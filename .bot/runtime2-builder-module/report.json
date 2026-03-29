@@ -95,6 +95,70 @@
         "health": "green",
         "notes": "59 total test stubs (53 C# + 6 PLang). All gaps addressed except engine.RunAction I/O pattern (implementation detail for coder)."
       }
+    },
+    {
+      "id": "coder-v1-20260329",
+      "bot": "coder",
+      "timestamp_start": "2026-03-29T23:00:00Z",
+      "timestamp_end": null,
+      "intent": "Implement builder module: GoalFile, 8 actions, Step.Merge, Goal.MergeFrom, tests",
+      "before": {
+        "assumptions": "Architect plan defines 8 actions + GoalFile. Test stubs exist (53 C# + 6 PLang). Zero builder module code exists. v1 PlangModule/Program.cs has reference implementations for all actions.",
+        "risk": "GoalFile is the only real parser in PLang — edge cases around blank lines, multi-line comments, continuation lines. Builder actions that use engine.RunAction for file I/O need careful context wiring. Building guard needs to be checked on every action entry."
+      },
+      "plan": "Phase 1: Add Step.Merge() and Goal.MergeFrom() to entity classes. Phase 2: GoalFile parser (.goal text → List<Goal>). Phase 3: 8 builder actions (getActions, getTypeInfo, getGoals, validateActions, mergeStep, getApp, saveApp, saveGoals). Phase 4: Implement 53 C# test stubs.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Step.Merge() and Goal.MergeFrom() methods — OBP ownership of merge logic"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/modules/builder/GoalFile.cs",
+            "PLang/Runtime2/modules/builder/getActions.cs",
+            "PLang/Runtime2/modules/builder/getTypeInfo.cs",
+            "PLang/Runtime2/modules/builder/getGoals.cs",
+            "PLang/Runtime2/modules/builder/validateActions.cs",
+            "PLang/Runtime2/modules/builder/mergeStep.cs",
+            "PLang/Runtime2/modules/builder/getApp.cs",
+            "PLang/Runtime2/modules/builder/saveApp.cs",
+            "PLang/Runtime2/modules/builder/saveGoals.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "9 new files: GoalFile parser + 8 builder actions. Standard [Action] partial class : IContext pattern with Building guard."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/builder/GoalFileTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/MergeTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetActionsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetTypeInfoTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetGoalsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/ValidateActionsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/MergeStepTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/AppTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/SaveGoalsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/BuildingGuardTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Implemented all 53 C# test stubs. Fixed alias conflicts with global usings."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "All 2015 tests pass (0 failures). 9 new source files, 2 modified entity files, 10 test files implemented. Ready for codeanalyzer review."
+      }
     }
   ]
 }

@@ -1,6 +1,4 @@
 using PLang.Runtime2.modules.builder;
-using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
-using Step = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;
 using PLang.Runtime2.Engine.Goals.Goal;
 
 namespace PLang.Tests.Runtime2.Modules.builder;
@@ -15,100 +13,149 @@ public class GoalFileTests
     [Test]
     public async Task Parse_SingleGoalWithSteps_ReturnsOneGoal()
     {
-        // Single goal with two steps — basic happy path
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        var goals = gf.Parse("MyGoal\n- step one\n- step two", "/MyGoal.goal");
+
+        await Assert.That(goals.Count).IsEqualTo(1);
+        await Assert.That(goals[0].Name).IsEqualTo("MyGoal");
+        await Assert.That(goals[0].Steps.Count).IsEqualTo(2);
+        await Assert.That(goals[0].Steps[0].Text).IsEqualTo("step one");
+        await Assert.That(goals[0].Steps[1].Text).IsEqualTo("step two");
     }
 
     [Test]
     public async Task Parse_MultipleGoals_FirstPublicRestPrivate()
     {
-        // First goal = Visibility.Public, subsequent goals = Visibility.Private
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        var goals = gf.Parse("First\n- step a\n\nSecond\n- step b\n\nThird\n- step c", "/Multi.goal");
+
+        await Assert.That(goals.Count).IsEqualTo(3);
+        await Assert.That(goals[0].Visibility).IsEqualTo(Visibility.Public);
+        await Assert.That(goals[1].Visibility).IsEqualTo(Visibility.Private);
+        await Assert.That(goals[2].Visibility).IsEqualTo(Visibility.Private);
     }
 
     [Test]
     public async Task Parse_IndentedSteps_SetsIndentLevel()
     {
-        // 4 spaces before dash = Indent 1, 8 spaces = Indent 2
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        var goals = gf.Parse("MyGoal\n- top level\n    - indent 1\n        - indent 2", "/Indent.goal");
+
+        await Assert.That(goals[0].Steps[0].Indent).IsEqualTo(0);
+        await Assert.That(goals[0].Steps[1].Indent).IsEqualTo(1);
+        await Assert.That(goals[0].Steps[2].Indent).IsEqualTo(2);
     }
 
     [Test]
     public async Task Parse_ContinuationLines_AppendsToStepText()
     {
-        // Indented non-dash lines after a step join with \n to previous step's Text
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        var goals = gf.Parse("MyGoal\n- first line\n  continuation line", "/Cont.goal");
+
+        await Assert.That(goals[0].Steps.Count).IsEqualTo(1);
+        await Assert.That(goals[0].Steps[0].Text).IsEqualTo("first line\ncontinuation line");
     }
 
     [Test]
     public async Task Parse_GoalComments_SetsGoalComment()
     {
-        // / lines before the first step of a goal become goal.Comment
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        var goals = gf.Parse("/ This is a comment\nMyGoal\n- step", "/Comment.goal");
+
+        await Assert.That(goals[0].Comment).IsEqualTo("This is a comment");
     }
 
     [Test]
     public async Task Parse_StepComments_SetsStepComment()
     {
-        // / lines between steps become the next step's Comment
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        var goals = gf.Parse("MyGoal\n- step one\n/ step comment\n- step two", "/StepComment.goal");
+
+        await Assert.That(goals[0].Steps[0].Comment).IsNull();
+        await Assert.That(goals[0].Steps[1].Comment).IsEqualTo("step comment");
     }
 
     [Test]
     public async Task Parse_MultiLineComments_HandledCorrectly()
     {
-        // /* ... */ block comments spanning multiple lines
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        var goals = gf.Parse("/* multi\nline */\nMyGoal\n- step", "/BlockComment.goal");
+
+        await Assert.That(goals[0].Comment).IsEqualTo("multi\nline");
     }
 
     [Test]
     public async Task Parse_PathComputation_AllGoalsSharePath()
     {
-        // All goals from one .goal file share the same Path; PrPath derives correctly
-        // For /folder/MyGoal.goal → Path = "/folder/MyGoal.goal", PrPath = "/folder/.build/mygoal.pr"
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        var goals = gf.Parse("First\n- step\n\nSecond\n- step", "/folder/MyGoal.goal");
+
+        await Assert.That(goals[0].Path).IsEqualTo("/folder/MyGoal.goal");
+        await Assert.That(goals[1].Path).IsEqualTo("/folder/MyGoal.goal");
     }
 
     [Test]
     public async Task Parse_EmptyFile_ReturnsEmptyList()
     {
-        // Empty string or whitespace-only input → empty list, no crash
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+
+        var goals1 = gf.Parse("", "/Empty.goal");
+        await Assert.That(goals1.Count).IsEqualTo(0);
+
+        var goals2 = gf.Parse("   \n  \n  ", "/Whitespace.goal");
+        await Assert.That(goals2.Count).IsEqualTo(0);
     }
 
     [Test]
     public async Task Parse_TabsConvertedToSpaces()
     {
-        // Tabs are converted to 4 spaces before parsing — tab-indented steps get correct Indent level
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        // Tab before dash = 4 spaces = indent 1
+        var goals = gf.Parse("MyGoal\n- top\n\t- indented", "/Tabs.goal");
+
+        await Assert.That(goals[0].Steps[1].Indent).IsEqualTo(1);
     }
 
     [Test]
     public async Task Parse_SubGoalNames_PopulatedOnPublicGoal()
     {
-        // SubGoals list on first (public) goal contains names of all non-first goals
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        var goals = gf.Parse("Public\n- step\n\nPrivateA\n- step\n\nPrivateB\n- step", "/Sub.goal");
+
+        await Assert.That(goals[0].SubGoals.Count).IsEqualTo(2);
+        await Assert.That(goals[0].SubGoals[0]).IsEqualTo("PrivateA");
+        await Assert.That(goals[0].SubGoals[1]).IsEqualTo("PrivateB");
     }
 
     [Test]
     public async Task Parse_BlankLinesBetweenGoals_HandledCorrectly()
     {
-        // Blank lines between goals don't create phantom goals or corrupt step attribution
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        var goals = gf.Parse("First\n- step a\n\n\n\nSecond\n- step b", "/Blank.goal");
+
+        await Assert.That(goals.Count).IsEqualTo(2);
+        await Assert.That(goals[0].Steps.Count).IsEqualTo(1);
+        await Assert.That(goals[1].Steps.Count).IsEqualTo(1);
     }
 
     [Test]
     public async Task Parse_StepLineNumbers_MatchSourceLines()
     {
-        // Each Step.LineNumber corresponds to the 1-based line in the .goal text where the dash appears
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        // Line 1: MyGoal, Line 2: - step one, Line 3: - step two
+        var goals = gf.Parse("MyGoal\n- step one\n- step two", "/Lines.goal");
+
+        await Assert.That(goals[0].Steps[0].LineNumber).IsEqualTo(2);
+        await Assert.That(goals[0].Steps[1].LineNumber).IsEqualTo(3);
     }
 
     [Test]
     public async Task Parse_PrPath_DerivedFromPath()
     {
-        // /folder/MyGoal.goal → PrPath auto-derives to /folder/.build/mygoal.pr
-        // PrPath is never set directly — it's a read-only derived property on Goal
-        Assert.Fail("Not implemented");
+        var gf = new GoalFile();
+        var goals = gf.Parse("MyGoal\n- step", "/folder/MyGoal.goal");
+
+        // PrPath is derived from Path — /folder/MyGoal.goal → /folder/.build/mygoal.pr
+        await Assert.That(goals[0].PrPath).IsEqualTo("/folder/.build/mygoal.pr");
     }
 }

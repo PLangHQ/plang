@@ -1,6 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.builder;
+using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.builder;
@@ -21,6 +22,7 @@ public class ValidateActionsTests
             "plang_test_builder_validate_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _engine = new PLangEngine(_tempDir);
+        _engine.Building.IsEnabled = true;
     }
 
     [After(Test)]
@@ -38,36 +40,113 @@ public class ValidateActionsTests
     [Test]
     public async Task ValidateActions_ValidActions_ReturnsOk()
     {
-        // All actions found in engine.Modules → Data.Ok(true)
-        Assert.Fail("Not implemented");
+        var actions = new StepActions
+        {
+            new Action { Module = "file", ActionName = "read", Parameters = new List<Data> { new("Path", "test.txt") } }
+        };
+
+        var action = new validateActions { Context = _engine.Context, Actions = actions };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That((bool)result.Value!).IsTrue();
     }
 
     [Test]
     public async Task ValidateActions_UnknownAction_ReturnsError()
     {
-        // Action not in module registry → error Data with action name in message
-        Assert.Fail("Not implemented");
+        var actions = new StepActions
+        {
+            new Action { Module = "nonexistent", ActionName = "fake" }
+        };
+
+        var action = new validateActions { Context = _engine.Context, Actions = actions };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Message).Contains("nonexistent.fake");
     }
 
     [Test]
     public async Task ValidateActions_GoalCallPath_Resolved()
     {
-        // GoalCall PrPath resolved by scanning .build/ for .pr files,
-        // falling back to .goal files in the source tree
-        Assert.Fail("Not implemented");
+        // Create a .pr file that the resolver can find
+        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
+        System.IO.Directory.CreateDirectory(buildDir);
+        var prJson = System.Text.Json.JsonSerializer.Serialize(new List<Goal>
+        {
+            new Goal { Name = "DoSomething", Path = "/DoSomething.goal" }
+        }, new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+        });
+        System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "dosomething.pr"), prJson);
+
+        var goalCallData = new Data("GoalName", new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "DoSomething" });
+        goalCallData.Type = new PLang.Runtime2.Engine.Memory.Type("goal.call");
+
+        var actions = new StepActions
+        {
+            new Action
+            {
+                Module = "condition",
+                ActionName = "if",
+                Parameters = new List<Data> { goalCallData }
+            }
+        };
+
+        var action = new validateActions { Context = _engine.Context, Actions = actions };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
     }
 
     [Test]
     public async Task ValidateActions_DynamicNames_Skipped()
     {
-        // GoalCall names containing % (variable references) are not resolved
-        Assert.Fail("Not implemented");
+        var goalCallData = new Data("GoalName", new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "%dynamicGoal%" });
+        goalCallData.Type = new PLang.Runtime2.Engine.Memory.Type("goal.call");
+
+        var actions = new StepActions
+        {
+            new Action
+            {
+                Module = "condition",
+                ActionName = "if",
+                Parameters = new List<Data> { goalCallData }
+            }
+        };
+
+        var action = new validateActions { Context = _engine.Context, Actions = actions };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
     }
 
     [Test]
     public async Task ValidateActions_DefaultsFilled()
     {
-        // Missing parameters with [Default] attribute get default values applied
-        Assert.Fail("Not implemented");
+        // file.list has [Default("*")] on Pattern and [Default(false)] on Recursive
+        var actions = new StepActions
+        {
+            new Action
+            {
+                Module = "file",
+                ActionName = "list",
+                Parameters = new List<Data> { new("Path", "docs/") }
+            }
+        };
+
+        var action = new validateActions { Context = _engine.Context, Actions = actions };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        // Defaults should be filled for missing params
+        var fileList = actions[0];
+        await Assert.That(fileList.Defaults).IsNotNull();
+        await Assert.That(fileList.Defaults!.Count).IsGreaterThan(0);
+        var patternDefault = fileList.Defaults.FirstOrDefault(d =>
+            d.Name.Equals("pattern", StringComparison.OrdinalIgnoreCase));
+        await Assert.That(patternDefault).IsNotNull();
     }
 }

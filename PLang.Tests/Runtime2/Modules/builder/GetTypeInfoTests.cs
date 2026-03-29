@@ -21,6 +21,7 @@ public class GetTypeInfoTests
             "plang_test_builder_typeinfo_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _engine = new PLangEngine(_tempDir);
+        _engine.Building.IsEnabled = true;
     }
 
     [After(Test)]
@@ -38,14 +39,32 @@ public class GetTypeInfoTests
     [Test]
     public async Task GetTypeInfo_ReturnsBuilderTypeNames()
     {
-        // Should return canonical PLang type names (string, int, list, etc.)
-        Assert.Fail("Not implemented");
+        var action = new getTypeInfo { Context = _engine.Context };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        // Result should have TypeNames containing basic types
+        var value = result.Value!;
+        var typeNamesProp = value.GetType().GetProperty("TypeNames");
+        await Assert.That(typeNamesProp).IsNotNull();
+        var typeNames = (string)typeNamesProp!.GetValue(value)!;
+        await Assert.That(typeNames).Contains("string");
+        await Assert.That(typeNames).Contains("int");
+        await Assert.That(typeNames).Contains("bool");
     }
 
     [Test]
     public async Task GetTypeInfo_ReturnsComplexTypeSchemas()
     {
-        // Should return JSON schemas for complex types (goal.call, etc.)
-        Assert.Fail("Not implemented");
+        var action = new getTypeInfo { Context = _engine.Context };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var value = result.Value!;
+        var schemasProp = value.GetType().GetProperty("TypeSchemas");
+        await Assert.That(schemasProp).IsNotNull();
+        var schemas = (string)schemasProp!.GetValue(value)!;
+        // goal.call should have a schema
+        await Assert.That(schemas).Contains("goal.call");
     }
 }

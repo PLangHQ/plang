@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.builder;
-using Step = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;
+using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.builder;
@@ -21,6 +21,7 @@ public class MergeStepTests
             "plang_test_builder_mergestep_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _engine = new PLangEngine(_tempDir);
+        _engine.Building.IsEnabled = true;
     }
 
     [After(Test)]
@@ -38,7 +39,26 @@ public class MergeStepTests
     [Test]
     public async Task MergeStep_DelegatesToStepMerge()
     {
-        // Action calls Step.Merge(StepFromLlm) and returns Data.Ok(Step)
-        Assert.Fail("Not implemented");
+        var target = new Step { Text = "do something", Index = 0, LineNumber = 1 };
+        var source = new Step
+        {
+            Text = "do something",
+            Actions = new StepActions(new[]
+            {
+                new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hi") } }
+            })
+        };
+
+        var action = new mergeStep { Context = _engine.Context, Step = target, StepFromLlm = source };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var merged = result.Value as Step;
+        await Assert.That(merged).IsNotNull();
+        await Assert.That(merged!.Actions.Count).IsEqualTo(1);
+        await Assert.That(merged.Actions[0].Module).IsEqualTo("output");
+        // Structural fields preserved
+        await Assert.That(merged.Text).IsEqualTo("do something");
+        await Assert.That(merged.Index).IsEqualTo(0);
     }
 }

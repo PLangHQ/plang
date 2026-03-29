@@ -1,7 +1,7 @@
+using System.Text.Json;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.builder;
-using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.builder;
@@ -22,6 +22,7 @@ public class SaveGoalsTests
             "plang_test_builder_savegoals_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _engine = new PLangEngine(_tempDir);
+        _engine.Building.IsEnabled = true;
     }
 
     [After(Test)]
@@ -39,21 +40,74 @@ public class SaveGoalsTests
     [Test]
     public async Task SaveGoals_SerializesToPrPath()
     {
-        // Writes List<Goal> as JSON to the derived PrPath from the first goal
-        Assert.Fail("Not implemented");
+        var goals = new List<Goal>
+        {
+            new Goal
+            {
+                Name = "Start",
+                Path = "/Start.goal",
+                Steps = new GoalSteps
+                {
+                    new Step { Text = "write hello", Index = 0 }
+                }
+            }
+        };
+
+        var action = new saveGoals { Context = _engine.Context, Goals = goals };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+
+        // File should exist at the derived PrPath
+        var prPath = System.IO.Path.Combine(_tempDir, ".build", "start.pr");
+        await Assert.That(System.IO.File.Exists(prPath)).IsTrue();
     }
 
     [Test]
     public async Task SaveGoals_CamelCase_NullsOmitted()
     {
-        // JSON output uses camelCase property names and omits null values
-        Assert.Fail("Not implemented");
+        var goals = new List<Goal>
+        {
+            new Goal
+            {
+                Name = "Test",
+                Path = "/Test.goal",
+                Description = null // Should be omitted
+            }
+        };
+
+        var action = new saveGoals { Context = _engine.Context, Goals = goals };
+        await _engine.RunAction(action, _engine.Context);
+
+        var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
+        var json = System.IO.File.ReadAllText(prPath);
+
+        // Should use camelCase
+        await Assert.That(json).Contains("\"name\"");
+        // Null description should be omitted
+        await Assert.That(json).DoesNotContain("\"description\"");
     }
 
     [Test]
     public async Task SaveGoals_MultipleGoals_SingleFile()
     {
-        // Multiple goals from one .goal file → single .pr file containing all
-        Assert.Fail("Not implemented");
+        var goals = new List<Goal>
+        {
+            new Goal { Name = "Public", Path = "/Multi.goal" },
+            new Goal { Name = "Private", Path = "/Multi.goal" }
+        };
+
+        var action = new saveGoals { Context = _engine.Context, Goals = goals };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+
+        var prPath = System.IO.Path.Combine(_tempDir, ".build", "multi.pr");
+        var json = System.IO.File.ReadAllText(prPath);
+        var deserialized = JsonSerializer.Deserialize<List<Goal>>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        await Assert.That(deserialized).IsNotNull();
+        await Assert.That(deserialized!.Count).IsEqualTo(2);
     }
 }

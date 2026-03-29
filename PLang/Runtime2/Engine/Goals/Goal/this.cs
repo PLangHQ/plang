@@ -137,6 +137,22 @@ public sealed partial class @this
         return string.Join("\n", lines);
     }
 
+    /// <summary>
+    /// Merges LLM-derived fields from an existing built goal onto this freshly-parsed goal.
+    /// Matches steps by Text, delegates to Step.Merge for each match.
+    /// </summary>
+    public void MergeFrom(@this? existing)
+    {
+        if (existing == null || existing.Steps.Count == 0) return;
+
+        foreach (var step in Steps)
+        {
+            var match = existing.Steps.FirstOrDefault(s => s.Text == step.Text);
+            if (match != null)
+                step.Merge(match);
+        }
+    }
+
     public static @this NotFound(string name) => new()
     {
         Name = name,

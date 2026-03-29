@@ -1,3 +1,4 @@
+using System.Text.Json;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.builder;
@@ -21,6 +22,7 @@ public class GetGoalsTests
             "plang_test_builder_getgoals_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _engine = new PLangEngine(_tempDir);
+        _engine.Building.IsEnabled = true;
     }
 
     [After(Test)]
@@ -38,37 +40,137 @@ public class GetGoalsTests
     [Test]
     public async Task GetGoals_ParsesGoalFilesFromFolder()
     {
-        // Write a .goal file to temp dir, call getGoals, verify goals returned
-        Assert.Fail("Not implemented");
+        // Write a .goal file
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(_tempDir, "Start.goal"),
+            "Start\n- write out 'hello'\n- set %x% = 1");
+
+        var action = new getGoals { Context = _engine.Context, Path = "." };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var goals = result.Value as List<Goal>;
+        await Assert.That(goals).IsNotNull();
+        await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);
+        await Assert.That(goals[0].Name).IsEqualTo("Start");
+        await Assert.That(goals[0].Steps.Count).IsEqualTo(2);
     }
 
     [Test]
     public async Task GetGoals_ExcludesSystemGoals()
     {
-        // .goal files under /system/ path should be filtered out
-        Assert.Fail("Not implemented");
+        // Write a regular .goal file
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(_tempDir, "MyGoal.goal"),
+            "MyGoal\n- step one");
+
+        // Write a system .goal file
+        var systemDir = System.IO.Path.Combine(_tempDir, "system");
+        System.IO.Directory.CreateDirectory(systemDir);
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(systemDir, "Build.goal"),
+            "Build\n- build step");
+
+        var action = new getGoals { Context = _engine.Context, Path = "." };
+        var result = await _engine.RunAction(action, _engine.Context);
+        var goals = result.Value as List<Goal>;
+
+        await Assert.That(goals).IsNotNull();
+        // Should not include system goals
+        var systemGoal = goals!.FirstOrDefault(g => g.Name == "Build");
+        await Assert.That(systemGoal).IsNull();
+        var userGoal = goals.FirstOrDefault(g => g.Name == "MyGoal");
+        await Assert.That(userGoal).IsNotNull();
     }
 
     [Test]
     public async Task GetGoals_MergesExistingPrData()
     {
-        // When a .pr file exists at PrPath, deserialize as List<Goal>,
-        // match by Name, call goal.MergeFrom(existingGoal) — LLM work preserved
-        Assert.Fail("Not implemented");
+        // Write a .goal file
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(_tempDir, "Start.goal"),
+            "Start\n- write out 'hello'");
+
+        // Write existing .pr data with actions for that step
+        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
+        System.IO.Directory.CreateDirectory(buildDir);
+
+        var prGoal = new Goal
+        {
+            Name = "Start",
+            Path = "/Start.goal",
+            Steps = new GoalSteps
+            {
+                new Step
+                {
+                    Text = "write out 'hello'",
+                    Actions = new StepActions(new[]
+                    {
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "output",
+                            ActionName = "write",
+                            Parameters = new List<Data> { new("Message", "hello") }
+                        }
+                    })
+                }
+            }
+        };
+        var prJson = JsonSerializer.Serialize(new List<Goal> { prGoal },
+            new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            });
+        System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "start.pr"), prJson);
+
+        var action = new getGoals { Context = _engine.Context, Path = "." };
+        var result = await _engine.RunAction(action, _engine.Context);
+        var goals = result.Value as List<Goal>;
+
+        await Assert.That(goals).IsNotNull();
+        var startGoal = goals!.FirstOrDefault(g => g.Name == "Start");
+        await Assert.That(startGoal).IsNotNull();
+        // Merged actions from .pr data
+        await Assert.That(startGoal!.Steps[0].Actions.Count).IsEqualTo(1);
+        await Assert.That(startGoal.Steps[0].Actions[0].Module).IsEqualTo("output");
     }
 
     [Test]
     public async Task GetGoals_EmptyFolder_ReturnsEmptyList()
     {
-        // No .goal files in folder → empty list, no error
-        Assert.Fail("Not implemented");
+        var action = new getGoals { Context = _engine.Context, Path = "." };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var goals = result.Value as List<Goal>;
+        await Assert.That(goals).IsNotNull();
+        await Assert.That(goals!.Count).IsEqualTo(0);
     }
 
     [Test]
     public async Task GetGoals_CorruptPrFile_IgnoresAndReparses()
     {
-        // When the existing .pr file contains invalid JSON, getGoals should not crash —
-        // treat it as if no .pr exists and let the LLM rebuild from scratch
-        Assert.Fail("Not implemented");
+        // Write a .goal file
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(_tempDir, "Start.goal"),
+            "Start\n- some step");
+
+        // Write corrupt .pr file
+        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
+        System.IO.Directory.CreateDirectory(buildDir);
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(buildDir, "start.pr"),
+            "{ invalid json {{{}}}");
+
+        var action = new getGoals { Context = _engine.Context, Path = "." };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var goals = result.Value as List<Goal>;
+        await Assert.That(goals).IsNotNull();
+        await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);
+        // Steps should have empty actions (no merge happened)
+        await Assert.That(goals[0].Steps[0].Actions.Count).IsEqualTo(0);
     }
 }

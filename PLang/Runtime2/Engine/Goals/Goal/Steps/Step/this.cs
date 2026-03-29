@@ -95,5 +95,36 @@ public sealed partial class @this
         };
     }
 
+    /// <summary>
+    /// Merges LLM-derived fields from another step onto this step.
+    /// Structural fields (Text, Index, Indent, LineNumber) are untouched.
+    /// </summary>
+    public void Merge(Step.@this from)
+    {
+        if (from.Actions.Count > 0)
+        {
+            Actions.Clear();
+            Actions.AddRange(from.Actions);
+        }
+
+        if (from.Cache != null)
+            Cache = from.Cache;
+
+        if (from.OnError != null)
+            OnError = from.OnError;
+
+        if (from.Errors.Count > 0)
+        {
+            Errors.Clear();
+            Errors.AddRange(from.Errors);
+        }
+
+        if (from.Warnings.Count > 0)
+        {
+            Warnings.Clear();
+            Warnings.AddRange(from.Warnings);
+        }
+    }
+
     public override string ToString() => $"[{Index}] {Text}";
 }

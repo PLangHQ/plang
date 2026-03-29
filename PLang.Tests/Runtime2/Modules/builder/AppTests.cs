@@ -1,5 +1,7 @@
+using System.Text.Json;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Utility;
 using PLang.Runtime2.modules.builder;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
@@ -20,6 +22,7 @@ public class AppTests
             "plang_test_builder_app_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _engine = new PLangEngine(_tempDir);
+        _engine.Building.IsEnabled = true;
     }
 
     [After(Test)]
@@ -37,21 +40,71 @@ public class AppTests
     [Test]
     public async Task GetApp_LoadsExistingAppPr()
     {
-        // When .build/app.pr exists, reads and deserializes as AppData
-        Assert.Fail("Not implemented");
+        // Create existing app.pr
+        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
+        System.IO.Directory.CreateDirectory(buildDir);
+        var existingApp = new AppData
+        {
+            Id = "test-id-123",
+            Created = DateTime.UtcNow.AddDays(-1),
+            Updated = DateTime.UtcNow.AddDays(-1),
+            Version = "0.2",
+            Name = "TestApp"
+        };
+        var json = JsonSerializer.Serialize(existingApp, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+        System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "app.pr"), json);
+
+        var action = new getApp { Context = _engine.Context, Path = "." };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var app = result.Value as AppData;
+        await Assert.That(app).IsNotNull();
+        await Assert.That(app!.Id).IsEqualTo("test-id-123");
+        await Assert.That(app.Name).IsEqualTo("TestApp");
     }
 
     [Test]
     public async Task GetApp_CreatesNewWhenMissing()
     {
-        // When .build/app.pr doesn't exist, creates new AppData with GUID and Version = "0.2"
-        Assert.Fail("Not implemented");
+        var action = new getApp { Context = _engine.Context, Path = "." };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var app = result.Value as AppData;
+        await Assert.That(app).IsNotNull();
+        await Assert.That(app!.Id).IsNotNull();
+        await Assert.That(app.Id.Length).IsGreaterThan(0);
+        await Assert.That(app.Version).IsEqualTo("0.2");
+
+        // File should exist on disk
+        var appPrPath = System.IO.Path.Combine(_tempDir, ".build", "app.pr");
+        await Assert.That(System.IO.File.Exists(appPrPath)).IsTrue();
     }
 
     [Test]
     public async Task SaveApp_UpdatesTimestamp()
     {
-        // App.Updated timestamp is set before writing to disk
-        Assert.Fail("Not implemented");
+        var app = new AppData
+        {
+            Id = "test-id",
+            Created = DateTime.UtcNow.AddDays(-1),
+            Updated = DateTime.UtcNow.AddDays(-1),
+            Version = "0.2"
+        };
+        var oldUpdated = app.Updated;
+
+        var action = new saveApp { Context = _engine.Context, App = app, Path = ".build/app.pr" };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(app.Updated).IsGreaterThan(oldUpdated);
+
+        // File should exist
+        var appPrPath = System.IO.Path.Combine(_tempDir, ".build", "app.pr");
+        await Assert.That(System.IO.File.Exists(appPrPath)).IsTrue();
     }
 }

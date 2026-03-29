@@ -1,10 +1,8 @@
+using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Goals.Goal;
 using PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 using PLang.Runtime2.Engine.Memory;
-using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
-using Step = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;
 using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
-using Actions = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this;
 
 namespace PLang.Tests.Runtime2.Modules.builder;
 
@@ -19,30 +17,98 @@ public class MergeTests
     [Test]
     public async Task StepMerge_CopiesLlmDerivedFields()
     {
-        // Actions, Cache, OnError copied from source step to target step
-        Assert.Fail("Not implemented");
+        var target = new Step { Text = "do something", Index = 0 };
+        var source = new Step
+        {
+            Text = "do something",
+            Actions = new StepActions(new[]
+            {
+                new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hello") } }
+            }),
+            Cache = new CacheSettings { DurationMs = 5000 },
+            OnError = new ErrorHandler { RetryCount = 3 }
+        };
+
+        target.Merge(source);
+
+        await Assert.That(target.Actions.Count).IsEqualTo(1);
+        await Assert.That(target.Actions[0].Module).IsEqualTo("output");
+        await Assert.That(target.Cache).IsNotNull();
+        await Assert.That(target.Cache!.DurationMs).IsEqualTo(5000);
+        await Assert.That(target.OnError).IsNotNull();
+        await Assert.That(target.OnError!.RetryCount).IsEqualTo(3);
     }
 
     [Test]
     public async Task StepMerge_PreservesStructuralFields()
     {
-        // Text, Index, Indent, LineNumber on target remain unchanged after merge
-        Assert.Fail("Not implemented");
+        var target = new Step { Text = "original text", Index = 5, Indent = 2, LineNumber = 10 };
+        var source = new Step
+        {
+            Text = "different text",
+            Index = 99,
+            Indent = 0,
+            LineNumber = 1,
+            Actions = new StepActions(new[]
+            {
+                new Action { Module = "file", ActionName = "read" }
+            })
+        };
+
+        target.Merge(source);
+
+        // Structural fields preserved
+        await Assert.That(target.Text).IsEqualTo("original text");
+        await Assert.That(target.Index).IsEqualTo(5);
+        await Assert.That(target.Indent).IsEqualTo(2);
+        await Assert.That(target.LineNumber).IsEqualTo(10);
+        // LLM field copied
+        await Assert.That(target.Actions.Count).IsEqualTo(1);
     }
 
     [Test]
     public async Task StepMerge_EmptySource_LeavesTargetUnchanged()
     {
-        // Source step with no Actions/Cache/OnError → target unchanged
-        Assert.Fail("Not implemented");
+        var originalAction = new Action { Module = "output", ActionName = "write" };
+        var target = new Step
+        {
+            Text = "step",
+            Actions = new StepActions(new[] { originalAction }),
+            Cache = new CacheSettings { DurationMs = 1000 }
+        };
+        var source = new Step { Text = "step" }; // Empty LLM fields
+
+        target.Merge(source);
+
+        // Actions not cleared because source has 0 actions
+        await Assert.That(target.Actions.Count).IsEqualTo(1);
+        await Assert.That(target.Cache!.DurationMs).IsEqualTo(1000);
     }
 
     [Test]
     public async Task StepMerge_ErrorsReplacedOnlyWhenSourceHasEntries()
     {
-        // Errors/Warnings on target replaced only when source has entries;
-        // empty source errors/warnings leave target's existing errors intact
-        Assert.Fail("Not implemented");
+        var target = new Step
+        {
+            Text = "step",
+            Errors = { new Info { Key = "E1", Message = "original error" } }
+        };
+
+        // Source with no errors — target keeps its errors
+        var emptySource = new Step { Text = "step" };
+        target.Merge(emptySource);
+        await Assert.That(target.Errors.Count).IsEqualTo(1);
+        await Assert.That(target.Errors[0].Key).IsEqualTo("E1");
+
+        // Source with errors — target errors replaced
+        var sourceWithErrors = new Step
+        {
+            Text = "step",
+            Errors = { new Info { Key = "E2", Message = "new error" } }
+        };
+        target.Merge(sourceWithErrors);
+        await Assert.That(target.Errors.Count).IsEqualTo(1);
+        await Assert.That(target.Errors[0].Key).IsEqualTo("E2");
     }
 
     #endregion
@@ -52,23 +118,87 @@ public class MergeTests
     [Test]
     public async Task GoalMergeFrom_MatchesByText_MergesLlmFields()
     {
-        // Steps matched by Text between existing and fresh goal;
-        // matched steps get LLM fields via Step.Merge
-        Assert.Fail("Not implemented");
+        var freshGoal = new Goal
+        {
+            Name = "Test",
+            Steps = new GoalSteps
+            {
+                new Step { Text = "do something", Index = 0 },
+                new Step { Text = "do another thing", Index = 1 }
+            }
+        };
+
+        var existingGoal = new Goal
+        {
+            Name = "Test",
+            Steps = new GoalSteps
+            {
+                new Step
+                {
+                    Text = "do something",
+                    Actions = new StepActions(new[]
+                    {
+                        new Action { Module = "output", ActionName = "write" }
+                    })
+                }
+            }
+        };
+
+        freshGoal.MergeFrom(existingGoal);
+
+        // Matched step gets actions
+        await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(1);
+        // Unmatched step keeps empty
+        await Assert.That(freshGoal.Steps[1].Actions.Count).IsEqualTo(0);
     }
 
     [Test]
     public async Task GoalMergeFrom_UnmatchedSteps_KeepEmptyActions()
     {
-        // Steps in fresh goal not found in existing goal keep their empty Actions
-        Assert.Fail("Not implemented");
+        var freshGoal = new Goal
+        {
+            Name = "Test",
+            Steps = new GoalSteps
+            {
+                new Step { Text = "new step that didn't exist before", Index = 0 }
+            }
+        };
+
+        var existingGoal = new Goal
+        {
+            Name = "Test",
+            Steps = new GoalSteps
+            {
+                new Step
+                {
+                    Text = "old step text",
+                    Actions = new StepActions(new[]
+                    {
+                        new Action { Module = "file", ActionName = "read" }
+                    })
+                }
+            }
+        };
+
+        freshGoal.MergeFrom(existingGoal);
+
+        await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(0);
     }
 
     [Test]
     public async Task GoalMergeFrom_NullExisting_NoOp()
     {
-        // Passing null or a goal with no steps → no crash, target unchanged
-        Assert.Fail("Not implemented");
+        var freshGoal = new Goal
+        {
+            Name = "Test",
+            Steps = new GoalSteps { new Step { Text = "step", Index = 0 } }
+        };
+
+        // Should not throw
+        freshGoal.MergeFrom(null);
+
+        await Assert.That(freshGoal.Steps.Count).IsEqualTo(1);
+        await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(0);
     }
 
     #endregion
