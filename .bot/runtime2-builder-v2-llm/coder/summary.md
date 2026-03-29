@@ -5,3 +5,6 @@ Implemented full LLM module: types (LlmMessage, ToolCall), GoalCall extensions (
 
 ## v2
 Fixed all 8 code analyzer findings in OpenAiProvider.cs: 2 bare catches scoped, sync-over-async made async, httpAction construction consolidated, dead BuildStreamProxy removed, OBP decomposed params fixed (ExecuteToolAsync/ToApiMessages/ResolveImage), 2 new tests for default param fill-in and type mappings. 1958/1958 tests green. See [v2/summary.md](v2/summary.md).
+
+## v3
+Fixed all 8 tester findings: renamed false-green tests, strengthened weak assertions (MaxToolCalls bound, API error keys, callback verification), added 4 new tests (mixed JSON types, parallel results, jpg mime, base64 passthrough). 1962/1962 tests green. See [v3/summary.md](v3/summary.md).

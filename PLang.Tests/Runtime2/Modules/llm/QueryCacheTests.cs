@@ -162,13 +162,20 @@ public class QueryCacheTests
         var result1 = await action.Run();
         await Assert.That(result1.Success).IsTrue();
 
-        // Cache hit
+        // Cache hit — goes through RestoreFromCache which deserializes cached value + metadata
         var action2 = LlmTestHelper.MakeQuery(Ctx, userText: "props test");
         var result2 = await action2.Run();
 
+        // Verify the cached result value matches original
         await Assert.That(result2.Success).IsTrue();
+        await Assert.That(result2.Value?.ToString()).IsEqualTo("preserved");
+        // Verify metadata was restored from cache
         await Assert.That(result2.Properties["Cached"]?.Value).IsEqualTo(true);
         await Assert.That(result2.Properties["RawResponse"]?.Value?.ToString()).IsEqualTo("preserved");
         await Assert.That(result2.Properties["Model"]?.Value?.ToString()).IsEqualTo("gpt-4.1-mini");
+        await Assert.That(result2.Properties["PromptTokens"]?.Value).IsNotNull();
+        await Assert.That(result2.Properties["CompletionTokens"]?.Value).IsNotNull();
+        // No additional HTTP call was made
+        await Assert.That(_handler.CallCount).IsEqualTo(1);
     }
 }

@@ -122,6 +122,8 @@ public class QueryBasicTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error?.Key).IsEqualTo("HttpError");
+        await Assert.That(result.Error?.Message).Contains("400");
     }
 
     [Test]
@@ -135,6 +137,8 @@ public class QueryBasicTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error?.Key).IsEqualTo("HttpError");
+        await Assert.That(result.Error?.Message).Contains("500");
     }
 
     #endregion

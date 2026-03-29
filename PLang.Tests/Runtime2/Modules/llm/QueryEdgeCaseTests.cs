@@ -91,9 +91,13 @@ public class QueryEdgeCaseTests
         };
         var result = await action.Run();
 
-        // Should have stopped after 5 individual tool calls, not infinite
-        // Round 1: 3 tools (count=3), Round 2: 2 more tools before hitting 5
+        // MaxToolCalls=5, 3 tools/round:
+        // Round 1 (HTTP #1): 3 tools execute, toolCallCount=3, continue
+        // Round 2 (HTTP #2): 3 tools execute, but only 2 results appended (count hits 5), continue
+        // Round 3 (HTTP #3): toolCallCount >= MaxToolCalls → break
         await Assert.That(result).IsNotNull();
+        await Assert.That(_handler.CallCount).IsEqualTo(3);
+        await Assert.That(callIndex).IsEqualTo(3);
     }
 
     [Test]
@@ -144,9 +148,11 @@ public class QueryEdgeCaseTests
     }
 
     [Test]
-    public async Task Query_ProviderNotRegistered_ReturnsError()
+    public async Task Query_ProviderRegistered_ByDefault()
     {
-        // Create a fresh engine WITHOUT registering the LLM provider
+        // Verify that RegisterDefaults always registers the LLM provider.
+        // A separate missing-provider test isn't practical since RegisterDefaults
+        // is called in the engine constructor and can't be skipped.
         var tempDir2 = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_noprov_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(tempDir2);
@@ -154,11 +160,9 @@ public class QueryEdgeCaseTests
 
         try
         {
-            // The default engine registers OpenAiProvider. To test missing provider,
-            // we'd need an engine that skips registration. Since RegisterDefaults
-            // always registers it, we verify the provider IS there instead.
             var providerResult = engine2.Providers.Get<ILlmProvider>();
             await Assert.That(providerResult.Success).IsTrue();
+            await Assert.That(providerResult.Value).IsTypeOf<OpenAiProvider>();
         }
         finally
         {

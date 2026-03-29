@@ -271,6 +271,39 @@
         "health": "FAIL — 4 major findings, 4 minor. Tests pass but have blind spots.",
         "notes": "Major: (1) ProviderNotRegistered tests opposite of name, (2) MaxToolCalls unverified, (3) API error assertions weak, (4) OnToolCall callback unverified. Coverage: OpenAiProvider 82.8% line, 61.5% branch. RestoreFromCache and ResolveImage file paths at 0%."
       }
+    },
+    {
+      "id": "llm-coder-v3",
+      "bot": "coder",
+      "timestamp_start": "2026-03-29T20:00:00Z",
+      "timestamp_end": "2026-03-29T20:30:00Z",
+      "intent": "Fix all 8 tester findings: strengthen assertions, rename false-greens, add coverage",
+      "before": {
+        "assumptions": "Tester v2 found 4 major and 4 minor test quality issues. All 1958 tests pass but have blind spots.",
+        "risk": "Low — test-only changes, no production code modified."
+      },
+      "plan": "Rename false-green tests, add bound assertions to MaxToolCalls, add Error.Key checks to API error tests, rename OnToolCall test, add mixed-type arg test, add image mime/base64 tests, strengthen cache hit assertions, add parallel result verification.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryImageTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCacheTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "8 findings fixed: 4 major (rename/strengthen), 4 minor (new tests/assertions). 4 new tests added."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1962 tests pass (0 failures). All 8 tester findings resolved.",
+        "notes": "4 new tests: mixed JSON type args, parallel tool results, jpg mime type, base64 passthrough."
+      }
     }
   ]
 }

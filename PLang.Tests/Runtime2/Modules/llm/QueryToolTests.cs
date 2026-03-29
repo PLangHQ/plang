@@ -503,4 +503,91 @@ public class QueryToolTests
     }
 
     #endregion
+
+    #region ParseToolArguments Mixed Types
+
+    [Test]
+    public async Task Query_ToolArgs_MixedJsonTypes_AllBranchesParsed()
+    {
+        // Exercise True, False, Null, Number, and fallback (object) branches in ParseToolArguments
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+            {
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(
+                        ("call_1", "MixedTool", "{\"flag\":true,\"disabled\":false,\"count\":42,\"label\":null,\"nested\":{\"key\":\"val\"}}"))));
+            }
+            return Task.FromResult(LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("parsed all types")));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "mixed types" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall { Name = "MixedTool", Description = "tool with mixed arg types" }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // Tool was executed and re-queried — tool result sent back to LLM
+        await Assert.That(_handler.CallCount).IsEqualTo(2);
+        var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        await Assert.That(secondReq).Contains("tool");
+    }
+
+    #endregion
+
+    #region Parallel Tool Results Verification
+
+    [Test]
+    public async Task Query_ParallelToolCalls_BothResultsSentToLlm()
+    {
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+            {
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(
+                        ("call_1", "ToolA", "{}"),
+                        ("call_2", "ToolB", "{}"))));
+            }
+            return Task.FromResult(LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("both done")));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "parallel" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall { Name = "ToolA", Description = "A", Parallel = true },
+                new GoalCall { Name = "ToolB", Description = "B", Parallel = true }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // Verify both tool results are in the re-query request
+        var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        await Assert.That(secondReq).Contains("call_1");
+        await Assert.That(secondReq).Contains("call_2");
+    }
+
+    #endregion
 }

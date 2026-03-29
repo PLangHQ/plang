@@ -82,9 +82,15 @@ public class QueryCallbackTests
     }
 
     [Test]
-    public async Task Query_OnToolCall_ReceivesNameArgumentsResult()
+    public async Task Query_OnToolCall_ToolLoopCompletesWithCallback()
     {
-        // Same as above — verifies the tool loop completes with OnToolCall configured
+        // Verifies the full tool loop completes when OnToolCall is configured.
+        // The callback goal doesn't exist in unit tests, so RunGoalAsync returns error,
+        // but the provider ignores callback errors and continues. This test proves:
+        // 1. OnToolCall doesn't crash the tool loop
+        // 2. Tool execution still works (tool result sent back to LLM)
+        // 3. Final result is correct
+        // Note: Verifying the callback actually fires requires integration tests with real goals.
         int callIndex = 0;
         _handler.Handler = _ =>
         {
@@ -113,6 +119,10 @@ public class QueryCallbackTests
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value?.ToString()).IsEqualTo("got data");
+        // Verify tool execution happened: 2 HTTP calls (tool call + re-query with result)
+        await Assert.That(_handler.CallCount).IsEqualTo(2);
+        var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        await Assert.That(secondReq).Contains("tool");
     }
 
     #endregion

@@ -73,9 +73,11 @@ public class QueryImageTests
     [Test]
     public async Task Query_ImageFilePath_ReadAndBase64Encoded()
     {
-        // Create a test image file
+        // Create a test image file using the engine's filesystem so the path resolves
         var imagePath = System.IO.Path.Combine(_tempDir, "test.png");
-        System.IO.File.WriteAllBytes(imagePath, new byte[] { 0x89, 0x50, 0x4E, 0x47 }); // PNG magic bytes
+        var pngBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47 }; // PNG magic bytes
+        System.IO.File.WriteAllBytes(imagePath, pngBytes);
+        var expectedBase64 = Convert.ToBase64String(pngBytes);
 
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("I see pixels")));
@@ -97,8 +99,69 @@ public class QueryImageTests
 
         await Assert.That(result.Success).IsTrue();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
-        await Assert.That(reqBody).Contains("base64");
+        // Verify file was read, base64-encoded, and MIME type detected
+        await Assert.That(reqBody).Contains(expectedBase64);
         await Assert.That(reqBody).Contains("image/png");
+        await Assert.That(reqBody).Contains("data:image/png;base64,");
+    }
+
+    [Test]
+    public async Task Query_ImageFilePath_JpgExtension_CorrectMimeType()
+    {
+        var imagePath = System.IO.Path.Combine(_tempDir, "photo.jpg");
+        System.IO.File.WriteAllBytes(imagePath, new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 }); // JPEG magic
+
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("jpeg")));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage
+                {
+                    Role = "user",
+                    Text = "What is this?",
+                    Images = new List<string> { imagePath }
+                }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(reqBody).Contains("image/jpeg");
+    }
+
+    [Test]
+    public async Task Query_ImageBase64_PassedDirectly()
+    {
+        // Non-URL, non-file string should be treated as base64
+        var base64Image = "iVBORw0KGgoAAAANSUhEUg==";
+
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("base64")));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage
+                {
+                    Role = "user",
+                    Text = "Describe",
+                    Images = new List<string> { base64Image }
+                }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        // Should wrap in data URI format
+        await Assert.That(reqBody).Contains($"data:image/png;base64,{base64Image}");
     }
 
     [Test]
