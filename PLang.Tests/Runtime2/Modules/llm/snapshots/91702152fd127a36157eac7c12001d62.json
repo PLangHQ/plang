@@ -1,1 +1,1 @@
-{"id":"snapshot-replay","object":"chat.completion","model":"gpt-4.1-mini","choices":[{"index":0,"message":{"role":"assistant","content":"42"},"finish_reason":"stop"}],"usage":{"prompt_tokens":33,"completion_tokens":1,"total_tokens":34}}
+{"id":"snapshot","object":"chat.completion","model":"gpt-4.1-mini","choices":[{"index":0,"message":{"role":"assistant","content":"42"},"finish_reason":"stop"}],"usage":{"prompt_tokens":33,"completion_tokens":1,"total_tokens":34}}

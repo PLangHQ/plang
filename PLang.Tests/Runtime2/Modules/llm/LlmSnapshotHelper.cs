@@ -13,6 +13,7 @@ namespace PLang.Tests.Runtime2.Modules.llm;
 /// Snapshot helper for LLM integration tests.
 /// Saves real API responses to disk. On subsequent runs, reuses the snapshot
 /// if the input messages AND class structure haven't changed.
+/// Supports multi-turn snapshots (tool call loops produce multiple HTTP responses).
 /// </summary>
 internal static class LlmSnapshotHelper
 {
@@ -49,7 +50,21 @@ internal static class LlmSnapshotHelper
     }
 
     /// <summary>
-    /// Saves a response snapshot to disk.
+    /// Returns a multi-turn snapshot as a list of response JSONs, or null.
+    /// </summary>
+    internal static List<string>? TryLoadMultiSnapshot(string testName, List<LlmMessage> messages)
+    {
+        var key = ComputeKey(testName, messages);
+        var path = System.IO.Path.Combine(SnapshotDir, $"{key}.multi.json");
+
+        if (!System.IO.File.Exists(path)) return null;
+
+        var json = System.IO.File.ReadAllText(path);
+        return JsonSerializer.Deserialize<List<string>>(json);
+    }
+
+    /// <summary>
+    /// Saves a single response snapshot to disk.
     /// </summary>
     internal static void SaveSnapshot(string testName, List<LlmMessage> messages, string responseJson)
     {
@@ -60,6 +75,17 @@ internal static class LlmSnapshotHelper
     }
 
     /// <summary>
+    /// Saves a multi-turn snapshot (list of responses) to disk.
+    /// </summary>
+    internal static void SaveMultiSnapshot(string testName, List<LlmMessage> messages, List<string> responses)
+    {
+        var key = ComputeKey(testName, messages);
+        System.IO.Directory.CreateDirectory(SnapshotDir);
+        var path = System.IO.Path.Combine(SnapshotDir, $"{key}.multi.json");
+        System.IO.File.WriteAllText(path, JsonSerializer.Serialize(responses));
+    }
+
+    /// <summary>
     /// Computes a cache key from test name + message content + class structure hash.
     /// </summary>
     private static string ComputeKey(string testName, List<LlmMessage> messages)
@@ -67,7 +93,6 @@ internal static class LlmSnapshotHelper
         var sb = new StringBuilder();
         sb.Append(testName).Append('|');
 
-        // Message content
         foreach (var msg in messages)
         {
             sb.Append(msg.Role).Append(':').Append(msg.Text ?? "").Append('|');
@@ -76,7 +101,6 @@ internal static class LlmSnapshotHelper
                     sb.Append("img:").Append(img).Append('|');
         }
 
-        // Class structure fingerprint
         sb.Append("struct:").Append(ComputeStructureHash());
 
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()));
@@ -85,7 +109,6 @@ internal static class LlmSnapshotHelper
 
     /// <summary>
     /// Hashes the public property signatures of all tracked types.
-    /// Any structural change (add/remove/rename/retype property) changes the hash.
     /// </summary>
     private static string ComputeStructureHash()
     {
@@ -96,13 +119,11 @@ internal static class LlmSnapshotHelper
 
             if (type.IsInterface)
             {
-                // Hash method signatures
                 foreach (var method in type.GetMethods().OrderBy(m => m.Name))
                     sb.Append(method.Name).Append(':').Append(method.ReturnType.Name).Append(',');
             }
             else
             {
-                // Hash public properties
                 foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                     .OrderBy(p => p.Name))
                 {

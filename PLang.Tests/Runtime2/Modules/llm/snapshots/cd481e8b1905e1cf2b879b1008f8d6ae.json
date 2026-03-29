@@ -1,0 +1,1 @@
+{"id":"snapshot","object":"chat.completion","model":"gpt-4.1-mini","choices":[{"index":0,"message":{"role":"assistant","content":"Hello, Alice! How can I assist you today?"},"finish_reason":"stop"}],"usage":{"prompt_tokens":26,"completion_tokens":11,"total_tokens":37}}
