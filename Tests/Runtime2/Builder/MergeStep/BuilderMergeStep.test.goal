@@ -1,0 +1,3 @@
+Start
+/ Test that builder.mergeStep merges LLM-derived fields from one step onto another
+- throw "not implemented"

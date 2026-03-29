@@ -1,0 +1,3 @@
+Start
+/ Test that builder.getGoals parses a .goal file and returns Runtime2 Goal objects
+- throw "not implemented"

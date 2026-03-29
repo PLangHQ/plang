@@ -1,0 +1,3 @@
+Start
+/ Test that builder.validateActions returns error for unknown module.action pairs
+- throw "not implemented"

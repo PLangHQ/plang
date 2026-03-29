@@ -1,0 +1,3 @@
+Start
+/ Test that builder.getActions returns a list of all registered module actions
+- throw "not implemented"

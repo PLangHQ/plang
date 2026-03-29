@@ -1,0 +1,56 @@
+{
+  "branch": "runtime2-builder-module",
+  "sessions": [
+    {
+      "id": "td-v1-20260329",
+      "bot": "test-designer",
+      "timestamp_start": "2026-03-29T00:00:00Z",
+      "timestamp_end": "2026-03-29T00:30:00Z",
+      "intent": "Design test suite for Piece 8: Builder Module",
+      "before": {
+        "assumptions": "Architect plan at v1/plan.md defines GoalFile parser, 8 builder actions, Step.Merge, Goal.MergeFrom. No builder module code exists yet — tests define the contract.",
+        "risk": "GoalFile is a new parser (unusual for PLang which is LLM-based) — needs thorough edge case coverage. Actions depend on engine.Modules reflection which may be tricky to test."
+      },
+      "plan": "49 test stubs across 6 batches: GoalFile parser (12), Step.Merge/Goal.MergeFrom (7), getActions/getTypeInfo (7), getGoals/validateActions (9), app/save/merge/guard (8), PLang integration (6). Independent additions: tabs, blank lines, conditional error replacement, cacheable flag, empty folder, building guard.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/builder/GoalFileTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/MergeTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetActionsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetTypeInfoTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetGoalsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/ValidateActionsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/AppTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/SaveGoalsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/MergeStepTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/BuildingGuardTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "43 C# test stubs for builder module — GoalFile, merge, actions, validation, app, save"
+        },
+        {
+          "paths": [
+            "Tests/Runtime2/Builder/GetActions/BuilderGetActions.test.goal",
+            "Tests/Runtime2/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal",
+            "Tests/Runtime2/Builder/ParseGoal/BuilderParseGoal.test.goal",
+            "Tests/Runtime2/Builder/MergeStep/BuilderMergeStep.test.goal",
+            "Tests/Runtime2/Builder/ValidateValid/BuilderValidateValid.test.goal",
+            "Tests/Runtime2/Builder/ValidateInvalid/BuilderValidateInvalid.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "6 PLang integration test stubs for builder module"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "49 test stubs written. Ready for coder bot to implement builder module and make tests pass."
+      }
+    }
+  ]
+}
