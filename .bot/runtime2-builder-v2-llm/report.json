@@ -337,6 +337,39 @@
         "health": "PASS — 7/8 findings properly fixed, 1 cosmetic, 3 minor non-blocking gaps remain.",
         "notes": "Coverage improved to 87.6% line / 65.1% branch. RestoreFromCache still 0% (mock-level gap). Recommend security analyst next."
       }
+    },
+    {
+      "id": "llm-security-v1",
+      "bot": "security",
+      "timestamp_start": "2026-03-29T22:00:00Z",
+      "timestamp_end": "2026-03-29T22:30:00Z",
+      "intent": "Security audit of LLM module — tool call loop, image handling, regex, caching, conversation continuity",
+      "before": {
+        "assumptions": "LLM module is new code: query action, OpenAiProvider, GoalCall additions. Tool call loop is the critical vector. PLang threat model: .pr files are trusted, user is sovereign.",
+        "risk": "Medium — LLM modules inherently bridge trusted (local goals) and untrusted (external API responses) domains."
+      },
+      "plan": "Blue team: map 7 attack surfaces. Red team: exploit sketches for each. Rate against PLang threat model. Key question: can the LLM execute goals not in the declared tool list?",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/Runtime2/modules/llm/query.cs",
+            "PLang/Runtime2/modules/llm/LlmMessage.cs",
+            "PLang/Runtime2/modules/llm/ToolCall.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full security audit. Tool whitelist is correct. 2 medium resource-exhaustion findings, 3 low accepted-risk findings."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — 0 critical, 0 high, 2 medium, 3 low. Tool call whitelist correctly prevents unauthorized goal execution.",
+        "notes": "Medium findings: image ReadAllBytes no size limit (OOM), conversation continuity no length limit. Both are resource limits, not exploits. Recommend auditor next."
+      }
     }
   ]
 }
