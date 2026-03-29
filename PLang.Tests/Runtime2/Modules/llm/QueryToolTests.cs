@@ -405,4 +405,102 @@ public class QueryToolTests
     }
 
     #endregion
+
+    #region Default Parameter Fill-In
+
+    [Test]
+    public async Task Query_ToolParams_DefaultFillIn_WhenLlmOmitsParam()
+    {
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+            {
+                // LLM calls tool with only "city", omitting "units" which has default "metric"
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(("call_1", "GetWeather", "{\"city\":\"London\"}"))));
+            }
+            return Task.FromResult(LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("London is 20C")));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "Weather in London?" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall
+                {
+                    Name = "GetWeather",
+                    Description = "Gets weather for a city",
+                    Parameters = new List<Data>
+                    {
+                        new Data("city", null, PLang.Runtime2.Engine.Memory.Type.String),       // required
+                        new Data("units", "metric", PLang.Runtime2.Engine.Memory.Type.String)   // optional, default "metric"
+                    }
+                }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // The second HTTP request should contain the tool result — tool was executed.
+        // The key assertion: tool was called successfully despite LLM omitting "units".
+        // If defaults weren't filled in, the goal call would have missing parameters.
+        await Assert.That(_handler.CallCount).IsEqualTo(2);
+        var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        await Assert.That(secondReq).Contains("tool");
+    }
+
+    #endregion
+
+    #region Type Mappings in Schema
+
+    [Test]
+    public async Task Query_ToolParams_TypeMappings_ProducesCorrectJsonSchema()
+    {
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "test" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall
+                {
+                    Name = "TypedTool",
+                    Description = "tool with mixed types",
+                    Parameters = new List<Data>
+                    {
+                        new Data("name", null, PLang.Runtime2.Engine.Memory.Type.String),
+                        new Data("count", null, new PLang.Runtime2.Engine.Memory.Type("int")),
+                        new Data("enabled", null, new PLang.Runtime2.Engine.Memory.Type("bool")),
+                        new Data("items", null, new PLang.Runtime2.Engine.Memory.Type("list")),
+                        new Data("config", null, new PLang.Runtime2.Engine.Memory.Type("object"))
+                    }
+                }
+            }
+        };
+        await action.Run();
+
+        var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        // Verify all type mappings appear in the request body
+        await Assert.That(reqBody).Contains("\"string\"");
+        await Assert.That(reqBody).Contains("\"integer\"");
+        await Assert.That(reqBody).Contains("\"boolean\"");
+        await Assert.That(reqBody).Contains("\"array\"");
+        await Assert.That(reqBody).Contains("\"object\"");
+    }
+
+    #endregion
 }

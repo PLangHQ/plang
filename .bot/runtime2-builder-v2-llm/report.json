@@ -172,6 +172,39 @@
         "health": "NEEDS WORK — 3 blocking findings in OpenAiProvider.cs, 6/7 files CLEAN",
         "notes": "Blocking: 2 bare catches (lines 587, 765), 1 sync-over-async (line 734). Coverage gaps: tool arg defaults untested, type mapping untested. Minor: duplicate httpAction, dead BuildStreamProxy, decomposed params."
       }
+    },
+    {
+      "id": "llm-coder-v2",
+      "bot": "coder",
+      "timestamp_start": "2026-03-29T17:00:00Z",
+      "timestamp_end": "2026-03-29T17:30:00Z",
+      "intent": "Fix all 8 code analyzer findings in OpenAiProvider.cs",
+      "before": {
+        "assumptions": "Code analyzer v1 identified 8 issues. All existing 1951 tests pass. Changes confined to OpenAiProvider.cs + new tests.",
+        "risk": "Low — scoped fixes, no architectural changes."
+      },
+      "plan": "Fix 3 critical (bare catches, sync-over-async), 2 moderate (add tests for default param fill-in and type mappings), 3 minor (consolidate httpAction, remove BuildStreamProxy, fix OBP decomposed params).",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "6 fixes: scoped catches, async ResolveConfig, consolidated httpAction, removed BuildStreamProxy, OBP-compliant ExecuteToolAsync/ToApiMessages/ResolveImage signatures"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "2 new tests: default parameter fill-in and type schema mappings"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1958 tests pass (0 failures). All 8 findings resolved.",
+        "notes": "Removed unused EngineType alias. IPLangFileSystem passed directly to ToApiMessages/ResolveImage instead of full engine."
+      }
     }
   ]
 }

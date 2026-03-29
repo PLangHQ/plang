@@ -7,8 +7,8 @@ using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Goals.Goal;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Settings;
+using PLang.Interfaces;
 using PLang.Runtime2.modules.http;
-using EngineType = PLang.Runtime2.Engine.@this;
 using PlangHttpMethod = PLang.Runtime2.modules.http.HttpMethod;
 
 namespace PLang.Runtime2.modules.llm.providers;
@@ -35,11 +35,11 @@ public sealed class OpenAiProvider : ILlmProvider
 
         // --- Config ---
         var settings = engine.System.SettingsStore;
-        var endpoint = ResolveConfig(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
+        var endpoint = await ResolveConfigAsync(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
             "https://api.openai.com/v1/chat/completions");
-        var apiKey = ResolveConfig(settings, "llm.apiKey", "OPENAI_API_KEY", null);
+        var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);
         var model = action.Model
-            ?? ResolveConfig(settings, "llm.model", null, "gpt-4.1-mini");
+            ?? await ResolveConfigAsync(settings, "llm.model", null, "gpt-4.1-mini");
 
         // --- Validate ---
         if (action.Messages.Count == 0)
@@ -119,7 +119,7 @@ public sealed class OpenAiProvider : ILlmProvider
             var body = new Dictionary<string, object?>
             {
                 ["model"] = model,
-                ["messages"] = ToApiMessages(messages, engine),
+                ["messages"] = ToApiMessages(messages, engine.FileSystem),
                 ["temperature"] = action.Temperature,
                 ["max_tokens"] = action.MaxTokens
             };
@@ -144,33 +144,17 @@ public sealed class OpenAiProvider : ILlmProvider
                 Body = body,
                 Headers = headers,
                 Unsigned = true,
-                TimeoutInSec = 120
+                TimeoutInSec = 120,
+                OnStream = action.OnStream != null ? action.OnStream : null,
+                StreamAs = action.OnStream != null ? StreamFormat.SSE : default
             };
 
-            Data httpResult;
+            Data httpResult = await engine.RunAction(httpAction, context);
             if (action.OnStream != null)
             {
-                // Streaming: use SSE streaming via HTTP module
-                httpAction = new request
-                {
-                    Context = context,
-                    Url = endpoint,
-                    Method = PlangHttpMethod.POST,
-                    Body = body,
-                    Headers = headers,
-                    Unsigned = true,
-                    TimeoutInSec = 120,
-                    OnStream = BuildStreamProxy(action, engine, context),
-                    StreamAs = StreamFormat.SSE
-                };
-                httpResult = await engine.RunAction(httpAction, context);
                 // TODO: streaming tool call accumulation needs work
                 // For now, streaming returns the accumulated result via the callback
                 break;
-            }
-            else
-            {
-                httpResult = await engine.RunAction(httpAction, context);
             }
 
             if (!httpResult.Success)
@@ -222,7 +206,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 List<string> results;
                 if (allParallel && toolCalls.Count > 1)
                 {
-                    var tasks = toolCalls.Select(tc => ExecuteToolAsync(engine, action, tc, context));
+                    var tasks = toolCalls.Select(tc => ExecuteToolAsync(action, tc));
                     results = (await Task.WhenAll(tasks)).ToList();
                 }
                 else
@@ -230,7 +214,7 @@ public sealed class OpenAiProvider : ILlmProvider
                     results = new List<string>();
                     foreach (var tc in toolCalls)
                     {
-                        results.Add(await ExecuteToolAsync(engine, action, tc, context));
+                        results.Add(await ExecuteToolAsync(action, tc));
                     }
                 }
 
@@ -363,9 +347,11 @@ public sealed class OpenAiProvider : ILlmProvider
 
     // --- Tool execution ---
 
-    private static async Task<string> ExecuteToolAsync(
-        EngineType engine, query action, ToolCall toolCall, PLangContext context)
+    private static async Task<string> ExecuteToolAsync(query action, ToolCall toolCall)
     {
+        var engine = action.Context.Engine;
+        var context = action.Context;
+
         // OnToolCall — starting
         if (action.OnToolCall != null)
         {
@@ -476,7 +462,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
     // --- Message formatting ---
 
-    private static List<object> ToApiMessages(List<LlmMessage> messages, EngineType engine)
+    private static List<object> ToApiMessages(List<LlmMessage> messages, IPLangFileSystem fileSystem)
     {
         var result = new List<object>();
         foreach (var msg in messages)
@@ -523,7 +509,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
                 foreach (var image in msg.Images)
                 {
-                    var imageContent = ResolveImage(image, engine);
+                    var imageContent = ResolveImage(image, fileSystem);
                     contentParts.Add(imageContent);
                 }
 
@@ -545,7 +531,7 @@ public sealed class OpenAiProvider : ILlmProvider
         return result;
     }
 
-    private static object ResolveImage(string image, EngineType engine)
+    private static object ResolveImage(string image, IPLangFileSystem fileSystem)
     {
         if (image.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || image.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -560,12 +546,11 @@ public sealed class OpenAiProvider : ILlmProvider
         // Try file path
         try
         {
-            var fs = engine.FileSystem;
-            if (fs.File.Exists(image))
+            if (fileSystem.File.Exists(image))
             {
-                var bytes = fs.File.ReadAllBytes(image);
+                var bytes = fileSystem.File.ReadAllBytes(image);
                 var base64 = Convert.ToBase64String(bytes);
-                var extension = fs.Path.GetExtension(image).TrimStart('.').ToLowerInvariant();
+                var extension = fileSystem.Path.GetExtension(image).TrimStart('.').ToLowerInvariant();
                 var mimeType = extension switch
                 {
                     "jpg" or "jpeg" => "image/jpeg",
@@ -584,7 +569,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 };
             }
         }
-        catch
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             // Fall through to base64 assumption
         }
@@ -727,11 +712,11 @@ public sealed class OpenAiProvider : ILlmProvider
 
     // --- Config resolution ---
 
-    private static string ResolveConfig(ISettingsStore settings, string settingKey,
+    private static async Task<string> ResolveConfigAsync(ISettingsStore settings, string settingKey,
         string? envVar, string? defaultValue)
     {
         // Try settings store
-        var result = settings.Get("LlmConfig", settingKey).GetAwaiter().GetResult();
+        var result = await settings.Get("LlmConfig", settingKey);
         if (result.Success && result.Value != null)
         {
             var val = result.Value is Data d ? d.Value?.ToString() : result.Value.ToString();
@@ -763,7 +748,7 @@ public sealed class OpenAiProvider : ILlmProvider
             using var doc = JsonDocument.Parse(json);
             return doc.RootElement.Clone();
         }
-        catch
+        catch (JsonException)
         {
             return null;
         }
@@ -858,17 +843,4 @@ public sealed class OpenAiProvider : ILlmProvider
         }).ToList();
     }
 
-    // --- Streaming proxy ---
-
-    /// <summary>
-    /// Builds a GoalCall that acts as a proxy between HTTP SSE streaming and the user's OnStream callback.
-    /// For now, streaming support is basic — full implementation needs the SSE chunk accumulation.
-    /// </summary>
-    private static GoalCall? BuildStreamProxy(query action, EngineType engine, PLangContext context)
-    {
-        // The HTTP module's streaming fires the OnStream GoalCall with each chunk.
-        // We need to intercept, accumulate, and forward to the user's OnStream callback.
-        // For v1, we pass through directly — the user gets raw SSE data.
-        return action.OnStream;
-    }
 }
