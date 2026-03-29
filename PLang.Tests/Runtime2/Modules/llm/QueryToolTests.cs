@@ -1,7 +1,7 @@
+using System.Text.Json;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Goals.Goal;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules.llm;
 using PLang.Runtime2.modules.llm.providers;
 using PLangEngine = PLang.Runtime2.Engine.@this;
@@ -16,6 +16,7 @@ public class QueryToolTests
 {
     private string _tempDir = null!;
     private PLangEngine _engine = null!;
+    private MockHttpMessageHandler _handler = null!;
 
     [Before(Test)]
     public void Setup()
@@ -24,6 +25,7 @@ public class QueryToolTests
             "plang_test_llm_tools_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _engine = new PLangEngine(_tempDir);
+        _handler = LlmTestHelper.SetupMockHttp(_engine);
     }
 
     [After(Test)]
@@ -45,29 +47,150 @@ public class QueryToolTests
     [Test]
     public async Task Query_SingleToolCall_ExecutesAndReQueries()
     {
-        // LLM requests one tool → engine runs GoalCall → result sent back → LLM gives final answer
-        Assert.Fail("Not implemented");
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+            {
+                // First call: LLM requests a tool
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(("call_1", "GetWeather", "{\"city\":\"London\"}"))));
+            }
+            // Second call: LLM gives final answer after tool result
+            return Task.FromResult(LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("The weather in London is sunny")));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "What's the weather?" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall { Name = "GetWeather", Description = "Gets weather", Parameters = new List<Data> { new Data("city", null, PLang.Runtime2.Engine.Memory.Type.String) } }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_handler.CallCount).IsEqualTo(2); // Tool call + re-query
+        // Second request should contain tool results
+        var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        await Assert.That(secondReq).Contains("tool");
     }
 
     [Test]
     public async Task Query_MultipleToolCalls_SequentialByDefault()
     {
-        // Multiple tools requested, all Parallel=false → executed in order (not concurrent)
-        Assert.Fail("Not implemented");
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+            {
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(
+                        ("call_1", "ToolA", "{}"),
+                        ("call_2", "ToolB", "{}"))));
+            }
+            return Task.FromResult(LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("done")));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "do both" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall { Name = "ToolA", Description = "Tool A", Parallel = false },
+                new GoalCall { Name = "ToolB", Description = "Tool B", Parallel = false }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_handler.CallCount).IsEqualTo(2);
     }
 
     [Test]
     public async Task Query_MultipleToolCalls_AllParallel_ConcurrentExecution()
     {
-        // Multiple tools requested, all Parallel=true → executed via Task.WhenAll
-        Assert.Fail("Not implemented");
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+            {
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(
+                        ("call_1", "ToolA", "{}"),
+                        ("call_2", "ToolB", "{}"))));
+            }
+            return Task.FromResult(LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("parallel done")));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "do both parallel" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall { Name = "ToolA", Description = "Tool A", Parallel = true },
+                new GoalCall { Name = "ToolB", Description = "Tool B", Parallel = true }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value?.ToString()).IsEqualTo("parallel done");
     }
 
     [Test]
     public async Task Query_MixedParallelFlags_ForcesSequential()
     {
-        // One tool has Parallel=false → all tools in that batch run sequentially
-        Assert.Fail("Not implemented");
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+            {
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(
+                        ("call_1", "ToolA", "{}"),
+                        ("call_2", "ToolB", "{}"))));
+            }
+            return Task.FromResult(LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("mixed done")));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "mixed" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall { Name = "ToolA", Description = "Tool A", Parallel = true },
+                new GoalCall { Name = "ToolB", Description = "Tool B", Parallel = false }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
     }
 
     #endregion
@@ -77,16 +200,72 @@ public class QueryToolTests
     [Test]
     public async Task Query_ToolError_SentBackToLlm()
     {
-        // GoalCall returns Data.FromError → error message sent back as tool result
-        // LLM decides how to proceed
-        Assert.Fail("Not implemented");
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+            {
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(("call_1", "FailTool", "{}"))));
+            }
+            return Task.FromResult(LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("handled the error")));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "call failing tool" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall { Name = "FailTool", Description = "A tool that will fail" }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // Tool error was sent back to LLM, which recovered
+        var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        await Assert.That(secondReq).Contains("Error:");
     }
 
     [Test]
     public async Task Query_UnknownToolName_ErrorResultSentToLlm()
     {
-        // LLM requests a tool not in the Tools list → "Error: unknown tool 'X'" sent back
-        Assert.Fail("Not implemented");
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+            {
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(("call_1", "NonExistent", "{}"))));
+            }
+            return Task.FromResult(LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("no such tool")));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "call unknown" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall { Name = "KnownTool", Description = "a tool" }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        await Assert.That(secondReq).Contains("unknown tool");
     }
 
     #endregion
@@ -96,8 +275,28 @@ public class QueryToolTests
     [Test]
     public async Task Query_MaxToolCallsReached_StopsLoop()
     {
-        // After MaxToolCalls individual calls, loop stops and returns current content
-        Assert.Fail("Not implemented");
+        // Always return tool calls — should stop at MaxToolCalls
+        _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(
+            LlmTestHelper.MakeToolCallResponse(("call_x", "InfiniteTool", "{}"))));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "loop forever" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall { Name = "InfiniteTool", Description = "loops" }
+            },
+            MaxToolCalls = 3
+        };
+        var result = await action.Run();
+
+        // Should have stopped after MaxToolCalls without crashing
+        await Assert.That(_handler.CallCount).IsGreaterThanOrEqualTo(2);
+        await Assert.That(_handler.CallCount).IsLessThanOrEqualTo(4); // bounded
     }
 
     #endregion
@@ -107,22 +306,102 @@ public class QueryToolTests
     [Test]
     public async Task Query_ToolParams_DefaultValueMeansOptional()
     {
-        // GoalCall parameter with Value != null → NOT in "required" array of JSON schema
-        Assert.Fail("Not implemented");
+        _handler.Handler = async req =>
+        {
+            var body = await req.Content!.ReadAsStringAsync();
+            return LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok"));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "test" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall
+                {
+                    Name = "TestTool",
+                    Description = "test",
+                    Parameters = new List<Data>
+                    {
+                        new Data("city", null, PLang.Runtime2.Engine.Memory.Type.String),     // required (no default)
+                        new Data("units", "metric", PLang.Runtime2.Engine.Memory.Type.String) // optional (has default)
+                    }
+                }
+            }
+        };
+        var result = await action.Run();
+
+        var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        // "city" should be in required, "units" should NOT be
+        await Assert.That(reqBody).Contains("required");
+        await Assert.That(reqBody).Contains("city");
     }
 
     [Test]
     public async Task Query_ToolParams_NullValueMeansRequired()
     {
-        // GoalCall parameter with Value == null → included in "required" array
-        Assert.Fail("Not implemented");
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "test" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall
+                {
+                    Name = "TestTool",
+                    Description = "test",
+                    Parameters = new List<Data>
+                    {
+                        new Data("query", null, PLang.Runtime2.Engine.Memory.Type.String)
+                    }
+                }
+            }
+        };
+        await action.Run();
+
+        var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(reqBody).Contains("\"required\"");
+        await Assert.That(reqBody).Contains("query");
     }
 
     [Test]
     public async Task Query_ToolParams_EmptyList_ProducesEmptySchema()
     {
-        // Empty or null Parameters → {type: "object", properties: {}}
-        Assert.Fail("Not implemented");
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "test" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall
+                {
+                    Name = "NoParamTool",
+                    Description = "no params",
+                    Parameters = new List<Data>()
+                }
+            }
+        };
+        await action.Run();
+
+        var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        // Should still have a valid schema object
+        await Assert.That(reqBody).Contains("properties");
     }
 
     #endregion

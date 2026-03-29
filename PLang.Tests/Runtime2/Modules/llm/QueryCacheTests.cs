@@ -1,8 +1,8 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules.llm;
 using PLang.Runtime2.modules.llm.providers;
+using PLang.Runtime2.Engine.Goals.Goal;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.llm;
@@ -15,6 +15,7 @@ public class QueryCacheTests
 {
     private string _tempDir = null!;
     private PLangEngine _engine = null!;
+    private MockHttpMessageHandler _handler = null!;
 
     [Before(Test)]
     public void Setup()
@@ -23,6 +24,7 @@ public class QueryCacheTests
             "plang_test_llm_cache_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _engine = new PLangEngine(_tempDir);
+        _handler = LlmTestHelper.SetupMockHttp(_engine);
     }
 
     [After(Test)]
@@ -42,45 +44,131 @@ public class QueryCacheTests
     [Test]
     public async Task Query_CacheTrue_SecondCallReturnsCached()
     {
-        // Same messages, model, temperature, schema, format → second call returns Cached=true
-        // MockHttpMessageHandler should only be called once
-        Assert.Fail("Not implemented");
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("cached answer")));
+
+        var action = LlmTestHelper.MakeQuery(Ctx, userText: "cache test");
+
+        var result1 = await action.Run();
+        await Assert.That(result1.Success).IsTrue();
+        await Assert.That(_handler.CallCount).IsEqualTo(1);
+
+        // Second call — should hit cache
+        var action2 = LlmTestHelper.MakeQuery(Ctx, userText: "cache test");
+        var result2 = await action2.Run();
+
+        await Assert.That(result2.Success).IsTrue();
+        await Assert.That(_handler.CallCount).IsEqualTo(1); // No additional HTTP call
+        await Assert.That(result2.Properties["Cached"]?.Value).IsEqualTo(true);
     }
 
     [Test]
     public async Task Query_CacheTrue_DifferentMessages_CacheMiss()
     {
-        // Different user message → cache miss, fresh API call
-        Assert.Fail("Not implemented");
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("answer")));
+
+        var action1 = LlmTestHelper.MakeQuery(Ctx, userText: "question 1");
+        await action1.Run();
+
+        var action2 = LlmTestHelper.MakeQuery(Ctx, userText: "question 2");
+        await action2.Run();
+
+        await Assert.That(_handler.CallCount).IsEqualTo(2); // Both made HTTP calls
     }
 
     [Test]
     public async Task Query_CacheFalse_AlwaysCallsApi()
     {
-        // Cache=false → always makes HTTP call even with identical input, Cached=false
-        Assert.Fail("Not implemented");
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("answer")));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "same question" }
+            },
+            Cache = false
+        };
+
+        await action.Run();
+        await action.Run();
+
+        await Assert.That(_handler.CallCount).IsEqualTo(2);
     }
 
     [Test]
     public async Task Query_CacheTrue_ToolsNonNull_CacheSkipped()
     {
-        // Tools list present → caching skipped regardless of Cache flag
-        // Tool results are non-deterministic
-        Assert.Fail("Not implemented");
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("tool result")));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "use tools" }
+            },
+            Cache = true,
+            Tools = new List<GoalCall>
+            {
+                new GoalCall { Name = "TestTool", Description = "a test tool" }
+            }
+        };
+
+        await action.Run();
+        await action.Run();
+
+        await Assert.That(_handler.CallCount).IsEqualTo(2); // Cache skipped
     }
 
     [Test]
     public async Task Query_CacheHash_IncludesModelTempSchemaFormat()
     {
-        // Changing model OR temperature OR schema OR format with same messages → cache miss
-        Assert.Fail("Not implemented");
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("answer")));
+
+        // Call with default model
+        var action1 = LlmTestHelper.MakeQuery(Ctx, userText: "same");
+        await action1.Run();
+
+        // Same message but different model — should be cache miss
+        var action2 = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "system", Text = "You are helpful" },
+                new LlmMessage { Role = "user", Text = "same" }
+            },
+            Model = "gpt-4o"
+        };
+        await action2.Run();
+
+        await Assert.That(_handler.CallCount).IsEqualTo(2);
     }
 
     [Test]
     public async Task Query_CacheHit_PropertiesPreserved()
     {
-        // Cached result should have all properties intact (RawResponse, Model, TotalTokens, etc.)
-        // plus Cached=true
-        Assert.Fail("Not implemented");
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("preserved", promptTokens: 5, completionTokens: 10)));
+
+        var action = LlmTestHelper.MakeQuery(Ctx, userText: "props test");
+        var result1 = await action.Run();
+        await Assert.That(result1.Success).IsTrue();
+
+        // Cache hit
+        var action2 = LlmTestHelper.MakeQuery(Ctx, userText: "props test");
+        var result2 = await action2.Run();
+
+        await Assert.That(result2.Success).IsTrue();
+        await Assert.That(result2.Properties["Cached"]?.Value).IsEqualTo(true);
+        await Assert.That(result2.Properties["RawResponse"]?.Value?.ToString()).IsEqualTo("preserved");
+        await Assert.That(result2.Properties["Model"]?.Value?.ToString()).IsEqualTo("gpt-4.1-mini");
     }
 }

@@ -1,8 +1,11 @@
+using System.Reflection;
 using System.Text.Json;
+using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Goals.Goal;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules.llm;
+using PLang.Runtime2.modules.llm.providers;
 
 namespace PLang.Tests.Runtime2.Modules.llm;
 
@@ -17,16 +20,30 @@ public class LlmTypeTests
     [Test]
     public async Task LlmMessage_DefaultProperties_AreNull()
     {
-        // A new LlmMessage should have null for optional properties
-        Assert.Fail("Not implemented");
+        var msg = new LlmMessage();
+        await Assert.That(msg.Text).IsNull();
+        await Assert.That(msg.Images).IsNull();
+        await Assert.That(msg.ToolCallId).IsNull();
+        await Assert.That(msg.ToolCalls).IsNull();
+        await Assert.That(msg.Role).IsEqualTo("");
     }
 
     [Test]
     public async Task LlmMessage_ToolCallsInternalOnly_NotExposedToBuilder()
     {
         // ToolCalls and ToolCallId should NOT have [Store] or [LlmBuilder] attributes
-        // They are internal fields used by the provider during tool conversations
-        Assert.Fail("Not implemented");
+        var toolCallIdProp = typeof(LlmMessage).GetProperty(nameof(LlmMessage.ToolCallId))!;
+        var toolCallsProp = typeof(LlmMessage).GetProperty(nameof(LlmMessage.ToolCalls))!;
+
+        await Assert.That(toolCallIdProp.GetCustomAttribute<StoreAttribute>()).IsNull();
+        await Assert.That(toolCallIdProp.GetCustomAttribute<LlmBuilderAttribute>()).IsNull();
+        await Assert.That(toolCallsProp.GetCustomAttribute<StoreAttribute>()).IsNull();
+        await Assert.That(toolCallsProp.GetCustomAttribute<LlmBuilderAttribute>()).IsNull();
+
+        // Role, Text, Images SHOULD have them
+        var roleProp = typeof(LlmMessage).GetProperty(nameof(LlmMessage.Role))!;
+        await Assert.That(roleProp.GetCustomAttribute<StoreAttribute>()).IsNotNull();
+        await Assert.That(roleProp.GetCustomAttribute<LlmBuilderAttribute>()).IsNotNull();
     }
 
     #endregion
@@ -36,8 +53,10 @@ public class LlmTypeTests
     [Test]
     public async Task ToolCall_DefaultProperties_AreEmptyStrings()
     {
-        // Id, Name, Arguments should default to "" (not null)
-        Assert.Fail("Not implemented");
+        var tc = new ToolCall();
+        await Assert.That(tc.Id).IsEqualTo("");
+        await Assert.That(tc.Name).IsEqualTo("");
+        await Assert.That(tc.Arguments).IsEqualTo("");
     }
 
     #endregion
@@ -47,31 +66,49 @@ public class LlmTypeTests
     [Test]
     public async Task GoalCall_Description_SerializesViaJson()
     {
-        // Description property should roundtrip through System.Text.Json serialization
-        // because it has [Store] attribute
-        Assert.Fail("Not implemented");
+        var gc = new GoalCall { Name = "Test", Description = "Does testing things" };
+        var json = JsonSerializer.Serialize(gc);
+        var deserialized = JsonSerializer.Deserialize<GoalCall>(json)!;
+        await Assert.That(deserialized.Description).IsEqualTo("Does testing things");
     }
 
     [Test]
     public async Task GoalCall_Parallel_DefaultsFalse()
     {
-        // New GoalCall should have Parallel = false by default
-        Assert.Fail("Not implemented");
+        var gc = new GoalCall();
+        await Assert.That(gc.Parallel).IsFalse();
     }
 
     [Test]
     public async Task GoalCall_Parallel_SerializesViaJson()
     {
-        // Parallel=true should roundtrip through System.Text.Json serialization
-        Assert.Fail("Not implemented");
+        var gc = new GoalCall { Name = "Test", Parallel = true };
+        var json = JsonSerializer.Serialize(gc);
+        var deserialized = JsonSerializer.Deserialize<GoalCall>(json)!;
+        await Assert.That(deserialized.Parallel).IsTrue();
     }
 
     [Test]
     public async Task GoalCall_ExistingProperties_UnchangedAfterNewFields()
     {
-        // Adding Description and Parallel must not break Name, Parameters, PrPath
-        // Serialize a GoalCall with all fields set, deserialize, verify all match
-        Assert.Fail("Not implemented");
+        var gc = new GoalCall
+        {
+            Name = "MyGoal",
+            Description = "description here",
+            Parallel = true,
+            Parameters = new List<Data> { new Data("param1", "value1") },
+            PrPath = "/test/.build/mygoal.pr"
+        };
+
+        var json = JsonSerializer.Serialize(gc);
+        var deserialized = JsonSerializer.Deserialize<GoalCall>(json)!;
+
+        await Assert.That(deserialized.Name).IsEqualTo("MyGoal");
+        await Assert.That(deserialized.Description).IsEqualTo("description here");
+        await Assert.That(deserialized.Parallel).IsTrue();
+        await Assert.That(deserialized.PrPath).IsEqualTo("/test/.build/mygoal.pr");
+        await Assert.That(deserialized.Parameters).IsNotNull();
+        await Assert.That(deserialized.Parameters!.Count).IsEqualTo(1);
     }
 
     #endregion
@@ -81,8 +118,7 @@ public class LlmTypeTests
     [Test]
     public async Task ILlmProvider_InheritsFromIProvider()
     {
-        // ILlmProvider should extend IProvider (has Name, IsDefault)
-        Assert.Fail("Not implemented");
+        await Assert.That(typeof(IProvider).IsAssignableFrom(typeof(ILlmProvider))).IsTrue();
     }
 
     #endregion

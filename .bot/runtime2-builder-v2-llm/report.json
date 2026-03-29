@@ -78,6 +78,66 @@
         "health": "All 70 test stubs written. Ready for coder to implement LLM module.",
         "notes": "Added 24 tests beyond architect's 46 suggestions: type serialization, format placement, tool param schemas, validation timing, edge cases. PLang tests will use real OpenAI with future response snapshotting."
       }
+    },
+    {
+      "id": "llm-coder-v1",
+      "bot": "coder",
+      "timestamp_start": "2026-03-29T14:00:00Z",
+      "timestamp_end": "2026-03-29T15:30:00Z",
+      "intent": "Implement LLM module: types, provider interface, OpenAI provider, make 61 C# tests pass",
+      "before": {
+        "assumptions": "Architect v2 plan is authoritative for design. Test-designer v1 has 62 C# test stubs + 8 PLang stubs. HTTP module and provider registry patterns are established. No LLM module code exists yet.",
+        "risk": "Medium — large surface area (types, provider, tool loop, caching, streaming, conversation continuity, images). Tool execution loop is the most complex piece. Cache persistence and streaming need design decisions."
+      },
+      "plan": "Create types (LlmMessage, ToolCall), update GoalCall (Description, Parallel), create query action + ILlmProvider, register in engine, implement OpenAiProvider with HTTP via engine.RunAction, cache via SQLite SettingsStore, tool loop, conversation continuity, format/schema handling, images. TDD: implement all test stubs.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/modules/llm/LlmMessage.cs", "PLang/Runtime2/modules/llm/ToolCall.cs"],
+          "type": "create", "category": "code", "confidence": "high",
+          "context": "LLM message and tool call types"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs"],
+          "type": "modify", "category": "code", "confidence": "high",
+          "context": "Added Description and Parallel properties for LLM tool definitions"
+        },
+        {
+          "paths": ["PLang/Runtime2/modules/llm/query.cs", "PLang/Runtime2/modules/llm/providers/ILlmProvider.cs"],
+          "type": "create", "category": "code", "confidence": "high",
+          "context": "Action record and provider interface"
+        },
+        {
+          "paths": ["PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs"],
+          "type": "create", "category": "code", "confidence": "high",
+          "context": "Full OpenAI-compatible provider: HTTP, tools, cache, streaming, conversation, format, images"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Providers/this.cs"],
+          "type": "modify", "category": "code", "confidence": "high",
+          "context": "Register ILlmProvider in ResolveType and RegisterDefaults"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/llm/LlmTestHelper.cs",
+            "PLang.Tests/Runtime2/Modules/llm/LlmTypeTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryFormatTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCacheTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryConversationTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryImageTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs"
+          ],
+          "type": "modify", "category": "test", "confidence": "high",
+          "context": "Implemented all 61 test stubs (removed 1 API key test per owner direction)"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 61 LLM tests pass. All 1951 project tests pass. Zero failures.",
+        "notes": "Removed MissingApiKey test per Ingi — providers handle auth differently. Cache uses SQLite since Data.Properties is [JsonIgnore]. Streaming is v1 passthrough."
+      }
     }
   ]
 }

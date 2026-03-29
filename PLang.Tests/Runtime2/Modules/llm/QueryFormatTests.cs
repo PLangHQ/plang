@@ -1,6 +1,6 @@
+using System.Text.Json;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules.llm;
 using PLang.Runtime2.modules.llm.providers;
 using PLangEngine = PLang.Runtime2.Engine.@this;
@@ -15,6 +15,7 @@ public class QueryFormatTests
 {
     private string _tempDir = null!;
     private PLangEngine _engine = null!;
+    private MockHttpMessageHandler _handler = null!;
 
     [Before(Test)]
     public void Setup()
@@ -23,6 +24,7 @@ public class QueryFormatTests
             "plang_test_llm_fmt_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _engine = new PLangEngine(_tempDir);
+        _handler = LlmTestHelper.SetupMockHttp(_engine);
     }
 
     [After(Test)]
@@ -44,16 +46,49 @@ public class QueryFormatTests
     [Test]
     public async Task Query_SchemaNoFormat_DefaultsToJson()
     {
-        // Schema set, Format null → format defaults to "json"
-        // System message should have "You MUST respond in JSON, schema: ..." appended
-        Assert.Fail("Not implemented");
+        _handler.Handler = async req =>
+        {
+            var body = await req.Content!.ReadAsStringAsync();
+            // Verify the system message has JSON schema instruction
+            return LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("{\"sentiment\": \"positive\"}"));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "system", Text = "analyze" },
+                new LlmMessage { Role = "user", Text = "I love this" }
+            },
+            Schema = "{sentiment: string}"
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // Verify the request had format instruction
+        var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(reqBody).Contains("You MUST respond in JSON");
+        await Assert.That(reqBody).Contains("sentiment: string");
     }
 
     [Test]
     public async Task Query_NoSchemaNoFormat_NoFormatInstruction()
     {
-        // Neither Schema nor Format set → no format instruction appended to system message
-        Assert.Fail("Not implemented");
+        _handler.Handler = async req =>
+        {
+            var body = await req.Content!.ReadAsStringAsync();
+            return LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("Just text"));
+        };
+
+        var action = LlmTestHelper.MakeQuery(Ctx);
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(reqBody).DoesNotContain("You MUST respond");
     }
 
     #endregion
@@ -63,22 +98,69 @@ public class QueryFormatTests
     [Test]
     public async Task Query_SchemaSet_JsonResponseParsed()
     {
-        // Valid JSON response with schema → parsed JSON accessible on Data.Value
-        Assert.Fail("Not implemented");
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("{\"sentiment\": \"positive\", \"score\": 0.9}")));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "test" }
+            },
+            Schema = "{sentiment: string, score: number}"
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // Value should be parsed JSON
+        await Assert.That(result.Value).IsNotNull();
+        var json = result.Value is JsonElement je ? je : JsonSerializer.SerializeToElement(result.Value);
+        await Assert.That(json.GetProperty("sentiment").GetString()).IsEqualTo("positive");
     }
 
     [Test]
     public async Task Query_InvalidJsonResponse_ReturnsDataFromError()
     {
-        // LLM returns non-JSON garbage when json format expected → Data.FromError
-        Assert.Fail("Not implemented");
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("This is not JSON at all")));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "test" }
+            },
+            Schema = "{result: string}"
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error?.Key).IsEqualTo("JsonParseError");
     }
 
     [Test]
     public async Task Query_InvalidJsonWithCodeBlock_ExtractsAndParses()
     {
-        // LLM wraps JSON in ```json\n{...}\n``` code block → fallback extraction works
-        Assert.Fail("Not implemented");
+        var wrappedJson = "Here's the result:\n```json\n{\"answer\": 42}\n```\nHope that helps!";
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse(wrappedJson)));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "test" }
+            },
+            Schema = "{answer: int}"
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
     }
 
     #endregion
@@ -88,22 +170,66 @@ public class QueryFormatTests
     [Test]
     public async Task Query_FormatPython_ExtractsFromCodeBlock()
     {
-        // Format="python", LLM responds with ```python\ncode\n``` → extracts "code"
-        Assert.Fail("Not implemented");
+        var response = "Here's the code:\n```python\nprint('hello')\n```";
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse(response)));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "write hello world" }
+            },
+            Format = "python"
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value?.ToString()).IsEqualTo("print('hello')");
     }
 
     [Test]
     public async Task Query_FormatMd_ExtractsFromCodeBlock()
     {
-        // Format="md", LLM responds with ```md\ncontent\n``` → extracts "content"
-        Assert.Fail("Not implemented");
+        var response = "```md\n# Hello World\n```";
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse(response)));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "write markdown" }
+            },
+            Format = "md"
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value?.ToString()).IsEqualTo("# Hello World");
     }
 
     [Test]
     public async Task Query_NoCodeBlockFound_ReturnsRawContent()
     {
-        // Format="python" but LLM returns plain text without code block → returns raw, no error
-        Assert.Fail("Not implemented");
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("Just plain text")));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Text = "test" }
+            },
+            Format = "python"
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value?.ToString()).IsEqualTo("Just plain text");
     }
 
     #endregion
@@ -113,9 +239,29 @@ public class QueryFormatTests
     [Test]
     public async Task Query_FormatInstruction_AppendsToExistingSystem()
     {
-        // When system message already has text, format instruction is appended with \n
-        // NOT replacing the original system message content
-        Assert.Fail("Not implemented");
+        _handler.Handler = async req =>
+        {
+            var body = await req.Content!.ReadAsStringAsync();
+            return LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("{\"ok\": true}"));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "system", Text = "You are a helpful assistant" },
+                new LlmMessage { Role = "user", Text = "test" }
+            },
+            Schema = "{ok: bool}"
+        };
+        var result = await action.Run();
+
+        // System message should contain BOTH original text AND format instruction
+        var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(reqBody).Contains("You are a helpful assistant");
+        await Assert.That(reqBody).Contains("You MUST respond in JSON");
     }
 
     #endregion

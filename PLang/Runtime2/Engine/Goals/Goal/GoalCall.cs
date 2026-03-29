@@ -11,6 +11,14 @@ public sealed class GoalCall
     /// <summary>Goal name to call (e.g., "ProcessData", "/Setup/Init").</summary>
     [Store, LlmBuilder]
     public string Name { get; init; } = "";
+    /// <summary>Description of what this goal does — used when GoalCall is a tool definition for an LLM.</summary>
+    [Store, LlmBuilder]
+    public string? Description { get; init; }
+
+    /// <summary>Whether this tool is safe for concurrent execution. Default false.</summary>
+    [Store, LlmBuilder]
+    public bool Parallel { get; init; }
+
     /// <summary>Parameters to pass to the goal, each as a named Data value.</summary>
     [Store, LlmBuilder]
     public List<Data>? Parameters { get; init; }
