@@ -304,6 +304,39 @@
         "health": "All 1962 tests pass (0 failures). All 8 tester findings resolved.",
         "notes": "4 new tests: mixed JSON type args, parallel tool results, jpg mime type, base64 passthrough."
       }
+    },
+    {
+      "id": "llm-tester-v3",
+      "bot": "tester",
+      "timestamp_start": "2026-03-29T20:30:00Z",
+      "timestamp_end": "2026-03-29T20:50:00Z",
+      "intent": "Re-verify coder v3 fixes for all 8 tester v2 findings",
+      "before": {
+        "assumptions": "Coder v3 claims all 8 findings resolved. 1962 tests pass.",
+        "risk": "Low — re-verification only."
+      },
+      "plan": "Run full test suite, run coverage, verify each of 8 findings by reading test code, write test-report.json with verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryImageTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCacheTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified each of 8 findings individually. 7 FIXED, 1 COSMETIC (OnToolCall — documented limitation)."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — 7/8 findings properly fixed, 1 cosmetic, 3 minor non-blocking gaps remain.",
+        "notes": "Coverage improved to 87.6% line / 65.1% branch. RestoreFromCache still 0% (mock-level gap). Recommend security analyst next."
+      }
     }
   ]
 }
