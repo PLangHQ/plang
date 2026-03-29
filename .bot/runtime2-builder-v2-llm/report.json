@@ -370,6 +370,38 @@
         "health": "PASS — 0 critical, 0 high, 2 medium, 3 low. Tool call whitelist correctly prevents unauthorized goal execution.",
         "notes": "Medium findings: image ReadAllBytes no size limit (OOM), conversation continuity no length limit. Both are resource limits, not exploits. Recommend auditor next."
       }
+    },
+    {
+      "id": "llm-auditor-v1",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-29T23:00:00Z",
+      "timestamp_end": "2026-03-29T23:45:00Z",
+      "intent": "Cross-cutting integrity audit of LLM module — focus on gaps between reviewers",
+      "before": {
+        "assumptions": "All three reviewers approved. 1962 tests pass. Code follows established patterns. GoalCall has new properties.",
+        "risk": "Medium — LLM module is new and complex, tool execution loop is the critical path."
+      },
+      "plan": "Read all bot reports, review production code for cross-file contracts, trace MaxToolCalls enforcement, check numeric boxing consistency, assess reviewer verdicts.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/Runtime2/modules/llm/query.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Cross-cutting audit. Found MaxToolCalls batch-overshoot bug and silent empty result on loop exit — both missed by other reviewers."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — 2 major, 2 minor, 1 nit. MaxToolCalls enforcement is wrong, loop exit discards content.",
+        "notes": "Cross-file contracts clean. GoalCall additions properly integrated. Recommend sending back to coder for findings #1 and #2."
+      }
     }
   ]
 }
