@@ -162,9 +162,13 @@ public sealed class OpenAiProvider : ILlmProvider
                 return httpResult;
 
             // --- Parse response ---
-            var responseJson = ParseApiResponse(httpResult.Value);
+            var (responseJson, parseEx) = ParseApiResponse(httpResult.Value);
             if (responseJson == null)
+            {
+                if (parseEx != null)
+                    return Data.FromError(ActionError.FromException(parseEx, "ParseError", 500));
                 return Data.FromError(new ActionError("Failed to parse LLM API response", "ParseError", 500));
+            }
 
             // Extract usage
             var usage = responseJson.Value.TryGetProperty("usage", out var usageProp) ? usageProp : (JsonElement?)null;
@@ -390,18 +394,26 @@ public sealed class OpenAiProvider : ILlmProvider
         {
             // Parse arguments and build GoalCall
             var parameters = ParseToolArguments(toolCall.Arguments, goalCall.Parameters);
-            var execCall = new GoalCall
+            var parseError = parameters.Find(p => !p.Success);
+            if (parseError != null)
             {
-                Name = goalCall.Name,
-                PrPath = goalCall.PrPath,
-                Parameters = parameters
-            };
-            var goalResult = await engine.RunGoalAsync(execCall, context);
-
-            if (goalResult.Success)
-                result = goalResult.Value != null ? JsonSerializer.Serialize(goalResult.Value) : "";
+                result = "Error: " + (parseError.Error?.Message ?? "Failed to parse tool arguments");
+            }
             else
-                result = "Error: " + (goalResult.Error?.Message ?? "Unknown error");
+            {
+                var execCall = new GoalCall
+                {
+                    Name = goalCall.Name,
+                    PrPath = goalCall.PrPath,
+                    Parameters = parameters
+                };
+                var goalResult = await engine.RunGoalAsync(execCall, context);
+
+                if (goalResult.Success)
+                    result = goalResult.Value != null ? JsonSerializer.Serialize(goalResult.Value) : "";
+                else
+                    result = "Error: " + (goalResult.Error?.Message ?? "Unknown error");
+            }
         }
 
         // OnToolCall — completed
@@ -455,8 +467,11 @@ public sealed class OpenAiProvider : ILlmProvider
         }
         catch (JsonException ex)
         {
-            // Surface the parse failure so it flows back to the LLM as a tool error
-            result.Add(new Data("__parse_error__", $"Failed to parse tool arguments: {ex.Message}"));
+            // Return error Data so the caller sees the parse failure with full exception
+            return new List<Data>
+            {
+                Data.FromError(ActionError.FromException(ex, "JsonParseError", 400))
+            };
         }
 
         // Fill in defaults for parameters not provided by the LLM
@@ -747,22 +762,22 @@ public sealed class OpenAiProvider : ILlmProvider
 
     // --- Response parsing ---
 
-    private static JsonElement? ParseApiResponse(object? value)
+    private static (JsonElement? Result, Exception? Error) ParseApiResponse(object? value)
     {
-        if (value == null) return null;
+        if (value == null) return (null, null);
 
         if (value is JsonElement je)
-            return je;
+            return (je, null);
 
         try
         {
             var json = JsonSerializer.Serialize(value);
             using var doc = JsonDocument.Parse(json);
-            return doc.RootElement.Clone();
+            return (doc.RootElement.Clone(), null);
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            return null;
+            return (null, ex);
         }
     }
 
