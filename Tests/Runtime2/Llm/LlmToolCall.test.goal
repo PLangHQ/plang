@@ -1,0 +1,3 @@
+Start
+/ Tool call — define a tool goal, LLM calls it, verify tool executed and result returned
+- throw "not implemented"

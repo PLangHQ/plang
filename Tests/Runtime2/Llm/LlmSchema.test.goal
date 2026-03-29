@@ -1,0 +1,3 @@
+Start
+/ Query with JSON schema — verify response is parsed and dot-navigable (e.g., %result.sentiment%)
+- throw "not implemented"

@@ -26,6 +26,58 @@
         "health": "Design approved by Ingi. Ready for implementation.",
         "notes": "Key decisions: no ILlmProvider C# interface, provider is a goal setting, tools are GoalCalls, GoalCall gets Description. Future: define step enables pure PLang modules (separate workstream)."
       }
+    },
+    {
+      "id": "llm-test-designer-v1",
+      "bot": "test-designer",
+      "timestamp_start": "2026-03-29T10:15:00Z",
+      "timestamp_end": "2026-03-29T10:45:00Z",
+      "intent": "Design comprehensive test suite for LLM module (query action, provider, tools, caching, streaming, validation)",
+      "before": {
+        "assumptions": "Architect v2 plan is the authoritative design. LLM module doesn't exist yet — tests define the contract. HTTP module tests provide the pattern for provider testing with MockHttpMessageHandler.",
+        "risk": "Medium — large surface area. Need to scope carefully: the architect's test suggestions are a starting point, not exhaustive."
+      },
+      "plan": "70 tests across 10 batches: types (8), basic query (8), format/schema (9), caching (6), tool execution (10), callbacks (8), conversation continuity (5), images (3), edge cases (5), PLang integration (8). PLang tests use real OpenAI API. C# tests use MockHttpMessageHandler.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/llm/LlmTypeTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryFormatTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCacheTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryConversationTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryImageTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "62 C# test stubs across 9 files, covering all LLM module behavior"
+        },
+        {
+          "paths": [
+            "Tests/Runtime2/Llm/LlmQuery.test.goal",
+            "Tests/Runtime2/Llm/LlmSchema.test.goal",
+            "Tests/Runtime2/Llm/LlmFormat.test.goal",
+            "Tests/Runtime2/Llm/LlmContinue.test.goal",
+            "Tests/Runtime2/Llm/LlmProperties.test.goal",
+            "Tests/Runtime2/Llm/LlmToolCall.test.goal",
+            "Tests/Runtime2/Llm/LlmValidation.test.goal",
+            "Tests/Runtime2/Llm/LlmCache.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "8 PLang integration test stubs using real OpenAI API"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 70 test stubs written. Ready for coder to implement LLM module.",
+        "notes": "Added 24 tests beyond architect's 46 suggestions: type serialization, format placement, tool param schemas, validation timing, edge cases. PLang tests will use real OpenAI with future response snapshotting."
+      }
     }
   ]
 }
