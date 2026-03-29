@@ -11,7 +11,7 @@ Piece 3: signing           ← DONE — Ed25519, nonce replay, contracts
 Piece 4: http              ← DONE (branch: runtime2-builder-v2-http)
 Piece 5: cleanup           ← review and clean up pieces 1-4
 Piece 6: template          ← DONE (branch: runtime2-builder-v2-template)
-Piece 7: llm               ← depends on http
+Piece 7: llm               ← DONE (branch: runtime2-builder-v2-llm)
 Piece 8: error extensions  ← engine-level
 Piece 9: build module      ← depends on all above
 Piece 10: builder v2 integration
