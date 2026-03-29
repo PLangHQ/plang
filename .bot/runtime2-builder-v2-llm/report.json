@@ -138,6 +138,40 @@
         "health": "All 61 LLM tests pass. All 1951 project tests pass. Zero failures.",
         "notes": "Removed MissingApiKey test per Ingi — providers handle auth differently. Cache uses SQLite since Data.Properties is [JsonIgnore]. Streaming is v1 passthrough."
       }
+    },
+    {
+      "id": "llm-codeanalyzer-v1",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-29T16:00:00Z",
+      "timestamp_end": "2026-03-29T16:30:00Z",
+      "intent": "5-pass code analysis of LLM module",
+      "before": {
+        "assumptions": "Coder v1 completed, 61 tests pass. Code follows handler → provider delegation pattern.",
+        "risk": "Low — analysis only, no code changes."
+      },
+      "plan": "5-pass analysis: OBP compliance, simplification, readability, behavioral reasoning, deletion test. Focus on OpenAiProvider.cs (874 lines).",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/llm/query.cs",
+            "PLang/Runtime2/modules/llm/LlmMessage.cs",
+            "PLang/Runtime2/modules/llm/ToolCall.cs",
+            "PLang/Runtime2/modules/llm/providers/ILlmProvider.cs",
+            "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full 5-pass analysis of all new/modified files"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "NEEDS WORK — 3 blocking findings in OpenAiProvider.cs, 6/7 files CLEAN",
+        "notes": "Blocking: 2 bare catches (lines 587, 765), 1 sync-over-async (line 734). Coverage gaps: tool arg defaults untested, type mapping untested. Minor: duplicate httpAction, dead BuildStreamProxy, decomposed params."
+      }
     }
   ]
 }
