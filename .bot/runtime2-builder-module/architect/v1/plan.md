@@ -6,16 +6,16 @@
 
 - **No Runtime1 dependencies.** No `IGoalParser`, no `PrParser`, no `GoalMapper`, no `Building.Model`. The builder module parses `.goal` files directly into Runtime2 Goal/Step types and reads `.pr` files as Runtime2 JSON.
 - **Native `.goal` parser.** A new `GoalFileParser` class in the builder module parses `.goal` text files directly into Runtime2 `Goal` and `Step` objects. Simple line-by-line parser — no Sprache dependency, no v1 model intermediary.
-- **`.pr` files are just Runtime2 Goal JSON.** Reading existing `.pr` files is `JsonSerializer.Deserialize<Goal>(json)`. No conversion, no mapping.
+- **`.pr` files are multi-goal Runtime2 JSON.** One `.goal` file → one `.pr` file containing `List<Goal>`. Reading existing `.pr` files is `JsonSerializer.Deserialize<List<Goal>>(json)`. No conversion, no mapping. All goals from a single `.goal` file share the same `Path` and therefore the same derived `PrPath` — they belong in one file.
 - **No provider pattern.** The builder module has no swappable behavior. It's a thin layer over `EngineModules`, `TypeMapping`, file I/O, and the goal parser.
 - **File I/O goes through `engine.RunAction(file.read/file.write)`.** Follows the same convention as the LLM module using `http.request`.
 - **`EngineModules` is instantiated fresh.** Each `getActions` call creates a `new EngineModules()` which discovers all `[Action]` types in the PLang assembly.
-- **MergeStep mutates the step.** Takes the target step and the LLM result step, copies actions/cache/onError/errors/warnings from LLM result onto the target. Returns the mutated step.
+- **MergeStep copies LLM-derived fields only.** Takes the target step (from parser, with structural fields like Text/Index/Indent already set via init) and the LLM result step. Copies only the LLM-derived mutable fields: Actions (`set`), Cache (`set`), OnError (`set`). For Errors/Warnings (init-only lists), mutates the existing list contents via `Clear()`/`AddRange()`. Returns the mutated step.
 - **ValidateActions does three things.** (1) Checks all actions exist in `EngineModules`, (2) resolves `GoalCall.PrPath` for goal-type parameters, (3) fills default values from `[Default]` attributes or `IConfigure<T>` config instances.
 - **GoalCall path resolution uses the file system directly.** Scans `.build/` for existing `.pr` files, or scans the source tree for `.goal` files, to find matching goals. No PrParser.
-- **SaveGoal uses v0.2 format.** Single `.pr` file per goal with all steps. Serialized with camelCase, nulls omitted.
+- **SaveGoal uses v0.2 format.** Single `.pr` file per `.goal` file, containing `List<Goal>` (one or more goals). Serialized with camelCase, nulls omitted. PrPath is derived from `Goal.Path` — never set directly.
 - **App.pr is simple JSON.** `GetApp` loads or creates `.build/app.pr`. `SaveApp` writes it back. Both use `AppData` from `PLang.Runtime2.Engine.Utility`.
-- **Engine.Building flag.** Builder module actions should only run when `engine.Building` is true. If called at runtime, return `Data.FromError`. Guard on `Run()`.
+- **Engine.Building guard.** `engine.Building` is a `Build.@this` object (not a bool). Builder module actions guard on `engine.Building != null` — null means not in build mode. If null, return `Data.FromError`. Guard on `Run()`.
 
 ## GoalFileParser
 
@@ -53,10 +53,12 @@ SecondGoal
 
 ### Path computation
 
+GoalFileParser only sets `Path` on each Goal. `PrPath` is a computed property on `Goal` — derived automatically from `Path`. Never set PrPath directly (the init setter is an intentional no-op).
+
 For a `.goal` file at `{rootPath}/folder/MyGoal.goal`:
-- First goal: `PrPath = .build/folder/MyGoal/goal.pr`
-- Sub-goals: `PrPath = .build/folder/MyGoal/{SubGoalName}/goal.pr`
-- `Path` = relative goal file path from root (e.g., `/folder/MyGoal.goal`)
+- All goals in the file get `Path = "/folder/MyGoal.goal"`
+- `PrPath` auto-derives to `/folder/.build/mygoal.pr` (sibling `.build/` folder, lowercase)
+- All goals from one file share the same PrPath → stored together in one `.pr` file as `List<Goal>`
 
 ### Output
 
@@ -81,10 +83,10 @@ Each `Goal` gets:
 - `Name` — from goal header line
 - `Description` / `Comment` — from `/` comment lines
 - `Visibility` — first = Public, rest = Private
-- `Path` — relative .goal file path
-- `PrPath` — computed .build path
-- `Steps` — `GoalSteps` collection of `Step` objects
-- `SubGoals` — list of sub-goal PrPaths (on the first goal)
+- `Path` — relative .goal file path (same for all goals in one file)
+- `PrPath` — **not set** — auto-derived from `Path` by the Goal type
+- `Steps` — `Steps.@this` collection (extends `List<Step>`)
+- `SubGoals` — list of sub-goal names (on the first/public goal)
 - `IsSetup` — true if goal name starts with "Setup" or step text matches setup patterns
 - `Hash` — hash of the goal text content
 
@@ -193,7 +195,7 @@ public partial class getGoals : IContext
 }
 ```
 
-**MergePrData** (private helper): If a `.pr` file already exists for a goal (at `goal.PrPath`), reads it as `JsonSerializer.Deserialize<Goal>(json)`. For steps that match by `Text`, copies the previously-built `Actions` onto the parsed step. This preserves LLM work across rebuilds — unchanged steps keep their existing actions.
+**MergePrData** (private helper): If a `.pr` file already exists (at the shared `PrPath`), reads it as `JsonSerializer.Deserialize<List<Goal>>(json)`. Matches parsed goals to existing goals by `Name`, then matches steps within each goal by `Text`. Copies previously-built `Actions` onto matching parsed steps. This preserves LLM work across rebuilds — unchanged steps keep their existing actions.
 
 ### builder.validateActions
 
@@ -327,23 +329,23 @@ public partial class saveApp : IContext
 }
 ```
 
-### builder.saveGoal
+### builder.saveGoals
 
-Serializes a Runtime2 Goal to a v0.2 `.pr` file (all steps in one file).
+Serializes a list of Runtime2 Goals to a v0.2 `.pr` file (all goals from one `.goal` file in one `.pr` file).
 
 ```csharp
-[Action("saveGoal")]
-public partial class saveGoal : IContext
+[Action("saveGoals")]
+public partial class saveGoals : IContext
 {
-    /// <summary>Goal to save.</summary>
+    /// <summary>Goals to save (all from the same .goal file).</summary>
     [IsNotNull]
-    public partial Goal Goal { get; init; }
+    public partial List<Goal> Goals { get; init; }
 
     public async Task<Data> Run()
     {
-        // 1. Get goal.PrPath
+        // 1. Get PrPath from first goal (all share the same derived PrPath)
         // 2. Ensure directory exists
-        // 3. Serialize with camelCase, indented, nulls omitted
+        // 3. Serialize List<Goal> with camelCase, indented, nulls omitted
         // 4. Write via engine.RunAction(file.write)
         // 5. Return Data.Ok(new { Path, Format = "v0.2" })
     }
@@ -360,7 +362,7 @@ All Runtime2, no Runtime1:
 | `TypeMapping` | `getActions`, `getTypeInfo` | PLang type names, valid values, complex type schemas |
 | `AppData` | `getApp`, `saveApp` | Simple POCO for app.pr |
 | `GoalFileParser` | `getGoals` | New — parses .goal text → Runtime2 Goal/Step |
-| `file.write` | `saveApp`, `saveGoal` | File I/O via engine.RunAction |
+| `file.write` | `saveApp`, `saveGoals` | File I/O via engine.RunAction |
 | `file.read` | `getApp`, `getGoals` | File I/O via engine.RunAction |
 
 ## How the Builder Goals Map
@@ -375,7 +377,7 @@ Build.goal                          → builder module actions used
 [plang] get type info               → builder.getTypeInfo
 [plang] ValidateActions             → builder.validateActions
 [plang] MergeStep                   → builder.mergeStep
-[plang] call SaveGoal               → builder.saveGoal
+[plang] call SaveGoal               → builder.saveGoals
 ```
 
 After this module lands, the `[plang]` tag in builder goal files becomes `builder.actionName` — regular module calls, no special handling needed.
@@ -392,7 +394,7 @@ PLang/Runtime2/modules/builder/
 ├── mergeStep.cs           — merge LLM result into step
 ├── getApp.cs              — load/create app.pr
 ├── saveApp.cs             — save app.pr
-├── saveGoal.cs            — save goal as .pr file
+├── saveGoals.cs           — save goals list as .pr file
 ```
 
 No providers directory. No types file (uses existing types from Engine/).
@@ -408,7 +410,7 @@ No providers directory. No types file (uses existing types from Engine/).
 - Continuation lines appended to previous step text
 - Comments attributed to goals and steps correctly
 - Multi-line `/* */` comments handled
-- Sub-goal PrPaths computed correctly
+- All goals share same Path, PrPath auto-derives correctly
 - Empty/whitespace-only file returns empty list
 
 **getActions (5):**
@@ -444,8 +446,9 @@ No providers directory. No types file (uses existing types from Engine/).
 - Loads existing app.pr and deserializes
 - Creates new app.pr when none exists (generates GUID, Version = "0.2")
 
-**saveGoal (1):**
-- Serializes goal to PrPath with camelCase, null properties omitted
+**saveGoals (2):**
+- Serializes List<Goal> to PrPath with camelCase, null properties omitted
+- Multiple goals from one file stored in single .pr file
 
 ### PLang tests (~6)
 
@@ -453,13 +456,13 @@ No providers directory. No types file (uses existing types from Engine/).
 - getGoals parses a test .goal file
 - validateActions passes for known actions, fails for unknown
 - mergeStep copies actions from LLM result
-- saveGoal writes .pr file, re-read matches
-- Full build flow: getApp → getGoals → (simulate LLM) → validateActions → mergeStep → saveGoal
+- saveGoals writes .pr file, re-read matches
+- Full build flow: getApp → getGoals → (simulate LLM) → validateActions → mergeStep → saveGoals
 
 ### Test count
-- **C# tests:** ~30
+- **C# tests:** ~31
 - **PLang tests:** ~6
-- **Total: ~36**
+- **Total: ~37**
 
 ## Files to Create
 
@@ -473,7 +476,7 @@ No providers directory. No types file (uses existing types from Engine/).
 | `PLang/Runtime2/modules/builder/mergeStep.cs` | Merge LLM result into step |
 | `PLang/Runtime2/modules/builder/getApp.cs` | Load/create app.pr |
 | `PLang/Runtime2/modules/builder/saveApp.cs` | Save app.pr |
-| `PLang/Runtime2/modules/builder/saveGoal.cs` | Save goal as .pr |
+| `PLang/Runtime2/modules/builder/saveGoals.cs` | Save goals list as .pr |
 
 ## Files to Modify
 
@@ -496,7 +499,7 @@ No providers directory. No types file (uses existing types from Engine/).
 - `validateActions` checks action existence, resolves GoalCall paths via file system scan, fills defaults
 - `mergeStep` copies actions/cache/onError/errors/warnings from LLM step to target
 - `getApp`/`saveApp` manage app.pr lifecycle
-- `saveGoal` writes v0.2 .pr files (camelCase, nulls omitted)
+- `saveGoals` writes v0.2 `.pr` files as `List<Goal>` (camelCase, nulls omitted) — one `.pr` per `.goal` file
 - File I/O goes through `engine.RunAction(file.read/write)`
 - Builder goal files updated to use `builder.*` instead of `[plang]`
 - `[plang]` tag no longer needed for builder operations
