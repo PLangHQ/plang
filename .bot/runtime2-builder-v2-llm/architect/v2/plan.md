@@ -12,7 +12,8 @@
 - **OnValidateResponse callback.** Query has an OnValidateResponse GoalCall that the provider invokes after getting the final response (after all tool calls are done). If validation fails, the error is fed back to the LLM for retry, up to MaxValidationRetries (default 3).
 - **OnStream callback.** Query has an OnStream GoalCall for streaming responses. Provider sets `stream: true` on the API request and calls OnStream with each chunk. Uses the http module's streaming support.
 - **ContinuePreviousConversation.** Follows Runtime1 pattern — stores full message list (including assistant response) in context after each call. When true, prepends stored history to the current messages. Also reuses previous schema if not specified.
-- **LlmMessage carries tool metadata.** Role + Text + Image + ToolCallId + ToolCalls. Needed for multi-turn tool conversations — the provider builds these internally during the tool loop.
+- **LlmMessage carries tool metadata.** Role + Text + Images + ToolCallId + ToolCalls. Needed for multi-turn tool conversations — the provider builds these internally during the tool loop.
+- **Images is a list.** `List<string>?` — supports sending multiple images in a single message. Each provider formats these according to its API (e.g., OpenAI uses content array with `type: image_url`).
 - **Tool execution loop is C#.** The provider calls engine.RunGoal for each tool call, appends results, re-queries. Clean typed code, no PLang string manipulation.
 - **Tool errors go back to the LLM.** When engine.RunGoal fails for a tool call, the error message is sent back as the tool result. The LLM decides how to proceed.
 - **Schema via system prompt, not response_format.** Follows Runtime1 approach — schema is appended to the system message as a text instruction (e.g., "You MUST respond in JSON, schema: {…}"). This is provider-agnostic and works with any LLM API.
@@ -22,6 +23,10 @@
 - **Cache defaults to false for tool calls.** Cache=true is only safe for deterministic queries (no tools). When Tools is non-null, caching is skipped regardless of the Cache flag.
 - **MaxToolCalls is total individual calls**, not rounds. Matches Runtime1 behavior — prevents runaway regardless of how many calls per round.
 - **HTTP via the http module.** The provider uses the runtime's http module for API calls, not raw HttpClient.
+- **Format instruction must not compound.** When storing messages for conversation continuity, the format instruction has already been appended to the system message. On the next call with ContinuePreviousConversation, the coder must ensure the instruction isn't appended again. Solve this cleanly — e.g., strip before storing, or store originals and re-apply fresh.
+- **Multiple system messages on continuation are provider-handled.** If a continuation call has a different system prompt than the original, the provider decides how to merge or order the system messages. This is provider-specific — different APIs handle multiple system messages differently.
+- **Tool parameter schemas come from `List<Data>`.** Data is `{Name, Type, Value}`. When tools are defined, the GoalCall.Parameters carry the parameter names and types. The provider uses Name and Type to build the API-specific tool parameter schema (e.g., OpenAI JSON schema). The LLM fills in the values.
+- **Streaming errors return Data.FromError.** If the HTTP stream fails mid-way, the provider returns `Data.FromError(...)`. The PLang developer handles the error like any other step error.
 
 ## Architecture
 
@@ -94,7 +99,7 @@ public class LlmMessage
     public string? Text { get; set; }
 
     [Store, LlmBuilder]
-    public string? Image { get; set; }
+    public List<string>? Images { get; set; }
 
     // --- Tool conversation fields (not set by builder, used internally) ---
 
@@ -105,6 +110,8 @@ public class LlmMessage
 ```
 
 `ToolCallId` and `ToolCalls` are internal — the builder never sets them. They exist so the provider can build multi-turn tool conversations without provider-specific message types leaking out.
+
+`Images` is a list — supports sending multiple images in one message. Each provider formats these for its API (e.g., OpenAI uses a content array with `type: image_url` entries).
 
 #### ToolCall
 
@@ -268,7 +275,11 @@ OpenAiProvider.Query(action):
             toolCalls = []
             usage = null
 
-            for each chunk in http.Stream(endpoint, body, apiKey):
+            streamResult = http.Stream(endpoint, body, apiKey)
+            if streamResult.Error:
+                return Data.FromError(streamResult.Error)
+
+            for each chunk in streamResult:
                 delta = chunk.choices[0].delta
 
                 if delta.content != null:
@@ -388,7 +399,9 @@ OpenAiProvider.Query(action):
 
         // --- Cache store (persistent) ---
         if cacheKey != null:
-            PersistentCache.Set(cacheKey, content)
+            result = Data.Ok(content)
+            result.Properties["Cached"] = true
+            PersistentCache.Set(cacheKey, result)  // Store with Cached=true so cache hits return correct flag
 
         // --- Build result with properties ---
         // Value = the parsed content (JSON object, extracted text, etc.)
@@ -444,6 +457,21 @@ ExecuteTool(engine, action, toolCall):
         })
 
     return result
+
+
+BuildParamSchema(parameters):
+    // List<Data> → JSON schema for OpenAI tool parameters
+    // Each Data has { Name: string, Type: string, Value: object }
+    // Example: [{Name="city", Type="string"}, {Name="units", Type="string"}]
+    // Produces: { type: "object", properties: { city: {type: "string"}, units: {type: "string"} },
+    //            required: [all parameter names] }
+    if parameters == null or parameters.Count == 0:
+        return { type: "object", properties: {} }
+
+    props = {}
+    for each param in parameters:
+        props[param.Name] = { type: MapPlangTypeToJsonSchema(param.Type) }
+    return { type: "object", properties: props, required: parameters.Select(p => p.Name) }
 
 
 BuildFormatInstruction(format, schema):
@@ -650,13 +678,17 @@ PLang/Runtime2/modules/llm/
 - OnValidateResponse callback fires on final response; error feeds back to LLM for retry
 - MaxValidationRetries (default 3) limits validation retry loops independently from tool calls
 - OnStream callback fires for each chunk during streaming; http module handles SSE
-- ContinuePreviousConversation stores/restores message history in context
+- ContinuePreviousConversation stores/restores message history in context; format instructions don't compound across turns
+- Streaming errors return Data.FromError, PLang developer handles via normal error flow
 - Tool errors are sent back to the LLM as tool results
 - Schema appended to system prompt as text instruction, JSON response validated
 - Format is user-defined (any string); non-json formats extracted from code blocks
 - Response properties populated on returned Data (tokens, cost, raw response, model, etc.)
 - Properties accessible via `%result!PropertyName%` syntax in PLang
+- Cached results have `Cached=true` property (set before storing); live results have `Cached=false`
 - Caching is persistent (not in-memory), hash-based, skipped for tool queries
 - GoalCall.Description and GoalCall.Parallel available for tool definitions
+- Images is `List<string>?` — supports multiple images per message
+- Multiple system messages on continuation handled by provider
 - Builder's `[llm]` syntax works through the new module
 - Provider switchable via standard `provider.set` action
