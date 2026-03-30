@@ -1,15 +1,12 @@
 [
   {
     "name": "Start",
-    "description": null,
-    "comment": null,
     "steps": [
       {
         "index": 0,
         "text": "assert %!engine.Name% is not null, \u0022engine name should be set\u0022",
         "lineNumber": 2,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "assert",
@@ -25,22 +22,9 @@
                 "value": "engine name should be set",
                 "type": "string"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       },
       {
@@ -48,7 +32,6 @@
         "text": "assert %!engine.Name% equals \u0022Runtime2\u0022",
         "lineNumber": 3,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "assert",
@@ -64,22 +47,9 @@
                 "value": "%!engine.Name%",
                 "type": "object"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       }
     ],
@@ -91,10 +61,6 @@
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,
-    "isTest": false,
-    "inputParameters": null,
-    "errors": [],
-    "warnings": [],
-    "fullPath": "Start"
+    "isTest": false
   }
 ]

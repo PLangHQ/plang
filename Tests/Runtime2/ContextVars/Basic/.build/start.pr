@@ -1,15 +1,12 @@
 [
   {
     "name": "Start",
-    "description": null,
-    "comment": null,
     "steps": [
       {
         "index": 0,
         "text": "write out %!engine.Name%",
         "lineNumber": 2,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "output",
@@ -20,22 +17,9 @@
                 "value": "%!engine.Name%",
                 "type": "string"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       }
     ],
@@ -47,10 +31,6 @@
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,
-    "isTest": false,
-    "inputParameters": null,
-    "errors": [],
-    "warnings": [],
-    "fullPath": "Start"
+    "isTest": false
   }
 ]

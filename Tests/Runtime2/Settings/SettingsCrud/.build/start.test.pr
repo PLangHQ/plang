@@ -1,15 +1,12 @@
 [
   {
     "name": "Start",
-    "description": null,
-    "comment": null,
     "steps": [
       {
         "index": 0,
         "text": "set settings \u0027TestApiKey\u0027 = \u0027sk-test-12345\u0027",
         "lineNumber": 2,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "settings",
@@ -25,22 +22,9 @@
                 "value": "sk-test-12345",
                 "type": "string"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       },
       {
@@ -48,7 +32,6 @@
         "text": "get settings \u0027TestApiKey\u0027, write to %apiKey%",
         "lineNumber": 3,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "settings",
@@ -62,24 +45,11 @@
             ],
             "return": [
               {
-                "name": "apiKey",
-                "value": null
+                "name": "apiKey"
               }
-            ],
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       },
       {
@@ -87,7 +57,6 @@
         "text": "assert %apiKey% equals \u0022sk-test-12345\u0022",
         "lineNumber": 4,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "assert",
@@ -103,22 +72,9 @@
                 "value": "%apiKey%",
                 "type": "string"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       },
       {
@@ -126,7 +82,6 @@
         "text": "set settings \u0027TestApiKey\u0027 = \u0027sk-updated-99999\u0027",
         "lineNumber": 5,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "settings",
@@ -142,22 +97,9 @@
                 "value": "sk-updated-99999",
                 "type": "string"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       },
       {
@@ -165,7 +107,6 @@
         "text": "get settings \u0027TestApiKey\u0027, write to %updatedKey%",
         "lineNumber": 6,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "settings",
@@ -179,24 +120,11 @@
             ],
             "return": [
               {
-                "name": "updatedKey",
-                "value": null
+                "name": "updatedKey"
               }
-            ],
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       },
       {
@@ -204,7 +132,6 @@
         "text": "assert %updatedKey% equals \u0022sk-updated-99999\u0022",
         "lineNumber": 7,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "assert",
@@ -220,22 +147,9 @@
                 "value": "%updatedKey%",
                 "type": "string"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       },
       {
@@ -243,7 +157,6 @@
         "text": "remove settings \u0027TestApiKey\u0027",
         "lineNumber": 8,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "settings",
@@ -254,22 +167,9 @@
                 "value": "TestApiKey",
                 "type": "string"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       }
     ],
@@ -281,10 +181,6 @@
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,
-    "isTest": false,
-    "inputParameters": null,
-    "errors": [],
-    "warnings": [],
-    "fullPath": "Start"
+    "isTest": false
   }
 ]

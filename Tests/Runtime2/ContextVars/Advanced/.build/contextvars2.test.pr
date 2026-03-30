@@ -1,8 +1,6 @@
 [
   {
     "name": "Start",
-    "description": null,
-    "comment": null,
     "steps": [
       {
         "index": 0,
@@ -25,22 +23,9 @@
                 "value": "Start",
                 "type": "string"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       },
       {
@@ -59,22 +44,9 @@
                 "value": "%!step%",
                 "type": "object"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       },
       {
@@ -93,22 +65,9 @@
                 "value": "%!context%",
                 "type": "object"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       },
       {
@@ -127,22 +86,9 @@
                 "value": "%!fileSystem%",
                 "type": "object"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       },
       {
@@ -161,22 +107,9 @@
                 "value": "%!callStack%",
                 "type": "object"
               }
-            ],
-            "return": null,
-            "defaults": null,
-            "errors": [],
-            "warnings": []
+            ]
           }
         ],
-        "onErrorGoal": null,
-        "hash": null,
-        "previousHash": null,
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "errors": [],
-        "warnings": [],
         "waitForExecution": true
       }
     ],
@@ -188,10 +121,6 @@
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,
-    "isTest": false,
-    "inputParameters": null,
-    "errors": [],
-    "warnings": [],
-    "fullPath": "Start"
+    "isTest": false
   }
 ]
