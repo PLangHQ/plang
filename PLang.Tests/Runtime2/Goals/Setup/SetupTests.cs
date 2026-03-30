@@ -60,7 +60,7 @@ public class SetupTests
     [Test]
     public async Task IsExecuted_ReturnsFalse_ForNewStep()
     {
-        var step = new Step { Hash = "abc123", Text = "do something" };
+        var step = new Step { Text = "do something" };
         var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
 
         await Assert.That(result).IsFalse();
@@ -69,7 +69,7 @@ public class SetupTests
     [Test]
     public async Task Record_ThenIsExecuted_ReturnsTrue()
     {
-        var step = new Step { Hash = "abc123", Text = "do something", Index = 0 };
+        var step = new Step { Text = "do something", Index = 0 };
 
         await _engine.Goals.Setup.Record(step, _engine);
         var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
@@ -80,7 +80,7 @@ public class SetupTests
     [Test]
     public async Task IsExecuted_ReturnsFalse_ForNullHash()
     {
-        var step = new Step { Hash = null, Text = "no hash" };
+        var step = new Step { Text = "" };
         var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
 
         await Assert.That(result).IsFalse();
@@ -90,9 +90,9 @@ public class SetupTests
     public async Task RunAsync_SkipsAlreadyExecutedSteps()
     {
         // Create a setup goal with two steps
-        var step1 = new Step { Index = 0, Text = "step one", Hash = "skip_hash1",
+        var step1 = new Step { Index = 0, Text = "step one",
             Actions = CreateNoOpActions() };
-        var step2 = new Step { Index = 1, Text = "step two", Hash = "skip_hash2",
+        var step2 = new Step { Index = 1, Text = "step two",
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {
@@ -127,7 +127,7 @@ public class SetupTests
     [Test]
     public async Task RunAsync_RerunsStepWithChangedHash()
     {
-        var step = new Step { Index = 0, Text = "create table", Hash = "original_hash",
+        var step = new Step { Index = 0, Text = "create table",
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {
@@ -142,7 +142,7 @@ public class SetupTests
         await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsTrue();
 
         // Simulate changed step (different hash) — new step object with different hash
-        var changedStep = new Step { Index = 0, Text = "create table v2", Hash = "changed_hash",
+        var changedStep = new Step { Index = 0, Text = "create table v2",
             Actions = CreateNoOpActions() };
         changedStep.Goal = goal;
 
@@ -187,7 +187,7 @@ public class SetupTests
         // A step that fails (unknown module) and does NOT have IgnoreError
         var step = new Step
         {
-            Index = 0, Text = "failing step", Hash = "fail_hash",
+            Index = 0, Text = "failing step",
             Actions = CreateFailingActions()
         };
         var goal = new Goal
@@ -212,7 +212,7 @@ public class SetupTests
         // A step that fails but has IgnoreError = true
         var step = new Step
         {
-            Index = 0, Text = "tolerated failure", Hash = "tolerated_hash",
+            Index = 0, Text = "tolerated failure",
             OnError = new ErrorHandler { IgnoreError = true },
             Actions = CreateFailingActions()
         };
@@ -235,7 +235,7 @@ public class SetupTests
     [Test]
     public async Task RunAsync_AbortsSetup_WhenRecordFails()
     {
-        var step = new Step { Index = 0, Text = "good step", Hash = "record_fail_hash",
+        var step = new Step { Index = 0, Text = "good step",
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {
@@ -261,9 +261,9 @@ public class SetupTests
     [Test]
     public async Task RunAsync_CancellationAborts()
     {
-        var step1 = new Step { Index = 0, Text = "step one", Hash = "cancel_hash1",
+        var step1 = new Step { Index = 0, Text = "step one",
             Actions = CreateNoOpActions() };
-        var step2 = new Step { Index = 1, Text = "step two", Hash = "cancel_hash2",
+        var step2 = new Step { Index = 1, Text = "step two",
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {

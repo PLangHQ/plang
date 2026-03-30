@@ -27,8 +27,13 @@ public sealed partial class @this
     [Store, Debug, Default]
     public Actions.@this Actions { get; set; } = new();
 
-    [Store, Debug]
-    public string? Hash { get; init; }
+    /// <summary>
+    /// Computed hash of the step text. Used by Setup for idempotency tracking.
+    /// </summary>
+    [JsonIgnore]
+    public string? Hash => string.IsNullOrEmpty(Text) ? null
+        : Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(Text))).ToLowerInvariant();
 
     [Store, LlmBuilder, Debug, Default]
     public string? Intent { get; init; }
@@ -80,7 +85,6 @@ public sealed partial class @this
             })),
             WaitForExecution = WaitForExecution,
             Goal = Goal,
-            Hash = Hash,
             Intent = Intent,
             OnError = OnError,
             Cache = Cache,

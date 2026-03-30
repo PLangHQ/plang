@@ -67,7 +67,6 @@ public static class GoalMapper
                 }
             },
             WaitForExecution = oldStep.WaitForExecution,
-            Hash = oldStep.Hash,
             Intent = oldStep.UserIntent,
             OnError = MapErrorHandler(oldStep.ErrorHandlers?.FirstOrDefault()),
             Cache = MapCacheSettings(oldStep.CacheHandler),

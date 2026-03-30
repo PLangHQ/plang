@@ -70,7 +70,7 @@ public class SaveGoalsTests
     }
 
     [Test]
-    public async Task SaveGoals_CamelCase_NullsOmitted()
+    public async Task SaveGoals_CamelCase_StoreOnly()
     {
         var goals = new List<Goal>
         {
@@ -90,8 +90,8 @@ public class SaveGoalsTests
 
         // Should use camelCase
         await Assert.That(json).Contains("\"name\"");
-        // Null properties are omitted for clean .pr files
-        await Assert.That(json).DoesNotContain("\"description\"");
+        // Null [Store] properties included for determinism
+        await Assert.That(json).Contains("\"description\"");
         // Non-[Store] properties should not appear
         await Assert.That(json).DoesNotContain("\"errors\"");
         await Assert.That(json).DoesNotContain("\"warnings\"");
