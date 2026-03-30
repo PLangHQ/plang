@@ -266,8 +266,8 @@ public sealed partial class @this
                 continue;
             }
 
-            // Line comment
-            if (trimmed.StartsWith("/") && !trimmed.StartsWith("//"))
+            // Line comment — any line starting with /
+            if (trimmed.StartsWith("/"))
             {
                 var commentText = trimmed[1..].TrimStart();
                 if (pendingComment.Length > 0) pendingComment.Append('\n');
@@ -317,6 +317,22 @@ public sealed partial class @this
                 {
                     Index = currentStep.Index,
                     Text = currentStep.Text + "\n" + trimmed,
+                    LineNumber = currentStep.LineNumber,
+                    Indent = currentStep.Indent,
+                    Comment = currentStep.Comment
+                };
+                currentGoal!.Steps[currentGoal.Steps.Count - 1] = currentStep;
+                continue;
+            }
+
+            // Escape character — \ at start of line continues previous step text
+            if (currentStep != null && trimmed.StartsWith("\\"))
+            {
+                var escapedText = trimmed[1..]; // strip the leading backslash
+                currentStep = new Steps.Step.@this
+                {
+                    Index = currentStep.Index,
+                    Text = currentStep.Text + "\n" + escapedText,
                     LineNumber = currentStep.LineNumber,
                     Indent = currentStep.Indent,
                     Comment = currentStep.Comment

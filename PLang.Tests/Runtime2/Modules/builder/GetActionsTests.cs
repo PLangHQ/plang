@@ -111,4 +111,25 @@ public class GetActionsTests
         await Assert.That(fileRead).IsNotNull();
         await Assert.That(fileRead!.Cacheable).IsTrue();
     }
+
+    [Test]
+    public async Task GetActions_ExcludesProviderProperties()
+    {
+        var action = new GetActions { Context = _engine.Context };
+        var result = await _engine.RunAction(action, _engine.Context);
+        var actions = (StepActions)result.Value!;
+
+        // No action should expose [Provider]-attributed interface properties
+        // (e.g., IBuilderProvider, IFileProvider, ILlmProvider)
+        // Note: string params named "Provider" (like identity.create) are legitimate
+        foreach (var a in actions)
+        {
+            var providerParam = a.Parameters.FirstOrDefault(p =>
+                p.Value?.ToString()?.StartsWith("i", StringComparison.OrdinalIgnoreCase) == true &&
+                p.Value.ToString()!.Contains("Provider"));
+            await Assert.That(providerParam)
+                .IsNull()
+                .Because($"{a.Module}.{a.ActionName} should not expose [Provider] interface properties");
+        }
+    }
 }

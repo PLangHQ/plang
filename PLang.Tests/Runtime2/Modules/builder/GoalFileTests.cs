@@ -165,4 +165,26 @@ public class GoalFileTests
         await Assert.That(goals[0].Steps.Count).IsEqualTo(1);
         await Assert.That(goals[0].Steps[0].Text).IsEqualTo("");
     }
+
+    [Test]
+    public async Task Parse_DoubleSlash_IsComment()
+    {
+        // // is also a comment, not a goal header
+        var goals = Goal.Parse("MyGoal\n// this is a comment\n- step", "/DoubleSlash.goal");
+
+        await Assert.That(goals.Count).IsEqualTo(1);
+        await Assert.That(goals[0].Steps.Count).IsEqualTo(1);
+        await Assert.That(goals[0].Steps[0].Comment).IsEqualTo("/ this is a comment");
+    }
+
+    [Test]
+    public async Task Parse_BackslashEscape_ContinuesStepText()
+    {
+        // \ at column 0 continues the previous step's text
+        var goals = Goal.Parse("MyGoal\n- write out 'select from list'\n\\Select option", "/Escape.goal");
+
+        await Assert.That(goals.Count).IsEqualTo(1);
+        await Assert.That(goals[0].Steps.Count).IsEqualTo(1);
+        await Assert.That(goals[0].Steps[0].Text).IsEqualTo("write out 'select from list'\nSelect option");
+    }
 }
