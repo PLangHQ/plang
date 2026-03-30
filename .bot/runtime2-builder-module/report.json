@@ -194,6 +194,38 @@
         "notes": "NEEDS WORK — 5 minor findings: 2 untested Parse() paths, unguarded Activator.CreateInstance, untested IConfigure<T> defaults, Runtime1 type in FormatForLlm. Send to coder for fixes."
       },
       "timestamp_end": "2026-03-30T01:00:00Z"
+    },
+    {
+      "id": "ca-v2-20260330",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-30T02:00:00Z",
+      "timestamp_end": "2026-03-30T02:30:00Z",
+      "intent": "Re-review coder fixes for v1 findings",
+      "before": {
+        "assumptions": "Coder addressed 4 of 5 findings in one commit. 3 new tests, 2 small production code changes.",
+        "risk": "Low — fixes are small and targeted."
+      },
+      "plan": "Verify each fix against the original finding. Full review of fix-introduced code (3 new tests, try/catch guard, file read error reporting).",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/codeanalyzer/v2/v1_review_summary.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v2/result.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v2/summary.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v2/verdict.json",
+            ".bot/runtime2-builder-module/codeanalyzer/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Re-review: 4/5 findings resolved, fix-introduced code clean. PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — all findings resolved (1 deferred as pre-existing). Recommend tester next."
+      }
     }
   ]
 }
