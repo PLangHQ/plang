@@ -101,12 +101,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var result = Data.Ok(allGoals);
         if (allErrors.Count > 0)
-        {
-            // Return goals but surface errors so the caller knows about corrupt .pr files
-            foreach (var error in allErrors)
-                result.Warnings ??= new List<Engine.Info>();
             result.Warnings = allErrors;
-        }
         return result;
     }
 
