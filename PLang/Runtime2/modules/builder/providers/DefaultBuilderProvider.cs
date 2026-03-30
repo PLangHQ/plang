@@ -133,7 +133,6 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (files == null || files.Length == 0)
             return Data.Ok(new List<Goal>());
 
-        var parser = new GoalFile();
         var allGoals = new List<Goal>();
 
         foreach (var file in files)
@@ -149,7 +148,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             if (!relativePath.StartsWith('/') && !relativePath.StartsWith('\\'))
                 relativePath = "/" + relativePath;
 
-            var parsedGoals = parser.Parse(text, relativePath);
+            var parsedGoals = Goal.Parse(text, relativePath);
 
             var normalizedPath = relativePath.Replace('\\', '/');
             if (normalizedPath.StartsWith("/system/", StringComparison.OrdinalIgnoreCase))

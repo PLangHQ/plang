@@ -190,4 +190,171 @@ public sealed partial class @this
         Description = "Goal not found"
     };
 
+    /// <summary>
+    /// Parses .goal file text into a list of Goals.
+    /// All goals share the same Path. First goal is Public, rest are Private.
+    /// Inverse of ToText().
+    /// </summary>
+    public static List<@this> Parse(string text, string path)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return new List<@this>();
+
+        text = text.Replace("\t", "    ");
+
+        var lines = text.Split('\n');
+        var goals = new List<@this>();
+        var currentGoal = (@this?)null;
+        var currentStep = (Steps.Step.@this?)null;
+        var pendingComment = new StringBuilder();
+        var inBlockComment = false;
+        var stepIndex = 0;
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var lineNumber = i + 1;
+            var raw = lines[i].TrimEnd('\r');
+
+            // Block comment continuation
+            if (inBlockComment)
+            {
+                var endIdx = raw.IndexOf("*/");
+                if (endIdx >= 0)
+                {
+                    var closePart = raw[..endIdx].Trim();
+                    if (closePart.Length > 0)
+                    {
+                        if (pendingComment.Length > 0) pendingComment.Append('\n');
+                        pendingComment.Append(closePart);
+                    }
+                    inBlockComment = false;
+                }
+                else
+                {
+                    if (pendingComment.Length > 0) pendingComment.Append('\n');
+                    pendingComment.Append(raw.Trim());
+                }
+                continue;
+            }
+
+            var trimmed = raw.TrimStart();
+
+            // Block comment start
+            if (trimmed.StartsWith("/*"))
+            {
+                var afterOpen = trimmed[2..];
+                var closeIdx = afterOpen.IndexOf("*/");
+                if (closeIdx >= 0)
+                {
+                    if (pendingComment.Length > 0) pendingComment.Append('\n');
+                    pendingComment.Append(afterOpen[..closeIdx].Trim());
+                }
+                else
+                {
+                    inBlockComment = true;
+                    if (pendingComment.Length > 0) pendingComment.Append('\n');
+                    pendingComment.Append(afterOpen.Trim());
+                }
+                continue;
+            }
+
+            // Blank line — comment boundary
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                pendingComment.Clear();
+                currentStep = null;
+                continue;
+            }
+
+            // Line comment
+            if (trimmed.StartsWith("/") && !trimmed.StartsWith("//"))
+            {
+                var commentText = trimmed[1..].TrimStart();
+                if (pendingComment.Length > 0) pendingComment.Append('\n');
+                pendingComment.Append(commentText);
+                continue;
+            }
+
+            // Step line
+            if (trimmed.StartsWith("- ") || trimmed == "-")
+            {
+                if (currentGoal == null)
+                {
+                    currentGoal = new @this
+                    {
+                        Name = "Start",
+                        Visibility = goals.Count == 0 ? Visibility.Public : Visibility.Private,
+                        Path = path
+                    };
+                    goals.Add(currentGoal);
+                    stepIndex = 0;
+                }
+
+                var leadingSpaces = raw.Length - raw.TrimStart().Length;
+                var indent = leadingSpaces / 4;
+                var stepText = trimmed.Length > 2 ? trimmed[2..] : "";
+                var comment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
+                pendingComment.Clear();
+
+                currentStep = new Steps.Step.@this
+                {
+                    Index = stepIndex,
+                    Text = stepText,
+                    LineNumber = lineNumber,
+                    Indent = indent,
+                    Comment = comment
+                };
+
+                currentGoal.Steps.Add(currentStep);
+                stepIndex++;
+                continue;
+            }
+
+            // Continuation line
+            if (currentStep != null && raw.Length > 0 && (raw[0] == ' ' || raw[0] == '\t'))
+            {
+                currentStep = new Steps.Step.@this
+                {
+                    Index = currentStep.Index,
+                    Text = currentStep.Text + "\n" + trimmed,
+                    LineNumber = currentStep.LineNumber,
+                    Indent = currentStep.Indent,
+                    Comment = currentStep.Comment
+                };
+                currentGoal!.Steps[currentGoal.Steps.Count - 1] = currentStep;
+                continue;
+            }
+
+            // Goal header
+            var goalName = trimmed;
+            var goalComment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
+            pendingComment.Clear();
+
+            var isSetup = goalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)
+                || (path != null && path.Replace('\\', '/').TrimStart('/')
+                    .StartsWith("setup/", StringComparison.OrdinalIgnoreCase));
+
+            currentGoal = new @this
+            {
+                Name = goalName,
+                Comment = goalComment,
+                Visibility = goals.Count == 0 ? Visibility.Public : Visibility.Private,
+                Path = path,
+                IsSetup = isSetup
+            };
+            goals.Add(currentGoal);
+            stepIndex = 0;
+            currentStep = null;
+        }
+
+        // Populate SubGoals on the first (public) goal
+        if (goals.Count > 1)
+        {
+            for (int i = 1; i < goals.Count; i++)
+                goals[0].SubGoals.Add(goals[i].Name);
+        }
+
+        return goals;
+    }
+
 }
