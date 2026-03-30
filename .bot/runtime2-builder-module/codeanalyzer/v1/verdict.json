@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "5 minor: 2 untested Parse() paths, unguarded Activator.CreateInstance, untested IConfigure<T> defaults, Runtime1 type in FormatForLlm" }

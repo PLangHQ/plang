@@ -120,20 +120,22 @@
         },
         {
           "paths": [
-            "PLang/Runtime2/modules/builder/GoalFile.cs",
-            "PLang/Runtime2/modules/builder/getActions.cs",
-            "PLang/Runtime2/modules/builder/getTypeInfo.cs",
-            "PLang/Runtime2/modules/builder/getGoals.cs",
-            "PLang/Runtime2/modules/builder/validateActions.cs",
-            "PLang/Runtime2/modules/builder/mergeStep.cs",
-            "PLang/Runtime2/modules/builder/getApp.cs",
-            "PLang/Runtime2/modules/builder/saveApp.cs",
-            "PLang/Runtime2/modules/builder/saveGoals.cs"
+            "PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/Runtime2/modules/builder/providers/IBuilderProvider.cs",
+            "PLang/Runtime2/modules/builder/actions.cs",
+            "PLang/Runtime2/modules/builder/app.cs",
+            "PLang/Runtime2/modules/builder/appSave.cs",
+            "PLang/Runtime2/modules/builder/goals.cs",
+            "PLang/Runtime2/modules/builder/goalsSave.cs",
+            "PLang/Runtime2/modules/builder/merge.cs",
+            "PLang/Runtime2/modules/builder/validate.cs",
+            "PLang/Runtime2/modules/builder/types.cs",
+            "PLang/Runtime2/modules/builder/BuilderTypeInfo.cs"
           ],
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "9 new files: GoalFile parser + 8 builder actions. Standard [Action] partial class : IContext pattern with Building guard."
+          "context": "11 new files: builder provider + 8 builder actions + type record. Standard handler→provider delegation pattern."
         },
         {
           "paths": [
@@ -159,6 +161,39 @@
         "health": "green",
         "notes": "All 2015 tests pass (0 failures). 9 new source files, 2 modified entity files, 10 test files implemented. Ready for codeanalyzer review."
       }
+    },
+    {
+      "id": "ca-v1-20260330",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-30T00:00:00Z",
+      "timestamp_end": null,
+      "intent": "5-pass code analysis of builder module (Piece 8)",
+      "before": {
+        "assumptions": "Builder module implements handler→provider delegation. Goal.Parse() is the only real text parser in PLang. Code uses engine.RunAction for file I/O. All tests reportedly pass.",
+        "risk": "Goal.Parse() is ~150 lines of text parsing — unusual for PLang, needs careful scrutiny. DefaultBuilderProvider at 344 lines is the largest single provider. Error handling patterns need audit."
+      },
+      "plan": "5-pass analysis: OBP compliance, simplification, readability, behavioral reasoning, deletion test. Focus on DefaultBuilderProvider.cs (core logic), Goal.Parse() (parser), engine modifications (Modules.Describe, TypeMapping additions).",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/codeanalyzer/v1/plan.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v1/result.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v1/summary.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v1/verdict.json",
+            ".bot/runtime2-builder-module/codeanalyzer/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "5-pass analysis of 15 production files + 10 test files. Verdict: NEEDS WORK — 5 minor findings, 0 major."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow",
+        "notes": "NEEDS WORK — 5 minor findings: 2 untested Parse() paths, unguarded Activator.CreateInstance, untested IConfigure<T> defaults, Runtime1 type in FormatForLlm. Send to coder for fixes."
+      },
+      "timestamp_end": "2026-03-30T01:00:00Z"
     }
   ]
 }
