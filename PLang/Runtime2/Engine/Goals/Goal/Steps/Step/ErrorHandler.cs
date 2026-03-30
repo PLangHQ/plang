@@ -14,44 +14,28 @@ public enum ErrorOrder
 /// </summary>
 public sealed class ErrorHandler
 {
-    /// <summary>
-    /// Goal to call when an error occurs.
-    /// </summary>
+    [Store]
     public GoalCall? Goal { get; init; }
 
-    /// <summary>
-    /// Number of times to retry the step.
-    /// </summary>
+    [Store]
     public int? RetryCount { get; init; }
 
-    /// <summary>
-    /// Total time window in milliseconds over which retries should occur.
-    /// </summary>
+    [Store]
     public int? RetryOverMs { get; init; }
 
-    /// <summary>
-    /// Order of error handling operations.
-    /// </summary>
+    [Store]
     public ErrorOrder? Order { get; init; }
 
-    /// <summary>
-    /// Whether to ignore the error and continue execution.
-    /// </summary>
+    [Store]
     public bool IgnoreError { get; init; }
 
-    /// <summary>
-    /// Optional message to display or log when error occurs.
-    /// </summary>
+    [Store]
     public string? Message { get; init; }
 
-    /// <summary>
-    /// Status code to filter which errors this handler handles.
-    /// </summary>
+    [Store]
     public int? StatusCode { get; init; }
 
-    /// <summary>
-    /// User-defined key for the error handler.
-    /// </summary>
+    [Store]
     public string? Key { get; init; }
 }
 

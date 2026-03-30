@@ -1,0 +1,155 @@
+[
+  {
+    "name": "Start",
+    "description": "Build steps for calling goal Greet with parameters and asserting the greeting variable.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "call goal Greet name=\u0022world\u0022",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: call goal with parameters and return value",
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "goalName",
+                "value": {
+                  "name": "Greet",
+                  "parameters": [
+                    {
+                      "name": "name",
+                      "value": "world",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %greeting% equals \u0022hello world\u0022",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "expected",
+                "value": "hello world",
+                "type": "string"
+              },
+              {
+                "name": "actual",
+                "value": "%greeting%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "call goal Greet name=\u0022plang\u0022",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": "Test: call goal with different parameter",
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "goalName",
+                "value": {
+                  "name": "Greet",
+                  "parameters": [
+                    {
+                      "name": "name",
+                      "value": "plang",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "assert %greeting% equals \u0022hello plang\u0022",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "expected",
+                "value": "hello plang",
+                "type": "string"
+              },
+              {
+                "name": "actual",
+                "value": "%greeting%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/GoalCall.test.goal",
+    "prPath": "/.build/goalcall.test.pr",
+    "hash": "c887b7562c22131bfe3944e7d52a5e852586bc05c82451610fecbe4f8c0717c3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

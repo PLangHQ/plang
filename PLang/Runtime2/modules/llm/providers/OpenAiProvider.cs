@@ -39,7 +39,7 @@ public sealed class OpenAiProvider : ILlmProvider
             "https://api.openai.com/v1/chat/completions");
         var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);
         var model = action.Model
-            ?? await ResolveConfigAsync(settings, "llm.model", null, "gpt-4.1-mini");
+            ?? await ResolveConfigAsync(settings, "llm.model", null, "gpt-5.4-nano");
 
         // --- Validate ---
         if (action.Messages.Count == 0)
@@ -122,7 +122,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 ["model"] = model,
                 ["messages"] = ToApiMessages(messages, engine.FileSystem),
                 ["temperature"] = action.Temperature,
-                ["max_tokens"] = action.MaxTokens
+                ["max_completion_tokens"] = action.MaxTokens
             };
             if (apiTools != null)
                 body["tools"] = apiTools;

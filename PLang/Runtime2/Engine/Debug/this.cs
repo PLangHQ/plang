@@ -208,7 +208,7 @@ public sealed class @this
     private static string FormatValue(object? value)
     {
         if (value == null) return "(null)";
-        if (value is string s) return s.Length > 200 ? $"\"{s[..200]}...\" ({s.Length} chars)" : $"\"{s}\"";
+        if (value is string s) return s.Length > 500 ? $"\"{s[..500]}...\" ({s.Length} chars)" : $"\"{s}\"";
         if (value is System.Collections.IDictionary dict)
         {
             var preview = new List<string>();

@@ -5,23 +5,15 @@ namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 /// </summary>
 public sealed class CacheSettings
 {
-    /// <summary>
-    /// How long to cache the result in milliseconds.
-    /// </summary>
+    [Store]
     public long DurationMs { get; init; }
 
-    /// <summary>
-    /// Whether this is a sliding expiration (resets on access).
-    /// </summary>
+    [Store]
     public bool Sliding { get; init; }
 
-    /// <summary>
-    /// Optional custom cache key.
-    /// </summary>
+    [Store]
     public string? Key { get; init; }
 
-    /// <summary>
-    /// Where to store the cache: "memory" or "disk".
-    /// </summary>
+    [Store]
     public string? Location { get; init; }
 }
