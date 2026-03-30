@@ -293,6 +293,40 @@ public static class TypeMapping
         if (underlying != null)
             return ConvertTo(value, underlying);
 
+        // List<T> handling: element-wise conversion or single-value wrapping
+        if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
+        {
+            var elementType = targetType.GetGenericArguments()[0];
+
+            // If source is already a list/collection, convert each element
+            if (value is System.Collections.IList sourceList)
+            {
+                var targetList = (System.Collections.IList)Activator.CreateInstance(targetType)!;
+                foreach (var item in sourceList)
+                {
+                    var convertedItem = ConvertTo(item, elementType);
+                    if (convertedItem != null)
+                        targetList.Add(convertedItem);
+                }
+                return targetList;
+            }
+
+            // Single value → wrap into List<T>
+            if (elementType.IsAssignableFrom(sourceType))
+            {
+                var list = (System.Collections.IList)Activator.CreateInstance(targetType)!;
+                list.Add(value);
+                return list;
+            }
+            var converted = ConvertTo(value, elementType);
+            if (converted != null && elementType.IsAssignableFrom(converted.GetType()))
+            {
+                var list = (System.Collections.IList)Activator.CreateInstance(targetType)!;
+                list.Add(converted);
+                return list;
+            }
+        }
+
         // Handle enum types
         if (targetType.IsEnum)
         {

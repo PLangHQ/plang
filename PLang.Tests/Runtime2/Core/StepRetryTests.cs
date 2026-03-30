@@ -248,7 +248,7 @@ public class StepRetryTests
                             Parameters = new List<Data>
                             {
                                 new Data("name", "%capturedError%"),
-                                new Data("value", "%__error__%")
+                                new Data("value", "%!error.Message%")
                             }
                         }
                     }
@@ -289,10 +289,8 @@ public class StepRetryTests
         var context = _engine.CreateContext();
         await _engine.RunGoalAsync(goal, context);
 
-        // __error__ variables should be cleaned up after error goal runs
-        await Assert.That(context.MemoryStack.GetValue("__error__")).IsNull();
-        await Assert.That(context.MemoryStack.GetValue("__errorKey__")).IsNull();
-        await Assert.That(context.MemoryStack.GetValue("__errorStatusCode__")).IsNull();
+        // !error variable should be cleaned up after error goal runs
+        await Assert.That(context.MemoryStack.GetValue("!error")).IsNull();
     }
 
     // ================================================================

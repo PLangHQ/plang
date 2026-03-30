@@ -1,13 +1,13 @@
 {
   "name": "Build",
-  "description": "This Goal builds a specified folder by setting a default path, retrieving application data, and processing goals found within that folder. It outputs the building path, the number of goals found, and saves the application data after processing each goal.",
+  "description": "Main entry point for the PLang builder. Transforms .goal files into .pr files.",
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = \u0022.\u0022",
+      "text": "set default %path% = \".\"",
       "lineNumber": 6,
       "indent": 0,
-      "comment": "Parameters: %path% - folder to build (default: \u0022.\u0022)",
+      "comment": "Parameters: %path% - folder to build (default: \".\")",
       "actions": [
         {
           "module": "variable",
@@ -22,20 +22,24 @@
               "name": "Value",
               "value": ".",
               "type": "string"
+            },
+            {
+              "name": "AsDefault",
+              "value": true,
+              "type": "bool"
             }
           ],
           "errors": [],
           "warnings": []
         }
       ],
-      "hash": "9e783ae28eb70e85bc1ceacd0b57796a1a5b4deba2bc062acf9e282651992ef7",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "write out \u0022Building path: %path%\u0022",
+      "text": "write out \"Building path: %path%\"",
       "lineNumber": 7,
       "indent": 0,
       "actions": [
@@ -47,23 +51,12 @@
               "name": "Content",
               "value": "Building path: %path%",
               "type": "string"
-            },
-            {
-              "name": "Actor",
-              "value": "user",
-              "type": "actor"
-            },
-            {
-              "name": "Channel",
-              "value": "default",
-              "type": "string"
             }
           ],
           "errors": [],
           "warnings": []
         }
       ],
-      "hash": "c1b8d164b23cf92fa7d69dc5d46aee2a0a6af3c8465bdc4d969b0e8281619d2f",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -75,12 +68,12 @@
       "indent": 0,
       "actions": [
         {
-          "module": "goal",
-          "action": "call",
+          "module": "builder",
+          "action": "app",
           "parameters": [
             {
-              "name": "GoalName",
-              "value": "GetApp",
+              "name": "Path",
+              "value": "%path%",
               "type": "string"
             }
           ],
@@ -93,24 +86,23 @@
           "warnings": []
         }
       ],
-      "hash": "6ab4511537f670c261a76dd8218ab2daec71f986130a5d387ee41a1175905fa2",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "[plang] GetGoalsV2, fileOrFolderPath=%path%, parser=\u0022goal\u0022, write to %goals%",
+      "text": "[plang] GetGoalsV2, fileOrFolderPath=%path%, parser=\"goal\", write to %goals%",
       "lineNumber": 9,
       "indent": 0,
       "actions": [
         {
-          "module": "goal",
-          "action": "call",
+          "module": "builder",
+          "action": "goals",
           "parameters": [
             {
-              "name": "GoalName",
-              "value": "GetGoalsV2",
+              "name": "Path",
+              "value": "%path%",
               "type": "string"
             }
           ],
@@ -123,14 +115,13 @@
           "warnings": []
         }
       ],
-      "hash": "dae82c7555b737831afd648cd32464b0ec2cc5a99cca6a2ecf395d5c644562b3",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "write out \u0022Found %goals.Count% goals\u0022",
+      "text": "write out \"Found %goals.Count% goals\"",
       "lineNumber": 10,
       "indent": 0,
       "actions": [
@@ -142,23 +133,12 @@
               "name": "Content",
               "value": "Found %goals.Count% goals",
               "type": "string"
-            },
-            {
-              "name": "Actor",
-              "value": "user",
-              "type": "actor"
-            },
-            {
-              "name": "Channel",
-              "value": "default",
-              "type": "string"
             }
           ],
           "errors": [],
           "warnings": []
         }
       ],
-      "hash": "6b5ca2131e83d1362ccc8b9d210e1e6a0f3b0e6cf15fe08da61e2559f4c0f0d6",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -193,7 +173,6 @@
           "warnings": []
         }
       ],
-      "hash": "c537d9c2131bf66769be1bc7a063646e4d7556e8e300ef873d36d27a4295ec44",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -205,20 +184,19 @@
       "indent": 0,
       "actions": [
         {
-          "module": "goal",
-          "action": "call",
+          "module": "builder",
+          "action": "app.save",
           "parameters": [
             {
-              "name": "GoalName",
-              "value": "SaveApp",
-              "type": "string"
+              "name": "App",
+              "value": "%app%",
+              "type": "object"
             }
           ],
           "errors": [],
           "warnings": []
         }
       ],
-      "hash": "802fd394760dcee84265ca74c9583267cfccbfe08453459cf0994abe256f2622",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -226,15 +204,16 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/Build.goal",
-  "prPath": "/.build/build.pr",
-  "hash": "916c269408a028e2d9716cb2a8fc0946364614e665ce1c36eca9b0f61ff863fb",
+  "inputParameters": {
+    "%path%": "The folder path to build, defaults to '.' if not provided."
+  },
+  "path": "/system/builder/Build.goal",
+  "prPath": "/system/builder/.build/build.pr",
+  "hash": "",
   "isSetup": false,
   "isEvent": false,
+  "isSystem": true,
   "isTest": false,
-  "inputParameters": {
-    "%path%": "The folder path to build, defaults to \u0027.\u0027 if not provided."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "Build"

@@ -223,7 +223,12 @@ public class DefaultBuilderProvider : IBuilderProvider
             }
         }
 
-        return Data.Ok((AppData?)null);
+        return Data.Ok(new AppData
+        {
+            Id = Guid.NewGuid().ToString(),
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow
+        });
     }
 
     public async Task<Data> AppSave(appSave action)

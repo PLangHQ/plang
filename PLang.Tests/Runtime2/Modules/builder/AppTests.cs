@@ -74,8 +74,11 @@ public class AppTests
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
-        // No app.pr exists — returns null, caller decides whether to create
-        await Assert.That(result.Value).IsNull();
+        // No app.pr exists — returns a new default AppData with generated Id
+        await Assert.That(result.Value).IsNotNull();
+        await Assert.That(result.Value).IsTypeOf<AppData>();
+        var appData = (AppData)result.Value!;
+        await Assert.That(appData.Id).IsNotNullOrEmpty();
     }
 
     [Test]

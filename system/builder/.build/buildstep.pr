@@ -1,80 +1,124 @@
 {
-  "name": "HandleBuildStepFailure",
-  "description": "The HandleBuildStepFailure goal is designed to manage errors that occur during a build step. It checks the status code of the error and takes appropriate actions based on its value. If the status code is 402 or greater than or equal to 500, it throws the error. It also appends the error to a list of step errors and checks if the retry count exceeds 3, in which case it ends the goal and the previous two steps. If the retry count is 3 or less, it logs a message indicating the retry attempt and calls the BuildStep function to attempt the build again.",
+  "name": "BuildStep",
+  "description": "Builds a step that needs detailed action info. Action suggestions already on step from BuildGoal.",
+  "comment": "Builds a step that needs detailed action info\nAction suggestions (module + action) already on step from BuildGoal",
   "steps": [
     {
       "index": 0,
-      "text": "if %!error.StatusCode% = 402 then",
-      "lineNumber": 22,
+      "text": "read file \"llm/BuildStep.llm\", load vars, write to %buildStepPrompt%",
+      "lineNumber": 4,
       "indent": 0,
       "actions": [
         {
-          "module": "condition",
-          "action": "if",
+          "module": "file",
+          "action": "read",
           "parameters": [
             {
-              "name": "Condition",
-              "value": "%!error.StatusCode% == 402",
-              "type": "bool"
+              "name": "Path",
+              "value": "llm/BuildStep.llm",
+              "type": "path"
             },
             {
-              "name": "GoalIfTrue",
-              "value": "HandleBuildStepFailure_ThrowError402",
-              "type": "goal.call"
+              "name": "ResolveVariables",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "return": [
+            {
+              "name": "buildStepPrompt"
             }
           ],
           "errors": [],
           "warnings": []
         }
       ],
-      "hash": "229ebdf1e831c02f91940a296481ae843fd681974b4d79c82b6d66bc3f003dc5",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "throw %!error%",
-      "lineNumber": 23,
-      "indent": 4,
+      "text": "[llm] system: %buildStepPrompt% user: %step.Serialize.Builder%",
+      "lineNumber": 5,
+      "indent": 0,
       "actions": [
         {
-          "module": "error",
-          "action": "throw",
+          "module": "llm",
+          "action": "query",
           "parameters": [
             {
-              "name": "message",
-              "value": "%!error%",
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "text": "%buildStepPrompt%"
+                },
+                {
+                  "role": "user",
+                  "text": "%step.Serialize.Builder%"
+                }
+              ],
               "type": "object"
+            },
+            {
+              "name": "Schema",
+              "value": "{\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}],\"actions\":[{\"module\":\"string\",\"action\":\"string\",\"parameters?\":[{\"name\":\"string\",\"value?\":\"object\",\"type?\":\"string\"}],\"return?\":[{\"name\":\"string\"}],\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}]}]}",
+              "type": "string"
+            },
+            {
+              "name": "Format",
+              "value": "json",
+              "type": "string"
+            },
+            {
+              "name": "Temperature",
+              "value": 0.0,
+              "type": "double"
+            },
+            {
+              "name": "Cache",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "return": [
+            {
+              "name": "result"
             }
           ],
           "errors": [],
           "warnings": []
         }
       ],
-      "hash": "197831eeac001e94ac83470d9195495165ea642a92fad82f9fc30a9c6088fb56",
+      "onError": {
+        "goal": {
+          "name": "HandleBuildStepFailure"
+        },
+        "ignoreError": false
+      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "if %!error.StatusCode% \u003E= 500 then",
-      "lineNumber": 24,
+      "text": "set %goal.Steps[stepResult.index].actions% = %result.actions%",
+      "lineNumber": 16,
       "indent": 0,
       "actions": [
         {
-          "module": "list",
-          "action": "add",
+          "module": "variable",
+          "action": "set",
           "parameters": [
             {
-              "name": "ListName",
-              "value": "%step.errors%",
+              "name": "Name",
+              "value": "%goal.Steps[stepResult.index].actions%",
               "type": "string"
             },
             {
               "name": "Value",
-              "value": "%!error%",
+              "value": "%result.actions%",
               "type": "object"
             }
           ],
@@ -82,24 +126,28 @@
           "warnings": []
         }
       ],
-      "hash": "02c4837139fb84a5a6fb42a78cf2235c0fa51a2045e93a597cf2e0ae163422b4",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "throw %!error%",
-      "lineNumber": 25,
-      "indent": 4,
+      "text": "set %goal.Steps[stepResult.index].actions.errors% = null",
+      "lineNumber": 17,
+      "indent": 0,
       "actions": [
         {
-          "module": "error",
-          "action": "throw",
+          "module": "variable",
+          "action": "set",
           "parameters": [
             {
-              "name": "message",
-              "value": "%!error%",
+              "name": "Name",
+              "value": "%goal.Steps[stepResult.index].actions.errors%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": null,
               "type": "object"
             }
           ],
@@ -107,29 +155,28 @@
           "warnings": []
         }
       ],
-      "hash": "a2eaccbdf0df61c51ee01a147e7222de6084584657ca1b4de580b1eb4065cd21",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "append %!error% to %step.errors%",
-      "lineNumber": 26,
+      "text": "set %goal.Steps[stepResult.index].errors% = null",
+      "lineNumber": 18,
       "indent": 0,
       "actions": [
         {
-          "module": "list",
-          "action": "add",
+          "module": "variable",
+          "action": "set",
           "parameters": [
             {
-              "name": "ListName",
-              "value": "%step.errors%",
+              "name": "Name",
+              "value": "%goal.Steps[stepResult.index].errors%",
               "type": "string"
             },
             {
               "name": "Value",
-              "value": "%!error%",
+              "value": null,
               "type": "object"
             }
           ],
@@ -137,143 +184,21 @@
           "warnings": []
         }
       ],
-      "hash": "4e8450d8dca77189bd85d17a5551ae61d68736d9e11792b44f11c93d6b8ede57",
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 5,
-      "text": "if %!error.retryCount% \u003E 3 then",
-      "lineNumber": 27,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Condition",
-              "value": "%!error.retryCount% \u003E 3",
-              "type": "bool"
-            },
-            {
-              "name": "GoalIfTrue",
-              "value": "BuildStep",
-              "type": "goal.call"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "hash": "d0276a5d1cff28964ccc9a8f20206a4ee6abd43b209c3a63fec0f2debbdbb137",
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 6,
-      "text": "end goal and previous 2",
-      "lineNumber": 28,
-      "indent": 4,
-      "actions": [
-        {
-          "module": "error",
-          "action": "throw",
-          "parameters": [
-            {
-              "name": "message",
-              "value": "end goal and previous 2",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "hash": "70a3d05a418b9e890afee9ad076db4d62f035e303a370321f359f0a084053626",
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 7,
-      "text": "write out \u0022  Retry %!error.retryCount%/3: %!error.Message%\u0022",
-      "lineNumber": 29,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {
-              "name": "Content",
-              "value": "  Retry %!error.retryCount%/3: %!error.Message%",
-              "type": "string"
-            },
-            {
-              "name": "Actor",
-              "value": "user",
-              "type": "actor"
-            },
-            {
-              "name": "Channel",
-              "value": "default",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "hash": "27a5211f013de197006598a02abed3d64f779b8f5d345b795599c66c2be88647",
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 8,
-      "text": "call BuildStep",
-      "lineNumber": 30,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "name": "GoalName",
-              "value": "BuildStep",
-              "type": "goal.call"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "hash": "70c06003466fe2a4c069122d81a49e562d3f0d7d967c719cef5a3840dee6379e",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
     }
   ],
   "subGoals": [],
-  "visibility": 0,
-  "path": "/BuildStep.goal",
-  "prPath": "/.build/buildstep.pr",
-  "hash": "c33e54e6bf299784cb3cbe44569c9377a5a2c31fc19b67fcd4b49a1353465553",
+  "visibility": 1,
+  "path": "/system/builder/BuildStep.goal",
+  "prPath": "/system/builder/.build/buildstep.pr",
+  "hash": "",
   "isSetup": false,
   "isEvent": false,
+  "isSystem": true,
   "isTest": false,
-  "inputParameters": {
-    "%!error.StatusCode%": "The status code of the error that occurred during the build step.",
-    "%!error%": "The error object that contains details about the failure.",
-    "%!error.retryCount%": "The number of times the build step has been retried.",
-    "%!error.Message%": "A message describing the error that occurred.",
-    "%step.errors%": "A collection of errors that have occurred during the step."
-  },
   "errors": [],
   "warnings": [],
-  "fullPath": "HandleBuildStepFailure"
+  "fullPath": "BuildStep"
 }

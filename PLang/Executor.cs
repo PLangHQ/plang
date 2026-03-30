@@ -296,46 +296,35 @@ namespace PLang
 		}
 		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Build2(string[] args)
 		{
-			var result = CommandLineParser.Parse(args);
+			var (_, parameters) = CommandLineParser.Parse(args);
 
-			// Load the new builder goal from system/builder/.build/
-			var prFilePath = System.IO.Path.Join(fileSystem.SystemDirectory, ".build", "Build", "00. Goal.pr");
-			var prParser = container.GetInstance<PrParser>();
-			var goal = prParser.ParsePrFile(prFilePath);
-			if (goal == null)
-				return (null, null, new Error($"Could not load builder goal from {prFilePath}"));
+			// Create v2 engine rooted at the user's project directory
+			var engine2 = new Runtime2.Engine.@this(fileSystem);
+			// SystemDirectory points to the system/ folder next to plang.exe
+			engine2.SystemDirectory = fileSystem.SystemDirectory;
+			engine2.Building.IsEnabled = true;
 
-			// Load all builder sub-goals so the engine can resolve them at runtime
-			var builderDir = System.IO.Path.Join(fileSystem.SystemDirectory, "builder");
-			var builderGoals = prParser.LoadAllGoalsByPath(builderDir);
-			prParser.AddSystemGoals(builderGoals);
-
-			var engine = container.GetInstance<IEngine>();
-			engine.Init(container);
-
-			var msa = container.GetInstance<IMemoryStackAccessor>();
-			var memoryStack = MemoryStack.New(container, engine);
-			msa.Current = memoryStack;
-
-			// Resolve build path relative to user's project root, not the builder's directory.
-			// The builder goals run from system/builder/, so relative paths must be made absolute here.
-			if (!result.parameters.TryGetValue("path", out var pathValue) || pathValue is not string pathStr)
+			// Resolve build path relative to user's project root
+			if (!parameters.TryGetValue("path", out var pathValue) || pathValue is not string pathStr)
 				pathStr = ".";
-			result.parameters["path"] = System.IO.Path.GetFullPath(System.IO.Path.Join(fileSystem.RootDirectory, pathStr));
+			parameters["path"] = System.IO.Path.GetFullPath(System.IO.Path.Join(fileSystem.RootDirectory, pathStr));
 
-			// Set parameters from command line
-			foreach (var param in result.parameters)
+			foreach (var param in parameters)
+				engine2.MemoryStack.Set(param.Key, param.Value);
+
+			// Run /system/Build which calls /system/builder/Build → BuildGoal → ApplyStep etc.
+			// Absolute path so user can override by placing system/ in their app folder.
+			var result = await engine2.RunGoalAsync(
+				new Runtime2.Engine.Goals.Goal.GoalCall { Name = "/system/Build" },
+				cancellationToken: CancellationToken.None);
+
+			if (!result.Success)
 			{
-				memoryStack.Put(param.Key, param.Value);
+				return (null, null, result.Error != null
+					? new Error(result.Error.Format())
+					: new Error("Build failed"));
 			}
-
-			var context = new PLangContext(memoryStack, engine, ExecutionMode.Console);
-			var contextAccessor = container.GetInstance<IPLangContextAccessor>();
-			contextAccessor.Current = context;
-
-			// Use Engine.RunGoal which properly resolves module types per step
-			var (vars, error) = await engine.RunGoal(goal, context);
-			return (engine, vars, error);
+			return (null, result.Value, null);
 		}
 
 		public async Task<Runtime2.Engine.Memory.Data> Run2(string[] args, CancellationToken cancellationToken = default)

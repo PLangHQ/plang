@@ -46,6 +46,13 @@ public sealed class @this : IAsyncDisposable
     public string AbsolutePath { get; }
 
     /// <summary>
+    /// The OS absolute path to the system/ folder (next to the plang executable).
+    /// System goals (builder, events, etc.) are resolved from here.
+    /// Null when no system directory is configured.
+    /// </summary>
+    public string? SystemDirectory { get; set; }
+
+    /// <summary>
     /// Environment name (e.g., "production", "development").
     /// </summary>
     public string Environment { get; set; }

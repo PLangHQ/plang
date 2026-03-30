@@ -168,14 +168,24 @@ public sealed partial class @this
         return Data.FromError(new Error($"Step failed after {retryCount} retries", "RetryExhausted", 500));
     }
 
+    private int _errorCallCount;
+
     private async Task<Data?> CallErrorGoalAsync(ErrorHandler handler, Data failedResult, Engine.@this engine, PLangContext context, CancellationToken cancellationToken)
     {
         if (handler.Goal == null) return null;
 
-        // Set error info in memory so the error goal can access it
-        context.MemoryStack.Set("__error__", failedResult.Error?.Message);
-        context.MemoryStack.Set("__errorKey__", failedResult.Error?.Key);
-        context.MemoryStack.Set("__errorStatusCode__", failedResult.Error?.StatusCode);
+        _errorCallCount++;
+
+        // Set %!error% as a Data object whose Value is a dictionary.
+        // This lets %!error.StatusCode%, %!error.Message%, %!error.retryCount% navigate via dot notation.
+        var errorInfo = new Dictionary<string, object?>
+        {
+            ["Message"] = failedResult.Error?.Message,
+            ["StatusCode"] = failedResult.Error?.StatusCode,
+            ["Key"] = failedResult.Error?.Key,
+            ["retryCount"] = _errorCallCount
+        };
+        context.MemoryStack.Set("!error", errorInfo);
 
         try
         {
@@ -193,10 +203,7 @@ public sealed partial class @this
         }
         finally
         {
-            // Clean up error variables
-            context.MemoryStack.Remove("__error__");
-            context.MemoryStack.Remove("__errorKey__");
-            context.MemoryStack.Remove("__errorStatusCode__");
+            context.MemoryStack.Remove("!error");
         }
     }
 }

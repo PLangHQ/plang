@@ -1,0 +1,270 @@
+{
+  "name": "HandleBuildStepFailure",
+  "steps": [
+    {
+      "index": 0,
+      "text": "if %!error.StatusCode% = 402 then",
+      "lineNumber": 22,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%!error.StatusCode%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 402,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "throw %!error%",
+      "lineNumber": 23,
+      "indent": 1,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "%!error.Message%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "if %!error.StatusCode% >= 500 then",
+      "lineNumber": 24,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%!error.StatusCode%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": ">=",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "throw %!error%",
+      "lineNumber": 25,
+      "indent": 1,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "%!error.Message%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "append %!error% to %step.errors%",
+      "lineNumber": 26,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "list",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%step.errors%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%!error%",
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "if %!error.retryCount% > 3 then",
+      "lineNumber": 27,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%!error.retryCount%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": ">",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "throw %!error%",
+      "lineNumber": 28,
+      "indent": 1,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "Build step failed after 3 retries",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "write out \"  Retry %!error.retryCount%/3: %!error.Message%\"",
+      "lineNumber": 29,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "  Retry %!error.retryCount%/3: %!error.Message%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "call BuildStep",
+      "lineNumber": 30,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "BuildStep"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 0,
+  "path": "/system/builder/BuildStep.goal",
+  "prPath": "/system/builder/.build/handlebuildstepfailure.pr",
+  "hash": "",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "HandleBuildStepFailure"
+}

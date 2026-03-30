@@ -120,36 +120,72 @@ public sealed class @this
         {
             var relativeDir = callingFolderPath.Trim('/', '\\');
             var combinedDir = string.IsNullOrEmpty(nameDir) ? relativeDir : Engine.FileSystem.Path.Combine(relativeDir, nameDir);
-            var relativePrPath = Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, combinedDir, ".build", file.ToLowerInvariant() + ".pr");
 
-            if (Engine.FileSystem.File.Exists(relativePrPath))
+            var loaded = await TryLoadPr(combinedDir, file, name, cancellationToken);
+            if (loaded != null) return loaded;
+        }
+
+        // Fall back to root-relative resolution, then system directory
+        {
+            var loaded = await TryLoadPr(nameDir, file, name, cancellationToken);
+            if (loaded != null) return loaded;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Tries to load a .pr file from {root}/{dir}/.build/{file}.pr first,
+    /// then from {SystemDirectory}/{stripped}/.build/{file}.pr for system goals.
+    /// SystemDirectory points to the system/ folder. Paths starting with system/
+    /// get the prefix stripped when resolving against SystemDirectory.
+    /// A user can override a specific system goal by placing the file at {root}/system/...
+    /// </summary>
+    private async Task<Goal.@this?> TryLoadPr(string dir, string file, string name, CancellationToken ct)
+    {
+        var prFile = file.ToLowerInvariant() + ".pr";
+
+        // 1. Try user's root directory
+        var rootPath = Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, dir, ".build", prFile);
+        if (Engine.FileSystem.File.Exists(rootPath))
+        {
+            var result = await LoadFromFileAsync(Engine, rootPath, cancellationToken: ct);
+            if (result.Success)
             {
-                var relResult = await LoadFromFileAsync(Engine, relativePrPath, cancellationToken: cancellationToken);
-                if (relResult.Success)
+                var goal = result.Value as Goal.@this;
+                if (goal is { IsSetup: true }) return null;
+                if (goal != null && !string.IsNullOrEmpty(name))
+                    _byPath[name] = goal;
+                return goal;
+            }
+        }
+
+        // 2. Try system directory — only for paths under system/
+        if (!string.IsNullOrEmpty(Engine.SystemDirectory))
+        {
+            var normalized = dir.Replace('\\', '/');
+            if (normalized.StartsWith("system/", StringComparison.OrdinalIgnoreCase)
+                || normalized.Equals("system", StringComparison.OrdinalIgnoreCase))
+            {
+                // Strip the "system/" prefix — SystemDirectory IS the system folder
+                var withinSystem = normalized.Length > 7 ? normalized[7..] : "";
+                var systemPath = Engine.FileSystem.Path.Combine(Engine.SystemDirectory, withinSystem, ".build", prFile);
+                if (Engine.FileSystem.File.Exists(systemPath))
                 {
-                    var loaded = relResult.Value as Goal.@this;
-                    if (loaded is { IsSetup: true }) return null;
-                    if (loaded != null && !string.IsNullOrEmpty(name))
-                        _byPath[name] = loaded;
-                    return loaded;
+                    var result = await LoadFromFileAsync(Engine, systemPath, cancellationToken: ct);
+                    if (result.Success)
+                    {
+                        var goal = result.Value as Goal.@this;
+                        if (goal is { IsSetup: true }) return null;
+                        if (goal != null && !string.IsNullOrEmpty(name))
+                            _byPath[name] = goal;
+                        return goal;
+                    }
                 }
             }
         }
 
-        // Fall back to root-relative resolution
-        var prPath = Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, nameDir, ".build", file.ToLowerInvariant() + ".pr");
-        if (!Engine.FileSystem.File.Exists(prPath))
-            return null;
-
-        var loadResult = await LoadFromFileAsync(Engine, prPath, cancellationToken: cancellationToken);
-        if (!loadResult.Success)
-            return null;
-
-        var result = loadResult.Value as Goal.@this;
-        if (result is { IsSetup: true }) return null;
-        if (result != null && !string.IsNullOrEmpty(name))
-            _byPath[name] = result;
-        return result;
+        return null;
     }
 
     /// <summary>
