@@ -1,10 +1,10 @@
 {
   "tester": "tester",
   "branch": "runtime2-builder-module",
-  "timestamp": "2026-03-30T14:00:00Z",
-  "tested_version": "v1",
+  "timestamp": "2026-03-30T15:00:00Z",
+  "tested_version": "v2",
   "test_run": {
-    "csharp": { "total": 2018, "passed": 2014, "failed": 0, "skipped": 4 },
+    "csharp": { "total": 2022, "passed": 2018, "failed": 0, "skipped": 4 },
     "plang": { "total": 6, "passed": 3, "failed": 0, "skipped": 3 }
   },
   "coverage": {
@@ -14,94 +14,15 @@
     "details": {
       "DefaultBuilderProvider.cs": "96.9%",
       "DefaultBuilderProvider.Goals": "84.3%",
-      "DefaultBuilderProvider.GoalsSave": "90.0%",
-      "DefaultBuilderProvider.App": "79.3%",
+      "DefaultBuilderProvider.GoalsSave": "100%",
+      "DefaultBuilderProvider.App": "93.1%",
       "DefaultBuilderProvider.AppSave": "100%",
       "DefaultBuilderProvider.MergePrData": "100%",
-      "DefaultBuilderProvider.ResolveGoalCallPaths": "89.7%",
-      "DefaultBuilderProvider.Validate": "100%",
-      "actions.cs (Run)": "100%",
-      "app.cs (Run)": "100%",
-      "appSave.cs (Run)": "100%",
-      "goals.cs (Run)": "100%",
-      "goalsSave.cs (Run)": "100%",
-      "merge.cs (Run)": "100%",
-      "validate.cs (Run)": "100%",
-      "types.cs (Run)": "100%"
+      "DefaultBuilderProvider.ResolveGoalCallPaths": "97.4%",
+      "DefaultBuilderProvider.Validate": "100%"
     }
   },
-  "findings": [
-    {
-      "id": 1,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/Runtime2/Modules/builder/ValidateActionsTests.cs",
-      "code_file": "PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs",
-      "issue": "ValidateActions_GoalCallPath_Resolved (line 71) only checks result.Success but never verifies that goalCall.PrPath was actually set. The test passes even if ResolveGoalCallPaths() is a no-op.",
-      "impact": "A broken GoalCall path resolution (e.g., file.exists returning wrong type, PrPath assignment skipped) would be invisible to this test.",
-      "suggestion": "After RunAction, retrieve the GoalCall from actions[0].Parameters[0].Value, cast to GoalCall, and assert goalCall.PrPath == expectedPrPath (e.g., '/.build/dosomething.pr')."
-    },
-    {
-      "id": 2,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/Runtime2/Modules/builder/AppTests.cs",
-      "code_file": "PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs",
-      "issue": "SaveApp_UpdatesTimestamp (line 82) only checks file exists but never verifies file content. Test name promises timestamp verification but delivers none. The file could be empty or contain garbage.",
-      "impact": "If AppSave serialized empty JSON or used wrong naming policy, this test would still pass.",
-      "suggestion": "Read the file back, deserialize to AppData, and assert app.Id equals the input value. If testing timestamp update, set Updated to a known value before save and verify it changed."
-    },
-    {
-      "id": 3,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/Runtime2/Modules/builder/SaveGoalsTests.cs",
-      "code_file": "PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs",
-      "issue": "SaveGoals_SerializesToPrPath (line 41) checks file existence but never verifies the content contains the goal data. The file could exist but be empty.",
-      "impact": "If the save action wrote empty content or wrong format, this test would pass. The CamelCase test partially covers this but only for naming/null policy, not for data integrity.",
-      "suggestion": "Read the .pr file back, deserialize to List<Goal>, and assert the goal name and step count match the input."
-    },
-    {
-      "id": 4,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Modules/builder/SaveGoalsTests.cs",
-      "code_file": "PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs",
-      "issue": "GoalsSave error guards at lines 124-129 (empty goals list, null PrPath) are untested. These are the 10% gap in GoalsSave coverage.",
-      "impact": "Error messages for invalid input not verified. Low risk since these are simple guard clauses.",
-      "suggestion": "Add SaveGoals_EmptyGoalsList_ReturnsError and SaveGoals_NoPrPath_ReturnsError tests."
-    },
-    {
-      "id": 5,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Modules/builder/AppTests.cs",
-      "code_file": "PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs",
-      "issue": "App() corrupt JSON error path at lines 219-222 is untested. This explains the 79.3% App coverage gap.",
-      "impact": "If the try/catch were removed or the error key changed, no test would catch it.",
-      "suggestion": "Add GetApp_CorruptJson_ReturnsError test: write invalid JSON to .build/app.pr, call GetApp, assert Success==false and Error.Key=='CorruptAppFile'."
-    },
-    {
-      "id": 6,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/Runtime2/Modules/builder/GetGoalsTests.cs",
-      "code_file": "PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs",
-      "issue": "GetGoals_CorruptPrFile_IgnoresAndReparses (line 154) verifies goals are returned with empty actions but never checks that result.Warnings contains the 'CorruptPrFile' error info. The warning propagation path at lines 111-112 is untested.",
-      "impact": "If the error collection mechanism broke (e.g., allErrors never populated), the test would still pass.",
-      "suggestion": "Cast result to Data, assert result.Warnings is not null and contains an entry with Key=='CorruptPrFile'."
-    },
-    {
-      "id": 7,
-      "severity": "minor",
-      "type": "edge-case",
-      "test_file": "PLang.Tests/Runtime2/Modules/builder/MergeTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Goals/Goal/this.cs",
-      "issue": "MergeFrom's HashSet<int> consumed guard (line 171) prevents duplicate text re-matching, but no test has goals with duplicate step texts to verify this behavior.",
-      "impact": "If the consumed check were removed, steps with identical text could silently double-merge. Low probability in practice but the guard exists for a reason.",
-      "suggestion": "Add GoalMergeFrom_DuplicateStepText_FirstMatchOnly test: two steps with same Text in fresh goal, one matching step in existing. Verify only the first gets merged."
-    }
-  ],
-  "verdict": "needs-fixes",
-  "summary": "2018 C# tests pass (0 fail). Coverage is strong at 96.9% for DefaultBuilderProvider. Found 3 major false-greens: GoalCall PrPath resolution never verified (finding 1), SaveApp content never checked (finding 2), SaveGoals content never checked (finding 3). All three tests check file-exists or Success==true without verifying the actual output data, meaning broken serialization or path resolution would be invisible. 4 minor findings for missing error path coverage and edge cases. PLang tests: 3 of 6 are deferred stubs (acceptable for actions requiring constructed objects). Fix the 3 major false-greens before merging."
+  "findings": [],
+  "verdict": "approved",
+  "summary": "All 7 v1 findings resolved. 4 new tests added (CorruptJson, DuplicateStepText, EmptyGoalsList, NoPrPath). 1 production bug fixed (PrPath resolution was broken). Coverage improved: GoalsSave 90→100%, App 79→93%, ResolveGoalCallPaths 90→97%. Goals at 84.3% is the only remaining gap (file-read error path). 2022 tests, 0 failures."
 }
