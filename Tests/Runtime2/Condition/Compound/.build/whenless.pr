@@ -1,0 +1,51 @@
+[
+  {
+    "name": "WhenLess",
+    "description": "Build goal steps for setting %lessResult% to \u0022yes\u0022.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %lessResult% = \u0022yes\u0022",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%lessResult%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "yes",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/WhenLess.goal",
+    "prPath": "/.build/whenless.pr",
+    "hash": "428a59343c2ef05617772887e106049b900979acae829a08f03039b4122c9886",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

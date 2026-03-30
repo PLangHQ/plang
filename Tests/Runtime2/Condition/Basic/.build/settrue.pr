@@ -1,0 +1,51 @@
+[
+  {
+    "name": "SetTrue",
+    "description": "Build goal to set %wasTrue% to true.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %wasTrue% = true",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%wasTrue%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/SetTrue.goal",
+    "prPath": "/.build/settrue.pr",
+    "hash": "bd4185e5dfa7bfa79c49d3f1911ebab78a6f74da3f41fbc944e9093d86f77cda",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

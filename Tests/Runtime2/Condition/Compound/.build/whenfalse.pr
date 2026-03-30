@@ -1,0 +1,51 @@
+[
+  {
+    "name": "WhenFalse",
+    "description": "Build goal steps for setting %falseResult% when false branch is taken.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %falseResult% = \u0022no\u0022",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%falseResult%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "no",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/WhenFalse.goal",
+    "prPath": "/.build/whenfalse.pr",
+    "hash": "7c617b7b5fbe2dcd7405ecf9e67a688c9149e29fd43e9a15425794ded6050900",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

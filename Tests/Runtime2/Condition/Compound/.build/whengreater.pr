@@ -1,0 +1,56 @@
+[
+  {
+    "name": "WhenGreater",
+    "description": "Build goal steps for setting %greaterResult% to \u0022yes\u0022.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %greaterResult% = \u0022yes\u0022",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%greaterResult%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "yes",
+                "type": "string"
+              },
+              {
+                "name": "Type",
+                "value": "string",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/WhenGreater.goal",
+    "prPath": "/.build/whengreater.pr",
+    "hash": "de1b2350ea4346d265a5ff9ada731caaf2f4e03ca5c99df387838b0bd87206b8",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]
