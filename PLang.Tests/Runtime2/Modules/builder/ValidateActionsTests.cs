@@ -99,6 +99,10 @@ public class ValidateActionsTests
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
+        // Verify PrPath was actually resolved
+        var resolvedCall = actions[0].Parameters[0].Value as PLang.Runtime2.Engine.Goals.Goal.GoalCall;
+        await Assert.That(resolvedCall).IsNotNull();
+        await Assert.That(resolvedCall!.PrPath).IsEqualTo("/.build/dosomething.pr");
     }
 
     [Test]

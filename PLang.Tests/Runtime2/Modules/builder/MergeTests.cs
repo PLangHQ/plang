@@ -201,5 +201,42 @@ public class MergeTests
         await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(0);
     }
 
+    [Test]
+    public async Task GoalMergeFrom_DuplicateStepText_FirstMatchOnly()
+    {
+        // Two steps with identical text in fresh goal, one match in existing
+        var freshGoal = new Goal
+        {
+            Name = "Test",
+            Steps = new GoalSteps
+            {
+                new Step { Text = "do something", Index = 0 },
+                new Step { Text = "do something", Index = 1 }
+            }
+        };
+
+        var existingGoal = new Goal
+        {
+            Name = "Test",
+            Steps = new GoalSteps
+            {
+                new Step
+                {
+                    Text = "do something",
+                    Actions = new StepActions(new[]
+                    {
+                        new Action { Module = "output", ActionName = "write" }
+                    })
+                }
+            }
+        };
+
+        freshGoal.MergeFrom(existingGoal);
+
+        // First match gets the actions, second stays empty
+        await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(1);
+        await Assert.That(freshGoal.Steps[1].Actions.Count).IsEqualTo(0);
+    }
+
     #endregion
 }

@@ -333,7 +333,7 @@ public class DefaultBuilderProvider : IBuilderProvider
                         Path = new PLangPath(expectedPrPath, context)
                     };
                     var existsResult = await engine.RunAction(existsAction, context);
-                    if (existsResult.Success && existsResult.Value is PLangPath pathData && pathData.Exists)
+                    if (existsResult.Success && existsResult is PLangPath pathData && pathData.Exists)
                     {
                         goalCall.PrPath = expectedPrPath;
                     }

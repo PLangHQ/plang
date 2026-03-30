@@ -174,5 +174,8 @@ public class GetGoalsTests
         await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);
         // Steps should have empty actions (no merge happened)
         await Assert.That(goals[0].Steps[0].Actions.Count).IsEqualTo(0);
+        // Warnings should contain the corrupt file error
+        await Assert.That(result.Warnings).IsNotNull();
+        await Assert.That(result.Warnings!.Any(w => w.Key == "CorruptPrFile")).IsTrue();
     }
 }

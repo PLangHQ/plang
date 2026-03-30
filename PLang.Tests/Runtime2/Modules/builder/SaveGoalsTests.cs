@@ -58,9 +58,15 @@ public class SaveGoalsTests
 
         await Assert.That(result.Success).IsTrue();
 
-        // File should exist at the derived PrPath
+        // Verify file content
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "start.pr");
-        await Assert.That(System.IO.File.Exists(prPath)).IsTrue();
+        var json = System.IO.File.ReadAllText(prPath);
+        var saved = JsonSerializer.Deserialize<List<Goal>>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        await Assert.That(saved).IsNotNull();
+        await Assert.That(saved!.Count).IsEqualTo(1);
+        await Assert.That(saved[0].Name).IsEqualTo("Start");
+        await Assert.That(saved[0].Steps.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -109,5 +115,26 @@ public class SaveGoalsTests
 
         await Assert.That(deserialized).IsNotNull();
         await Assert.That(deserialized!.Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task SaveGoals_EmptyGoalsList_ReturnsError()
+    {
+        var action = new goalsSave { Context = _engine.Context, Goals = new List<Goal>() };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NoGoals");
+    }
+
+    [Test]
+    public async Task SaveGoals_NoPrPath_ReturnsError()
+    {
+        var goals = new List<Goal> { new Goal { Name = "Test" } }; // No Path → no PrPath
+        var action = new goalsSave { Context = _engine.Context, Goals = goals };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NoPrPath");
     }
 }

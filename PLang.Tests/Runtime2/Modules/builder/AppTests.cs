@@ -94,8 +94,26 @@ public class AppTests
 
         await Assert.That(result.Success).IsTrue();
 
-        // File should exist with the app data
+        // Verify file content
         var appPrPath = System.IO.Path.Combine(_tempDir, ".build", "app.pr");
-        await Assert.That(System.IO.File.Exists(appPrPath)).IsTrue();
+        var json = System.IO.File.ReadAllText(appPrPath);
+        var saved = JsonSerializer.Deserialize<AppData>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        await Assert.That(saved).IsNotNull();
+        await Assert.That(saved!.Id).IsEqualTo("test-id");
+        await Assert.That(saved.Version).IsEqualTo("0.2");
+    }
+
+    [Test]
+    public async Task GetApp_CorruptJson_ReturnsError()
+    {
+        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
+        System.IO.Directory.CreateDirectory(buildDir);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "app.pr"), "{ broken json {{");
+
+        var action = new app { Context = _engine.Context, Path = "." };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("CorruptAppFile");
     }
 }
