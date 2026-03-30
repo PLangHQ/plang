@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": null,
+    "description": "Build for single step: write out %!engine.Name%",
     "comment": null,
     "steps": [
       {

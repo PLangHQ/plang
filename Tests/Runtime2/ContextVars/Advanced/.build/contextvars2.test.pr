@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": null,
+    "description": "Build for Start goal with assertions on special variables",
     "comment": null,
     "steps": [
       {

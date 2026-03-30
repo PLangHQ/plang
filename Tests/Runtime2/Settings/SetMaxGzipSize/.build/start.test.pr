@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": null,
+    "description": "Build steps for setting, getting, and asserting a settings value",
     "comment": null,
     "steps": [
       {
