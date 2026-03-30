@@ -49,10 +49,10 @@ Action level:
 Step text may include indented modifier lines (after \n). These are step-level properties, NOT actions.
 
 Recognized modifiers:
-- `cache for X seconds` → `cache: {durationSeconds: X}`
-- `cache for X minutes` → `cache: {durationSeconds: X*60}`
-- `cache for X minutes sliding` → `cache: {durationSeconds: X*60, sliding: true}`
-- `cache for X minutes, key 'name'` or `key=%var%` → `cache: {durationSeconds: X*60, key: "name"}`
+- `cache for X seconds` → `cache: {durationMs: X*1000}`
+- `cache for X minutes` → `cache: {durationMs: X*60000}`
+- `cache for X minutes sliding` → `cache: {durationMs: X*60000, sliding: true}`
+- `cache for X minutes, key 'name'` or `key=%var%` → `cache: {durationMs: X*60000, key: "name"}`
 
 When you see a cache modifier:
 1. Do NOT create a cache action for it — it is a step property

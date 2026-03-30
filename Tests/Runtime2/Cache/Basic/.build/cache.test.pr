@@ -1,0 +1,243 @@
+[
+  {
+    "name": "Start",
+    "description": "Build goal for cached file read test (cache hit should skip re-reading changed file).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "save \u0022first-value\u0022 to file \u0027testdata.txt\u0027",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: file.read with cache - proves cache hit skips re-reading changed file",
+        "actions": [
+          {
+            "module": "file",
+            "action": "save",
+            "parameters": [
+              {
+                "name": "path",
+                "value": "testdata.txt",
+                "type": "path"
+              },
+              {
+                "name": "value",
+                "value": "first-value",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "call ReadCached",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "goalName",
+                "value": "ReadCached",
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %fileData% is not null, \u0022cached read should return value\u0022",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "value",
+                "value": "%fileData%",
+                "type": "object"
+              },
+              {
+                "name": "message",
+                "value": "cached read should return value",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "save \u0022second-value\u0022 to file \u0027testdata.txt\u0027",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "file",
+            "action": "save",
+            "parameters": [
+              {
+                "name": "path",
+                "value": "testdata.txt",
+                "type": "path"
+              },
+              {
+                "name": "value",
+                "value": "second-value",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "call ReadCached",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "goalName",
+                "value": "ReadCached",
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "assert %fileData% equals \u0022first-value\u0022, \u0022second call should return cached first-value\u0022",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "expected",
+                "value": "first-value",
+                "type": "string"
+              },
+              {
+                "name": "actual",
+                "value": "%fileData%",
+                "type": "object"
+              },
+              {
+                "name": "message",
+                "value": "second call should return cached first-value",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 6,
+        "text": "delete file \u0027testdata.txt\u0027",
+        "lineNumber": 10,
+        "indent": 0,
+        "comment": "Cleanup",
+        "actions": [
+          {
+            "module": "file",
+            "action": "delete",
+            "parameters": [
+              {
+                "name": "path",
+                "value": "testdata.txt",
+                "type": "path"
+              },
+              {
+                "name": "ignoreIfNotFound",
+                "value": false,
+                "type": "bool"
+              },
+              {
+                "name": "recursive",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/Cache.test.goal",
+    "prPath": "/.build/cache.test.pr",
+    "hash": "7fabc2e1527462b1fec7568c496fe745b6de786b0d5eab208a8ffa3d7ab22f16",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]
