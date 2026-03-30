@@ -1,0 +1,88 @@
+diff --git a/Documentation/Runtime2/good_to_know.md b/Documentation/Runtime2/good_to_know.md
+index a27386fd..13a5deff 100644
+--- a/Documentation/Runtime2/good_to_know.md
++++ b/Documentation/Runtime2/good_to_know.md
+@@ -352,11 +352,28 @@ Add `IHttpProvider` to the provider interfaces list:
+ - `IHttpProvider : IProvider, IDisposable` — HTTP transport, disposable because it owns `HttpClient`
+ - `ITemplateProvider : IProvider` — template rendering (default: `FluidProvider` using Liquid syntax)
+ - `ILlmProvider : IProvider` — LLM queries (default: `OpenAiProvider`)
++- `IBuilderProvider : IProvider` — build-time goal parsing, validation, merge, persistence (default: `DefaultBuilderProvider`)
+ 
+ PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"template"` / `"itemplateprovider"` → `ITemplateProvider`, `"llm"` / `"illmprovider"` → `ILlmProvider`.
+ 
+ ---
+ 
++## IBuilderProvider — Builder Provider in Engine.Providers
++
++`IBuilderProvider` follows the same provider pattern as other module providers. Owns all build-time logic — action records are thin one-line delegates. The default `DefaultBuilderProvider` handles goal parsing, `.pr` file merging, action validation, and persistence.
++
++**BuildingGuard**: Static `BuildingGuard(IContext)` method on the provider. Checks `action.Context.Engine.Building.IsEnabled` — returns `ActionError("BuildingDisabled", 400)` if false. Called first in every provider method. This is the authorization gate that prevents builder actions from running at application runtime.
++
++**Goal.Parse() + MergeFrom()**: The builder module adds two key methods to the Goal entity:
++- `Goal.Parse(text, path)` — line-by-line parser for `.goal` text format. Produces `List<Goal>` with structural data (Name, Steps with Text/Index/Indent, Visibility, Comments). Supports multi-goal files, `/` and `/* */` comments, `\` escape, continuation lines.
++- `Goal.MergeFrom(existing)` — matches steps by `Text`, delegates to `Step.Merge()` for LLM field transfer. Unmatched steps keep empty Actions.
++
++**Step.Merge()**: Copies LLM-derived fields (Actions, Cache, OnError, Errors, Warnings) from source to target. Structural fields (Text, Index, Indent, LineNumber) are untouched. Only overwrites if source has data.
++
++**File I/O pattern**: All file operations go through `engine.RunAction` with file module actions — consistent with how the LLM module uses `http.request`. No direct `System.IO`.
++
++---
++
+ ## TransportPropertyFilter — [In] / [Out] Attributes
+ 
+ `[In]` and `[Out]` are serialization view attributes (defined in `Engine/View.cs`) that control transport-layer property visibility. They work alongside `[JsonIgnore]` to create a three-mode serialization system:
+diff --git a/Documentation/Runtime2/modules.md b/Documentation/Runtime2/modules.md
+index b439b8b6..0fdf6a66 100644
+--- a/Documentation/Runtime2/modules.md
++++ b/Documentation/Runtime2/modules.md
+@@ -253,8 +253,38 @@ public static class TypeMapping
+ | `http` | `request`, `download`, `upload`, `configure` | HTTP requests, file transfer, streaming, signing |
+ | `ui` | `render` | Liquid template rendering (inline/file, includes, callGoal) |
+ | `llm` | `query` | LLM queries with tools, streaming, validation, caching, structured output |
++| `builder` | `actions`, `types`, `goals`, `goals.save`, `actions.validate`, `steps.merge`, `app`, `app.save` | Build-time goal parsing, validation, merging, and persistence |
+ | `module` | `add`, `remove` | Load/unload external handler libraries |
+ 
++### builder module — Details
++
++The builder module provides the PLang build pipeline's core operations — parsing `.goal` files, validating LLM-returned actions, merging build data, and saving `.pr` files. All actions delegate to `IBuilderProvider` (default: `DefaultBuilderProvider`). This is an internal module used by `system/builder/*.goal` — not for direct use in application `.goal` files.
++
++**BuildingGuard**: Every provider method checks `engine.Building.IsEnabled` first. If building is not enabled, the action returns `ActionError("BuildingDisabled", 400)`. This prevents accidental use of builder actions at runtime.
++
++**Provider pattern**: `IBuilderProvider : IProvider` — swappable via `engine.Providers`. The default implementation owns all logic; action records are thin one-line delegates.
++
++**File I/O**: All file operations go through `engine.RunAction` with file module actions (`file.Read`, `file.Save`, `file.List`, `file.Exists`). No direct `System.IO` usage.
++
++**Actions:**
++
++| Action | Parameters | Behavior |
++|--------|-----------|----------|
++| `actions` | — | Returns `engine.Modules.Describe()` — all registered actions with parameter metadata for LLM prompt generation. |
++| `types` | — | Returns `BuilderTypeInfo` with PLang type names (from `TypeMapping.GetBuilderTypeNames()`) and complex type JSON schemas. |
++| `goals` | `Path` (default ".") | Recursively finds `*.goal` files, parses each via `Goal.Parse()`, merges existing `.pr` data via `Goal.MergeFrom()`. File errors collected as warnings. |
++| `goals.save` | `Goals` (required) | Serializes `List<Goal>` to PrPath (derived from first goal's Path). CamelCase indented JSON. |
++| `actions.validate` | `Actions` (required) | Validates actions exist in module registry. Resolves `goal.call` parameter paths (checks `.pr` file existence). Fills defaults from `[Default]` attributes and `IConfigure<T>` config. |
++| `steps.merge` | `Step`, `StepFromLlm` (both required) | Delegates to `Step.Merge()` — copies LLM-derived fields (Actions, Cache, OnError) from source to target. |
++| `app` | `Path` (default ".") | Reads `.build/app.pr`, deserializes to `AppData`. Returns null if not found. |
++| `app.save` | `App` (required), `Path` (default ".build/app.pr") | Serializes `AppData` to JSON and saves. |
++
++**Merge pipeline**: `Goal.Parse()` creates structural data → `Goal.MergeFrom(existing)` matches steps by `Text` and delegates to `Step.Merge()` → LLM fills unmatched steps → `goals.save` persists. This preserves LLM-derived fields across rebuilds when step text hasn't changed.
++
++**GoalCall path resolution** (in `actions.validate`): Scans action parameters for `goal.call` type. For literal names (no `%` variables), derives the expected PrPath using Goal's own convention and checks if the `.pr` file exists. Skips dynamic names.
++
++**Error handling**: File read errors and corrupt `.pr` files produce warnings (non-fatal). Validation errors (unknown actions, missing paths) are fatal `ActionError` responses.
++
+ ### condition module — Details
+ 
+ The condition module uses structured `Left/Operator/Right` parameters (not expression strings). The LLM builder maps natural language conditions to these typed parameters.
+diff --git a/docs/modules/index.md b/docs/modules/index.md
+index 674f6a9d..2079a9cb 100644
+--- a/docs/modules/index.md
++++ b/docs/modules/index.md
+@@ -70,6 +70,7 @@ You don't need to know the module name — just write what you want and the LLM
+ |--------|-------------|---------|
+ | [module](module.md) | Load/unload external handler libraries | add, remove |
+ | [provider](provider.md) | Manage pluggable providers | load, remove, list |
++| [builder](builder.md) | Build-time goal parsing, validation, and persistence (internal) | actions, types, goals, goals.save, actions.validate, steps.merge, app, app.save |
+ 
+ ## PLang Syntax Basics
+ 

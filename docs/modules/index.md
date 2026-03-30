@@ -70,6 +70,7 @@ You don't need to know the module name — just write what you want and the LLM 
 |--------|-------------|---------|
 | [module](module.md) | Load/unload external handler libraries | add, remove |
 | [provider](provider.md) | Manage pluggable providers | load, remove, list |
+| [builder](builder.md) | Build-time goal parsing, validation, and persistence (internal) | actions, types, goals, goals.save, actions.validate, steps.merge, app, app.save |
 
 ## PLang Syntax Basics
 

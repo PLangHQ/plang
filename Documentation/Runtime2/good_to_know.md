@@ -352,8 +352,25 @@ Add `IHttpProvider` to the provider interfaces list:
 - `IHttpProvider : IProvider, IDisposable` — HTTP transport, disposable because it owns `HttpClient`
 - `ITemplateProvider : IProvider` — template rendering (default: `FluidProvider` using Liquid syntax)
 - `ILlmProvider : IProvider` — LLM queries (default: `OpenAiProvider`)
+- `IBuilderProvider : IProvider` — build-time goal parsing, validation, merge, persistence (default: `DefaultBuilderProvider`)
 
 PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"template"` / `"itemplateprovider"` → `ITemplateProvider`, `"llm"` / `"illmprovider"` → `ILlmProvider`.
+
+---
+
+## IBuilderProvider — Builder Provider in Engine.Providers
+
+`IBuilderProvider` follows the same provider pattern as other module providers. Owns all build-time logic — action records are thin one-line delegates. The default `DefaultBuilderProvider` handles goal parsing, `.pr` file merging, action validation, and persistence.
+
+**BuildingGuard**: Static `BuildingGuard(IContext)` method on the provider. Checks `action.Context.Engine.Building.IsEnabled` — returns `ActionError("BuildingDisabled", 400)` if false. Called first in every provider method. This is the authorization gate that prevents builder actions from running at application runtime.
+
+**Goal.Parse() + MergeFrom()**: The builder module adds two key methods to the Goal entity:
+- `Goal.Parse(text, path)` — line-by-line parser for `.goal` text format. Produces `List<Goal>` with structural data (Name, Steps with Text/Index/Indent, Visibility, Comments). Supports multi-goal files, `/` and `/* */` comments, `\` escape, continuation lines.
+- `Goal.MergeFrom(existing)` — matches steps by `Text`, delegates to `Step.Merge()` for LLM field transfer. Unmatched steps keep empty Actions.
+
+**Step.Merge()**: Copies LLM-derived fields (Actions, Cache, OnError, Errors, Warnings) from source to target. Structural fields (Text, Index, Indent, LineNumber) are untouched. Only overwrites if source has data.
+
+**File I/O pattern**: All file operations go through `engine.RunAction` with file module actions — consistent with how the LLM module uses `http.request`. No direct `System.IO`.
 
 ---
 
