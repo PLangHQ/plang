@@ -181,7 +181,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (string.IsNullOrEmpty(prPath))
             return Data.FromError(new Engine.Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));
 
-        var json = JsonSerializer.Serialize(action.Goals, JsonOptions.PrFile);
+        var json = JsonSerializer.Serialize(action.Goals, Json.PrFileWrite);
 
         var saveAction = new file.Save
         {
@@ -260,7 +260,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         {
             try
             {
-                var existing = JsonSerializer.Deserialize<AppData>(json, JsonOptions.CaseInsensitive);
+                var existing = JsonSerializer.Deserialize<AppData>(json, Json.CaseInsensitiveRead);
                 if (existing != null)
                     return Data.Ok(existing);
             }
@@ -275,7 +275,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             Version = "0.2"
         };
 
-        var saveJson = JsonSerializer.Serialize(newApp, JsonOptions.CamelCase);
+        var saveJson = JsonSerializer.Serialize(newApp, Json.CamelCaseIndented);
         var saveAction = new file.Save
         {
             Context = context,
@@ -297,7 +297,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         action.App.Updated = DateTime.UtcNow;
 
         var savePath = string.IsNullOrWhiteSpace(action.Path) ? ".build/app.pr" : action.Path;
-        var json = JsonSerializer.Serialize(action.App, JsonOptions.CamelCase);
+        var json = JsonSerializer.Serialize(action.App, Json.CamelCaseIndented);
 
         var saveAction = new file.Save
         {
@@ -330,7 +330,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         try
         {
-            var prGoals = JsonSerializer.Deserialize<List<Goal>>(prJson, JsonOptions.CaseInsensitive);
+            var prGoals = JsonSerializer.Deserialize<List<Goal>>(prJson, Json.CaseInsensitiveRead);
             if (prGoals != null)
             {
                 var match = prGoals.FirstOrDefault(g =>

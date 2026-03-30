@@ -314,7 +314,7 @@ public static class TypeMapping
                 {
                     return System.Text.Json.JsonSerializer.Deserialize<PLang.Runtime2.Engine.Goals.Goal.GoalCall>(
                         je.GetRawText(),
-                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        Json.CaseInsensitiveRead);
                 }
                 catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { return null; }
             }
@@ -354,7 +354,7 @@ public static class TypeMapping
             try
             {
                 var json = System.Text.Json.JsonSerializer.Serialize(value);
-                return System.Text.Json.JsonSerializer.Deserialize(json, targetType, _caseInsensitiveOptions);
+                return System.Text.Json.JsonSerializer.Deserialize(json, targetType, Json.CaseInsensitiveRead);
             }
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { return null; }
         }
@@ -362,10 +362,6 @@ public static class TypeMapping
         return value;
     }
 
-    private static readonly System.Text.Json.JsonSerializerOptions _caseInsensitiveOptions = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
 
     /// <summary>
     /// Returns canonical builder type names (excludes aliases like "text"→"string").
