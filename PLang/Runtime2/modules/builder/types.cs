@@ -6,8 +6,8 @@ namespace PLang.Runtime2.modules.builder;
 /// <summary>
 /// Returns PLang type names and complex type JSON schemas for the LLM prompt.
 /// </summary>
-[Action("getTypeInfo")]
-public partial class getTypeInfo : IContext
+[Action("types")]
+public partial class types : IContext
 {
     public Task<Data> Run()
     {

@@ -39,7 +39,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ReturnsAllModulesAndActions()
     {
-        var action = new getActions { Context = _engine.Context };
+        var action = new GetActions { Context = _engine.Context };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
@@ -51,7 +51,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ParameterTypes_IncludeNullableMarkers()
     {
-        var action = new getActions { Context = _engine.Context };
+        var action = new GetActions { Context = _engine.Context };
         var result = await _engine.RunAction(action, _engine.Context);
         var actions = (StepActions)result.Value!;
 
@@ -65,7 +65,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_VariableNameParams_Marked()
     {
-        var action = new getActions { Context = _engine.Context };
+        var action = new GetActions { Context = _engine.Context };
         var result = await _engine.RunAction(action, _engine.Context);
         var actions = (StepActions)result.Value!;
 
@@ -81,7 +81,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_DefaultValues_Included()
     {
-        var action = new getActions { Context = _engine.Context };
+        var action = new GetActions { Context = _engine.Context };
         var result = await _engine.RunAction(action, _engine.Context);
         var actions = (StepActions)result.Value!;
 
@@ -97,7 +97,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_CacheableFlag_FromActionAttribute()
     {
-        var action = new getActions { Context = _engine.Context };
+        var action = new GetActions { Context = _engine.Context };
         var result = await _engine.RunAction(action, _engine.Context);
         var actions = (StepActions)result.Value!;
 

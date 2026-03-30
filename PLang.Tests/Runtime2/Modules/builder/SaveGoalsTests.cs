@@ -53,7 +53,7 @@ public class SaveGoalsTests
             }
         };
 
-        var action = new saveGoals { Context = _engine.Context, Goals = goals };
+        var action = new goalsSave { Context = _engine.Context, Goals = goals };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
@@ -64,7 +64,7 @@ public class SaveGoalsTests
     }
 
     [Test]
-    public async Task SaveGoals_CamelCase_NullsOmitted()
+    public async Task SaveGoals_CamelCase_NullsIncluded()
     {
         var goals = new List<Goal>
         {
@@ -72,11 +72,11 @@ public class SaveGoalsTests
             {
                 Name = "Test",
                 Path = "/Test.goal",
-                Description = null // Should be omitted
+                Description = null // Should be included for determinism
             }
         };
 
-        var action = new saveGoals { Context = _engine.Context, Goals = goals };
+        var action = new goalsSave { Context = _engine.Context, Goals = goals };
         await _engine.RunAction(action, _engine.Context);
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
@@ -84,8 +84,8 @@ public class SaveGoalsTests
 
         // Should use camelCase
         await Assert.That(json).Contains("\"name\"");
-        // Null description should be omitted
-        await Assert.That(json).DoesNotContain("\"description\"");
+        // Null description should be included (deterministic .pr files)
+        await Assert.That(json).Contains("\"description\"");
     }
 
     [Test]
@@ -97,7 +97,7 @@ public class SaveGoalsTests
             new Goal { Name = "Private", Path = "/Multi.goal" }
         };
 
-        var action = new saveGoals { Context = _engine.Context, Goals = goals };
+        var action = new goalsSave { Context = _engine.Context, Goals = goals };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();

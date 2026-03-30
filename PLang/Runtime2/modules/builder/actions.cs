@@ -9,8 +9,8 @@ namespace PLang.Runtime2.modules.builder;
 /// <summary>
 /// Returns all registered actions with parameter schemas for the LLM prompt.
 /// </summary>
-[Action("getActions")]
-public partial class getActions : IContext
+[Action("actions")]
+public partial class GetActions : IContext
 {
     public async Task<Data> Run()
     {
@@ -19,7 +19,7 @@ public partial class getActions : IContext
             return Data.FromError(new Engine.Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
 
         var modules = engine.Modules;
-        var actions = new Actions();
+        var result = new Actions();
 
         foreach (var ns in modules.Names)
         {
@@ -37,22 +37,17 @@ public partial class getActions : IContext
 
                     var typeName = TypeMapping.GetTypeName(prop.PropertyType);
 
-                    // Nullable reference types
                     bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
                     if (!isNullable && !prop.PropertyType.IsValueType)
                         isNullable = nCtx.Create(prop).WriteState == NullabilityState.Nullable;
                     if (isNullable && !typeName.EndsWith("?"))
                         typeName += "?";
 
-                    // ValidValues
                     var validValues = TypeMapping.GetValidValues(prop.PropertyType);
                     if (validValues != null)
                         typeName += $"({string.Join("|", validValues)})";
 
-                    // @var marker
                     var hasVar = prop.GetCustomAttribute<VariableNameAttribute>() != null;
-
-                    // Default value
                     var defaultAttr = prop.GetCustomAttribute<DefaultAttribute>();
 
                     var desc = hasVar ? $"@var {typeName}" : typeName;
@@ -62,13 +57,12 @@ public partial class getActions : IContext
                     parameters.Add(new Data(prop.Name, desc));
                 }
 
-                // Cacheable flag
                 bool cacheable = true;
                 var actionAttr = parameterType.GetCustomAttribute<ActionAttribute>();
                 if (actionAttr != null)
                     cacheable = actionAttr.Cacheable;
 
-                actions.Add(new Action
+                result.Add(new Action
                 {
                     Module = ns,
                     ActionName = className,
@@ -79,7 +73,7 @@ public partial class getActions : IContext
             }
         }
 
-        return Data.Ok(actions);
+        return Data.Ok(result);
     }
 
     private static string FormatDefault(object? value) => value switch

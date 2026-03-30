@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json.Serialization;
 using PLang.Attributes;
 namespace PLang.Runtime2.Engine.Goals.Goal;
@@ -54,13 +56,34 @@ public sealed partial class @this
     }
 
     [Store, Debug]
-    public string? Hash { get; init; }
+    public string? Hash
+    {
+        get
+        {
+            if (_hash != null) return _hash;
+            if (Steps.Count == 0) return null;
+
+            var sb = new StringBuilder();
+            sb.Append(Name);
+            foreach (var step in Steps)
+                sb.Append(step.Text);
+
+            _hash = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()))).ToLowerInvariant();
+            return _hash;
+        }
+        init => _hash = value;
+    }
+    private string? _hash;
 
     [Store, Debug, Default]
     public bool IsSetup { get; init; }
 
     [Store, Debug, Default]
     public bool IsEvent { get; init; }
+
+    [Store, Debug, Default]
+    public bool IsSystem { get; set; }
 
     [Store, Debug, Default]
     public bool IsTest { get; set; }
@@ -145,11 +168,19 @@ public sealed partial class @this
     {
         if (existing == null || existing.Steps.Count == 0) return;
 
+        var consumed = new HashSet<int>();
         foreach (var step in Steps)
         {
-            var match = existing.Steps.FirstOrDefault(s => s.Text == step.Text);
-            if (match != null)
-                step.Merge(match);
+            for (int i = 0; i < existing.Steps.Count; i++)
+            {
+                if (consumed.Contains(i)) continue;
+                if (existing.Steps[i].Text == step.Text)
+                {
+                    step.Merge(existing.Steps[i]);
+                    consumed.Add(i);
+                    break;
+                }
+            }
         }
     }
 

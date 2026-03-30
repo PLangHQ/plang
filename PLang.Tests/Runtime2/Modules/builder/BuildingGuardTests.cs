@@ -41,7 +41,7 @@ public class BuildingGuardTests
     [Test]
     public async Task GetGoals_BuildingDisabled_ReturnsError()
     {
-        var action = new getGoals { Context = _engine.Context, Path = "." };
+        var action = new goals { Context = _engine.Context, Path = "." };
         var result = await _engine.RunAction(action, _engine.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
@@ -50,7 +50,7 @@ public class BuildingGuardTests
     [Test]
     public async Task GetActions_BuildingDisabled_ReturnsError()
     {
-        var action = new getActions { Context = _engine.Context };
+        var action = new GetActions { Context = _engine.Context };
         var result = await _engine.RunAction(action, _engine.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
@@ -60,7 +60,7 @@ public class BuildingGuardTests
     public async Task ValidateActions_BuildingDisabled_ReturnsError()
     {
         var actions = new StepActions { new Action { Module = "file", ActionName = "read" } };
-        var action = new validateActions { Context = _engine.Context, Actions = actions };
+        var action = new validate { Context = _engine.Context, Actions = actions };
         var result = await _engine.RunAction(action, _engine.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
@@ -70,7 +70,7 @@ public class BuildingGuardTests
     public async Task SaveGoals_BuildingDisabled_ReturnsError()
     {
         var goals = new List<Goal> { new Goal { Name = "Test", Path = "/Test.goal" } };
-        var action = new saveGoals { Context = _engine.Context, Goals = goals };
+        var action = new goalsSave { Context = _engine.Context, Goals = goals };
         var result = await _engine.RunAction(action, _engine.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
@@ -79,7 +79,7 @@ public class BuildingGuardTests
     [Test]
     public async Task GetApp_BuildingDisabled_ReturnsError()
     {
-        var action = new getApp { Context = _engine.Context, Path = "." };
+        var action = new app { Context = _engine.Context, Path = "." };
         var result = await _engine.RunAction(action, _engine.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
@@ -89,7 +89,7 @@ public class BuildingGuardTests
     public async Task SaveApp_BuildingDisabled_ReturnsError()
     {
         var app = new AppData { Id = "x", Version = "0.2" };
-        var action = new saveApp { Context = _engine.Context, App = app, Path = ".build/app.pr" };
+        var action = new appSave { Context = _engine.Context, App = app, Path = ".build/app.pr" };
         var result = await _engine.RunAction(action, _engine.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
@@ -100,7 +100,7 @@ public class BuildingGuardTests
     {
         var step = new Step { Text = "step" };
         var from = new Step { Text = "step" };
-        var action = new mergeStep { Context = _engine.Context, Step = step, StepFromLlm = from };
+        var action = new merge { Context = _engine.Context, Step = step, StepFromLlm = from };
         var result = await _engine.RunAction(action, _engine.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
@@ -109,7 +109,7 @@ public class BuildingGuardTests
     [Test]
     public async Task GetTypeInfo_BuildingDisabled_ReturnsError()
     {
-        var action = new getTypeInfo { Context = _engine.Context };
+        var action = new types { Context = _engine.Context };
         var result = await _engine.RunAction(action, _engine.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");

@@ -39,7 +39,7 @@ public class GetTypeInfoTests
     [Test]
     public async Task GetTypeInfo_ReturnsBuilderTypeNames()
     {
-        var action = new getTypeInfo { Context = _engine.Context };
+        var action = new types { Context = _engine.Context };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
@@ -56,7 +56,7 @@ public class GetTypeInfoTests
     [Test]
     public async Task GetTypeInfo_ReturnsComplexTypeSchemas()
     {
-        var action = new getTypeInfo { Context = _engine.Context };
+        var action = new types { Context = _engine.Context };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();

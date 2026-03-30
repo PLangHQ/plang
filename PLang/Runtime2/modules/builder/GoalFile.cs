@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text;
 using PLang.Runtime2.Engine.Goals.Goal;
 using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
@@ -182,38 +181,30 @@ public sealed class GoalFile
                 goals[0].SubGoals.Add(goals[i].Name);
         }
 
-        // Compute hash for each goal
-        for (int i = 0; i < goals.Count; i++)
+        // Mark Setup goals
+        foreach (var goal in goals)
         {
-            var goal = goals[i];
-            goals[i] = new Goal
+            if (goal.Name.Equals("Setup", StringComparison.OrdinalIgnoreCase))
             {
-                Name = goal.Name,
-                Description = goal.Description,
-                Comment = goal.Comment,
-                Steps = goal.Steps,
-                SubGoals = goal.SubGoals,
-                Visibility = goal.Visibility,
-                Path = goal.Path,
-                Hash = ComputeHash(goal),
-                IsSetup = goal.Name.Equals("Setup", StringComparison.OrdinalIgnoreCase),
-                InputParameters = goal.InputParameters,
-                Errors = goal.Errors,
-                Warnings = goal.Warnings
-            };
+                // IsSetup is init-only — need to reconstruct
+                var idx = goals.IndexOf(goal);
+                goals[idx] = new Goal
+                {
+                    Name = goal.Name,
+                    Description = goal.Description,
+                    Comment = goal.Comment,
+                    Steps = goal.Steps,
+                    SubGoals = goal.SubGoals,
+                    Visibility = goal.Visibility,
+                    Path = goal.Path,
+                    IsSetup = true,
+                    InputParameters = goal.InputParameters,
+                    Errors = goal.Errors,
+                    Warnings = goal.Warnings
+                };
+            }
         }
 
         return goals;
-    }
-
-    private static string ComputeHash(Goal goal)
-    {
-        var sb = new StringBuilder();
-        sb.Append(goal.Name);
-        foreach (var step in goal.Steps)
-            sb.Append(step.Text);
-
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()));
-        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 }

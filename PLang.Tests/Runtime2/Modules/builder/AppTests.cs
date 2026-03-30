@@ -57,7 +57,7 @@ public class AppTests
         });
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "app.pr"), json);
 
-        var action = new getApp { Context = _engine.Context, Path = "." };
+        var action = new app { Context = _engine.Context, Path = "." };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
@@ -70,7 +70,7 @@ public class AppTests
     [Test]
     public async Task GetApp_CreatesNewWhenMissing()
     {
-        var action = new getApp { Context = _engine.Context, Path = "." };
+        var action = new app { Context = _engine.Context, Path = "." };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
@@ -97,7 +97,7 @@ public class AppTests
         };
         var oldUpdated = app.Updated;
 
-        var action = new saveApp { Context = _engine.Context, App = app, Path = ".build/app.pr" };
+        var action = new appSave { Context = _engine.Context, App = app, Path = ".build/app.pr" };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();

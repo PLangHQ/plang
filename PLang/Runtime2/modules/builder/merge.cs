@@ -3,10 +3,10 @@ using PLang.Runtime2.Engine.Memory;
 namespace PLang.Runtime2.modules.builder;
 
 /// <summary>
-/// Thin delegation to Step.Merge(). Merges LLM-derived fields from StepFromLlm onto Step.
+/// Merges LLM-derived fields from StepFromLlm onto Step. Delegates to Step.Merge().
 /// </summary>
-[Action("mergeStep")]
-public partial class mergeStep : IContext
+[Action("steps.merge")]
+public partial class merge : IContext
 {
     [IsNotNull]
     public partial Step Step { get; init; }

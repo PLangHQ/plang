@@ -8,10 +8,11 @@ using Actions = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this;
 namespace PLang.Runtime2.modules.builder;
 
 /// <summary>
-/// Validates LLM-returned actions exist, resolves GoalCall paths, fills defaults.
+/// Validates LLM-returned actions exist, resolves GoalCall paths relative to the
+/// goal being built, fills defaults.
 /// </summary>
-[Action("validateActions")]
-public partial class validateActions : IContext
+[Action("actions.validate")]
+public partial class validate : IContext
 {
     [IsNotNull]
     public partial Actions Actions { get; init; }
@@ -36,8 +37,8 @@ public partial class validateActions : IContext
             return Data.FromError(new Engine.Errors.ActionError(
                 $"Actions not found: {string.Join(", ", notFound)}", "ActionNotFound", 400));
 
-        // Resolve GoalCall paths
-        ResolveGoalCallPaths(Actions, engine);
+        // Resolve GoalCall paths relative to current goal
+        await ResolveGoalCallPaths(Actions, engine);
 
         // Fill defaults
         foreach (var action in Actions)
@@ -46,7 +47,7 @@ public partial class validateActions : IContext
         return Data.Ok(true);
     }
 
-    private static void ResolveGoalCallPaths(Actions actions, Engine.@this engine)
+    private async Task ResolveGoalCallPaths(Actions actions, Engine.@this engine)
     {
         foreach (var action in actions)
         {
@@ -68,14 +69,26 @@ public partial class validateActions : IContext
                     continue;
                 }
 
-                // Try to find .pr file in .build directories
-                var fs = engine.FileSystem;
-                var resolved = TryResolvePrPath(goalCall.Name, fs);
-                if (resolved != null)
+                // Resolve path relative to current goal:
+                // /SomeGoal = from engine root, SomeGoal = from goal's directory
+                var goalName = goalCall.Name;
+                var expectedPrPath = ComputeExpectedPrPath(goalName, engine);
+
+                if (expectedPrPath != null)
                 {
-                    goalCall.PrPath = resolved;
-                    param.Value = goalCall;
-                    continue;
+                    // Verify the .pr file exists via file.read
+                    var readAction = new file.Read
+                    {
+                        Context = Context,
+                        Path = new PLangPath(expectedPrPath, Context)
+                    };
+                    var readResult = await engine.RunAction(readAction, Context);
+                    if (readResult.Success)
+                    {
+                        goalCall.PrPath = expectedPrPath;
+                        param.Value = goalCall;
+                        continue;
+                    }
                 }
 
                 // Not found — leave PrPath null (runtime falls back to name lookup)
@@ -84,45 +97,37 @@ public partial class validateActions : IContext
         }
     }
 
-    private static string? TryResolvePrPath(string goalName, Interfaces.IPLangFileSystem fs)
+    /// <summary>
+    /// Computes the expected PrPath for a goal name.
+    /// /GoalName = from root, GoalName = from current goal's directory.
+    /// </summary>
+    private static string? ComputeExpectedPrPath(string goalName, Engine.@this engine)
     {
-        // Scan .build directories for matching .pr files
-        try
+        // Normalize: strip .goal extension if present
+        var name = goalName;
+        if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
+            name = name[..^5];
+
+        // The PrPath convention: /folder/.build/name.pr
+        // For a goal name "DoSomething", the .goal file is DoSomething.goal
+        // and the .pr file is .build/dosomething.pr (relative to the .goal file's directory)
+        var lowerName = name.ToLowerInvariant();
+
+        if (goalName.StartsWith('/') || goalName.StartsWith('\\'))
         {
-            var buildDirs = fs.Directory.GetDirectories(fs.RootDirectory, ".build", SearchOption.AllDirectories);
-            foreach (var buildDir in buildDirs)
+            // Absolute from root: /folder/GoalName → /folder/.build/goalname.pr
+            var lastSep = name.LastIndexOfAny(new[] { '/', '\\' });
+            if (lastSep >= 0)
             {
-                var prFiles = fs.Directory.GetFiles(buildDir, "*.pr");
-                foreach (var prFile in prFiles)
-                {
-                    try
-                    {
-                        var json = fs.File.ReadAllText(prFile);
-                        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-                        // Try List<Goal> format
-                        var goals = JsonSerializer.Deserialize<List<Engine.Goals.Goal.@this>>(json, options);
-                        if (goals != null)
-                        {
-                            var match = goals.FirstOrDefault(g =>
-                                g.Name.Equals(goalName, StringComparison.OrdinalIgnoreCase));
-                            if (match?.PrPath != null)
-                                return match.PrPath;
-                        }
-                    }
-                    catch (JsonException)
-                    {
-                        // Skip corrupt files
-                    }
-                }
+                var dir = name[..(lastSep + 1)];
+                var baseName = name[(lastSep + 1)..].ToLowerInvariant();
+                return dir + ".build/" + baseName + ".pr";
             }
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            // Can't scan — return null
+            return "/.build/" + lowerName + ".pr";
         }
 
-        return null;
+        // Relative — from the current goal's directory
+        return ".build/" + lowerName + ".pr";
     }
 
     private static GoalCall? DeserializeGoalCall(object? value)
@@ -133,8 +138,7 @@ public partial class validateActions : IContext
         {
             try
             {
-                return JsonSerializer.Deserialize<GoalCall>(je.GetRawText(),
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                return JsonSerializer.Deserialize<GoalCall>(je.GetRawText(), JsonOptions.CaseInsensitive);
             }
             catch { return null; }
         }
@@ -157,7 +161,6 @@ public partial class validateActions : IContext
                 paramNames.Add(p.Name);
         }
 
-        // Check for IConfigure<TConfig>
         var configType = GetConfigureType(actionType);
         action.Defaults = configType != null
             ? FillFromConfigInstance(configType, paramNames)

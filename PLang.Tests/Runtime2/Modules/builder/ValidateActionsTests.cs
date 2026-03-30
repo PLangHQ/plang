@@ -45,7 +45,7 @@ public class ValidateActionsTests
             new Action { Module = "file", ActionName = "read", Parameters = new List<Data> { new("Path", "test.txt") } }
         };
 
-        var action = new validateActions { Context = _engine.Context, Actions = actions };
+        var action = new validate { Context = _engine.Context, Actions = actions };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
@@ -60,7 +60,7 @@ public class ValidateActionsTests
             new Action { Module = "nonexistent", ActionName = "fake" }
         };
 
-        var action = new validateActions { Context = _engine.Context, Actions = actions };
+        var action = new validate { Context = _engine.Context, Actions = actions };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsFalse();
@@ -95,7 +95,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validateActions { Context = _engine.Context, Actions = actions };
+        var action = new validate { Context = _engine.Context, Actions = actions };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
@@ -117,7 +117,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validateActions { Context = _engine.Context, Actions = actions };
+        var action = new validate { Context = _engine.Context, Actions = actions };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
@@ -137,7 +137,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validateActions { Context = _engine.Context, Actions = actions };
+        var action = new validate { Context = _engine.Context, Actions = actions };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
