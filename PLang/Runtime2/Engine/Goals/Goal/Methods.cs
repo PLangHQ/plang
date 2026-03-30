@@ -105,7 +105,7 @@ public sealed partial class @this
 
 	private object BuildFormatData()
 	{
-		var jsonOpts = Utility.Json.Compact;
+		var jsonOpts = new JsonSerializerOptions();
 
 		return new
 		{
@@ -141,7 +141,7 @@ public sealed partial class @this
 	private string FormatForLlmFallback()
 	{
 		var sb = new System.Text.StringBuilder();
-		var jsonOpts = Utility.Json.Compact;
+		var jsonOpts = new JsonSerializerOptions();
 
 		if (!string.IsNullOrEmpty(Comment))
 			sb.AppendLine($"/ {Comment}");

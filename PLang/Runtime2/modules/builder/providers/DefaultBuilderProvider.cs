@@ -181,7 +181,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (string.IsNullOrEmpty(prPath))
             return Data.FromError(new Engine.Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));
 
-        var json = JsonSerializer.Serialize(action.Goals, Json.PrFileWrite);
+        var json = JsonSerializer.Serialize(action.Goals, Json.CamelCaseIndented);
 
         var saveAction = new file.Save
         {
