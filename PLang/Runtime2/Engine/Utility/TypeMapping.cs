@@ -279,79 +279,125 @@ public static class TypeMapping
 
     /// <summary>
     /// Attempts to convert a value to the specified type.
+    /// Returns null on failure — use TryConvertTo for error details.
     /// </summary>
     public static object? ConvertTo(object? value, Type targetType)
     {
+        var (result, _) = TryConvertTo(value, targetType);
+        return result;
+    }
+
+    /// <summary>
+    /// Attempts to convert a value to the specified type.
+    /// Returns the converted value and null error on success,
+    /// or null value and an Error describing what went wrong.
+    /// </summary>
+    public static (object? Value, Engine.Errors.Error? Error) TryConvertTo(object? value, Type targetType)
+    {
         if (value == null)
-            return targetType.IsValueType ? Activator.CreateInstance(targetType) : null;
+            return (targetType.IsValueType ? Activator.CreateInstance(targetType) : null, null);
 
         var sourceType = value.GetType();
         if (targetType.IsAssignableFrom(sourceType))
-            return value;
+            return (value, null);
 
         // Handle nullable target types
         var underlying = Nullable.GetUnderlyingType(targetType);
         if (underlying != null)
-            return ConvertTo(value, underlying);
+            return TryConvertTo(value, underlying);
 
-        // List<T> handling: element-wise conversion or single-value wrapping
-        if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
+        // List-like target: List<T> or types inheriting List<T>
+        var listElementType = GetListElementType(targetType);
+        if (listElementType != null)
         {
-            var elementType = targetType.GetGenericArguments()[0];
-
             // If source is already a list/collection, convert each element
             if (value is System.Collections.IList sourceList)
             {
                 var targetList = (System.Collections.IList)Activator.CreateInstance(targetType)!;
-                foreach (var item in sourceList)
+                var errors = new List<Engine.Errors.Error>();
+                for (int i = 0; i < sourceList.Count; i++)
                 {
-                    var convertedItem = ConvertTo(item, elementType);
+                    var (convertedItem, itemError) = TryConvertTo(sourceList[i], listElementType);
+                    if (itemError != null)
+                    {
+                        itemError = new Engine.Errors.Error(
+                            $"[{i}]: {itemError.Message}", "ElementConversionFailed", 400)
+                            { FixSuggestion = itemError.FixSuggestion };
+                        errors.Add(itemError);
+                        continue;
+                    }
                     if (convertedItem != null)
                         targetList.Add(convertedItem);
                 }
-                return targetList;
+                if (errors.Count > 0)
+                {
+                    var error = new Engine.Errors.Error(
+                        $"Failed converting {errors.Count}/{sourceList.Count} elements from {sourceType.Name} to {targetType.Name}",
+                        "ListConversionFailed", 400)
+                        { FixSuggestion = $"Element type: {listElementType.Name}" };
+                    foreach (var e in errors) error.ErrorChain.Add(e);
+                    return (targetList.Count > 0 ? targetList : null, error);
+                }
+                return (targetList, null);
             }
 
-            // Single value → wrap into List<T>
-            if (elementType.IsAssignableFrom(sourceType))
+            // Single value → wrap into list
+            if (listElementType.IsAssignableFrom(sourceType))
             {
                 var list = (System.Collections.IList)Activator.CreateInstance(targetType)!;
                 list.Add(value);
-                return list;
+                return (list, null);
             }
-            var converted = ConvertTo(value, elementType);
-            if (converted != null && elementType.IsAssignableFrom(converted.GetType()))
+            var (converted, convError) = TryConvertTo(value, listElementType);
+            if (converted != null && listElementType.IsAssignableFrom(converted.GetType()))
             {
                 var list = (System.Collections.IList)Activator.CreateInstance(targetType)!;
                 list.Add(converted);
-                return list;
+                return (list, null);
             }
+            if (convError != null)
+                return (null, convError);
         }
 
         // Handle enum types
         if (targetType.IsEnum)
         {
             if (value is string s)
-                return Enum.Parse(targetType, s, ignoreCase: true);
+            {
+                if (Enum.TryParse(targetType, s, ignoreCase: true, out var parsed))
+                    return (parsed, null);
+                return (null, new Engine.Errors.Error(
+                    $"Cannot parse '{s}' as {targetType.Name}",
+                    "EnumParseFailed", 400)
+                    { FixSuggestion = $"Valid values: {string.Join(", ", Enum.GetNames(targetType))}" });
+            }
             if (value.GetType().IsEnum)
-                return value;
-            return Enum.ToObject(targetType, value);
+                return (value, null);
+            try { return (Enum.ToObject(targetType, value), null); }
+            catch { return (null, new Engine.Errors.Error(
+                $"Cannot convert {sourceType.Name} to enum {targetType.Name}",
+                "EnumConversionFailed", 400)); }
         }
 
         // GoalCall: convert from string, JsonElement, or Dictionary (UnwrapJsonElement output)
         if (targetType == typeof(PLang.Runtime2.Engine.Goals.Goal.GoalCall))
         {
             if (value is string goalName)
-                return new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = goalName };
+                return (new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = goalName }, null);
             if (value is System.Text.Json.JsonElement je)
             {
                 try
                 {
-                    return System.Text.Json.JsonSerializer.Deserialize<PLang.Runtime2.Engine.Goals.Goal.GoalCall>(
+                    return (System.Text.Json.JsonSerializer.Deserialize<PLang.Runtime2.Engine.Goals.Goal.GoalCall>(
                         je.GetRawText(),
-                        Json.CaseInsensitiveRead);
+                        Json.CaseInsensitiveRead), null);
                 }
-                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { return null; }
+                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+                {
+                    return (null, new Engine.Errors.Error(
+                        $"Failed to deserialize GoalCall from JSON: {ex.Message}",
+                        "GoalCallDeserializationFailed", 400));
+                }
             }
             if (value is IDictionary<string, object?> dict)
             {
@@ -366,7 +412,7 @@ public static class TypeMapping
                             d.TryGetValue("value", out var dv) ? dv : null))
                         .ToList();
                 }
-                return new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = name, Parameters = parameters };
+                return (new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = name, Parameters = parameters }, null);
             }
         }
 
@@ -375,26 +421,66 @@ public static class TypeMapping
         {
             try
             {
-                return Convert.ChangeType(value, targetType);
+                return (Convert.ChangeType(value, targetType), null);
             }
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
-                return null;
+                return (null, new Engine.Errors.Error(
+                    $"Cannot convert '{value}' ({sourceType.Name}) to {targetType.Name}: {ex.Message}",
+                    "PrimitiveConversionFailed", 400));
             }
         }
 
-        // Complex types: dict/JsonElement → serialize to JSON → deserialize to target type
-        if (value is IDictionary<string, object?> or System.Text.Json.JsonElement)
+        // Complex types: dict/JsonElement/list → serialize to JSON → deserialize to target type
+        if (value is IDictionary<string, object?> or System.Text.Json.JsonElement or System.Collections.IList)
         {
             try
             {
                 var json = System.Text.Json.JsonSerializer.Serialize(value);
-                return System.Text.Json.JsonSerializer.Deserialize(json, targetType, Json.CaseInsensitiveRead);
+                var result = System.Text.Json.JsonSerializer.Deserialize(json, targetType, Json.CaseInsensitiveRead);
+                return (result, null);
             }
-            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { return null; }
+            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+            {
+                return (null, new Engine.Errors.Error(
+                    $"Failed to deserialize {sourceType.Name} to {targetType.Name}: {ex.Message}",
+                    "DeserializationFailed", 400)
+                    { FixSuggestion = $"Source: {sourceType.FullName}, Target: {targetType.FullName}" });
+            }
         }
 
-        return value;
+        // Last resort: type mismatch
+        if (!targetType.IsAssignableFrom(sourceType))
+        {
+            return (null, new Engine.Errors.Error(
+                $"Cannot convert {sourceType.Name} to {targetType.Name}",
+                "TypeMismatch", 400)
+                { FixSuggestion = $"Source: {sourceType.FullName}, Target: {targetType.FullName}" });
+        }
+
+        return (value, null);
+    }
+
+    /// <summary>
+    /// Finds the element type if targetType is List&lt;T&gt; or inherits from it.
+    /// Returns null if not a list type.
+    /// </summary>
+    private static Type? GetListElementType(Type targetType)
+    {
+        // Direct List<T>
+        if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
+            return targetType.GetGenericArguments()[0];
+
+        // Inherits from List<T> (e.g., Actions : List<Action>)
+        var baseType = targetType.BaseType;
+        while (baseType != null)
+        {
+            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(List<>))
+                return baseType.GetGenericArguments()[0];
+            baseType = baseType.BaseType;
+        }
+
+        return null;
     }
 
 
