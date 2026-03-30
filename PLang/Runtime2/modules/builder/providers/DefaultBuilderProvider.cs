@@ -161,6 +161,9 @@ public class DefaultBuilderProvider : IBuilderProvider
         var context = action.Context;
         var modules = engine.Modules;
 
+        if (action.Actions == null || action.Actions.Count == 0)
+            return Data.Ok(true);
+
         var notFound = new List<string>();
         foreach (var a in action.Actions)
         {

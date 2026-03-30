@@ -7,8 +7,7 @@ namespace PLang.Runtime2.modules.builder;
 [Action("actions.validate")]
 public partial class validate : IContext
 {
-    [IsNotNull]
-    public partial Actions Actions { get; init; }
+    public partial Actions? Actions { get; init; }
 
     [Provider]
     public partial IBuilderProvider Builder { get; }
