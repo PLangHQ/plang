@@ -8,3 +8,6 @@ Re-review of coder fixes. All production code fixes verified, 3 new tests confir
 
 ## v3: NEEDS WORK — 2 new findings from fresh-eyes review
 Fresh-eyes re-analysis found 2 things v1/v2 missed: (1) `Describe()` leaks `[Provider]` properties into LLM builder prompt — affects ALL modules, medium severity; (2) `Step.Clone()` drops Action.Defaults/Errors/Warnings — clone family bug. Send to coder. See [v3/summary.md](v3/summary.md).
+
+## v4: PASS — all v3 findings resolved
+All 3 fixes verified. Minimal, mechanical changes. Recommend tester next. See [v4/summary.md](v4/summary.md).

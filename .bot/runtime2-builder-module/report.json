@@ -257,6 +257,36 @@
         "health": "yellow",
         "notes": "NEEDS WORK — 2 new findings: Describe() leaks [Provider] properties (affects all modules), Step.Clone() drops Action fields. Send to coder."
       }
+    },
+    {
+      "id": "ca-v4-20260330",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-30T11:00:00Z",
+      "timestamp_end": "2026-03-30T11:15:00Z",
+      "intent": "Verify coder fixes for v3 findings",
+      "before": {
+        "assumptions": "Coder addressed all 3 v3 findings in one commit.",
+        "risk": "Low — fixes are minimal and mechanical."
+      },
+      "plan": "Verify each fix against the original finding. Review fix-introduced code.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/codeanalyzer/v4/result.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v4/summary.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v4/verdict.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "All 3 fixes verified. PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — all v3 findings resolved. Recommend tester next."
+      }
     }
   ]
 }
