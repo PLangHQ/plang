@@ -5,3 +5,6 @@
 
 ## v2: PASS — 4 of 5 findings resolved
 Re-review of coder fixes. All production code fixes verified, 3 new tests confirmed covering the gaps. Finding #5 (Runtime1 type) deferred as pre-existing. Recommend tester next. See [v2/summary.md](v2/summary.md).
+
+## v3: NEEDS WORK — 2 new findings from fresh-eyes review
+Fresh-eyes re-analysis found 2 things v1/v2 missed: (1) `Describe()` leaks `[Provider]` properties into LLM builder prompt — affects ALL modules, medium severity; (2) `Step.Clone()` drops Action.Defaults/Errors/Warnings — clone family bug. Send to coder. See [v3/summary.md](v3/summary.md).

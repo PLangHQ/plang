@@ -226,6 +226,37 @@
         "health": "green",
         "notes": "PASS — all findings resolved (1 deferred as pre-existing). Recommend tester next."
       }
+    },
+    {
+      "id": "ca-v3-20260330",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-30T10:00:00Z",
+      "timestamp_end": "2026-03-30T10:30:00Z",
+      "intent": "Fresh-eyes re-analysis of builder module — find what v1/v2 missed",
+      "before": {
+        "assumptions": "v1/v2 found and resolved 5 minor findings. Coder fixes verified. User wants fresh eyes to catch anything missed.",
+        "risk": "Medium — the first review may have anchored on specific areas and missed broader patterns."
+      },
+      "plan": "Re-read all production code from scratch. Apply all 5 passes without anchoring on v1 findings. Focus on clone family audit, Describe() reflection gaps, dead code paths.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/codeanalyzer/v3/plan.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v3/result.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v3/summary.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v3/verdict.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Fresh-eyes analysis found 2 missed findings: Describe() leaks [Provider] properties (medium), Step.Clone() drops Action fields (minor). Verdict: NEEDS WORK."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow",
+        "notes": "NEEDS WORK — 2 new findings: Describe() leaks [Provider] properties (affects all modules), Step.Clone() drops Action fields. Send to coder."
+      }
     }
   ]
 }
