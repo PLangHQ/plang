@@ -149,4 +149,27 @@ public class ValidateActionsTests
             d.Name.Equals("pattern", StringComparison.OrdinalIgnoreCase));
         await Assert.That(patternDefault).IsNotNull();
     }
+
+    [Test]
+    public async Task ValidateActions_ConfigureDefaults_FromIConfigureT()
+    {
+        // http.configure implements IConfigure<Config> — defaults come from Config instance, not [Default]
+        var actions = new StepActions
+        {
+            new Action
+            {
+                Module = "http",
+                ActionName = "configure",
+                Parameters = new List<Data>()
+            }
+        };
+
+        var action = new validate { Context = _engine.Context, Actions = actions };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var httpConfigure = actions[0];
+        await Assert.That(httpConfigure.Defaults).IsNotNull();
+        await Assert.That(httpConfigure.Defaults!.Count).IsGreaterThan(0);
+    }
 }

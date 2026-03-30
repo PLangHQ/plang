@@ -78,7 +78,15 @@ public class DefaultBuilderProvider : IBuilderProvider
         {
             var readAction = new file.Read { Context = context, Path = file };
             var readResult = await engine.RunAction(readAction, context);
-            if (!readResult.Success) continue;
+            if (!readResult.Success)
+            {
+                allErrors.Add(new Engine.Info
+                {
+                    Key = "FileReadError",
+                    Message = $"Failed to read {file.Raw}: {readResult.Error?.Message}"
+                });
+                continue;
+            }
 
             var text = readResult.Value?.ToString();
             if (string.IsNullOrWhiteSpace(text)) continue;

@@ -208,7 +208,9 @@ public sealed class @this
             if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(modules.IConfigure<>))
             {
                 var configType = iface.GetGenericArguments()[0];
-                var instance = Activator.CreateInstance(configType);
+                object? instance;
+                try { instance = Activator.CreateInstance(configType); }
+                catch { break; } // No parameterless constructor — fall through to [Default] attributes
                 if (instance == null) break;
 
                 var defaults = new List<Memory.Data>();

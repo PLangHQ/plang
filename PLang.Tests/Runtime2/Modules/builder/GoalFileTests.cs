@@ -143,4 +143,26 @@ public class GoalFileTests
         // PrPath is derived from Path — /folder/MyGoal.goal → /folder/.build/mygoal.pr
         await Assert.That(goals[0].PrPath).IsEqualTo("/folder/.build/mygoal.pr");
     }
+
+    [Test]
+    public async Task Parse_StepBeforeHeader_CreatesImplicitStartGoal()
+    {
+        // Steps before any goal header → implicit "Start" goal
+        var goals = Goal.Parse("- step one\n- step two", "/NoHeader.goal");
+
+        await Assert.That(goals.Count).IsEqualTo(1);
+        await Assert.That(goals[0].Name).IsEqualTo("Start");
+        await Assert.That(goals[0].Visibility).IsEqualTo(Visibility.Public);
+        await Assert.That(goals[0].Steps.Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task Parse_BareDash_CreatesStepWithEmptyText()
+    {
+        // A bare "-" with no text creates a step with empty Text
+        var goals = Goal.Parse("MyGoal\n-", "/BareDash.goal");
+
+        await Assert.That(goals[0].Steps.Count).IsEqualTo(1);
+        await Assert.That(goals[0].Steps[0].Text).IsEqualTo("");
+    }
 }
