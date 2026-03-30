@@ -351,6 +351,67 @@
         "health": "green",
         "notes": "PASS — all findings resolved, 2022 tests pass, coverage strong. Recommend security analyst next."
       }
+    },
+    {
+      "id": "sec-v1-20260330",
+      "bot": "security",
+      "timestamp_start": "2026-03-30T16:00:00Z",
+      "timestamp_end": "2026-03-30T16:30:00Z",
+      "intent": "Security audit of builder module (Piece 8)",
+      "before": {
+        "assumptions": "Builder module is new code with 8 actions, Goal.Parse() text parser, provider/module registry changes. All tests pass, codeanalyzer and tester both passed.",
+        "risk": "Goal.Parse() is a text parser — unusual for PLang. Provider registry has type resolution logic. Assembly loading paths exist."
+      },
+      "plan": "Blue team: map 7 attack surface areas (goal-parser, pr-deser, action-registry, provider-registry, assembly-loading, builder-auth, merge-pipeline). Red team: assess each vector for exploitability under PLang threat model. Write security-report.json and verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs",
+            "PLang/Runtime2/Engine/Modules/this.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/modules/module/add.cs",
+            "PLang/Runtime2/modules/provider/load.cs",
+            "PLang/Runtime2/modules/builder/actions.cs",
+            "PLang/Runtime2/modules/builder/goals.cs",
+            "PLang/Runtime2/modules/builder/validate.cs",
+            "PLang/Runtime2/modules/builder/merge.cs",
+            "PLang/Runtime2/modules/builder/app.cs",
+            "PLang/Runtime2/modules/builder/appSave.cs",
+            "PLang/Runtime2/modules/builder/goalsSave.cs",
+            "PLang/Runtime2/modules/builder/types.cs",
+            "PLang/Runtime2/modules/Attributes.cs",
+            "PLang/Runtime2/modules/IConfigure.cs",
+            "PLang/Runtime2/modules/provider/remove.cs",
+            "PLang/Runtime2/modules/provider/setDefault.cs",
+            "PLang/Runtime2/modules/provider/list.cs",
+            "PLang/Runtime2/modules/module/remove.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full security review of 21 source files. 7 attack surface areas mapped. 5 findings: 0 critical, 0 high, 2 medium, 3 low."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/security-report.json",
+            ".bot/runtime2-builder-module/security/v1/plan.md",
+            ".bot/runtime2-builder-module/security/v1/summary.md",
+            ".bot/runtime2-builder-module/security/v1/verdict.json",
+            ".bot/runtime2-builder-module/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security report, plan, summary, verdict. PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — 0 critical, 0 high, 2 medium, 3 low. Builder module follows PLang threat model correctly. Recommend auditor next."
+      }
     }
   ]
 }

@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "PASS — 0 critical, 0 high, 2 medium, 3 low findings. Builder module follows threat model correctly."
+}
