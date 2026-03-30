@@ -68,21 +68,14 @@ public class AppTests
     }
 
     [Test]
-    public async Task GetApp_CreatesNewWhenMissing()
+    public async Task GetApp_ReturnsNullWhenMissing()
     {
         var action = new app { Context = _engine.Context, Path = "." };
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
-        var app = result.Value as AppData;
-        await Assert.That(app).IsNotNull();
-        await Assert.That(app!.Id).IsNotNull();
-        await Assert.That(app.Id.Length).IsGreaterThan(0);
-        await Assert.That(app.Version).IsEqualTo("0.2");
-
-        // File should exist on disk
-        var appPrPath = System.IO.Path.Combine(_tempDir, ".build", "app.pr");
-        await Assert.That(System.IO.File.Exists(appPrPath)).IsTrue();
+        // No app.pr exists — returns null, caller decides whether to create
+        await Assert.That(result.Value).IsNull();
     }
 
     [Test]

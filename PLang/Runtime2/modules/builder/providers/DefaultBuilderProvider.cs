@@ -28,63 +28,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return Task.FromResult(guard);
 
-        var engine = action.Context.Engine;
-        var modules = engine.Modules;
-        var result = new Actions();
-
-        foreach (var ns in modules.Names)
-        {
-            foreach (var className in modules.GetActions(ns))
-            {
-                var parameterType = modules.GetActionType(ns, className);
-                if (parameterType == null) continue;
-
-                var parameters = new List<Data>();
-                var nCtx = new NullabilityInfoContext();
-
-                foreach (var prop in parameterType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                {
-                    if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
-
-                    var typeName = TypeMapping.GetTypeName(prop.PropertyType);
-
-                    bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
-                    if (!isNullable && !prop.PropertyType.IsValueType)
-                        isNullable = nCtx.Create(prop).WriteState == NullabilityState.Nullable;
-                    if (isNullable && !typeName.EndsWith("?"))
-                        typeName += "?";
-
-                    var validValues = TypeMapping.GetValidValues(prop.PropertyType);
-                    if (validValues != null)
-                        typeName += $"({string.Join("|", validValues)})";
-
-                    var hasVar = prop.GetCustomAttribute<VariableNameAttribute>() != null;
-                    var defaultAttr = prop.GetCustomAttribute<DefaultAttribute>();
-
-                    var desc = hasVar ? $"@var {typeName}" : typeName;
-                    if (defaultAttr != null)
-                        desc += $" = {FormatDefault(defaultAttr.Value)}";
-
-                    parameters.Add(new Data(prop.Name, desc));
-                }
-
-                bool cacheable = true;
-                var actionAttr = parameterType.GetCustomAttribute<ActionAttribute>();
-                if (actionAttr != null)
-                    cacheable = actionAttr.Cacheable;
-
-                result.Add(new Action
-                {
-                    Module = ns,
-                    ActionName = className,
-                    ParameterSchema = parameterType,
-                    Parameters = parameters,
-                    Cacheable = cacheable
-                });
-            }
-        }
-
-        return Task.FromResult(Data.Ok(result));
+        return Task.FromResult(Data.Ok(action.Context.Engine.Modules.Describe()));
     }
 
     // --- Types ---
@@ -264,26 +208,15 @@ public class DefaultBuilderProvider : IBuilderProvider
                 if (existing != null)
                     return Data.Ok(existing);
             }
-            catch (JsonException) { }
+            catch (JsonException ex)
+            {
+                return Data.FromError(new Engine.Errors.ActionError(
+                    $"Failed to parse app.pr: {ex.Message}", "CorruptAppFile", 400));
+            }
         }
 
-        var newApp = new AppData
-        {
-            Id = Guid.NewGuid().ToString(),
-            Created = DateTime.UtcNow,
-            Updated = DateTime.UtcNow,
-            Version = "0.2"
-        };
-
-        var saveJson = JsonSerializer.Serialize(newApp, Json.CamelCaseIndented);
-        var saveAction = new file.Save
-        {
-            Context = context,
-            Path = new PLangPath(appPrPath, context),
-            Value = new Data("", saveJson)
-        };
-        var saveResult = await engine.RunAction(saveAction, context);
-        return saveResult.Success ? Data.Ok(newApp) : saveResult;
+        // Not found — return empty Data (caller decides whether to create)
+        return Data.Ok((AppData?)null);
     }
 
     public async Task<Data> SaveApp(appSave action)
@@ -372,7 +305,9 @@ public class DefaultBuilderProvider : IBuilderProvider
                     continue;
                 }
 
-                var expectedPrPath = ComputeExpectedPrPath(goalCall.Name);
+                // Use Goal's own PrPath derivation — don't reimplement the convention
+                var tempGoal = new Goal { Path = "/" + goalCall.Name + ".goal" };
+                var expectedPrPath = tempGoal.PrPath;
                 if (expectedPrPath != null)
                 {
                     var readAction = new file.Read
@@ -392,27 +327,6 @@ public class DefaultBuilderProvider : IBuilderProvider
                 param.Value = goalCall;
             }
         }
-    }
-
-    private static string? ComputeExpectedPrPath(string goalName)
-    {
-        var name = goalName;
-        if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
-            name = name[..^5];
-
-        if (goalName.StartsWith('/') || goalName.StartsWith('\\'))
-        {
-            var lastSep = name.LastIndexOfAny(new[] { '/', '\\' });
-            if (lastSep >= 0)
-            {
-                var dir = name[..(lastSep + 1)];
-                var baseName = name[(lastSep + 1)..].ToLowerInvariant();
-                return dir + ".build/" + baseName + ".pr";
-            }
-            return "/.build/" + name.ToLowerInvariant() + ".pr";
-        }
-
-        return ".build/" + name.ToLowerInvariant() + ".pr";
     }
 
     private static GoalCall? ToGoalCall(object? value)
@@ -472,11 +386,4 @@ public class DefaultBuilderProvider : IBuilderProvider
         return defaults;
     }
 
-    private static string FormatDefault(object? value) => value switch
-    {
-        null => "null",
-        string s => $"\"{s}\"",
-        bool b => b ? "true" : "false",
-        _ => value.ToString() ?? "null"
-    };
 }

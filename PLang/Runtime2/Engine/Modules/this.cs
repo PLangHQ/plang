@@ -129,6 +129,77 @@ public sealed class @this
         => _modules.TryRemove(module, out _);
 
     public void Clear() => _modules.Clear();
+
+    /// <summary>
+    /// Describes all registered actions with parameter metadata for the LLM builder prompt.
+    /// EngineModules owns this because it knows its own types.
+    /// </summary>
+    public Goals.Goal.Steps.Step.Actions.@this Describe()
+    {
+        var result = new Goals.Goal.Steps.Step.Actions.@this();
+        var nCtx = new NullabilityInfoContext();
+
+        foreach (var ns in Names)
+        {
+            foreach (var actionName in GetActions(ns))
+            {
+                var parameterType = GetActionType(ns, actionName);
+                if (parameterType == null) continue;
+
+                var parameters = new List<Memory.Data>();
+
+                foreach (var prop in parameterType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
+
+                    var typeName = Utility.TypeMapping.GetTypeName(prop.PropertyType);
+
+                    bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
+                    if (!isNullable && !prop.PropertyType.IsValueType)
+                        isNullable = nCtx.Create(prop).WriteState == NullabilityState.Nullable;
+                    if (isNullable && !typeName.EndsWith("?"))
+                        typeName += "?";
+
+                    var validValues = Utility.TypeMapping.GetValidValues(prop.PropertyType);
+                    if (validValues != null)
+                        typeName += $"({string.Join("|", validValues)})";
+
+                    var hasVar = prop.GetCustomAttribute<modules.VariableNameAttribute>() != null;
+                    var defaultAttr = prop.GetCustomAttribute<modules.DefaultAttribute>();
+
+                    var desc = hasVar ? $"@var {typeName}" : typeName;
+                    if (defaultAttr != null)
+                        desc += $" = {FormatDefault(defaultAttr.Value)}";
+
+                    parameters.Add(new Memory.Data(prop.Name, desc));
+                }
+
+                bool cacheable = true;
+                var actionAttr = parameterType.GetCustomAttribute<modules.ActionAttribute>();
+                if (actionAttr != null)
+                    cacheable = actionAttr.Cacheable;
+
+                result.Add(new Goals.Goal.Steps.Step.Actions.Action.@this
+                {
+                    Module = ns,
+                    ActionName = actionName,
+                    ParameterSchema = parameterType,
+                    Parameters = parameters,
+                    Cacheable = cacheable
+                });
+            }
+        }
+
+        return result;
+    }
+
+    private static string FormatDefault(object? value) => value switch
+    {
+        null => "null",
+        string s => $"\"{s}\"",
+        bool b => b ? "true" : "false",
+        _ => value.ToString() ?? "null"
+    };
 }
 
 /// <summary>
