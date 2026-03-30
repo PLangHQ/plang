@@ -12,5 +12,5 @@ public partial class app : IContext
     [Provider]
     public partial IBuilderProvider Builder { get; }
 
-    public async Task<Data> Run() => await Builder.GetApp(this);
+    public async Task<Data> Run() => await Builder.App(this);
 }

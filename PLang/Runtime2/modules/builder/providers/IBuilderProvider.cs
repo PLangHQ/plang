@@ -12,12 +12,12 @@ namespace PLang.Runtime2.modules.builder.providers;
 /// </summary>
 public interface IBuilderProvider : IProvider
 {
-    Task<Data> GetActions(GetActions action);
-    Data GetTypes(types action);
-    Task<Data> GetGoals(goals action);
-    Task<Data> SaveGoals(goalsSave action);
+    Task<Data> Actions(GetActions action);
+    Data Types(types action);
+    Task<Data> Goals(goals action);
+    Task<Data> GoalsSave(goalsSave action);
     Task<Data> Validate(validate action);
     Data Merge(merge action);
-    Task<Data> GetApp(app action);
-    Task<Data> SaveApp(appSave action);
+    Task<Data> App(app action);
+    Task<Data> AppSave(appSave action);
 }

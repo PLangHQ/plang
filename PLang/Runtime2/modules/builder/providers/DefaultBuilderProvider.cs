@@ -21,7 +21,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     // --- Actions ---
 
-    public Task<Data> GetActions(GetActions action)
+    public Task<Data> Actions(GetActions action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return Task.FromResult(guard);
@@ -31,7 +31,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     // --- Types ---
 
-    public Data GetTypes(types action)
+    public Data Types(types action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
@@ -47,7 +47,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     // --- Goals ---
 
-    public async Task<Data> GetGoals(goals action)
+    public async Task<Data> Goals(goals action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
@@ -105,7 +105,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         return result;
     }
 
-    public async Task<Data> SaveGoals(goalsSave action)
+    public async Task<Data> GoalsSave(goalsSave action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
@@ -180,7 +180,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     // --- App ---
 
-    public async Task<Data> GetApp(app action)
+    public async Task<Data> App(app action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
@@ -218,7 +218,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         return Data.Ok((AppData?)null);
     }
 
-    public async Task<Data> SaveApp(appSave action)
+    public async Task<Data> AppSave(appSave action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
