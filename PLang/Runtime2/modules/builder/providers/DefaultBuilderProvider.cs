@@ -1,10 +1,8 @@
-using System.Reflection;
 using System.Text.Json;
 using PLang.Runtime2.Engine.Goals.Goal;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Utility;
 using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
-using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
 using Actions = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this;
 
 namespace PLang.Runtime2.modules.builder.providers;
@@ -162,7 +160,12 @@ public class DefaultBuilderProvider : IBuilderProvider
         await ResolveGoalCallPaths(action.Actions, engine, context);
 
         foreach (var a in action.Actions)
-            FillDefaults(a, modules);
+        {
+            var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (a.Parameters != null)
+                foreach (var p in a.Parameters) paramNames.Add(p.Name);
+            a.Defaults = modules.GetDefaults(a.Module, a.ActionName, paramNames);
+        }
 
         return Data.Ok(true);
     }
@@ -333,57 +336,6 @@ public class DefaultBuilderProvider : IBuilderProvider
     {
         if (value is GoalCall gc) return gc;
         return TypeMapping.ConvertTo<GoalCall>(value);
-    }
-
-    private static void FillDefaults(Action action, Engine.Modules.@this modules)
-    {
-        var actionType = modules.GetActionType(action.Module, action.ActionName);
-        if (actionType == null) return;
-
-        var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (action.Parameters != null)
-            foreach (var p in action.Parameters) paramNames.Add(p.Name);
-
-        var configType = GetConfigureType(actionType);
-        action.Defaults = configType != null
-            ? FillFromConfigInstance(configType, paramNames)
-            : FillFromAttributes(actionType, paramNames);
-    }
-
-    private static System.Type? GetConfigureType(System.Type actionType)
-    {
-        foreach (var iface in actionType.GetInterfaces())
-            if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IConfigure<>))
-                return iface.GetGenericArguments()[0];
-        return null;
-    }
-
-    private static List<Data> FillFromConfigInstance(System.Type configType, HashSet<string> paramNames)
-    {
-        var defaults = new List<Data>();
-        var instance = Activator.CreateInstance(configType);
-        if (instance == null) return defaults;
-        foreach (var prop in configType.GetProperties())
-        {
-            if (paramNames.Contains(prop.Name)) continue;
-            var value = prop.GetValue(instance);
-            if (value == null) continue;
-            defaults.Add(new Data(prop.Name.ToLowerInvariant(), value));
-        }
-        return defaults;
-    }
-
-    private static List<Data> FillFromAttributes(System.Type actionType, HashSet<string> paramNames)
-    {
-        var defaults = new List<Data>();
-        foreach (var prop in actionType.GetProperties())
-        {
-            if (paramNames.Contains(prop.Name)) continue;
-            var attrs = prop.GetCustomAttributes(typeof(DefaultAttribute), false);
-            if (attrs.Length == 0) continue;
-            defaults.Add(new Data(prop.Name.ToLowerInvariant(), ((DefaultAttribute)attrs[0]).Value));
-        }
-        return defaults;
     }
 
 }

@@ -193,6 +193,49 @@ public sealed class @this
         return result;
     }
 
+    /// <summary>
+    /// Returns default values for an action's parameters that aren't already provided.
+    /// Checks IConfigure&lt;TConfig&gt; first, falls back to [Default] attributes.
+    /// </summary>
+    public List<Memory.Data>? GetDefaults(string module, string actionName, HashSet<string> excludeParams)
+    {
+        var actionType = GetActionType(module, actionName);
+        if (actionType == null) return null;
+
+        // IConfigure<TConfig> → instantiate config, read property defaults
+        foreach (var iface in actionType.GetInterfaces())
+        {
+            if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(modules.IConfigure<>))
+            {
+                var configType = iface.GetGenericArguments()[0];
+                var instance = Activator.CreateInstance(configType);
+                if (instance == null) break;
+
+                var defaults = new List<Memory.Data>();
+                foreach (var prop in configType.GetProperties())
+                {
+                    if (excludeParams.Contains(prop.Name)) continue;
+                    var value = prop.GetValue(instance);
+                    if (value == null) continue;
+                    defaults.Add(new Memory.Data(prop.Name.ToLowerInvariant(), value));
+                }
+                return defaults;
+            }
+        }
+
+        // [Default] attributes
+        var attrDefaults = new List<Memory.Data>();
+        foreach (var prop in actionType.GetProperties())
+        {
+            if (excludeParams.Contains(prop.Name)) continue;
+            var attrs = prop.GetCustomAttributes(typeof(modules.DefaultAttribute), false);
+            if (attrs.Length == 0) continue;
+            attrDefaults.Add(new Memory.Data(prop.Name.ToLowerInvariant(),
+                ((modules.DefaultAttribute)attrs[0]).Value));
+        }
+        return attrDefaults.Count > 0 ? attrDefaults : null;
+    }
+
     private static string FormatDefault(object? value) => value switch
     {
         null => "null",
