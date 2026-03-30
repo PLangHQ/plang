@@ -363,7 +363,7 @@ public class DefaultBuilderProvider : IBuilderProvider
                 if (!string.Equals(param.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                var goalCall = DeserializeGoalCall(param.Value);
+                var goalCall = ToGoalCall(param.Value);
                 if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
                     continue;
 
@@ -416,16 +416,12 @@ public class DefaultBuilderProvider : IBuilderProvider
         return ".build/" + name.ToLowerInvariant() + ".pr";
     }
 
-    private static GoalCall? DeserializeGoalCall(object? value)
+    private static GoalCall? ToGoalCall(object? value)
     {
         if (value is GoalCall gc) return gc;
-        if (value is JsonElement je)
-        {
-            try { return JsonSerializer.Deserialize<GoalCall>(je.GetRawText(), JsonOptions.CaseInsensitive); }
-            catch { return null; }
-        }
-        if (value is string s) return new GoalCall { Name = s };
-        return null;
+        // UnwrapJsonElement already converts JsonElement → Dictionary/string,
+        // so we only need to handle those + use TypeMapping for dictionaries
+        return TypeMapping.ConvertTo(value, typeof(GoalCall)) as GoalCall;
     }
 
     private static void FillDefaults(Action action, Engine.Modules.@this modules)
