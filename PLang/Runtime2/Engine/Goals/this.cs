@@ -322,22 +322,46 @@ public sealed class @this
     {
         try
         {
-            var goal = await engine.Channels.ReadAsync<Goal.@this>(prFilePath, cancellationToken);
+            // .pr files can be an array of goals (multiple goals per .goal file) or a single goal object
+            var fs = engine.FileSystem;
+            var content = await fs.File.ReadAllTextAsync(prFilePath, cancellationToken);
+            var ext = fs.Path.GetExtension(prFilePath);
 
-            if (goal == null)
-                return Data.FromError(new Error($"Failed to parse goal file: {prFilePath}"));
-
-            foreach (var step in goal.Steps)
-                step.Goal = goal;
-
-            if (context != null)
+            List<Goal.@this>? goals = null;
+            var trimmed = content.TrimStart();
+            if (trimmed.StartsWith('['))
             {
-                var loadResult = await goal.Load(context);
-                if (!loadResult.Success) return loadResult;
+                goals = engine.Channels.Serializers.Deserialize<List<Goal.@this>>(
+                    new Channels.Serializers.DeserializeOptions { Value = content, Extension = ext });
+            }
+            else
+            {
+                var single = engine.Channels.Serializers.Deserialize<Goal.@this>(
+                    new Channels.Serializers.DeserializeOptions { Value = content, Extension = ext });
+                if (single != null)
+                    goals = new List<Goal.@this> { single };
             }
 
-            Add(goal);
-            return Data.Ok(goal);
+            if (goals == null || goals.Count == 0)
+                return Data.FromError(new Error($"Failed to parse goal file: {prFilePath}"));
+
+            Goal.@this? primary = null;
+            foreach (var goal in goals)
+            {
+                foreach (var step in goal.Steps)
+                    step.Goal = goal;
+
+                if (context != null)
+                {
+                    var loadResult = await goal.Load(context);
+                    if (!loadResult.Success) return loadResult;
+                }
+
+                Add(goal);
+                primary ??= goal;
+            }
+
+            return Data.Ok(primary!);
         }
         catch (Exception ex)
         {
