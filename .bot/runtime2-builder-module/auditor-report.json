@@ -1,47 +1,25 @@
 {
   "reviewer": "auditor",
   "branch": "runtime2-builder-module",
-  "timestamp": "2026-03-30T18:00:00Z",
-  "reviewed_version": "v1",
-  "summary": "Builder module is well-structured, follows OBP patterns correctly, and has good test coverage. Three previous reviewers (codeanalyzer, tester, security) all passed. I found 3 findings: 1 minor test gap (Describe() [Provider] filter untested — fell between codeanalyzer recommendation and tester verification), 1 minor performance issue (FormatForLlm allocates JsonSerializerOptions per call), and 1 nit (comment explaining the // exclusion in Parse would help future readers). No critical or major issues. The cross-file contracts are sound — Goal.Parse fills structural fields, MergeFrom fills LLM fields, Step.Clone copies all fields, Describe excludes internal properties. The provider pattern delegation is consistent across all 8 actions.",
+  "timestamp": "2026-03-30T20:00:00Z",
+  "reviewed_version": "v2",
+  "summary": "All 3 v1 findings resolved. Fresh-eyes review of Parse() changes found 1 minor contract gap: ToText() doesn't produce `\\` escapes for multiline step text, so the claimed 'Inverse of ToText()' contract is broken. Not a runtime bug — nobody round-trips ToText→Parse in production. The `//` comment simplification and `\\` escape feature are both clean and well-tested. The `ExcludesProviderProperties` test is a good addition. No critical or major issues.",
   "previous_reviews_assessed": {
-    "codeanalyzer": "agree — thorough 4-round analysis, fresh-eyes pass caught real issues (Provider leak in Describe, Step.Clone gap). All findings resolved.",
-    "tester": "partial — good false-green hunting in v1, but missed the Describe() [Provider] filter test that codeanalyzer v4 specifically recommended. Coverage numbers are strong otherwise.",
-    "security": "agree — correct threat model application. Builder runs on developer's machine, .goal/.pr files are trusted. Medium findings (Parse size limit, ResolveType default) are reasonable."
+    "codeanalyzer": "agree — v5 correctly identified all 4 changes as clean, backslash escape analysis is thorough",
+    "tester": "n/a — no tester review of this cycle",
+    "security": "n/a — no security review of this cycle"
   },
   "findings": [
     {
       "id": 1,
       "severity": "minor",
-      "category": "review-gap",
-      "file": "PLang/Runtime2/Engine/Modules/this.cs",
-      "line": 154,
-      "issue": "Describe() filters [Provider] properties (codeanalyzer v3 finding, fixed in v4), but no test verifies this filter. If someone removes the `GetCustomAttribute<ProviderAttribute>() != null` check on line 154, no test fails. The codeanalyzer v4 explicitly recommended a Describe_ExcludesProviderProperties test, but the tester v2 did not add one.",
-      "missed_by": "tester",
-      "impact": "If the [Provider] filter is accidentally removed, every builder action would include an 'IBuilderProvider Builder' parameter in the LLM prompt, and HTTP actions would include 'IHttpProvider Http', etc. The LLM would try to fill these parameters. Build would likely produce broken .pr files.",
-      "suggestion": "Add a test that calls engine.Modules.Describe(), finds any builder action, and asserts none of its parameters contain 'IBuilderProvider' or 'Provider' in the name/description."
-    },
-    {
-      "id": 2,
-      "severity": "minor",
-      "category": "foundation",
-      "file": "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
-      "line": 108,
-      "issue": "FormatForLlm() allocates `new JsonSerializerOptions()` on every call (lines 108 and 144). System.Text.Json documentation warns this is expensive — options should be cached as static readonly fields. This method is called once per goal during build, so it's not hot-path, but it's still wasteful.",
-      "missed_by": "codeanalyzer",
-      "impact": "Minor performance overhead during build. Each call allocates and initializes a new options object instead of reusing a cached one.",
-      "suggestion": "Replace with `Json.CamelCaseIndented` or a `private static readonly JsonSerializerOptions _formatOptions = new();` field. The centralized Json utility already exists for this purpose."
-    },
-    {
-      "id": 3,
-      "severity": "nit",
-      "category": "architectural",
+      "category": "contract",
       "file": "PLang/Runtime2/Engine/Goals/Goal/this.cs",
-      "line": 270,
-      "issue": "The `//` exclusion in the line comment check (`trimmed.StartsWith(\"/\") && !trimmed.StartsWith(\"//\")`) is correct but unexplained. PLang uses `/` for comments, not `//`. A `//` line falls through to goal-header parsing, creating a goal named '// something'. This is intentional but surprising to someone reading the parser for the first time.",
-      "missed_by": "none",
-      "impact": "None — code is correct. Readability concern only.",
-      "suggestion": "Add a brief comment: `// PLang uses '/' for comments, not '//' — double-slash is not a comment`"
+      "line": 196,
+      "issue": "Parse() docstring claims 'Inverse of ToText()' (line 196) but ToText() (line 142) doesn't produce `\\` escapes for multiline step text. A step with Text='first line\\ncontinuation' renders via ToText as raw newlines. Re-parsing that output treats the unindented second line as a goal header, not a continuation. Additionally, ToText doesn't emit space-indented continuation lines either.",
+      "missed_by": "codeanalyzer",
+      "impact": "Low. ToText() is only called in 4 test methods — never in production. The builder pipeline uses FormatForLlm (template-based), not ToText. But the false contract could mislead future developers who trust the docstring.",
+      "suggestion": "Either fix ToText to emit continuation lines (space-indented or `\\`-escaped), or update the docstring to remove the 'Inverse' claim. Recommend the docstring fix since ToText isn't used in production."
     }
   ]
 }
