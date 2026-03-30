@@ -419,9 +419,7 @@ public class DefaultBuilderProvider : IBuilderProvider
     private static GoalCall? ToGoalCall(object? value)
     {
         if (value is GoalCall gc) return gc;
-        // UnwrapJsonElement already converts JsonElement → Dictionary/string,
-        // so we only need to handle those + use TypeMapping for dictionaries
-        return TypeMapping.ConvertTo(value, typeof(GoalCall)) as GoalCall;
+        return TypeMapping.ConvertTo<GoalCall>(value);
     }
 
     private static void FillDefaults(Action action, Engine.Modules.@this modules)

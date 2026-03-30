@@ -272,6 +272,11 @@ public static class TypeMapping
     }
 
     /// <summary>
+    /// Attempts to convert a value to the specified type. Generic convenience overload.
+    /// </summary>
+    public static T? ConvertTo<T>(object? value) => (T?)ConvertTo(value, typeof(T));
+
+    /// <summary>
     /// Attempts to convert a value to the specified type.
     /// </summary>
     public static object? ConvertTo(object? value, Type targetType)
