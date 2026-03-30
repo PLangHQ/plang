@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "No critical or major findings. 2 minor gaps (untested Describe filter, per-call JsonOptions allocation), 1 nit. Builder module is solid — recommend docs bot next." }
