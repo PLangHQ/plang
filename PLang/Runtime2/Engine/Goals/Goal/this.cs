@@ -83,7 +83,7 @@ public sealed partial class @this
     public bool IsEvent { get; init; }
 
     [Store, Debug, Default]
-    public bool IsSystem { get; set; }
+    public bool IsSystem { get; init; }
 
     [Store, Debug, Default]
     public bool IsTest { get; set; }
@@ -330,9 +330,10 @@ public sealed partial class @this
             var goalComment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
             pendingComment.Clear();
 
+            var normalizedPath = path?.Replace('\\', '/').TrimStart('/') ?? "";
             var isSetup = goalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)
-                || (path != null && path.Replace('\\', '/').TrimStart('/')
-                    .StartsWith("setup/", StringComparison.OrdinalIgnoreCase));
+                || normalizedPath.StartsWith("setup/", StringComparison.OrdinalIgnoreCase);
+            var isSystem = normalizedPath.StartsWith("system/", StringComparison.OrdinalIgnoreCase);
 
             currentGoal = new @this
             {
@@ -340,7 +341,8 @@ public sealed partial class @this
                 Comment = goalComment,
                 Visibility = goals.Count == 0 ? Visibility.Public : Visibility.Private,
                 Path = path,
-                IsSetup = isSetup
+                IsSetup = isSetup,
+                IsSystem = isSystem
             };
             goals.Add(currentGoal);
             stepIndex = 0;

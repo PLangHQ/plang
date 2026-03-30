@@ -43,14 +43,11 @@ public class GetTypeInfoTests
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
-        // Result should have TypeNames containing basic types
-        var value = result.Value!;
-        var typeNamesProp = value.GetType().GetProperty("TypeNames");
-        await Assert.That(typeNamesProp).IsNotNull();
-        var typeNames = (string)typeNamesProp!.GetValue(value)!;
-        await Assert.That(typeNames).Contains("string");
-        await Assert.That(typeNames).Contains("int");
-        await Assert.That(typeNames).Contains("bool");
+        var info = result.Value as BuilderTypeInfo;
+        await Assert.That(info).IsNotNull();
+        await Assert.That(info!.TypeNames).Contains("string");
+        await Assert.That(info.TypeNames).Contains("int");
+        await Assert.That(info.TypeNames).Contains("bool");
     }
 
     [Test]
@@ -60,11 +57,8 @@ public class GetTypeInfoTests
         var result = await _engine.RunAction(action, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
-        var value = result.Value!;
-        var schemasProp = value.GetType().GetProperty("TypeSchemas");
-        await Assert.That(schemasProp).IsNotNull();
-        var schemas = (string)schemasProp!.GetValue(value)!;
-        // goal.call should have a schema
-        await Assert.That(schemas).Contains("goal.call");
+        var info = result.Value as BuilderTypeInfo;
+        await Assert.That(info).IsNotNull();
+        await Assert.That(info!.TypeSchemas).Contains("goal.call");
     }
 }

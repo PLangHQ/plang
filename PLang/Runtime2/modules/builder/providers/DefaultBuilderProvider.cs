@@ -40,13 +40,9 @@ public class DefaultBuilderProvider : IBuilderProvider
         var schemas = TypeMapping.GetComplexTypeSchemas();
         var schemaLines = schemas.Select(kvp => $"  {kvp.Key}: {kvp.Value}");
 
-        var result = new
-        {
-            TypeNames = string.Join(", ", names),
-            TypeSchemas = string.Join("\n", schemaLines)
-        };
-
-        return Data.Ok(result);
+        return Data.Ok(new BuilderTypeInfo(
+            string.Join(", ", names),
+            string.Join("\n", schemaLines)));
     }
 
     // --- Goals ---
@@ -76,6 +72,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             return Data.Ok(new List<Goal>());
 
         var allGoals = new List<Goal>();
+        var allErrors = new List<Engine.Info>();
 
         foreach (var file in files)
         {
@@ -92,20 +89,25 @@ public class DefaultBuilderProvider : IBuilderProvider
 
             var parsedGoals = Goal.Parse(text, relativePath);
 
-            var normalizedPath = relativePath.Replace('\\', '/');
-            if (normalizedPath.StartsWith("/system/", StringComparison.OrdinalIgnoreCase))
-            {
-                foreach (var goal in parsedGoals)
-                    goal.IsSystem = true;
-            }
-
+            // Merge existing .pr data, collect errors
             foreach (var goal in parsedGoals)
-                await MergePrData(goal, engine, context);
+            {
+                var mergeErrors = await MergePrData(goal, engine, context);
+                allErrors.AddRange(mergeErrors);
+            }
 
             allGoals.AddRange(parsedGoals);
         }
 
-        return Data.Ok(allGoals);
+        var result = Data.Ok(allGoals);
+        if (allErrors.Count > 0)
+        {
+            // Return goals but surface errors so the caller knows about corrupt .pr files
+            foreach (var error in allErrors)
+                result.Warnings ??= new List<Engine.Info>();
+            result.Warnings = allErrors;
+        }
+        return result;
     }
 
     public async Task<Data> SaveGoals(goalsSave action)
@@ -218,7 +220,6 @@ public class DefaultBuilderProvider : IBuilderProvider
             }
         }
 
-        // Not found — return empty Data (caller decides whether to create)
         return Data.Ok((AppData?)null);
     }
 
@@ -229,8 +230,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var engine = action.Context.Engine;
         var context = action.Context;
-
-        action.App.Updated = DateTime.UtcNow;
 
         var savePath = string.IsNullOrWhiteSpace(action.Path) ? ".build/app.pr" : action.Path;
         var json = JsonSerializer.Serialize(action.App, Json.CamelCaseIndented);
@@ -247,11 +246,15 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     // --- Private helpers ---
 
-    private static async Task MergePrData(Goal goal, Engine.@this engine,
+    /// <summary>
+    /// Merges existing .pr data into a goal. Returns any errors encountered (corrupt .pr files).
+    /// </summary>
+    private static async Task<List<Engine.Info>> MergePrData(Goal goal, Engine.@this engine,
         Engine.Context.PLangContext context)
     {
+        var errors = new List<Engine.Info>();
         var prPath = goal.PrPath;
-        if (string.IsNullOrEmpty(prPath)) return;
+        if (string.IsNullOrEmpty(prPath)) return errors;
 
         var readAction = new file.Read
         {
@@ -259,10 +262,10 @@ public class DefaultBuilderProvider : IBuilderProvider
             Path = new PLangPath(prPath, context)
         };
         var readResult = await engine.RunAction(readAction, context);
-        if (!readResult.Success) return;
+        if (!readResult.Success) return errors;
 
         var prJson = readResult.Value?.ToString();
-        if (string.IsNullOrWhiteSpace(prJson)) return;
+        if (string.IsNullOrWhiteSpace(prJson)) return errors;
 
         try
         {
@@ -273,17 +276,18 @@ public class DefaultBuilderProvider : IBuilderProvider
                     g.Name.Equals(goal.Name, StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                     goal.MergeFrom(match);
-                return;
             }
         }
         catch (JsonException ex)
         {
-            goal.Errors.Add(new Engine.Info
+            errors.Add(new Engine.Info
             {
                 Key = "CorruptPrFile",
                 Message = $"Failed to parse .pr file at {prPath}: {ex.Message}"
             });
         }
+
+        return errors;
     }
 
     private static async Task ResolveGoalCallPaths(Actions actions, Engine.@this engine,
@@ -308,22 +312,27 @@ public class DefaultBuilderProvider : IBuilderProvider
                     continue;
                 }
 
-                // Use Goal's own PrPath derivation — don't reimplement the convention
-                var tempGoal = new Goal { Path = "/" + goalCall.Name + ".goal" };
+                // Derive PrPath using Goal's own convention
+                var goalPath = goalCall.Name;
+                if (!goalPath.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
+                    goalPath += ".goal";
+                if (!goalPath.StartsWith('/') && !goalPath.StartsWith('\\'))
+                    goalPath = "/" + goalPath;
+
+                var tempGoal = new Goal { Path = goalPath };
                 var expectedPrPath = tempGoal.PrPath;
                 if (expectedPrPath != null)
                 {
-                    var readAction = new file.Read
+                    // Check existence via file.exists — don't read the whole file
+                    var existsAction = new file.Exists
                     {
                         Context = context,
                         Path = new PLangPath(expectedPrPath, context)
                     };
-                    var readResult = await engine.RunAction(readAction, context);
-                    if (readResult.Success)
+                    var existsResult = await engine.RunAction(existsAction, context);
+                    if (existsResult.Success && existsResult.Value is PLangPath pathData && pathData.Exists)
                     {
                         goalCall.PrPath = expectedPrPath;
-                        param.Value = goalCall;
-                        continue;
                     }
                 }
 
@@ -337,5 +346,4 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (value is GoalCall gc) return gc;
         return TypeMapping.ConvertTo<GoalCall>(value);
     }
-
 }
