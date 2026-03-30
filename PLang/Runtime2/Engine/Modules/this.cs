@@ -151,6 +151,7 @@ public sealed class @this
                 foreach (var prop in parameterType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 {
                     if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
+                    if (prop.GetCustomAttribute<modules.ProviderAttribute>() != null) continue;
 
                     var typeName = Utility.TypeMapping.GetTypeName(prop.PropertyType);
 

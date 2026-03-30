@@ -79,7 +79,10 @@ public sealed partial class @this
                 Module = a.Module,
                 ActionName = a.ActionName,
                 Parameters = new List<Data>(a.Parameters),
-                Return = a.Return != null ? new List<Data>(a.Return) : null
+                Return = a.Return != null ? new List<Data>(a.Return) : null,
+                Defaults = a.Defaults != null ? new List<Data>(a.Defaults) : null,
+                Errors = new List<Info>(a.Errors),
+                Warnings = new List<Info>(a.Warnings)
             })),
             OnErrorGoal = OnErrorGoal,
             WaitForExecution = WaitForExecution,

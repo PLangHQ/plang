@@ -311,7 +311,7 @@ public sealed partial class @this
             }
 
             // Continuation line
-            if (currentStep != null && raw.Length > 0 && (raw[0] == ' ' || raw[0] == '\t'))
+            if (currentStep != null && raw.Length > 0 && raw[0] == ' ')
             {
                 currentStep = new Steps.Step.@this
                 {
