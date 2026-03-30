@@ -122,10 +122,10 @@ public sealed partial class @this
     [JsonIgnore]
     public Engine.@this? Engine { get; set; }
 
-    [Store, Debug]
+    [Debug]
     public List<Info> Errors { get; init; } = new();
 
-    [Store, Debug]
+    [Debug]
     public List<Info> Warnings { get; init; } = new();
 
     [Debug, Default]

@@ -25,7 +25,6 @@ public class StepTests
                     Return = new List<Data> { new Data("response") }
                 }
             },
-            OnErrorGoal = "HandleError",
             WaitForExecution = false
         };
 
@@ -37,7 +36,6 @@ public class StepTests
         await Assert.That(step.Actions.Count).IsEqualTo(1);
         await Assert.That(step.Actions[0].Module).IsEqualTo("http");
         await Assert.That(step.Actions[0].ActionName).IsEqualTo("get");
-        await Assert.That(step.OnErrorGoal).IsEqualTo("HandleError");
         await Assert.That(step.WaitForExecution).IsFalse();
     }
 
@@ -90,7 +88,6 @@ public class StepTests
                     Return = new List<Data> { new Data("result") }
                 }
             },
-            OnErrorGoal = "ErrorHandler",
             WaitForExecution = false,
             Goal = originalGoal
         };
@@ -105,7 +102,6 @@ public class StepTests
         await Assert.That(clone.Actions.Count).IsEqualTo(1);
         await Assert.That(clone.Actions[0].Module).IsEqualTo("variable");
         await Assert.That(clone.Actions[0].ActionName).IsEqualTo("set");
-        await Assert.That(clone.OnErrorGoal).IsEqualTo(original.OnErrorGoal);
         await Assert.That(clone.WaitForExecution).IsEqualTo(original.WaitForExecution);
         await Assert.That(clone.Goal).IsEqualTo(original.Goal);
     }
@@ -154,14 +150,6 @@ public class StepTests
         var step = new Step();
 
         await Assert.That(step.Comment).IsNull();
-    }
-
-    [Test]
-    public async Task OnErrorGoal_DefaultsToNull()
-    {
-        var step = new Step();
-
-        await Assert.That(step.OnErrorGoal).IsNull();
     }
 
     [Test]

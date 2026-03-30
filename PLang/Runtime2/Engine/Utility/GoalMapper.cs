@@ -66,10 +66,8 @@ public static class GoalMapper
                     Return = null
                 }
             },
-            OnErrorGoal = oldStep.ErrorHandlers?.FirstOrDefault()?.GoalToCall?.Name,
             WaitForExecution = oldStep.WaitForExecution,
             Hash = oldStep.Hash,
-            PreviousHash = null, // Computed during serialization
             Intent = oldStep.UserIntent,
             OnError = MapErrorHandler(oldStep.ErrorHandlers?.FirstOrDefault()),
             Cache = MapCacheSettings(oldStep.CacheHandler),

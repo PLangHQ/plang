@@ -25,10 +25,10 @@ public sealed partial class @this
     [Store, Debug, Default]
     public List<Data>? Defaults { get; set; }
 
-    [Store, LlmBuilder, Debug, Default]
+    [Debug]
     public List<Info> Errors { get; init; } = new();
 
-    [Store, LlmBuilder, Debug, Default]
+    [Debug]
     public List<Info> Warnings { get; init; } = new();
 
     [JsonIgnore]

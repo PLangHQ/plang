@@ -27,14 +27,8 @@ public sealed partial class @this
     [Store, Debug, Default]
     public Actions.@this Actions { get; set; } = new();
 
-    [Store, Debug, Default]
-    public string? OnErrorGoal { get; init; }
-
     [Store, Debug]
     public string? Hash { get; init; }
-
-    [Store, Debug]
-    public string? PreviousHash { get; init; }
 
     [Store, LlmBuilder, Debug, Default]
     public string? Intent { get; init; }
@@ -48,10 +42,10 @@ public sealed partial class @this
     [Store, Debug, Default]
     public int? Timeout { get; init; }
 
-    [Store, Debug]
+    [Debug]
     public List<Info> Errors { get; init; } = new();
 
-    [Store, Debug]
+    [Debug]
     public List<Info> Warnings { get; init; } = new();
 
     [Store, Debug, Default]
@@ -84,11 +78,9 @@ public sealed partial class @this
                 Errors = new List<Info>(a.Errors),
                 Warnings = new List<Info>(a.Warnings)
             })),
-            OnErrorGoal = OnErrorGoal,
             WaitForExecution = WaitForExecution,
             Goal = Goal,
             Hash = Hash,
-            PreviousHash = PreviousHash,
             Intent = Intent,
             OnError = OnError,
             Cache = Cache,

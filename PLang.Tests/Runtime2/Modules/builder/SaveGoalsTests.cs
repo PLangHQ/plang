@@ -70,7 +70,7 @@ public class SaveGoalsTests
     }
 
     [Test]
-    public async Task SaveGoals_CamelCase_NullsIncluded()
+    public async Task SaveGoals_CamelCase_NullsOmitted()
     {
         var goals = new List<Goal>
         {
@@ -78,7 +78,7 @@ public class SaveGoalsTests
             {
                 Name = "Test",
                 Path = "/Test.goal",
-                Description = null // Should be included for determinism
+                Description = null
             }
         };
 
@@ -90,8 +90,11 @@ public class SaveGoalsTests
 
         // Should use camelCase
         await Assert.That(json).Contains("\"name\"");
-        // Null description should be included (deterministic .pr files)
-        await Assert.That(json).Contains("\"description\"");
+        // Null properties are omitted for clean .pr files
+        await Assert.That(json).DoesNotContain("\"description\"");
+        // Non-[Store] properties should not appear
+        await Assert.That(json).DoesNotContain("\"errors\"");
+        await Assert.That(json).DoesNotContain("\"warnings\"");
     }
 
     [Test]

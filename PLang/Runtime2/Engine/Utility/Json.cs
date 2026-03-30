@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace PLang.Runtime2.Engine.Utility;
 
@@ -26,4 +27,44 @@ public static class Json
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true
     };
+
+    /// <summary>
+    /// .pr file serialization — only properties marked with [Store] are included.
+    /// CamelCase, indented, nulls omitted.
+    /// </summary>
+    public static readonly JsonSerializerOptions PrWrite = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { StoreOnlyModifier }
+        }
+    };
+
+    private static void StoreOnlyModifier(JsonTypeInfo typeInfo)
+    {
+        // Only filter properties on our own types (Goal, Step, Action, etc.)
+        // Leave framework types (List, Dictionary, Data, etc.) alone
+        if (typeInfo.Kind != JsonTypeInfoKind.Object)
+            return;
+
+        var ns = typeInfo.Type.Namespace;
+        if (ns == null || !ns.StartsWith("PLang.Runtime2.Engine.Goals", StringComparison.Ordinal))
+            return;
+
+        foreach (var prop in typeInfo.Properties)
+        {
+            if (prop.AttributeProvider == null)
+                continue;
+
+            var hasStore = prop.AttributeProvider
+                .GetCustomAttributes(typeof(StoreAttribute), inherit: true)
+                .Length > 0;
+
+            if (!hasStore)
+                prop.ShouldSerialize = (_, _) => false;
+        }
+    }
 }
