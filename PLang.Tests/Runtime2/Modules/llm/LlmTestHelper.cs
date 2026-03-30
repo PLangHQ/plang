@@ -32,7 +32,7 @@ internal static class LlmTestHelper
     /// </summary>
     internal static string MakeCompletionResponse(string content,
         int promptTokens = 10, int completionTokens = 20,
-        string model = "gpt-4.1-mini")
+        string model = "gpt-5.4-nano")
     {
         return JsonSerializer.Serialize(new
         {
@@ -73,7 +73,7 @@ internal static class LlmTestHelper
         {
             id = "chatcmpl-test",
             @object = "chat.completion",
-            model = "gpt-4.1-mini",
+            model = "gpt-5.4-nano",
             choices = new[]
             {
                 new

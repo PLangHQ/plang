@@ -31,6 +31,10 @@ public sealed class StepCache
         {
             RestoreVariables(cached, context.MemoryStack);
             await Hit.Run(context);
+            // Return the first restored variable's Data so the action return mapping
+            // gets the correct value (not a null-valued cache entry)
+            if (cached.Properties.Count > 0)
+                return cached.Properties[0];
             return Data.Ok();
         }
 

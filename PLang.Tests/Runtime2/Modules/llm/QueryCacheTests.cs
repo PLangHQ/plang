@@ -172,7 +172,7 @@ public class QueryCacheTests
         // Verify metadata was restored from cache
         await Assert.That(result2.Properties["Cached"]?.Value).IsEqualTo(true);
         await Assert.That(result2.Properties["RawResponse"]?.Value?.ToString()).IsEqualTo("preserved");
-        await Assert.That(result2.Properties["Model"]?.Value?.ToString()).IsEqualTo("gpt-4.1-mini");
+        await Assert.That(result2.Properties["Model"]?.Value?.ToString()).IsEqualTo("gpt-5.4-nano");
         await Assert.That(result2.Properties["PromptTokens"]?.Value).IsNotNull();
         await Assert.That(result2.Properties["CompletionTokens"]?.Value).IsNotNull();
         // No additional HTTP call was made

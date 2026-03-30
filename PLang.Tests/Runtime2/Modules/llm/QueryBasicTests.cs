@@ -157,7 +157,7 @@ public class QueryBasicTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Properties["RawResponse"]?.Value?.ToString()).IsEqualTo("result text");
-        await Assert.That(result.Properties["Model"]?.Value?.ToString()).IsEqualTo("gpt-4.1-mini");
+        await Assert.That(result.Properties["Model"]?.Value?.ToString()).IsEqualTo("gpt-5.4-nano");
         await Assert.That(result.Properties["PromptTokens"]?.Value).IsEqualTo(15);
         await Assert.That(result.Properties["CompletionTokens"]?.Value).IsEqualTo(25);
         await Assert.That(result.Properties["TotalTokens"]?.Value).IsEqualTo(40);

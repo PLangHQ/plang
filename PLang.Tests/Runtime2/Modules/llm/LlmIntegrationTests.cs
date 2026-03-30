@@ -300,7 +300,7 @@ public class LlmIntegrationTests
         var rawResponse = result.Properties["RawResponse"]?.Value?.ToString();
         if (rawResponse == null) return null;
 
-        var model = result.Properties["Model"]?.Value?.ToString() ?? "gpt-4.1-mini";
+        var model = result.Properties["Model"]?.Value?.ToString() ?? "gpt-5.4-nano";
         var promptTokens = result.Properties["PromptTokens"]?.Value is int pt ? pt : 0;
         var completionTokens = result.Properties["CompletionTokens"]?.Value is int ct ? ct : 0;
 

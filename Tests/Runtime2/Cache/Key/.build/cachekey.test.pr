@@ -1,0 +1,248 @@
+[
+  {
+    "name": "Start",
+    "description": "Build goal with cached file read behavior as described by the user (same step with same input hits cache).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "save \u0027cachekey.txt\u0027 with content \u0027value1\u0027",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "same step with same input hits cache",
+        "actions": [
+          {
+            "module": "file",
+            "action": "save",
+            "parameters": [
+              {
+                "name": "path",
+                "value": "cachekey.txt",
+                "type": "path"
+              },
+              {
+                "name": "value",
+                "value": "value1",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "call ReadCachedFile",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "goalName",
+                "value": "ReadCachedFile",
+                "type": "goal.call"
+              }
+            ],
+            "return": [
+              {
+                "name": "cachedContent",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "set %first% = %cachedContent%",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "name",
+                "value": "%first%",
+                "type": "string"
+              },
+              {
+                "name": "value",
+                "value": "%cachedContent%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "save \u0027cachekey.txt\u0027 with content \u0027value2\u0027",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "file",
+            "action": "save",
+            "parameters": [
+              {
+                "name": "path",
+                "value": "cachekey.txt",
+                "type": "path"
+              },
+              {
+                "name": "value",
+                "value": "value2",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "call ReadCachedFile",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "goalName",
+                "value": "ReadCachedFile",
+                "type": "goal.call"
+              }
+            ],
+            "return": [
+              {
+                "name": "cachedContent",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "assert %cachedContent% equals %first%",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "expected",
+                "value": "%first%",
+                "type": "object"
+              },
+              {
+                "name": "actual",
+                "value": "%cachedContent%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 6,
+        "text": "delete file \u0027cachekey.txt\u0027",
+        "lineNumber": 9,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "file",
+            "action": "delete",
+            "parameters": [
+              {
+                "name": "path",
+                "value": "cachekey.txt",
+                "type": "path"
+              },
+              {
+                "name": "ignoreIfNotFound",
+                "value": false,
+                "type": "bool"
+              },
+              {
+                "name": "recursive",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/CacheKey.test.goal",
+    "prPath": "/.build/cachekey.test.pr",
+    "hash": "29051c83e2d6c1d9f6649583b042eb2df72980ba61eb723cc4eeb10572326286",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]
