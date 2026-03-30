@@ -74,7 +74,7 @@ public sealed class @this
 
             try
             {
-                result.Result = await RunSingleTest(fileSystem, rootDir, testFile, result, cancellationToken);
+                result.Result = await RunSingleTest(fileSystem, rootDir, testFile, result, _engine.Debug.IsEnabled, cancellationToken);
                 Console.WriteLine(result.Passed ? " PASS" : " FAIL");
             }
             catch (Exception ex)
@@ -95,6 +95,7 @@ public sealed class @this
         string rootDir,
         string testFile,
         TestResult result,
+        bool debug,
         CancellationToken cancellationToken)
     {
         // Derive the .pr file path
@@ -112,6 +113,7 @@ public sealed class @this
         var testFs = new SafeFileSystem.PLangFileSystem(dir, "");
         await using var testEngine = new Engine.@this(testFs);
         testEngine.Testing.IsEnabled = true;
+        if (debug) testEngine.Debug.Apply(true);
 
         // Load the test .pr file
         await testEngine.Goals.LoadFromFileAsync(testEngine, prPath, cancellationToken: cancellationToken);

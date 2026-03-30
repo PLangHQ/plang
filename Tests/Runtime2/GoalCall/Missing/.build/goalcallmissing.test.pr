@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal that calls a non-existent goal, handles the error by calling a handler goal, and asserts the missing error was caught.",
+    "description": "Build goal that calls a non-existent goal and verifies the error handler caught it.",
     "comment": null,
     "steps": [
       {

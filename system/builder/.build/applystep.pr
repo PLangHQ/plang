@@ -1,46 +1,27 @@
 {
   "name": "ApplyStep",
-  "description": "Validates and applies step result. Skips if step is already approved (unchanged).",
+  "description": "Validates and applies step result from the LLM.",
   "steps": [
     {
       "index": 0,
-      "text": "if %stepResult.approved% != true, call ProcessStep",
+      "text": "call ProcessStep",
       "lineNumber": 4,
       "indent": 0,
       "actions": [
         {
-          "module": "condition",
-          "action": "if",
+          "module": "goal",
+          "action": "call",
           "parameters": [
             {
-              "name": "Left",
-              "value": "%stepResult.approved%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": "!=",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": true,
-              "type": "bool"
-            },
-            {
-              "name": "GoalIfTrue",
+              "name": "GoalName",
               "value": {
                 "name": "ProcessStep"
               },
               "type": "goal.call"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     }
   ],
@@ -52,8 +33,5 @@
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "ApplyStep"
+  "isTest": false
 }

@@ -10,7 +10,31 @@
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
-        "actions": [],
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%missingCaught%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "Type",
+                "value": "bool",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
         "intent": null,
         "onError": null,
         "cache": null,
