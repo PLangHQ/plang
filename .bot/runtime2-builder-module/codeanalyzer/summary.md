@@ -11,3 +11,6 @@ Fresh-eyes re-analysis found 2 things v1/v2 missed: (1) `Describe()` leaks `[Pro
 
 ## v4: PASS — all v3 findings resolved
 All 3 fixes verified. Minimal, mechanical changes. Recommend tester next. See [v4/summary.md](v4/summary.md).
+
+## v5: PASS — post-pipeline review
+4 production changes from tester/auditor cycle: comment simplification, backslash escape, existsResult bug fix, JsonSerializerOptions caching. All clean. Auditor findings resolved. Recommend docs next. See [v5/summary.md](v5/summary.md).
