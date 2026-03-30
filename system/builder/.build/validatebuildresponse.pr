@@ -1,0 +1,45 @@
+{
+  "name": "ValidateBuildResponse",
+  "description": "Validates the LLM build response — every non-approved step must have actions.",
+  "steps": [
+    {
+      "index": 0,
+      "text": "foreach %response.steps%, call ValidateStep, item=%step%",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%response.steps%",
+              "type": "object"
+            },
+            {
+              "name": "GoalName",
+              "value": "ValidateStep",
+              "type": "goal.call"
+            },
+            {
+              "name": "ItemName",
+              "value": "%step%",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/system/builder/ValidateBuildResponse.goal",
+  "prPath": "/system/builder/.build/validatebuildresponse.pr",
+  "hash": "",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false
+}

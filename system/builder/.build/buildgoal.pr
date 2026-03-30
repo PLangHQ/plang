@@ -223,6 +223,13 @@
               "name": "Cache",
               "value": false,
               "type": "bool"
+            },
+            {
+              "name": "OnValidateResponse",
+              "value": {
+                "name": "ValidateBuildResponse"
+              },
+              "type": "goal.call"
             }
           ],
           "return": [
