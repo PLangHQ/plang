@@ -400,6 +400,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("            if (__interpolationError) return default;");
         sb.AppendLine("            return (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(interpolated, typeof(T));");
         sb.AppendLine("        }");
+        sb.AppendLine("        if (data?.Value is System.Collections.IList || data?.Value is System.Collections.IDictionary)");
+        sb.AppendLine("        {");
+        sb.AppendLine("            var __deepResolved = __memoryStack!.ResolveDeep(data.Value);");
+        sb.AppendLine("            return (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(__deepResolved, typeof(T));");
+        sb.AppendLine("        }");
         sb.AppendLine("        return data != null");
         sb.AppendLine("            ? (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(data.Value, typeof(T))");
         sb.AppendLine("            : default;");

@@ -64,6 +64,9 @@ public class FluidProvider : ITemplateProvider
         var options = new TemplateOptions();
         options.MaxSteps = 100_000; // Defense-in-depth: prevent pathological templates from running indefinitely
         options.MaxRecursion = 100; // Prevent deeply recursive includes
+        // UnsafeMemberAccessStrategy allows access to all public properties without per-type registration.
+        // PLang templates render internal objects (Goals, Steps, Actions) — no user-supplied types.
+        options.MemberAccessStrategy = new UnsafeMemberAccessStrategy();
         options.MemberAccessStrategy.IgnoreCasing = true;
         options.MemberAccessStrategy.MemberNameStrategy = MemberNameStrategies.Default;
 
@@ -81,9 +84,7 @@ public class FluidProvider : ITemplateProvider
         // Load memory stack variables (GetAll already excludes !-prefixed)
         foreach (var data in action.Context.MemoryStack.GetAll())
         {
-            var value = data.Value;
-            RegisterTypeIfNeeded(options, value);
-            fluidContext.SetValue(data.Name, FluidValue.Create(value, options));
+            fluidContext.SetValue(data.Name, FluidValue.Create(data.Value, options));
         }
 
         // Override with explicit parameters
@@ -91,7 +92,6 @@ public class FluidProvider : ITemplateProvider
         {
             foreach (var param in action.Parameters)
             {
-                RegisterTypeIfNeeded(options, param.Value);
                 fluidContext.SetValue(param.Name, FluidValue.Create(param.Value, options));
             }
         }
@@ -100,7 +100,7 @@ public class FluidProvider : ITemplateProvider
         try
         {
             var writer = new StringWriter();
-            await fluidTemplate.RenderAsync(writer, System.Text.Encodings.Web.HtmlEncoder.Default, fluidContext);
+            await fluidTemplate.RenderAsync(writer, NullEncoder.Default, fluidContext);
             return Data.Ok(writer.ToString());
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
@@ -109,30 +109,6 @@ public class FluidProvider : ITemplateProvider
             return Data.FromError(new ServiceError(
                 $"Template render error{location}: {ex.Message}", "RenderError", 500));
         }
-    }
-
-    /// <summary>
-    /// Registers a type with Fluid's MemberAccessStrategy so its properties are accessible.
-    /// Skips primitives, strings, and collections that Fluid already handles natively.
-    /// </summary>
-    private static void RegisterTypeIfNeeded(TemplateOptions options, object? value)
-    {
-        if (value == null) return;
-        var type = value.GetType();
-        if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal)
-            || type == typeof(DateTime) || type == typeof(DateTimeOffset)
-            || type == typeof(Guid) || type.IsEnum)
-            return;
-        // Skip generic collections — Fluid handles IEnumerable natively
-        if (type.IsArray) return;
-        if (type.IsGenericType)
-        {
-            var genDef = type.GetGenericTypeDefinition();
-            if (genDef == typeof(List<>) || genDef == typeof(Dictionary<,>)
-                || genDef == typeof(HashSet<>))
-                return;
-        }
-        options.MemberAccessStrategy.Register(type);
     }
 
     /// <summary>

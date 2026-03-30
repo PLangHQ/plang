@@ -580,7 +580,7 @@ public class RenderTests : IDisposable
     // --- Batch 8: Security & Encoding ---
 
     [Test]
-    public async Task Render_HtmlInVariable_IsEscapedByDefault()
+    public async Task Render_HtmlInVariable_IsNotEscaped()
     {
         var ctx = CreateContext();
         ctx.MemoryStack.Put(new Data("name", "<script>alert(1)</script>"));
@@ -595,9 +595,8 @@ public class RenderTests : IDisposable
 
         await Assert.That(result.Success).IsTrue();
         var output = result.Value?.ToString() ?? "";
-        // Should be HTML-escaped
-        await Assert.That(output).DoesNotContain("<script>");
-        await Assert.That(output).Contains("&lt;script&gt;");
+        // PLang templates output raw content — no HTML escaping
+        await Assert.That(output).Contains("<script>");
     }
 
     // --- Batch 9: Auto-detect (LooksLikeFilePath coverage) ---

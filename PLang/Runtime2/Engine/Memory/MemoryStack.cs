@@ -153,6 +153,48 @@ public class MemoryStack
     }
 
     /// <summary>
+    /// Recursively resolves %variable% references in any object tree.
+    /// Strings: full-match (%var%) returns the actual value, mixed ("hello %name%") interpolates.
+    /// Lists: resolves each element. Dicts: resolves each value.
+    /// Non-string primitives pass through unchanged.
+    /// </summary>
+    public object? ResolveDeep(object? value)
+    {
+        if (value == null) return null;
+
+        if (value is string str)
+        {
+            if (!str.Contains('%')) return str;
+
+            // Full match: %varName% → return the actual object (not stringified)
+            var fullMatch = Regex.Match(str, @"^%([^%]+)%$");
+            if (fullMatch.Success)
+                return Get(fullMatch.Groups[1].Value)?.Value;
+
+            // Partial match: "hello %name%" → string interpolation
+            return Resolve(str);
+        }
+
+        if (value is IList<object?> objList)
+        {
+            var result = new List<object?>(objList.Count);
+            foreach (var item in objList)
+                result.Add(ResolveDeep(item));
+            return result;
+        }
+
+        if (value is IDictionary<string, object?> dict)
+        {
+            var result = new Dictionary<string, object?>(dict.Count, StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in dict)
+                result[kvp.Key] = ResolveDeep(kvp.Value);
+            return result;
+        }
+
+        return value;
+    }
+
+    /// <summary>
     /// Gets all variable names.
     /// </summary>
     public IEnumerable<string> GetNames()

@@ -304,6 +304,12 @@ namespace PLang
 			engine2.SystemDirectory = fileSystem.SystemDirectory;
 			engine2.Building.IsEnabled = true;
 
+			if (parameters.TryGetValue("debug", out var debugValue) && debugValue is not false)
+			{
+				engine2.Debug.Apply(debugValue);
+				parameters.Remove("debug");
+			}
+
 			// Resolve build path relative to user's project root
 			if (!parameters.TryGetValue("path", out var pathValue) || pathValue is not string pathStr)
 				pathStr = ".";

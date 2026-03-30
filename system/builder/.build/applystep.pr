@@ -1,11 +1,10 @@
 {
   "name": "ApplyStep",
-  "description": "Validates and applies step result. If validation fails, falls back to BuildStep with error context.",
-  "comment": "Validates and applies step result\nIf validation fails, falls back to BuildStep with error context",
+  "description": "Validates and applies step result. Skips if step is already approved (unchanged).",
   "steps": [
     {
       "index": 0,
-      "text": "if %stepResult.approved% = false, call ProcessStep",
+      "text": "if %stepResult.approved% != true, call ProcessStep",
       "lineNumber": 4,
       "indent": 0,
       "actions": [
@@ -20,12 +19,12 @@
             },
             {
               "name": "Operator",
-              "value": "==",
+              "value": "!=",
               "type": "string"
             },
             {
               "name": "Right",
-              "value": false,
+              "value": true,
               "type": "bool"
             },
             {

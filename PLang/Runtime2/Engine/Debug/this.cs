@@ -96,8 +96,11 @@ public sealed class @this
 
         foreach (var action in step.Actions)
         {
-            var paramStr = string.Join(", ", action.Parameters.Select(p => $"{p.Name}={p.Value}"));
-            sb.AppendLine($"  Action: {action.Module}.{action.ActionName}({paramStr})");
+            sb.AppendLine($"  Action: {action.Module}.{action.ActionName}");
+            foreach (var p in action.Parameters)
+            {
+                sb.AppendLine($"    {p.Name} = {FormatValue(p.Value)}");
+            }
 
             if (action.Return != null && action.Return.Count > 0)
             {
@@ -184,16 +187,103 @@ public sealed class @this
         {
             var data = memoryStack.Get(name);
             if (data == null || !data.IsInitialized)
+            {
                 sb.AppendLine($"    %{name}% = (undefined)");
-            else
-                sb.AppendLine($"    %{name}% = {FormatValue(data.Value)} ({data.Type?.Value ?? "?"})");
+                continue;
+            }
+
+            sb.AppendLine($"    %{name}% = {FormatValue(data.Value)} ({data.Type?.Value ?? "?"})");
+
+            if (data.Properties.Count > 0)
+            {
+                sb.AppendLine($"      Properties ({data.Properties.Count}):");
+                foreach (var prop in data.Properties)
+                {
+                    sb.AppendLine($"        {prop.Name} = {FormatValue(prop.Value)}");
+                }
+            }
         }
     }
 
     private static string FormatValue(object? value)
     {
         if (value == null) return "(null)";
-        if (value is string s) return $"\"{s}\"";
-        return value.ToString() ?? "(null)";
+        if (value is string s) return s.Length > 200 ? $"\"{s[..200]}...\" ({s.Length} chars)" : $"\"{s}\"";
+        if (value is System.Collections.IDictionary dict)
+        {
+            var preview = new List<string>();
+            var i = 0;
+            foreach (System.Collections.DictionaryEntry entry in dict)
+            {
+                if (i++ >= 3) { preview.Add("..."); break; }
+                var val = FormatPreviewValue(entry.Value);
+                preview.Add($"{entry.Key}: {val}");
+            }
+            return $"{{ {string.Join(", ", preview)} }} ({dict.Count} keys)";
+        }
+        if (value is System.Collections.IList list)
+        {
+            if (list.Count == 0) return "[0 items]";
+            var first = FormatPreviewValue(list[0]);
+            return list.Count == 1 ? $"[1 item: {first}]" : $"[{list.Count} items, first: {first}]";
+        }
+        if (value is System.Collections.IEnumerable enumerable and not string)
+        {
+            int count = 0;
+            object? first = null;
+            foreach (var item in enumerable) { if (count == 0) first = item; count++; }
+            if (count == 0) return "[0 items]";
+            var firstStr = FormatPreviewValue(first);
+            return count == 1 ? $"[1 item: {firstStr}]" : $"[{count} items, first: {firstStr}]";
+        }
+        var str = value.ToString() ?? "(null)";
+        return str.Length > 200 ? $"{str[..200]}... ({str.Length} chars)" : str;
+    }
+
+    private static string FormatPreviewValue(object? value)
+    {
+        if (value == null) return "(null)";
+        if (value is string s) return s.Length > 80 ? $"\"{s[..80]}...\" ({s.Length}c)" : $"\"{s}\"";
+        if (value is System.Collections.IDictionary dict)
+        {
+            var parts = new List<string>();
+            var i = 0;
+            foreach (System.Collections.DictionaryEntry entry in dict)
+            {
+                if (i++ >= 4) { parts.Add("..."); break; }
+                parts.Add($"{entry.Key}={TruncateToString(entry.Value, 40)}");
+            }
+            return $"{{ {string.Join(", ", parts)} }}";
+        }
+        if (value is System.Collections.ICollection col)
+            return $"[{col.Count} items]";
+
+        // For objects: show public property names and short values
+        var type = value.GetType();
+        if (!type.IsPrimitive && type != typeof(decimal) && type != typeof(DateTime)
+            && type != typeof(Guid) && !type.IsEnum)
+        {
+            var props = type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                .Where(p => p.CanRead && p.Name != "EqualityContract")
+                .Take(5)
+                .Select(p =>
+                {
+                    try { return $"{p.Name}={TruncateToString(p.GetValue(value), 40)}"; }
+                    catch { return $"{p.Name}=?"; }
+                });
+            var propStr = string.Join(", ", props);
+            if (!string.IsNullOrEmpty(propStr))
+                return $"{{ {propStr} }}";
+        }
+
+        return TruncateToString(value, 80);
+    }
+
+    private static string TruncateToString(object? value, int max)
+    {
+        if (value == null) return "null";
+        if (value is string s) return s.Length > max ? $"\"{s[..max]}...\"" : $"\"{s}\"";
+        var str = value.ToString() ?? "?";
+        return str.Length > max ? $"{str[..max]}..." : str;
     }
 }
