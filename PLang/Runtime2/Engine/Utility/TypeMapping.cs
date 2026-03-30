@@ -167,6 +167,8 @@ public static class TypeMapping
             "csv" => "text/csv",
             "yaml" or "yml" => "text/yaml",
             "txt" => "text/plain",
+            "goal" => "text/plain",
+            "pr" => "application/json",
             "png" => "image/png",
             "jpg" or "jpeg" => "image/jpeg",
             "gif" => "image/gif",

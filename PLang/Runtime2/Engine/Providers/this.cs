@@ -200,6 +200,7 @@ public sealed class @this
             "file" or "ifileprovider" => typeof(modules.file.providers.IFileProvider),
             "template" or "itemplateprovider" => typeof(ITemplateProvider),
             "llm" or "illmprovider" => typeof(modules.llm.providers.ILlmProvider),
+            "builder" or "ibuilderprovider" => typeof(modules.builder.providers.IBuilderProvider),
             null or "" => typeof(ISigningProvider),
             _ => null
         };
@@ -222,5 +223,6 @@ public sealed class @this
         Register<modules.file.providers.IFileProvider>(new modules.file.providers.DefaultFileProvider());
         Register<ITemplateProvider>(new FluidProvider());
         Register<modules.llm.providers.ILlmProvider>(new modules.llm.providers.OpenAiProvider());
+        Register<modules.builder.providers.IBuilderProvider>(new modules.builder.providers.DefaultBuilderProvider());
     }
 }

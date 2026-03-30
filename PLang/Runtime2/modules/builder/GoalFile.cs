@@ -162,12 +162,17 @@ public sealed class GoalFile
             var goalComment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
             pendingComment.Clear();
 
+            var isSetup = goalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)
+                || (path != null && path.Replace('\\', '/').TrimStart('/')
+                    .StartsWith("setup/", StringComparison.OrdinalIgnoreCase));
+
             currentGoal = new Goal
             {
                 Name = goalName,
                 Comment = goalComment,
                 Visibility = goals.Count == 0 ? Visibility.Public : Visibility.Private,
-                Path = path
+                Path = path,
+                IsSetup = isSetup
             };
             goals.Add(currentGoal);
             stepIndex = 0;
@@ -179,30 +184,6 @@ public sealed class GoalFile
         {
             for (int i = 1; i < goals.Count; i++)
                 goals[0].SubGoals.Add(goals[i].Name);
-        }
-
-        // Mark Setup goals
-        foreach (var goal in goals)
-        {
-            if (goal.Name.Equals("Setup", StringComparison.OrdinalIgnoreCase))
-            {
-                // IsSetup is init-only — need to reconstruct
-                var idx = goals.IndexOf(goal);
-                goals[idx] = new Goal
-                {
-                    Name = goal.Name,
-                    Description = goal.Description,
-                    Comment = goal.Comment,
-                    Steps = goal.Steps,
-                    SubGoals = goal.SubGoals,
-                    Visibility = goal.Visibility,
-                    Path = goal.Path,
-                    IsSetup = true,
-                    InputParameters = goal.InputParameters,
-                    Errors = goal.Errors,
-                    Warnings = goal.Warnings
-                };
-            }
         }
 
         return goals;
