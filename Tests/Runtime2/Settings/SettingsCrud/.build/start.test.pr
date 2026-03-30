@@ -1,15 +1,15 @@
 [
   {
     "name": "Start",
-    "description": null,
-    "comment": null,
+    "description": "Tests basic CRUD operations on settings: set, get, update, remove",
+    "comment": "Tests basic CRUD operations on settings: set, get, update, remove",
     "steps": [
       {
         "index": 0,
         "text": "set settings \u0027TestApiKey\u0027 = \u0027sk-test-12345\u0027",
-        "lineNumber": 2,
+        "lineNumber": 4,
         "indent": 0,
-        "comment": null,
+        "comment": "Set initial value",
         "actions": [
           {
             "module": "settings",
@@ -39,7 +39,7 @@
       {
         "index": 1,
         "text": "get settings \u0027TestApiKey\u0027, write to %apiKey%",
-        "lineNumber": 3,
+        "lineNumber": 5,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -71,7 +71,7 @@
       {
         "index": 2,
         "text": "assert %apiKey% equals \u0022sk-test-12345\u0022",
-        "lineNumber": 4,
+        "lineNumber": 6,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -103,7 +103,7 @@
       {
         "index": 3,
         "text": "set settings \u0027TestApiKey\u0027 = \u0027sk-updated-99999\u0027",
-        "lineNumber": 5,
+        "lineNumber": 7,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -135,7 +135,7 @@
       {
         "index": 4,
         "text": "get settings \u0027TestApiKey\u0027, write to %updatedKey%",
-        "lineNumber": 6,
+        "lineNumber": 8,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -167,7 +167,7 @@
       {
         "index": 5,
         "text": "assert %updatedKey% equals \u0022sk-updated-99999\u0022",
-        "lineNumber": 7,
+        "lineNumber": 9,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -199,7 +199,7 @@
       {
         "index": 6,
         "text": "remove settings \u0027TestApiKey\u0027",
-        "lineNumber": 8,
+        "lineNumber": 10,
         "indent": 0,
         "comment": null,
         "actions": [

@@ -124,6 +124,16 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (action.Goals.Count == 0)
             return Data.FromError(new Engine.Errors.ActionError("No goals to save", "NoGoals", 400));
 
+        // Apply LLM-generated description if available in the memory stack
+        var stepResults = context.MemoryStack.Get("stepResults");
+        if (stepResults?.Value is IDictionary<string, object?> resultsDict
+            && resultsDict.TryGetValue("description", out var desc)
+            && desc is string description
+            && !string.IsNullOrEmpty(description))
+        {
+            action.Goals[0].Description = description;
+        }
+
         var prPath = action.Goals[0].PrPath;
         if (string.IsNullOrEmpty(prPath))
             return Data.FromError(new Engine.Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));

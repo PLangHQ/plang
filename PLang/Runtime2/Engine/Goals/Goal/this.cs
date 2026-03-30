@@ -22,7 +22,7 @@ public sealed partial class @this
     public string Name { get; init; } = "";
 
     [Store, LlmBuilder, Debug, Default]
-    public string? Description { get; init; }
+    public string? Description { get; set; }
 
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; init; }
