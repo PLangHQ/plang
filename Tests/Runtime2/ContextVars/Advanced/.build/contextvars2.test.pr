@@ -1,6 +1,8 @@
 [
   {
     "name": "Start",
+    "description": null,
+    "comment": null,
     "steps": [
       {
         "index": 0,
@@ -23,9 +25,15 @@
                 "value": "Start",
                 "type": "string"
               }
-            ]
+            ],
+            "return": null,
+            "defaults": null
           }
         ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
         "waitForExecution": true
       },
       {
@@ -44,9 +52,15 @@
                 "value": "%!step%",
                 "type": "object"
               }
-            ]
+            ],
+            "return": null,
+            "defaults": null
           }
         ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
         "waitForExecution": true
       },
       {
@@ -65,9 +79,15 @@
                 "value": "%!context%",
                 "type": "object"
               }
-            ]
+            ],
+            "return": null,
+            "defaults": null
           }
         ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
         "waitForExecution": true
       },
       {
@@ -86,9 +106,15 @@
                 "value": "%!fileSystem%",
                 "type": "object"
               }
-            ]
+            ],
+            "return": null,
+            "defaults": null
           }
         ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
         "waitForExecution": true
       },
       {
@@ -107,9 +133,15 @@
                 "value": "%!callStack%",
                 "type": "object"
               }
-            ]
+            ],
+            "return": null,
+            "defaults": null
           }
         ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
         "waitForExecution": true
       }
     ],
@@ -121,6 +153,7 @@
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,
-    "isTest": false
+    "isTest": false,
+    "inputParameters": null
   }
 ]

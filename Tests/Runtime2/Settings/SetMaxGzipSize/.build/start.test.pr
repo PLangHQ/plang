@@ -1,12 +1,15 @@
 [
   {
     "name": "Start",
+    "description": null,
+    "comment": null,
     "steps": [
       {
         "index": 0,
         "text": "set settings \u0027archive.max\u0027 = 20971520",
         "lineNumber": 2,
         "indent": 0,
+        "comment": null,
         "actions": [
           {
             "module": "settings",
@@ -22,9 +25,15 @@
                 "value": 20971520,
                 "type": "int"
               }
-            ]
+            ],
+            "return": null,
+            "defaults": null
           }
         ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
         "waitForExecution": true
       },
       {
@@ -32,6 +41,7 @@
         "text": "get settings \u0027archive.max\u0027, write to %maxSize%",
         "lineNumber": 3,
         "indent": 0,
+        "comment": null,
         "actions": [
           {
             "module": "settings",
@@ -45,11 +55,17 @@
             ],
             "return": [
               {
-                "name": "maxSize"
+                "name": "maxSize",
+                "value": null
               }
-            ]
+            ],
+            "defaults": null
           }
         ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
         "waitForExecution": true
       },
       {
@@ -57,6 +73,7 @@
         "text": "assert %maxSize% equals 20971520",
         "lineNumber": 4,
         "indent": 0,
+        "comment": null,
         "actions": [
           {
             "module": "assert",
@@ -72,9 +89,15 @@
                 "value": "%maxSize%",
                 "type": "string"
               }
-            ]
+            ],
+            "return": null,
+            "defaults": null
           }
         ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
         "waitForExecution": true
       }
     ],
@@ -86,6 +109,7 @@
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,
-    "isTest": false
+    "isTest": false,
+    "inputParameters": null
   }
 ]
