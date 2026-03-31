@@ -90,9 +90,9 @@ public class HashActionTests
     [Test]
     public async Task Hash_NullInput_ReturnsError()
     {
-        // [IsNotNull] validation runs in CodeGeneratedExecuteAsync
+        // [IsNotNull] validation runs in ExecuteAsync
         var action = new Hash { Data = new Data(""), Algorithm = "keccak256" };
-        var result = await action.CodeGeneratedExecuteAsync(new List<Data>(), _engine, Ctx);
+        var result = await action.ExecuteAsync(new List<Data>(), _engine, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -171,7 +171,7 @@ public class HashActionTests
     public async Task Verify_NullHash_ReturnsError()
     {
         var verifyAction = new Verify { Data = Data.Ok("hello"), Hash = null!, Algorithm = "keccak256" };
-        var result = await verifyAction.CodeGeneratedExecuteAsync(new List<Data>(), _engine, Ctx);
+        var result = await verifyAction.ExecuteAsync(new List<Data>(), _engine, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -183,7 +183,7 @@ public class HashActionTests
     public async Task Verify_NullInput_ReturnsError()
     {
         var verifyAction = new Verify { Data = new Data(""), Hash = "abc123", Algorithm = "keccak256" };
-        var result = await verifyAction.CodeGeneratedExecuteAsync(new List<Data>(), _engine, Ctx);
+        var result = await verifyAction.ExecuteAsync(new List<Data>(), _engine, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();

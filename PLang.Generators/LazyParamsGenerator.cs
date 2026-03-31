@@ -203,7 +203,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
             var setFlag = $"__{prop.Name}_set";
 
             // [Provider] properties — resolved lazily from engine.Providers
-            // Works both via CodeGeneratedExecuteAsync (__engine) and direct test usage (Context.Engine)
+            // Works both via ExecuteAsync (__engine) and direct test usage (Context.Engine)
             if (prop.IsProvider)
             {
                 var engineExpr = info.ImplementsIContext ? "__engine ?? Context?.Engine" : "__engine";
@@ -283,8 +283,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
             sb.AppendLine();
         }
 
-        // CodeGeneratedExecuteAsync
-        sb.AppendLine("    public async System.Threading.Tasks.Task<PLang.Runtime2.Engine.Memory.Data> CodeGeneratedExecuteAsync(");
+        // ExecuteAsync
+        sb.AppendLine("    public async System.Threading.Tasks.Task<PLang.Runtime2.Engine.Memory.Data> ExecuteAsync(");
         sb.AppendLine("        List<PLang.Runtime2.Engine.Memory.Data> parameters, PLang.Runtime2.Engine.@this engine, PLang.Runtime2.Engine.Context.PLangContext context,");
         sb.AppendLine("        List<PLang.Runtime2.Engine.Memory.Data>? defaults = null)");
         sb.AppendLine("    {");

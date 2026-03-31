@@ -10,7 +10,7 @@ namespace PLang.Runtime2.modules;
 /// </summary>
 public interface ICodeGenerated
 {
-    Task<Data> CodeGeneratedExecuteAsync(
+    Task<Data> ExecuteAsync(
         List<Data> parameters, EngineType engine, PLangContext context,
         List<Data>? defaults = null);
 }

@@ -240,11 +240,7 @@ public sealed class @this : IAsyncDisposable
 
         Providers.RegisterDefaults();
         Types.RegisterDomainTypes();
-        _modules.DiscoverMethods(this);
     }
-
-    // --- [Method] primitives — PLang-callable engine actions ---
-    // (output.write moved to action class with IChannel pattern)
 
     /// <summary>
     /// Runs a module action through the same code-generated execution path as steps.
@@ -254,7 +250,7 @@ public sealed class @this : IAsyncDisposable
     public async Task<Data<TResult>> RunAction<TAction, TResult>(TAction action, PLangContext context)
         where TAction : ICodeGenerated
     {
-        var result = await action.CodeGeneratedExecuteAsync(new List<Data>(), this, context);
+        var result = await action.ExecuteAsync(new List<Data>(), this, context);
         if (!result.Success) return Data<TResult>.FromError(result.Error!);
         return Data<TResult>.Ok((TResult)result.Value!);
     }
@@ -266,7 +262,7 @@ public sealed class @this : IAsyncDisposable
     public async Task<Data> RunAction<TAction>(TAction action, PLangContext context)
         where TAction : ICodeGenerated
     {
-        return await action.CodeGeneratedExecuteAsync(new List<Data>(), this, context);
+        return await action.ExecuteAsync(new List<Data>(), this, context);
     }
 
     /// <summary>

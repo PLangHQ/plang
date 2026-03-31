@@ -45,7 +45,7 @@ public class FakeGetPath : PLang.Runtime2.modules.ICodeGenerated
 {
     public Task<FakePathResult> Run() => Task.FromResult(new FakePathResult());
 
-    public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters,
+    public Task<Data> ExecuteAsync(List<Data> parameters,
         PLang.Runtime2.Engine.@this engine,
         PLang.Runtime2.Engine.Context.PLangContext context,
         List<Data>? defaults) => Task.FromResult(Data.Ok());
@@ -57,7 +57,7 @@ public class FakeBasicAction : PLang.Runtime2.modules.ICodeGenerated
 {
     public Task<Data> Run() => Task.FromResult(Data.Ok("hello"));
 
-    public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters,
+    public Task<Data> ExecuteAsync(List<Data> parameters,
         PLang.Runtime2.Engine.@this engine,
         PLang.Runtime2.Engine.Context.PLangContext context,
         List<Data>? defaults) => Task.FromResult(Data.Ok());

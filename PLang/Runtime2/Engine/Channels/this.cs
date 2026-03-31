@@ -117,7 +117,7 @@ public sealed class @this : IAsyncDisposable
     public IEnumerable<string> ChannelNames => _channels.Keys;
 
     /// <summary>
-    /// Writes data to a channel. Navigates the action for channel name and content.
+    /// Writes data to a channel. Navigates the IChannel action for channel name and content.
     /// </summary>
     public async Task<Data> WriteAsync(modules.output.Write action)
     {
