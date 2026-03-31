@@ -173,17 +173,24 @@ Any change to the builder (prompt, validator, .pr files) means all previously pa
 ## Build & Run Commands
 
 ```
-plang p build          # Build from current directory
-plang p !test          # Run tests from current directory
-plang p !debug         # Debug all steps
-plang p !debug=GoalName:stepIndex   # Debug specific step
+plang p --build                                    # Build from current directory
+plang p --build={"cache":false}                    # Build without LLM cache
+plang p --test                                     # Run tests from current directory
+plang p --debug=true                               # Debug all steps
+plang p --debug={"goal":"GoalName","step":3}       # Debug specific step
+plang p --build --debug={"goal":"BuildGoal"}       # Build with debug on specific goal
 ```
 
 ## LLM Cache
 
-The v2 builder sets `Cache = false` on LLM queries — **the builder does not cache LLM responses**. Each build makes fresh LLM calls. Intermittent build failures (like null content errors) are transient API issues, not stale cache. Just retry the build.
+The builder caches LLM responses by default in `.db/system.sqlite` (`LlmCache` table). Same input produces the same output — fast rebuilds.
 
-For non-builder LLM calls, responses are cached in `.db/system.sqlite` in the `LlmCache` table. To clear:
+To force fresh LLM calls (e.g., after changing the builder prompt):
+```
+plang p --build={"cache":false}
+```
+
+To clear the cache manually:
 ```sql
 DELETE FROM LlmCache;
 ```

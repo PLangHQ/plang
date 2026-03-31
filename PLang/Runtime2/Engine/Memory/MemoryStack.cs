@@ -76,7 +76,13 @@ public class MemoryStack
 
         // Dot/bracket path: navigate to the parent object, then set the final property
         if (!_variables.TryGetValue(rootName, out var root))
-            return;
+        {
+            // Root doesn't exist — create it as a dictionary so dot-path properties work
+            var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            root = new Data(rootName, dict);
+            root.Context = _context;
+            _variables[rootName] = root;
+        }
 
         var remaining = name.Length > rootName.Length && name[rootName.Length] == '.'
             ? name[(rootName.Length + 1)..]

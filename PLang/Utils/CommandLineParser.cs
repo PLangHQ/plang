@@ -44,8 +44,8 @@ public class CommandLineParser
 	{
 		if (string.IsNullOrWhiteSpace(arg)) return false;
 
-		// Starts with ! (flag or namespaced param)
-		if (arg.StartsWith("!")) return true;
+		// Starts with -- (system flag or param)
+		if (arg.StartsWith("--")) return true;
 
 		// Contains = (key=value)
 		if (arg.Contains("=")) return true;
@@ -62,21 +62,23 @@ public class CommandLineParser
 		if (string.IsNullOrWhiteSpace(input)) return;
 
 		// Regex to match parameters:
-		// - !flag (boolean true)
-		// - !key.subkey="value" or !key.subkey=value
-		// - key=value or key="value"
+		// - --flag (system boolean true)
+		// - --key=value or --key={"json":true}
+		// - key=value or key="value" (user param)
 		// - key.subkey=value or key.subkey="value"
 
 		var pattern = @"
-            (?:^|[\s,]+)                           # start or separator
-            (!)?                                   # optional ! prefix (group 1)
+            (?:^|\s+)                              # start or whitespace separator (not comma — JSON contains commas)
+            (-{2})?                                # optional -- prefix (group 1)
             ([\w.]+)                               # key, possibly with dots (group 2)
             (?:
                 \s*=\s*                            # equals sign
                 (?:
                     ""([^""]*)""|                  # quoted value (group 3)
                     '([^']*)'|                     # single quoted value (group 4)
-                    ([^\s,]+)                      # unquoted value (group 5)
+                    (\{[^}]*\})|                   # JSON object value (group 5)
+                    (\[[^\]]*\])|                  # JSON array value (group 6)
+                    ([^\s]+)                       # unquoted value (group 7)
                 )
             )?                                     # value part is optional (for flags)
         ";
@@ -86,28 +88,32 @@ public class CommandLineParser
 
 		foreach (Match match in matches)
 		{
-			bool hasExclaim = match.Groups[1].Success;
+			bool isSystem = match.Groups[1].Success;
 			string key = match.Groups[2].Value;
 
 			// Determine value
 			string? rawValue = match.Groups[3].Success ? match.Groups[3].Value :
 							   match.Groups[4].Success ? match.Groups[4].Value :
 							   match.Groups[5].Success ? match.Groups[5].Value :
+							   match.Groups[6].Success ? match.Groups[6].Value :
+							   match.Groups[7].Success ? match.Groups[7].Value :
 							   null;
 
 			object value;
 
 			if (rawValue == null)
 			{
-				// No value provided - it's a flag, ! means true
-				value = hasExclaim;
+				// No value provided — --flag means true, bare key means true
+				value = true;
 			}
 			else
 			{
 				value = ParseValue(rawValue);
 			}
 
-			Parameters[key] = value;
+			// System params (--key) get ! prefix for MemoryStack storage
+			var storageKey = isSystem ? "!" + key : key;
+			Parameters[storageKey] = value;
 		}
 	}
 

@@ -79,12 +79,12 @@ public class CommandLineParserTests
     }
 
     [Test]
-    public async Task Parse_FlagParam_ExclaimIsTrue()
+    public async Task Parse_FlagParam_DoubleDashIsSystemTrue()
     {
-        var (_, parameters) = CommandLineParser.Parse(["!verbose"]);
+        var (_, parameters) = CommandLineParser.Parse(["--verbose"]);
 
-        await Assert.That(parameters).ContainsKey("verbose");
-        await Assert.That(parameters["verbose"]).IsEqualTo(true);
+        await Assert.That(parameters).ContainsKey("!verbose");
+        await Assert.That(parameters["!verbose"]).IsEqualTo(true);
     }
 
     [Test]

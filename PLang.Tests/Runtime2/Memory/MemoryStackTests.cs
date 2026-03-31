@@ -180,15 +180,19 @@ public class MemoryStackTests
     }
 
     [Test]
-    public async Task Set_DotPath_NonExistentRoot_DoesNotThrow()
+    public async Task Set_DotPath_NonExistentRoot_CreatesRootDictionary()
     {
         var stack = new MemoryStack();
 
-        // Should not throw — root doesn't exist
+        // Root doesn't exist — creates a dictionary and sets the property
         stack.Set("nonexistent.prop", "value");
 
-        // Root still doesn't exist
-        await Assert.That(stack.Get("nonexistent")).IsNull();
+        var root = stack.Get("nonexistent");
+        await Assert.That(root).IsNotNull();
+        await Assert.That(root!.Value).IsTypeOf<Dictionary<string, object?>>();
+
+        var prop = stack.Get("nonexistent.prop");
+        await Assert.That(prop!.Value).IsEqualTo("value");
     }
 
     [Test]

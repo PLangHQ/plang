@@ -32,9 +32,16 @@ public sealed class @this
         string? goalFilter = null;
         int? stepFilter = null;
 
-        if (debugValue is string spec && !string.IsNullOrEmpty(spec))
+        if (debugValue is IDictionary<string, object?> dict)
         {
-            ParseFilter(spec, out goalFilter, out stepFilter);
+            ParseJsonFilter(dict, out goalFilter, out stepFilter);
+        }
+        else if (debugValue is not true and not false)
+        {
+            // Newtonsoft JObject or other dictionary-like types — convert via generic dictionary
+            var converted = ToDictionary(debugValue);
+            if (converted != null)
+                ParseJsonFilter(converted, out goalFilter, out stepFilter);
         }
 
         var events = _engine.Context.User.Events;
@@ -61,24 +68,49 @@ public sealed class @this
             stopOnError: false));
     }
 
-    private static void ParseFilter(string spec, out string? goalFilter, out int? stepFilter)
+    private static IDictionary<string, object?>? ToDictionary(object value)
+    {
+        // Handle Newtonsoft JObject and similar dictionary-like types
+        if (value is System.Collections.IDictionary rawDict)
+        {
+            var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (System.Collections.DictionaryEntry entry in rawDict)
+                result[entry.Key.ToString()!] = entry.Value;
+            return result;
+        }
+
+        // Try indexer pattern (JObject implements this)
+        var type = value.GetType();
+        var indexer = type.GetProperty("Item", new[] { typeof(string) });
+        if (indexer == null) return null;
+
+        var result2 = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        // Try known property names
+        foreach (var name in new[] { "goal", "step", "goals", "verbose" })
+        {
+            try
+            {
+                var val = indexer.GetValue(value, new object[] { name });
+                if (val != null) result2[name] = val.ToString();
+            }
+            catch { }
+        }
+        return result2.Count > 0 ? result2 : null;
+    }
+
+    private static void ParseJsonFilter(IDictionary<string, object?> dict, out string? goalFilter, out int? stepFilter)
     {
         goalFilter = null;
         stepFilter = null;
 
-        var colonIndex = spec.IndexOf(':');
-        if (colonIndex >= 0)
-        {
-            var goalPart = spec[..colonIndex];
-            var stepPart = spec[(colonIndex + 1)..];
+        if (dict.TryGetValue("goal", out var goalVal) && goalVal is string g && !string.IsNullOrEmpty(g))
+            goalFilter = g;
 
-            goalFilter = goalPart == "*" ? null : goalPart;
-            if (int.TryParse(stepPart, out var idx))
-                stepFilter = idx;
-        }
-        else
+        if (dict.TryGetValue("step", out var stepVal))
         {
-            goalFilter = spec;
+            if (stepVal is int i) stepFilter = i;
+            else if (stepVal is long l) stepFilter = (int)l;
+            else if (stepVal is string s && int.TryParse(s, out var parsed)) stepFilter = parsed;
         }
     }
 

@@ -39,8 +39,38 @@
     },
     {
       "index": 1,
-      "text": "write out \"Building path: %path%\"",
+      "text": "set default %!build.cache% = true",
       "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%!build.cache%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "AsDefault",
+              "value": true,
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out \"Building path: %path%\"",
+      "lineNumber": 8,
       "indent": 0,
       "actions": [
         {
@@ -62,9 +92,9 @@
       "waitForExecution": true
     },
     {
-      "index": 2,
+      "index": 3,
       "text": "[plang] call GetApp, write to %app%",
-      "lineNumber": 8,
+      "lineNumber": 9,
       "indent": 0,
       "actions": [
         {
@@ -91,9 +121,9 @@
       "waitForExecution": true
     },
     {
-      "index": 3,
+      "index": 4,
       "text": "[plang] GetGoalsV2, fileOrFolderPath=%path%, parser=\"goal\", write to %goals%",
-      "lineNumber": 9,
+      "lineNumber": 10,
       "indent": 0,
       "actions": [
         {
@@ -120,9 +150,9 @@
       "waitForExecution": true
     },
     {
-      "index": 4,
+      "index": 5,
       "text": "write out \"Found %goals.Count% goals\"",
-      "lineNumber": 10,
+      "lineNumber": 11,
       "indent": 0,
       "actions": [
         {
@@ -144,9 +174,9 @@
       "waitForExecution": true
     },
     {
-      "index": 5,
+      "index": 6,
       "text": "foreach %goals%, call BuildGoal, item=%goal%",
-      "lineNumber": 11,
+      "lineNumber": 12,
       "indent": 0,
       "actions": [
         {
@@ -178,9 +208,9 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 7,
       "text": "[plang] call SaveApp, app=%app%",
-      "lineNumber": 12,
+      "lineNumber": 13,
       "indent": 0,
       "actions": [
         {

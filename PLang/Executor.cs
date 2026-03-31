@@ -304,17 +304,19 @@ namespace PLang
 			engine2.SystemDirectory = fileSystem.SystemDirectory;
 			engine2.Building.IsEnabled = true;
 
-			if (parameters.TryGetValue("debug", out var debugValue) && debugValue is not false)
+			// Debug: --debug=true or --debug={"goal":"X","step":3}
+			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
 			{
 				engine2.Debug.Apply(debugValue);
-				parameters.Remove("debug");
 			}
+			parameters.Remove("!debug");
 
 			// Resolve build path relative to user's project root
 			if (!parameters.TryGetValue("path", out var pathValue) || pathValue is not string pathStr)
 				pathStr = ".";
 			parameters["path"] = System.IO.Path.GetFullPath(System.IO.Path.Join(fileSystem.RootDirectory, pathStr));
 
+			// Parameters already have ! prefix for system params (--build → !build)
 			foreach (var param in parameters)
 				engine2.MemoryStack.Set(param.Key, param.Value);
 
@@ -333,21 +335,23 @@ namespace PLang
 			return (null, result.Value, null);
 		}
 
+
 		public async Task<Runtime2.Engine.Memory.Data> Run2(string[] args, CancellationToken cancellationToken = default)
 		{
 			var (goalName, parameters) = CommandLineParser.Parse(args);
 
 			var engine = new Runtime2.Engine.@this(fileSystem);
 
-			if (parameters.TryGetValue("debug", out var debugValue) && debugValue is not false)
+			// Debug: --debug=true or --debug={"goal":"X","step":3}
+			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
 			{
 				engine.Debug.Apply(debugValue);
-				parameters.Remove("debug");
 			}
+			parameters.Remove("!debug");
 
-			if (parameters.TryGetValue("test", out var testValue) && testValue is not false)
+			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
 			{
-				parameters.Remove("test");
+				parameters.Remove("!test");
 				foreach (var param in parameters)
 					engine.MemoryStack.Set(param.Key, param.Value);
 
@@ -355,6 +359,7 @@ namespace PLang
 				return exitCode == 0 ? Runtime2.Engine.Memory.Data.Ok() : Runtime2.Engine.Memory.Data.FromError(new Runtime2.Engine.Errors.Error("Tests failed", "TestsFailed", exitCode));
 			}
 
+			// Parameters already have ! prefix for system params (--run → !run)
 			foreach (var param in parameters)
 				engine.MemoryStack.Set(param.Key, param.Value);
 

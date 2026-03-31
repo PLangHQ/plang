@@ -4,6 +4,7 @@ Build
 / Parameters: %path% - folder to build (default: ".")
 
 - set default %path% = "."
+- set default %!build.cache% = true
 - write out "Building path: %path%"
 - [plang] call GetApp, write to %app%
 - [plang] GetGoalsV2, fileOrFolderPath=%path%, parser="goal", write to %goals%
