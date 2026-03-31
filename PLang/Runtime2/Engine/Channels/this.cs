@@ -122,7 +122,13 @@ public sealed class @this : IAsyncDisposable
     public async Task<Data> WriteAsync(modules.output.Write action)
     {
         var channel = action.Data?.Properties?.Get<string>("channel") ?? "default";
-        return await WriteAsync(channel, action.Data?.Value);
+        var content = action.Data?.Value;
+
+        // Resolve %var% references from the context's MemoryStack
+        if (content is string str && str.Contains('%'))
+            content = action.Context.MemoryStack.Resolve(str);
+
+        return await WriteAsync(channel, content);
     }
 
     /// <summary>

@@ -1,0 +1,103 @@
+[
+  {
+    "name": "Start",
+    "description": "Calls the goal WriteOut with a parameter indicating pr is null.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "call goal WriteOut",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "GoalName",
+                "value": {
+                  "name": "WriteOut",
+                  "parameters": [
+                    {
+                      "name": "pr",
+                      "value": null,
+                      "type": "object"
+                    }
+                  ]
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [
+      "WriteOut"
+    ],
+    "visibility": 1,
+    "path": "/Test.goal",
+    "prPath": "/.build/test.pr",
+    "hash": "d4ede1cd47b4687a6cefcce4522af183e526fcca01b6f9fb337ddeee54b65138",
+    "builderVersion": "0.2.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  },
+  {
+    "name": "WriteOut",
+    "description": "Writes the literal string to the output channel.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "write out \u0022hello plang world\u0022",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "hello plang world",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 0,
+    "path": "/Test.goal",
+    "prPath": "/.build/test.pr",
+    "hash": "3be0cf8c671538ebc9500db89b248cb7df76b7f7a868d9f396c66ad4919f2f0b",
+    "builderVersion": "0.2.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

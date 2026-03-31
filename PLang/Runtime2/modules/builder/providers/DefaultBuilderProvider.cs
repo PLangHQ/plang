@@ -138,7 +138,32 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (string.IsNullOrEmpty(prPath))
             return Data.FromError(new Engine.Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));
 
-        var json = JsonSerializer.Serialize(action.Goals, Json.PrWrite);
+        // Load existing goals from .pr file — merge by name (replace or append)
+        var existingGoals = new List<Goal>();
+        var readAction = new file.Read { Context = context, Path = new PLangPath(prPath, context) };
+        var readResult = await engine.RunAction(readAction, context);
+        if (readResult.Success && readResult.Value?.ToString() is string existingJson && !string.IsNullOrWhiteSpace(existingJson))
+        {
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<List<Goal>>(existingJson, Json.CaseInsensitiveRead);
+                if (parsed != null) existingGoals = parsed;
+            }
+            catch (JsonException) { /* corrupt file — start fresh */ }
+        }
+
+        // Replace existing goals by name, append new ones
+        foreach (var goal in action.Goals)
+        {
+            var idx = existingGoals.FindIndex(g =>
+                string.Equals(g.Name, goal.Name, StringComparison.OrdinalIgnoreCase));
+            if (idx >= 0)
+                existingGoals[idx] = goal;
+            else
+                existingGoals.Add(goal);
+        }
+
+        var json = JsonSerializer.Serialize(existingGoals, Json.PrWrite);
 
         var saveAction = new file.Save
         {

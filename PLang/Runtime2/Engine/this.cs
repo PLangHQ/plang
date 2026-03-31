@@ -242,6 +242,14 @@ public sealed class @this : IAsyncDisposable
         Types.RegisterDomainTypes();
     }
 
+    // --- [Method] primitives ---
+
+    [modules.Method("test", "echo")]
+    public Task<Data> TestEcho(string message, string prefix = "echo")
+    {
+        return Task.FromResult(Data.Ok($"{prefix}: {message}"));
+    }
+
     /// <summary>
     /// Runs a module action through the same code-generated execution path as steps.
     /// Set properties via init, then call RunAction — engine wires context, memory, validation, error handling.

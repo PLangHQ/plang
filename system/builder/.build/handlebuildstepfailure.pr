@@ -162,7 +162,7 @@
           "action": "write",
           "parameters": [
             {
-              "name": "Content",
+              "name": "Data",
               "value": "  Retry %!error.retryCount%/3: %!error.Message%",
               "type": "string"
             }

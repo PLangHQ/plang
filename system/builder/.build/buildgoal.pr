@@ -14,7 +14,7 @@
           "action": "write",
           "parameters": [
             {
-              "name": "Content",
+              "name": "Data",
               "value": "Building goal: %goal.Name%",
               "type": "string"
             }

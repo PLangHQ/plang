@@ -78,7 +78,7 @@
           "action": "write",
           "parameters": [
             {
-              "name": "Content",
+              "name": "Data",
               "value": "Building path: %path%",
               "type": "string"
             }
@@ -160,7 +160,7 @@
           "action": "write",
           "parameters": [
             {
-              "name": "Content",
+              "name": "Data",
               "value": "Found %goals.Count% goals",
               "type": "string"
             }
