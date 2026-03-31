@@ -1,7 +1,7 @@
 [
   {
     "name": "HandleTrue",
-    "description": "Built goal HandleTrue with one variable assignment step.",
+    "description": "Sets %result% to the literal string \u0027true-branch\u0027 in goal HandleTrue.",
     "comment": null,
     "steps": [
       {
@@ -24,14 +24,9 @@
                 "name": "Value",
                 "value": "true-branch",
                 "type": "string"
-              },
-              {
-                "name": "Type",
-                "value": "string",
-                "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -47,7 +42,7 @@
     "path": "/HandleTrue.goal",
     "prPath": "/.build/handletrue.pr",
     "hash": "49e7d4ae7739c7c8735ca92768d80236a99551c8e9a5f12a70a412e97d782cd2",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

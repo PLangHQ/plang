@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal into executable form for compound AND condition test.",
+    "description": "Sets variables a and b, evaluates a compound AND condition (a \u003E 1 AND b \u003C 10), calls DoThing when true, then asserts that %result% equals the expected value.",
     "comment": null,
     "steps": [
       {
@@ -91,17 +91,23 @@
               },
               {
                 "name": "Right",
-                "value": "1",
-                "type": "string"
+                "value": 1,
+                "type": "long"
               }
             ],
             "return": [
               {
-                "name": "_cond1",
+                "name": "__conditionReturn1__",
                 "value": null
               }
             ],
-            "defaults": null
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           },
           {
             "module": "condition",
@@ -119,17 +125,23 @@
               },
               {
                 "name": "Right",
-                "value": "10",
-                "type": "string"
+                "value": 10,
+                "type": "long"
               }
             ],
             "return": [
               {
-                "name": "_cond2",
+                "name": "__conditionReturn2__",
                 "value": null
               }
             ],
-            "defaults": null
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           },
           {
             "module": "condition",
@@ -137,7 +149,7 @@
             "parameters": [
               {
                 "name": "Left",
-                "value": "%_cond1%",
+                "value": "%__conditionReturn1__%",
                 "type": "string"
               },
               {
@@ -147,32 +159,33 @@
               },
               {
                 "name": "Right",
-                "value": "%_cond2%",
+                "value": "%__conditionReturn2__%",
                 "type": "string"
               },
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "DoThing"
+                  "name": "DoThing",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": null
                 },
                 "type": "goal.call"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": "insufficientContext: compound AND requires both comparisons; current rebuild only checks %a% \u003E 1. Full correct rebuild would require nested if or an AND-capable condition mapping, but the available condition DTO only supports a single comparison per if.",
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -197,6 +210,11 @@
                 "name": "Actual",
                 "value": "%result%",
                 "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "AND condition should pass when both sides true",
+                "type": "string"
               }
             ],
             "return": null,
@@ -215,7 +233,7 @@
     "path": "/ConditionCompoundAnd.test.goal",
     "prPath": "/.build/conditioncompoundand.test.pr",
     "hash": "1b2c7e71ed1ee4211f422eeead71eb38e7c7849066e50b810718f63ada6ea335",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

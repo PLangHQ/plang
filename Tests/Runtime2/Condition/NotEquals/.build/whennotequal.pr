@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenNotEqual",
-    "description": "Build goal steps for setting %result% when not equal (no explicit comparison provided).",
+    "description": "Sets %result% to the literal string \u0022not-equal\u0022. The \u003C= pr: null modifier is not represented in the available engine action schema, so it is ignored by the compiler.",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/WhenNotEqual.goal",
     "prPath": "/.build/whennotequal.pr",
     "hash": "9bc3d19b23c5f3af2f7ff1fa39c16e7cdfa6de4c161b5376ce1d779e368fde14",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

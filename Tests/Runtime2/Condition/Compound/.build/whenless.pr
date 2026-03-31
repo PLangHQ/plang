@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenLess",
-    "description": "Build goal WhenLess",
+    "description": "Sets the variable %lessResult% to the literal string \u0022yes\u0022 when the condition indicates a null/less-than case (as provided by the step text).",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -42,7 +48,7 @@
     "path": "/WhenLess.goal",
     "prPath": "/.build/whenless.pr",
     "hash": "428a59343c2ef05617772887e106049b900979acae829a08f03039b4122c9886",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

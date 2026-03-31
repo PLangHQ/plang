@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal with GoalFirst error handling order and assertions.",
+    "description": "Sets tracking variables, calls AlwaysFails with GoalFirst error handling (handler goal first, then retry 2 times), and asserts the handler was invoked.",
     "comment": null,
     "steps": [
       {
@@ -81,7 +81,9 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "AlwaysFails",
+                "value": {
+                  "name": "AlwaysFails"
+                },
                 "type": "goal.call"
               }
             ],
@@ -124,7 +126,7 @@
               {
                 "name": "Value",
                 "value": "%goalFirstHandled%",
-                "type": "object"
+                "type": "bool"
               },
               {
                 "name": "Message",
@@ -148,7 +150,7 @@
     "path": "/ErrorGoalFirst.test.goal",
     "prPath": "/.build/errorgoalfirst.test.pr",
     "hash": "e7fff35aa8b251b0726e792f79f6f003fbed9f55b66ef9d316cfb0b40b541245",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

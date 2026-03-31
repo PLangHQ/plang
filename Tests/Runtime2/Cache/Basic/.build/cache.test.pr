@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal for cached file read test (cache hit should skip re-reading changed file).",
+    "description": "Writes testdata.txt, calls ReadCached twice to verify the second call returns the originally cached value even after the file content changes, then deletes the file.",
     "comment": null,
     "steps": [
       {
@@ -16,12 +16,12 @@
             "action": "save",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "testdata.txt",
                 "type": "path"
               },
               {
-                "name": "value",
+                "name": "Value",
                 "value": "first-value",
                 "type": "string"
               }
@@ -48,8 +48,14 @@
             "action": "call",
             "parameters": [
               {
-                "name": "goalName",
-                "value": "ReadCached",
+                "name": "GoalName",
+                "value": {
+                  "name": "ReadCached",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": "/.build/readcached.pr"
+                },
                 "type": "goal.call"
               }
             ],
@@ -75,12 +81,12 @@
             "action": "isNotNull",
             "parameters": [
               {
-                "name": "value",
+                "name": "Value",
                 "value": "%fileData%",
                 "type": "object"
               },
               {
-                "name": "message",
+                "name": "Message",
                 "value": "cached read should return value",
                 "type": "string"
               }
@@ -107,12 +113,12 @@
             "action": "save",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "testdata.txt",
                 "type": "path"
               },
               {
-                "name": "value",
+                "name": "Value",
                 "value": "second-value",
                 "type": "string"
               }
@@ -139,9 +145,9 @@
             "action": "call",
             "parameters": [
               {
-                "name": "goalName",
-                "value": "ReadCached",
-                "type": "goal.call"
+                "name": "GoalName",
+                "value": "",
+                "type": "string"
               }
             ],
             "return": null,
@@ -166,17 +172,17 @@
             "action": "equals",
             "parameters": [
               {
-                "name": "expected",
+                "name": "Expected",
                 "value": "first-value",
                 "type": "string"
               },
               {
-                "name": "actual",
+                "name": "Actual",
                 "value": "%fileData%",
                 "type": "object"
               },
               {
-                "name": "message",
+                "name": "Message",
                 "value": "second call should return cached first-value",
                 "type": "string"
               }
@@ -203,17 +209,17 @@
             "action": "delete",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "testdata.txt",
                 "type": "path"
               },
               {
-                "name": "ignoreIfNotFound",
+                "name": "IgnoreIfNotFound",
                 "value": false,
                 "type": "bool"
               },
               {
-                "name": "recursive",
+                "name": "Recursive",
                 "value": false,
                 "type": "bool"
               }
@@ -234,6 +240,7 @@
     "path": "/Cache.test.goal",
     "prPath": "/.build/cache.test.pr",
     "hash": "7fabc2e1527462b1fec7568c496fe745b6de786b0d5eab208a8ffa3d7ab22f16",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

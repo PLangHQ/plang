@@ -1,7 +1,7 @@
 [
   {
     "name": "ThrowError",
-    "description": "Build goal ThrowError with a single throw step.",
+    "description": "Maps ThrowError goal to a single error.throw action that throws the provided error message.",
     "comment": null,
     "steps": [
       {
@@ -37,7 +37,7 @@
     "path": "/ThrowError.goal",
     "prPath": "/.build/throwerror.pr",
     "hash": "760733522882f786b33a29656b13a929e3aabde1a27dbce83d60c95e0290a596",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

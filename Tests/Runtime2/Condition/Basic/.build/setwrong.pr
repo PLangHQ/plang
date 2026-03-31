@@ -1,7 +1,7 @@
 [
   {
     "name": "SetWrong",
-    "description": "Sets the %wasWrong% variable to true (no-cache) using the variable set action.",
+    "description": "Sets the %wasWrong% variable to true (with a null-like value provided in the step).",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -42,7 +48,7 @@
     "path": "/SetWrong.goal",
     "prPath": "/.build/setwrong.pr",
     "hash": "9a328158bcd3fea39002d861281fa7b89be9c46b471209ab9cc3349558a60267",
-    "builderVersion": "0.2.3",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "ReadCached",
-    "description": "Build goal steps for reading a cached file value.",
+    "description": "Reads cacheslide.txt with a cache duration of 60 seconds and writes the file contents to %cachedValue%.",
     "comment": null,
     "steps": [
       {
@@ -16,12 +16,12 @@
             "action": "read",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "cacheslide.txt",
                 "type": "path"
               },
               {
-                "name": "resolveVariables",
+                "name": "ResolveVariables",
                 "value": false,
                 "type": "bool"
               }
@@ -39,7 +39,7 @@
         "onError": null,
         "cache": {
           "durationMs": 60000,
-          "sliding": false,
+          "sliding": true,
           "key": null,
           "location": null
         },
@@ -52,6 +52,7 @@
     "path": "/ReadCached.goal",
     "prPath": "/.build/readcached.pr",
     "hash": "a42f6e6232c2cd7c67fa24f0938f74634d8cc0e4552c9b7a94d54e1cd2563268",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

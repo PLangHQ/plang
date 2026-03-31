@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal with a boolean truthy check that conditionally calls a goal.",
+    "description": "Sets %flag% to true, conditionally calls HandleTrue when %flag% is truthy, then asserts %result% equals the expected value to verify the correct branch was taken.",
     "comment": null,
     "steps": [
       {
@@ -26,7 +26,7 @@
                 "type": "bool"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -50,7 +50,7 @@
               {
                 "name": "Left",
                 "value": "%flag%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Operator",
@@ -65,13 +65,23 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "HandleTrue"
+                  "name": "HandleTrue",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": "/.build/handletrue.pr"
                 },
                 "type": "goal.call"
               }
             ],
-            "return": [],
-            "defaults": null
+            "return": null,
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -99,7 +109,7 @@
               {
                 "name": "Actual",
                 "value": "%result%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Message",
@@ -107,7 +117,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -123,7 +133,7 @@
     "path": "/ConditionTruthy.test.goal",
     "prPath": "/.build/conditiontruthy.test.pr",
     "hash": "7c148bf8428f1b535a357771e74061460e768a153f269c0620f8b165fe03f340",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

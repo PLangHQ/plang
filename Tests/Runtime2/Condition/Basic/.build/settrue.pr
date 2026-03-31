@@ -1,7 +1,7 @@
 [
   {
     "name": "SetTrue",
-    "description": "Sets the boolean variable %wasTrue% to true.",
+    "description": "Sets the boolean variable %wasTrue% to true (with a null/unspecified value as indicated by the step).",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/SetTrue.goal",
     "prPath": "/.build/settrue.pr",
     "hash": "bd4185e5dfa7bfa79c49d3f1911ebab78a6f74da3f41fbc944e9093d86f77cda",
-    "builderVersion": "0.2.3",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

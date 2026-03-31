@@ -1,7 +1,7 @@
 [
   {
     "name": "AlwaysFails",
-    "description": "Build goal AlwaysFails into executable form.",
+    "description": "AlwaysFails adds 1 to %goalFirstAttempts% (writing back to the same variable) and then throws an error with message \u0022always fails\u0022.",
     "comment": null,
     "steps": [
       {
@@ -12,27 +12,52 @@
         "comment": null,
         "actions": [
           {
-            "module": "math",
+            "module": "list",
             "action": "add",
             "parameters": [
               {
-                "name": "A",
-                "value": 1,
-                "type": "int"
+                "name": "ListName",
+                "value": "%goalFirstAttempts%",
+                "type": "string"
               },
               {
-                "name": "B",
-                "value": "%goalFirstAttempts%",
+                "name": "Value",
+                "value": 1,
+                "type": "long"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "atindex",
+                "value": -1,
                 "type": "int"
               }
-            ],
-            "return": [
+            ]
+          },
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
               {
-                "name": "goalFirstAttempts",
-                "value": null
+                "name": "Name",
+                "value": "%goalFirstAttempts%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "%goalFirstAttempts%",
+                "type": "string"
               }
             ],
-            "defaults": null
+            "return": null,
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -74,7 +99,7 @@
     "path": "/AlwaysFails.goal",
     "prPath": "/.build/alwaysfails.pr",
     "hash": "20452d6d06df8961ba441d4dc18fc37c2e6dd04b2658568f70fb8b95f341268d",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal for conditional call when %a% != 3, then assert result.",
+    "description": "Sets %a% to 7, conditionally calls WhenNotEqual when %a% != 3, then asserts %result% equals \u0022not-equal\u0022.",
     "comment": null,
     "steps": [
       {
@@ -26,7 +26,7 @@
                 "type": "int"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -50,17 +50,17 @@
               {
                 "name": "Left",
                 "value": "%a%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Operator",
                 "value": "!=",
-                "type": "string"
+                "type": "operator"
               },
               {
                 "name": "Right",
                 "value": 3,
-                "type": "int"
+                "type": "data"
               },
               {
                 "name": "GoalIfTrue",
@@ -70,21 +70,12 @@
                 "type": "goal.call"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -108,7 +99,7 @@
               {
                 "name": "Actual",
                 "value": "%result%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Message",
@@ -116,21 +107,12 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -141,7 +123,7 @@
     "path": "/ConditionNotEquals.test.goal",
     "prPath": "/.build/conditionnotequals.test.pr",
     "hash": "ad76488613c6199f810beebffe95d913d476903f632a43cdb8832c2219815027",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

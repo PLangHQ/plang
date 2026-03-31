@@ -1,7 +1,7 @@
 [
   {
     "name": "ReadCached",
-    "description": "Build goal: ReadCached (read file and cache the step result).",
+    "description": "Reads testdata.txt and writes its contents to %fileData%, using a 5-minute cache window.",
     "comment": null,
     "steps": [
       {
@@ -16,12 +16,12 @@
             "action": "read",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "testdata.txt",
                 "type": "path"
               },
               {
-                "name": "resolveVariables",
+                "name": "ResolveVariables",
                 "value": false,
                 "type": "bool"
               }
@@ -52,6 +52,7 @@
     "path": "/ReadCached.goal",
     "prPath": "/.build/readcached.pr",
     "hash": "0aa691e280cfcca5d81be063bd7df881d6bc75ef8b228b6886e1e3d5c0176a0b",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

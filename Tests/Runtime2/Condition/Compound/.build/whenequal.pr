@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenEqual",
-    "description": "Build goal steps for setting %equalResult% to \u0022yes\u0022.",
+    "description": "Sets %equalResult% to the literal string \u0022yes\u0022 for the WhenEqual step.",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/WhenEqual.goal",
     "prPath": "/.build/whenequal.pr",
     "hash": "39ca33859cd43cdfa7f65838321b73822acadbd150285dddf482b01296633ee7",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

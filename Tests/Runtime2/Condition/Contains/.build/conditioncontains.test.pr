@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal into executable form",
+    "description": "Sets %name% to a string, checks whether it contains a substring, calls WhenContains if true, then asserts that %result% equals \u0027contains\u0027 to confirm the correct branch executed.",
     "comment": null,
     "steps": [
       {
@@ -65,8 +65,7 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenContains",
-                  "parameters": []
+                  "name": "WhenContains"
                 },
                 "type": "goal.call"
               }
@@ -76,16 +75,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -110,6 +100,11 @@
                 "name": "Actual",
                 "value": "%result%",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "GoalIfTrue should have been called for contains",
+                "type": "string"
               }
             ],
             "return": null,
@@ -117,16 +112,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -137,7 +123,7 @@
     "path": "/ConditionContains.test.goal",
     "prPath": "/.build/conditioncontains.test.pr",
     "hash": "9ffdba833592c772bb37f764984e7b08eccddd6431e756d5aaa861b9befcb91c",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

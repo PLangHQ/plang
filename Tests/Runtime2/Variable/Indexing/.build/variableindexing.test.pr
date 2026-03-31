@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Built goal steps for setting list variables and asserting indexed elements.",
+    "description": "Sets up an items list and index variables, then asserts that the list elements at those indices match expected values.",
     "comment": null,
     "steps": [
       {
@@ -28,6 +28,11 @@
                   "c"
                 ],
                 "type": "list"
+              },
+              {
+                "name": "Type",
+                "value": "list",
+                "type": "string"
               }
             ],
             "return": null,
@@ -60,6 +65,11 @@
                 "name": "Value",
                 "value": 1,
                 "type": "int"
+              },
+              {
+                "name": "Type",
+                "value": "int",
+                "type": "string"
               }
             ],
             "return": null,
@@ -91,6 +101,11 @@
               {
                 "name": "Actual",
                 "value": "%items[idx]%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "",
                 "type": "string"
               }
             ],
@@ -124,6 +139,11 @@
                 "name": "Value",
                 "value": 0,
                 "type": "int"
+              },
+              {
+                "name": "Type",
+                "value": "int",
+                "type": "string"
               }
             ],
             "return": null,
@@ -156,6 +176,11 @@
                 "name": "Value",
                 "value": 2,
                 "type": "int"
+              },
+              {
+                "name": "Type",
+                "value": "int",
+                "type": "string"
               }
             ],
             "return": null,
@@ -238,7 +263,7 @@
     "path": "/VariableIndexing.test.goal",
     "prPath": "/.build/variableindexing.test.pr",
     "hash": "df6a35c2c73a17ab3d107574ff2e64ce3a95146ae40b43751ec3ce71ea830483",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

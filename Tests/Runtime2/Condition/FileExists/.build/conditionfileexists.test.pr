@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal into executable form for the provided PLang steps.",
+    "description": "Creates a file, checks whether it exists, and conditionally calls ProcessFile; then asserts the expected result when the file exists.",
     "comment": null,
     "steps": [
       {
@@ -23,10 +23,10 @@
               {
                 "name": "Value",
                 "value": "hello",
-                "type": "object"
+                "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -83,13 +83,23 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "ProcessFile"
+                  "name": "ProcessFile",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": "/.build/processfile.pr"
                 },
                 "type": "goal.call"
               }
             ],
-            "return": [],
-            "defaults": null
+            "return": null,
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -125,7 +135,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -141,7 +151,7 @@
     "path": "/ConditionFileExists.test.goal",
     "prPath": "/.build/conditionfileexists.test.pr",
     "hash": "21b50d07eca29a81b2dac983c8fe78b09fa0195b1841ddcd8c8da5fb3e4feb35",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

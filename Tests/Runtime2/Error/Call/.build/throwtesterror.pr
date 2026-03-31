@@ -1,7 +1,7 @@
 [
   {
     "name": "ThrowTestError",
-    "description": "Build goal ThrowTestError",
+    "description": "Compiles ThrowTestError goal to a single error.throw action that raises an error with message \u0027test error\u0027.",
     "comment": null,
     "steps": [
       {
@@ -37,7 +37,7 @@
     "path": "/ThrowTestError.goal",
     "prPath": "/.build/throwtesterror.pr",
     "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

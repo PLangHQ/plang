@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal with error-catching behavior and assertion.",
+    "description": "Sets caughtMessage to empty, calls ThrowTestError with an on-error handler that calls CatchError, then asserts caughtMessage equals \u0027test error\u0027.",
     "comment": null,
     "steps": [
       {
@@ -49,7 +49,10 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "ThrowTestError",
+                "value": {
+                  "name": "ThrowTestError",
+                  "parameters": []
+                },
                 "type": "goal.call"
               }
             ],
@@ -116,7 +119,7 @@
     "path": "/ErrorCall.test.goal",
     "prPath": "/.build/errorcall.test.pr",
     "hash": "8c21fb451d36f668ff578e8d092ed6e203cfced3aa3ec24de873a6fafb88d34d",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

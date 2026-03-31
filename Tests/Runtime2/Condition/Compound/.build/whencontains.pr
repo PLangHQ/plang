@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenContains",
-    "description": "Build goal steps for setting %containsResult% to \u0022yes\u0022.",
+    "description": "Sets %containsResult% to the literal string \u0022yes\u0022.",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/WhenContains.goal",
     "prPath": "/.build/whencontains.pr",
     "hash": "d9bad68c8fdb8b9b379af9b0ec70c8a42ed1dd448dceb087b33fd894d34dca9c",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

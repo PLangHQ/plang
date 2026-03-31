@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenFalse",
-    "description": "Build goal steps for negating condition result.",
+    "description": "Sets %result% to the literal string \u0022negated\u0022 (step indicates a null/\u003C= pr: null condition, but no conditional action is specified).",
     "comment": null,
     "steps": [
       {
@@ -24,11 +24,6 @@
                 "name": "Value",
                 "value": "negated",
                 "type": "string"
-              },
-              {
-                "name": "Type",
-                "value": "string",
-                "type": "string"
               }
             ],
             "return": null,
@@ -47,7 +42,7 @@
     "path": "/WhenFalse.goal",
     "prPath": "/.build/whenfalse.pr",
     "hash": "04427d0c9df712277476d5458f5462b724ffe2a212e88b0db99e6edb0d710010",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

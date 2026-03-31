@@ -1,7 +1,7 @@
 [
   {
     "name": "AlwaysFails",
-    "description": "Build goal that always throws an error.",
+    "description": "Compiles the goal step to an error throw action that always fails.",
     "comment": null,
     "steps": [
       {
@@ -19,11 +19,6 @@
                 "name": "Message",
                 "value": "always fails",
                 "type": "string"
-              },
-              {
-                "name": "StatusCode",
-                "value": 500,
-                "type": "int"
               }
             ],
             "return": null,
@@ -42,7 +37,7 @@
     "path": "/AlwaysFails.goal",
     "prPath": "/.build/alwaysfails.pr",
     "hash": "a91369207d3e67d7d3fbc2cc7a0fc4e6f2a7558d1ae6c543d01237f04ad35098",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "DoThing",
-    "description": "Build goal DoThing",
+    "description": "Sets %result% to the literal string \u0022both-true\u0022. The \u003C= pr: null note is not mapped to any engine action because no corresponding action/modifier exists in the provided action set.",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/DoThing.goal",
     "prPath": "/.build/dothing.pr",
     "hash": "c9ef2a4feef41411dca98e9dfc8891e7c57d1b2cd95a3e7d46290e11d80adbac",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

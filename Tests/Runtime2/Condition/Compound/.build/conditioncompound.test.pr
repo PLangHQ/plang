@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal into executable form based on provided steps and PR data (all pr: null).",
+    "description": "Compiles the provided Start goal into engine actions: sets variables, evaluates conditions, calls corresponding goals, and asserts expected results for greater-than, less-than, equals, not-equals, string-contains, and a false-condition branch.",
     "comment": null,
     "steps": [
       {
@@ -50,7 +50,7 @@
               {
                 "name": "Left",
                 "value": "%x%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Operator",
@@ -65,8 +65,7 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenGreater",
-                  "parameters": []
+                  "name": "WhenGreater"
                 },
                 "type": "goal.call"
               }
@@ -76,16 +75,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -109,7 +99,7 @@
               {
                 "name": "Actual",
                 "value": "%greaterResult%",
-                "type": "object"
+                "type": "data"
               }
             ],
             "return": null,
@@ -168,7 +158,7 @@
               {
                 "name": "Left",
                 "value": "%y%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Operator",
@@ -183,8 +173,7 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenLess",
-                  "parameters": []
+                  "name": "WhenLess"
                 },
                 "type": "goal.call"
               }
@@ -194,16 +183,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -227,7 +207,7 @@
               {
                 "name": "Actual",
                 "value": "%lessResult%",
-                "type": "object"
+                "type": "data"
               }
             ],
             "return": null,
@@ -286,7 +266,7 @@
               {
                 "name": "Left",
                 "value": "%z%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Operator",
@@ -301,8 +281,7 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenEqual",
-                  "parameters": []
+                  "name": "WhenEqual"
                 },
                 "type": "goal.call"
               }
@@ -312,16 +291,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -345,7 +315,7 @@
               {
                 "name": "Actual",
                 "value": "%equalResult%",
-                "type": "object"
+                "type": "data"
               }
             ],
             "return": null,
@@ -404,7 +374,7 @@
               {
                 "name": "Left",
                 "value": "%a%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Operator",
@@ -419,8 +389,7 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenNotEqual",
-                  "parameters": []
+                  "name": "WhenNotEqual"
                 },
                 "type": "goal.call"
               }
@@ -430,16 +399,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -463,7 +423,7 @@
               {
                 "name": "Actual",
                 "value": "%notEqualResult%",
-                "type": "object"
+                "type": "data"
               }
             ],
             "return": null,
@@ -522,7 +482,7 @@
               {
                 "name": "Left",
                 "value": "%name%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Operator",
@@ -537,8 +497,7 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenContains",
-                  "parameters": []
+                  "name": "WhenContains"
                 },
                 "type": "goal.call"
               }
@@ -548,16 +507,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -581,7 +531,7 @@
               {
                 "name": "Actual",
                 "value": "%containsResult%",
-                "type": "object"
+                "type": "data"
               }
             ],
             "return": null,
@@ -640,7 +590,7 @@
               {
                 "name": "Left",
                 "value": "%b%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Operator",
@@ -655,16 +605,14 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenGreater",
-                  "parameters": []
+                  "name": "WhenGreater"
                 },
                 "type": "goal.call"
               },
               {
                 "name": "GoalIfFalse",
                 "value": {
-                  "name": "WhenFalse",
-                  "parameters": []
+                  "name": "WhenFalse"
                 },
                 "type": "goal.call"
               }
@@ -674,16 +622,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -707,7 +646,7 @@
               {
                 "name": "Actual",
                 "value": "%falseResult%",
-                "type": "object"
+                "type": "data"
               }
             ],
             "return": null,
@@ -726,7 +665,7 @@
     "path": "/ConditionCompound.test.goal",
     "prPath": "/.build/conditioncompound.test.pr",
     "hash": "9b189b9e28d5b45c9a83ddf05681b7b878ce40779e9bde3e606bf33dccdd647e",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

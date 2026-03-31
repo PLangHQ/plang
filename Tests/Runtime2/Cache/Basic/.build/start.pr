@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal for file read caching tests (default cache and custom cache key) plus cleanup.",
+    "description": "Compiles the provided Start goal into engine actions: writes test files, calls cached-read goals (ReadCached and ReadWithKey), outputs returned cached values, then deletes the test files.",
     "comment": null,
     "steps": [
       {
@@ -16,12 +16,12 @@
             "action": "save",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "testdata.txt",
                 "type": "path"
               },
               {
-                "name": "value",
+                "name": "Value",
                 "value": "first-value",
                 "type": "string"
               }
@@ -48,8 +48,11 @@
             "action": "call",
             "parameters": [
               {
-                "name": "goalName",
-                "value": "ReadCached",
+                "name": "GoalName",
+                "value": {
+                  "name": "ReadCached",
+                  "parameters": []
+                },
                 "type": "goal.call"
               }
             ],
@@ -75,14 +78,9 @@
             "action": "write",
             "parameters": [
               {
-                "name": "content",
+                "name": "Data",
                 "value": "  1st call returned: %fileData.Value%",
                 "type": "string"
-              },
-              {
-                "name": "actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
               }
             ],
             "return": null,
@@ -107,12 +105,12 @@
             "action": "save",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "testdata.txt",
                 "type": "path"
               },
               {
-                "name": "value",
+                "name": "Value",
                 "value": "second-value",
                 "type": "string"
               }
@@ -139,8 +137,11 @@
             "action": "call",
             "parameters": [
               {
-                "name": "goalName",
-                "value": "ReadCached",
+                "name": "GoalName",
+                "value": {
+                  "name": "ReadCached",
+                  "parameters": []
+                },
                 "type": "goal.call"
               }
             ],
@@ -166,14 +167,9 @@
             "action": "write",
             "parameters": [
               {
-                "name": "content",
+                "name": "Data",
                 "value": "  2nd call returned: %fileData.Value% (should still be \u0027first-value\u0027 if cached)",
                 "type": "string"
-              },
-              {
-                "name": "actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
               }
             ],
             "return": null,
@@ -198,12 +194,12 @@
             "action": "save",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "keytest.txt",
                 "type": "path"
               },
               {
-                "name": "value",
+                "name": "Value",
                 "value": "key-value-1",
                 "type": "string"
               }
@@ -230,8 +226,11 @@
             "action": "call",
             "parameters": [
               {
-                "name": "goalName",
-                "value": "ReadWithKey",
+                "name": "GoalName",
+                "value": {
+                  "name": "ReadWithKey",
+                  "parameters": []
+                },
                 "type": "goal.call"
               }
             ],
@@ -257,14 +256,9 @@
             "action": "write",
             "parameters": [
               {
-                "name": "content",
+                "name": "Data",
                 "value": "  key test 1st: %keyData.Value%",
                 "type": "string"
-              },
-              {
-                "name": "actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
               }
             ],
             "return": null,
@@ -289,12 +283,12 @@
             "action": "save",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "keytest.txt",
                 "type": "path"
               },
               {
-                "name": "value",
+                "name": "Value",
                 "value": "key-value-2",
                 "type": "string"
               }
@@ -321,8 +315,11 @@
             "action": "call",
             "parameters": [
               {
-                "name": "goalName",
-                "value": "ReadWithKey",
+                "name": "GoalName",
+                "value": {
+                  "name": "ReadWithKey",
+                  "parameters": []
+                },
                 "type": "goal.call"
               }
             ],
@@ -348,14 +345,9 @@
             "action": "write",
             "parameters": [
               {
-                "name": "content",
+                "name": "Data",
                 "value": "  key test 2nd: %keyData.Value% (should still be \u0027key-value-1\u0027 if cached)",
                 "type": "string"
-              },
-              {
-                "name": "actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
               }
             ],
             "return": null,
@@ -380,19 +372,9 @@
             "action": "delete",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "testdata.txt",
                 "type": "path"
-              },
-              {
-                "name": "ignoreIfNotFound",
-                "value": false,
-                "type": "bool"
-              },
-              {
-                "name": "recursive",
-                "value": false,
-                "type": "bool"
               }
             ],
             "return": null,
@@ -417,19 +399,9 @@
             "action": "delete",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "keytest.txt",
                 "type": "path"
-              },
-              {
-                "name": "ignoreIfNotFound",
-                "value": false,
-                "type": "bool"
-              },
-              {
-                "name": "recursive",
-                "value": false,
-                "type": "bool"
               }
             ],
             "return": null,
@@ -448,6 +420,7 @@
     "path": "/Start.goal",
     "prPath": "/.build/start.pr",
     "hash": "e2501f37c408164fa0c6814aa53ed48510b581f8b484cad21d95d52c69f99ed9",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

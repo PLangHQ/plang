@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal into executable form.",
+    "description": "Sets %user% to a JSON object, then writes various nested properties/paths from %user% to output, including array indexing and special index-like paths (idx, first, last, random).",
     "comment": null,
     "steps": [
       {
@@ -37,6 +37,11 @@
                   ]
                 },
                 "type": "object"
+              },
+              {
+                "name": "Type",
+                "value": "object",
+                "type": "string"
               }
             ],
             "return": null,
@@ -61,14 +66,9 @@
             "action": "write",
             "parameters": [
               {
-                "name": "Content",
+                "name": "Data",
                 "value": "%user.name%",
-                "type": "object"
-              },
-              {
-                "name": "Actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
+                "type": "string"
               }
             ],
             "return": null,
@@ -93,14 +93,9 @@
             "action": "write",
             "parameters": [
               {
-                "name": "Content",
+                "name": "Data",
                 "value": "%user.age%",
-                "type": "object"
-              },
-              {
-                "name": "Actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
+                "type": "string"
               }
             ],
             "return": null,
@@ -125,14 +120,9 @@
             "action": "write",
             "parameters": [
               {
-                "name": "Content",
+                "name": "Data",
                 "value": "%user.addresses%",
-                "type": "object"
-              },
-              {
-                "name": "Actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
+                "type": "string"
               }
             ],
             "return": null,
@@ -157,14 +147,14 @@
             "action": "write",
             "parameters": [
               {
-                "name": "Content",
+                "name": "Data",
                 "value": "%user.addresses.street%",
-                "type": "object"
+                "type": "string"
               },
               {
-                "name": "Actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -189,14 +179,14 @@
             "action": "write",
             "parameters": [
               {
-                "name": "Content",
+                "name": "Data",
                 "value": "%user.addresses.first.street%",
-                "type": "object"
+                "type": "string"
               },
               {
-                "name": "Actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -221,14 +211,14 @@
             "action": "write",
             "parameters": [
               {
-                "name": "Content",
+                "name": "Data",
                 "value": "%user.addresses.last.street%",
-                "type": "object"
+                "type": "string"
               },
               {
-                "name": "Actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -253,14 +243,9 @@
             "action": "write",
             "parameters": [
               {
-                "name": "Content",
+                "name": "Data",
                 "value": "%user.addresses[0].street%",
-                "type": "object"
-              },
-              {
-                "name": "Actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
+                "type": "string"
               }
             ],
             "return": null,
@@ -293,6 +278,11 @@
                 "name": "Value",
                 "value": 1,
                 "type": "int"
+              },
+              {
+                "name": "Type",
+                "value": "int",
+                "type": "string"
               }
             ],
             "return": null,
@@ -317,14 +307,14 @@
             "action": "write",
             "parameters": [
               {
-                "name": "Content",
+                "name": "Data",
                 "value": "%user.addresses[idx].street%",
-                "type": "object"
+                "type": "string"
               },
               {
-                "name": "Actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -349,14 +339,14 @@
             "action": "write",
             "parameters": [
               {
-                "name": "Content",
+                "name": "Data",
                 "value": "%user.addresses.random.street%",
-                "type": "object"
+                "type": "string"
               },
               {
-                "name": "Actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -375,7 +365,7 @@
     "path": "/Start.goal",
     "prPath": "/.build/start.pr",
     "hash": "24db3b0719484be17fb3bc8fb48508d18fcf6f8ac3074cc589d12feda770bdf8",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

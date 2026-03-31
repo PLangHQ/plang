@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenBig",
-    "description": "Build goal for step: WhenBig - set %result% = \u0022big\u0022",
+    "description": "Sets %result% to the literal string \u0022big\u0022. The condition/pr note (\u0022\u003C= pr: null\u0022) is not represented as an engine action because no corresponding action/parameter exists for it in the provided action set.",
     "comment": null,
     "steps": [
       {
@@ -24,11 +24,6 @@
                 "name": "Value",
                 "value": "big",
                 "type": "string"
-              },
-              {
-                "name": "Type",
-                "value": "string",
-                "type": "string"
               }
             ],
             "return": null,
@@ -47,7 +42,7 @@
     "path": "/WhenBig.goal",
     "prPath": "/.build/whenbig.pr",
     "hash": "3dffbc0e1cdf035691216d1a5708f49cd6c5dcd74c5e886b58fb647d91f19719",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

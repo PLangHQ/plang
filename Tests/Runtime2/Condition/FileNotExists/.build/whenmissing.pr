@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenMissing",
-    "description": "Build goal step: set %result% to \u0022missing\u0022 when missing (no additional context provided).",
+    "description": "Sets %result% to the literal string \u0022missing\u0022 when the provided value is null (as indicated by \u003C= pr: null).",
     "comment": null,
     "steps": [
       {
@@ -26,7 +26,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -42,7 +42,7 @@
     "path": "/WhenMissing.goal",
     "prPath": "/.build/whenmissing.pr",
     "hash": "7d583ce279569ddf336cbb7c7453473420e4935986969420c7206fd300c1c73c",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

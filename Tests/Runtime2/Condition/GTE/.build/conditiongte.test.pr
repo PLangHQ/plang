@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal with boundary check for \u003E= operator and conditional goal call.",
+    "description": "Sets %x% to 5, conditionally calls WhenGTE when %x% \u003E= 5, then asserts that %result% equals \u0027gte\u0027.",
     "comment": null,
     "steps": [
       {
@@ -26,7 +26,7 @@
                 "type": "int"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -50,12 +50,12 @@
               {
                 "name": "Left",
                 "value": "%x%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Operator",
                 "value": "\u003E=",
-                "type": "string"
+                "type": "operator"
               },
               {
                 "name": "Right",
@@ -70,7 +70,7 @@
                 "type": "goal.call"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -99,7 +99,7 @@
               {
                 "name": "Actual",
                 "value": "%result%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Message",
@@ -107,7 +107,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -123,7 +123,7 @@
     "path": "/ConditionGTE.test.goal",
     "prPath": "/.build/conditiongte.test.pr",
     "hash": "234f3042235ab436cebb469be11e44b3dd2ee4f16b68113748704c09f29c7810",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

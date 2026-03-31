@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal for endswith operator conditional goal call.",
+    "description": "Sets %name%, conditionally calls WhenEnds when %name% ends with \u0027world\u0027, then asserts %result% equals \u0027ends\u0027.",
     "comment": null,
     "steps": [
       {
@@ -26,7 +26,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -65,13 +65,12 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenEnds",
-                  "parameters": []
+                  "name": "WhenEnds"
                 },
                 "type": "goal.call"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -101,9 +100,14 @@
                 "name": "Actual",
                 "value": "%result%",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "GoalIfTrue should have been called for endswith",
+                "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -119,7 +123,7 @@
     "path": "/ConditionEndsWith.test.goal",
     "prPath": "/.build/conditionendswith.test.pr",
     "hash": "33ea9e6482f1d8b3dac0f1b66fc0c2e67ba920fb203421a09a2dbb54ebc73d68",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

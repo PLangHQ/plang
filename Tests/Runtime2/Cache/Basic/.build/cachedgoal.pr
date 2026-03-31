@@ -1,7 +1,7 @@
 [
   {
     "name": "CachedGoal",
-    "description": "Build CachedGoal with caching on the file read step so the second call hits cache.",
+    "description": "CachedGoal reads testdata.txt into %cachedMsg% with a 5-minute cache, then writes a message to output using the cached value. When CachedGoal is called twice, the second call should hit the cache for the read step.",
     "comment": null,
     "steps": [
       {
@@ -16,12 +16,12 @@
             "action": "read",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "testdata.txt",
                 "type": "path"
               },
               {
-                "name": "resolveVariables",
+                "name": "ResolveVariables",
                 "value": false,
                 "type": "bool"
               }
@@ -58,14 +58,9 @@
             "action": "write",
             "parameters": [
               {
-                "name": "content",
+                "name": "Data",
                 "value": "  CachedGoal read: %cachedMsg%",
                 "type": "string"
-              },
-              {
-                "name": "actor",
-                "value": "user",
-                "type": "actor(user|service|system)"
               }
             ],
             "return": null,
@@ -84,6 +79,7 @@
     "path": "/CachedGoal.goal",
     "prPath": "/.build/cachedgoal.pr",
     "hash": "530633b1822355ea48057798a87c093a26b5085baac91fec508af31e03850a85",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

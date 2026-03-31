@@ -1,7 +1,7 @@
 [
   {
     "name": "SetFalse",
-    "description": "Sets the variable %wasFalse% to true (despite the goal name \u0027SetFalse\u0027), using variable.set with AsDefault=false.",
+    "description": "Sets the %wasFalse% variable to true (with a null-like value on the right-hand side as indicated by the step).",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/SetFalse.goal",
     "prPath": "/.build/setfalse.pr",
     "hash": "b48b1e98e5c83353559c4da0d65e5f66bd4a0fc8a1843466208086a965389769",
-    "builderVersion": "0.2.3",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

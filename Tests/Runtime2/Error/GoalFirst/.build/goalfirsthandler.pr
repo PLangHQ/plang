@@ -1,7 +1,7 @@
 [
   {
     "name": "GoalFirstHandler",
-    "description": "Build GoalFirstHandler",
+    "description": "Sets the variable %goalFirstHandled% to true as the GoalFirstHandler step action.",
     "comment": null,
     "steps": [
       {
@@ -24,16 +24,6 @@
                 "name": "Value",
                 "value": true,
                 "type": "bool"
-              },
-              {
-                "name": "Type",
-                "value": "bool",
-                "type": "string"
-              },
-              {
-                "name": "AsDefault",
-                "value": false,
-                "type": "bool"
               }
             ],
             "return": null,
@@ -52,7 +42,7 @@
     "path": "/GoalFirstHandler.goal",
     "prPath": "/.build/goalfirsthandler.pr",
     "hash": "2b7ff65f48a8799450de40bf1ac28c41b8556607bbbc18e685f8f69d90ab6108",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

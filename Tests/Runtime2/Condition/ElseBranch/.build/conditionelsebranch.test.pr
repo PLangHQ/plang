@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal with conditional else branch calling GoalIfFalse (WhenSmall) and assertion for else-path result.",
+    "description": "Sets %x% to 2, evaluates an if condition (%x% \u003E 100) and calls WhenBig if true or WhenSmall if false, then asserts that %result% equals \u0027small\u0027 to verify the else branch executed.",
     "comment": null,
     "steps": [
       {
@@ -50,7 +50,7 @@
               {
                 "name": "Left",
                 "value": "%x%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Operator",
@@ -65,16 +65,14 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenBig",
-                  "parameters": []
+                  "name": "WhenBig"
                 },
                 "type": "goal.call"
               },
               {
                 "name": "GoalIfFalse",
                 "value": {
-                  "name": "WhenSmall",
-                  "parameters": []
+                  "name": "WhenSmall"
                 },
                 "type": "goal.call"
               }
@@ -108,7 +106,12 @@
               {
                 "name": "Actual",
                 "value": "%result%",
-                "type": "object"
+                "type": "data"
+              },
+              {
+                "name": "Message",
+                "value": "else branch should execute when condition is false",
+                "type": "string"
               }
             ],
             "return": null,
@@ -127,7 +130,7 @@
     "path": "/ConditionElseBranch.test.goal",
     "prPath": "/.build/conditionelsebranch.test.pr",
     "hash": "1e47a3ea8ece27ced425e78c62abeb15ec688a4e4e4b3cef98ab293a43b3efa7",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

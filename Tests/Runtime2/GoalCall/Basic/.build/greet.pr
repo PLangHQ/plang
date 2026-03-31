@@ -1,7 +1,7 @@
 [
   {
     "name": "Greet",
-    "description": "Build goal Greet",
+    "description": "Sets the %greeting% variable to the literal string \u0022hello %name%\u0022 (no interpolation performed by the compiler).",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/Greet.goal",
     "prPath": "/.build/greet.pr",
     "hash": "72898260a2b952d69739148b4726df3957311adb7aa7e77b2130a90faf8423cf",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

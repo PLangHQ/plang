@@ -1,7 +1,7 @@
 [
   {
     "name": "CatchError",
-    "description": "Build goal CatchError: capture the current error message into %caughtMessage%.",
+    "description": "Sets %caughtMessage% to the caught error message (from %!error.Message%) with a null fallback as indicated by the step.",
     "comment": null,
     "steps": [
       {
@@ -23,11 +23,22 @@
               {
                 "name": "Value",
                 "value": "%!error.Message%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Type",
+                "value": "object",
+                "type": "string"
               }
             ],
-            "return": null,
-            "defaults": null
+            "return": [],
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -42,7 +53,7 @@
     "path": "/CatchError.goal",
     "prPath": "/.build/catcherror.pr",
     "hash": "e0c6c59c2f69f86595162877a2a5796ede74af5a3074201db9a8dd56c0c7fa4d",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

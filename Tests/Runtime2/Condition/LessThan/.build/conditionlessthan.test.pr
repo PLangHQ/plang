@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Built goal steps with required actions; added missing action for the initial set step and mapped the conditional call and assertion.",
+    "description": "Sets %y% to 3, checks condition %y% \u003C 10, calls goal WhenLess if true, then asserts %result% equals \u0027less\u0027.",
     "comment": null,
     "steps": [
       {
@@ -26,7 +26,7 @@
                 "type": "int"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -50,7 +50,7 @@
               {
                 "name": "Left",
                 "value": "%y%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Operator",
@@ -70,7 +70,7 @@
                 "type": "goal.call"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -99,7 +99,7 @@
               {
                 "name": "Actual",
                 "value": "%result%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Message",
@@ -107,7 +107,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -123,7 +123,7 @@
     "path": "/ConditionLessThan.test.goal",
     "prPath": "/.build/conditionlessthan.test.pr",
     "hash": "b4b4a4c64a60145503c6c66e5743d1be6e41e579c8b2f9bd02c39a39f16bd75c",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal steps for setting an outer error handler flag, invoking a failing goal with an outer handler, and asserting the flag was set.",
+    "description": "Sets outerHandled=false, calls ThrowWithBadHandler with an on-error handler that calls OuterHandler, then asserts outerHandled becomes true to verify error propagation to the outer handler.",
     "comment": null,
     "steps": [
       {
@@ -24,14 +24,9 @@
                 "name": "Value",
                 "value": false,
                 "type": "bool"
-              },
-              {
-                "name": "Type",
-                "value": "bool",
-                "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -54,11 +49,14 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "ThrowWithBadHandler",
+                "value": {
+                  "name": "ThrowWithBadHandler",
+                  "parameters": []
+                },
                 "type": "goal.call"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -102,10 +100,10 @@
               {
                 "name": "Actual",
                 "value": "%outerHandled%",
-                "type": "object"
+                "type": "bool"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -121,7 +119,7 @@
     "path": "/ErrorInHandler.test.goal",
     "prPath": "/.build/errorinhandler.test.pr",
     "hash": "ac84eb8f196a13e591d4c452ae6710b5c53c7d96d635bf06dba62927d1efa8da",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

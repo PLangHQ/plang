@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Built goal steps for variable scoping and foreach capture behavior.",
+    "description": "Compiles steps: set %x%, call InnerGoal, assert %x% was modified; then build %items%, capture each item via CaptureItem, and assert %captured% contains both alpha and beta.",
     "comment": null,
     "steps": [
       {
@@ -49,7 +49,10 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "InnerGoal",
+                "value": {
+                  "name": "InnerGoal",
+                  "parameters": []
+                },
                 "type": "goal.call"
               }
             ],
@@ -58,16 +61,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -214,19 +208,16 @@
               {
                 "name": "Collection",
                 "value": "%items%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "GoalName",
                 "value": {
                   "name": "CaptureItem",
-                  "parameters": [
-                    {
-                      "name": "item",
-                      "value": "%item%",
-                      "type": "string"
-                    }
-                  ]
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": null
                 },
                 "type": "goal.call"
               },
@@ -241,16 +232,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -268,12 +250,12 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "alpha",
+                "value": "%captured%",
                 "type": "string"
               },
               {
                 "name": "Container",
-                "value": "%captured%",
+                "value": "alpha",
                 "type": "string"
               }
             ],
@@ -300,12 +282,12 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "beta",
+                "value": "%captured%",
                 "type": "string"
               },
               {
                 "name": "Container",
-                "value": "%captured%",
+                "value": "beta",
                 "type": "string"
               }
             ],
@@ -325,7 +307,7 @@
     "path": "/VariableScoping.test.goal",
     "prPath": "/.build/variablescoping.test.pr",
     "hash": "c32737166653604c22d4d239baed09929cbc95e64c135139ad51b1e6a77288a5",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

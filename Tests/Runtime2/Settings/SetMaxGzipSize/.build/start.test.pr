@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal steps for setting, reading, and asserting archive.max.",
+    "description": "Sets the settings value archive.max, reads it back into %maxSize%, then asserts it equals 20971520.",
     "comment": null,
     "steps": [
       {
@@ -87,7 +87,7 @@
               {
                 "name": "Actual",
                 "value": "%maxSize%",
-                "type": "object"
+                "type": "int"
               }
             ],
             "return": null,
@@ -106,7 +106,7 @@
     "path": "/Start.test.goal",
     "prPath": "/.build/start.test.pr",
     "hash": "ec751a865962456ca94721ed138f68c2f3b6ca44ff11e1e7b784ace01ee33796",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "CaptureItem",
-    "description": "Build goal CaptureItem",
+    "description": "Sets the %captured% variable by appending the current %item% to the existing %captured% value (comma-separated).",
     "comment": null,
     "steps": [
       {
@@ -22,12 +22,18 @@
               },
               {
                 "name": "Value",
-                "value": "%captured%,%item%",
+                "value": "\u0022%captured%,%item%\u0022",
                 "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -42,7 +48,7 @@
     "path": "/CaptureItem.goal",
     "prPath": "/.build/captureitem.pr",
     "hash": "51b9279b30e920ef717ea10f7f9f2c21ea4d5604e161a72cd24f8983e791f068",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "OuterHandler",
-    "description": "Build goal OuterHandler step to mark outer error as handled.",
+    "description": "OuterHandler sets the %outerHandled% flag to true to indicate it caught the propagated error from BadHandler.",
     "comment": null,
     "steps": [
       {
@@ -26,7 +26,7 @@
                 "type": "bool"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -42,7 +42,7 @@
     "path": "/OuterHandler.goal",
     "prPath": "/.build/outerhandler.pr",
     "hash": "6408d926d051e2348b13ffda7f9b733c1ed41db27e8ca3a7ffde98c7172e8c36",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

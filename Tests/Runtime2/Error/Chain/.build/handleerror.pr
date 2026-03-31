@@ -1,7 +1,7 @@
 [
   {
     "name": "HandleError",
-    "description": "Build goal HandleError",
+    "description": "Sets the %errorHandled% flag to true in HandleError.",
     "comment": null,
     "steps": [
       {
@@ -24,19 +24,9 @@
                 "name": "Value",
                 "value": true,
                 "type": "bool"
-              },
-              {
-                "name": "Type",
-                "value": "bool",
-                "type": "string"
-              },
-              {
-                "name": "AsDefault",
-                "value": false,
-                "type": "bool"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -52,7 +42,7 @@
     "path": "/HandleError.goal",
     "prPath": "/.build/handleerror.pr",
     "hash": "e591f83f4025046dd0efc4f1ff631ccb5f0a4c4d3ead32f1fa6d49332e46c1ee",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

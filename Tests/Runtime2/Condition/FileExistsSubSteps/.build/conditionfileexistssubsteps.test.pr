@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal into executable form",
+    "description": "Saves a file, initializes an inner flag, conditionally sets the flag if the file exists, then asserts the flag is set to \u0027yes\u0027.",
     "comment": null,
     "steps": [
       {
@@ -23,7 +23,7 @@
               {
                 "name": "Value",
                 "value": "hello",
-                "type": "object"
+                "type": "string"
               }
             ],
             "return": null,
@@ -76,30 +76,12 @@
         "comment": null,
         "actions": [
           {
-            "module": "file",
-            "action": "exists",
-            "parameters": [
-              {
-                "name": "Path",
-                "value": "testfile.txt",
-                "type": "path"
-              }
-            ],
-            "return": [
-              {
-                "name": "__conditionReturn__",
-                "value": null
-              }
-            ],
-            "defaults": null
-          },
-          {
             "module": "condition",
             "action": "if",
             "parameters": [
               {
                 "name": "Left",
-                "value": "%__conditionReturn__.Exists%",
+                "value": "testfile.txt exists",
                 "type": "bool"
               },
               {
@@ -114,7 +96,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -146,7 +134,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -174,7 +168,7 @@
               {
                 "name": "Actual",
                 "value": "%innerRan%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -198,7 +192,7 @@
     "path": "/ConditionFileExistsSubSteps.test.goal",
     "prPath": "/.build/conditionfileexistssubsteps.test.pr",
     "hash": "d420210fbe207ea104aa6663b47743ef3fd803669e8b75f2f608316b10da4d95",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

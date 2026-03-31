@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Rebuilt goal with valid actions per step (including the initial cache modifier step).",
+    "description": "Saves a file, calls ReadCached to populate %cachedValue%, verifies sliding cache keeps the original value after the underlying file is changed, then deletes the file.",
     "comment": null,
     "steps": [
       {
@@ -16,12 +16,12 @@
             "action": "save",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "cacheslide.txt",
                 "type": "path"
               },
               {
-                "name": "value",
+                "name": "Value",
                 "value": "original",
                 "type": "string"
               }
@@ -32,12 +32,7 @@
         ],
         "intent": null,
         "onError": null,
-        "cache": {
-          "durationMs": 0,
-          "sliding": true,
-          "key": null,
-          "location": null
-        },
+        "cache": null,
         "timeout": null,
         "waitForExecution": true
       },
@@ -53,17 +48,14 @@
             "action": "call",
             "parameters": [
               {
-                "name": "goalName",
-                "value": "ReadCached",
+                "name": "GoalName",
+                "value": {
+                  "name": "ReadCached"
+                },
                 "type": "goal.call"
               }
             ],
-            "return": [
-              {
-                "name": "cachedValue",
-                "value": null
-              }
-            ],
+            "return": null,
             "defaults": null
           }
         ],
@@ -85,12 +77,12 @@
             "action": "equals",
             "parameters": [
               {
-                "name": "expected",
+                "name": "Expected",
                 "value": "original",
                 "type": "string"
               },
               {
-                "name": "actual",
+                "name": "Actual",
                 "value": "%cachedValue%",
                 "type": "string"
               }
@@ -117,12 +109,12 @@
             "action": "save",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "cacheslide.txt",
                 "type": "path"
               },
               {
-                "name": "value",
+                "name": "Value",
                 "value": "changed",
                 "type": "string"
               }
@@ -149,17 +141,14 @@
             "action": "call",
             "parameters": [
               {
-                "name": "goalName",
-                "value": "ReadCached",
+                "name": "GoalName",
+                "value": {
+                  "name": "ReadCached"
+                },
                 "type": "goal.call"
               }
             ],
-            "return": [
-              {
-                "name": "cachedValue",
-                "value": null
-              }
-            ],
+            "return": null,
             "defaults": null
           }
         ],
@@ -181,12 +170,12 @@
             "action": "equals",
             "parameters": [
               {
-                "name": "expected",
+                "name": "Expected",
                 "value": "original",
                 "type": "string"
               },
               {
-                "name": "actual",
+                "name": "Actual",
                 "value": "%cachedValue%",
                 "type": "string"
               }
@@ -213,17 +202,17 @@
             "action": "delete",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "cacheslide.txt",
                 "type": "path"
               },
               {
-                "name": "ignoreIfNotFound",
+                "name": "IgnoreIfNotFound",
                 "value": false,
                 "type": "bool"
               },
               {
-                "name": "recursive",
+                "name": "Recursive",
                 "value": false,
                 "type": "bool"
               }
@@ -244,6 +233,7 @@
     "path": "/CacheSliding.test.goal",
     "prPath": "/.build/cachesliding.test.pr",
     "hash": "5746e3ed1dfeb8d5dc758b25c0986c2556f4c15eda96239852399d32274fdf50",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

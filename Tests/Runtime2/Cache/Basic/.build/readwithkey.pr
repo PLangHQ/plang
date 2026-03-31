@@ -1,7 +1,7 @@
 [
   {
     "name": "ReadWithKey",
-    "description": "Build goal ReadWithKey",
+    "description": "Reads keytest.txt and writes its contents to %keyData%, using a 5-minute cache keyed by \u0027myKeyTest\u0027.",
     "comment": null,
     "steps": [
       {
@@ -16,12 +16,12 @@
             "action": "read",
             "parameters": [
               {
-                "name": "path",
+                "name": "Path",
                 "value": "keytest.txt",
                 "type": "path"
               },
               {
-                "name": "resolveVariables",
+                "name": "ResolveVariables",
                 "value": false,
                 "type": "bool"
               }
@@ -52,6 +52,7 @@
     "path": "/ReadWithKey.goal",
     "prPath": "/.build/readwithkey.pr",
     "hash": "0c4bc9bc4a1f048eae1406d6c63a3bdfe8fca33e193944a9b5f81f3a87e2356a",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

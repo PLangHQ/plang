@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Built goal steps for setting a user object and asserting nested fields (including indexed access).",
+    "description": "Sets %user% to a JSON object, then asserts multiple nested fields (including array indexing and variable-based index) match expected literal values.",
     "comment": null,
     "steps": [
       {
@@ -37,6 +37,16 @@
                   ]
                 },
                 "type": "object"
+              },
+              {
+                "name": "Type",
+                "value": "json",
+                "type": "string"
+              },
+              {
+                "name": "AsDefault",
+                "value": false,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -261,6 +271,16 @@
                 "name": "Value",
                 "value": 1,
                 "type": "int"
+              },
+              {
+                "name": "Type",
+                "value": "int",
+                "type": "string"
+              },
+              {
+                "name": "AsDefault",
+                "value": false,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -311,7 +331,7 @@
     "path": "/Variables.test.goal",
     "prPath": "/.build/variables.test.pr",
     "hash": "fa5dc90cf015b4e555f6d5a9f2e1d66dfe94672727b153d4b17b263293f5e394",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

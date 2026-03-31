@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenFalse",
-    "description": "Build goal steps into executable form.",
+    "description": "Sets the variable %falseResult% to the literal string \u0022no\u0022 (step indicates pr: null, but no engine parameter is affected).",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/WhenFalse.goal",
     "prPath": "/.build/whenfalse.pr",
     "hash": "7c617b7b5fbe2dcd7405ecf9e67a688c9149e29fd43e9a15425794ded6050900",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

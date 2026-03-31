@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal for nested conditions test (inner false skips inner block; outer continues).",
+    "description": "Sets up variables, runs an outer if (%x% \u003E 5) containing an inner if (%y% \u003E 100). Since the inner condition is false, only the inner block is skipped; the outer continues to execute the subsequent assert steps.",
     "comment": null,
     "steps": [
       {
@@ -26,7 +26,7 @@
                 "type": "int"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -58,7 +58,7 @@
                 "type": "int"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -90,7 +90,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -122,7 +122,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -146,7 +146,7 @@
               {
                 "name": "Left",
                 "value": "%x%",
-                "type": "int"
+                "type": "string"
               },
               {
                 "name": "Operator",
@@ -165,7 +165,13 @@
                 "value": null
               }
             ],
-            "defaults": null
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -201,8 +207,19 @@
                 "type": "string"
               }
             ],
-            "return": [],
-            "defaults": null
+            "return": [
+              {
+                "name": "__conditionReturn__",
+                "value": null
+              }
+            ],
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -233,7 +250,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -265,7 +282,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -294,7 +311,7 @@
               {
                 "name": "Actual",
                 "value": "%innerRan%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Message",
@@ -302,7 +319,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -331,7 +348,7 @@
               {
                 "name": "Actual",
                 "value": "%outerAfterRan%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Message",
@@ -339,7 +356,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -355,7 +372,7 @@
     "path": "/ConditionNested.test.goal",
     "prPath": "/.build/conditionnested.test.pr",
     "hash": "fa1b29070a16b3c7970d353c4240aa79f32eb16faa7ed137f08e0c200504cbb0",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

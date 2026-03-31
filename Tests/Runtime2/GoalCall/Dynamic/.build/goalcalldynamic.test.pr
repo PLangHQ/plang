@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal that sets a goal name variable, calls it dynamically, then asserts the dynamic result.",
+    "description": "Sets %goalName% to \u0027TargetGoal\u0027, calls the goal referenced by %goalName%, then asserts that %dynamicResult% equals \u0027reached\u0027.",
     "comment": null,
     "steps": [
       {
@@ -58,16 +58,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": "on error handling not specified in the goal text; default behavior will apply.",
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -99,16 +90,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": "on error handling not specified in the goal text; default behavior will apply.",
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -119,7 +101,7 @@
     "path": "/GoalCallDynamic.test.goal",
     "prPath": "/.build/goalcalldynamic.test.pr",
     "hash": "be5fdfa8098f28bad9b07b1562a74bea782e882575a057eeae821965441a287a",
-    "builderVersion": "0.2.1",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,
