@@ -1,2 +1,2 @@
 CatchError
-- set %caughtMessage% = %__error__%
+- set %caughtMessage% = %!error.Message%

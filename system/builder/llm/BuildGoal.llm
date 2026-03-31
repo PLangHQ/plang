@@ -121,7 +121,8 @@ Response:
 - Steps can reference variables from previous steps — use the full goal context
 - Only set needsDetail: true when you cannot construct the parameters from the summary
 - When needsDetail: true, still include actions with module and action — omit parameters
-- Every step must have an entry in the steps array
+- The number of steps in your response MUST exactly match the number of steps in the goal. Do not add, remove, or split steps. Comments (lines starting with /) are NOT steps. `on error` modifiers are part of the step they appear on, not separate steps.
+- Comments are documentation only — never use comment text to determine module, action, parameters, or error handling for any step. Each step's action mapping must be derived solely from the step's own text (the line starting with `-`).
 - Actions within a step execute in order. A later action can reference the return variable of an earlier action in the same step.
 - For `goal.call` type parameters: the value is a plain string with the goal name (e.g., "ProcessData"). When the goal needs parameters, use the object form: {"name": "GoalName", "parameters": [{"name": "key", "value": "value", "type": "string"}]}. The parameters array uses the same {name, value, type} format as action parameters. The field inside the object is `name`, not the parameter name.
 - Omit nullable parameters (types ending in ?) entirely when not applicable — do NOT include them with empty or null values.

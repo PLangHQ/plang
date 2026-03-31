@@ -27,6 +27,7 @@ BuildGoal
         on error HandleBuildGoalFailure
         write to %stepResults%
 - foreach %stepResults.steps%, call ApplyStep, item=%stepResult%
+- set %goal.BuilderVersion% = "0.2.1"
 - [plang] call SaveGoal %goal%
 
 

@@ -120,6 +120,161 @@ public class MemoryStackTests
     }
 
     [Test]
+    public async Task Set_DotPath_SetsPropertyOnObject()
+    {
+        var stack = new MemoryStack();
+        var person = new TestPerson { Name = "John", Age = 30 };
+        stack.Set("person", person);
+
+        stack.Set("person.Name", "Jane");
+
+        await Assert.That(person.Name).IsEqualTo("Jane");
+        // Verify Get also sees the change
+        var result = stack.Get("person.Name");
+        await Assert.That(result!.Value).IsEqualTo("Jane");
+    }
+
+    [Test]
+    public async Task Set_DotPath_SetsNestedProperty()
+    {
+        var stack = new MemoryStack();
+        var person = new TestPerson
+        {
+            Name = "John",
+            Age = 30,
+            Address = new TestAddress { Street = "Main St", City = "Springfield" }
+        };
+        stack.Set("person", person);
+
+        stack.Set("person.Address.City", "Shelbyville");
+
+        await Assert.That(person.Address.City).IsEqualTo("Shelbyville");
+        var result = stack.Get("person.Address.City");
+        await Assert.That(result!.Value).IsEqualTo("Shelbyville");
+    }
+
+    [Test]
+    public async Task Set_DotPath_CaseInsensitive()
+    {
+        var stack = new MemoryStack();
+        var person = new TestPerson { Name = "John", Age = 30 };
+        stack.Set("person", person);
+
+        stack.Set("person.name", "Jane");
+
+        await Assert.That(person.Name).IsEqualTo("Jane");
+    }
+
+    [Test]
+    public async Task Set_DotPath_DictionaryValue()
+    {
+        var stack = new MemoryStack();
+        var data = new Dictionary<string, object?> { { "name", "John" }, { "age", 30 } };
+        stack.Set("user", data);
+
+        stack.Set("user.name", "Jane");
+
+        await Assert.That(data["name"]).IsEqualTo("Jane");
+        var result = stack.Get("user.name");
+        await Assert.That(result!.Value).IsEqualTo("Jane");
+    }
+
+    [Test]
+    public async Task Set_DotPath_NonExistentRoot_DoesNotThrow()
+    {
+        var stack = new MemoryStack();
+
+        // Should not throw — root doesn't exist
+        stack.Set("nonexistent.prop", "value");
+
+        // Root still doesn't exist
+        await Assert.That(stack.Get("nonexistent")).IsNull();
+    }
+
+    [Test]
+    public async Task Set_DotPath_ReadOnlyProperty_ConvertsToDictionary()
+    {
+        var stack = new MemoryStack();
+        var person = new TestPersonGetOnly();
+        stack.Set("person", person);
+
+        // Name is get-only — object converts to dictionary, property is set there
+        stack.Set("person.Name", "Jane");
+
+        var result = stack.Get("person.Name");
+        await Assert.That(result!.Value).IsEqualTo("Jane");
+        // Original CLR object is unchanged
+        await Assert.That(person.Name).IsEqualTo("John");
+        // Underlying value is now a dictionary
+        var root = stack.Get("person");
+        await Assert.That(root!.Value).IsTypeOf<Dictionary<string, object?>>();
+    }
+
+    [Test]
+    public async Task Set_DotPath_NewProperty_ConvertsToDictionary()
+    {
+        var stack = new MemoryStack();
+        var person = new TestPerson { Name = "John", Age = 30 };
+        stack.Set("person", person);
+
+        // Street doesn't exist on TestPerson — converts to dict and adds it
+        stack.Set("person.Street", "Main 123");
+
+        var result = stack.Get("person.Street");
+        await Assert.That(result!.Value).IsEqualTo("Main 123");
+        // Original properties still accessible
+        var name = stack.Get("person.Name");
+        await Assert.That(name!.Value).IsEqualTo("John");
+    }
+
+    [Test]
+    public async Task Set_DotPath_NewProperty_CaseInsensitive()
+    {
+        var stack = new MemoryStack();
+        var person = new TestPerson { Name = "John", Age = 30 };
+        stack.Set("person", person);
+
+        // Add via lowercase, read via mixed case
+        stack.Set("person.street", "Main 123");
+
+        var result = stack.Get("person.street");
+        await Assert.That(result!.Value).IsEqualTo("Main 123");
+    }
+
+    [Test]
+    public async Task Set_DotPath_WithBracketIndex()
+    {
+        var stack = new MemoryStack();
+        var items = new List<TestPerson>
+        {
+            new TestPerson { Name = "Alice", Age = 25 },
+            new TestPerson { Name = "Bob", Age = 35 }
+        };
+        stack.Set("people", items);
+
+        stack.Set("people[1].Name", "Robert");
+
+        await Assert.That(items[1].Name).IsEqualTo("Robert");
+    }
+
+    [Test]
+    public async Task Set_DotPath_WithVariableIndex()
+    {
+        var stack = new MemoryStack();
+        var items = new List<TestPerson>
+        {
+            new TestPerson { Name = "Alice", Age = 25 },
+            new TestPerson { Name = "Bob", Age = 35 }
+        };
+        stack.Set("people", items);
+        stack.Set("idx", 0);
+
+        stack.Set("people[idx].Name", "Alicia");
+
+        await Assert.That(items[0].Name).IsEqualTo("Alicia");
+    }
+
+    [Test]
     public async Task Get_ReturnsData()
     {
         var stack = new MemoryStack();
@@ -748,4 +903,26 @@ public class MemoryStackAccessorTests
         await Assert.That(result!.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("NavigationDepthExceeded");
     }
+}
+
+// --- Test helper classes for Set dot-path tests ---
+
+public class TestPerson
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+    public TestAddress? Address { get; set; }
+}
+
+public class TestAddress
+{
+    public string Street { get; set; } = "";
+    public string City { get; set; } = "";
+}
+
+public record TestPersonReadOnly(string Name, int Age);
+
+public class TestPersonGetOnly
+{
+    public string Name { get; } = "John";
 }

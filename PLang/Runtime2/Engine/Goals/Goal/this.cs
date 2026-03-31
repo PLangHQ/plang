@@ -76,6 +76,9 @@ public sealed partial class @this
     }
     private string? _hash;
 
+    [Store, Debug]
+    public string? BuilderVersion { get; set; }
+
     [Store, Debug, Default]
     public bool IsSetup { get; init; }
 

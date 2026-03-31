@@ -1,4 +1,4 @@
 InspectError
-- set %errorMessage% = %__error__%
-- set %errorKey% = %__errorKey__%
-- set %errorStatusCode% = %__errorStatusCode__%
+- set %errorMessage% = %!error.Message%
+- set %errorKey% = %!error.Key%
+- set %errorStatusCode% = %!error.StatusCode%

@@ -287,8 +287,33 @@
     },
     {
       "index": 8,
-      "text": "[plang] call SaveGoal %goal%",
+      "text": "set %goal.BuilderVersion% = \"0.2.1\"",
       "lineNumber": 30,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goal.BuilderVersion%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "0.2.1",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "[plang] call SaveGoal %goal%",
+      "lineNumber": 31,
       "indent": 0,
       "actions": [
         {

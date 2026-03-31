@@ -49,18 +49,105 @@ public class MemoryStack
     public void Set(string name, object? value, Type? type = null)
     {
         name = CleanName(name);
-        if (_variables.TryGetValue(name, out var existing))
+
+        // Resolve variable references inside bracket indices: [idx] → [1]
+        if (name.Contains('['))
+            name = ResolveVariablesInPath(name);
+
+        var rootName = GetRootName(name);
+
+        // Simple case: no dot/bracket path — set the root variable directly
+        if (rootName == name)
         {
-            existing.Value = value;
-            if (type != null)
-                existing.Type = type;
+            if (_variables.TryGetValue(name, out var existing))
+            {
+                existing.Value = value;
+                if (type != null)
+                    existing.Type = type;
+            }
+            else
+            {
+                var data = new Data(name, value, type);
+                data.Context = _context;
+                _variables[name] = data;
+            }
+            return;
+        }
+
+        // Dot/bracket path: navigate to the parent object, then set the final property
+        if (!_variables.TryGetValue(rootName, out var root))
+            return;
+
+        var remaining = name.Length > rootName.Length && name[rootName.Length] == '.'
+            ? name[(rootName.Length + 1)..]
+            : name[rootName.Length..];
+
+        // Split remaining into parent path + final property name
+        var lastDot = remaining.LastIndexOf('.');
+        Data? parent;
+        string propertyName;
+
+        if (lastDot >= 0)
+        {
+            parent = root.GetChild(remaining[..lastDot]);
+            propertyName = remaining[(lastDot + 1)..];
         }
         else
         {
-            var data = new Data(name, value, type);
-            data.Context = _context;
-            _variables[name] = data;
+            parent = root;
+            propertyName = remaining;
         }
+
+        if (parent?.Value == null) return;
+
+        var result = SetValueOnObject(parent.Value, propertyName, value);
+        if (!ReferenceEquals(result, parent.Value))
+            parent.Value = result;
+    }
+
+    /// <summary>
+    /// Sets a property on a target object. If the target is a dictionary, sets the key.
+    /// If CLR object with writable property, sets via reflection.
+    /// Otherwise converts to a case-insensitive dictionary and sets there.
+    /// Returns the (possibly replaced) target.
+    /// </summary>
+    private static object SetValueOnObject(object target, string propertyName, object? value)
+    {
+        // Dictionary — set key directly (case-insensitive lookup)
+        if (target is IDictionary<string, object?> dict)
+        {
+            var key = dict.Keys.FirstOrDefault(k =>
+                string.Equals(k, propertyName, StringComparison.OrdinalIgnoreCase)) ?? propertyName;
+            dict[key] = value;
+            return target;
+        }
+
+        // CLR object — try writable property first
+        var prop = target.GetType().GetProperty(propertyName,
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        if (prop != null && prop.CanWrite)
+        {
+            prop.SetValue(target, value);
+            return target;
+        }
+
+        // Property is read-only or doesn't exist — convert to dictionary
+        var converted = ConvertToDictionary(target);
+        var dictKey = converted.Keys.FirstOrDefault(k =>
+            string.Equals(k, propertyName, StringComparison.OrdinalIgnoreCase)) ?? propertyName;
+        converted[dictKey] = value;
+        return converted;
+    }
+
+    private static Dictionary<string, object?> ConvertToDictionary(object obj)
+    {
+        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var prop in obj.GetType().GetProperties(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            dict[prop.Name] = prop.GetValue(obj);
+        }
+        return dict;
     }
 
     /// <summary>

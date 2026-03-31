@@ -1,11 +1,61 @@
 {
   "name": "ValidateBuildResponse",
-  "description": "Validates the LLM build response — every non-approved step must have actions.",
+  "description": "Validates the LLM build response — step count must match goal, every step must have actions.",
   "steps": [
     {
       "index": 0,
+      "text": "if %response.steps.Count% is not %goal.Steps.Count%",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%response.steps.Count%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "!=",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "%goal.Steps.Count%",
+              "type": "object"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "throw error 'LLM returned %response.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step.'",
+      "lineNumber": 4,
+      "indent": 1,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "LLM returned %response.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step.",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
       "text": "foreach %response.steps%, call ValidateStep, item=%step%",
-      "lineNumber": 2,
+      "lineNumber": 5,
       "indent": 0,
       "actions": [
         {

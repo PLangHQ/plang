@@ -1,2 +1,2 @@
 CatchThrow
-- set %throwKey% = %__errorKey__%
+- set %throwKey% = %!error.Key%
