@@ -82,14 +82,13 @@ public class ErrorCategoryTests
     }
 
     [Test]
-    public async Task ApplicationError_FormatIsConcise()
+    public async Task ApplicationError_FormatShowsFullDetail()
     {
         var error = new ValidationError("Email is required");
         var formatted = error.Format();
 
-        await Assert.That(formatted).Contains("Error: Email is required");
-        await Assert.That(formatted).DoesNotContain("================");
-        await Assert.That(formatted).DoesNotContain("Call stack");
+        await Assert.That(formatted).Contains("Email is required");
+        await Assert.That(formatted).Contains("==================");
     }
 
     [Test]

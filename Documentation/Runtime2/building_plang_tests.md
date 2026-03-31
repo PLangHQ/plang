@@ -181,7 +181,9 @@ plang p !debug=GoalName:stepIndex   # Debug specific step
 
 ## LLM Cache
 
-LLM responses are cached in `.db/system.sqlite` in the `LlmCache` table. If a build consistently produces wrong output, clear just the LLM cache:
+The v2 builder sets `Cache = false` on LLM queries — **the builder does not cache LLM responses**. Each build makes fresh LLM calls. Intermittent build failures (like null content errors) are transient API issues, not stale cache. Just retry the build.
+
+For non-builder LLM calls, responses are cached in `.db/system.sqlite` in the `LlmCache` table. To clear:
 ```sql
 DELETE FROM LlmCache;
 ```

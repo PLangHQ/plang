@@ -87,7 +87,11 @@ public sealed class Actor : IAsyncDisposable
 
     private ISettingsStore CreateSettingsStore()
     {
-        if (Engine.Testing.IsEnabled || Engine.Building.IsEnabled)
+        // System actor always uses on-disk — it holds the LLM cache and other
+        // persistent system data that must survive across engine instances.
+        // User/Service actors use in-memory during building/testing for isolation.
+        if ((Engine.Testing.IsEnabled || Engine.Building.IsEnabled)
+            && !Name.Equals("System", StringComparison.OrdinalIgnoreCase))
             return SqliteSettingsStore.InMemory(Name.ToLowerInvariant());
 
         var dbDir = Engine.FileSystem.Path.Combine(Engine.AbsolutePath, ".db");

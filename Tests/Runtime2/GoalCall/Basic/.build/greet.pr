@@ -1,7 +1,7 @@
 [
   {
     "name": "Greet",
-    "description": "Build goal Greet with one step setting a greeting variable.",
+    "description": "Build goal \u0027Greet\u0027 with a single step that sets %greeting% based on %name%.",
     "comment": null,
     "steps": [
       {
@@ -42,6 +42,7 @@
     "path": "/Greet.goal",
     "prPath": "/.build/greet.pr",
     "hash": "72898260a2b952d69739148b4726df3957311adb7aa7e77b2130a90faf8423cf",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

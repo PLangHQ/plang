@@ -106,15 +106,13 @@ public class Phase0Proof
         step.Goal = goal;
         var error = new ValidationError("Email address is required", step);
 
-        // OUTPUT: concise format — no ======, no call stack, no C# info
+        // OUTPUT: unified format — full detail for all errors
         var output = error.Format();
 
-        await Assert.That(output).Contains("Error: Email address is required");
-        await Assert.That(output).Contains("Step:");
+        await Assert.That(output).Contains("Email address is required");
         await Assert.That(output).Contains("validate %email% is not empty");
-        await Assert.That(output).DoesNotContain("==================");
-        await Assert.That(output).DoesNotContain("Call stack");
-        await Assert.That(output).DoesNotContain("C# Developers");
+        await Assert.That(output).Contains("Start.goal");
+        await Assert.That(output).Contains("==================");
     }
 
     [Test]
