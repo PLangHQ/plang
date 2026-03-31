@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Writes testdata.txt, calls ReadCached twice to verify the second call returns the originally cached value even after the file content changes, then deletes the file.",
+    "description": "Writes testdata.txt, calls ReadCached twice to verify the second call returns the cached value even after the file content changes, then deletes the file.",
     "comment": null,
     "steps": [
       {
@@ -146,7 +146,7 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "",
+                "value": "ReadCached",
                 "type": "string"
               }
             ],
@@ -215,11 +215,6 @@
               },
               {
                 "name": "IgnoreIfNotFound",
-                "value": false,
-                "type": "bool"
-              },
-              {
-                "name": "Recursive",
                 "value": false,
                 "type": "bool"
               }

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Built goal steps into executable PLang actions.",
+    "description": "Sets %order% to empty, calls FailOnce with retry-first error handling (retry 1 time, then call LogRetryError), then asserts that %order% contains the substring \u0022error\u0022.",
     "comment": null,
     "steps": [
       {
@@ -26,7 +26,7 @@
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -49,11 +49,14 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "FailOnce",
+                "value": {
+                  "name": "FailOnce",
+                  "parameters": []
+                },
                 "type": "goal.call"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -92,15 +95,15 @@
               {
                 "name": "Value",
                 "value": "%order%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "Container",
                 "value": "error",
-                "type": "object"
+                "type": "data"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -116,7 +119,7 @@
     "path": "/ErrorOrdering.test.goal",
     "prPath": "/.build/errorordering.test.pr",
     "hash": "38ca5305ba8097ecc606cd908d65fc442a1a0650aee0c20e2cc4526b22a82f8c",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

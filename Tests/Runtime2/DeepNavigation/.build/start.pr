@@ -1,0 +1,193 @@
+[
+  {
+    "name": "Start",
+    "description": "Sets nested object %deep%, writes a deeply nested value, sets a list of objects %list%, then writes values from specific list indices and nested item arrays.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %deep% = {a:{b:{c:{d:{e:\u0022found\u0022}}}}}",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%deep%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": {
+                  "a": {
+                    "b": {
+                      "c": {
+                        "d": {
+                          "e": "found"
+                        }
+                      }
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "write out %deep.a.b.c.d.e%",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%deep.a.b.c.d.e%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%list%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": [
+                  {
+                    "items": [
+                      {
+                        "val": 1
+                      },
+                      {
+                        "val": 2
+                      }
+                    ]
+                  },
+                  {
+                    "items": [
+                      {
+                        "val": 3
+                      }
+                    ]
+                  }
+                ],
+                "type": "list"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "write out %list[0].items[1].val%",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%list[0].items[1].val%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "write out %list[1].items[0].val%",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%list[1].items[0].val%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/Start.goal",
+    "prPath": "/.build/start.pr",
+    "hash": "1644ef9b76a8754de5c93c9e0d607d7c1810d5f5fd2c3048f58495fb0c2a560b",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

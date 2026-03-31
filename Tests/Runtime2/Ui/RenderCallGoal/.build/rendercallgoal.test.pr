@@ -1,0 +1,116 @@
+[
+  {
+    "name": "Start",
+    "description": "Sets a template string containing a callGoal tag, renders it to %result%, then asserts the rendered output contains \u0027Error\u0027 because the referenced goal is not loaded/does not exist.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %template% = \u0027Result: {% callGoal \u0022GetGreeting\u0022 %}\u0027",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": "Test: render template that uses callGoal to invoke a PLang goal\nNote: callGoal requires a loaded goal - this tests that the tag works without crashing",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%template%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "Result: {% callGoal \u0022GetGreeting\u0022 %}",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "render %template%, write to %result%",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "ui",
+            "action": "render",
+            "parameters": [
+              {
+                "name": "Template",
+                "value": "%template%",
+                "type": "string"
+              }
+            ],
+            "return": [
+              {
+                "name": "result",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %result% contains \u0027Error\u0027",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": "The goal doesn\u0027t exist, so expect error text in output",
+        "actions": [
+          {
+            "module": "assert",
+            "action": "contains",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%result%",
+                "type": "object"
+              },
+              {
+                "name": "Container",
+                "value": "Error",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/RenderCallGoal.test.goal",
+    "prPath": "/.build/rendercallgoal.test.pr",
+    "hash": "59103672d31071799eaf8404345ad2c389b1ca7b32019366e4f2029e89e8c560",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

@@ -1,7 +1,7 @@
 [
   {
     "name": "InnerGoal",
-    "description": "Build InnerGoal with error handling that calls InnerHandler if ThrowInnerError fails.",
+    "description": "Calls InnerGoal ThrowInnerError, and if that step errors, calls InnerHandler. The \u0027pr: null\u0027 note is not mapped to an engine action because no corresponding action/parameter exists in the provided action set.",
     "comment": null,
     "steps": [
       {
@@ -17,7 +17,9 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "ThrowInnerError",
+                "value": {
+                  "name": "ThrowInnerError"
+                },
                 "type": "goal.call"
               }
             ],
@@ -52,7 +54,7 @@
     "path": "/InnerGoal.goal",
     "prPath": "/.build/innergoal.pr",
     "hash": "a60dacbb90144444eb57f4e9cb6fa09714365e4b956c674f73d69b64dc38f5c7",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Start",
+    "description": "Single step goal: throw a not implemented error (placeholder).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "throw \u0022not implemented\u0022",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: create a named identity, get it by name, verify Name and PublicKey properties",
+        "actions": [
+          {
+            "module": "error",
+            "action": "throw",
+            "parameters": [
+              {
+                "name": "Message",
+                "value": "not implemented",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/IdentityGetByName.test.goal",
+    "prPath": "/.build/identitygetbyname.test.pr",
+    "hash": "efd3c678aa189b670c30bd15f1b988f98f6ce808da298c407ee5e77730b198df",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

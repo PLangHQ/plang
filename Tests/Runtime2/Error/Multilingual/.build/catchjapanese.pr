@@ -1,7 +1,7 @@
 [
   {
     "name": "CatchJapanese",
-    "description": "Build goal CatchJapanese",
+    "description": "Sets the %caughtJapanese% variable to true (with a null-like placeholder value as indicated by the step).",
     "comment": null,
     "steps": [
       {
@@ -24,15 +24,16 @@
                 "name": "Value",
                 "value": true,
                 "type": "bool"
-              },
-              {
-                "name": "Type",
-                "value": "bool",
-                "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -47,7 +48,7 @@
     "path": "/CatchJapanese.goal",
     "prPath": "/.build/catchjapanese.pr",
     "hash": "60c802606c976f152d5f57bca81d0e5a510c3c76a762e5b2835c240434bcdc3c",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

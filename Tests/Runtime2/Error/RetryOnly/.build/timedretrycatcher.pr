@@ -1,7 +1,7 @@
 [
   {
     "name": "TimedRetryCatcher",
-    "description": "Build goal TimedRetryCatcher",
+    "description": "Set the %timedRetryCaught% flag to true (with a provided PR context value of null).",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/TimedRetryCatcher.goal",
     "prPath": "/.build/timedretrycatcher.pr",
     "hash": "0c5b0bce71ea2d237dd7b436a42bc5268c0db5828e914f20dc18abea890d7450",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

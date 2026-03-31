@@ -1,7 +1,7 @@
 [
   {
     "name": "CatchIcelandic",
-    "description": "Build goal steps for CatchIcelandic.",
+    "description": "Sets the %caughtIcelandic% variable to true (with a null-like PR note).",
     "comment": null,
     "steps": [
       {
@@ -24,16 +24,6 @@
                 "name": "Value",
                 "value": true,
                 "type": "bool"
-              },
-              {
-                "name": "Type",
-                "value": null,
-                "type": "string?"
-              },
-              {
-                "name": "AsDefault",
-                "value": false,
-                "type": "bool"
               }
             ],
             "return": null,
@@ -52,7 +42,7 @@
     "path": "/CatchIcelandic.goal",
     "prPath": "/.build/catchicelandic.pr",
     "hash": "6344b0e654e98037daab29cea8946dd188c6aa4167017e8e0008457d04b8af37",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

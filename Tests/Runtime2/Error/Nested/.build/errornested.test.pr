@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Builds a simple flow that calls OuterGoal and then asserts inner and outer completion flags.",
+    "description": "Calls OuterGoal with parameter pr=null, then asserts that innerErrorHandled is true and outerCompleted is true. Nested goal error handling is assumed to be implemented inside OuterGoal.",
     "comment": null,
     "steps": [
       {
@@ -17,11 +17,20 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "OuterGoal",
+                "value": {
+                  "name": "OuterGoal",
+                  "parameters": [
+                    {
+                      "name": "pr",
+                      "value": null,
+                      "type": "object"
+                    }
+                  ]
+                },
                 "type": "goal.call"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -50,10 +59,10 @@
               {
                 "name": "Actual",
                 "value": "%innerErrorHandled%",
-                "type": "object"
+                "type": "bool"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -82,10 +91,10 @@
               {
                 "name": "Actual",
                 "value": "%outerCompleted%",
-                "type": "object"
+                "type": "bool"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -101,7 +110,7 @@
     "path": "/ErrorNested.test.goal",
     "prPath": "/.build/errornested.test.pr",
     "hash": "adcb692a108f261a6aea742541701c3d10cb50bd659dc60f7e7a5677d184505a",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

@@ -1,0 +1,255 @@
+[
+  {
+    "name": "Start",
+    "description": "Configures the HTTP client base URL, performs an unsigned GET to a relative path (/get), then conditionally writes success messages based on whether the response is non-empty and whether the response status code equals 200.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "configure http, base url https://httpbin.org",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: Configure base URL, then relative path request",
+        "actions": [
+          {
+            "module": "http",
+            "action": "configure",
+            "parameters": [
+              {
+                "name": "BaseUrl",
+                "value": "https://httpbin.org",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "get /get, unsigned, write to %response%",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "http",
+            "action": "request",
+            "parameters": [
+              {
+                "name": "Url",
+                "value": "/get",
+                "type": "string"
+              },
+              {
+                "name": "Method",
+                "value": "GET",
+                "type": "string"
+              },
+              {
+                "name": "Unsigned",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": [
+              {
+                "name": "response",
+                "value": null
+              }
+            ],
+            "defaults": [
+              {
+                "name": "contenttype",
+                "value": "application/json",
+                "type": "string"
+              },
+              {
+                "name": "encoding",
+                "value": "utf-8",
+                "type": "string"
+              },
+              {
+                "name": "timeoutinsec",
+                "value": 30,
+                "type": "int"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "if %response% is not empty then",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "condition",
+            "action": "if",
+            "parameters": [
+              {
+                "name": "Left",
+                "value": "%response%",
+                "type": "string"
+              },
+              {
+                "name": "Operator",
+                "value": "isempty",
+                "type": "string"
+              },
+              {
+                "name": "Right",
+                "value": "false",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "write out \u0027Relative URL with base URL worked\u0027",
+        "lineNumber": 6,
+        "indent": 1,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "Relative URL with base URL worked",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "if %response.StatusCode% equals 200 then",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "condition",
+            "action": "if",
+            "parameters": [
+              {
+                "name": "Left",
+                "value": "%response.StatusCode%",
+                "type": "int"
+              },
+              {
+                "name": "Operator",
+                "value": "==",
+                "type": "string"
+              },
+              {
+                "name": "Right",
+                "value": 200,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "__conditionReturn__",
+                "value": null
+              }
+            ],
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "write out \u0027Status code is 200\u0027",
+        "lineNumber": 8,
+        "indent": 1,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "Status code is 200",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ConfigBaseUrl.test.goal",
+    "prPath": "/.build/configbaseurl.test.pr",
+    "hash": "01dc137ea19f5d3c1b5db93b973fbe773de24f7bea80089d8d558bf792d295d9",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

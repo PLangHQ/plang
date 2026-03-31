@@ -1,0 +1,187 @@
+[
+  {
+    "name": "Start",
+    "description": "Compiles the Start goal: initializes matchCount, installs a before-action hook for actions matching variable.* that calls WildcardHandler, sets variables a and b, then asserts matchCount is greater than 0. The wildcard comment indicates intent but does not change the concrete engine action mapping.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %matchCount% = 0",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "wildcard pattern matches multiple actions",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%matchCount%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 0,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "before action variable.* call WildcardHandler",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "event",
+            "action": "on",
+            "parameters": [
+              {
+                "name": "Type",
+                "value": "BeforeAction",
+                "type": "string"
+              },
+              {
+                "name": "GoalToCall",
+                "value": {
+                  "name": "WildcardHandler"
+                },
+                "type": "goal.call"
+              },
+              {
+                "name": "ActionPattern",
+                "value": "variable.*",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "set %a% = 1",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%a%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 1,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "set %b% = 2",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%b%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 2,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "assert %matchCount% is greater than 0",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "greaterThan",
+            "parameters": [
+              {
+                "name": "A",
+                "value": "%matchCount%",
+                "type": "data"
+              },
+              {
+                "name": "B",
+                "value": 0,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/EventWildcard.test.goal",
+    "prPath": "/.build/eventwildcard.test.pr",
+    "hash": "5c9a82daceaf72be93a9ca2181c59f24b0084f0323e5ea1361fc1d4ed05db036",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal steps for calling an error handler and asserting error details.",
+    "description": "Calls ThrowCustomError with step-level error handling that invokes InspectError, then asserts the handler-provided error variables match expected message, key, and status code.",
     "comment": null,
     "steps": [
       {
@@ -17,7 +17,9 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "ThrowCustomError",
+                "value": {
+                  "name": "ThrowCustomError"
+                },
                 "type": "goal.call"
               }
             ],
@@ -148,7 +150,7 @@
     "path": "/ErrorProps.test.goal",
     "prPath": "/.build/errorprops.test.pr",
     "hash": "24caa6948f23774e4754f2c176f0c61f3b842b279bc512ccff461edfb54c66ee",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

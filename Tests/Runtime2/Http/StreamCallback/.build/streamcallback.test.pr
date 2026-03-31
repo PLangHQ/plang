@@ -1,0 +1,111 @@
+[
+  {
+    "name": "Start",
+    "description": "Fetches a streaming HTTP response from httpbin, routes streamed chunks to ProcessChunk via the http.request OnStream callback, then writes \u0027Streaming complete\u0027.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "get https://httpbin.org/stream/3, call ProcessChunk, unsigned",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: Stream response with OnStream callback",
+        "actions": [
+          {
+            "module": "http",
+            "action": "request",
+            "parameters": [
+              {
+                "name": "Url",
+                "value": "https://httpbin.org/stream/3",
+                "type": "string"
+              },
+              {
+                "name": "Method",
+                "value": "GET",
+                "type": "httpmethod"
+              },
+              {
+                "name": "Unsigned",
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "OnStream",
+                "value": {
+                  "name": "",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": null
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": [],
+            "defaults": [
+              {
+                "name": "contenttype",
+                "value": "application/json",
+                "type": "string"
+              },
+              {
+                "name": "encoding",
+                "value": "utf-8",
+                "type": "string"
+              },
+              {
+                "name": "timeoutinsec",
+                "value": 30,
+                "type": "int"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "write out \u0027Streaming complete\u0027",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "Streaming complete",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/StreamCallback.test.goal",
+    "prPath": "/.build/streamcallback.test.pr",
+    "hash": "5c4c5a3d5158ab94c5bf346b7099b09600511a1d3781802d465ec12193d9a0f8",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

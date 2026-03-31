@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal steps for throwing/catching errors and file-not-found handling.",
+    "description": "Compiles steps that (1) call ThrowUserError with error handling to CatchThrow, then assert the thrown error key; and (2) attempt to read a missing file with error handling to CatchFileError, then assert the file error was caught.",
     "comment": null,
     "steps": [
       {
@@ -17,11 +17,13 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "ThrowUserError",
+                "value": {
+                  "name": "ThrowUserError"
+                },
                 "type": "goal.call"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -65,24 +67,15 @@
               {
                 "name": "Actual",
                 "value": "%throwKey%",
-                "type": "string"
+                "type": "data"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -102,19 +95,9 @@
                 "name": "Path",
                 "value": "nonexistent_file_xyz.txt",
                 "type": "path"
-              },
-              {
-                "name": "ResolveVariables",
-                "value": false,
-                "type": "bool"
               }
             ],
-            "return": [
-              {
-                "name": "content",
-                "value": null
-              }
-            ],
+            "return": null,
             "defaults": null
           }
         ],
@@ -158,24 +141,15 @@
               {
                 "name": "Actual",
                 "value": "%fileErrorCaught%",
-                "type": "bool"
+                "type": "data"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -186,7 +160,7 @@
     "path": "/ErrorTypes.test.goal",
     "prPath": "/.build/errortypes.test.pr",
     "hash": "795a83975d59d5634a207d8f3ff7e47d24f549850fe91a0107e5f4123e5a6510",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

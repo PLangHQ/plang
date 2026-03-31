@@ -1,0 +1,47 @@
+[
+  {
+    "name": "ProcessChunk",
+    "description": "Writes a trace/output message for each stream chunk, including the runtime value of %!data%.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "write out \u0027Received chunk: %!data%\u0027",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Called per stream chunk",
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "Received chunk: %!data%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ProcessChunk.goal",
+    "prPath": "/.build/processchunk.pr",
+    "hash": "04c66cdf7538158f70ec86f58de4129957c80656d1b317866d3bab22ac2a7fca",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

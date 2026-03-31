@@ -375,6 +375,16 @@
                 "name": "Path",
                 "value": "testdata.txt",
                 "type": "path"
+              },
+              {
+                "name": "IgnoreIfNotFound",
+                "value": false,
+                "type": "bool"
+              },
+              {
+                "name": "Recursive",
+                "value": false,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -402,6 +412,16 @@
                 "name": "Path",
                 "value": "keytest.txt",
                 "type": "path"
+              },
+              {
+                "name": "IgnoreIfNotFound",
+                "value": false,
+                "type": "bool"
+              },
+              {
+                "name": "Recursive",
+                "value": false,
+                "type": "bool"
               }
             ],
             "return": null,

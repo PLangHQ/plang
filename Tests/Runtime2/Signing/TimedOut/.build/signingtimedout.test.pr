@@ -1,0 +1,316 @@
+[
+  {
+    "name": "Start",
+    "description": "Maps each goal step to engine actions: create identity, set input data, sign it, set signing timeout, wait, verify with contracts and on-error handling, then assert timedOut is true.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "create identity testSigner",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: verify fails when Created is older than timeout setting",
+        "actions": [
+          {
+            "module": "identity",
+            "action": "create",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "testSigner",
+                "type": "string"
+              }
+            ],
+            "return": [
+              {
+                "name": "default",
+                "value": null
+              }
+            ],
+            "defaults": [
+              {
+                "name": "setasdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "set %data% = { \u0022payload\u0022: \u0022old\u0022 }",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": {
+                  "payload": "old"
+                },
+                "type": "json"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "sign %data%",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "signing",
+            "action": "sign",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%data%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "set signing timeout to 50",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "settings",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Key",
+                "value": "signing.timeout",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 50,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "wait for 60 ms",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "WAIT 60ms",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "verify %data% with contracts [\u0027C0\u0027], on error call HandleTimedOut",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "signing",
+            "action": "verify",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Contracts",
+                "value": [
+                  "C0"
+                ],
+                "type": "list"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": {
+            "name": "HandleTimedOut",
+            "description": null,
+            "parallel": false,
+            "parameters": null,
+            "prPath": null
+          },
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 6,
+        "text": "assert %timedOut% is true, \u0022signature older than timeout should fail\u0022",
+        "lineNumber": 9,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isTrue",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%timedOut%",
+                "type": "bool"
+              },
+              {
+                "name": "Message",
+                "value": "signature older than timeout should fail",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [
+      "HandleTimedOut"
+    ],
+    "visibility": 1,
+    "path": "/SigningTimedOut.test.goal",
+    "prPath": "/.build/signingtimedout.test.pr",
+    "hash": "f64b2646bfd61664b47f4e2c8e789268f711e4375863b7fabf88c14753cc2bcd",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  },
+  {
+    "name": "HandleTimedOut",
+    "description": "Sets the %timedOut% variable to true (with a null-like PR value as provided).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %timedOut% = true",
+        "lineNumber": 12,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%timedOut%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 0,
+    "path": "/SigningTimedOut.test.goal",
+    "prPath": "/.build/signingtimedout.test.pr",
+    "hash": "3be0880cb8dae8a7f44bb51e2c80c3c576792515de5a75b8341f6ad1fc33a1a4",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

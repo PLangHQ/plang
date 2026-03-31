@@ -1,0 +1,291 @@
+[
+  {
+    "name": "Start",
+    "description": "Saves test content to a file, uploads it to httpbin, checks that a response exists and that StatusCode equals 200, writes messages accordingly, then deletes the temporary upload file.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "save \u0027test upload content\u0027 to \u0027upload-test.txt\u0027",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: Upload file, verify response",
+        "actions": [
+          {
+            "module": "file",
+            "action": "save",
+            "parameters": [
+              {
+                "name": "Path",
+                "value": "upload-test.txt",
+                "type": "path"
+              },
+              {
+                "name": "Value",
+                "value": "test upload content",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "upload upload-test.txt to https://httpbin.org/post, unsigned, write to %response%",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "http",
+            "action": "upload",
+            "parameters": [
+              {
+                "name": "Url",
+                "value": "https://httpbin.org/post",
+                "type": "string"
+              },
+              {
+                "name": "Content",
+                "value": "upload-test.txt",
+                "type": "string"
+              },
+              {
+                "name": "Method",
+                "value": "POST",
+                "type": "httpmethod"
+              },
+              {
+                "name": "Unsigned",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": [
+              {
+                "name": "response",
+                "value": null
+              }
+            ],
+            "defaults": [
+              {
+                "name": "encoding",
+                "value": "utf-8",
+                "type": "string"
+              },
+              {
+                "name": "timeoutinsec",
+                "value": 30,
+                "type": "int"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "if %response% is not empty then",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "condition",
+            "action": "if",
+            "parameters": [
+              {
+                "name": "Left",
+                "value": "%response%",
+                "type": "string"
+              },
+              {
+                "name": "Operator",
+                "value": "isempty",
+                "type": "string"
+              },
+              {
+                "name": "Right",
+                "value": "",
+                "type": "string"
+              },
+              {
+                "name": "Negate",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "write out \u0027Upload returned response\u0027",
+        "lineNumber": 6,
+        "indent": 1,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "Upload returned response",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "if %response.StatusCode% equals 200 then",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "condition",
+            "action": "if",
+            "parameters": [
+              {
+                "name": "Left",
+                "value": "%response.StatusCode%",
+                "type": "string"
+              },
+              {
+                "name": "Operator",
+                "value": "==",
+                "type": "string"
+              },
+              {
+                "name": "Right",
+                "value": "200",
+                "type": "string"
+              }
+            ],
+            "return": [
+              {
+                "name": "__conditionReturn__",
+                "value": null
+              }
+            ],
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "write out \u0027Status code is 200\u0027",
+        "lineNumber": 8,
+        "indent": 1,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "Status code is 200",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 6,
+        "text": "delete file \u0027upload-test.txt\u0027",
+        "lineNumber": 9,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "file",
+            "action": "delete",
+            "parameters": [
+              {
+                "name": "Path",
+                "value": "upload-test.txt",
+                "type": "path"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/UploadFile.test.goal",
+    "prPath": "/.build/uploadfile.test.pr",
+    "hash": "296a21da8725826befc0761f8b8d175e1122aceea3e22c7e3717225ef9afa0d2",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

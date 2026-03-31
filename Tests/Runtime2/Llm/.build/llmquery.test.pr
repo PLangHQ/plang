@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Start",
+    "description": "Single-step goal that throws an error indicating the implementation is not provided.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "throw \u0022not implemented\u0022",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Simple system\u002Buser query \u2014 verify we get a non-null response from the LLM",
+        "actions": [
+          {
+            "module": "error",
+            "action": "throw",
+            "parameters": [
+              {
+                "name": "Message",
+                "value": "not implemented",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/LlmQuery.test.goal",
+    "prPath": "/.build/llmquery.test.pr",
+    "hash": "efd3c678aa189b670c30bd15f1b988f98f6ce808da298c407ee5e77730b198df",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

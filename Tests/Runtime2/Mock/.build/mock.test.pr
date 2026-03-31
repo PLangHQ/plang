@@ -1,0 +1,412 @@
+[
+  {
+    "name": "Start",
+    "description": "Compiles a mock-driven test flow: intercepts file.read and output.write, asserts initial mock state, reads a file to trigger the intercepted action, verifies call count, then resets the mock and asserts call count is cleared.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "mock intercept \u0022file.read\u0022, return \u0022mocked content\u0022, write to %mockRead%",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "mock",
+            "action": "intercept",
+            "parameters": [
+              {
+                "name": "ActionPattern",
+                "value": "file.read",
+                "type": "string"
+              },
+              {
+                "name": "ReturnValue",
+                "value": "mocked content",
+                "type": "string"
+              }
+            ],
+            "return": [
+              {
+                "name": "mockRead",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %mockRead.callCount% equals 0, \u0022mock should start with 0 calls\u0022",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 0,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%mockRead.callCount%",
+                "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "mock should start with 0 calls",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %mockRead.actionPattern% equals \u0022file.read\u0022",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "file.read",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%mockRead.actionPattern%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "assert %mockRead.isSpy% equals false",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": false,
+                "type": "bool"
+              },
+              {
+                "name": "Actual",
+                "value": "%mockRead.isSpy%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "mock intercept \u0022output.write\u0022, write to %spyWrite%",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "mock",
+            "action": "intercept",
+            "parameters": [
+              {
+                "name": "ActionPattern",
+                "value": "output.write",
+                "type": "string"
+              },
+              {
+                "name": "ReturnValue",
+                "value": "",
+                "type": "string"
+              },
+              {
+                "name": "GoalToCall",
+                "value": null,
+                "type": "goal.call"
+              },
+              {
+                "name": "Parameters",
+                "value": {},
+                "type": "dict"
+              }
+            ],
+            "return": [
+              {
+                "name": "spyWrite",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "assert %spyWrite.isSpy% equals true",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "Actual",
+                "value": "%spyWrite.isSpy%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 6,
+        "text": "read file \u0027test_output.txt\u0027, write to %mockResult%",
+        "lineNumber": 9,
+        "indent": 0,
+        "comment": "exercise the mock \u2014 call intercepted action, verify callCount",
+        "actions": [
+          {
+            "module": "file",
+            "action": "read",
+            "parameters": [
+              {
+                "name": "Path",
+                "value": "test_output.txt",
+                "type": "path"
+              },
+              {
+                "name": "ResolveVariables",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": [
+              {
+                "name": "mockResult",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 7,
+        "text": "assert %mockRead.callCount% equals 1, \u0022callCount should increment after mock intercept\u0022",
+        "lineNumber": 10,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 1,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%mockRead.callCount%",
+                "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "callCount should increment after mock intercept",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 8,
+        "text": "mock verify %mockRead% was called 1 time",
+        "lineNumber": 12,
+        "indent": 0,
+        "comment": "verify",
+        "actions": [
+          {
+            "module": "mock",
+            "action": "verify",
+            "parameters": [
+              {
+                "name": "Mock",
+                "value": "%mockRead%",
+                "type": "mockhandle"
+              },
+              {
+                "name": "ExpectedCount",
+                "value": 1,
+                "type": "int"
+              },
+              {
+                "name": "Message",
+                "value": null,
+                "type": "string?"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 9,
+        "text": "mock reset %mockRead%",
+        "lineNumber": 14,
+        "indent": 0,
+        "comment": "reset",
+        "actions": [
+          {
+            "module": "mock",
+            "action": "reset",
+            "parameters": [
+              {
+                "name": "Mock",
+                "value": "%mockRead%",
+                "type": "mockhandle"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 10,
+        "text": "assert %mockRead.callCount% equals 0, \u0022reset should clear callCount\u0022",
+        "lineNumber": 15,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 0,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%mockRead.callCount%",
+                "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "reset should clear callCount",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/Mock.test.goal",
+    "prPath": "/.build/mock.test.pr",
+    "hash": "f1cf4d4b7f07539b7158e8373bae9c4eb7a2e4f483e6c13cc31ab3407db8c7f3",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

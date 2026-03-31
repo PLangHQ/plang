@@ -1,0 +1,168 @@
+[
+  {
+    "name": "Start",
+    "description": "Sets %title% to \u0027Welcome\u0027, renders page.html into %result%, then asserts the rendered output contains expected header and body content.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %title% = \u0027Welcome\u0027",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: render template that includes a partial via include tag",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%title%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "Welcome",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "render file \u0027page.html\u0027, write to %result%",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "ui",
+            "action": "render",
+            "parameters": [
+              {
+                "name": "Template",
+                "value": "page.html",
+                "type": "string"
+              },
+              {
+                "name": "Parameters",
+                "value": [],
+                "type": "list"
+              },
+              {
+                "name": "IsFile",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": [
+              {
+                "name": "result",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %result% contains \u0027Header: Welcome\u0027",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "contains",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%result%",
+                "type": "string"
+              },
+              {
+                "name": "Container",
+                "value": "Header: Welcome",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected rendered output to contain \u0027Header: Welcome\u0027",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "assert %result% contains \u0027Body content\u0027",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "contains",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%result%",
+                "type": "string"
+              },
+              {
+                "name": "Container",
+                "value": "Body content",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Rendered output should contain expected body content text.",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/RenderInclude.test.goal",
+    "prPath": "/.build/renderinclude.test.pr",
+    "hash": "f5a069c0614dc3f898da793a4ec9531776bcedcffe6f9dede75a085ab6878f43",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

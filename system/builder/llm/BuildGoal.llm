@@ -99,7 +99,8 @@ Response:
 
 - Step count in response MUST match step count in goal. Comments (/) are NOT steps. `on error` is part of its step, not separate.
 - Comments are documentation only — never influence action mapping.
-- Variables use \%name\% syntax — preserve literally. Return values omit \% signs (e.g., "config" not "\%config\%").
+- Variables use \%name\% syntax — preserve literally.
+- `write to \%var\%` maps to `"return": [{"name": "var"}]` on the action — NOT a separate variable.set step. Return names omit \% signs (e.g., "config" not "\%config\%").
 - For `goal.call`: simple = `{"name": "GoalName"}`, with params = `{"name": "GoalName", "parameters": [{"name": "key", "value": "val", "type": "string"}]}`.
 - Omit nullable parameters (types ending ?) when not applicable.
 - \%variable\% references resolve at runtime. Never pre-evaluate.

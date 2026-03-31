@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Start",
+    "description": "Goal contains a single step that throws an error with message \u0027not implemented\u0027.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "throw \u0022not implemented\u0022",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Two queries \u2014 second uses continuePreviousConversation, verify LLM remembers context",
+        "actions": [
+          {
+            "module": "error",
+            "action": "throw",
+            "parameters": [
+              {
+                "name": "Message",
+                "value": "not implemented",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/LlmContinue.test.goal",
+    "prPath": "/.build/llmcontinue.test.pr",
+    "hash": "efd3c678aa189b670c30bd15f1b988f98f6ce808da298c407ee5e77730b198df",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

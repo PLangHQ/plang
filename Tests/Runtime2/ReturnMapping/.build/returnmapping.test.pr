@@ -1,0 +1,149 @@
+[
+  {
+    "name": "Start",
+    "description": "Reads testfile.txt into %content%, asserts its exact value, then calls ComputeValue and asserts the returned %result% is not null.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "read file \u0027testfile.txt\u0027, write to %content%",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "return value mapped to variable via write to",
+        "actions": [
+          {
+            "module": "file",
+            "action": "read",
+            "parameters": [
+              {
+                "name": "Path",
+                "value": "testfile.txt",
+                "type": "path"
+              }
+            ],
+            "return": [
+              {
+                "name": "content",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %content% equals \u0022hello from file\u0022",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "hello from file",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%content%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "call ComputeValue, write to %result%",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": "goal call return",
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "GoalName",
+                "value": {
+                  "name": "ComputeValue",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": "/.build/computevalue.pr"
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": [
+              {
+                "name": "result",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "assert %result% is not null",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%result%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ReturnMapping.test.goal",
+    "prPath": "/.build/returnmapping.test.pr",
+    "hash": "68157ee64ac6cb646c5a5fdcfa4ab9f400a26f4379808e75ca70a1776d2ae8e1",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

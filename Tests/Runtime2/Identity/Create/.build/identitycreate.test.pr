@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Start",
+    "description": "Single step throws an error indicating the requested identity creation/verification is not implemented.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "throw \u0022not implemented\u0022",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: create an identity and verify %MyIdentity% resolves to its public key",
+        "actions": [
+          {
+            "module": "error",
+            "action": "throw",
+            "parameters": [
+              {
+                "name": "Message",
+                "value": "not implemented",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/IdentityCreate.test.goal",
+    "prPath": "/.build/identitycreate.test.pr",
+    "hash": "efd3c678aa189b670c30bd15f1b988f98f6ce808da298c407ee5e77730b198df",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

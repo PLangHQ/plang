@@ -1,7 +1,7 @@
 [
   {
     "name": "ThrowInnerError",
-    "description": "Build goal ThrowInnerError with a single throw step.",
+    "description": "Compiles ThrowInnerError goal step to an error throw action with message \u0027inner error\u0027 and StatusCode defaulting to 500 (pr: null indicates no additional parameter).",
     "comment": null,
     "steps": [
       {
@@ -19,11 +19,6 @@
                 "name": "Message",
                 "value": "inner error",
                 "type": "string"
-              },
-              {
-                "name": "StatusCode",
-                "value": 500,
-                "type": "int"
               }
             ],
             "return": null,
@@ -42,7 +37,7 @@
     "path": "/ThrowInnerError.goal",
     "prPath": "/.build/throwinnererror.pr",
     "hash": "7d8dc891f5dc542946212b275eb7dd377c3208351c17761e0c6b02e233a7cc75",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

@@ -1,0 +1,206 @@
+[
+  {
+    "name": "Start",
+    "description": "Creates an identity provider for signing, sets empty JSON data, signs it, verifies the signature against provided contracts, then asserts verification succeeded.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "create identity testSigner",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: sign empty/minimal data, verify succeeds",
+        "actions": [
+          {
+            "module": "identity",
+            "action": "create",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "testSigner",
+                "type": "string"
+              },
+              {
+                "name": "SetAsDefault",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "set %data% = {}",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": {},
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "sign %data%",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "signing",
+            "action": "sign",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%data%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "verify %data% with contracts [\u0027C0\u0027], write to %verifyResult%",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "signing",
+            "action": "verify",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Contracts",
+                "value": [
+                  "C0"
+                ],
+                "type": "list\u003Cobject\u003E"
+              }
+            ],
+            "return": [
+              {
+                "name": "verifyResult",
+                "value": null
+              }
+            ],
+            "defaults": null
+          },
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%verifyResult%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "verifyResult",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "assert %verifyResult.Success% is true, \u0022empty data should sign and verify\u0022",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isTrue",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%verifyResult.Success%",
+                "type": "bool"
+              },
+              {
+                "name": "Message",
+                "value": "empty data should sign and verify",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/SigningEmptyData.test.goal",
+    "prPath": "/.build/signingemptydata.test.pr",
+    "hash": "2c6688e2cf107f0e1249107ccaa65069adfc000c22c22e8a425dfafc034c5713",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

@@ -1,7 +1,7 @@
 [
   {
     "name": "BareRetryGoal",
-    "description": "Build BareRetryGoal into executable steps.",
+    "description": "BareRetryGoal increments %bareRetryAttempts%, writes it back, then throws an error that always fails.",
     "comment": null,
     "steps": [
       {
@@ -22,16 +22,34 @@
               },
               {
                 "name": "B",
-                "value": "1",
-                "type": "object"
+                "value": 1,
+                "type": "int"
               }
             ],
             "return": [
               {
-                "name": "bareRetryAttempts",
+                "name": "bareRetryAttemptsNext",
                 "value": null
               }
             ],
+            "defaults": null
+          },
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%bareRetryAttempts%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "%bareRetryAttemptsNext%",
+                "type": "object"
+              }
+            ],
+            "return": null,
             "defaults": null
           }
         ],
@@ -74,7 +92,7 @@
     "path": "/BareRetryGoal.goal",
     "prPath": "/.build/bareretrygoal.pr",
     "hash": "a14e6258269311dacfa378adeede9211601390c49ba1730b9d410840b5c59476",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "CatchThrow",
-    "description": "Build goal CatchThrow",
+    "description": "Sets the variable %throwKey% to the error key from %!error.Key% (which is null per the step comment).",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/CatchThrow.goal",
     "prPath": "/.build/catchthrow.pr",
     "hash": "a9d4109da4f4fdea5487a25def29160b0e3b117c4c5a4ad46277163ff63cc402",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

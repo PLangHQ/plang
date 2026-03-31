@@ -1,7 +1,7 @@
 [
   {
     "name": "CatchKorean",
-    "description": "Build goal CatchKorean",
+    "description": "Sets the %caughtKorean% variable to true (with a null-like PR value as provided).",
     "comment": null,
     "steps": [
       {
@@ -24,16 +24,6 @@
                 "name": "Value",
                 "value": true,
                 "type": "bool"
-              },
-              {
-                "name": "Type",
-                "value": null,
-                "type": "string"
-              },
-              {
-                "name": "AsDefault",
-                "value": false,
-                "type": "bool"
               }
             ],
             "return": null,
@@ -52,7 +42,7 @@
     "path": "/CatchKorean.goal",
     "prPath": "/.build/catchkorean.pr",
     "hash": "287ada7e401dad5112bfcbd604fa2f11d75a5f355c734fcd157d75eeb32937d2",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

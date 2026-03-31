@@ -1,7 +1,7 @@
 [
   {
     "name": "OuterGoal",
-    "description": "Build OuterGoal with two steps: call InnerGoal and then set %outerCompleted% to true.",
+    "description": "OuterGoal calls InnerGoal, then sets the %outerCompleted% variable to true.",
     "comment": null,
     "steps": [
       {
@@ -17,7 +17,10 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "InnerGoal",
+                "value": {
+                  "name": "InnerGoal",
+                  "parameters": []
+                },
                 "type": "goal.call"
               }
             ],
@@ -69,7 +72,7 @@
     "path": "/OuterGoal.goal",
     "prPath": "/.build/outergoal.pr",
     "hash": "3d350858b806fc84804e872cd32f364549ef42dfee0f09f5705a4e7469cb160c",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

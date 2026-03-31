@@ -1,7 +1,7 @@
 [
   {
     "name": "ComputeAnswer",
-    "description": "Sets the %result% variable to integer value 42.",
+    "description": "Sets the %result% variable to the literal integer 42.",
     "comment": null,
     "steps": [
       {

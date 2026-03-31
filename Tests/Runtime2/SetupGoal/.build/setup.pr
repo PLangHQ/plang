@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Setup",
+    "description": "Sets the %setupDone% variable to true with pr: null (no explicit value payload).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %setupDone% = true",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%setupDone%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "Type",
+                "value": "bool",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/Setup.goal",
+    "prPath": "/.build/setup.pr",
+    "hash": "3f806b74cd5365a2f65d04e4fc3d43757a75d2e803500ec1506732df9204fa8e",
+    "builderVersion": "0.3",
+    "isSetup": true,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

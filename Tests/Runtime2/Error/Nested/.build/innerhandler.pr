@@ -1,7 +1,7 @@
 [
   {
     "name": "InnerHandler",
-    "description": "Build goal step: set inner error handled flag.",
+    "description": "Sets the variable %innerErrorHandled% to true (with a null PR value as provided).",
     "comment": null,
     "steps": [
       {
@@ -24,14 +24,9 @@
                 "name": "Value",
                 "value": true,
                 "type": "bool"
-              },
-              {
-                "name": "Type",
-                "value": "bool",
-                "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": null
           }
         ],
@@ -47,7 +42,7 @@
     "path": "/InnerHandler.goal",
     "prPath": "/.build/innerhandler.pr",
     "hash": "dd5be9a4665106e1df91cb580cec1e0ef0640e82a8c7e88b24bdc562ab4e8d43",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

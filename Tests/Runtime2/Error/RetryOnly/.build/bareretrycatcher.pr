@@ -1,7 +1,7 @@
 [
   {
     "name": "BareRetryCatcher",
-    "description": "Build goal BareRetryCatcher",
+    "description": "Sets the %bareRetryCaught% flag to true (no additional actions).",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/BareRetryCatcher.goal",
     "prPath": "/.build/bareretrycatcher.pr",
     "hash": "721530b5266483f76149d388538696506be500e36c0e32b9216a91de8f854701",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

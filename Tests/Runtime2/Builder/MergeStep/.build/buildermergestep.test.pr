@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Start",
+    "description": "Single-step goal that throws an error indicating the builder.mergeStep behavior is not implemented in PLang and is deferred to C# tests.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "throw \u0022not implemented \u2014 requires constructing Step objects in PLang, deferred to C# tests\u0022",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test that builder.mergeStep merges LLM-derived fields from one step onto another",
+        "actions": [
+          {
+            "module": "error",
+            "action": "throw",
+            "parameters": [
+              {
+                "name": "Message",
+                "value": "not implemented \u2014 requires constructing Step objects in PLang, deferred to C# tests",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/BuilderMergeStep.test.goal",
+    "prPath": "/.build/buildermergestep.test.pr",
+    "hash": "f902ef75117c04fdc5acc19d48f99f0cc29b33725fecba8ab0dd035549da35c3",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

@@ -1,7 +1,7 @@
 [
   {
     "name": "TimedRetryGoal",
-    "description": "Build TimedRetryGoal steps into executable form.",
+    "description": "Adds 1 to %timedRetryAttempts% and writes the result back, then throws an error \u0027timed fail\u0027.",
     "comment": null,
     "steps": [
       {
@@ -22,13 +22,13 @@
               },
               {
                 "name": "B",
-                "value": "1",
-                "type": "string"
+                "value": 1,
+                "type": "long"
               }
             ],
             "return": [
               {
-                "name": "timedRetryAttempts",
+                "name": "pr",
                 "value": null
               }
             ],
@@ -45,12 +45,18 @@
               },
               {
                 "name": "Value",
-                "value": "%timedRetryAttempts%",
+                "value": "%pr%",
                 "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -92,7 +98,7 @@
     "path": "/TimedRetryGoal.goal",
     "prPath": "/.build/timedretrygoal.pr",
     "hash": "c3682ca3c59a1d65c0fcf535415978b1d1d02bc7019282c388101c838ccf5612",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

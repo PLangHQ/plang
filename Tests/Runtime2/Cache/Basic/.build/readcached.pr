@@ -1,7 +1,7 @@
 [
   {
     "name": "ReadCached",
-    "description": "Reads testdata.txt and writes its contents to %fileData%, using a 5-minute cache window.",
+    "description": "Reads testdata.txt and writes its contents to %fileData%, using a cache duration of 5 minutes.",
     "comment": null,
     "steps": [
       {

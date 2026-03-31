@@ -1,0 +1,336 @@
+[
+  {
+    "name": "Start",
+    "description": "Creates a signer identity, signs request data with specific headers, then verifies using the wrong headers so verification should fail; on error it calls HandleHeaderError and asserts headerFailed is true.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "create identity testSigner",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: verify fails when expected headers don\u0027t match signed headers",
+        "actions": [
+          {
+            "module": "identity",
+            "action": "create",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "testSigner",
+                "type": "string"
+              },
+              {
+                "name": "SetAsDefault",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": [
+              {
+                "name": "identityHandle",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "set %data% = { \u0022body\u0022: \u0022content\u0022 }",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": {
+                  "body": "content"
+                },
+                "type": "json"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "set %signHeaders% = { \u0022method\u0022: \u0022POST\u0022, \u0022url\u0022: \u0022/api/send\u0022 }",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%signHeaders%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": {
+                  "method": "POST",
+                  "url": "/api/send"
+                },
+                "type": "json"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "sign %data% with headers %signHeaders%",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "signing",
+            "action": "sign",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Headers",
+                "value": "%signHeaders%",
+                "type": "dict"
+              }
+            ],
+            "return": [
+              {
+                "name": "signature",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "set %wrongHeaders% = { \u0022method\u0022: \u0022GET\u0022, \u0022url\u0022: \u0022/api/send\u0022 }",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%wrongHeaders%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": {
+                  "method": "GET",
+                  "url": "/api/send"
+                },
+                "type": "json"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "verify %data% with contracts [\u0027C0\u0027] and headers %wrongHeaders%, on error call HandleHeaderError",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "signing",
+            "action": "verify",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Contracts",
+                "value": [
+                  "C0"
+                ],
+                "type": "list\u003Cobject\u003E"
+              },
+              {
+                "name": "Headers",
+                "value": "%wrongHeaders%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": {
+            "name": "HandleHeaderError",
+            "description": null,
+            "parallel": false,
+            "parameters": null,
+            "prPath": null
+          },
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 6,
+        "text": "assert %headerFailed% is true, \u0022header mismatch should fail verification\u0022",
+        "lineNumber": 9,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isTrue",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%headerFailed%",
+                "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "header mismatch should fail verification",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [
+      "HandleHeaderError"
+    ],
+    "visibility": 1,
+    "path": "/SigningHeaderMismatch.test.goal",
+    "prPath": "/.build/signingheadermismatch.test.pr",
+    "hash": "d5632ec21a6ab120c02d3b38109e01694f6f52443b42228583194dadb80d4622",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  },
+  {
+    "name": "HandleHeaderError",
+    "description": "Sets the %headerFailed% flag to true in HandleHeaderError.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %headerFailed% = true",
+        "lineNumber": 12,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%headerFailed%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 0,
+    "path": "/SigningHeaderMismatch.test.goal",
+    "prPath": "/.build/signingheadermismatch.test.pr",
+    "hash": "7563068bd6895c224b7083ab5ba33d7087c80cdc9a9c7a9102100d85dc81f3b0",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

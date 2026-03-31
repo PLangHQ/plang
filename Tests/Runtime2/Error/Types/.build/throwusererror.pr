@@ -1,7 +1,7 @@
 [
   {
     "name": "ThrowUserError",
-    "description": "Build goal step to throw a user error with a specific key.",
+    "description": "Maps ThrowUserError to an error.throw action with message and key.",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,7 @@
     "path": "/ThrowUserError.goal",
     "prPath": "/.build/throwusererror.pr",
     "hash": "ea9ddd08e494e52118b430af4ba6e52104efe7321bf5bbfd891ce7101fb8c920",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

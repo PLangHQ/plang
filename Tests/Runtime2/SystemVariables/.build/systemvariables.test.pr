@@ -1,0 +1,269 @@
+[
+  {
+    "name": "Start",
+    "description": "Asserts that Now and NowUtc are not null, then snapshots GUID into guid1 and guid2, asserts both are not null, and asserts guid1 differs from guid2.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "assert %Now% is not null",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Now is not null",
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%Now%",
+                "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "pr: null",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %NowUtc% is not null",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": "NowUtc is not null",
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%NowUtc%",
+                "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "pr: null",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "set %guid1% = %GUID%",
+        "lineNumber": 9,
+        "indent": 0,
+        "comment": "GUID is not null and changes",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%guid1%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "%GUID%",
+                "type": "object"
+              },
+              {
+                "name": "Type",
+                "value": null,
+                "type": "string"
+              },
+              {
+                "name": "AsDefault",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "set %guid2% = %GUID%",
+        "lineNumber": 10,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%guid2%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "%GUID%",
+                "type": "object"
+              },
+              {
+                "name": "Type",
+                "value": null,
+                "type": "string"
+              },
+              {
+                "name": "AsDefault",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "assert %guid1% is not null",
+        "lineNumber": 11,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%guid1%",
+                "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "pr: null",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "assert %guid2% is not null",
+        "lineNumber": 12,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%guid2%",
+                "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "pr: null",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 6,
+        "text": "assert %guid1% not equals %guid2%",
+        "lineNumber": 13,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "notEquals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "%guid2%",
+                "type": "object"
+              },
+              {
+                "name": "Actual",
+                "value": "%guid1%",
+                "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "pr: null",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/SystemVariables.test.goal",
+    "prPath": "/.build/systemvariables.test.pr",
+    "hash": "24b27bcc5826d580f34b269f17f170324a036737587c6549a941ee8126030f50",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

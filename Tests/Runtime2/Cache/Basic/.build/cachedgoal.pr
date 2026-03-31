@@ -1,7 +1,7 @@
 [
   {
     "name": "CachedGoal",
-    "description": "CachedGoal reads testdata.txt into %cachedMsg% with a 5-minute cache, then writes a message to output using the cached value. When CachedGoal is called twice, the second call should hit the cache for the read step.",
+    "description": "CachedGoal reads testdata.txt into %cachedMsg%, caches the read step for 5 minutes, then writes a message using the cached content. If CachedGoal is called twice within the cache window, the second call should reuse the cached read result.",
     "comment": null,
     "steps": [
       {

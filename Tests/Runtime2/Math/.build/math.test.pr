@@ -1,0 +1,897 @@
+[
+  {
+    "name": "Start",
+    "description": "Performs arithmetic operations (add, subtract, multiply, divide, abs, round, min, max, power, sqrt, floor, ceiling, modulo) and asserts each computed result matches the expected value.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "add 5 and 3, write to %sum%",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "math",
+            "action": "add",
+            "parameters": [
+              {
+                "name": "A",
+                "value": 5,
+                "type": "int"
+              },
+              {
+                "name": "B",
+                "value": 3,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "sum",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %sum% equals 8",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 8,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%sum%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "subtract 3 from 10, write to %diff%",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "math",
+            "action": "subtract",
+            "parameters": [
+              {
+                "name": "A",
+                "value": 10,
+                "type": "int"
+              },
+              {
+                "name": "B",
+                "value": 3,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "diff",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "assert %diff% equals 7",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 7,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%diff%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "multiply 6 by 7, write to %product%",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "math",
+            "action": "multiply",
+            "parameters": [
+              {
+                "name": "A",
+                "value": 6,
+                "type": "int"
+              },
+              {
+                "name": "B",
+                "value": 7,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "product",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "assert %product% equals 42",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 42,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%product%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 6,
+        "text": "divide 10 by 4, write to %quotient%",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "math",
+            "action": "divide",
+            "parameters": [
+              {
+                "name": "A",
+                "value": 10,
+                "type": "int"
+              },
+              {
+                "name": "B",
+                "value": 4,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "quotient",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 7,
+        "text": "assert %quotient% equals 2.5",
+        "lineNumber": 9,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 2.5,
+                "type": "double"
+              },
+              {
+                "name": "Actual",
+                "value": "%quotient%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 8,
+        "text": "get absolute value of -42, write to %absVal%",
+        "lineNumber": 10,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "math",
+            "action": "abs",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": -42,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "absVal",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 9,
+        "text": "assert %absVal% equals 42",
+        "lineNumber": 11,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 42,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%absVal%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 10,
+        "text": "round 3.14159 to 2 decimal places, write to %rounded%",
+        "lineNumber": 12,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "math",
+            "action": "round",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": 3.14159,
+                "type": "double"
+              },
+              {
+                "name": "Decimals",
+                "value": 2,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "rounded",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 11,
+        "text": "assert %rounded% equals 3.14",
+        "lineNumber": 13,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 3.14,
+                "type": "double"
+              },
+              {
+                "name": "Actual",
+                "value": "%rounded%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 12,
+        "text": "get min of 5 and 3, write to %minimum%",
+        "lineNumber": 14,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "math",
+            "action": "min",
+            "parameters": [
+              {
+                "name": "A",
+                "value": 5,
+                "type": "int"
+              },
+              {
+                "name": "B",
+                "value": 3,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "minimum",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 13,
+        "text": "assert %minimum% equals 3",
+        "lineNumber": 15,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 3,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%minimum%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 14,
+        "text": "get max of 5 and 3, write to %maximum%",
+        "lineNumber": 16,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "math",
+            "action": "max",
+            "parameters": [
+              {
+                "name": "A",
+                "value": 5,
+                "type": "int"
+              },
+              {
+                "name": "B",
+                "value": 3,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "maximum",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 15,
+        "text": "assert %maximum% equals 5",
+        "lineNumber": 17,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 5,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%maximum%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 16,
+        "text": "raise 2 to the power of 3, write to %pow%",
+        "lineNumber": 19,
+        "indent": 0,
+        "comment": "power",
+        "actions": [
+          {
+            "module": "math",
+            "action": "power",
+            "parameters": [
+              {
+                "name": "Base",
+                "value": 2,
+                "type": "int"
+              },
+              {
+                "name": "Exponent",
+                "value": 3,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "pow",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 17,
+        "text": "assert %pow% equals 8",
+        "lineNumber": 20,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 8,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%pow%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 18,
+        "text": "get square root of 16, write to %root%",
+        "lineNumber": 22,
+        "indent": 0,
+        "comment": "sqrt",
+        "actions": [
+          {
+            "module": "math",
+            "action": "sqrt",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": 16,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "root",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 19,
+        "text": "assert %root% equals 4",
+        "lineNumber": 23,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 4,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%root%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 20,
+        "text": "get floor of 3.7, write to %floored%",
+        "lineNumber": 25,
+        "indent": 0,
+        "comment": "floor",
+        "actions": [
+          {
+            "module": "math",
+            "action": "floor",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": 3.7,
+                "type": "double"
+              }
+            ],
+            "return": [
+              {
+                "name": "floored",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 21,
+        "text": "assert %floored% equals 3",
+        "lineNumber": 26,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 3,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%floored%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 22,
+        "text": "get ceiling of 3.2, write to %ceiled%",
+        "lineNumber": 28,
+        "indent": 0,
+        "comment": "ceiling",
+        "actions": [
+          {
+            "module": "math",
+            "action": "ceiling",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": 3.2,
+                "type": "double"
+              }
+            ],
+            "return": [
+              {
+                "name": "ceiled",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 23,
+        "text": "assert %ceiled% equals 4",
+        "lineNumber": 29,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 4,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%ceiled%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 24,
+        "text": "get 10 modulo 3, write to %mod%",
+        "lineNumber": 31,
+        "indent": 0,
+        "comment": "modulo",
+        "actions": [
+          {
+            "module": "math",
+            "action": "modulo",
+            "parameters": [
+              {
+                "name": "A",
+                "value": 10,
+                "type": "int"
+              },
+              {
+                "name": "B",
+                "value": 3,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "mod",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 25,
+        "text": "assert %mod% equals 1",
+        "lineNumber": 32,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 1,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%mod%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/Math.test.goal",
+    "prPath": "/.build/math.test.pr",
+    "hash": "2d30d897efc6ade166fdc152dfb9b20a8fe0ab7aa0b94fa7815bc406dc3c77ac",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

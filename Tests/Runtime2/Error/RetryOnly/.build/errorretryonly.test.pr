@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Builds the provided retry-exhaustion test flow into executable PLang steps with correct onError retry semantics.",
+    "description": "Compiles the Start goal into engine actions: initializes retry tracking variables, calls BareRetryGoal with retry handling that exhausts then calls BareRetryCatcher, asserts exhaustion propagated and attempt count is 3; repeats the same pattern for TimedRetryGoal with timed retry over 500ms and asserts exhaustion and attempt count.",
     "comment": null,
     "steps": [
       {
@@ -81,7 +81,12 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "BareRetryGoal",
+                "value": {
+                  "name": "BareRetryGoal",
+                  "description": "",
+                  "parallel": false,
+                  "parameters": []
+                },
                 "type": "goal.call"
               }
             ],
@@ -257,7 +262,20 @@
               {
                 "name": "GoalName",
                 "value": "TimedRetryGoal",
-                "type": "goal.call"
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          },
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "GoalName",
+                "value": "TimedRetryCatcher",
+                "type": "string"
               }
             ],
             "return": null,
@@ -360,7 +378,7 @@
     "path": "/ErrorRetryOnly.test.goal",
     "prPath": "/.build/errorretryonly.test.pr",
     "hash": "96a26b749f43cc186e430e26b98692236ef09efc220d4930e9241da1aa50525d",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

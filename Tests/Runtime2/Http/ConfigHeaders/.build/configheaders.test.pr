@@ -1,0 +1,191 @@
+[
+  {
+    "name": "Start",
+    "description": "Configures default HTTP headers, performs an unsigned GET to httpbin headers endpoint, then conditionally writes a message if the response is not empty.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "configure http, default headers {\u0027X-Test-Header\u0027: \u0027plang-test\u0027}",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: Configure default headers, verify they\u0027re sent",
+        "actions": [
+          {
+            "module": "http",
+            "action": "configure",
+            "parameters": [
+              {
+                "name": "DefaultHeaders",
+                "value": {
+                  "X-Test-Header": "plang-test"
+                },
+                "type": "dictionary"
+              },
+              {
+                "name": "Default",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "get https://httpbin.org/headers, unsigned, write to %response%",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "http",
+            "action": "request",
+            "parameters": [
+              {
+                "name": "Url",
+                "value": "https://httpbin.org/headers",
+                "type": "string"
+              },
+              {
+                "name": "Method",
+                "value": "GET",
+                "type": "httpmethod"
+              },
+              {
+                "name": "Unsigned",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": [
+              {
+                "name": "response",
+                "value": null
+              }
+            ],
+            "defaults": [
+              {
+                "name": "contenttype",
+                "value": "application/json",
+                "type": "string"
+              },
+              {
+                "name": "encoding",
+                "value": "utf-8",
+                "type": "string"
+              },
+              {
+                "name": "timeoutinsec",
+                "value": 30,
+                "type": "int"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "if %response% is not empty then",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "condition",
+            "action": "if",
+            "parameters": [
+              {
+                "name": "Left",
+                "value": "%response%",
+                "type": "string"
+              },
+              {
+                "name": "Operator",
+                "value": "isempty",
+                "type": "string"
+              },
+              {
+                "name": "Right",
+                "value": "",
+                "type": "string"
+              },
+              {
+                "name": "Negate",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": [
+              {
+                "name": "__conditionReturn__",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "write out \u0027Request with default headers returned data\u0027",
+        "lineNumber": 6,
+        "indent": 1,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "Request with default headers returned data",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ConfigHeaders.test.goal",
+    "prPath": "/.build/configheaders.test.pr",
+    "hash": "29e2997537ad66df7ec3cd4beb455913b7a6be87f3b2955e8024beda9cffaa69",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

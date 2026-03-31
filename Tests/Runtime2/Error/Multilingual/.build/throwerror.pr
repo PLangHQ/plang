@@ -1,7 +1,7 @@
 [
   {
     "name": "ThrowError",
-    "description": "Build goal ThrowError with a single throw step.",
+    "description": "Throws an intentional error with the provided message.",
     "comment": null,
     "steps": [
       {
@@ -19,11 +19,6 @@
                 "name": "Message",
                 "value": "intentional error",
                 "type": "string"
-              },
-              {
-                "name": "StatusCode",
-                "value": 500,
-                "type": "int"
               }
             ],
             "return": null,
@@ -42,7 +37,7 @@
     "path": "/ThrowError.goal",
     "prPath": "/.build/throwerror.pr",
     "hash": "227b802a61ecde7ab3c5b00a247f6e6ba6695f0b2db6325dd8b538a69a2642c6",
-    "builderVersion": "0.2.2",
+    "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

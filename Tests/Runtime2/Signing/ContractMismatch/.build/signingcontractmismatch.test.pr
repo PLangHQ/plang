@@ -1,0 +1,259 @@
+[
+  {
+    "name": "Start",
+    "description": "Creates an identity signer, sets test data, signs it with contract C0, then verifies with contract C1 expecting failure; on verification error it calls HandleContractError, and finally asserts the contractFailed flag is true.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "create identity testSigner",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: verify with wrong contracts fails",
+        "actions": [
+          {
+            "module": "identity",
+            "action": "create",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "testSigner",
+                "type": "string"
+              }
+            ],
+            "return": [
+              {
+                "name": "identity",
+                "value": null
+              }
+            ],
+            "defaults": [
+              {
+                "name": "setasdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "set %data% = { \u0022payload\u0022: \u0022test\u0022 }",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": {
+                  "payload": "test"
+                },
+                "type": "json"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "sign %data% with contracts [\u0027C0\u0027]",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "signing",
+            "action": "sign",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Contracts",
+                "value": [
+                  "C0"
+                ],
+                "type": "list\u003Cobject\u003E"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "verify %data% with contracts [\u0027C1\u0027], on error call HandleContractError",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "signing",
+            "action": "verify",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Contracts",
+                "value": [
+                  "C1"
+                ],
+                "type": "list\u003Cobject\u003E"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": {
+            "name": "HandleContractError",
+            "description": null,
+            "parallel": false,
+            "parameters": null,
+            "prPath": null
+          },
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "assert %contractFailed% is true, \u0022contract mismatch should fail verification\u0022",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isTrue",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%contractFailed%",
+                "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "contract mismatch should fail verification",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [
+      "HandleContractError"
+    ],
+    "visibility": 1,
+    "path": "/SigningContractMismatch.test.goal",
+    "prPath": "/.build/signingcontractmismatch.test.pr",
+    "hash": "e23baa32ba5c6d383b43980cdd9f678c91e6abf1f2fe6f058d5c35c0fbbe7fef",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  },
+  {
+    "name": "HandleContractError",
+    "description": "Sets the %contractFailed% variable to true (contract failure flag).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %contractFailed% = true",
+        "lineNumber": 10,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%contractFailed%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 0,
+    "path": "/SigningContractMismatch.test.goal",
+    "prPath": "/.build/signingcontractmismatch.test.pr",
+    "hash": "99dd5b372171f6680daa623bfc32ffd105f72a65ded41bf6ade7d30c5f3ac5dc",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

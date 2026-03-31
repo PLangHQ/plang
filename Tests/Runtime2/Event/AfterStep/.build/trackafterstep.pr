@@ -1,0 +1,58 @@
+[
+  {
+    "name": "TrackAfterStep",
+    "description": "Increments %afterCount% by 1 using variable.set with an expression value.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %afterCount% = %afterCount% \u002B 1",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%afterCount%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "%afterCount% \u002B 1",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/TrackAfterStep.goal",
+    "prPath": "/.build/trackafterstep.pr",
+    "hash": "e61efc7ed7e84e12985a055cdc731de72239a5a4d6abb5a762d78256849ac1ee",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

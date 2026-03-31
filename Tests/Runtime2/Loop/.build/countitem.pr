@@ -1,0 +1,58 @@
+[
+  {
+    "name": "CountItem",
+    "description": "Increments %count% by 1 using variable.set with an expression value.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %count% = %count% \u002B 1",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%count%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "%count% \u002B 1",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/CountItem.goal",
+    "prPath": "/.build/countitem.pr",
+    "hash": "40ee3f7bba0e615628ee90ccb5a4da7e07721b4f2dc62fc48137da9bce77051e",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]
