@@ -5,7 +5,8 @@ using PLang.Runtime2.modules.condition.providers;
 namespace PLang.Runtime2.modules.condition;
 
 [Example("if %count% > 0, call ProcessItems", "Left=%count%, Operator=>, Right=0, GoalIfTrue=ProcessItems")]
-[Example("if %isAdmin%, call ShowAdminPanel, else call ShowUserPanel", "Left=%isAdmin%, GoalIfTrue=ShowAdminPanel, GoalIfFalse=ShowUserPanel")]
+[Example("if %isAdmin%, call ShowAdminPanel, else call ShowUserPanel", "Left=%isAdmin%, Operator===, Right=true, GoalIfTrue=ShowAdminPanel, GoalIfFalse=ShowUserPanel")]
+[Example("if not %flag%, call HandleFalse", "Left=%flag%, Operator===, Right=true, Negate=true, GoalIfTrue=HandleFalse")]
 [Example("if %name% equals 'Alice'\n    - write 'Hello Alice'", "Left=%name%, Operator===, Right=Alice")]
 [Action("if")]
 public partial class If : IContext

@@ -56,6 +56,14 @@ public sealed partial class @this
     [Store, Debug, Default]
     public bool WaitForExecution { get; init; } = true;
 
+    /// <summary>
+    /// True when the next step has higher indent (sub-steps).
+    /// Lazy — navigates to parent Goal.Steps on access.
+    /// Used by the builder to omit GoalIfTrue/GoalIfFalse when sub-steps handle branching.
+    /// </summary>
+    [JsonIgnore]
+    public bool HasSubSteps => Goal?.Steps.HasIndentedChildren(Index) ?? false;
+
     [JsonIgnore]
     public Goals.Goal.@this? Goal { get; set; }
 

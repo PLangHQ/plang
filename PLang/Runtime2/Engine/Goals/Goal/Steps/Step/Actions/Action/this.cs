@@ -34,6 +34,11 @@ public sealed partial class @this
     [JsonIgnore]
     public bool Cacheable { get; init; } = true;
 
-    [JsonIgnore]
     public List<Data> Examples { get; init; } = new();
+
+    /// <summary>
+    /// Return type properties for the builder summary. Null when Run() returns plain Data.
+    /// Derived from the concrete return type of Run() via reflection in Describe().
+    /// </summary>
+    public List<Data>? ReturnType { get; init; }
 }

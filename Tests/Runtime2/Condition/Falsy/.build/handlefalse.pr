@@ -1,7 +1,7 @@
 [
   {
     "name": "HandleFalse",
-    "description": "Build goal step HandleFalse",
+    "description": "Built goal step for HandleFalse.",
     "comment": null,
     "steps": [
       {
@@ -23,6 +23,11 @@
               {
                 "name": "Value",
                 "value": "false-branch",
+                "type": "string"
+              },
+              {
+                "name": "Type",
+                "value": "string",
                 "type": "string"
               }
             ],

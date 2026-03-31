@@ -170,7 +170,7 @@ public class DefaultFileProvider : IFileProvider
         }
     }
 
-    public Data Exists(Exists action)
+    public PathData Exists(Exists action)
     {
         return new PathData(action.Path.Absolute, action.Context.Engine.FileSystem);
     }

@@ -184,6 +184,8 @@ public sealed class @this
                     .Select(e => new Memory.Data(e.Plang, e.Mapping))
                     .ToList();
 
+                var returnType = DescribeReturnType(parameterType);
+
                 result.Add(new Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = ns,
@@ -191,12 +193,50 @@ public sealed class @this
                     ParameterSchema = parameterType,
                     Parameters = parameters,
                     Cacheable = cacheable,
-                    Examples = examples
+                    Examples = examples,
+                    ReturnType = returnType
                 });
             }
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Reads the Run() method's return type. If it returns a concrete Data subtype,
+    /// reflects its public properties for the builder summary. Returns null for plain Data.
+    /// </summary>
+    private static List<Memory.Data>? DescribeReturnType(System.Type actionType)
+    {
+        var runMethod = actionType.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
+        if (runMethod == null) return null;
+
+        var returnType = runMethod.ReturnType;
+
+        // Unwrap Task<T> → T
+        if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+            returnType = returnType.GetGenericArguments()[0];
+
+        // Plain Data — no extra properties to describe
+        if (returnType == typeof(Memory.Data)) return null;
+
+        // Must be a Data subclass
+        if (!typeof(Memory.Data).IsAssignableFrom(returnType)) return null;
+
+        // Collect public properties that are NOT on the base Data class
+        var baseProps = typeof(Memory.Data).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Select(p => p.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var properties = new List<Memory.Data>();
+        foreach (var prop in returnType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (baseProps.Contains(prop.Name)) continue;
+            var typeName = Utility.TypeMapping.GetTypeName(prop.PropertyType);
+            properties.Add(new Memory.Data(prop.Name, typeName));
+        }
+
+        return properties.Count > 0 ? properties : null;
     }
 
     /// <summary>

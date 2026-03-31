@@ -1,3 +1,4 @@
+using PLang.Runtime2.Engine.FileSystem;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
 
@@ -11,5 +12,5 @@ public interface IFileProvider : IProvider
     Data Copy(Copy action);
     Data Move(Move action);
     Data List(List action);
-    Data Exists(Exists action);
+    PathData Exists(Exists action);
 }

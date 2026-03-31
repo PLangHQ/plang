@@ -308,6 +308,7 @@ public sealed partial class @this
                     Comment = comment
                 };
 
+                currentStep.Goal = currentGoal;
                 currentGoal.Steps.Add(currentStep);
                 stepIndex++;
                 continue;

@@ -240,6 +240,46 @@ public class IfHandlerTests : IDisposable
         await Assert.That(result.Value).IsEqualTo(true);
     }
 
+    // --- Data.ToBoolean tests ---
+
+    [Test]
+    public async Task IsTruthy_DataWithToBooleanTrue_ReturnsTrue()
+    {
+        var data = new TestData(true);
+
+        await Assert.That(Operator.IsTruthy(data)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsTruthy_DataWithToBooleanFalse_ReturnsFalse()
+    {
+        var data = new TestData(false);
+
+        await Assert.That(Operator.IsTruthy(data)).IsFalse();
+    }
+
+    [Test]
+    public async Task Run_EqualsTrueWithToBooleanTrue_ReturnsTrue()
+    {
+        var data = new TestData(true);
+        var action = new If { Context = CreateContext(), Left = data, Operator = "==", Right = Data.Ok(true) };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo(true);
+    }
+
+    [Test]
+    public async Task Run_EqualsTrueWithToBooleanFalse_ReturnsFalse()
+    {
+        var data = new TestData(false);
+        var action = new If { Context = CreateContext(), Left = data, Operator = "==", Right = Data.Ok(true) };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo(false);
+    }
+
     [Test]
     public async Task Run_Negate_IsEmpty_CallsGoalWhenNotEmpty()
     {
@@ -309,4 +349,11 @@ public class IfHandlerTests : IDisposable
         await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
         await Assert.That(result.Error!.Message).Contains("does not support comparison");
     }
+}
+
+public class TestData : Data
+{
+    private readonly bool _boolean;
+    public TestData(bool boolean) : base("test", "some-value") => _boolean = boolean;
+    public override bool ToBoolean() => _boolean;
 }

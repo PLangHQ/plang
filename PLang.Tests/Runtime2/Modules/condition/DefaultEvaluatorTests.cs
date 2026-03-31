@@ -101,10 +101,8 @@ public class DefaultEvaluatorTests
     [Test] public async Task Evaluate_IsEmpty_NonEmpty() => await Assert.That(IsFalse(Eval(new List<object> { 1 }, "isempty", null))).IsTrue();
     [Test] public async Task Evaluate_IsEmpty_Null() => await Assert.That(IsTrue(Eval(null, "isempty", null))).IsTrue();
 
-    // --- Logical & Unary ---
+    // --- Logical ---
 
-    [Test] public async Task Evaluate_Not_Truthy() => await Assert.That(IsFalse(Eval(true, "not", null))).IsTrue();
-    [Test] public async Task Evaluate_Not_Falsy() => await Assert.That(IsTrue(Eval(null, "not", null))).IsTrue();
     [Test] public async Task Evaluate_And_BothTrue() => await Assert.That(IsTrue(Eval(true, "and", true))).IsTrue();
     [Test] public async Task Evaluate_And_OneFalse() => await Assert.That(IsFalse(Eval(true, "and", false))).IsTrue();
     [Test] public async Task Evaluate_Or_BothFalse() => await Assert.That(IsFalse(Eval(false, "or", false))).IsTrue();
@@ -145,10 +143,4 @@ public class DefaultEvaluatorTests
     [Test] public async Task Truthy_String_IsInitialized() => await Assert.That(IsTrue(EvalIf("hello", "==", true))).IsTrue();
     [Test] public async Task Truthy_Null_NotInitialized() => await Assert.That(IsFalse(EvalIf(null, "==", true))).IsTrue();
 
-    // --- not operator: bool checks value, non-bool checks IsInitialized ---
-
-    [Test] public async Task Not_BoolTrue_IsFalse() => await Assert.That(IsFalse(EvalIf(true, "not"))).IsTrue();
-    [Test] public async Task Not_BoolFalse_IsTrue() => await Assert.That(IsTrue(EvalIf(false, "not"))).IsTrue();
-    [Test] public async Task Not_Int_IsFalse() => await Assert.That(IsFalse(EvalIf(42, "not"))).IsTrue();
-    [Test] public async Task Not_Null_IsTrue() => await Assert.That(IsTrue(EvalIf(null, "not"))).IsTrue();
 }

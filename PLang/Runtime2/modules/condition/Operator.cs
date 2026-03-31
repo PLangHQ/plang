@@ -26,7 +26,6 @@ public sealed class Operator : IObject
             ["endswith"] = (l, r) => StringOp(Val(l), Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase)),
             ["in"] = (l, r) => In(Val(l), Val(r)),
             ["isempty"] = (l, _) => IsEmpty(Val(l)),
-            ["not"] = (l, _) => !IsTruthy(l),
             ["and"] = (l, r) => IsTruthy(l) && IsTruthy(r),
             ["or"] = (l, r) => IsTruthy(l) || IsTruthy(r),
         };
@@ -61,18 +60,17 @@ public sealed class Operator : IObject
     public static bool IsTruthy(Data? data)
     {
         if (data == null) return false;
-        if (!data.IsInitialized) return false;
         if (data.Value is bool b) return b;
-        return data.IsInitialized;
+        return data.ToBoolean();
     }
 
     // --- Equality ---
 
     private static bool Equal(Data? left, Data? right)
     {
-        // == true with non-bool left: check IsInitialized
+        // == true with non-bool left: delegates to Data.ToBoolean()
         if (right?.Value is bool rb && left?.Value is not bool)
-            return rb ? left?.IsInitialized == true : left?.IsInitialized != true;
+            return rb ? left?.ToBoolean() == true : left?.ToBoolean() != true;
 
         // == true/false with bool left: normal equality
         return AreEqual(Val(left), Val(right));

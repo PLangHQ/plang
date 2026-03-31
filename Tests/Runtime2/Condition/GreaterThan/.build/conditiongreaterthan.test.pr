@@ -1,0 +1,138 @@
+[
+  {
+    "name": "Start",
+    "description": "Built goal steps with required actions. Note: the if-step cannot be fully constructed because the DSL requires a condition operator mapping that is not explicitly defined beyond the generic compare/if schema; however, the action mapping for the true branch is clear (goal.call).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %x% = 10",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: greater than operator calls goal when condition is true",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%x%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 10,
+                "type": "int"
+              }
+            ],
+            "return": [],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "if %x% \u003E 5, call WhenGreater",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "condition",
+            "action": "if",
+            "parameters": [
+              {
+                "name": "Left",
+                "value": "%x%",
+                "type": "string"
+              },
+              {
+                "name": "Operator",
+                "value": "\u003E",
+                "type": "string"
+              },
+              {
+                "name": "Right",
+                "value": 5,
+                "type": "int"
+              },
+              {
+                "name": "GoalIfTrue",
+                "value": {
+                  "name": "WhenGreater"
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": [
+              {
+                "name": "_cond1",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %result% equals \u0022greater\u0022, \u0022GoalIfTrue should have been called for x \u003E 5\u0022",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "greater",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%result%",
+                "type": "object"
+              },
+              {
+                "name": "Message",
+                "value": "GoalIfTrue should have been called for x \u003E 5",
+                "type": "string"
+              }
+            ],
+            "return": [],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ConditionGreaterThan.test.goal",
+    "prPath": "/.build/conditiongreaterthan.test.pr",
+    "hash": "df77bfacc5403b8a9d116844f19337ab0324690151f0dc72e84a3196e7406ea3",
+    "builderVersion": "0.2.2",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

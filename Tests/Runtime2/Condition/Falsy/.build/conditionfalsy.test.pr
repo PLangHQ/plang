@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal with falsy value triggering else branch in condition.",
+    "description": "Build goal for falsy value triggers else branch (GoalIfFalse).",
     "comment": null,
     "steps": [
       {
@@ -65,16 +65,14 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "HandleTrue",
-                  "parameters": []
+                  "name": "HandleTrue"
                 },
                 "type": "goal.call"
               },
               {
                 "name": "GoalIfFalse",
                 "value": {
-                  "name": "HandleFalse",
-                  "parameters": []
+                  "name": "HandleFalse"
                 },
                 "type": "goal.call"
               }

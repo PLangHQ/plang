@@ -121,6 +121,10 @@ public class PathData : Data
 
     public string? Source { get; }
 
+    // --- ToBoolean ---
+
+    public override bool ToBoolean() => Exists;
+
     // --- Display ---
 
     public override string ToString() => Value?.ToString() ?? Relative;

@@ -1,3 +1,4 @@
+using PLang.Runtime2.Engine.FileSystem;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.file.providers;
 
@@ -13,5 +14,5 @@ public partial class Exists : IContext
     [Provider]
     public partial IFileProvider Files { get; }
 
-    public Task<Data> Run() => Task.FromResult(Files.Exists(this));
+    public Task<PathData> Run() => Task.FromResult(Files.Exists(this));
 }

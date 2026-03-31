@@ -205,6 +205,12 @@ public partial class Data
 
     /// <summary>
     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.
+    /// The natural boolean meaning of this Data.
+    /// Default: IsInitialized. Subtypes override (e.g., PathData → Exists).
+    /// </summary>
+    public virtual bool ToBoolean() => IsInitialized;
+
+    /// <summary>
     /// Virtual so subclasses (DataList) can override with proper cloning.
     /// SettingsData and DynamicData should not be cloned — they are stateless/factory-based.
     /// </summary>

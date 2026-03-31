@@ -43,6 +43,7 @@ Action level:
 
 - Warning: you built it but want to flag something (typo, low confidence, missing variable)
 - Error: you could not build it
+- `missingVariable` is ALWAYS a warning, never an error. Variables can be set by called goals — you cannot see into sub-goals. Build the step and flag as a warning.
 
 ## Step Modifiers
 
@@ -74,22 +75,17 @@ When you see an error modifier:
 
 ## Example
 
+This example shows the response format and step-level features (approved, needsDetail, cache, onError, errors, warnings). Module/action parameter mappings come from the action summaries and examples above — follow those, not this example, for parameter names and types.
+
 Goal:
 ```plang
 Start
-- write out "hello"  <= pr: {actions: [{module: "output", action: "write", parameters: [{name: "content", value: "hello", type: "string"}]}]}
-- set \%count\% = 5
-- select * from users, write to \%users\%
+- write out "hello"  <= pr: {actions: [{module: "output", action: "write", parameters: [{name: "Content", value: "hello", type: "string"}]}]}
 - sign \%payload\% with sha256 and verify with \%publicKey\%, write to \%isValid\%
 - get data from server
-- get \%apiUrl\%, write to \%result\%
 - read file 'config.json', write to \%config\%\n    cache for 5 minutes
-- throw error "something went wrong", on error ignore
-- call Greet name=\%userName\%
 - call ProcessData, on error call HandleError
-- call LoadData, on error retry 3 times over 5000
 - call SaveData, on error retry 2 times, then call HandleSaveError
-- if \%count\%, call ProcessData
 ```
 
 Response:
@@ -99,18 +95,11 @@ Response:
   "warnings": [],
   "steps": [
     {"index": 0, "approved": true},
-    {"index": 1, "actions": [{"module": "variable", "action": "set", "parameters": [{"name": "name", "value": "\%count\%", "type": "string"}, {"name": "value", "value": 5, "type": "int"}]}]},
-    {"index": 2, "actions": [{"module": "db", "action": "select", "parameters": [{"name": "sql", "value": "select * from users", "type": "string"}], "return": [{"name": "\%users\%"}]}]},
-    {"index": 3, "needsDetail": true, "actions": [{"module": "crypto", "action": "sign", "return": [{"name": "\%signature\%"}]}, {"module": "crypto", "action": "verify", "return": [{"name": "\%isValid\%"}]}]},
-    {"index": 4, "errors": [{"key": "ambiguousStep", "message": "could be db.select or http.get"}], "actions": []},
-    {"index": 5, "actions": [{"module": "http", "action": "get", "parameters": [{"name": "url", "value": "\%apiUrl\%", "type": "string"}], "return": [{"name": "\%result\%"}], "warnings": [{"key": "missingVariable", "message": "\%apiUrl\% not set in previous steps"}]}]},
-    {"index": 6, "actions": [{"module": "file", "action": "read", "parameters": [{"name": "path", "value": "config.json", "type": "string"}], "return": [{"name": "\%config\%"}]}], "cache": {"durationMs": 300000}},
-    {"index": 7, "actions": [{"module": "error", "action": "throw", "parameters": [{"name": "message", "value": "something went wrong", "type": "string"}]}], "onError": {"ignoreError": true}},
-    {"index": 8, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": {"name": "Greet", "parameters": [{"name": "name", "value": "\%userName\%", "type": "string"}]}, "type": "goal.call"}]}]},
-    {"index": 9, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "ProcessData", "type": "goal.call"}]}], "onError": {"goal": {"name": "HandleError"}}},
-    {"index": 10, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "LoadData", "type": "goal.call"}]}], "onError": {"retryCount": 3, "retryOverMs": 5000}},
-    {"index": 11, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "SaveData", "type": "goal.call"}]}], "onError": {"retryCount": 2, "order": "RetryFirst", "goal": {"name": "HandleSaveError"}}},
-    {"index": 12, "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Condition", "value": "\%count\%", "type": "bool"}, {"name": "GoalIfTrue", "value": "ProcessData", "type": "goal.call"}]}]}
+    {"index": 1, "needsDetail": true, "actions": [{"module": "crypto", "action": "sign", "return": [{"name": "\%signature\%"}]}, {"module": "crypto", "action": "verify", "return": [{"name": "\%isValid\%"}]}]},
+    {"index": 2, "errors": [{"key": "ambiguousStep", "message": "could be db.select or http.get"}], "actions": []},
+    {"index": 3, "actions": [{"module": "file", "action": "read", "parameters": [{"name": "Path", "value": "config.json", "type": "path"}], "return": [{"name": "\%config\%"}]}], "cache": {"durationMs": 300000}},
+    {"index": 4, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "ProcessData"}, "type": "goal.call"}]}], "onError": {"goal": {"name": "HandleError"}}},
+    {"index": 5, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "SaveData"}, "type": "goal.call"}]}], "onError": {"retryCount": 2, "order": "RetryFirst", "goal": {"name": "HandleSaveError"}}}
   ]
 }
 ```
@@ -126,6 +115,7 @@ Response:
 - Actions within a step execute in order. A later action can reference the return variable of an earlier action in the same step.
 - For `goal.call` type parameters: the value is a plain string with the goal name (e.g., "ProcessData"). When the goal needs parameters, use the object form: {"name": "GoalName", "parameters": [{"name": "key", "value": "value", "type": "string"}]}. The parameters array uses the same {name, value, type} format as action parameters. The field inside the object is `name`, not the parameter name.
 - Omit nullable parameters (types ending in ?) entirely when not applicable — do NOT include them with empty or null values.
-- \%variable\% references in parameter values are resolved at runtime. NEVER pre-evaluate them at build time. For bool parameters, use the \%variable\% reference string (e.g., "\%isReady\%") — the runtime resolves it to the variable's value and converts to bool. Do not hardcode true/false based on what you think the variable's value might be.
+- \%variable\% references in parameter values are resolved at runtime. NEVER pre-evaluate them at build time. For bool parameters referencing variables, use the \%variable\% reference string (e.g., "\%isReady\%") — the runtime resolves it. Do not hardcode true/false based on what you think the variable's value might be.
+- Literal values must use correct JSON types: `true`/`false` (JSON boolean, not string "true"/"false"), numbers without quotes, strings with quotes. The `type` field must match: `"bool"` for booleans, `"int"` for integers, `"string"` for strings.
 - CRITICAL: When a step expresses error handling intent (calling a goal on failure, retrying, ignoring errors), you MUST include the `onError` object on the step result. This applies to ALL step types including `goal.call` steps. Missing `onError` is a build-breaking bug.
 - NEVER alter literal values from the step text. If the step says `assert %x% equals "content1"`, the expected value MUST be "content1" — not "content2" or any other value. You are a compiler, not an editor. Reproduce the user's values exactly, even if you think they are wrong. Flag concerns as warnings, but never change the values.

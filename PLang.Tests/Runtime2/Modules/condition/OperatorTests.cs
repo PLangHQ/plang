@@ -47,7 +47,6 @@ public class OperatorTests
         await Assert.That(values).Contains("endswith");
         await Assert.That(values).Contains("in");
         await Assert.That(values).Contains("isempty");
-        await Assert.That(values).Contains("not");
         await Assert.That(values).Contains("and");
         await Assert.That(values).Contains("or");
     }
@@ -102,24 +101,6 @@ public class OperatorTests
         var op = new Operator(">");
         await Assert.That(op.Evaluate(D(10), D(5))).IsTrue();
         await Assert.That(op.Evaluate(D(5), D(10))).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_Not_Bool()
-    {
-        var op = new Operator("not");
-        await Assert.That(op.Evaluate(D(false), null)).IsTrue();
-        await Assert.That(op.Evaluate(D(true), null)).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_Not_NonBool_ChecksIsInitialized()
-    {
-        var op = new Operator("not");
-        // Initialized non-bool → IsTruthy = true → not = false
-        await Assert.That(op.Evaluate(D(42), null)).IsFalse();
-        // Null → IsTruthy = false → not = true
-        await Assert.That(op.Evaluate(null, null)).IsTrue();
     }
 
     // --- IObject interface ---

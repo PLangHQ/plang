@@ -36,6 +36,42 @@ public class PathTests : IDisposable
         return path;
     }
 
+    // --- ToBoolean ---
+
+    [Test]
+    public async Task ToBoolean_FileExists_ReturnsTrue()
+    {
+        var path = TempFile("exists.txt");
+        var pd = new PathData(path, _fs);
+
+        await Assert.That(pd.ToBoolean()).IsTrue();
+    }
+
+    [Test]
+    public async Task ToBoolean_FileDoesNotExist_ReturnsFalse()
+    {
+        var pd = new PathData(_fs.Path.Combine(_tempDir, "nope.txt"), _fs);
+
+        await Assert.That(pd.ToBoolean()).IsFalse();
+    }
+
+    [Test]
+    public async Task IsTruthy_PathDataExists_ReturnsTrue()
+    {
+        var path = TempFile("truthy.txt");
+        var pd = new PathData(path, _fs);
+
+        await Assert.That(PLang.Runtime2.modules.condition.Operator.IsTruthy(pd)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsTruthy_PathDataNotExists_ReturnsFalse()
+    {
+        var pd = new PathData(_fs.Path.Combine(_tempDir, "missing.txt"), _fs);
+
+        await Assert.That(PLang.Runtime2.modules.condition.Operator.IsTruthy(pd)).IsFalse();
+    }
+
     // --- Constructor & Absolute ---
 
     [Test]

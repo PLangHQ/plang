@@ -1,7 +1,7 @@
 [
   {
     "name": "HandleTrue",
-    "description": "Build goal HandleTrue from provided PR data.",
+    "description": "Built goal HandleTrue with one variable assignment step.",
     "comment": null,
     "steps": [
       {
@@ -24,9 +24,14 @@
                 "name": "Value",
                 "value": "true-branch",
                 "type": "string"
+              },
+              {
+                "name": "Type",
+                "value": "string",
+                "type": "string"
               }
             ],
-            "return": null,
+            "return": [],
             "defaults": null
           }
         ],
