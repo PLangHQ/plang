@@ -173,13 +173,27 @@ Any change to the builder (prompt, validator, .pr files) means all previously pa
 ## Build & Run Commands
 
 ```
-plang p --build                                    # Build from current directory
-plang p --build={"cache":false}                    # Build without LLM cache
-plang p --test                                     # Run tests from current directory
-plang p --debug=true                               # Debug all steps
-plang p --debug={"goal":"GoalName","step":3}       # Debug specific step
-plang p --build --debug={"goal":"BuildGoal"}       # Build with debug on specific goal
+plang p --build                                                          # Build from current directory
+plang p --build={"cache":false}                                          # Build without LLM cache
+plang p --test                                                           # Run tests from current directory
+plang p --debug=true                                                     # Debug all steps
+plang p --debug={"goal":"GoalName","step":3}                             # Debug specific step
+plang p --debug={"goal":"BuildGoal","step":3,"maxLength":0}              # No truncation
+plang p --debug={"goal":"BuildGoal","step":3,"grep":"condition"}         # Filter output (regex)
+plang p --debug={"goal":"BuildGoal","step":3,"maxLength":0,"grep":"if"}  # Full content, filtered
+plang p --build --debug={"goal":"BuildGoal"}                             # Build with debug
 ```
+
+### Debug Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `goal` | `*` (all) | Only debug steps in this goal |
+| `step` | all | Only debug this step index |
+| `maxLength` | 500 | Max characters per line in output. `0` = no truncation |
+| `grep` | none | Regex filter — only show lines matching the pattern |
+
+**Order matters**: grep runs on full (untrimmed) content first, then maxLength truncation applies. This ensures grep matches aren't lost to truncation.
 
 ## LLM Cache
 

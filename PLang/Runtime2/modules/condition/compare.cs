@@ -9,7 +9,7 @@ namespace PLang.Runtime2.modules.condition;
 public partial class Compare : IContext
 {
     public partial Data? Left { get; init; }
-    public partial string Operator { get; init; }
+    public partial Operator Operator { get; init; }
     public partial Data? Right { get; init; }
 
     [Provider]

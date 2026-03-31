@@ -58,15 +58,10 @@ public class CompareHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task Run_UnsupportedOperator_ReturnsEvaluationError()
+    public async Task Run_UnsupportedOperator_ThrowsOnConstruction()
     {
-        var action = new Compare { Context = _engine.CreateContext(), Left = Data.Ok(1), Operator = "xor", Right = Data.Ok(2) };
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
-        await Assert.That(result.Error!.Message).Contains("xor");
-        await Assert.That(result.Error!.Message).Contains("Int32");
+        await Assert.That(() => new Operator("xor")).ThrowsException()
+            .WithMessageMatching("*Unsupported operator*");
     }
 
     [Test]

@@ -30,9 +30,9 @@ public class IfHandlerTests : IDisposable
     private PLangContext CreateContext() => _engine.CreateContext();
 
     [Test]
-    public async Task Run_NoOperator_TruthyLeft_ReturnsTrue()
+    public async Task Run_Truthy_InitializedNonBool_ReturnsTrue()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(42) };
+        var action = new If { Context = CreateContext(), Left = Data.Ok(42), Operator = "==", Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -40,9 +40,9 @@ public class IfHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task Run_NoOperator_FalsyLeft_ReturnsFalse()
+    public async Task Run_Truthy_UninitializedLeft_ReturnsFalse()
     {
-        var action = new If { Context = CreateContext(), Left = new Data("") };
+        var action = new If { Context = CreateContext(), Left = new Data(""), Operator = "==", Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -96,6 +96,8 @@ public class IfHandlerTests : IDisposable
         {
             Context = CreateContext(),
             Left = Data.Ok(true),
+            Operator = "==",
+            Right = Data.Ok(true),
             GoalIfTrue = new GoalCall { Name = "TrueBranch" }
         };
         var result = await action.Run();
@@ -145,6 +147,8 @@ public class IfHandlerTests : IDisposable
         {
             Context = CreateContext(),
             Left = Data.Ok(false),
+            Operator = "==",
+            Right = Data.Ok(true),
             GoalIfFalse = new GoalCall { Name = "FalseBranch" }
         };
         var result = await action.Run();
@@ -206,6 +210,8 @@ public class IfHandlerTests : IDisposable
         {
             Context = CreateContext(),
             Left = Data.Ok(true),
+            Operator = "==",
+            Right = Data.Ok(true),
             GoalIfTrue = new GoalCall { Name = "NonExistentGoal" }
         };
         var result = await action.Run();
@@ -215,15 +221,10 @@ public class IfHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task Run_UnsupportedOperator_ReturnsEvaluationError()
+    public async Task Run_UnsupportedOperator_ThrowsOnConstruction()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(1), Operator = "xor", Right = Data.Ok(2) };
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
-        await Assert.That(result.Error!.Message).Contains("xor");
-        await Assert.That(result.Error!.Message).Contains("Int32");
+        await Assert.That(() => new Operator("xor")).ThrowsException()
+            .WithMessageMatching("*Unsupported operator*");
     }
 
     [Test]

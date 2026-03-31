@@ -359,6 +359,36 @@ public static class TypeMapping
                 return (null, convError);
         }
 
+        // Handle IObject types — validated value types with string constructors
+        if (typeof(PLang.Runtime2.modules.IObject).IsAssignableFrom(targetType))
+        {
+            var strVal = value is string sv ? sv : value?.ToString();
+            if (strVal == null)
+                return (null, new Engine.Errors.Error(
+                    $"Cannot convert null to {targetType.Name}",
+                    "IObjectConversionFailed", 400));
+            var ctor = targetType.GetConstructor([typeof(string)]);
+            if (ctor == null)
+                return (null, new Engine.Errors.Error(
+                    $"{targetType.Name} has no string constructor",
+                    "IObjectConversionFailed", 400));
+            try
+            {
+                return (ctor.Invoke([strVal]), null);
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException ?? ex;
+                var validValues = GetValidValues(targetType);
+                return (null, new Engine.Errors.Error(
+                    inner.Message,
+                    "IObjectConversionFailed", 400)
+                    { FixSuggestion = validValues != null
+                        ? $"Valid values: {string.Join(", ", validValues)}"
+                        : null });
+            }
+        }
+
         // Handle enum types
         if (targetType.IsEnum)
         {

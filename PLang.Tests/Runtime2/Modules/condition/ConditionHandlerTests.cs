@@ -36,7 +36,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfTrue_NoGoals_ReturnsSuccessWithTrue()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(true) };
+        var action = new If { Context = CreateContext(), Left = Data.Ok(true), Operator = "==", Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -46,7 +46,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfFalse_NoGoals_ReturnsSuccessWithFalse()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(false) };
+        var action = new If { Context = CreateContext(), Left = Data.Ok(false), Operator = "==", Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -94,6 +94,8 @@ public class ConditionHandlerTests : IDisposable
         {
             Context = CreateContext(),
             Left = Data.Ok(true),
+            Operator = "==",
+            Right = Data.Ok(true),
             GoalIfTrue = new GoalCall { Name = "TrueBranch" },
             GoalIfFalse = new GoalCall { Name = "FalseBranch" }
         };
@@ -145,6 +147,8 @@ public class ConditionHandlerTests : IDisposable
         {
             Context = CreateContext(),
             Left = Data.Ok(false),
+            Operator = "==",
+            Right = Data.Ok(true),
             GoalIfTrue = new GoalCall { Name = "TrueBranch" },
             GoalIfFalse = new GoalCall { Name = "FalseBranch" }
         };
@@ -166,6 +170,8 @@ public class ConditionHandlerTests : IDisposable
         {
             Context = CreateContext(),
             Left = Data.Ok(true),
+            Operator = "==",
+            Right = Data.Ok(true),
             GoalIfTrue = new GoalCall { Name = "NonExistentGoal" }
         };
         var result = await action.Run();
@@ -247,6 +253,8 @@ public class ConditionHandlerTests : IDisposable
                             Parameters = new System.Collections.Generic.List<Data>
                             {
                                 new Data("left", "%fileResult.Exists%"),
+                                new Data("operator", "=="),
+                                new Data("right", true),
                                 new Data("goalIfTrue", "WriteExists")
                             }
                         }

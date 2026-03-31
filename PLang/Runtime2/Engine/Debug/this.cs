@@ -38,7 +38,6 @@ public sealed class @this
         }
         else if (debugValue is not true and not false)
         {
-            // Newtonsoft JObject or other dictionary-like types — convert via generic dictionary
             var converted = ToDictionary(debugValue);
             if (converted != null)
                 ParseJsonFilter(converted, out goalFilter, out stepFilter);
@@ -131,7 +130,7 @@ public sealed class @this
             sb.AppendLine($"  Action: {action.Module}.{action.ActionName}");
             foreach (var p in action.Parameters)
             {
-                sb.AppendLine($"    {p.Name} = {FormatValue(p.Value)}");
+                sb.AppendLine($"    {p.Name} = {FormatValue(p.Value, context)}");
             }
 
             if (action.Return != null && action.Return.Count > 0)
@@ -151,10 +150,10 @@ public sealed class @this
             }
         }
 
-        AppendStepVariables(sb, step, context.MemoryStack);
+        AppendStepVariables(sb, context);
         sb.AppendLine("========================================");
 
-        Console.Error.Write(sb);
+        WriteFiltered(sb, context);
         return Task.FromResult(Data.Ok());
     }
 
@@ -169,11 +168,45 @@ public sealed class @this
 
         sb.AppendLine($"=== DEBUG [AFTER]: Step [{step.Index}] of {goalName} ===");
 
-        AppendStepVariables(sb, step, context.MemoryStack);
+        AppendStepVariables(sb, context);
         sb.AppendLine("========================================");
 
-        Console.Error.Write(sb);
+        WriteFiltered(sb, context);
         return Task.FromResult(Data.Ok());
+    }
+
+    private static void WriteFiltered(StringBuilder sb, PLangContext context)
+    {
+        var maxLen = GetMaxLength(context);
+        var grep = GetGrepPattern(context);
+        var output = sb.ToString();
+
+        // Grep first on full content
+        if (grep != null)
+        {
+            var filtered = new StringBuilder();
+            foreach (var line in output.Split('\n'))
+            {
+                if (grep.IsMatch(line))
+                    filtered.AppendLine(line);
+            }
+            output = filtered.ToString();
+        }
+
+        // Then truncate lines for display
+        if (maxLen > 0)
+        {
+            var truncated = new StringBuilder();
+            foreach (var line in output.Split('\n'))
+            {
+                truncated.AppendLine(line.Length > maxLen
+                    ? $"{line[..maxLen]}... ({line.Length} chars)"
+                    : line);
+            }
+            output = truncated.ToString();
+        }
+
+        Console.Error.Write(output);
     }
 
     private static Task<Data> AfterGoalHandler(PLangContext context)
@@ -183,15 +216,33 @@ public sealed class @this
         return Task.FromResult(Data.Ok());
     }
 
+    private static int GetMaxLength(PLangContext context)
+    {
+        var val = context.MemoryStack.GetValue("!debug.maxLength");
+        if (val is int i) return i;
+        if (val is long l) return (int)l;
+        return 500; // default
+    }
+
+    private static Regex? GetGrepPattern(PLangContext context)
+    {
+        var val = context.MemoryStack.GetValue("!debug.grep");
+        if (val is not string pattern || string.IsNullOrEmpty(pattern)) return null;
+        try { return new Regex(pattern, RegexOptions.IgnoreCase); }
+        catch { return new Regex(Regex.Escape(pattern), RegexOptions.IgnoreCase); }
+    }
+
     private static readonly Regex VarRefPattern = new(@"%([^%]+)%", RegexOptions.Compiled);
 
-    private static void AppendStepVariables(StringBuilder sb, Step step, MemoryStack memoryStack)
+    private static void AppendStepVariables(StringBuilder sb, PLangContext context)
     {
+        var step = context.Step;
+        if (step == null) return;
+
         var varNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var action in step.Actions)
         {
-            // Collect from Return
             if (action.Return != null)
             {
                 foreach (var r in action.Return)
@@ -201,7 +252,6 @@ public sealed class @this
                 }
             }
 
-            // Collect %var% references from parameter values
             foreach (var p in action.Parameters)
             {
                 if (p.Value is string s)
@@ -217,30 +267,31 @@ public sealed class @this
         sb.AppendLine($"  Variables ({varNames.Count}):");
         foreach (var name in varNames)
         {
-            var data = memoryStack.Get(name);
+            var data = context.MemoryStack.Get(name);
             if (data == null || !data.IsInitialized)
             {
                 sb.AppendLine($"    %{name}% = (undefined)");
                 continue;
             }
 
-            sb.AppendLine($"    %{name}% = {FormatValue(data.Value)} ({data.Type?.Value ?? "?"})");
+            sb.AppendLine($"    %{name}% = {FormatValue(data.Value, context)} ({data.Type?.Value ?? "?"})");
 
             if (data.Properties.Count > 0)
             {
                 sb.AppendLine($"      Properties ({data.Properties.Count}):");
                 foreach (var prop in data.Properties)
                 {
-                    sb.AppendLine($"        {prop.Name} = {FormatValue(prop.Value)}");
+                    sb.AppendLine($"        {prop.Name} = {FormatValue(prop.Value, context)}");
                 }
             }
         }
     }
 
-    private static string FormatValue(object? value)
+    private static string FormatValue(object? value, PLangContext context)
     {
+        // Always format full content — truncation happens at WriteFiltered
         if (value == null) return "(null)";
-        if (value is string s) return s.Length > 500 ? $"\"{s[..500]}...\" ({s.Length} chars)" : $"\"{s}\"";
+        if (value is string s) return $"\"{s}\"";
         if (value is System.Collections.IDictionary dict)
         {
             var preview = new List<string>();
@@ -269,7 +320,7 @@ public sealed class @this
             return count == 1 ? $"[1 item: {firstStr}]" : $"[{count} items, first: {firstStr}]";
         }
         var str = value.ToString() ?? "(null)";
-        return str.Length > 200 ? $"{str[..200]}... ({str.Length} chars)" : str;
+        return str;
     }
 
     private static string FormatPreviewValue(object? value)

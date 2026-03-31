@@ -59,6 +59,15 @@ plang p --debug={"goal":"Start"}
 # Debug specific step in a goal
 plang p --debug={"goal":"BuildGoal","step":6}
 
+# Full output, no truncation
+plang p --debug={"goal":"BuildGoal","step":3,"maxLength":0}
+
+# Filter output with regex
+plang p --debug={"goal":"BuildGoal","step":3,"grep":"condition"}
+
+# Full content, filtered
+plang p --debug={"goal":"BuildGoal","step":3,"maxLength":0,"grep":"# condition"}
+
 # Combine with build
 plang p --build={"cache":false} --debug={"goal":"BuildGoal","step":6}
 ```
@@ -67,11 +76,15 @@ Schema:
 ```json
 {
   "goal": "GoalName",       // optional — debug only this goal
-  "step": 3                 // optional — debug only this step index (requires goal)
+  "step": 3,                // optional — debug only this step index
+  "maxLength": 500,         // optional — max chars per line (0 = no limit, default 500)
+  "grep": "pattern"         // optional — regex filter on output lines
 }
 ```
 
 Or just `true` for debug everything.
+
+**grep runs before truncation** — full content is searched, then matching lines are truncated for display. This prevents grep matches from being lost to truncation.
 
 ### Test Parameters
 

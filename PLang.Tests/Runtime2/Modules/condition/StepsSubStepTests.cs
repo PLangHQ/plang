@@ -45,7 +45,12 @@ public class StepsSubStepTests : IDisposable
                 {
                     Module = "condition",
                     ActionName = "if",
-                    Parameters = new List<Data> { new Data("left", conditionResult) }
+                    Parameters = new List<Data>
+                    {
+                        new Data("left", conditionResult),
+                        new Data("operator", "=="),
+                        new Data("right", true)
+                    }
                 }
             }
         };

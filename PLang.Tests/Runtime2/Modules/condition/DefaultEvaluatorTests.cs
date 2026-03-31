@@ -13,7 +13,7 @@ public class DefaultEvaluatorTests
     private Data Eval(object? left, string op, object? right)
         => _eval.Evaluate(new Compare { Left = D(left), Operator = op, Right = D(right) });
 
-    private Data EvalIf(object? left, string? op = null, object? right = null)
+    private Data EvalIf(object? left, string op = "==", object? right = null)
         => _eval.Evaluate(new If { Left = D(left), Operator = op, Right = D(right) });
 
     private bool IsTrue(Data result) => result.Success && (bool)result.Value!;
@@ -121,11 +121,10 @@ public class DefaultEvaluatorTests
     [Test] public async Task Evaluate_StringEquality_CaseInsensitive() => await Assert.That(IsTrue(Eval("Hello", "==", "hello"))).IsTrue();
 
     [Test]
-    public async Task Evaluate_UnsupportedOperator_ReturnsError()
+    public async Task Evaluate_UnsupportedOperator_ThrowsOnConstruction()
     {
-        var result = Eval(1, "xor", 2);
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
+        await Assert.That(() => new Operator("xor")).ThrowsException()
+            .WithMessageMatching("*Unsupported operator*");
     }
 
     [Test]
@@ -138,19 +137,18 @@ public class DefaultEvaluatorTests
 
     [Test] public async Task Evaluate_UnknownNumericType() => await Assert.That(IsTrue(Eval((ushort)5, "==", (ushort)5))).IsTrue();
 
-    // --- IsTruthy via If (null operator) ---
+    // --- Truthy via == true: bool left checks value, non-bool left checks IsInitialized ---
 
-    [Test] public async Task IsTruthy_Null() => await Assert.That(IsFalse(EvalIf(null))).IsTrue();
-    [Test] public async Task IsTruthy_True() => await Assert.That(IsTrue(EvalIf(true))).IsTrue();
-    [Test] public async Task IsTruthy_False() => await Assert.That(IsFalse(EvalIf(false))).IsTrue();
-    [Test] public async Task IsTruthy_ZeroInt() => await Assert.That(IsFalse(EvalIf(0))).IsTrue();
-    [Test] public async Task IsTruthy_NonZeroInt() => await Assert.That(IsTrue(EvalIf(42))).IsTrue();
-    [Test] public async Task IsTruthy_ZeroLong() => await Assert.That(IsFalse(EvalIf(0L))).IsTrue();
-    [Test] public async Task IsTruthy_ZeroDouble() => await Assert.That(IsFalse(EvalIf(0.0))).IsTrue();
-    [Test] public async Task IsTruthy_EmptyString() => await Assert.That(IsFalse(EvalIf(""))).IsTrue();
-    [Test] public async Task IsTruthy_Whitespace() => await Assert.That(IsFalse(EvalIf("  "))).IsTrue();
-    [Test] public async Task IsTruthy_NonEmptyString() => await Assert.That(IsTrue(EvalIf("hello"))).IsTrue();
-    [Test] public async Task IsTruthy_EmptyCollection() => await Assert.That(IsFalse(EvalIf(new List<int>()))).IsTrue();
-    [Test] public async Task IsTruthy_NonEmptyCollection() => await Assert.That(IsTrue(EvalIf(new List<int> { 1 }))).IsTrue();
-    [Test] public async Task IsTruthy_Object() => await Assert.That(IsTrue(EvalIf(new object()))).IsTrue();
+    [Test] public async Task Truthy_BoolTrue_IsTrue() => await Assert.That(IsTrue(EvalIf(true, "==", true))).IsTrue();
+    [Test] public async Task Truthy_BoolFalse_IsFalse() => await Assert.That(IsFalse(EvalIf(false, "==", true))).IsTrue();
+    [Test] public async Task Truthy_Int_IsInitialized() => await Assert.That(IsTrue(EvalIf(42, "==", true))).IsTrue();
+    [Test] public async Task Truthy_String_IsInitialized() => await Assert.That(IsTrue(EvalIf("hello", "==", true))).IsTrue();
+    [Test] public async Task Truthy_Null_NotInitialized() => await Assert.That(IsFalse(EvalIf(null, "==", true))).IsTrue();
+
+    // --- not operator: bool checks value, non-bool checks IsInitialized ---
+
+    [Test] public async Task Not_BoolTrue_IsFalse() => await Assert.That(IsFalse(EvalIf(true, "not"))).IsTrue();
+    [Test] public async Task Not_BoolFalse_IsTrue() => await Assert.That(IsTrue(EvalIf(false, "not"))).IsTrue();
+    [Test] public async Task Not_Int_IsFalse() => await Assert.That(IsFalse(EvalIf(42, "not"))).IsTrue();
+    [Test] public async Task Not_Null_IsTrue() => await Assert.That(IsTrue(EvalIf(null, "not"))).IsTrue();
 }
