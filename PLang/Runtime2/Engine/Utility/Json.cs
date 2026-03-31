@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
 namespace PLang.Runtime2.Engine.Utility;
@@ -11,11 +12,14 @@ public static class Json
 {
     /// <summary>
     /// Case-insensitive property matching for deserialization.
+    /// Handles enums as strings and string↔number coercion (LLM output is non-deterministic).
     /// Use for: .pr files, app.pr, HTTP responses, any JSON read where casing may vary.
     /// </summary>
     public static readonly JsonSerializerOptions CaseInsensitiveRead = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true) },
+        NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
     /// <summary>

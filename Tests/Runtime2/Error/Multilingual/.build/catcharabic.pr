@@ -1,12 +1,12 @@
 [
   {
-    "name": "CatchError",
-    "description": "Build goal CatchError: capture the current error message into %caughtMessage%.",
+    "name": "CatchArabic",
+    "description": "Build goal CatchArabic",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %caughtMessage% = %!error.Message%",
+        "text": "set %caughtArabic% = true",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
@@ -17,13 +17,23 @@
             "parameters": [
               {
                 "name": "Name",
-                "value": "%caughtMessage%",
+                "value": "%caughtArabic%",
                 "type": "string"
               },
               {
                 "name": "Value",
-                "value": "%!error.Message%",
-                "type": "object"
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "Type",
+                "value": null,
+                "type": "string?"
+              },
+              {
+                "name": "AsDefault",
+                "value": false,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -39,9 +49,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/CatchError.goal",
-    "prPath": "/.build/catcherror.pr",
-    "hash": "e0c6c59c2f69f86595162877a2a5796ede74af5a3074201db9a8dd56c0c7fa4d",
+    "path": "/CatchArabic.goal",
+    "prPath": "/.build/catcharabic.pr",
+    "hash": "64dc901c857473f38e7ff10967d149b8f277a68d993a14db776d641cbd649e86",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

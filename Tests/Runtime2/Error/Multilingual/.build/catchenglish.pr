@@ -1,24 +1,29 @@
 [
   {
-    "name": "ThrowTestError",
-    "description": "Build goal ThrowTestError",
+    "name": "CatchEnglish",
+    "description": "Build goal CatchEnglish",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw error \u0022test error\u0022",
+        "text": "set %caughtEnglish% = true",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "error",
-            "action": "throw",
+            "module": "variable",
+            "action": "set",
             "parameters": [
               {
-                "name": "Message",
-                "value": "test error",
+                "name": "Name",
+                "value": "%caughtEnglish%",
                 "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -34,9 +39,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ThrowTestError.goal",
-    "prPath": "/.build/throwtesterror.pr",
-    "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
+    "path": "/CatchEnglish.goal",
+    "prPath": "/.build/catchenglish.pr",
+    "hash": "c11b8da5be85fd1d87b8d4c084a19289aaded54eee8dfb3fe09760ef963b462c",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

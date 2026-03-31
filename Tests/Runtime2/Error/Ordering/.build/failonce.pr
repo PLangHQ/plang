@@ -1,12 +1,12 @@
 [
   {
-    "name": "ThrowTestError",
-    "description": "Build goal ThrowTestError",
+    "name": "FailOnce",
+    "description": "Build goal FailOnce with a single throw error step.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw error \u0022test error\u0022",
+        "text": "throw error \u0022fail\u0022",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
@@ -17,7 +17,7 @@
             "parameters": [
               {
                 "name": "Message",
-                "value": "test error",
+                "value": "fail",
                 "type": "string"
               }
             ],
@@ -34,9 +34,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ThrowTestError.goal",
-    "prPath": "/.build/throwtesterror.pr",
-    "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
+    "path": "/FailOnce.goal",
+    "prPath": "/.build/failonce.pr",
+    "hash": "f1648733b8656221b79a27895b2aaed27dd6586ca475761244b73193182e4865",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

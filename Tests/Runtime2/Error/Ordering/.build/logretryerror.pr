@@ -1,23 +1,28 @@
 [
   {
-    "name": "ThrowTestError",
-    "description": "Build goal ThrowTestError",
+    "name": "LogRetryError",
+    "description": "Build goal LogRetryError",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw error \u0022test error\u0022",
+        "text": "set %order% = \u0022error\u0022",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "error",
-            "action": "throw",
+            "module": "variable",
+            "action": "set",
             "parameters": [
               {
-                "name": "Message",
-                "value": "test error",
+                "name": "Name",
+                "value": "%order%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "error",
                 "type": "string"
               }
             ],
@@ -34,9 +39,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ThrowTestError.goal",
-    "prPath": "/.build/throwtesterror.pr",
-    "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
+    "path": "/LogRetryError.goal",
+    "prPath": "/.build/logretryerror.pr",
+    "hash": "51313fa12d49b8619cb31583b870ffabe109bfdafe268ce0f17242a2064d6148",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

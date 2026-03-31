@@ -1,47 +1,15 @@
 [
   {
     "name": "Start",
-    "description": "Build goal with error-catching behavior and assertion.",
+    "description": "Build goal with error handling: call AlwaysFails, retry on error then call HandleError; then assert errorHandled is true.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %caughtMessage% = \u0022\u0022",
+        "text": "call AlwaysFails, on error retry 2 times, then call HandleError",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "on error call goal catches error from called goal",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%caughtMessage%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "call ThrowTestError, on error call CatchError",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
+        "comment": "retry then error goal, both fail",
         "actions": [
           {
             "module": "goal",
@@ -49,7 +17,7 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "ThrowTestError",
+                "value": "AlwaysFails",
                 "type": "goal.call"
               }
             ],
@@ -60,15 +28,15 @@
         "intent": null,
         "onError": {
           "goal": {
-            "name": "CatchError",
+            "name": "HandleError",
             "description": null,
             "parallel": false,
             "parameters": null,
             "prPath": null
           },
-          "retryCount": null,
+          "retryCount": 2,
           "retryOverMs": null,
-          "order": null,
+          "order": 1,
           "ignoreError": false,
           "message": null,
           "statusCode": null,
@@ -79,9 +47,9 @@
         "waitForExecution": true
       },
       {
-        "index": 2,
-        "text": "assert %caughtMessage% equals \u0022test error\u0022",
-        "lineNumber": 5,
+        "index": 1,
+        "text": "assert %errorHandled% equals true",
+        "lineNumber": 4,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -91,13 +59,13 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": "test error",
-                "type": "string"
+                "value": true,
+                "type": "bool"
               },
               {
                 "name": "Actual",
-                "value": "%caughtMessage%",
-                "type": "string"
+                "value": "%errorHandled%",
+                "type": "object"
               }
             ],
             "return": null,
@@ -113,9 +81,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ErrorCall.test.goal",
-    "prPath": "/.build/errorcall.test.pr",
-    "hash": "8c21fb451d36f668ff578e8d092ed6e203cfced3aa3ec24de873a6fafb88d34d",
+    "path": "/ErrorChain.test.goal",
+    "prPath": "/.build/errorchain.test.pr",
+    "hash": "fe394c1e28a212a2da3fad3d2b54cf60555891dbbec803be12826c75c4875960",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

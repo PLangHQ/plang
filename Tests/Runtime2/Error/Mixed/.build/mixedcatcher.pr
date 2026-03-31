@@ -1,24 +1,29 @@
 [
   {
-    "name": "ThrowTestError",
-    "description": "Build goal ThrowTestError",
+    "name": "MixedCatcher",
+    "description": "Build goal MixedCatcher",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw error \u0022test error\u0022",
+        "text": "set %mixedCaught% = true",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "error",
-            "action": "throw",
+            "module": "variable",
+            "action": "set",
             "parameters": [
               {
-                "name": "Message",
-                "value": "test error",
+                "name": "Name",
+                "value": "%mixedCaught%",
                 "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -34,9 +39,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ThrowTestError.goal",
-    "prPath": "/.build/throwtesterror.pr",
-    "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
+    "path": "/MixedCatcher.goal",
+    "prPath": "/.build/mixedcatcher.pr",
+    "hash": "a0848b3b32f6aca7e670247d79e5ae4b3856ac7f6beaf496c5b132e23a2daa67",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

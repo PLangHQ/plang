@@ -1,15 +1,15 @@
 [
   {
-    "name": "CatchError",
-    "description": "Build goal CatchError: capture the current error message into %caughtMessage%.",
+    "name": "OuterHandler",
+    "description": "Build goal OuterHandler step to mark outer error as handled.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %caughtMessage% = %!error.Message%",
-        "lineNumber": 2,
+        "text": "set %outerHandled% = true",
+        "lineNumber": 3,
         "indent": 0,
-        "comment": null,
+        "comment": "catches the propagated error from BadHandler",
         "actions": [
           {
             "module": "variable",
@@ -17,16 +17,16 @@
             "parameters": [
               {
                 "name": "Name",
-                "value": "%caughtMessage%",
+                "value": "%outerHandled%",
                 "type": "string"
               },
               {
                 "name": "Value",
-                "value": "%!error.Message%",
-                "type": "object"
+                "value": true,
+                "type": "bool"
               }
             ],
-            "return": null,
+            "return": [],
             "defaults": null
           }
         ],
@@ -39,9 +39,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/CatchError.goal",
-    "prPath": "/.build/catcherror.pr",
-    "hash": "e0c6c59c2f69f86595162877a2a5796ede74af5a3074201db9a8dd56c0c7fa4d",
+    "path": "/OuterHandler.goal",
+    "prPath": "/.build/outerhandler.pr",
+    "hash": "6408d926d051e2348b13ffda7f9b733c1ed41db27e8ca3a7ffde98c7172e8c36",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

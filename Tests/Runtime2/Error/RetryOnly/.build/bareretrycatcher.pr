@@ -1,24 +1,29 @@
 [
   {
-    "name": "ThrowTestError",
-    "description": "Build goal ThrowTestError",
+    "name": "BareRetryCatcher",
+    "description": "Build goal BareRetryCatcher",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw error \u0022test error\u0022",
+        "text": "set %bareRetryCaught% = true",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "error",
-            "action": "throw",
+            "module": "variable",
+            "action": "set",
             "parameters": [
               {
-                "name": "Message",
-                "value": "test error",
+                "name": "Name",
+                "value": "%bareRetryCaught%",
                 "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -34,9 +39,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ThrowTestError.goal",
-    "prPath": "/.build/throwtesterror.pr",
-    "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
+    "path": "/BareRetryCatcher.goal",
+    "prPath": "/.build/bareretrycatcher.pr",
+    "hash": "721530b5266483f76149d388538696506be500e36c0e32b9216a91de8f854701",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

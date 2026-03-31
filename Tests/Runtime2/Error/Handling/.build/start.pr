@@ -1,0 +1,152 @@
+[
+  {
+    "name": "Start",
+    "description": "Build goal steps for error handling test.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "write out \u0022Before error test\u0022",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Content",
+                "value": "Before error test",
+                "type": "string"
+              },
+              {
+                "name": "Actor",
+                "value": "user",
+                "type": "actor(user|service|system)"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "throw error \u0022something went wrong\u0022, on error ignore",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "error",
+            "action": "throw",
+            "parameters": [
+              {
+                "name": "Message",
+                "value": "something went wrong",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "write out \u0022After ignored error - this should print\u0022",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Content",
+                "value": "After ignored error - this should print",
+                "type": "string"
+              },
+              {
+                "name": "Actor",
+                "value": "user",
+                "type": "actor(user|service|system)"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "throw error \u0022expected failure\u0022 with status code 404",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "error",
+            "action": "throw",
+            "parameters": [
+              {
+                "name": "Message",
+                "value": "expected failure",
+                "type": "string"
+              },
+              {
+                "name": "StatusCode",
+                "value": 404,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/Start.goal",
+    "prPath": "/.build/start.pr",
+    "hash": "a96260d1a54aa464354c1fe08bfc93e313b755f6038151d2994689831b159765",
+    "builderVersion": "0.2.2",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

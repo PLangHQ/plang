@@ -1,15 +1,15 @@
 [
   {
-    "name": "Start",
-    "description": "Build goal with error-catching behavior and assertion.",
+    "name": "InspectError",
+    "description": "Build goal steps for InspectError.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %caughtMessage% = \u0022\u0022",
-        "lineNumber": 3,
+        "text": "set %errorMessage% = %!error.Message%",
+        "lineNumber": 2,
         "indent": 0,
-        "comment": "on error call goal catches error from called goal",
+        "comment": null,
         "actions": [
           {
             "module": "variable",
@@ -17,13 +17,13 @@
             "parameters": [
               {
                 "name": "Name",
-                "value": "%caughtMessage%",
+                "value": "%errorMessage%",
                 "type": "string"
               },
               {
                 "name": "Value",
-                "value": "",
-                "type": "string"
+                "value": "%!error.Message%",
+                "type": "object"
               }
             ],
             "return": null,
@@ -38,19 +38,24 @@
       },
       {
         "index": 1,
-        "text": "call ThrowTestError, on error call CatchError",
-        "lineNumber": 4,
+        "text": "set %errorKey% = %!error.Key%",
+        "lineNumber": 3,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "goal",
-            "action": "call",
+            "module": "variable",
+            "action": "set",
             "parameters": [
               {
-                "name": "GoalName",
-                "value": "ThrowTestError",
-                "type": "goal.call"
+                "name": "Name",
+                "value": "%errorKey%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "%!error.Key%",
+                "type": "object"
               }
             ],
             "return": null,
@@ -58,46 +63,31 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": {
-            "name": "CatchError",
-            "description": null,
-            "parallel": false,
-            "parameters": null,
-            "prPath": null
-          },
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
       },
       {
         "index": 2,
-        "text": "assert %caughtMessage% equals \u0022test error\u0022",
-        "lineNumber": 5,
+        "text": "set %errorStatusCode% = %!error.StatusCode%",
+        "lineNumber": 4,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "assert",
-            "action": "equals",
+            "module": "variable",
+            "action": "set",
             "parameters": [
               {
-                "name": "Expected",
-                "value": "test error",
+                "name": "Name",
+                "value": "%errorStatusCode%",
                 "type": "string"
               },
               {
-                "name": "Actual",
-                "value": "%caughtMessage%",
-                "type": "string"
+                "name": "Value",
+                "value": "%!error.StatusCode%",
+                "type": "object"
               }
             ],
             "return": null,
@@ -113,9 +103,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ErrorCall.test.goal",
-    "prPath": "/.build/errorcall.test.pr",
-    "hash": "8c21fb451d36f668ff578e8d092ed6e203cfced3aa3ec24de873a6fafb88d34d",
+    "path": "/InspectError.goal",
+    "prPath": "/.build/inspecterror.pr",
+    "hash": "a04c978e2dcf88fd3ad7c3ff05b8361a9e019e3440c9bbfcef137a4260d21a14",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

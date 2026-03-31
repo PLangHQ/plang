@@ -1,12 +1,12 @@
 [
   {
-    "name": "CatchError",
-    "description": "Build goal CatchError: capture the current error message into %caughtMessage%.",
+    "name": "InnerHandler",
+    "description": "Build goal step: set inner error handled flag.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %caughtMessage% = %!error.Message%",
+        "text": "set %innerErrorHandled% = true",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
@@ -17,16 +17,21 @@
             "parameters": [
               {
                 "name": "Name",
-                "value": "%caughtMessage%",
+                "value": "%innerErrorHandled%",
                 "type": "string"
               },
               {
                 "name": "Value",
-                "value": "%!error.Message%",
-                "type": "object"
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "Type",
+                "value": "bool",
+                "type": "string"
               }
             ],
-            "return": null,
+            "return": [],
             "defaults": null
           }
         ],
@@ -39,9 +44,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/CatchError.goal",
-    "prPath": "/.build/catcherror.pr",
-    "hash": "e0c6c59c2f69f86595162877a2a5796ede74af5a3074201db9a8dd56c0c7fa4d",
+    "path": "/InnerHandler.goal",
+    "prPath": "/.build/innerhandler.pr",
+    "hash": "dd5be9a4665106e1df91cb580cec1e0ef0640e82a8c7e88b24bdc562ab4e8d43",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

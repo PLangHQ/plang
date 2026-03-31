@@ -1,23 +1,33 @@
 [
   {
-    "name": "ThrowTestError",
-    "description": "Build goal ThrowTestError",
+    "name": "CatchJapanese",
+    "description": "Build goal CatchJapanese",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw error \u0022test error\u0022",
+        "text": "set %caughtJapanese% = true",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "error",
-            "action": "throw",
+            "module": "variable",
+            "action": "set",
             "parameters": [
               {
-                "name": "Message",
-                "value": "test error",
+                "name": "Name",
+                "value": "%caughtJapanese%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "Type",
+                "value": "bool",
                 "type": "string"
               }
             ],
@@ -34,9 +44,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ThrowTestError.goal",
-    "prPath": "/.build/throwtesterror.pr",
-    "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
+    "path": "/CatchJapanese.goal",
+    "prPath": "/.build/catchjapanese.pr",
+    "hash": "60c802606c976f152d5f57bca81d0e5a510c3c76a762e5b2835c240434bcdc3c",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

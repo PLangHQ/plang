@@ -1,12 +1,12 @@
 [
   {
-    "name": "ThrowTestError",
-    "description": "Build goal ThrowTestError",
+    "name": "ThrowCustomError",
+    "description": "Build goal step to throw a custom error with message, key, and status code.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw error \u0022test error\u0022",
+        "text": "throw error \u0022bad thing\u0022 key=\u0022CustomKey\u0022 statusCode=422",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
@@ -17,7 +17,17 @@
             "parameters": [
               {
                 "name": "Message",
-                "value": "test error",
+                "value": "bad thing",
+                "type": "string"
+              },
+              {
+                "name": "StatusCode",
+                "value": 422,
+                "type": "int"
+              },
+              {
+                "name": "Key",
+                "value": "CustomKey",
                 "type": "string"
               }
             ],
@@ -34,9 +44,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ThrowTestError.goal",
-    "prPath": "/.build/throwtesterror.pr",
-    "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
+    "path": "/ThrowCustomError.goal",
+    "prPath": "/.build/throwcustomerror.pr",
+    "hash": "8e10bd9f6f672d9297e03b262e092f9742b07097098c01f7ea73cd6c11e48d99",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

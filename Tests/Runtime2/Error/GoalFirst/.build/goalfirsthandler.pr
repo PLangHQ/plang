@@ -1,12 +1,12 @@
 [
   {
-    "name": "CatchError",
-    "description": "Build goal CatchError: capture the current error message into %caughtMessage%.",
+    "name": "GoalFirstHandler",
+    "description": "Build GoalFirstHandler",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %caughtMessage% = %!error.Message%",
+        "text": "set %goalFirstHandled% = true",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
@@ -17,13 +17,23 @@
             "parameters": [
               {
                 "name": "Name",
-                "value": "%caughtMessage%",
+                "value": "%goalFirstHandled%",
                 "type": "string"
               },
               {
                 "name": "Value",
-                "value": "%!error.Message%",
-                "type": "object"
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "Type",
+                "value": "bool",
+                "type": "string"
+              },
+              {
+                "name": "AsDefault",
+                "value": false,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -39,9 +49,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/CatchError.goal",
-    "prPath": "/.build/catcherror.pr",
-    "hash": "e0c6c59c2f69f86595162877a2a5796ede74af5a3074201db9a8dd56c0c7fa4d",
+    "path": "/GoalFirstHandler.goal",
+    "prPath": "/.build/goalfirsthandler.pr",
+    "hash": "2b7ff65f48a8799450de40bf1ac28c41b8556607bbbc18e685f8f69d90ab6108",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

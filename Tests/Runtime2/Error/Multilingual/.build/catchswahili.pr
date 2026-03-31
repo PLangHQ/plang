@@ -1,24 +1,29 @@
 [
   {
-    "name": "ThrowTestError",
-    "description": "Build goal ThrowTestError",
+    "name": "CatchSwahili",
+    "description": "Build goal CatchSwahili",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw error \u0022test error\u0022",
+        "text": "set %caughtSwahili% = true",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "error",
-            "action": "throw",
+            "module": "variable",
+            "action": "set",
             "parameters": [
               {
-                "name": "Message",
-                "value": "test error",
+                "name": "Name",
+                "value": "%caughtSwahili%",
                 "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -34,9 +39,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ThrowTestError.goal",
-    "prPath": "/.build/throwtesterror.pr",
-    "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
+    "path": "/CatchSwahili.goal",
+    "prPath": "/.build/catchswahili.pr",
+    "hash": "9b4b035307347296916d7c5b39b0a2c058d0ec06b33195186cbd8e4a8c1b2734",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

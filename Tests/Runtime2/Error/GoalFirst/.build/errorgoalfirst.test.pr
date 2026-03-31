@@ -1,15 +1,15 @@
 [
   {
     "name": "Start",
-    "description": "Build goal with error-catching behavior and assertion.",
+    "description": "Build goal with GoalFirst error handling order and assertions.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %caughtMessage% = \u0022\u0022",
+        "text": "set %goalFirstHandled% = false",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "on error call goal catches error from called goal",
+        "comment": "GoalFirst order \u2014 call error handler first, then retry",
         "actions": [
           {
             "module": "variable",
@@ -17,13 +17,13 @@
             "parameters": [
               {
                 "name": "Name",
-                "value": "%caughtMessage%",
+                "value": "%goalFirstHandled%",
                 "type": "string"
               },
               {
                 "name": "Value",
-                "value": "",
-                "type": "string"
+                "value": false,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -38,8 +38,40 @@
       },
       {
         "index": 1,
-        "text": "call ThrowTestError, on error call CatchError",
+        "text": "set %goalFirstAttempts% = 0",
         "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%goalFirstAttempts%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 0,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "call AlwaysFails, on error call GoalFirstHandler, then retry 2 times",
+        "lineNumber": 5,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -49,7 +81,7 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": "ThrowTestError",
+                "value": "AlwaysFails",
                 "type": "goal.call"
               }
             ],
@@ -60,15 +92,15 @@
         "intent": null,
         "onError": {
           "goal": {
-            "name": "CatchError",
+            "name": "GoalFirstHandler",
             "description": null,
             "parallel": false,
             "parameters": null,
             "prPath": null
           },
-          "retryCount": null,
+          "retryCount": 2,
           "retryOverMs": null,
-          "order": null,
+          "order": 0,
           "ignoreError": false,
           "message": null,
           "statusCode": null,
@@ -79,24 +111,24 @@
         "waitForExecution": true
       },
       {
-        "index": 2,
-        "text": "assert %caughtMessage% equals \u0022test error\u0022",
-        "lineNumber": 5,
+        "index": 3,
+        "text": "assert %goalFirstHandled% is true, \u0022error goal should be called in GoalFirst order\u0022",
+        "lineNumber": 6,
         "indent": 0,
         "comment": null,
         "actions": [
           {
             "module": "assert",
-            "action": "equals",
+            "action": "isTrue",
             "parameters": [
               {
-                "name": "Expected",
-                "value": "test error",
-                "type": "string"
+                "name": "Value",
+                "value": "%goalFirstHandled%",
+                "type": "object"
               },
               {
-                "name": "Actual",
-                "value": "%caughtMessage%",
+                "name": "Message",
+                "value": "error goal should be called in GoalFirst order",
                 "type": "string"
               }
             ],
@@ -113,9 +145,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ErrorCall.test.goal",
-    "prPath": "/.build/errorcall.test.pr",
-    "hash": "8c21fb451d36f668ff578e8d092ed6e203cfced3aa3ec24de873a6fafb88d34d",
+    "path": "/ErrorGoalFirst.test.goal",
+    "prPath": "/.build/errorgoalfirst.test.pr",
+    "hash": "e7fff35aa8b251b0726e792f79f6f003fbed9f55b66ef9d316cfb0b40b541245",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

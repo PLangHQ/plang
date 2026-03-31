@@ -1,12 +1,12 @@
 [
   {
-    "name": "CatchError",
-    "description": "Build goal CatchError: capture the current error message into %caughtMessage%.",
+    "name": "HandleError",
+    "description": "Build goal HandleError",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %caughtMessage% = %!error.Message%",
+        "text": "set %errorHandled% = true",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
@@ -17,16 +17,26 @@
             "parameters": [
               {
                 "name": "Name",
-                "value": "%caughtMessage%",
+                "value": "%errorHandled%",
                 "type": "string"
               },
               {
                 "name": "Value",
-                "value": "%!error.Message%",
-                "type": "object"
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "Type",
+                "value": "bool",
+                "type": "string"
+              },
+              {
+                "name": "AsDefault",
+                "value": false,
+                "type": "bool"
               }
             ],
-            "return": null,
+            "return": [],
             "defaults": null
           }
         ],
@@ -39,9 +49,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/CatchError.goal",
-    "prPath": "/.build/catcherror.pr",
-    "hash": "e0c6c59c2f69f86595162877a2a5796ede74af5a3074201db9a8dd56c0c7fa4d",
+    "path": "/HandleError.goal",
+    "prPath": "/.build/handleerror.pr",
+    "hash": "e591f83f4025046dd0efc4f1ff631ccb5f0a4c4d3ead32f1fa6d49332e46c1ee",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,

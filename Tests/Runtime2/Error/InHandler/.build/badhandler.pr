@@ -1,15 +1,15 @@
 [
   {
-    "name": "ThrowTestError",
-    "description": "Build goal ThrowTestError",
+    "name": "BadHandler",
+    "description": "Build goal steps for throwing an error.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw error \u0022test error\u0022",
-        "lineNumber": 2,
+        "text": "throw error \u0022handler error\u0022",
+        "lineNumber": 3,
         "indent": 0,
-        "comment": null,
+        "comment": "this handler also throws",
         "actions": [
           {
             "module": "error",
@@ -17,7 +17,7 @@
             "parameters": [
               {
                 "name": "Message",
-                "value": "test error",
+                "value": "handler error",
                 "type": "string"
               }
             ],
@@ -34,9 +34,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/ThrowTestError.goal",
-    "prPath": "/.build/throwtesterror.pr",
-    "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
+    "path": "/BadHandler.goal",
+    "prPath": "/.build/badhandler.pr",
+    "hash": "4a219d8c94d25f14b8b0a5c33a9b4ae0aa0948114da0df9b0ac04a0d7e9cbbe8",
     "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,
