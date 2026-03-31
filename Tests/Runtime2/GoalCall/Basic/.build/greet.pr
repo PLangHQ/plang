@@ -1,7 +1,7 @@
 [
   {
     "name": "Greet",
-    "description": "Build goal \u0027Greet\u0027 with a single step that sets %greeting% based on %name%.",
+    "description": "Build goal Greet",
     "comment": null,
     "steps": [
       {

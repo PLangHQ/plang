@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Builds a flow that sets a boolean flag, conditionally calls goals, and asserts the expected branch outcomes.",
+    "description": "Builds the provided Start goal into executable PLang steps.",
     "comment": null,
     "steps": [
       {
@@ -66,14 +66,6 @@
                 "name": "GoalIfTrue",
                 "value": {
                   "name": "SetTrue",
-                  "parameters": []
-                },
-                "type": "goal.call"
-              },
-              {
-                "name": "GoalIfFalse",
-                "value": {
-                  "name": "SetFalse",
                   "parameters": []
                 },
                 "type": "goal.call"
@@ -244,6 +236,7 @@
     "path": "/Condition.test.goal",
     "prPath": "/.build/condition.test.pr",
     "hash": "afeace710baab1e7e08bdde31918fa94ca3f912ba6b7e051437914824fdf6640",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

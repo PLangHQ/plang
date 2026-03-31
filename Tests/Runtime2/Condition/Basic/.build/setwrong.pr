@@ -1,7 +1,7 @@
 [
   {
     "name": "SetWrong",
-    "description": "Build goal to set %wasWrong% to true.",
+    "description": "Build goal step to set %wasWrong% = true.",
     "comment": null,
     "steps": [
       {
@@ -24,11 +24,6 @@
                 "name": "Value",
                 "value": true,
                 "type": "bool"
-              },
-              {
-                "name": "Type",
-                "value": "bool",
-                "type": "string"
               }
             ],
             "return": null,
@@ -47,6 +42,7 @@
     "path": "/SetWrong.goal",
     "prPath": "/.build/setwrong.pr",
     "hash": "9a328158bcd3fea39002d861281fa7b89be9c46b471209ab9cc3349558a60267",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

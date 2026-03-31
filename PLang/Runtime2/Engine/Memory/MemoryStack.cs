@@ -133,6 +133,11 @@ public class MemoryStack
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
         if (prop != null && prop.CanWrite)
         {
+            if (value != null && !prop.PropertyType.IsAssignableFrom(value.GetType()))
+            {
+                var (typedValue, _) = Utility.TypeMapping.TryConvertTo(value, prop.PropertyType);
+                if (typedValue != null) value = typedValue;
+            }
             prop.SetValue(target, value);
             return target;
         }

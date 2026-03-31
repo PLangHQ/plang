@@ -42,6 +42,7 @@
     "path": "/SetTrue.goal",
     "prPath": "/.build/settrue.pr",
     "hash": "bd4185e5dfa7bfa79c49d3f1911ebab78a6f74da3f41fbc944e9093d86f77cda",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

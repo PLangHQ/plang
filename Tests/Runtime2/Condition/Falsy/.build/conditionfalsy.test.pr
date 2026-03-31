@@ -1,0 +1,151 @@
+[
+  {
+    "name": "Start",
+    "description": "Build goal with falsy value triggering else branch in condition.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %flag% = false",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: falsy value triggers else branch (GoalIfFalse)",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%flag%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "if %flag%, call HandleTrue, else call HandleFalse",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "condition",
+            "action": "if",
+            "parameters": [
+              {
+                "name": "Left",
+                "value": "%flag%",
+                "type": "bool"
+              },
+              {
+                "name": "Operator",
+                "value": "==",
+                "type": "string"
+              },
+              {
+                "name": "Right",
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "GoalIfTrue",
+                "value": {
+                  "name": "HandleTrue",
+                  "parameters": []
+                },
+                "type": "goal.call"
+              },
+              {
+                "name": "GoalIfFalse",
+                "value": {
+                  "name": "HandleFalse",
+                  "parameters": []
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %result% equals \u0022false-branch\u0022, \u0022GoalIfFalse should have been called\u0022",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "false-branch",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%result%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "GoalIfFalse should have been called",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ConditionFalsy.test.goal",
+    "prPath": "/.build/conditionfalsy.test.pr",
+    "hash": "dc5a504602162b53b08ccae42a594e1cb8bcac00e9b7b91321f6229bf1868c4e",
+    "builderVersion": "0.2.2",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

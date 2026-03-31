@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenFalse",
-    "description": "Build goal steps for setting %falseResult% when false branch is taken.",
+    "description": "Build goal steps into executable form.",
     "comment": null,
     "steps": [
       {
@@ -42,6 +42,7 @@
     "path": "/WhenFalse.goal",
     "prPath": "/.build/whenfalse.pr",
     "hash": "7c617b7b5fbe2dcd7405ecf9e67a688c9149e29fd43e9a15425794ded6050900",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

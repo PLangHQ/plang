@@ -1,12 +1,12 @@
 [
   {
-    "name": "WhenNotEqual",
-    "description": "Build goal steps for setting %notEqualResult% when no prior PR data exists.",
+    "name": "WhenEqual",
+    "description": "Build goal for setting %result% to \u0022equal\u0022 whenEqual step.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %notEqualResult% = \u0022yes\u0022",
+        "text": "set %result% = \u0022equal\u0022",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
@@ -17,16 +17,16 @@
             "parameters": [
               {
                 "name": "Name",
-                "value": "%notEqualResult%",
+                "value": "%result%",
                 "type": "string"
               },
               {
                 "name": "Value",
-                "value": "yes",
+                "value": "equal",
                 "type": "string"
               }
             ],
-            "return": null,
+            "return": [],
             "defaults": null
           }
         ],
@@ -39,9 +39,9 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/WhenNotEqual.goal",
-    "prPath": "/.build/whennotequal.pr",
-    "hash": "63094fc1d603d21557ff55e1e388dea437e0804ccd1f0fa964903093d823e476",
+    "path": "/WhenEqual.goal",
+    "prPath": "/.build/whenequal.pr",
+    "hash": "830e91bfee72d07e3af29591fa2533c6fd399afd470dadce05fd29da117af8ab",
     "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,

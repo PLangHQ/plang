@@ -15,6 +15,8 @@ public partial class If : IContext
     public partial Data? Right { get; init; }
     public partial GoalCall? GoalIfTrue { get; init; }
     public partial GoalCall? GoalIfFalse { get; init; }
+    [Default(false)]
+    public partial bool Negate { get; init; }
 
     [Provider]
     public partial IEvaluator Evaluator { get; }
@@ -24,7 +26,11 @@ public partial class If : IContext
         var evalResult = Evaluator.Evaluate(this);
         if (!evalResult.Success) return evalResult;
 
-        var goalToCall = evalResult.Value is true ? GoalIfTrue : GoalIfFalse;
+        var conditionResult = evalResult.Value is true;
+        if (Negate) conditionResult = !conditionResult;
+        evalResult = Data.Ok(conditionResult);
+
+        var goalToCall = conditionResult ? GoalIfTrue : GoalIfFalse;
         if (goalToCall != null)
         {
             var goalResult = await Context.Engine!.RunGoalAsync(goalToCall, Context, Context.CancellationToken);

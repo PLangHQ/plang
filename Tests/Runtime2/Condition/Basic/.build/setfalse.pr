@@ -1,7 +1,7 @@
 [
   {
     "name": "SetFalse",
-    "description": "Build goal: SetFalse",
+    "description": "Build goal to set %wasFalse% to true.",
     "comment": null,
     "steps": [
       {
@@ -24,6 +24,11 @@
                 "name": "Value",
                 "value": true,
                 "type": "bool"
+              },
+              {
+                "name": "Type",
+                "value": "bool",
+                "type": "string"
               }
             ],
             "return": null,
@@ -42,6 +47,7 @@
     "path": "/SetFalse.goal",
     "prPath": "/.build/setfalse.pr",
     "hash": "b48b1e98e5c83353559c4da0d65e5f66bd4a0fc8a1843466208086a965389769",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

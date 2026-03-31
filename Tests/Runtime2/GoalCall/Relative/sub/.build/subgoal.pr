@@ -1,7 +1,7 @@
 [
   {
     "name": "SubGoal",
-    "description": "Build for SubGoal with one step setting a variable",
+    "description": "Built SubGoal into executable steps.",
     "comment": null,
     "steps": [
       {
@@ -42,6 +42,7 @@
     "path": "/sub/SubGoal.goal",
     "prPath": "/sub/.build/subgoal.pr",
     "hash": "270b6886e3dfae13e16ba4bcc2d9703db915d0231c5cb5ccf125bb14f91238f3",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

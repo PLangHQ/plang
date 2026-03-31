@@ -279,6 +279,28 @@ public class MemoryStackTests
     }
 
     [Test]
+    public async Task Set_DotPath_ConvertsListOfObject_ToTypedList()
+    {
+        var stack = new MemoryStack();
+        var holder = new TestItemHolder();
+        stack.Set("holder", holder);
+
+        // Simulate what the LLM produces: List<object> containing dictionaries
+        var items = new List<object>
+        {
+            new Dictionary<string, object?> { ["Name"] = "Alice", ["Score"] = 10 },
+            new Dictionary<string, object?> { ["Name"] = "Bob", ["Score"] = 20 }
+        };
+
+        stack.Set("holder.Items", items);
+
+        await Assert.That(holder.Items).IsNotNull();
+        await Assert.That(holder.Items.Count).IsEqualTo(2);
+        await Assert.That(holder.Items[0].Name).IsEqualTo("Alice");
+        await Assert.That(holder.Items[1].Score).IsEqualTo(20);
+    }
+
+    [Test]
     public async Task Get_ReturnsData()
     {
         var stack = new MemoryStack();
@@ -929,4 +951,15 @@ public record TestPersonReadOnly(string Name, int Age);
 public class TestPersonGetOnly
 {
     public string Name { get; } = "John";
+}
+
+public class TestItemHolder
+{
+    public List<TestItem> Items { get; set; } = new();
+}
+
+public class TestItem
+{
+    public string Name { get; set; } = "";
+    public int Score { get; set; }
 }

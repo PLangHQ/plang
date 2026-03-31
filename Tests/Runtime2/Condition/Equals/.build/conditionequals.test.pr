@@ -1,0 +1,130 @@
+[
+  {
+    "name": "Start",
+    "description": "Build goal: when %z% equals 5, call WhenEqual; then assert result indicates the true branch executed.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %z% = 5",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: equals operator calls goal when values match",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%z%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 5,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "if %z% == 5, call WhenEqual",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "condition",
+            "action": "if",
+            "parameters": [
+              {
+                "name": "Left",
+                "value": "%z%",
+                "type": "string"
+              },
+              {
+                "name": "Operator",
+                "value": "==",
+                "type": "string"
+              },
+              {
+                "name": "Right",
+                "value": 5,
+                "type": "int"
+              },
+              {
+                "name": "GoalIfTrue",
+                "value": {
+                  "name": "WhenEqual",
+                  "parameters": [],
+                  "type": "goal.call"
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %result% equals \u0022equal\u0022, \u0022GoalIfTrue should have been called for z == 5\u0022",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "equal",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%result%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ConditionEquals.test.goal",
+    "prPath": "/.build/conditionequals.test.pr",
+    "hash": "d07f25e0cc5c2de3e3f762de7a372d5b7787bd72a0e29c9b75b4a7bf230c5aca",
+    "builderVersion": "0.2.1",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

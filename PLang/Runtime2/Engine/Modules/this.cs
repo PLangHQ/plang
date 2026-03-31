@@ -180,13 +180,18 @@ public sealed class @this
                 if (actionAttr != null)
                     cacheable = actionAttr.Cacheable;
 
+                var examples = parameterType.GetCustomAttributes<modules.ExampleAttribute>()
+                    .Select(e => new Memory.Data(e.Plang, e.Mapping))
+                    .ToList();
+
                 result.Add(new Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = ns,
                     ActionName = actionName,
                     ParameterSchema = parameterType,
                     Parameters = parameters,
-                    Cacheable = cacheable
+                    Cacheable = cacheable,
+                    Examples = examples
                 });
             }
         }

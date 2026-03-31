@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Builds conditional call flow and assertions for greaterThan, lessThan, equals, notEquals, stringContains, and falseCondition.",
+    "description": "Build goal into executable form based on provided steps and PR data (all pr: null).",
     "comment": null,
     "steps": [
       {
@@ -76,7 +76,16 @@
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -185,7 +194,16 @@
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -294,7 +312,16 @@
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -403,7 +430,16 @@
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -512,7 +548,16 @@
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -629,7 +674,16 @@
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -672,6 +726,7 @@
     "path": "/ConditionCompound.test.goal",
     "prPath": "/.build/conditioncompound.test.pr",
     "hash": "9b189b9e28d5b45c9a83ddf05681b7b878ce40779e9bde3e606bf33dccdd647e",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

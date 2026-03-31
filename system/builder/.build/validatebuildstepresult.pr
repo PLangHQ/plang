@@ -1,0 +1,84 @@
+{
+  "name": "ValidateBuildStepResult",
+  "description": "Check for top-level and action-level errors from the BuildStep LLM.",
+  "steps": [
+    {
+      "index": 0,
+      "text": "if %result.errors% is not empty, call ThrowBuildStepErrors",
+      "lineNumber": 23,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%result.errors%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "isempty",
+              "type": "string"
+            },
+            {
+              "name": "Negate",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "GoalIfTrue",
+              "value": {
+                "name": "ThrowBuildStepErrors"
+              },
+              "type": "goal.call"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "foreach %result.actions%, call ValidateActionErrors, item=%action%",
+      "lineNumber": 25,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%result.actions%",
+              "type": "list"
+            },
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ValidateActionErrors"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "ItemName",
+              "value": "action",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 0,
+  "path": "/system/builder/BuildStep.goal",
+  "prPath": "/system/builder/.build/validatebuildstepresult.pr",
+  "hash": "",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false
+}

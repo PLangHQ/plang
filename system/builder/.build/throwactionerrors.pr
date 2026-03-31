@@ -1,0 +1,35 @@
+{
+  "name": "ThrowActionErrors",
+  "description": "Throws an error with the action-level errors from the BuildStep LLM.",
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \"Action %action.module%.%action.action% failed for step '%step.Text%': %action.errors%\"",
+      "lineNumber": 34,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "Action %action.module%.%action.action% failed for step '%step.Text%': %action.errors%",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 0,
+  "path": "/system/builder/BuildStep.goal",
+  "prPath": "/system/builder/.build/throwactionerrors.pr",
+  "hash": "",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false
+}

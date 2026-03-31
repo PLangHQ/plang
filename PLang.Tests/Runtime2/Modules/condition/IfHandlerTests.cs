@@ -221,6 +221,78 @@ public class IfHandlerTests : IDisposable
     }
 
     [Test]
+    public async Task Run_Negate_FlipsTrue_ToFalse()
+    {
+        var action = new If { Context = CreateContext(), Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5), Negate = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo(false);
+    }
+
+    [Test]
+    public async Task Run_Negate_FlipsFalse_ToTrue()
+    {
+        var action = new If { Context = CreateContext(), Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5), Negate = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo(true);
+    }
+
+    [Test]
+    public async Task Run_Negate_IsEmpty_CallsGoalWhenNotEmpty()
+    {
+        var captureStream = new System.IO.MemoryStream();
+        _engine.User.Channels.Register(new Channel(
+            EngineChannels.Default, captureStream,
+            ChannelDirection.Output, ownsStream: true)
+        { ContentType = "text/plain" });
+
+        var goal = new Goal
+        {
+            Name = "NotEmptyBranch",
+            Path = "/NotEmptyBranch.goal",
+            Steps = new GoalSteps
+            {
+                new Step
+                {
+                    Index = 0,
+                    Text = "write not empty",
+                    Actions = new StepActions
+                    {
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "output",
+                            ActionName = "write",
+                            Parameters = new List<Data> { new Data("content", "not-empty") }
+                        }
+                    }
+                }
+            }
+        };
+        _engine.Goals.Add(goal);
+
+        var list = new List<string> { "item1" };
+        var action = new If
+        {
+            Context = CreateContext(),
+            Left = Data.Ok(list),
+            Operator = "isempty",
+            Negate = true,
+            GoalIfTrue = new GoalCall { Name = "NotEmptyBranch" }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo(true);
+
+        captureStream.Position = 0;
+        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+        await Assert.That(output).IsEqualTo("not-empty" + System.Environment.NewLine);
+    }
+
+    [Test]
     public async Task Run_UnsupportedOperator_ThrowsOnConstruction()
     {
         await Assert.That(() => new Operator("xor")).ThrowsException()

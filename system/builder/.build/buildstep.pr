@@ -184,8 +184,30 @@
     },
     {
       "index": 5,
+      "text": "call ValidateBuildStepResult",
+      "lineNumber": 19,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ValidateBuildStepResult"
+              },
+              "type": "goal.call"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
       "text": "set %goal.Steps[stepResult.index].Actions% = %result.actions%",
-      "lineNumber": 16,
+      "lineNumber": 20,
       "indent": 0,
       "actions": [
         {

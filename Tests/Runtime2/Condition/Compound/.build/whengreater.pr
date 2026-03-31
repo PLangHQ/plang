@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenGreater",
-    "description": "Build goal steps for setting %greaterResult% to \u0022yes\u0022.",
+    "description": "Build goal steps for WhenGreater",
     "comment": null,
     "steps": [
       {
@@ -24,11 +24,6 @@
                 "name": "Value",
                 "value": "yes",
                 "type": "string"
-              },
-              {
-                "name": "Type",
-                "value": "string",
-                "type": "string"
               }
             ],
             "return": null,
@@ -47,6 +42,7 @@
     "path": "/WhenGreater.goal",
     "prPath": "/.build/whengreater.pr",
     "hash": "de1b2350ea4346d265a5ff9ada731caaf2f4e03ca5c99df387838b0bd87206b8",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

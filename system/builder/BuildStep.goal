@@ -16,7 +16,22 @@ BuildStep
                 }
         on error call HandleBuildStepFailure
         write to %result%
+- call ValidateBuildStepResult
 - set %goal.Steps[stepResult.index].Actions% = %result.actions%
+
+ValidateBuildStepResult
+/ Check for top-level and action-level errors from the BuildStep LLM
+- if %result.errors% is not empty, call ThrowBuildStepErrors
+- foreach %result.actions%, call ValidateActionErrors, item=%action%
+
+ThrowBuildStepErrors
+- throw error "BuildStep failed for step '%step.Text%': %result.errors%"
+
+ValidateActionErrors
+- if %action.errors% is not empty, call ThrowActionErrors
+
+ThrowActionErrors
+- throw error "Action %action.module%.%action.action% failed for step '%step.Text%': %action.errors%"
 
 HandleBuildStepFailure
 - if %!error.StatusCode% = 402 then

@@ -1,12 +1,12 @@
 [
   {
-    "name": "WhenNotEqual",
-    "description": "Build goal steps for setting %notEqualResult% when no prior PR data exists.",
+    "name": "HandleTrue",
+    "description": "Build goal HandleTrue from provided PR data.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %notEqualResult% = \u0022yes\u0022",
+        "text": "set %result% = \u0022true-branch\u0022",
         "lineNumber": 2,
         "indent": 0,
         "comment": null,
@@ -17,12 +17,12 @@
             "parameters": [
               {
                 "name": "Name",
-                "value": "%notEqualResult%",
+                "value": "%result%",
                 "type": "string"
               },
               {
                 "name": "Value",
-                "value": "yes",
+                "value": "true-branch",
                 "type": "string"
               }
             ],
@@ -39,10 +39,10 @@
     ],
     "subGoals": [],
     "visibility": 1,
-    "path": "/WhenNotEqual.goal",
-    "prPath": "/.build/whennotequal.pr",
-    "hash": "63094fc1d603d21557ff55e1e388dea437e0804ccd1f0fa964903093d823e476",
-    "builderVersion": "0.2.1",
+    "path": "/HandleTrue.goal",
+    "prPath": "/.build/handletrue.pr",
+    "hash": "49e7d4ae7739c7c8735ca92768d80236a99551c8e9a5f12a70a412e97d782cd2",
+    "builderVersion": "0.2.2",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,
