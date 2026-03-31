@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build steps for setting a variable, calling a goal by variable name, and asserting a variable equals a value.",
+    "description": "Build goal that sets a goal name variable, calls it dynamically, then asserts the dynamic result.",
     "comment": null,
     "steps": [
       {
@@ -58,7 +58,16 @@
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": "on error handling not specified in the goal text; default behavior will apply.",
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -90,7 +99,16 @@
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": "on error handling not specified in the goal text; default behavior will apply.",
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -101,6 +119,7 @@
     "path": "/GoalCallDynamic.test.goal",
     "prPath": "/.build/goalcalldynamic.test.pr",
     "hash": "be5fdfa8098f28bad9b07b1562a74bea782e882575a057eeae821965441a287a",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

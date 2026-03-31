@@ -1,12 +1,96 @@
 {
   "name": "BuildStep",
   "description": "Builds a step that needs detailed action info. Action suggestions already on step from BuildGoal.",
-  "comment": "Builds a step that needs detailed action info\nAction suggestions (module + action) already on step from BuildGoal",
   "steps": [
     {
       "index": 0,
-      "text": "read file \"llm/BuildStep.llm\", load vars, write to %buildStepPrompt%",
+      "text": "set %step% = %goal.Steps[stepResult.index]%",
       "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%step%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%goal.Steps[stepResult.index]%",
+              "type": "object"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "render template \"/system/builder/templates/v2/stepForLlm.template\", write to %stepForLlm%",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "ui",
+          "action": "render",
+          "parameters": [
+            {
+              "name": "Template",
+              "value": "/system/builder/templates/v2/stepForLlm.template",
+              "type": "string"
+            },
+            {
+              "name": "IsFile",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "return": [
+            {
+              "name": "stepForLlm"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "render template \"/system/builder/templates/v2/stepActionDetails.template\", write to %actionDetails%",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "ui",
+          "action": "render",
+          "parameters": [
+            {
+              "name": "Template",
+              "value": "/system/builder/templates/v2/stepActionDetails.template",
+              "type": "string"
+            },
+            {
+              "name": "IsFile",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "return": [
+            {
+              "name": "actionDetails"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "read file \"llm/BuildStep.llm\", load vars, write to %buildStepPrompt%",
+      "lineNumber": 7,
       "indent": 0,
       "actions": [
         {
@@ -28,19 +112,15 @@
             {
               "name": "buildStepPrompt"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
-      "index": 1,
-      "text": "[llm] system: %buildStepPrompt% user: %step.Serialize.Builder%",
-      "lineNumber": 5,
+      "index": 4,
+      "text": "[llm] system: %buildStepPrompt% user: %stepForLlm%",
+      "lineNumber": 8,
       "indent": 0,
       "actions": [
         {
@@ -56,7 +136,7 @@
                 },
                 {
                   "role": "user",
-                  "text": "%step.Serialize.Builder%"
+                  "text": "%stepForLlm%"
                 }
               ],
               "type": "object"
@@ -77,8 +157,13 @@
               "type": "double"
             },
             {
+              "name": "MaxTokens",
+              "value": 8000,
+              "type": "int"
+            },
+            {
               "name": "Cache",
-              "value": false,
+              "value": "%!build.cache%",
               "type": "bool"
             }
           ],
@@ -86,9 +171,7 @@
             {
               "name": "result"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
       "onError": {
@@ -97,13 +180,11 @@
         },
         "ignoreError": false
       },
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
-      "index": 2,
-      "text": "set %goal.Steps[stepResult.index].actions% = %result.actions%",
+      "index": 5,
+      "text": "set %goal.Steps[stepResult.index].Actions% = %result.actions%",
       "lineNumber": 16,
       "indent": 0,
       "actions": [
@@ -113,7 +194,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%goal.Steps[stepResult.index].actions%",
+              "value": "%goal.Steps[stepResult.index].Actions%",
               "type": "string"
             },
             {
@@ -121,84 +202,19 @@
               "value": "%result.actions%",
               "type": "object"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "set %goal.Steps[stepResult.index].actions.errors% = null",
-      "lineNumber": 17,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%goal.Steps[stepResult.index].actions.errors%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": null,
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 4,
-      "text": "set %goal.Steps[stepResult.index].errors% = null",
-      "lineNumber": 18,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%goal.Steps[stepResult.index].errors%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": null,
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     }
   ],
   "subGoals": [],
-  "visibility": 1,
+  "visibility": 0,
   "path": "/system/builder/BuildStep.goal",
   "prPath": "/system/builder/.build/buildstep.pr",
   "hash": "",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "BuildStep"
+  "isTest": false
 }

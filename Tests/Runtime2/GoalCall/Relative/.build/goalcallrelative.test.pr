@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal with calling a subdirectory goal and asserting a variable equals a string",
+    "description": "Build goal with a subdirectory goal call and an assertion on its result.",
     "comment": null,
     "steps": [
       {
@@ -18,10 +18,15 @@
               {
                 "name": "goalName",
                 "value": "sub/SubGoal",
-                "type": "goal.call"
+                "type": "string"
               }
             ],
-            "return": null,
+            "return": [
+              {
+                "name": "subResult",
+                "value": null
+              }
+            ],
             "defaults": null
           }
         ],
@@ -43,12 +48,12 @@
             "action": "equals",
             "parameters": [
               {
-                "name": "expected",
+                "name": "Expected",
                 "value": "from sub",
                 "type": "string"
               },
               {
-                "name": "actual",
+                "name": "Actual",
                 "value": "%subResult%",
                 "type": "string"
               }
@@ -69,6 +74,7 @@
     "path": "/GoalCallRelative.test.goal",
     "prPath": "/.build/goalcallrelative.test.pr",
     "hash": "cb01eef210fee7de682ba2b2518a19d73b1aea2dc6f39fb6b7de168b0414c8b0",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

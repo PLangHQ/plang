@@ -4,7 +4,7 @@ You are the PLang builder. The main build pass could not fully build this step. 
 
 ## Action Detail
 
-%step.actions.details.md%
+%actionDetails%
 
 ## Instructions
 

@@ -4,7 +4,7 @@
     {
       "index": 0,
       "text": "if %!error.StatusCode% = 402 then",
-      "lineNumber": 22,
+      "lineNumber": 18,
       "indent": 0,
       "actions": [
         {
@@ -26,19 +26,15 @@
               "value": 402,
               "type": "int"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 1,
       "text": "throw %!error%",
-      "lineNumber": 23,
+      "lineNumber": 19,
       "indent": 1,
       "actions": [
         {
@@ -50,19 +46,15 @@
               "value": "%!error.Message%",
               "type": "string"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 2,
       "text": "if %!error.StatusCode% >= 500 then",
-      "lineNumber": 24,
+      "lineNumber": 20,
       "indent": 0,
       "actions": [
         {
@@ -84,19 +76,15 @@
               "value": 500,
               "type": "int"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 3,
       "text": "throw %!error%",
-      "lineNumber": 25,
+      "lineNumber": 21,
       "indent": 1,
       "actions": [
         {
@@ -108,48 +96,15 @@
               "value": "%!error.Message%",
               "type": "string"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "append %!error% to %step.errors%",
-      "lineNumber": 26,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "list",
-          "action": "add",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%step.errors%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%!error%",
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 5,
       "text": "if %!error.retryCount% > 3 then",
-      "lineNumber": 27,
+      "lineNumber": 22,
       "indent": 0,
       "actions": [
         {
@@ -171,19 +126,15 @@
               "value": 3,
               "type": "int"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
-      "index": 6,
-      "text": "throw %!error%",
-      "lineNumber": 28,
+      "index": 5,
+      "text": "throw error \"Build step failed after 3 retries\"",
+      "lineNumber": 23,
       "indent": 1,
       "actions": [
         {
@@ -195,19 +146,15 @@
               "value": "Build step failed after 3 retries",
               "type": "string"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 6,
       "text": "write out \"  Retry %!error.retryCount%/3: %!error.Message%\"",
-      "lineNumber": 29,
+      "lineNumber": 24,
       "indent": 0,
       "actions": [
         {
@@ -219,19 +166,15 @@
               "value": "  Retry %!error.retryCount%/3: %!error.Message%",
               "type": "string"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 7,
       "text": "call BuildStep",
-      "lineNumber": 30,
+      "lineNumber": 25,
       "indent": 0,
       "actions": [
         {
@@ -245,13 +188,9 @@
               },
               "type": "goal.call"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     }
   ],
@@ -263,8 +202,5 @@
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "HandleBuildStepFailure"
+  "isTest": false
 }

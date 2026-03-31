@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal that calls a non-existent goal and verifies the error handler caught it.",
+    "description": "Build goal that attempts to call a non-existent goal, then verifies the error was caught via an error handler goal.",
     "comment": null,
     "steps": [
       {
@@ -18,7 +18,7 @@
               {
                 "name": "goalName",
                 "value": "NonExistentGoal",
-                "type": "goal.call"
+                "type": "string"
               }
             ],
             "return": null,
@@ -65,7 +65,7 @@
               {
                 "name": "Actual",
                 "value": "%missingCaught%",
-                "type": "bool"
+                "type": "string"
               }
             ],
             "return": null,
@@ -84,6 +84,7 @@
     "path": "/GoalCallMissing.test.goal",
     "prPath": "/.build/goalcallmissing.test.pr",
     "hash": "42ff00589e01e37c2a08137308ad6fc27dc45b3a0b3cd118fb5496c7fc4978f7",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

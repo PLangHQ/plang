@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Built goal steps with error handling for called goals.",
+    "description": "Built goal into executable form (3 steps).",
     "comment": null,
     "steps": [
       {
@@ -48,7 +48,7 @@
             "action": "call",
             "parameters": [
               {
-                "name": "GoalName",
+                "name": "goalName",
                 "value": "ThrowTestError",
                 "type": "goal.call"
               }
