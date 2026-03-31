@@ -9,9 +9,5 @@ public partial class Write : IContext, IChannel
 {
     public partial Data Data { get; init; }
 
-    public async Task<Data> Run()
-    {
-        var channel = Data.Properties?.Get<string>("channel") ?? "default";
-        return await Channels.WriteAsync(channel, Data.Value);
-    }
+    public async Task<Data> Run() => await Channels.WriteAsync(this);
 }
