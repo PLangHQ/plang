@@ -1,7 +1,7 @@
 [
   {
     "name": "BareRetryGoal",
-    "description": "Built BareRetryGoal steps into executable PLang actions.",
+    "description": "Build BareRetryGoal into executable steps.",
     "comment": null,
     "steps": [
       {
@@ -17,39 +17,21 @@
             "parameters": [
               {
                 "name": "A",
-                "value": "1",
-                "type": "int"
+                "value": "%bareRetryAttempts%",
+                "type": "object"
               },
               {
                 "name": "B",
-                "value": "%bareRetryAttempts%",
-                "type": "int"
+                "value": "1",
+                "type": "object"
               }
             ],
             "return": [
               {
-                "name": "__mathAddReturn__",
+                "name": "bareRetryAttempts",
                 "value": null
               }
             ],
-            "defaults": null
-          },
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "@bareRetryAttempts",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "%__mathAddReturn__%",
-                "type": "int"
-              }
-            ],
-            "return": null,
             "defaults": null
           }
         ],

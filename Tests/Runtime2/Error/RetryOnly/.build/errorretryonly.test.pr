@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Built goal steps for bare retry and timed retry scenarios.",
+    "description": "Builds the provided retry-exhaustion test flow into executable PLang steps with correct onError retry semantics.",
     "comment": null,
     "steps": [
       {
@@ -156,7 +156,7 @@
               {
                 "name": "Expected",
                 "value": 3,
-                "type": "object"
+                "type": "int"
               },
               {
                 "name": "Actual",
@@ -331,7 +331,7 @@
               {
                 "name": "Expected",
                 "value": 3,
-                "type": "object"
+                "type": "int"
               },
               {
                 "name": "Actual",

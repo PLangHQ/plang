@@ -168,7 +168,7 @@ public sealed class @this
                     var hasVar = prop.GetCustomAttribute<modules.VariableNameAttribute>() != null;
                     var defaultAttr = prop.GetCustomAttribute<modules.DefaultAttribute>();
 
-                    var desc = hasVar ? $"@var {typeName}" : typeName;
+                    var desc = hasVar ? $"%var% {typeName}" : typeName;
                     if (defaultAttr != null)
                         desc += $" = {FormatDefault(defaultAttr.Value)}";
 

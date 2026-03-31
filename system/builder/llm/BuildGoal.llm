@@ -14,7 +14,7 @@ You are the PLang builder. Build a goal into executable form.
    - If it has no pr data: build it.
 3. For each action, determine the correct module.action from the summary above
 4. Build the parameters array matching the DTO definition — each parameter is {name, value, type}
-5. Include the `type` field for each parameter. Valid type names: %typeInfo.TypeNames%. For types with valid values like actor(user|service|system), pick a value from the list. For @var params, the value must be a \%variable\% reference. Params with = default are optional — omit them to use the default.
+5. Include the `type` field for each parameter. Valid type names: %typeInfo.TypeNames%. For types with valid values like actor(user|service|system), pick a value from the list. For %var% params, the value must be a \%variable\% reference (e.g., "\%myVar\%"). Params with = default are optional — omit them to use the default.
 %typeInfo.TypeSchemas%
 The system resolves PrPath post-build.
 6. If you can identify the actions but cannot fully construct the parameters from the summary, set needsDetail: true and still include the actions with module and action filled in — leave parameters empty

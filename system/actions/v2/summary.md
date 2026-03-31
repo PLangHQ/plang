@@ -1,4 +1,4 @@
-Notation: @var = value is a %variable% reference | type(a|b) = valid values | = val is default, param is optional
+Notation: %var% = value must be a %variable% reference | type(a|b) = valid values | = val is default, param is optional
 {% assign classes = actions | map: "Module" | uniq %}
 {% for class_name in classes %}
 # {{ class_name }}

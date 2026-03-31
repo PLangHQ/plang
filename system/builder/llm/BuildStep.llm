@@ -105,4 +105,4 @@ Example: `if testfile.txt exists, call ProcessFile`
 - Build data objects matching the DTO definitions exactly
 - If you cannot build a valid result, omit the data field and add an error
 - Actions within a step execute in order. A later action can reference the return variable of an earlier action in the same step.
-- Valid type names: string, int, long, float, double, decimal, bool, datetime, guid, json (for JSON objects/structures), json[] (for JSON arrays), list, dict, actor, goal.call. @var params expect \%variable\% values. Params with defaults are optional. For goal.call type, value is `{"name": "GoalName"}`. The system resolves PrPath post-build.
+- Valid type names: string, int, long, float, double, decimal, bool, datetime, guid, json (for JSON objects/structures), json[] (for JSON arrays), list, dict, actor, goal.call. %var% params expect \%variable\% values (e.g., "\%myVar\%"). Params with defaults are optional. For goal.call type, value is `{"name": "GoalName"}`. The system resolves PrPath post-build.

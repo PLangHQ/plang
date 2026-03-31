@@ -24,16 +24,6 @@
                 "name": "Value",
                 "value": true,
                 "type": "bool"
-              },
-              {
-                "name": "Type",
-                "value": "",
-                "type": "string"
-              },
-              {
-                "name": "AsDefault",
-                "value": false,
-                "type": "bool"
               }
             ],
             "return": null,

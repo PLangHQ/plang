@@ -1,7 +1,7 @@
 [
   {
     "name": "TimedRetryGoal",
-    "description": "Build TimedRetryGoal steps into executable PLang actions.",
+    "description": "Build TimedRetryGoal steps into executable form.",
     "comment": null,
     "steps": [
       {
@@ -18,17 +18,17 @@
               {
                 "name": "A",
                 "value": "%timedRetryAttempts%",
-                "type": "int"
+                "type": "string"
               },
               {
                 "name": "B",
-                "value": 1,
-                "type": "int"
+                "value": "1",
+                "type": "string"
               }
             ],
             "return": [
               {
-                "name": "__mathAddReturn__",
+                "name": "timedRetryAttempts",
                 "value": null
               }
             ],
@@ -45,7 +45,7 @@
               },
               {
                 "name": "Value",
-                "value": "%__mathAddReturn__%",
+                "value": "%timedRetryAttempts%",
                 "type": "string"
               }
             ],
@@ -74,11 +74,6 @@
                 "name": "Message",
                 "value": "timed fail",
                 "type": "string"
-              },
-              {
-                "name": "StatusCode",
-                "value": 500,
-                "type": "int"
               }
             ],
             "return": null,
