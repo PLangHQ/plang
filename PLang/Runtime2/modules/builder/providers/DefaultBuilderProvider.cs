@@ -176,6 +176,7 @@ public class DefaultBuilderProvider : IBuilderProvider
                 $"Actions not found: {string.Join(", ", notFound)}", "ActionNotFound", 400));
 
         await ResolveGoalCallPaths(action.Actions, engine, context);
+        NormalizeParameterTypes(action.Actions);
 
         foreach (var a in action.Actions)
         {
@@ -263,6 +264,32 @@ public class DefaultBuilderProvider : IBuilderProvider
         };
         var saveResult = await engine.RunAction(saveAction, context);
         return saveResult.Success ? Data.Ok(action.App) : saveResult;
+    }
+
+    /// <summary>
+    /// Normalizes parameter values to match their declared type.
+    /// LLMs are non-deterministic — they may produce "false" (string) instead of false (bool).
+    /// This runs at build time so the .pr file has correct types.
+    /// </summary>
+    private static void NormalizeParameterTypes(Actions actions)
+    {
+        foreach (var a in actions)
+        {
+            if (a.Parameters == null) continue;
+            foreach (var p in a.Parameters)
+            {
+                if (p.Value is not string strValue) continue;
+                if (strValue.StartsWith('%') && strValue.EndsWith('%')) continue; // variable reference
+                if (p.Type == null) continue;
+
+                var targetType = TypeMapping.GetType(p.Type.Value);
+                if (targetType == null || targetType == typeof(string)) continue;
+
+                var (converted, _) = TypeMapping.TryConvertTo(strValue, targetType);
+                if (converted != null)
+                    p.Value = converted;
+            }
+        }
     }
 
     // --- Private helpers ---

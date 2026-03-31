@@ -154,6 +154,88 @@ public class ValidateActionsTests
         await Assert.That(patternDefault).IsNotNull();
     }
 
+    // --- Type normalization ---
+
+    [Test]
+    public async Task ValidateActions_NormalizesBoolStringToJsonBool()
+    {
+        var actions = new StepActions
+        {
+            new Action
+            {
+                Module = "condition",
+                ActionName = "if",
+                Parameters = new List<Data>
+                {
+                    new("Left", "%flag%"),
+                    new("Operator", "==") { Type = new PLang.Runtime2.Engine.Memory.Type("string") },
+                    new("Right", "false") { Type = new PLang.Runtime2.Engine.Memory.Type("bool") }
+                }
+            }
+        };
+
+        var action = new validate { Context = _engine.Context, Actions = actions };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
+        await Assert.That(rightParam.Value).IsEqualTo(false);
+        await Assert.That(rightParam.Value is bool).IsTrue();
+    }
+
+    [Test]
+    public async Task ValidateActions_NormalizesIntStringToInt()
+    {
+        var actions = new StepActions
+        {
+            new Action
+            {
+                Module = "condition",
+                ActionName = "if",
+                Parameters = new List<Data>
+                {
+                    new("Left", "%count%"),
+                    new("Operator", ">") { Type = new PLang.Runtime2.Engine.Memory.Type("string") },
+                    new("Right", "5") { Type = new PLang.Runtime2.Engine.Memory.Type("int") }
+                }
+            }
+        };
+
+        var action = new validate { Context = _engine.Context, Actions = actions };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
+        await Assert.That(rightParam.Value is int or long).IsTrue();
+    }
+
+    [Test]
+    public async Task ValidateActions_SkipsVariableReferences()
+    {
+        var actions = new StepActions
+        {
+            new Action
+            {
+                Module = "condition",
+                ActionName = "if",
+                Parameters = new List<Data>
+                {
+                    new("Left", "%flag%") { Type = new PLang.Runtime2.Engine.Memory.Type("bool") },
+                    new("Operator", "=="),
+                    new("Right", true) { Type = new PLang.Runtime2.Engine.Memory.Type("bool") }
+                }
+            }
+        };
+
+        var action = new validate { Context = _engine.Context, Actions = actions };
+        var result = await _engine.RunAction(action, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        // %flag% should NOT be converted — it's a variable reference
+        var leftParam = actions[0].Parameters.First(p => p.Name == "Left");
+        await Assert.That(leftParam.Value).IsEqualTo("%flag%");
+    }
+
     [Test]
     public async Task ValidateActions_ConfigureDefaults_FromIConfigureT()
     {
