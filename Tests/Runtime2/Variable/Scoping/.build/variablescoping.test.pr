@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build goal with variable setting, inner goal call, assertions, list manipulation, and foreach loop with calls.",
+    "description": "Built goal steps for variable scoping and foreach capture behavior.",
     "comment": null,
     "steps": [
       {
@@ -58,7 +58,16 @@
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -205,7 +214,7 @@
               {
                 "name": "Collection",
                 "value": "%items%",
-                "type": "list"
+                "type": "object"
               },
               {
                 "name": "GoalName",
@@ -215,7 +224,7 @@
                     {
                       "name": "item",
                       "value": "%item%",
-                      "type": "object"
+                      "type": "string"
                     }
                   ]
                 },
@@ -232,7 +241,16 @@
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -250,12 +268,12 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%captured%",
+                "value": "alpha",
                 "type": "string"
               },
               {
                 "name": "Container",
-                "value": "alpha",
+                "value": "%captured%",
                 "type": "string"
               }
             ],
@@ -282,12 +300,12 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%captured%",
+                "value": "beta",
                 "type": "string"
               },
               {
                 "name": "Container",
-                "value": "beta",
+                "value": "%captured%",
                 "type": "string"
               }
             ],
@@ -307,6 +325,7 @@
     "path": "/VariableScoping.test.goal",
     "prPath": "/.build/variablescoping.test.pr",
     "hash": "c32737166653604c22d4d239baed09929cbc95e64c135139ad51b1e6a77288a5",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Set variables and assert list elements by index",
+    "description": "Built goal steps for setting list variables and asserting indexed elements.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,7 @@
                   "b",
                   "c"
                 ],
-                "type": "array"
+                "type": "list"
               }
             ],
             "return": null,
@@ -238,6 +238,7 @@
     "path": "/VariableIndexing.test.goal",
     "prPath": "/.build/variableindexing.test.pr",
     "hash": "df6a35c2c73a17ab3d107574ff2e64ce3a95146ae40b43751ec3ce71ea830483",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

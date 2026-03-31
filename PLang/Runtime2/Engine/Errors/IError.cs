@@ -1,3 +1,5 @@
+using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
+
 namespace PLang.Runtime2.Engine.Errors;
 
 /// <summary>
@@ -22,15 +24,26 @@ public interface IError
     List<IError> ErrorChain { get; }
 
     /// <summary>
-    /// The step where the error occurred. Navigate to goal, line number, etc. via Step.Goal.
+    /// The step where the error occurred.
     /// </summary>
-    Step? Step { get; }
+    Step? Step { get; set; }
+
+    /// <summary>
+    /// The goal where the error occurred.
+    /// </summary>
+    Goal? Goal { get; set; }
 
     /// <summary>
     /// Snapshot of the call stack frames at the time the error was created.
     /// Reads bottom-up: first frame is the root goal, last frame is where the error occurred.
     /// </summary>
-    IReadOnlyList<CallFrame> CallFrames { get; }
+    IReadOnlyList<CallFrame> CallFrames { get; set; }
+
+    /// <summary>
+    /// Snapshot of variable names and their values at the time of the error.
+    /// Captured from the MemoryStack when the error is enriched in Step.RunAsync.
+    /// </summary>
+    Dictionary<string, string> Variables { get; set; }
 
     /// <summary>
     /// Formats this error for display. Called only at the final display point, never during propagation.

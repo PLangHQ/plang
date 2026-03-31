@@ -119,6 +119,57 @@ The debug output tells you exactly:
 
 **Never change .pr files.** If the build produces wrong output, rebuild (clear LLM cache if needed) or fix the builder prompt. Exception: builder .pr files (`system/builder/.build/`) are currently hand-crafted — changes require permission first, since they affect everything already tested.
 
+## When a Test Fails — Process
+
+When a build or test fails, follow this process. Do NOT silently retry, change .goal files to work around issues, or change C# code without asking. Debug, analyze, report.
+
+### Step 1: Read the error message
+What exactly failed — build error, runtime error, assertion mismatch? Note the exact error text.
+
+### Step 2: Read the .pr file
+Verify each step maps correctly:
+- Right module and action?
+- Right parameters matching the step text literally?
+- `onError`/`cache` present when the step has modifiers?
+- Literal values (assertion expected values) not altered?
+
+This catches builder issues — if the .pr is wrong, it's a build problem.
+
+### Step 3: If the .pr looks wrong — debug the builder
+Use `!debug=BuildGoal:4` (what the LLM saw) and `!debug=BuildGoal:6` (what the LLM returned). Analyze:
+- What text did the LLM receive as the user message?
+- What JSON did the LLM return?
+- How many validation retries occurred?
+- Why is the mapping wrong?
+
+### Step 4: If the .pr looks correct but runtime fails — debug the runtime
+Use `!debug` on the failing step to see variable values before/after execution. Analyze:
+- What values were expected?
+- What values were actually present?
+- Where did the mismatch happen?
+
+### Step 5: Stop and report
+Do NOT attempt fixes. Present to the user:
+
+**First, show the PLang code** with a `<--` arrow on the failing line:
+```
+Start
+- set %items% = ["a", "b", "c"]
+- set %idx% = 1
+- assert %items[idx]% equals "b"        <-- build fails here (null content to LLM)
+- set %i% = 0
+```
+
+**Then the three whys:**
+1. **What failed** — the exact error
+2. **Why it failed** — the root cause (bad .pr, missing variable, wrong module, null content, etc.)
+3. **Why that happened** — the deeper cause (LLM confused by comment, variable in step text resolved during template rendering, etc.)
+
+Plus a proposed fix with options if there are multiple approaches. Wait for approval before implementing.
+
+### When the builder changes — revalidate
+Any change to the builder (prompt, validator, .pr files) means all previously passing tests must be rebuilt and rerun. The `builderVersion` field in .pr files tracks which builder version produced each file.
+
 ## Build & Run Commands
 
 ```

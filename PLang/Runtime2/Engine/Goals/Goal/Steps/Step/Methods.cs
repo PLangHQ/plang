@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
@@ -51,6 +52,18 @@ public sealed partial class @this
             var error = StepError.FromException(ex, context);
             context.CallStack?.AddError(error);
             result = Data.FromError(error);
+        }
+
+        // Enrich error with step/goal/callstack/variables context before error handling
+        if (!result.Success && result.Error != null)
+        {
+            var error = result.Error;
+            if (error.Step == null) error.Step = this;
+            if (error.Goal == null) error.Goal = context.Goal;
+            if (error.CallFrames.Count == 0)
+                error.CallFrames = context.CallStack?.GetFrames() ?? (IReadOnlyList<CallFrame>)Array.Empty<CallFrame>();
+            if (error.Variables.Count == 0)
+                error.Variables = SnapshotVariables(context);
         }
 
         // Handle errors via OnError configuration
@@ -205,5 +218,65 @@ public sealed partial class @this
         {
             context.MemoryStack.Remove("!error");
         }
+    }
+
+    /// <summary>
+    /// Snapshots all %var% references found in the step text and action parameters,
+    /// looking up their current values from the MemoryStack.
+    /// </summary>
+    private Dictionary<string, string> SnapshotVariables(PLangContext context)
+    {
+        var vars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var varNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Extract %var% references from step text
+        foreach (Match match in Regex.Matches(Text, @"%([^%]+)%"))
+            varNames.Add(match.Groups[1].Value);
+
+        // Extract from action parameter values
+        foreach (var action in Actions)
+        {
+            foreach (var param in action.Parameters)
+            {
+                if (param.Value is string strVal)
+                {
+                    foreach (Match match in Regex.Matches(strVal, @"%([^%]+)%"))
+                        varNames.Add(match.Groups[1].Value);
+                }
+            }
+        }
+
+        foreach (var name in varNames)
+        {
+            try
+            {
+                var data = context.MemoryStack.Get(name);
+                if (data == null)
+                {
+                    vars[name] = "[not created yet]";
+                    continue;
+                }
+                if (!data.IsInitialized)
+                {
+                    vars[name] = "[not initialized]";
+                    continue;
+                }
+                var value = data.Value;
+                vars[name] = value switch
+                {
+                    null => "(null)",
+                    string s => s.Length > 200 ? s[..200] + "..." : s,
+                    _ => value.ToString()?.Length > 200
+                        ? value.ToString()![..200] + "..."
+                        : value.ToString() ?? "(null)"
+                };
+            }
+            catch
+            {
+                vars[name] = "(error reading)";
+            }
+        }
+
+        return vars;
     }
 }

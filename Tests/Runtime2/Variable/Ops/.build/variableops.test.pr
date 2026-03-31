@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Test variable set, exists, remove, and clear operations with assertions",
+    "description": "Build goal for variable set/exists/remove/clear tests.",
     "comment": null,
     "steps": [
       {
@@ -82,7 +82,7 @@
               {
                 "name": "Value",
                 "value": "%existsResult%",
-                "type": "string"
+                "type": "bool"
               }
             ],
             "return": null,
@@ -168,7 +168,7 @@
               {
                 "name": "Value",
                 "value": "%goneResult%",
-                "type": "string"
+                "type": "bool"
               }
             ],
             "return": null,
@@ -312,7 +312,7 @@
               {
                 "name": "Value",
                 "value": "%aResult%",
-                "type": "string"
+                "type": "bool"
               }
             ],
             "return": null,
@@ -331,6 +331,7 @@
     "path": "/VariableOps.test.goal",
     "prPath": "/.build/variableops.test.pr",
     "hash": "1fa4acdf118f518cd49f40a0bc11e4b11c864683d64b08d621ea4234acdd2dbc",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

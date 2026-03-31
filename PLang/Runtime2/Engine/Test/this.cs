@@ -38,6 +38,8 @@ public sealed class @this
         public int StepIndex { get; init; }
         public string StepText { get; init; } = "";
         public string Message { get; init; } = "";
+        public int LineNumber { get; init; }
+        public string? GoalPath { get; init; }
     }
 
     /// <summary>
@@ -81,6 +83,15 @@ public sealed class @this
             {
                 result.Result = Data.FromError(Error.FromException(ex));
                 Console.WriteLine(" ERROR");
+            }
+
+            // Print full error immediately so the developer sees it in context
+            if (!result.Passed && !result.Result.Success && result.Failures.Count == 0
+                && result.Result.Error != null)
+            {
+                Console.WriteLine();
+                Console.WriteLine(result.Result.Error.Format());
+                Console.WriteLine();
             }
 
             results.Add(result);
@@ -151,7 +162,9 @@ public sealed class @this
             {
                 StepIndex = step.Index,
                 StepText = step.Text,
-                Message = assertError.Message
+                Message = assertError.Message,
+                LineNumber = step.LineNumber,
+                GoalPath = step.Goal?.Path
             });
         }
 
@@ -183,14 +196,19 @@ public sealed class @this
             {
                 Console.WriteLine($"  FAILED: {result.FilePath}");
 
-                if (!result.Result.Success)
+                if (!result.Result.Success && result.Failures.Count == 0)
                 {
-                    Console.WriteLine($"    Error: {result.Result.Error?.Message}");
+                    // Full error was already printed immediately after the test — just reference it
+                    Console.WriteLine($"    Error: {result.Result.Error?.Key}({result.Result.Error?.StatusCode}) — {result.Result.Error?.Message}");
                 }
 
                 foreach (var failure in result.Failures)
                 {
+                    var location = failure.GoalPath != null
+                        ? $"{failure.GoalPath}:{failure.LineNumber}"
+                        : $"line {failure.LineNumber}";
                     Console.WriteLine($"    [{failure.StepIndex}] {failure.StepText}");
+                    Console.WriteLine($"        at {location}");
                     Console.WriteLine($"        {failure.Message}");
                 }
 

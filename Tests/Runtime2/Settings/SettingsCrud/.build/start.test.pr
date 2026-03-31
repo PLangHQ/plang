@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Tests basic CRUD operations on settings: set, get, update, remove",
+    "description": "Build CRUD test flow for settings: set, get, update, remove.",
     "comment": "Tests basic CRUD operations on settings: set, get, update, remove",
     "steps": [
       {
@@ -16,12 +16,12 @@
             "action": "set",
             "parameters": [
               {
-                "name": "key",
+                "name": "Key",
                 "value": "TestApiKey",
                 "type": "string"
               },
               {
-                "name": "value",
+                "name": "Value",
                 "value": "sk-test-12345",
                 "type": "string"
               }
@@ -48,7 +48,7 @@
             "action": "get",
             "parameters": [
               {
-                "name": "key",
+                "name": "Key",
                 "value": "TestApiKey",
                 "type": "string"
               }
@@ -80,12 +80,12 @@
             "action": "equals",
             "parameters": [
               {
-                "name": "expected",
+                "name": "Expected",
                 "value": "sk-test-12345",
                 "type": "string"
               },
               {
-                "name": "actual",
+                "name": "Actual",
                 "value": "%apiKey%",
                 "type": "string"
               }
@@ -112,12 +112,12 @@
             "action": "set",
             "parameters": [
               {
-                "name": "key",
+                "name": "Key",
                 "value": "TestApiKey",
                 "type": "string"
               },
               {
-                "name": "value",
+                "name": "Value",
                 "value": "sk-updated-99999",
                 "type": "string"
               }
@@ -144,7 +144,7 @@
             "action": "get",
             "parameters": [
               {
-                "name": "key",
+                "name": "Key",
                 "value": "TestApiKey",
                 "type": "string"
               }
@@ -176,12 +176,12 @@
             "action": "equals",
             "parameters": [
               {
-                "name": "expected",
+                "name": "Expected",
                 "value": "sk-updated-99999",
                 "type": "string"
               },
               {
-                "name": "actual",
+                "name": "Actual",
                 "value": "%updatedKey%",
                 "type": "string"
               }
@@ -208,7 +208,7 @@
             "action": "remove",
             "parameters": [
               {
-                "name": "key",
+                "name": "Key",
                 "value": "TestApiKey",
                 "type": "string"
               }
@@ -229,6 +229,7 @@
     "path": "/Start.test.goal",
     "prPath": "/.build/start.test.pr",
     "hash": "b1b13f160e7dc9e4284b0988418d73bfa908b2cfd342f0e147e9b9cf5a41b1bd",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

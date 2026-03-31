@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build for Start goal with assertions on special variables",
+    "description": "Build assertions to verify goal/step/context/fileSystem/callStack accessibility.",
     "comment": null,
     "steps": [
       {
@@ -16,13 +16,13 @@
             "action": "equals",
             "parameters": [
               {
-                "name": "Actual",
-                "value": "%!goal.Name%",
+                "name": "Expected",
+                "value": "Start",
                 "type": "string"
               },
               {
-                "name": "Expected",
-                "value": "Start",
+                "name": "Actual",
+                "value": "%!goal.Name%",
                 "type": "string"
               }
             ],
@@ -150,6 +150,7 @@
     "path": "/ContextVars2.test.goal",
     "prPath": "/.build/contextvars2.test.pr",
     "hash": "85619f863448eb43ec701fc1850de420df2fea3a522ce131303290d8f6ae53de",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

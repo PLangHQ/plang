@@ -1,7 +1,7 @@
 [
   {
     "name": "InnerGoal",
-    "description": "Build for goal InnerGoal with one step to set variable %x% to \u0027modified\u0027.",
+    "description": "Build goal steps for InnerGoal.",
     "comment": null,
     "steps": [
       {
@@ -42,6 +42,7 @@
     "path": "/InnerGoal.goal",
     "prPath": "/.build/innergoal.pr",
     "hash": "f825cd12443c1cd65525ad125c97678711c27853132279ce31186940caf5795e",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

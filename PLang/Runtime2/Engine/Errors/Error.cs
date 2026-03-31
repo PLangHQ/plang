@@ -1,5 +1,6 @@
 using System.Text;
 using PLang.Runtime2.Engine.Context;
+using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
 
 namespace PLang.Runtime2.Engine.Errors;
 
@@ -18,8 +19,10 @@ public class Error : IError
     public DateTime CreatedUtc { get; }
     public Exception? Exception { get; init; }
     public List<IError> ErrorChain { get; } = new();
-    public Step? Step { get; init; }
-    public IReadOnlyList<CallFrame> CallFrames { get; init; } = Array.Empty<CallFrame>();
+    public Step? Step { get; set; }
+    public Goal? Goal { get; set; }
+    public IReadOnlyList<CallFrame> CallFrames { get; set; } = Array.Empty<CallFrame>();
+    public Dictionary<string, string> Variables { get; set; } = new();
     public virtual ErrorCategory Category => StatusCode < 500 ? ErrorCategory.Application : ErrorCategory.Runtime;
 
     public Error(string message, string key = "Error", int statusCode = 400)
@@ -31,21 +34,23 @@ public class Error : IError
         CreatedUtc = DateTime.UtcNow;
     }
 
-    public Error(string message, Step step, string key = "Error", int statusCode = 400)
+    public Error(string message, Step? step, string key = "Error", int statusCode = 400)
         : this(message, key, statusCode)
     {
         Step = step;
+        Goal = step?.Goal;
     }
 
-    public Error(string message, Step step, IReadOnlyList<CallFrame> callFrames, string key = "Error", int statusCode = 400)
+    public Error(string message, Step? step, IReadOnlyList<CallFrame> callFrames, string key = "Error", int statusCode = 400)
         : this(message, step, key, statusCode)
     {
         CallFrames = callFrames;
     }
 
     public Error(string message, PLangContext context, string key = "Error", int statusCode = 400)
-        : this(message, context.Step!, key, statusCode)
+        : this(message, context.Step, key, statusCode)
     {
+        Goal = context.Goal;
         CallFrames = context.CallStack?.GetFrames() ?? (IReadOnlyList<CallFrame>)Array.Empty<CallFrame>();
     }
 
@@ -68,63 +73,33 @@ public class Error : IError
     public virtual string Format()
     {
         var sb = new StringBuilder();
-        FormatSingle(this, sb, "");
+        FormatError(this, sb, "");
 
         for (int i = 0; i < ErrorChain.Count; i++)
         {
             sb.AppendLine();
             sb.AppendLine($"--- Error during error handling [{i + 1}] ---");
-            FormatSingle(ErrorChain[i], sb, "\t");
+            FormatError(ErrorChain[i], sb, "\t");
         }
         return sb.ToString().TrimEnd();
     }
 
-    private static void FormatSingle(IError error, StringBuilder sb, string indent)
+    private static void FormatError(IError error, StringBuilder sb, string indent)
     {
-        if (error.Category == ErrorCategory.Application)
-        {
-            FormatApplication(error, sb, indent);
-        }
-        else
-        {
-            FormatRuntime(error, sb, indent);
-        }
-    }
+        var goalPath = error.Goal?.Path ?? error.Step?.Goal?.Path;
+        var file = goalPath != null && error.Step != null ? $"{goalPath}:{error.Step.LineNumber}" : goalPath;
 
-    private static void FormatApplication(IError error, StringBuilder sb, string indent)
-    {
-        var file = error.Step?.Goal?.Path != null ? $"{error.Step.Goal.Path}:{error.Step.LineNumber}" : null;
-
-        sb.AppendLine($"{indent}\u26a0\ufe0f  Error({error.StatusCode}) \u2014 {error.Key}");
-        sb.AppendLine($"{indent}Error: {error.Message}");
-
-        if (error.Step != null)
-            sb.AppendLine($"{indent}\ud83d\udcdd Step: - {error.Step.Text}");
-        if (file != null)
-            sb.AppendLine($"{indent}\ud83d\udcc4 File: {file}");
-
-        if (error.FixSuggestion != null)
-            sb.AppendLine($"{indent}\ud83d\udee0\ufe0f  Fix: {error.FixSuggestion}");
-
-        if (error is Error e)
-            e.FormatExtra(sb, indent);
-    }
-
-    private static void FormatRuntime(IError error, StringBuilder sb, string indent)
-    {
-        var file = error.Step?.Goal?.Path != null ? $"{error.Step.Goal.Path}:{error.Step.LineNumber}" : null;
-        var line = error.Step?.LineNumber;
-
+        // Header
         sb.AppendLine($"{indent}\ud83d\udd34   ================== {error.Key}({error.StatusCode}) ==================   \ud83d\udd34");
         if (file != null)
             sb.AppendLine($"{indent}\ud83d\udcc4 File: {file}");
-        if (line != null)
-            sb.AppendLine($"{indent}\ud83d\udd22 Line: {line}");
+        if (error.Step != null)
+            sb.AppendLine($"{indent}\ud83d\udd22 Line: {error.Step.LineNumber}");
         sb.AppendLine($"{indent}\ud83e\udde9 Key:  {error.Key}");
         sb.AppendLine($"{indent}#\ufe0f\u20e3  StatusCode:  {error.StatusCode}");
         sb.AppendLine($"{indent}\ud83d\udd51 Time: {error.CreatedUtc}");
 
-        // Error Details
+        // Code snippet
         sb.AppendLine();
         sb.AppendLine($"{indent}\ud83d\udd0d   ================== Error Details ==================   \ud83d\udd0d");
 
@@ -137,10 +112,12 @@ public class Error : IError
                 sb.AppendLine($"{indent}        at {file}");
         }
 
+        // Reason
         sb.AppendLine();
         sb.AppendLine($"{indent}\ud83e\uddd0 Reason: ");
         sb.AppendLine($"{indent}    {error.Message}");
 
+        // Fix suggestions
         if (error.FixSuggestion != null)
         {
             sb.AppendLine();
@@ -148,6 +125,7 @@ public class Error : IError
             sb.AppendLine($"{indent}    {error.FixSuggestion}");
         }
 
+        // Helpful links
         if (error.HelpfulLinks != null)
         {
             sb.AppendLine();
@@ -155,6 +133,18 @@ public class Error : IError
             sb.AppendLine($"{indent}    {error.HelpfulLinks}");
         }
 
+        // Variables snapshot
+        if (error.Variables.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"{indent}\ud83c\udff7\ufe0f  Variables in step:");
+            foreach (var (name, value) in error.Variables)
+            {
+                sb.AppendLine($"{indent}    %{name}% = {value}");
+            }
+        }
+
+        // Call stack
         if (error.CallFrames.Count > 0)
         {
             sb.AppendLine();
@@ -166,9 +156,11 @@ public class Error : IError
             }
         }
 
+        // Error source (ActionError overrides FormatExtra)
         if (error is Error e)
             e.FormatExtra(sb, indent);
 
+        // Exception details
         if (error.Exception != null)
         {
             sb.AppendLine();

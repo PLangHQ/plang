@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build steps for setting, getting, and asserting a settings value",
+    "description": "Build goal steps for setting, reading, and asserting archive.max.",
     "comment": null,
     "steps": [
       {
@@ -16,12 +16,12 @@
             "action": "set",
             "parameters": [
               {
-                "name": "key",
+                "name": "Key",
                 "value": "archive.max",
                 "type": "string"
               },
               {
-                "name": "value",
+                "name": "Value",
                 "value": 20971520,
                 "type": "int"
               }
@@ -48,7 +48,7 @@
             "action": "get",
             "parameters": [
               {
-                "name": "key",
+                "name": "Key",
                 "value": "archive.max",
                 "type": "string"
               }
@@ -80,14 +80,14 @@
             "action": "equals",
             "parameters": [
               {
-                "name": "expected",
+                "name": "Expected",
                 "value": 20971520,
                 "type": "int"
               },
               {
-                "name": "actual",
+                "name": "Actual",
                 "value": "%maxSize%",
-                "type": "string"
+                "type": "object"
               }
             ],
             "return": null,
@@ -106,6 +106,7 @@
     "path": "/Start.test.goal",
     "prPath": "/.build/start.test.pr",
     "hash": "ec751a865962456ca94721ed138f68c2f3b6ca44ff11e1e7b784ace01ee33796",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,

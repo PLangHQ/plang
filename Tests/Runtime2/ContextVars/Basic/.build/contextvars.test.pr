@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Build for two assert steps checking engine name",
+    "description": "Build assertions for engine name variable.",
     "comment": null,
     "steps": [
       {
@@ -16,12 +16,12 @@
             "action": "isNotNull",
             "parameters": [
               {
-                "name": "value",
+                "name": "Value",
                 "value": "%!engine.Name%",
-                "type": "object"
+                "type": "string"
               },
               {
-                "name": "message",
+                "name": "Message",
                 "value": "engine name should be set",
                 "type": "string"
               }
@@ -48,14 +48,14 @@
             "action": "equals",
             "parameters": [
               {
-                "name": "expected",
+                "name": "Expected",
                 "value": "Runtime2",
                 "type": "string"
               },
               {
-                "name": "actual",
+                "name": "Actual",
                 "value": "%!engine.Name%",
-                "type": "object"
+                "type": "string"
               }
             ],
             "return": null,
@@ -74,6 +74,7 @@
     "path": "/ContextVars.test.goal",
     "prPath": "/.build/contextvars.test.pr",
     "hash": "b0e581625fc2ac575c4d940196f0d15530b79441fdf4163a7b44e35af674398d",
+    "builderVersion": "0.2.1",
     "isSetup": false,
     "isEvent": false,
     "isSystem": false,
