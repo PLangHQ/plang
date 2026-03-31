@@ -5,9 +5,6 @@ using PLang.SafeFileSystem;
 
 namespace PLang.Tests.Runtime2.Engine;
 
-/// <summary>
-/// Tests for [Method] attribute — engine methods registered as PLang-callable actions.
-/// </summary>
 public class MethodAttributeTests : IDisposable
 {
     private readonly string _tempDir;
@@ -30,7 +27,7 @@ public class MethodAttributeTests : IDisposable
     }
 
     [Test]
-    public async Task OutputWrite_ViaMethod_WritesToChannel()
+    public async Task OutputWrite_DataParameter_WritesToDefaultChannel()
     {
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new Channel(
@@ -38,12 +35,11 @@ public class MethodAttributeTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
-        // Build an action that maps to output.write
         var action = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
         {
             Module = "output",
             ActionName = "write",
-            Parameters = new List<Data> { new Data("Content", "hello from method") }
+            Parameters = new List<Data> { new Data("Data", "hello world") }
         };
 
         var context = _engine.CreateContext();
@@ -53,11 +49,41 @@ public class MethodAttributeTests : IDisposable
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("hello from method" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("hello world" + System.Environment.NewLine);
     }
 
     [Test]
-    public async Task OutputWrite_BeforeEvent_CanInterceptAction()
+    public async Task OutputWrite_WithChannelProperty_WritesToNamedChannel()
+    {
+        var traceStream = new System.IO.MemoryStream();
+        _engine.User.Channels.Register(new Channel(
+            "trace", traceStream,
+            ChannelDirection.Output, ownsStream: true)
+        { ContentType = "text/plain" });
+
+        // Data with channel property
+        var data = new Data("Data", "trace message");
+        data.Properties.Set("channel", "trace");
+
+        var action = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+        {
+            Module = "output",
+            ActionName = "write",
+            Parameters = new List<Data> { data }
+        };
+
+        var context = _engine.CreateContext();
+        var result = await action.RunAsync(_engine, context);
+
+        await Assert.That(result.Success).IsTrue();
+
+        traceStream.Position = 0;
+        var output = new System.IO.StreamReader(traceStream).ReadToEnd();
+        await Assert.That(output).IsEqualTo("trace message" + System.Environment.NewLine);
+    }
+
+    [Test]
+    public async Task OutputWrite_BeforeEvent_CanIntercept()
     {
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new Channel(
@@ -67,7 +93,7 @@ public class MethodAttributeTests : IDisposable
 
         var context = _engine.CreateContext();
 
-        // Register a before-action event that skips the write
+        // Register skip goal
         var skipGoal = new Goal
         {
             Name = "SkipWrite",
@@ -92,7 +118,7 @@ public class MethodAttributeTests : IDisposable
         };
         _engine.Goals.Add(skipGoal);
 
-        // Register before event on output.write
+        // Register before event
         var onAction = new PLang.Runtime2.modules.@event.On
         {
             Context = context,
@@ -102,12 +128,11 @@ public class MethodAttributeTests : IDisposable
         };
         await onAction.Run();
 
-        // Now try to write — should be intercepted
         var action = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
         {
             Module = "output",
             ActionName = "write",
-            Parameters = new List<Data> { new Data("Content", "should not appear") }
+            Parameters = new List<Data> { new Data("Data", "should not appear") }
         };
 
         var result = await action.RunAsync(_engine, context);
@@ -115,7 +140,6 @@ public class MethodAttributeTests : IDisposable
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo("intercepted");
 
-        // Stream should be empty — write was skipped
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
         await Assert.That(output).IsEqualTo("");

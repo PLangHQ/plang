@@ -365,7 +365,7 @@ public class PrPipelineTests
         public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context, List<Data>? defaults = null)
         {
             Initialize(engine, context);
-            var contentData = parameters.FirstOrDefault(d => string.Equals(d.Name, "content", StringComparison.OrdinalIgnoreCase));
+            var contentData = parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
             object? content = contentData?.Value;
             if (content is string str && str.Contains('%'))
             {

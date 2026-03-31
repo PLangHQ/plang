@@ -28,13 +28,13 @@ public class StartGoalTests
                     new Dictionary<string, object?> { { "name", "name" }, { "value", "Plang" } },
                     index: 0, text: "set %name% = \"Plang\""),
                 MakeStep("output", "write",
-                    new Dictionary<string, object?> { { "content", "%name%" } },
+                    new Dictionary<string, object?> { { "Data", "%name%" } },
                     index: 1, text: "write out %name%"),
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "newVarName" }, { "value", "%name%" } },
                     index: 2, text: "set %newVarName% = %name%"),
                 MakeStep("output", "write",
-                    new Dictionary<string, object?> { { "content", "NewVar: %newVarName%" } },
+                    new Dictionary<string, object?> { { "Data", "NewVar: %newVarName%" } },
                     index: 3, text: "write out \"NewVar: %newVarName%\"")
             }
         };
@@ -139,7 +139,7 @@ public class StartGoalTests
                     new Dictionary<string, object?> { { "name", "user" }, { "value", "World" } },
                     index: 0, text: "set user"),
                 MakeStep("output", "write",
-                    new Dictionary<string, object?> { { "content", "Hello %user%!" } },
+                    new Dictionary<string, object?> { { "Data", "Hello %user%!" } },
                     index: 1, text: "write Hello %user%!")
             }
         };
@@ -167,7 +167,7 @@ public class StartGoalTests
             Steps = new GoalSteps
             {
                 MakeStep("output", "write",
-                    new Dictionary<string, object?> { { "content", "no variables here" } },
+                    new Dictionary<string, object?> { { "Data", "no variables here" } },
                     index: 0, text: "write literal")
             }
         };
@@ -195,7 +195,7 @@ public class StartGoalTests
             Steps = new GoalSteps
             {
                 MakeStep("output", "write",
-                    new Dictionary<string, object?> { { "content", "Value: %unknown%" } },
+                    new Dictionary<string, object?> { { "Data", "Value: %unknown%" } },
                     index: 0, text: "write with unknown var")
             }
         };
@@ -401,7 +401,7 @@ public class StartGoalTests
         public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context, List<Data>? defaults = null)
         {
             Initialize(engine, context);
-            var contentData = parameters.FirstOrDefault(d => string.Equals(d.Name, "content", StringComparison.OrdinalIgnoreCase));
+            var contentData = parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
             object? content = contentData?.Value;
             if (content is string str && str.Contains('%'))
             {

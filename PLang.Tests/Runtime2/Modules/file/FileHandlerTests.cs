@@ -408,7 +408,7 @@ public class FileHandlerTests : IDisposable
                             Module = "output",
                             ActionName = "write",
                             Parameters = new System.Collections.Generic.List<PLang.Runtime2.Engine.Memory.Data>
-                                { new PLang.Runtime2.Engine.Memory.Data("content", "%fileResult.Exists%") },
+                                { new PLang.Runtime2.Engine.Memory.Data("Data", "%fileResult.Exists%") },
                         }
                     }
                 }
@@ -477,7 +477,7 @@ public class FileHandlerTests : IDisposable
                             Module = "output",
                             ActionName = "write",
                             Parameters = new System.Collections.Generic.List<PLang.Runtime2.Engine.Memory.Data>
-                                { new PLang.Runtime2.Engine.Memory.Data("content", "%fileResult.Exists%") },
+                                { new PLang.Runtime2.Engine.Memory.Data("Data", "%fileResult.Exists%") },
                         }
                     }
                 }

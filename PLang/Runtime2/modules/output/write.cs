@@ -1,22 +1,17 @@
-using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.output;
 
+[Example("write out 'hello'", "Data=hello")]
+[Example("write trace 'debug info'", "Data=debug info, Properties={channel: trace}")]
 [Action("write", Cacheable = false)]
-public partial class Write : IContext
+public partial class Write : IContext, IChannel
 {
-    public partial object Content { get; init; }
-
-    [Default("user")]
-    public partial Actor Actor { get; init; }
-
-    [Default("default")]
-    public partial string? Channel { get; init; }
+    public partial Data Data { get; init; }
 
     public async Task<Data> Run()
     {
-        var channel = string.IsNullOrEmpty(Channel) ? "default" : Channel;
-        return await Actor.Channels.WriteAsync(channel, Content);
+        var channel = Data.Properties?.Get<string>("channel") ?? "default";
+        return await Channels.WriteAsync(channel, Data.Value);
     }
 }

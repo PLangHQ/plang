@@ -260,7 +260,7 @@ public class GoalTests
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new List<Data> { new("content", "hello") }
+                            Parameters = new List<Data> { new("Data", "hello") }
                         }
                     })
                 }
@@ -272,7 +272,7 @@ public class GoalTests
         await Assert.That(result).Contains("Start");
         await Assert.That(result).Contains("\"module\":\"output\"");
         await Assert.That(result).Contains("\"action\":\"write\"");
-        await Assert.That(result).Contains("\"name\":\"content\"");
+        await Assert.That(result).Contains("\"name\":\"Data\"");
     }
 
     [Test]
@@ -360,7 +360,7 @@ public class GoalTests
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new List<Data> { new("content", "hello") }
+                            Parameters = new List<Data> { new("Data", "hello") }
                         }
                     })
                 },

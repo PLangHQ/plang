@@ -84,7 +84,7 @@ public class IfHandlerTests : IDisposable
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new List<Data> { new Data("content", "true-branch") }
+                            Parameters = new List<Data> { new Data("Data", "true-branch") }
                         }
                     }
                 }
@@ -135,7 +135,7 @@ public class IfHandlerTests : IDisposable
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new List<Data> { new Data("content", "false-branch") }
+                            Parameters = new List<Data> { new Data("Data", "false-branch") }
                         }
                     }
                 }
@@ -305,7 +305,7 @@ public class IfHandlerTests : IDisposable
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new List<Data> { new Data("content", "not-empty") }
+                            Parameters = new List<Data> { new Data("Data", "not-empty") }
                         }
                     }
                 }

@@ -28,7 +28,7 @@
           "module": "output",
           "action": "write",
           "parameters": [
-            { "name": "content", "value": "%content%" }
+            { "name": "Data", "value": "%content%" }
           ]
         }
       ]

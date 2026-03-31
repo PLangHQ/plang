@@ -72,7 +72,7 @@ public class StepsSubStepTests : IDisposable
                 {
                     Module = "output",
                     ActionName = "write",
-                    Parameters = new List<Data> { new Data("content", marker) }
+                    Parameters = new List<Data> { new Data("Data", marker) }
                 }
             }
         };

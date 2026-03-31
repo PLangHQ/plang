@@ -70,6 +70,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
             i.Name == "IContext"
             && i.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.modules");
 
+        // Check if it implements IChannel
+        var implementsIChannel = classSymbol.AllInterfaces.Any(i =>
+            i.Name == "IChannel"
+            && i.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.modules");
+
         // Find partial properties (declared by author, needing generated implementation)
         var properties = new List<ActionPropertyInfo>();
         foreach (var member in classSymbol.GetMembers())
@@ -149,6 +154,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
             classSymbol.Name,
             $"{classSymbol.ContainingNamespace}.{classSymbol.Name}",
             implementsIContext,
+            implementsIChannel,
             properties);
     }
 
@@ -172,6 +178,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
         if (info.ImplementsIContext)
         {
             sb.AppendLine("    public PLang.Runtime2.Engine.Context.PLangContext Context { get; set; } = null!;");
+            sb.AppendLine();
+        }
+
+        // IChannel auto-provision
+        if (info.ImplementsIChannel)
+        {
+            sb.AppendLine("    public PLang.Runtime2.Engine.Channels.@this Channels { get; set; } = null!;");
             sb.AppendLine();
         }
 
@@ -286,6 +299,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
         if (info.ImplementsIContext)
         {
             sb.AppendLine("        Context = context;");
+        }
+        if (info.ImplementsIChannel)
+        {
+            sb.AppendLine("        Channels = (context.Actor ?? engine.User).Channels;");
         }
         sb.AppendLine();
 
@@ -486,15 +503,17 @@ internal class ActionClassInfo
     public string ClassName { get; }
     public string FullName { get; }
     public bool ImplementsIContext { get; }
+    public bool ImplementsIChannel { get; }
     public List<ActionPropertyInfo> Properties { get; }
 
     public ActionClassInfo(string ns, string className, string fullName,
-        bool implementsIContext, List<ActionPropertyInfo> properties)
+        bool implementsIContext, bool implementsIChannel, List<ActionPropertyInfo> properties)
     {
         Namespace = ns;
         ClassName = className;
         FullName = fullName;
         ImplementsIContext = implementsIContext;
+        ImplementsIChannel = implementsIChannel;
         Properties = properties;
     }
 }

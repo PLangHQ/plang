@@ -82,7 +82,7 @@ public class ConditionHandlerTests : IDisposable
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<Data> { new Data("content", "true-branch") }
+                            Parameters = new System.Collections.Generic.List<Data> { new Data("Data", "true-branch") }
                         }
                     }
                 }
@@ -135,7 +135,7 @@ public class ConditionHandlerTests : IDisposable
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<Data> { new Data("content", "false-branch") }
+                            Parameters = new System.Collections.Generic.List<Data> { new Data("Data", "false-branch") }
                         }
                     }
                 }
@@ -211,7 +211,7 @@ public class ConditionHandlerTests : IDisposable
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<Data> { new Data("content", "file exists!") }
+                            Parameters = new System.Collections.Generic.List<Data> { new Data("Data", "file exists!") }
                         }
                     }
                 }

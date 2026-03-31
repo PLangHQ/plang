@@ -244,14 +244,7 @@ public sealed class @this : IAsyncDisposable
     }
 
     // --- [Method] primitives — PLang-callable engine actions ---
-
-    [modules.Method("output", "write")]
-    public async Task<Data> Write(object content, PLangContext context, string? channel = "default")
-    {
-        channel = string.IsNullOrEmpty(channel) ? "default" : channel;
-        var actor = context.Actor ?? User;
-        return await actor.Channels.WriteAsync(channel, content);
-    }
+    // (output.write moved to action class with IChannel pattern)
 
     /// <summary>
     /// Runs a module action through the same code-generated execution path as steps.

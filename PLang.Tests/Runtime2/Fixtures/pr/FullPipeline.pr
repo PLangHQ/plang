@@ -44,7 +44,7 @@
           "module": "output",
           "action": "write",
           "parameters": [
-            { "name": "content", "value": "%greeting%, %user%!" }
+            { "name": "Data", "value": "%greeting%, %user%!" }
           ]
         }
       ]
