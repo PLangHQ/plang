@@ -584,3 +584,19 @@ Query
 - Parameter resolution at runtime without source generator (the goal receives raw action data)
 
 **The LLM module is the first module to use this pattern.** Ship LLM with thin C# wrapper if this isn't ready, then migrate when `define` lands.
+
+## Rename BuildStep → StepBuild (Step.Build)
+**Date:** 2026-03-31
+**Context:** Naming convention is noun-first, verb-second (OBP pattern). BuildStep should be StepBuild → Step.Build. Same for BuildGoal → GoalBuild.
+
+## BuildGoal → BuildStep guidance with confidence levels
+**Date:** 2026-03-31
+**Context:** When BuildGoal pass 1 can't fully build a step, it currently just sets `needsDetail: true`. Instead, it should provide guidance text to BuildStep pass 2 — "I think this is file.exists + condition.if, sub-steps mean no GoalIfTrue." This gives pass 2 better context for higher accuracy.
+
+**Idea:** Replace the binary `needsDetail: true/false` with confidence levels or structured hints:
+- High confidence: BuildGoal built it fully, skip BuildStep
+- Medium confidence: BuildGoal has a guess, pass it as context to BuildStep
+- Low confidence: BuildGoal identified module+action but needs BuildStep for parameters
+- No confidence: BuildStep gets full autonomy
+
+The guidance text from BuildGoal's LLM would flow into BuildStep's prompt as additional context, improving probability of correct output. This is essentially the first LLM "teaching" the second LLM about what it thinks the step means.

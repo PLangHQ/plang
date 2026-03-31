@@ -18,6 +18,7 @@ BuildStep
         write to %result%
 - call ValidateBuildStepResult
 - set %goal.Steps[stepResult.index].Actions% = %result.actions%
+- [plang] ValidateActions, actions=%goal.Steps[stepResult.index].Actions%
 
 ValidateBuildStepResult
 / Check for top-level and action-level errors from the BuildStep LLM

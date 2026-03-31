@@ -201,7 +201,7 @@
             },
             {
               "name": "Schema",
-              "value": "{\"description\":\"string\",\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}],\"steps\":[{\"index\":\"int\",\"approved?\":\"bool\",\"rebuildReason?\":\"string\",\"needsDetail?\":\"bool\",\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}],\"cache?\":{\"durationMs\":\"long\",\"sliding?\":\"bool\",\"key?\":\"string\"},\"onError?\":{\"ignoreError?\":\"bool\",\"goal?\":{\"name\":\"string\"},\"retryCount?\":\"int\",\"retryOverMs?\":\"int\",\"order?\":\"string\",\"message?\":\"string\"},\"actions?\":[{\"module\":\"string\",\"action\":\"string\",\"parameters?\":[{\"name\":\"string\",\"value?\":\"object\",\"type?\":\"string\"}],\"return?\":[{\"name\":\"string\"}],\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}]}]}]}",
+              "value": "{\"description\":\"string\",\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}],\"steps\":[{\"index\":\"int\",\"guidance\":\"string\",\"actions?\":[{\"module\":\"string\",\"action\":\"string\",\"parameters?\":[{\"name\":\"string\",\"value?\":\"object\",\"type?\":\"string\"}],\"return?\":[{\"name\":\"string\"}],\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}]}],\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}],\"cache?\":{\"durationMs\":\"long\",\"sliding?\":\"bool\",\"key?\":\"string\"},\"onError?\":{\"ignoreError?\":\"bool\",\"goal?\":{\"name\":\"string\"},\"retryCount?\":\"int\",\"retryOverMs?\":\"int\",\"order?\":\"string\",\"message?\":\"string\"},\"level\":\"string\",\"confidence\":\"int\"}]}",
               "type": "string"
             },
             {
@@ -302,7 +302,7 @@
             },
             {
               "name": "Value",
-              "value": "0.2.2",
+              "value": "0.2.3",
               "type": "string"
             }
           ]

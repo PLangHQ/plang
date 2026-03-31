@@ -228,6 +228,26 @@
         }
       ],
       "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "[plang] ValidateActions, actions=%goal.Steps[stepResult.index].Actions%",
+      "lineNumber": 21,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "builder",
+          "action": "actions.validate",
+          "parameters": [
+            {
+              "name": "Actions",
+              "value": "%goal.Steps[stepResult.index].Actions%",
+              "type": "object"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
     }
   ],
   "subGoals": [],
