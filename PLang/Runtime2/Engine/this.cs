@@ -240,6 +240,17 @@ public sealed class @this : IAsyncDisposable
 
         Providers.RegisterDefaults();
         Types.RegisterDomainTypes();
+        _modules.DiscoverMethods(this);
+    }
+
+    // --- [Method] primitives — PLang-callable engine actions ---
+
+    [modules.Method("output", "write")]
+    public async Task<Data> Write(object content, PLangContext context, string? channel = "default")
+    {
+        channel = string.IsNullOrEmpty(channel) ? "default" : channel;
+        var actor = context.Actor ?? User;
+        return await actor.Channels.WriteAsync(channel, content);
     }
 
     /// <summary>

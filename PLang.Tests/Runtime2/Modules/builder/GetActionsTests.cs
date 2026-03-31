@@ -75,7 +75,7 @@ public class GetActionsTests
         var nameParam = varSet!.Parameters.FirstOrDefault(p =>
             p.Name.Equals("Name", StringComparison.OrdinalIgnoreCase));
         await Assert.That(nameParam).IsNotNull();
-        await Assert.That(nameParam!.Value!.ToString()).Contains("@var");
+        await Assert.That(nameParam!.Value!.ToString()).Contains("%var%");
     }
 
     [Test]

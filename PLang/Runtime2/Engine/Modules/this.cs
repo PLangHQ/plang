@@ -60,6 +60,27 @@ public sealed class @this
     }
 
     /// <summary>
+    /// Discovers and registers [Method]-attributed methods on an object as PLang actions.
+    /// Each method becomes an action accessible as module.action in PLang steps.
+    /// </summary>
+    public int DiscoverMethods(object target)
+    {
+        int count = 0;
+        foreach (var method in target.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var attr = method.GetCustomAttribute<modules.MethodAttribute>();
+            if (attr == null) continue;
+
+            var adapter = new MethodAdapter(target, method);
+            var actions = _modules.GetOrAdd(attr.Module,
+                _ => new ConcurrentDictionary<string, ActionEntry>(StringComparer.OrdinalIgnoreCase));
+            actions[attr.Action] = new ActionEntry(null, null, adapter);
+            count++;
+        }
+        return count;
+    }
+
+    /// <summary>
     /// Registers a shared action instance (stateful — external DLLs, test overrides).
     /// Instance takes priority over type during resolution.
     /// </summary>
@@ -296,10 +317,13 @@ public sealed class @this
 /// <summary>
 /// Single registry entry — either a Type (per-call instantiation) or a shared Instance.
 /// </summary>
-public record ActionEntry(Type? Type, IAction? Instance)
+public record ActionEntry(Type? Type, IAction? Instance, ICodeGenerated? MethodAdapter = null)
 {
     public ICodeGenerated? Create()
     {
+        if (MethodAdapter != null)
+            return MethodAdapter;
+
         if (Instance is ICodeGenerated cg)
             return cg;
 
