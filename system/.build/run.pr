@@ -58,72 +58,22 @@
         },
         {
           "index": 1,
-          "text": "call ExecuteWithRetry",
+          "text": "execute %step%, write to %__data__%",
           "indent": 0,
           "actions": [
             {
-              "module": "goal",
-              "action": "call",
+              "module": "engine",
+              "action": "execute",
               "parameters": [
-                {"name": "GoalName", "value": {"name": "ExecuteWithRetry"}, "type": "goal.call"}
-              ]
+                {"name": "Step", "value": "%step%", "type": "object"}
+              ],
+              "return": [{"name": "__data__"}]
             }
           ],
           "waitForExecution": true
         },
         {
           "index": 2,
-          "text": "if %__data__.error% is not empty and %step.onError.goal% is not empty",
-          "indent": 0,
-          "actions": [
-            {
-              "module": "condition",
-              "action": "if",
-              "parameters": [
-                {"name": "Left", "value": "%__data__.error%", "type": "object"},
-                {"name": "Operator", "value": "isempty", "type": "string"},
-                {"name": "Negate", "value": true, "type": "bool"},
-                {"name": "GoalIfTrue", "value": {"name": "CallErrorGoal"}, "type": "goal.call"}
-              ]
-            }
-          ],
-          "waitForExecution": true
-        },
-        {
-          "index": 3,
-          "text": "if %__data__.error% is not empty, throw",
-          "indent": 0,
-          "actions": [
-            {
-              "module": "condition",
-              "action": "if",
-              "parameters": [
-                {"name": "Left", "value": "%__data__.error%", "type": "object"},
-                {"name": "Operator", "value": "isempty", "type": "string"},
-                {"name": "Negate", "value": true, "type": "bool"},
-                {"name": "GoalIfTrue", "value": {"name": "ThrowError"}, "type": "goal.call"}
-              ]
-            }
-          ],
-          "waitForExecution": true
-        },
-        {
-          "index": 4,
-          "text": "remove %__retryAttempt__%",
-          "indent": 0,
-          "actions": [
-            {
-              "module": "variable",
-              "action": "remove",
-              "parameters": [
-                {"name": "Name", "value": "%__retryAttempt__%", "type": "string"}
-              ]
-            }
-          ],
-          "waitForExecution": true
-        },
-        {
-          "index": 5,
           "text": "foreach %step.events.after%, call RunEvent, item=%event%",
           "indent": 0,
           "actions": [
@@ -141,150 +91,6 @@
         }
       ],
       "goals": [
-        {
-          "name": "ExecuteWithRetry",
-          "steps": [
-            {
-              "index": 0,
-              "text": "set default %__retryAttempt__% = 0",
-              "indent": 0,
-              "actions": [
-                {
-                  "module": "variable",
-                  "action": "set",
-                  "parameters": [
-                    {"name": "Name", "value": "%__retryAttempt__%", "type": "string"},
-                    {"name": "Value", "value": 0, "type": "int"},
-                    {"name": "AsDefault", "value": true, "type": "bool"}
-                  ]
-                }
-              ],
-              "waitForExecution": true
-            },
-            {
-              "index": 1,
-              "text": "execute %step%, write to %__data__%",
-              "indent": 0,
-              "actions": [
-                {
-                  "module": "engine",
-                  "action": "execute",
-                  "parameters": [
-                    {"name": "Step", "value": "%step%", "type": "object"}
-                  ],
-                  "return": [{"name": "__data__"}]
-                }
-              ],
-              "waitForExecution": true
-            },
-            {
-              "index": 2,
-              "text": "if %__data__.error% is not empty and %step.onError.retryCount% > %__retryAttempt__%",
-              "indent": 0,
-              "actions": [
-                {
-                  "module": "condition",
-                  "action": "if",
-                  "parameters": [
-                    {"name": "Left", "value": "%__data__.error%", "type": "object"},
-                    {"name": "Operator", "value": "isempty", "type": "string"},
-                    {"name": "Negate", "value": true, "type": "bool"}
-                  ]
-                }
-              ],
-              "waitForExecution": true
-            },
-            {
-              "index": 3,
-              "text": "increase %__retryAttempt__% by 1",
-              "indent": 1,
-              "actions": [
-                {
-                  "module": "math",
-                  "action": "add",
-                  "parameters": [
-                    {"name": "A", "value": "%__retryAttempt__%", "type": "int"},
-                    {"name": "B", "value": 1, "type": "int"}
-                  ],
-                  "return": [{"name": "__retryAttempt__"}]
-                }
-              ],
-              "waitForExecution": true
-            },
-            {
-              "index": 4,
-              "text": "call ExecuteWithRetry",
-              "indent": 1,
-              "actions": [
-                {
-                  "module": "goal",
-                  "action": "call",
-                  "parameters": [
-                    {"name": "GoalName", "value": {"name": "ExecuteWithRetry"}, "type": "goal.call"}
-                  ]
-                }
-              ],
-              "waitForExecution": true
-            }
-          ],
-          "goals": [],
-          "visibility": 0,
-          "path": "/system/run.goal",
-          "prPath": "/system/.build/run.pr",
-          "isSystem": true
-        },
-        {
-          "name": "CallErrorGoal",
-          "steps": [
-            {
-              "index": 0,
-              "text": "call %step.onError.goal%",
-              "indent": 0,
-              "actions": [
-                {
-                  "module": "goal",
-                  "action": "call",
-                  "parameters": [
-                    {"name": "GoalName", "value": "%step.onError.goal%", "type": "goal.call"}
-                  ]
-                }
-              ],
-              "waitForExecution": true
-            }
-          ],
-          "goals": [],
-          "visibility": 0,
-          "path": "/system/run.goal",
-          "prPath": "/system/.build/run.pr",
-          "isSystem": true
-        },
-        {
-          "name": "ThrowError",
-          "steps": [
-            {
-              "index": 0,
-              "text": "throw %__data__.error%",
-              "indent": 0,
-              "actions": [
-                {
-                  "module": "error",
-                  "action": "throw",
-                  "parameters": [
-                    {"name": "Message", "value": "%__data__.error.Message%", "type": "string"},
-                    {"name": "StatusCode", "value": "%__data__.error.StatusCode%", "type": "int"},
-                    {"name": "Key", "value": "%__data__.error.Key%", "type": "string"}
-                  ]
-                }
-              ],
-              "waitForExecution": true
-            }
-          ],
-          "goals": [],
-          "visibility": 0,
-          "path": "/system/run.goal",
-          "prPath": "/system/.build/run.pr",
-          "isSystem": true
-        },
         {
           "name": "RunEvent",
           "steps": [
