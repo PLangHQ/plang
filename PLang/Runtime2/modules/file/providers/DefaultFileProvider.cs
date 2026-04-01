@@ -42,14 +42,18 @@ public class DefaultFileProvider : IFileProvider
                     content = converted ?? text;
 
                     // Set back-references for .pr deserialization (temporary — will be replaced by MemoryStack provenance)
-                    if (content is Goal goal)
-                        goal.SetStepBackReferences();
+                    if (content is Engine.Goals.Goal.@this prGoal)
+                        prGoal.SetStepBackReferences();
                 }
                 else
                 {
                     content = text;
                 }
             }
+
+            // Typed content (e.g., Goal from .pr) — return as Data, not PathData
+            if (clr != null && clr != typeof(string) && clr != typeof(byte[]))
+                return Data.Ok(content);
 
             return new PathData(path.Absolute, fs, content);
         }

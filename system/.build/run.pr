@@ -3,7 +3,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "read file %goalFile%, write to %goals%",
+      "text": "read file %goalFile%, write to %goal%",
       "lineNumber": 5,
       "indent": 0,
       "actions": [

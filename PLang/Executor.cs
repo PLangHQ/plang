@@ -358,7 +358,7 @@ namespace PLang
 			engine.MemoryStack.Set("goalFile", "/" + prPath.ToLowerInvariant());
 
 			// Start the engine — reads system/.build/run.pr, kernel-loops its steps
-			return await engine.Start(ct: cancellationToken);
+			return await engine.Start();
 		}
 
 		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Run(bool debug = false, bool test = false, string[]? args = null)

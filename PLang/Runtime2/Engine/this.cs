@@ -293,6 +293,7 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public async Task<Data> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, PLangContext context)
     {
+        Console.WriteLine($"[engine.Run] {action.Module}.{action.ActionName}");
         var (executor, error) = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
         if (error != null)
             return Data.FromError(error);
@@ -327,6 +328,8 @@ public sealed class @this : IAsyncDisposable
         Data result = Data.Ok();
         foreach (var step in steps)
         {
+            if (step.Goal == null) step.Goal = context.Goal;
+
             foreach (var action in step.Actions)
             {
                 result = await Run(action, context);
