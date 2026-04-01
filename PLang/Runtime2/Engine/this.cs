@@ -242,6 +242,9 @@ public sealed class @this : IAsyncDisposable
         Types.RegisterDomainTypes();
     }
 
+    /// <summary>
+    /// Loads the PLang runtime via file.read on first use.
+    /// file.read handles .pr → List&lt;Goal&gt; deserialization via MIME type mapping.
     // --- [Method] primitives — the kernel ---
 
     /// <summary>

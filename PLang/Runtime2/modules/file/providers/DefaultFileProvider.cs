@@ -23,9 +23,27 @@ public class DefaultFileProvider : IFileProvider
         {
             var mime = TypeMapping.GetMimeType(path.Extension);
             var type = Engine.Memory.Type.FromMime(mime);
-            object content = type.ClrType == typeof(byte[])
-                ? fs.File.ReadAllBytes(path.Absolute)
-                : fs.File.ReadAllText(path.Absolute);
+            object content;
+
+            if (type.ClrType == typeof(byte[]))
+            {
+                content = fs.File.ReadAllBytes(path.Absolute);
+            }
+            else
+            {
+                var text = fs.File.ReadAllText(path.Absolute);
+                var clr = type.ClrType;
+                // If the type has a CLR mapping (not just string), deserialize
+                if (clr != null && clr != typeof(string))
+                {
+                    var (converted, _) = TypeMapping.TryConvertTo(text, clr);
+                    content = converted ?? text;
+                }
+                else
+                {
+                    content = text;
+                }
+            }
 
             return new PathData(path.Absolute, fs, content);
         }

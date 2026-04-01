@@ -338,40 +338,32 @@ namespace PLang
 
 		public async Task<Runtime2.Engine.Memory.Data> Run2(string[] args, CancellationToken cancellationToken = default)
 		{
-			var (goalName, parameters) = CommandLineParser.Parse(args);
+			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
 			var engine = new Runtime2.Engine.@this(fileSystem);
+			engine.SystemDirectory = fileSystem.SystemDirectory;
 
-			// Debug: --debug=true or --debug={"goal":"X","step":3}
-			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
-			{
-				engine.Debug.Apply(debugValue);
-			}
-			parameters.Remove("!debug");
-
-			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
-			{
-				parameters.Remove("!test");
-				foreach (var param in parameters)
-					engine.MemoryStack.Set(param.Key, param.Value);
-
-				var exitCode = await engine.Testing.RunAsync(cancellationToken);
-				return exitCode == 0 ? Runtime2.Engine.Memory.Data.Ok() : Runtime2.Engine.Memory.Data.FromError(new Runtime2.Engine.Errors.Error("Tests failed", "TestsFailed", exitCode));
-			}
-
-			// Parameters already have ! prefix for system params (--run → !run)
+			// All CLI parameters go on the MemoryStack
+			// --build → %!build%, --test → %!test%, --debug → %!debug%
 			foreach (var param in parameters)
 				engine.MemoryStack.Set(param.Key, param.Value);
 
-			// Run setup goals before the main goal (discovery happens internally)
-			var setupResult = await engine.Goals.Setup.RunAsync(engine, engine.Context, cancellationToken);
-			if (!setupResult.Success) return setupResult;
+			// Debug wiring (reads from %!debug% on MemoryStack)
+			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
+				engine.Debug.Apply(debugValue);
 
-			// When goalName is "setup", only run setup — no main goal after
-			if (goalName.Equals("setup", StringComparison.OrdinalIgnoreCase) && engine.Goals.Setup.Goals.Any())
-				return setupResult;
+			// Resolve .goal → .pr path for the PLang runtime
+			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
+			if (!prPath.StartsWith(".build"))
+				prPath = ".build/" + prPath;
+			prPath = "/" + prPath.ToLowerInvariant();
+			engine.MemoryStack.Set("goalFile", prPath);
 
-			return await engine.RunGoalAsync(new Runtime2.Engine.Goals.Goal.GoalCall { Name = goalName }, cancellationToken: cancellationToken);
+			// Run system/run.goal — the PLang entry point
+			// Routes to build, test, or run based on %!build%, %!test%
+			return await engine.RunGoalAsync(
+				new Runtime2.Engine.Goals.Goal.GoalCall { Name = "Run", PrPath = "/system/.build/run.pr" },
+				cancellationToken: cancellationToken);
 		}
 
 		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Run(bool debug = false, bool test = false, string[]? args = null)

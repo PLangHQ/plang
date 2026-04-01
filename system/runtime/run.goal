@@ -1,27 +1,15 @@
 RunGoal
 / PLang runtime — executes a goal's steps with full orchestration
-/ The kernel (engine.execute) dispatches actions. This goal handles everything else.
-- foreach %goal.steps%, call RunStep, item=%step%
+/ %goalCall% is on the MemoryStack with .Name and .PrPath
+- read file %goalCall.PrPath%, write to %goalJson%
+/ TODO: deserialize goalJson to goal object, find by name
+/ For now, the goal is loaded by the engine and set as %goal%
+- foreach %goal.Steps%, call RunStep, item=%step%
 
 RunStep
 / Before events
-- call %step.on.before%
-/ Kernel dispatch — raw action execution, no error handling
-- %!engine.execute(%step%)%, write to %result%
+- call %step.event.before%
+/ Kernel dispatch — raw action execution
+- execute %step%, write to %result%
 / After events
-- call %step.on.after%
-/ Error handling
-- if %result.error% is not empty
-    - if %step.onError.ignoreError%
-        - return
-    - if %step.onError.goal% is not empty
-        - call %step.onError.goal%
-    - if %step.onError.retryCount% > 0 and %result.error.retryCount% < %step.onError.retryCount%
-        - call RunStep
-    - throw %result.error%
-/ Sub-step control — false condition skips indented children
-- if %step.hasSubSteps% and %result% == false
-    - set %!skipIndent% = %step.indent%
-/ Cancellation
-- if %!cancelled%
-    - throw "Cancelled"
+- call %step.event.after%

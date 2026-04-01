@@ -1,0 +1,106 @@
+[
+  {
+    "name": "Run",
+    "steps": [
+      {
+        "index": 0,
+        "text": "read file %goalFile%, write to %goals%",
+        "lineNumber": 5,
+        "indent": 0,
+        "actions": [
+          {
+            "module": "file",
+            "action": "read",
+            "parameters": [
+              {"name": "Path", "value": "%goalFile%", "type": "path"}
+            ],
+            "return": [
+              {"name": "goals"}
+            ]
+          }
+        ],
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "foreach %goals%, call RunGoal, item=%goal%",
+        "lineNumber": 6,
+        "indent": 0,
+        "actions": [
+          {
+            "module": "loop",
+            "action": "foreach",
+            "parameters": [
+              {"name": "Collection", "value": "%goals%", "type": "list"},
+              {"name": "GoalName", "value": {"name": "RunGoal"}, "type": "goal.call"},
+              {"name": "ItemName", "value": "goal", "type": "string"}
+            ]
+          }
+        ],
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": ["RunGoal", "RunStep"],
+    "visibility": 1,
+    "path": "/system/run.goal",
+    "prPath": "/system/.build/run.pr",
+    "isSystem": true
+  },
+  {
+    "name": "RunGoal",
+    "steps": [
+      {
+        "index": 0,
+        "text": "foreach %goal.Steps%, call RunStep, item=%step%",
+        "lineNumber": 9,
+        "indent": 0,
+        "actions": [
+          {
+            "module": "loop",
+            "action": "foreach",
+            "parameters": [
+              {"name": "Collection", "value": "%goal.Steps%", "type": "list"},
+              {"name": "GoalName", "value": {"name": "RunStep"}, "type": "goal.call"},
+              {"name": "ItemName", "value": "step", "type": "string"}
+            ]
+          }
+        ],
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 0,
+    "path": "/system/run.goal",
+    "prPath": "/system/.build/run.pr",
+    "isSystem": true
+  },
+  {
+    "name": "RunStep",
+    "steps": [
+      {
+        "index": 0,
+        "text": "execute %step%",
+        "lineNumber": 12,
+        "indent": 0,
+        "actions": [
+          {
+            "module": "engine",
+            "action": "execute",
+            "parameters": [
+              {"name": "Step", "value": "%step%", "type": "object"}
+            ],
+            "return": [
+              {"name": "result"}
+            ]
+          }
+        ],
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 0,
+    "path": "/system/run.goal",
+    "prPath": "/system/.build/run.pr",
+    "isSystem": true
+  }
+]

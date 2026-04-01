@@ -141,6 +141,8 @@ public static class TypeMapping
                 return typeof(byte[]);
             if (typeName.Equals("application/json", StringComparison.OrdinalIgnoreCase))
                 return typeof(object);
+            if (typeName.Equals("application/plang-goal", StringComparison.OrdinalIgnoreCase))
+                return typeof(List<PLang.Runtime2.Engine.Goals.Goal.@this>);
             if (typeName.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
                 return typeof(byte[]);
         }
@@ -169,7 +171,7 @@ public static class TypeMapping
             "txt" => "text/plain",
             "llm" => "text/plain",
             "goal" => "text/plain",
-            "pr" => "application/json",
+            "pr" => "application/plang-goal",
             "png" => "image/png",
             "jpg" or "jpeg" => "image/jpeg",
             "gif" => "image/gif",
@@ -459,6 +461,17 @@ public static class TypeMapping
                     $"Cannot convert '{value}' ({sourceType.Name}) to {targetType.Name}: {ex.Message}",
                     "PrimitiveConversionFailed", 400));
             }
+        }
+
+        // String → complex type: try JSON deserialization (e.g., file.read of .pr → List<Goal>)
+        if (value is string jsonStr && !targetType.IsPrimitive && targetType != typeof(string))
+        {
+            try
+            {
+                var result = System.Text.Json.JsonSerializer.Deserialize(jsonStr, targetType, Json.CaseInsensitiveRead);
+                return (result, null);
+            }
+            catch { /* not valid JSON for this type — fall through */ }
         }
 
         // Complex types: dict/JsonElement/list → serialize to JSON → deserialize to target type
