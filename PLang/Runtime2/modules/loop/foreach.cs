@@ -32,13 +32,6 @@ public partial class Foreach : IContext
 
             Context.MemoryStack.Set(variableName, value);
 
-            // Inject context on Steps so %step.events.before% resolves
-            if (value is PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this step)
-            {
-                step.Events.Context = Context;
-                if (step.Goal == null) step.Goal = Context.Goal;
-            }
-
             if (KeyName != null)
                 Context.MemoryStack.Set(KeyName, key);
 

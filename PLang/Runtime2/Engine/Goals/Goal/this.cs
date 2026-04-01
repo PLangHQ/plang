@@ -19,11 +19,11 @@ public enum Visibility
 /// </summary>
 public sealed partial class @this
 {
-    private Events? _events;
+    private modules.Events? _events;
     [JsonIgnore]
-    public Events Events
+    public modules.Events Events
     {
-        get => _events ??= new Events(this);
+        get => _events ??= new modules.Events(this);
         set => _events = value;
     }
     [Store, LlmBuilder, Debug, Default]

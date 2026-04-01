@@ -293,7 +293,6 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public async Task<Data> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, PLangContext context)
     {
-        Console.WriteLine($"[engine.Run] {action.Module}.{action.ActionName}");
         var (executor, error) = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
         if (error != null)
             return Data.FromError(error);
@@ -357,28 +356,11 @@ public sealed class @this : IAsyncDisposable
     public async Task<Data> RunGoalAsync(GoalCall goalCall, PLangContext? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
-
-        // Check sub-goals in current goal first
-        var currentGoal = context.Goal;
-        if (currentGoal != null)
-        {
-            var subGoal = currentGoal.Goals.FirstOrDefault(g =>
-                string.Equals(g.Name, goalCall.Name, StringComparison.OrdinalIgnoreCase));
-            if (subGoal != null)
-                return await RunGoalAsync(subGoal, context, ct);
-        }
-
-        // Inject parameters
-        if (goalCall.Parameters != null)
-            foreach (var param in goalCall.Parameters)
-                context.MemoryStack.Put(param);
-
         var goal = await goalCall.GetGoalAsync(this, context);
         if (goal == null)
             return Data.FromError(Errors.GoalError.NotFound(goalCall.Name ?? goalCall.PrPath ?? "unknown"));
 
-        context.Goal = goal;
-        return await RunSteps(goal.Steps, context);
+        return await RunGoalAsync(goal, context, ct);
     }
 
     /// <summary>
@@ -387,8 +369,11 @@ public sealed class @this : IAsyncDisposable
     public async Task<Data> RunGoalAsync(Goal goal, PLangContext? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
+        var savedGoal = context.Goal;
         context.Goal = goal;
-        return await RunSteps(goal.Steps, context);
+        var result = await RunSteps(goal.Steps, context);
+        context.Goal = savedGoal;
+        return result;
     }
 
     /// <summary>

@@ -16,8 +16,6 @@ public partial class Data
     /// </summary>
     public virtual Data? GetChild(string path, int depth = 0)
     {
-        if (path.Contains("events", StringComparison.OrdinalIgnoreCase))
-            Console.WriteLine($"[GetChild] path='{path}' this={GetType().Name} Value={Value?.GetType().Name ?? "null"} depth={depth}");
         if (string.IsNullOrEmpty(path))
             return this;
 
@@ -68,6 +66,10 @@ public partial class Data
         var child = new Data(segment, childValue, parent: this);
         child.Context = _context;
 
+        // Inject context on IContext values during traversal
+        if (childValue is PLang.Runtime2.modules.IContext contextual && _context != null)
+            contextual.Context = _context;
+
         if (string.IsNullOrEmpty(remaining))
             return child;
 
@@ -83,8 +85,6 @@ public partial class Data
             return ownProp.GetValue(this);
 
         var val = Value;
-        if (key.Equals("events", StringComparison.OrdinalIgnoreCase))
-            Console.WriteLine($"[GetChildValue] key=events this={GetType().Name} val={val?.GetType().Name ?? "null"} ownProp={ownProp?.Name}");
         if (val == null) return null;
         return ValueNavigators.Navigate(val, key);
     }

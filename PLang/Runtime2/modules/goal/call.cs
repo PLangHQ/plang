@@ -11,20 +11,6 @@ public partial class Call : IContext
     public async Task<Data> Run()
     {
         var engine = Context.Engine!;
-
-        // 1. Check sub-goals in current goal (already in memory)
-        var currentGoal = Context.Goal;
-        Console.Error.WriteLine($"[goal.call] looking for '{GoalName.Name}' in goal '{currentGoal?.Name}' with {currentGoal?.Goals?.Count ?? 0} sub-goals");
-        Console.Error.Flush();
-        if (currentGoal != null)
-        {
-            var subGoal = currentGoal.Goals.FirstOrDefault(g =>
-                string.Equals(g.Name, GoalName.Name, StringComparison.OrdinalIgnoreCase));
-            if (subGoal != null)
-                return await engine.RunGoalAsync(subGoal, Context);
-        }
-
-        // 2. Not a sub-goal — load from .pr file
         var goal = await GoalName.GetGoalAsync(engine, Context);
         if (goal == null)
             return Data.FromError(new Engine.Errors.ServiceError(

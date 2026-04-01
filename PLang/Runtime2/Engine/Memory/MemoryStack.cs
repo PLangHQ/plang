@@ -191,7 +191,6 @@ public class MemoryStack
 
         if (!_variables.TryGetValue(rootName, out var root))
         {
-            Console.WriteLine($"[MemoryStack.Get] '{rootName}' not found");
             return null;
         }
 
@@ -199,7 +198,6 @@ public class MemoryStack
             return root;
 
         var child = root.GetChild(remaining);
-        Console.WriteLine($"[MemoryStack.Get] '{name}' root={root.Value?.GetType().Name ?? "null"} child={child?.Value?.GetType().Name ?? "null"}");
         return child;
     }
 

@@ -28,13 +28,33 @@ public sealed class GoalCall
     [Store]
     public string? PrPath { get; set; }
 
+    /// <summary>The step this GoalCall originated from. Set by Events when resolving bindings.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public Steps.Step.@this? Step { get; set; }
+
     /// <summary>
-    /// Loads the Goal from the .pr file. Derives PrPath from Name if not set.
-    /// Uses file.read — MIME handles .pr → Goal deserialization.
+    /// Resolves the Goal. Checks step's parent goal sub-goals first, then file.read.
     /// </summary>
     public async Task<@this?> GetGoalAsync(Engine.@this engine, PLangContext context)
     {
-        // Derive PrPath from name if not set
+        // 1. Check sub-goals via the step's goal (the step knows where it came from)
+        var parentGoal = Step?.Goal;
+        if (parentGoal != null)
+        {
+            var subGoal = parentGoal.Goals.FirstOrDefault(g =>
+                string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
+            if (subGoal != null) return subGoal;
+        }
+
+        // 2. Check current context goal's sub-goals
+        if (context.Goal != null && context.Goal != parentGoal)
+        {
+            var subGoal = context.Goal.Goals.FirstOrDefault(g =>
+                string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
+            if (subGoal != null) return subGoal;
+        }
+
+        // 3. Not a sub-goal — file.read the .pr
         var prPath = PrPath;
         if (string.IsNullOrEmpty(prPath) && !string.IsNullOrEmpty(Name))
         {

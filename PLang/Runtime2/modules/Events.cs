@@ -15,8 +15,16 @@ public class Events : IContext
 
     public Events(object owner) => _owner = owner;
 
-    public List<GoalCall> Before => Context?.GetEventBindings(_owner, EventPhase.Before) ?? [];
-    public List<GoalCall> After => Context?.GetEventBindings(_owner, EventPhase.After) ?? [];
+    public List<GoalCall> Before => Stamp(Context?.GetEventBindings(_owner, EventPhase.Before) ?? []);
+    public List<GoalCall> After => Stamp(Context?.GetEventBindings(_owner, EventPhase.After) ?? []);
+
+    private List<GoalCall> Stamp(List<GoalCall> calls)
+    {
+        var step = _owner as PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;
+        if (step != null)
+            foreach (var gc in calls) gc.Step = step;
+        return calls;
+    }
 }
 
 public enum EventPhase
