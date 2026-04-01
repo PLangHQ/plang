@@ -112,6 +112,18 @@ public sealed class @this
         return entry.Type ?? entry.Instance?.GetType();
     }
 
+    /// <summary>
+    /// Returns whether an action is cacheable (from its [Action] attribute).
+    /// Defaults to true if the action/attribute isn't found.
+    /// </summary>
+    public bool IsCacheable(string module, string actionName)
+    {
+        var type = GetActionType(module, actionName);
+        if (type == null) return true;
+        var attr = type.GetCustomAttribute<modules.ActionAttribute>();
+        return attr?.Cacheable ?? true;
+    }
+
     public int Count => _modules.Values.Sum(a => a.Count);
 
     /// <summary>

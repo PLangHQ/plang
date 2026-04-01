@@ -11,11 +11,17 @@
     "steps": [
       {"index": 0, "indent": 0, "text": "foreach before events",
         "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%step.events.before%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"}, {"name": "ItemName", "value": "event", "type": "string"}]}], "waitForExecution": true},
-      {"index": 1, "indent": 0, "text": "execute %step%, write to %__data__%",
+      {"index": 1, "indent": 0, "text": "cache check %step%, write to %__data__%",
+        "actions": [{"module": "cache", "action": "check", "parameters": [{"name": "Step", "value": "%step%", "type": "object"}], "return": [{"name": "__data__"}]}], "waitForExecution": true},
+      {"index": 2, "indent": 0, "text": "if %__data__% == false",
+        "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%__data__%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": false, "type": "bool"}]}], "waitForExecution": true},
+      {"index": 3, "indent": 1, "text": "execute %step%, write to %__data__%",
         "actions": [{"module": "engine", "action": "execute", "parameters": [{"name": "Step", "value": "%step%", "type": "object"}], "return": [{"name": "__data__"}]}], "waitForExecution": true},
-      {"index": 2, "indent": 0, "text": "check %__data__%",
+      {"index": 4, "indent": 1, "text": "cache store %step% %__data__%",
+        "actions": [{"module": "cache", "action": "store", "parameters": [{"name": "Step", "value": "%step%", "type": "object"}, {"name": "Data", "value": "%__data__%", "type": "object"}]}], "waitForExecution": true},
+      {"index": 5, "indent": 0, "text": "check %__data__%",
         "actions": [{"module": "error", "action": "check", "parameters": [{"name": "Data", "value": "%__data__%", "type": "object"}]}], "waitForExecution": true},
-      {"index": 3, "indent": 0, "text": "foreach after events",
+      {"index": 6, "indent": 0, "text": "foreach after events",
         "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%step.events.after%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"}, {"name": "ItemName", "value": "event", "type": "string"}]}], "waitForExecution": true}
     ],
     "goals": [
