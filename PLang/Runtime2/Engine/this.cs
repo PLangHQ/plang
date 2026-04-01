@@ -242,7 +242,18 @@ public sealed class @this : IAsyncDisposable
         Types.RegisterDomainTypes();
     }
 
-    // --- [Method] primitives ---
+    // --- [Method] primitives — the kernel ---
+
+    /// <summary>
+    /// Kernel: dispatches a step's actions. No retry. No events. No error handling.
+    /// The PLang runtime (system/runtime/run.goal) wraps this with orchestration.
+    /// </summary>
+    [modules.Method("engine", "execute")]
+    public async Task<Data> Execute(
+        Goals.Goal.Steps.Step.@this step, PLangContext context, CancellationToken ct = default)
+    {
+        return await step.Actions.RunAsync(this, context, ct);
+    }
 
     [modules.Method("test", "echo")]
     public Task<Data> TestEcho(string message, string prefix = "echo")

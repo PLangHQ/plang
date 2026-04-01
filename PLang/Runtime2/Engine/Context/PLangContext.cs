@@ -309,6 +309,38 @@ public sealed class PLangContext : IDisposable
     }
 
     /// <summary>
+    /// Returns matching event GoalCalls for the given owner and phase.
+    /// Owner type determines scope: Step → step bindings, Goal → goal bindings.
+    /// Used by Event resolver (IEvent) during dot-path traversal.
+    /// </summary>
+    public List<GoalCall> GetEventBindings(object owner, modules.EventPhase phase)
+    {
+        var userEvents = User.Events;
+        var (beforeType, afterType) = owner switch
+        {
+            Step step => (EventType.BeforeStep, EventType.AfterStep),
+            Goal goal => (EventType.BeforeGoal, EventType.AfterGoal),
+            _ => (EventType.BeforeStep, EventType.AfterStep) // fallback
+        };
+
+        var eventType = phase == modules.EventPhase.Before ? beforeType : afterType;
+
+        string? goalName = owner switch
+        {
+            Step step => step.Goal?.Name,
+            Goal goal => goal.Name,
+            _ => null
+        };
+        string? stepText = owner is Step s ? s.Text : null;
+
+        var bindings = userEvents.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText);
+        return bindings
+            .Where(b => b.GoalToCall != null)
+            .Select(b => b.GoalToCall!)
+            .ToList();
+    }
+
+    /// <summary>
     /// Requests cancellation of this execution.
     /// </summary>
     public void Cancel()

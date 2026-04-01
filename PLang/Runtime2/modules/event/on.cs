@@ -51,7 +51,8 @@ public partial class On : IContext
             stepPattern: StepPattern,
             actionPattern: ActionPattern,
             priority: Priority,
-            isRegex: IsRegex);
+            isRegex: IsRegex,
+            goalToCall: GoalToCall);
 
         Context.User.Events.Register(binding);
 

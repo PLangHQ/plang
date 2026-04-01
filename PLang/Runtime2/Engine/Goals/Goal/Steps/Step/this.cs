@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules;
 using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
@@ -7,8 +8,15 @@ namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 /// <summary>
 /// Represents a step within a goal for Runtime2.
 /// </summary>
-public sealed partial class @this
+public sealed partial class @this : IEvent
 {
+    private Event? _event;
+    [JsonIgnore]
+    public Event Event
+    {
+        get => _event ??= new Event(this);
+        set => _event = value;
+    }
     [Store, LlmBuilder, Debug, Default]
     public int Index { get; init; }
 

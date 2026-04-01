@@ -16,6 +16,7 @@ public sealed class @this
     public string? StepPattern { get; }
     public string? ActionPattern { get; }
     public Func<PLangContext, Task<Data>> Handler { get; }
+    public Goals.Goal.GoalCall? GoalToCall { get; }
     public int Priority { get; }
     public bool StopOnError { get; }
     public bool IsRegex { get; }
@@ -61,7 +62,8 @@ public sealed class @this
         string? actionPattern = null,
         int priority = 0,
         bool stopOnError = true,
-        bool isRegex = false)
+        bool isRegex = false,
+        Goals.Goal.GoalCall? goalToCall = null)
     {
         Id = Guid.NewGuid().ToString("N")[..8];
         Type = type;
@@ -72,6 +74,7 @@ public sealed class @this
         Priority = priority;
         StopOnError = stopOnError;
         IsRegex = isRegex;
+        GoalToCall = goalToCall;
     }
 
     /// <summary>

@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using PLang.Attributes;
+using PLang.Runtime2.modules;
 namespace PLang.Runtime2.Engine.Goals.Goal;
 
 /// <summary>
@@ -16,8 +17,15 @@ public enum Visibility
 /// <summary>
 /// Represents a goal (a .goal file or sub-goal) for Runtime2.
 /// </summary>
-public sealed partial class @this
+public sealed partial class @this : IEvent
 {
+    private Event? _event;
+    [JsonIgnore]
+    public Event Event
+    {
+        get => _event ??= new Event(this);
+        set => _event = value;
+    }
     [Store, LlmBuilder, Debug, Default]
     public string Name { get; init; } = "";
 
