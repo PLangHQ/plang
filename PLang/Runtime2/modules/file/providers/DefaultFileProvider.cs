@@ -33,11 +33,17 @@ public class DefaultFileProvider : IFileProvider
             {
                 var text = fs.File.ReadAllText(path.Absolute);
                 var clr = type.ClrType;
+                Console.WriteLine($"[file.read] ext={path.Extension} mime={mime} clr={clr?.Name ?? "null"}");
                 // If the type has a CLR mapping (not just string), deserialize
                 if (clr != null && clr != typeof(string))
                 {
-                    var (converted, _) = TypeMapping.TryConvertTo(text, clr);
+                    var (converted, convertError) = TypeMapping.TryConvertTo(text, clr);
+                    Console.WriteLine($"[file.read] convert: success={converted != null} type={converted?.GetType().Name ?? "null"} error={convertError?.Message}");
                     content = converted ?? text;
+
+                    // Set back-references for .pr deserialization (temporary — will be replaced by MemoryStack provenance)
+                    if (content is Goal goal)
+                        goal.SetStepBackReferences();
                 }
                 else
                 {

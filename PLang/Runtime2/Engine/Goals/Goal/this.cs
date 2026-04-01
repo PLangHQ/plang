@@ -39,7 +39,7 @@ public sealed partial class @this : IEvent
     public Steps.@this Steps { get; init; } = new();
 
     [Store, Debug, Default]
-    public List<string> SubGoals { get; init; } = new();
+    public List<@this> Goals { get; set; } = new();
 
     [Store, LlmBuilder, Debug, Default]
     public Visibility Visibility { get; init; } = Visibility.Private;
@@ -98,6 +98,16 @@ public sealed partial class @this : IEvent
 
     [Store, Debug, Default]
     public bool IsTest { get; set; }
+
+    /// <summary>
+    /// Sets step.Goal back-references after deserialization.
+    /// JSON doesn't serialize circular refs — this restores them.
+    /// </summary>
+    public void SetStepBackReferences()
+    {
+        foreach (var step in Steps) step.Goal = this;
+        foreach (var sub in Goals) sub.SetStepBackReferences();
+    }
 
     /// <summary>
     /// Folder path of this goal, derived from Path.
@@ -377,11 +387,11 @@ public sealed partial class @this : IEvent
             currentStep = null;
         }
 
-        // Populate SubGoals on the first (public) goal
+        // Populate Goals on the first (public) goal — rest are sub-goals
         if (goals.Count > 1)
         {
             for (int i = 1; i < goals.Count; i++)
-                goals[0].SubGoals.Add(goals[i].Name);
+                goals[0].Goals.Add(goals[i]);
         }
 
         return goals;

@@ -30,7 +30,7 @@ public static class GoalMapper
             Path = oldGoal.RelativeGoalPath,
             PrPath = oldGoal.RelativePrPath,
             Steps = new GoalSteps(oldGoal.GoalSteps.Select(ToRuntime2Step)),
-            SubGoals = oldGoal.SubGoals ?? new(),
+            Goals = new(), // v1 SubGoals not mapped — v3 uses nested Goal objects
             Errors = new(),
             Warnings = new()
         };

@@ -3,8 +3,7 @@ using PLang.Runtime2.Engine.Memory;
 namespace PLang.Runtime2.modules.engine;
 
 /// <summary>
-/// Kernel step dispatch — runs a step's actions directly.
-/// No retry, no events, no error handling. The PLang runtime wraps this.
+/// Kernel step dispatch — runs a step's actions via engine.Run().
 /// </summary>
 [Action("execute")]
 public partial class Execute : IContext
@@ -14,6 +13,18 @@ public partial class Execute : IContext
 
     public async Task<Data> Run()
     {
-        return await Step.Actions.RunAsync(Context.Engine!, Context, Context.CancellationToken);
+        var engine = Context.Engine!;
+
+        // Set context goal to the step's goal so goal.call finds sub-goals
+        Console.WriteLine($"[execute] step='{Step.Text}' step.Goal={Step.Goal?.Name ?? "null"} goals={Step.Goal?.Goals?.Count ?? -1}");
+        if (Step.Goal != null) Context.Goal = Step.Goal;
+
+        Data result = Data.Ok();
+        foreach (var action in Step.Actions)
+        {
+            result = await engine.Run(action, Context);
+            if (!result.Success) return result;
+        }
+        return result;
     }
 }

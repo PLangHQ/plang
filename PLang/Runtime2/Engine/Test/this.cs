@@ -147,7 +147,7 @@ public sealed class @this
             priority: int.MaxValue - 1,
             stopOnError: false));
 
-        return await testEngine.RunGoalAsync(goal, cancellationToken: cancellationToken);
+        return await testEngine.RunGoalAsync(goal, ct: cancellationToken);
     }
 
     private static Task<Data> TrackAssertionFailures(PLangContext context, TestResult result)

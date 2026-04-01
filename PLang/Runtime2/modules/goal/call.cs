@@ -11,6 +11,23 @@ public partial class Call : IContext
     public async Task<Data> Run()
     {
         var engine = Context.Engine!;
-        return await engine.RunGoalAsync(GoalName, Context, Context.CancellationToken);
+
+        // 1. Check sub-goals in current goal (already in memory)
+        var currentGoal = Context.Goal;
+        if (currentGoal != null)
+        {
+            var subGoal = currentGoal.Goals.FirstOrDefault(g =>
+                string.Equals(g.Name, GoalName.Name, StringComparison.OrdinalIgnoreCase));
+            if (subGoal != null)
+                return await engine.RunGoalAsync(subGoal, Context);
+        }
+
+        // 2. Not a sub-goal — load from .pr file
+        var goal = await GoalName.GetGoalAsync(engine, Context);
+        if (goal == null)
+            return Data.FromError(new Engine.Errors.ServiceError(
+                $"Goal '{GoalName.Name}' not found", "NotFound", 404));
+
+        return await engine.RunGoalAsync(goal, Context);
     }
 }

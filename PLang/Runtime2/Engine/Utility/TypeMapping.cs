@@ -142,7 +142,7 @@ public static class TypeMapping
             if (typeName.Equals("application/json", StringComparison.OrdinalIgnoreCase))
                 return typeof(object);
             if (typeName.Equals("application/plang-goal", StringComparison.OrdinalIgnoreCase))
-                return typeof(List<PLang.Runtime2.Engine.Goals.Goal.@this>);
+                return typeof(PLang.Runtime2.Engine.Goals.Goal.@this);
             if (typeName.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
                 return typeof(byte[]);
         }
@@ -308,6 +308,21 @@ public static class TypeMapping
         if (underlying != null)
             return TryConvertTo(value, underlying);
 
+        // String → complex type: try JSON deserialization before list handling
+        // (e.g., file.read of .pr returns JSON string → List<Goal>)
+        if (value is string jsonStr && !targetType.IsPrimitive && targetType != typeof(string))
+        {
+            try
+            {
+                var jsonResult = System.Text.Json.JsonSerializer.Deserialize(jsonStr, targetType, Json.CaseInsensitiveRead);
+                if (jsonResult != null) return (jsonResult, null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TryConvertTo] JSON→{targetType.FullName} failed: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+
         // List-like target: List<T> or types inheriting List<T>
         var listElementType = GetListElementType(targetType);
         if (listElementType != null)
@@ -463,16 +478,7 @@ public static class TypeMapping
             }
         }
 
-        // String → complex type: try JSON deserialization (e.g., file.read of .pr → List<Goal>)
-        if (value is string jsonStr && !targetType.IsPrimitive && targetType != typeof(string))
-        {
-            try
-            {
-                var result = System.Text.Json.JsonSerializer.Deserialize(jsonStr, targetType, Json.CaseInsensitiveRead);
-                return (result, null);
-            }
-            catch { /* not valid JSON for this type — fall through */ }
-        }
+        // (String → JSON moved above list handling)
 
         // Complex types: dict/JsonElement/list → serialize to JSON → deserialize to target type
         if (value is IDictionary<string, object?> or System.Text.Json.JsonElement or System.Collections.IList)

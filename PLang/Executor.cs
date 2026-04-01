@@ -323,8 +323,7 @@ namespace PLang
 			// Run /system/Build which calls /system/builder/Build → BuildGoal → ApplyStep etc.
 			// Absolute path so user can override by placing system/ in their app folder.
 			var result = await engine2.RunGoalAsync(
-				new Runtime2.Engine.Goals.Goal.GoalCall { Name = "/system/Build" },
-				cancellationToken: CancellationToken.None);
+				new Runtime2.Engine.Goals.Goal.GoalCall { Name = "/system/Build" });
 
 			if (!result.Success)
 			{
@@ -352,18 +351,14 @@ namespace PLang
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
 				engine.Debug.Apply(debugValue);
 
-			// Resolve .goal → .pr path for the PLang runtime
+			// Set the goal file for the PLang runtime
 			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
 			if (!prPath.StartsWith(".build"))
 				prPath = ".build/" + prPath;
-			prPath = "/" + prPath.ToLowerInvariant();
-			engine.MemoryStack.Set("goalFile", prPath);
+			engine.MemoryStack.Set("goalFile", "/" + prPath.ToLowerInvariant());
 
-			// Run system/run.goal — the PLang entry point
-			// Routes to build, test, or run based on %!build%, %!test%
-			return await engine.RunGoalAsync(
-				new Runtime2.Engine.Goals.Goal.GoalCall { Name = "Run", PrPath = "/system/.build/run.pr" },
-				cancellationToken: cancellationToken);
+			// Start the engine — reads system/.build/run.pr, kernel-loops its steps
+			return await engine.Start(ct: cancellationToken);
 		}
 
 		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Run(bool debug = false, bool test = false, string[]? args = null)

@@ -288,45 +288,76 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Runs a goal via a strongly-typed GoalCall. Resolves %var% in Name, tries PrPath first, falls back to name lookup.
+    /// Dispatches a single action. The engine doesn't know about goals or steps.
+    /// It receives an action, finds the module handler, executes it, returns result.
     /// </summary>
-    public async Task<Data> RunGoalAsync(GoalCall goalCall, PLangContext? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, PLangContext context)
     {
-        context ??= User.Context;
+        var (executor, error) = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
+        if (error != null)
+            return Data.FromError(error);
 
-        // Resolve %var% references in the goal name
-        var resolvedName = context.MemoryStack.Resolve(goalCall.Name);
-
-        // Inject GoalCall parameters into the context's MemoryStack
-        if (goalCall.Parameters != null)
-        {
-            foreach (var param in goalCall.Parameters)
-                context.MemoryStack.Put(param);
-        }
-
-        // Try PrPath first (when available)
-        if (!string.IsNullOrEmpty(goalCall.PrPath))
-        {
-            var goal = await _goals.GetByPrPathAsync(goalCall.PrPath, cancellationToken);
-            if (goal != null)
-                return await RunGoalAsync(goal, context, cancellationToken);
-        }
-
-        // Fall back to name-based lookup
-        return await _goals.Run(resolvedName, context, cancellationToken);
+        return await executor!.ExecuteAsync(action.Parameters, this, context, action.Defaults);
     }
 
     /// <summary>
-    /// Runs a goal using the User actor's context by default.
+    /// Bootstrap: reads system/.build/run.pr, pushes its actions to Run().
+    /// This is the ONLY loop in C#. After this, PLang code drives everything.
     /// </summary>
-    public async Task<Data> RunGoalAsync(Goal goal, PLangContext? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data> Start(PLangContext? context = null)
     {
         context ??= User.Context;
 
-        var loadResult = await goal.Load(context);
-        if (!loadResult.Success) return loadResult;
+        var goalCall = new GoalCall { PrPath = "system/.build/run.pr" };
+        var goal = await goalCall.GetGoalAsync(this, context);
+        if (goal == null)
+            return Data.FromError(new Errors.ServiceError(
+                "system/.build/run.pr not found", "RuntimeNotFound", 500));
 
-        return await goal.RunAsync(this, context, cancellationToken);
+        context.Goal = goal;
+        return await RunSteps(goal.Steps, context);
+    }
+
+    /// <summary>
+    /// Iterates steps and dispatches each action via Run().
+    /// Used by Start() for bootstrap and by engine.execute for user steps.
+    /// </summary>
+    public async Task<Data> RunSteps(GoalSteps steps, PLangContext context)
+    {
+        Data result = Data.Ok();
+        foreach (var step in steps)
+        {
+            foreach (var action in step.Actions)
+            {
+                result = await Run(action, context);
+                if (!result.Success) return result;
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Runs a goal via GoalCall. Used by goal.call and backward compat.
+    /// </summary>
+    public async Task<Data> RunGoalAsync(GoalCall goalCall, PLangContext? context = null, CancellationToken ct = default)
+    {
+        context ??= User.Context;
+        var goal = await goalCall.GetGoalAsync(this, context);
+        if (goal == null)
+            return Data.FromError(Errors.GoalError.NotFound(goalCall.Name ?? goalCall.PrPath ?? "unknown"));
+
+        context.Goal = goal;
+        return await RunSteps(goal.Steps, context);
+    }
+
+    /// <summary>
+    /// Kernel-executes a goal already in memory.
+    /// </summary>
+    public async Task<Data> RunGoalAsync(Goal goal, PLangContext? context = null, CancellationToken ct = default)
+    {
+        context ??= User.Context;
+        context.Goal = goal;
+        return await RunSteps(goal.Steps, context);
     }
 
     /// <summary>
