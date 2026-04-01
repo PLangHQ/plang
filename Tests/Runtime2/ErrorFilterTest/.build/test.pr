@@ -1,0 +1,85 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error 'not found', on error ignore if statusCode=404",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {"name": "Message", "value": "not found", "type": "string"},
+            {"name": "StatusCode", "value": 404, "type": "int"},
+            {"name": "Key", "value": "NotFound", "type": "string"}
+          ]
+        }
+      ],
+      "onError": {
+        "ignoreError": true,
+        "statusCode": 404
+      },
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out 'after 404 ignored'",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {"name": "Data", "value": "after 404 ignored", "type": "string"}
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "throw error 'server error', on error ignore if statusCode=404",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {"name": "Message", "value": "server error", "type": "string"},
+            {"name": "StatusCode", "value": 500, "type": "int"},
+            {"name": "Key", "value": "ServerError", "type": "string"}
+          ]
+        }
+      ],
+      "onError": {
+        "ignoreError": true,
+        "statusCode": 404
+      },
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "write out 'should not print'",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {"name": "Data", "value": "should not print", "type": "string"}
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Test.goal",
+  "prPath": "/.build/test.pr"
+}

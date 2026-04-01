@@ -1,11 +1,14 @@
 using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Errors;
+using PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.error;
 
 /// <summary>
-/// Checks a Data result for errors. Handles: ignoreError, retry (already done by ExecuteWithRetry),
-/// error goal, or propagates. The step's OnError determines behavior.
+/// Single owner of all error handling: filtering, ignoreError, retry (with delay),
+/// error goal, order (GoalFirst/RetryFirst), and propagation.
+/// Reads the user step's OnError from MemoryStack.
 /// </summary>
 [Action("check", Cacheable = false)]
 public partial class Check : IContext, IAction
@@ -16,34 +19,123 @@ public partial class Check : IContext, IAction
     {
         if (Data == null || Data.Success) return Data ?? Engine.Memory.Data.Ok();
 
-        // Read the user step from MemoryStack — it has the OnError
         var userStep = Context.MemoryStack.GetValue("step") as PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;
         var onError = userStep?.OnError;
-        // OnError determines behavior: ignore, retry, error goal, or propagate
 
-        // No error handler — propagate (clear Handled so RunSteps stops)
+        // No error handler — propagate
         if (onError == null)
         {
             Data.Handled = false;
             return Data;
         }
 
-        // Ignore — swallow the error
+        // Filter — does this error match the handler's criteria?
+        if (!ErrorMatches(Data.Error, onError))
+        {
+            Data.Handled = false;
+            return Data;
+        }
+
+        // Ignore — swallow
         if (onError.IgnoreError)
             return Engine.Memory.Data.Ok();
 
-        // Error goal — call it, then consider the error handled
-        if (onError.Goal != null)
+        var engine = Context.Engine!;
+        var order = onError.Order ?? ErrorOrder.RetryFirst;
+
+        if (order == ErrorOrder.GoalFirst)
         {
-            // Stamp the GoalCall's Action so it can navigate to the user step's goal sub-goals
-            onError.Goal.Action ??= userStep!.Actions.FirstOrDefault();
-            var engine = Context.Engine!;
-            await engine.RunGoalAsync(onError.Goal, Context);
-            return Engine.Memory.Data.Ok();
+            // Goal first (e.g. fix preconditions), then retry
+            await CallErrorGoal(engine, userStep!, onError);
+
+            var retryResult = await Retry(engine, userStep!);
+            if (retryResult != null) return retryResult;
+
+            // Goal ran but no retry or retry failed — goal alone counts as handled
+            if (onError.Goal != null) return Engine.Memory.Data.Ok();
+        }
+        else
+        {
+            // Retry first (default), then error goal as fallback
+            var retryResult = await Retry(engine, userStep!);
+            if (retryResult != null) return retryResult;
+
+            if (onError.Goal != null)
+            {
+                await CallErrorGoal(engine, userStep!, onError);
+                return Engine.Memory.Data.Ok();
+            }
         }
 
-        // No handler matched — propagate (clear Handled so RunSteps stops)
+        // Nothing handled it — propagate
         Data.Handled = false;
         return Data;
+    }
+
+    /// <summary>
+    /// Retry the step up to RetryCount times, with delay spread over RetryOverMs.
+    /// Returns Data.Ok() on success, null if retries exhausted or not configured.
+    /// </summary>
+    private async Task<Data?> Retry(Engine.@this engine, PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this userStep)
+    {
+        var onError = userStep.OnError!;
+        if (onError.RetryCount == null || onError.RetryCount <= 0) return null;
+
+        var delayMs = onError.RetryOverMs != null && onError.RetryCount > 0
+            ? onError.RetryOverMs.Value / onError.RetryCount.Value
+            : 0;
+
+        for (int attempt = 0; attempt < onError.RetryCount; attempt++)
+        {
+            if (delayMs > 0)
+                await Task.Delay(delayMs);
+
+            // Re-execute the user step's actions
+            Data result = Engine.Memory.Data.Ok();
+            foreach (var action in userStep.Actions)
+            {
+                result = await engine.Run(action, Context);
+                if (!result.Success) break;
+            }
+
+            if (result.Success) return result;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Call the error goal if configured. Stamps Action for sub-goal navigation.
+    /// </summary>
+    private async Task CallErrorGoal(Engine.@this engine,
+        PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this userStep, ErrorHandler onError)
+    {
+        if (onError.Goal == null) return;
+
+        // Stamp Action so GoalCall can navigate to sub-goals
+        onError.Goal.Action ??= userStep.Actions.FirstOrDefault();
+        await engine.RunGoalAsync(onError.Goal, Context);
+    }
+
+    /// <summary>
+    /// Check if the error matches the handler's filter criteria (message, statusCode, key).
+    /// All specified filters must match. No filters = matches everything.
+    /// </summary>
+    private static bool ErrorMatches(IError? error, ErrorHandler onError)
+    {
+        if (error == null) return true;
+
+        if (onError.Message != null &&
+            !error.Message.Contains(onError.Message, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (onError.StatusCode != null && error.StatusCode != onError.StatusCode)
+            return false;
+
+        if (onError.Key != null &&
+            !string.Equals(error.Key, onError.Key, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        return true;
     }
 }
