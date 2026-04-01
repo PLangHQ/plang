@@ -74,6 +74,38 @@
         },
         {
           "index": 2,
+          "text": "if %__data__.Success% == false",
+          "indent": 0,
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {"name": "Left", "value": "%__data__.Success%", "type": "bool"},
+                {"name": "Operator", "value": "==", "type": "string"},
+                {"name": "Right", "value": false, "type": "bool"}
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 3,
+          "text": "return %__data__%",
+          "indent": 1,
+          "actions": [
+            {
+              "module": "goal",
+              "action": "return",
+              "parameters": [
+                {"name": "Data", "value": "%__data__%", "type": "object"}
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 4,
           "text": "foreach %step.events.after%, call RunEvent, item=%event%",
           "indent": 0,
           "actions": [

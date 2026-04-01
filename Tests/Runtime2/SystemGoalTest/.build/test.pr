@@ -33,6 +33,38 @@
         }
       ],
       "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "throw error 'test error'",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {"name": "Message", "value": "test error", "type": "string"}
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "write out 'should not print'",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {"name": "Data", "value": "should not print", "type": "string"}
+          ]
+        }
+      ],
+      "waitForExecution": true
     }
   ],
   "goals": [
