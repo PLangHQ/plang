@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
+using ActionType = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
 using EngineType = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Runtime2.modules;
@@ -10,7 +11,5 @@ namespace PLang.Runtime2.modules;
 /// </summary>
 public interface ICodeGenerated
 {
-    Task<Data> ExecuteAsync(
-        List<Data> parameters, EngineType engine, PLangContext context,
-        List<Data>? defaults = null);
+    Task<Data> ExecuteAsync(ActionType action, EngineType engine, PLangContext context);
 }

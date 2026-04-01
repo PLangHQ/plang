@@ -20,9 +20,12 @@ public class Events : IContext
 
     private List<GoalCall> Stamp(List<GoalCall> calls)
     {
-        var step = _owner as PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;
-        if (step != null)
-            foreach (var gc in calls) gc.Step = step;
+        // For events, we don't have an action — create a placeholder action with the step
+        if (_owner is PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this step)
+        {
+            var placeholder = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this { Step = step };
+            foreach (var gc in calls) gc.Action = placeholder;
+        }
         return calls;
     }
 }

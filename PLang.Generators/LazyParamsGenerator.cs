@@ -284,16 +284,18 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
 
         // ExecuteAsync
+        sb.AppendLine("    private PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
+        sb.AppendLine();
         sb.AppendLine("    public async System.Threading.Tasks.Task<PLang.Runtime2.Engine.Memory.Data> ExecuteAsync(");
-        sb.AppendLine("        List<PLang.Runtime2.Engine.Memory.Data> parameters, PLang.Runtime2.Engine.@this engine, PLang.Runtime2.Engine.Context.PLangContext context,");
-        sb.AppendLine("        List<PLang.Runtime2.Engine.Memory.Data>? defaults = null)");
+        sb.AppendLine("        PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action, PLang.Runtime2.Engine.@this engine, PLang.Runtime2.Engine.Context.PLangContext context)");
         sb.AppendLine("    {");
-        sb.AppendLine("        __parameters = parameters;");
-        sb.AppendLine("        __defaults = defaults;");
+        sb.AppendLine("        __action = action;");
+        sb.AppendLine("        __parameters = action.Parameters;");
+        sb.AppendLine("        __defaults = action.Defaults;");
         sb.AppendLine("        __memoryStack = context.MemoryStack;");
         sb.AppendLine("        __engine = engine;");
         sb.AppendLine("        __resolutionError = null;");
-        sb.AppendLine("        var __step = context.Step;");
+        sb.AppendLine("        var __step = action.Step;");
         sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<PLang.Runtime2.Engine.CallStack.CallFrame>)System.Array.Empty<PLang.Runtime2.Engine.CallStack.CallFrame>();");
 
         if (info.ImplementsIContext)
@@ -439,6 +441,9 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("                    { FixSuggestion = __error.FixSuggestion });");
         sb.AppendLine("            return default;");
         sb.AppendLine("        }");
+        sb.AppendLine("        // Stamp GoalCalls with the action so goal resolution can navigate action → step → goal");
+        sb.AppendLine("        if (__result is PLang.Runtime2.Engine.Goals.Goal.GoalCall __gc && __gc.Action == null)");
+        sb.AppendLine("            __gc.Action = __action;");
         sb.AppendLine("        return (T?)__result;");
         sb.AppendLine("    }");
         sb.AppendLine();

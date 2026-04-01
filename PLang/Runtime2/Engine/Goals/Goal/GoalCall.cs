@@ -28,30 +28,31 @@ public sealed class GoalCall
     [Store]
     public string? PrPath { get; set; }
 
-    /// <summary>The step this GoalCall originated from. Set by Events when resolving bindings.</summary>
+    /// <summary>The action this GoalCall originated from. Set during parameter resolution.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public Steps.Step.@this? Step { get; set; }
+    public Steps.Step.Actions.Action.@this? Action { get; set; }
 
     /// <summary>
     /// Resolves the Goal. Checks step's parent goal sub-goals first, then file.read.
     /// </summary>
     public async Task<@this?> GetGoalAsync(Engine.@this engine, PLangContext context)
     {
-        // 1. Check sub-goals via the step's goal (the step knows where it came from)
-        var parentGoal = Step?.Goal;
-        if (parentGoal != null)
+        // 1. Check via the action's step's goal chain (action → step → goal → walk up)
+        var currentGoal = Action?.Step?.Goal;
+        while (currentGoal != null)
         {
-            var subGoal = parentGoal.Goals.FirstOrDefault(g =>
-                string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
-            if (subGoal != null) return subGoal;
-        }
+            // Check if the goal itself matches (recursive call)
+            if (string.Equals(currentGoal.Name, Name, StringComparison.OrdinalIgnoreCase))
+                return currentGoal;
 
-        // 2. Check current context goal's sub-goals
-        if (context.Goal != null && context.Goal != parentGoal)
-        {
-            var subGoal = context.Goal.Goals.FirstOrDefault(g =>
+            // Check sub-goals
+            var subGoal = currentGoal.Goals.FirstOrDefault(g =>
                 string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
             if (subGoal != null) return subGoal;
+
+            // Walk up — find parent goal that contains currentGoal
+            // TODO: Goal needs a Parent reference for proper walk-up
+            break;
         }
 
         // 3. Not a sub-goal — file.read the .pr

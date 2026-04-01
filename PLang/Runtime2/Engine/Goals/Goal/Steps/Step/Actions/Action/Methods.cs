@@ -26,7 +26,7 @@ public sealed partial class @this
             if (error != null)
                 return Data.FromError(error);
 
-            result = await action!.ExecuteAsync(Parameters, engine, context, Defaults);
+            result = await action!.ExecuteAsync(this, engine, context);
         }
 
         result.Context = context;

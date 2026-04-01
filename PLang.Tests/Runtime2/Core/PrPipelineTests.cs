@@ -362,10 +362,10 @@ public class PrPipelineTests
 
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
 
-        public Task<Data> ExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context, List<Data>? defaults = null)
+        public Task<Data> ExecuteAsync(PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
-            var contentData = parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
+            var contentData = action.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
             object? content = contentData?.Value;
             if (content is string str && str.Contains('%'))
             {

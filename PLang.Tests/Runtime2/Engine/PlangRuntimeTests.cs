@@ -75,13 +75,13 @@ public class PlangRuntimeTests : IDisposable
         var context = _engine.CreateContext();
 
         // Step implements IEvent — Event property should exist
-        await Assert.That(step.Event).IsNotNull();
+        await Assert.That(step.Events).IsNotNull();
 
         // Inject context so Event can resolve bindings
-        step.Event.Context = context;
+        step.Events.Context = context;
 
-        await Assert.That(step.Event.Before).IsNotNull();
-        await Assert.That(step.Event.Before.Count).IsEqualTo(0);
+        await Assert.That(step.Events.Before).IsNotNull();
+        await Assert.That(step.Events.Before.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -100,9 +100,9 @@ public class PlangRuntimeTests : IDisposable
         await onAction.Run();
 
         var step = new Step { Index = 0, Text = "write hello" };
-        step.Event.Context = context;
+        step.Events.Context = context;
 
-        var bindings = step.Event.Before;
+        var bindings = step.Events.Before;
         await Assert.That(bindings.Count).IsGreaterThan(0);
         await Assert.That(bindings[0].Name).IsEqualTo("LogBefore");
     }

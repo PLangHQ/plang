@@ -283,7 +283,7 @@ public class EngineTests
         var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, cancellationToken: cts.Token);
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, ct: cts.Token);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
@@ -621,7 +621,7 @@ public class EngineTests
 
         public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
-        public Task<Data> ExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context, List<Data>? defaults = null)
+        public Task<Data> ExecuteAsync(PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);
@@ -638,7 +638,7 @@ public class EngineTests
 
         public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
-        public Task<Data> ExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context, List<Data>? defaults = null)
+        public Task<Data> ExecuteAsync(PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);
@@ -657,7 +657,7 @@ public class EngineTests
         {
             throw new InvalidOperationException("Test exception");
         }
-        public Task<Data> ExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context, List<Data>? defaults = null)
+        public Task<Data> ExecuteAsync(PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);

@@ -28,7 +28,7 @@ public class GoalSerializationTests
             IsEvent = false,
             Hash = "abc123",
             InputParameters = new Dictionary<string, string> { { "param1", "string" } },
-            SubGoals = new List<string> { "SubGoal1" }
+            Goals = new List<PLang.Runtime2.Engine.Goals.Goal.@this> { new() { Name = "SubGoal1" } }
         };
 
         var json = JsonSerializer.Serialize(goal, JsonOptions);
@@ -42,7 +42,7 @@ public class GoalSerializationTests
         await Assert.That(deserialized.IsEvent).IsFalse();
         await Assert.That(deserialized.Hash).IsEqualTo("abc123");
         await Assert.That(deserialized.InputParameters!["param1"]).IsEqualTo("string");
-        await Assert.That(deserialized.SubGoals[0]).IsEqualTo("SubGoal1");
+        await Assert.That(deserialized.Goals[0]).IsEqualTo("SubGoal1");
     }
 
     [Test]

@@ -45,10 +45,9 @@ public class FakeGetPath : PLang.Runtime2.modules.ICodeGenerated
 {
     public Task<FakePathResult> Run() => Task.FromResult(new FakePathResult());
 
-    public Task<Data> ExecuteAsync(List<Data> parameters,
+    public Task<Data> ExecuteAsync(PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action,
         PLang.Runtime2.Engine.@this engine,
-        PLang.Runtime2.Engine.Context.PLangContext context,
-        List<Data>? defaults) => Task.FromResult(Data.Ok());
+        PLang.Runtime2.Engine.Context.PLangContext context) => Task.FromResult(Data.Ok());
 }
 
 // Fake action returning plain Data
@@ -57,10 +56,9 @@ public class FakeBasicAction : PLang.Runtime2.modules.ICodeGenerated
 {
     public Task<Data> Run() => Task.FromResult(Data.Ok("hello"));
 
-    public Task<Data> ExecuteAsync(List<Data> parameters,
+    public Task<Data> ExecuteAsync(PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action,
         PLang.Runtime2.Engine.@this engine,
-        PLang.Runtime2.Engine.Context.PLangContext context,
-        List<Data>? defaults) => Task.FromResult(Data.Ok());
+        PLang.Runtime2.Engine.Context.PLangContext context) => Task.FromResult(Data.Ok());
 }
 
 // Fake return type simulating PathData-like properties

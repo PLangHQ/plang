@@ -272,7 +272,8 @@ public sealed class @this : IAsyncDisposable
     public async Task<Data<TResult>> RunAction<TAction, TResult>(TAction action, PLangContext context)
         where TAction : ICodeGenerated
     {
-        var result = await action.ExecuteAsync(new List<Data>(), this, context);
+        var emptyAction = new Goals.Goal.Steps.Step.Actions.Action.@this();
+        var result = await action.ExecuteAsync(emptyAction, this, context);
         if (!result.Success) return Data<TResult>.FromError(result.Error!);
         return Data<TResult>.Ok((TResult)result.Value!);
     }
@@ -284,7 +285,8 @@ public sealed class @this : IAsyncDisposable
     public async Task<Data> RunAction<TAction>(TAction action, PLangContext context)
         where TAction : ICodeGenerated
     {
-        return await action.ExecuteAsync(new List<Data>(), this, context);
+        var emptyAction = new Goals.Goal.Steps.Step.Actions.Action.@this();
+        return await action.ExecuteAsync(emptyAction, this, context);
     }
 
     /// <summary>
@@ -297,7 +299,7 @@ public sealed class @this : IAsyncDisposable
         if (error != null)
             return Data.FromError(error);
 
-        var result = await executor!.ExecuteAsync(action.Parameters, this, context, action.Defaults);
+        var result = await executor!.ExecuteAsync(action, this, context);
 
         // Handle return mapping — set variable on MemoryStack
         if (action.Return != null)
@@ -326,7 +328,6 @@ public sealed class @this : IAsyncDisposable
             return Data.FromError(new Errors.ServiceError(
                 "system/.build/run.pr not found", "RuntimeNotFound", 500));
 
-        context.Goal = goal;
         return await RunSteps(goal.Steps, context);
     }
 
@@ -339,8 +340,6 @@ public sealed class @this : IAsyncDisposable
         Data result = Data.Ok();
         foreach (var step in steps)
         {
-            if (step.Goal == null) step.Goal = context.Goal;
-
             foreach (var action in step.Actions)
             {
                 result = await Run(action, context);
@@ -369,11 +368,7 @@ public sealed class @this : IAsyncDisposable
     public async Task<Data> RunGoalAsync(Goal goal, PLangContext? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
-        var savedGoal = context.Goal;
-        context.Goal = goal;
-        var result = await RunSteps(goal.Steps, context);
-        context.Goal = savedGoal;
-        return result;
+        return await RunSteps(goal.Steps, context);
     }
 
     /// <summary>

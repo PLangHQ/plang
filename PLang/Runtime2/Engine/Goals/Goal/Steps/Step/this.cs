@@ -32,8 +32,13 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; init; }
 
+    private Actions.@this _actions = new();
     [Store, Debug, Default]
-    public Actions.@this Actions { get; set; } = new();
+    public Actions.@this Actions
+    {
+        get { _actions.Step = this; return _actions; }
+        set => _actions = value;
+    }
 
     /// <summary>
     /// Computed hash of the step text. Used by Setup for idempotency tracking.

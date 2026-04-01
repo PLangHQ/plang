@@ -34,6 +34,9 @@ public sealed partial class @this
     [JsonIgnore]
     public bool Cacheable { get; init; } = true;
 
+    [JsonIgnore]
+    public Steps.Step.@this? Step { get; set; }
+
     public List<Data> Examples { get; init; } = new();
 
     /// <summary>

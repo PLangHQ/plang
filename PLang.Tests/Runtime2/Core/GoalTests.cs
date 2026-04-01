@@ -20,7 +20,7 @@ public class GoalTests
             IsSetup = true,
             IsEvent = false,
             InputParameters = new Dictionary<string, string> { { "param1", "string" } },
-            SubGoals = new List<string> { "SubGoal1", "SubGoal2" },
+            Goals = new List<PLang.Runtime2.Engine.Goals.Goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
             Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "first step" },
@@ -38,7 +38,7 @@ public class GoalTests
         await Assert.That(goal.IsSetup).IsTrue();
         await Assert.That(goal.IsEvent).IsFalse();
         await Assert.That(goal.InputParameters!.Count).IsEqualTo(1);
-        await Assert.That(goal.SubGoals.Count).IsEqualTo(2);
+        await Assert.That(goal.Goals.Count).IsEqualTo(2);
         await Assert.That(goal.Steps.Count).IsEqualTo(2);
     }
 
@@ -88,8 +88,8 @@ public class GoalTests
     {
         var goal = new Goal();
 
-        await Assert.That(goal.SubGoals).IsNotNull();
-        await Assert.That(goal.SubGoals.Count).IsEqualTo(0);
+        await Assert.That(goal.Goals).IsNotNull();
+        await Assert.That(goal.Goals.Count).IsEqualTo(0);
     }
 
     [Test]

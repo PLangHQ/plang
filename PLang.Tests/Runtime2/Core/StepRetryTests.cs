@@ -469,7 +469,7 @@ public class StepRetryTests
             return Task.FromResult(Data.Ok("success"));
         }
 
-        public Task<Data> ExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context, List<Data>? defaults = null)
+        public Task<Data> ExecuteAsync(PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);
