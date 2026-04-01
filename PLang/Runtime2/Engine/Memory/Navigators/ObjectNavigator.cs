@@ -14,6 +14,9 @@ public class ObjectNavigator : IValueNavigator
         var prop = value.GetType().GetProperty(key,
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
 
-        return prop?.GetValue(value);
+        var result = prop?.GetValue(value);
+        if (key.Equals("events", StringComparison.OrdinalIgnoreCase) || key.Equals("before", StringComparison.OrdinalIgnoreCase))
+            Console.WriteLine($"[ObjectNav] {value.GetType().Name}.{key} = {result?.GetType().Name ?? "null"} prop={prop != null}");
+        return result;
     }
 }

@@ -8,14 +8,14 @@ namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 /// <summary>
 /// Represents a step within a goal for Runtime2.
 /// </summary>
-public sealed partial class @this : IEvent
+public sealed partial class @this
 {
-    private Event? _event;
+    private Events? _events;
     [JsonIgnore]
-    public Event Event
+    public Events Events
     {
-        get => _event ??= new Event(this);
-        set => _event = value;
+        get => _events ??= new Events(this);
+        set => _events = value;
     }
     [Store, LlmBuilder, Debug, Default]
     public int Index { get; init; }

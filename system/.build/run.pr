@@ -4,7 +4,6 @@
     {
       "index": 0,
       "text": "read file %goalFile%, write to %goal%",
-      "lineNumber": 5,
       "indent": 0,
       "actions": [
         {
@@ -13,17 +12,14 @@
           "parameters": [
             {"name": "Path", "value": "%goalFile%", "type": "path"}
           ],
-          "return": [
-            {"name": "goal"}
-          ]
+          "return": [{"name": "goal"}]
         }
       ],
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "foreach %goals.Steps%, call RunStep, item=%step%",
-      "lineNumber": 6,
+      "text": "foreach %goal.Steps%, call RunStep, item=%step%",
       "indent": 0,
       "actions": [
         {
@@ -45,8 +41,24 @@
       "steps": [
         {
           "index": 0,
+          "text": "foreach %step.events.before%, call RunEvent, item=%event%",
+          "indent": 0,
+          "actions": [
+            {
+              "module": "loop",
+              "action": "foreach",
+              "parameters": [
+                {"name": "Collection", "value": "%step.events.before%", "type": "list"},
+                {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"},
+                {"name": "ItemName", "value": "event", "type": "string"}
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
           "text": "execute %step%",
-          "lineNumber": 9,
           "indent": 0,
           "actions": [
             {
@@ -55,15 +67,56 @@
               "parameters": [
                 {"name": "Step", "value": "%step%", "type": "object"}
               ],
-              "return": [
-                {"name": "result"}
+              "return": [{"name": "result"}]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "foreach %step.events.after%, call RunEvent, item=%event%",
+          "indent": 0,
+          "actions": [
+            {
+              "module": "loop",
+              "action": "foreach",
+              "parameters": [
+                {"name": "Collection", "value": "%step.events.after%", "type": "list"},
+                {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"},
+                {"name": "ItemName", "value": "event", "type": "string"}
               ]
             }
           ],
           "waitForExecution": true
         }
       ],
-      "goals": [],
+      "goals": [
+        {
+          "name": "RunEvent",
+          "steps": [
+            {
+              "index": 0,
+              "text": "call goal %event%",
+              "indent": 0,
+              "actions": [
+                {
+                  "module": "goal",
+                  "action": "call",
+                  "parameters": [
+                    {"name": "GoalName", "value": "%event%", "type": "goal.call"}
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ],
+          "goals": [],
+          "visibility": 0,
+          "path": "/system/run.goal",
+          "prPath": "/system/.build/run.pr",
+          "isSystem": true
+        }
+      ],
       "visibility": 0,
       "path": "/system/run.goal",
       "prPath": "/system/.build/run.pr",

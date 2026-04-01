@@ -16,6 +16,8 @@ public partial class Data
     /// </summary>
     public virtual Data? GetChild(string path, int depth = 0)
     {
+        if (path.Contains("events", StringComparison.OrdinalIgnoreCase))
+            Console.WriteLine($"[GetChild] path='{path}' this={GetType().Name} Value={Value?.GetType().Name ?? "null"} depth={depth}");
         if (string.IsNullOrEmpty(path))
             return this;
 
@@ -81,6 +83,8 @@ public partial class Data
             return ownProp.GetValue(this);
 
         var val = Value;
+        if (key.Equals("events", StringComparison.OrdinalIgnoreCase))
+            Console.WriteLine($"[GetChildValue] key=events this={GetType().Name} val={val?.GetType().Name ?? "null"} ownProp={ownProp?.Name}");
         if (val == null) return null;
         return ValueNavigators.Navigate(val, key);
     }

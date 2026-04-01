@@ -4,17 +4,16 @@ using PLang.Runtime2.Engine.Goals.Goal;
 namespace PLang.Runtime2.modules;
 
 /// <summary>
-/// Event resolver — returns matching event bindings for the owner (Step, Goal, etc.).
-/// Implements IContext so the MemoryStack can inject context during dot-path traversal.
-/// The owner's type determines which bindings match (step-level, goal-level, etc.).
+/// Events for a step/goal. Owns the logic to find matching bindings.
+/// Context is injected so it can resolve from registered event bindings.
 /// </summary>
-public class Event : IContext
+public class Events : IContext
 {
     private readonly object _owner;
 
     public PLangContext Context { get; set; } = null!;
 
-    public Event(object owner) => _owner = owner;
+    public Events(object owner) => _owner = owner;
 
     public List<GoalCall> Before => Context?.GetEventBindings(_owner, EventPhase.Before) ?? [];
     public List<GoalCall> After => Context?.GetEventBindings(_owner, EventPhase.After) ?? [];

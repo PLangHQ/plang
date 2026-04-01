@@ -3,8 +3,25 @@
   "steps": [
     {
       "index": 0,
-      "text": "call goal WriteOut",
+      "text": "before step, call BeforeStep",
       "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "event",
+          "action": "on",
+          "parameters": [
+            {"name": "Type", "value": "BeforeStep", "type": "string"},
+            {"name": "GoalToCall", "value": {"name": "BeforeStep"}, "type": "goal.call"}
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call goal WriteOut",
+      "lineNumber": 3,
       "indent": 0,
       "actions": [
         {
@@ -25,7 +42,7 @@
         {
           "index": 0,
           "text": "write out \"hello plang world\"",
-          "lineNumber": 5,
+          "lineNumber": 6,
           "indent": 0,
           "actions": [
             {
@@ -33,6 +50,31 @@
               "action": "write",
               "parameters": [
                 {"name": "Data", "value": "hello plang world", "type": "string"}
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Test.goal",
+      "prPath": "/.build/test.pr"
+    },
+    {
+      "name": "BeforeStep",
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out \"before!\"",
+          "lineNumber": 9,
+          "indent": 0,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {"name": "Data", "value": "before!", "type": "string"}
               ]
             }
           ],
