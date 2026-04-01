@@ -600,3 +600,9 @@ Query
 - No confidence: BuildStep gets full autonomy
 
 The guidance text from BuildGoal's LLM would flow into BuildStep's prompt as additional context, improving probability of correct output. This is essentially the first LLM "teaching" the second LLM about what it thinks the step means.
+
+## BuildGoal step grouping for BuildStep context
+**Date:** 2026-04-01
+**Context:** BuildGoal LLM returns steps. Related steps (e.g., error check → retry → throw) could be grouped with a `group` field. BuildStep then receives the whole group at once, seeing all related steps + their module details. This gives the LLM more context for parameter mapping — it sees the full flow instead of one step at a time.
+
+**Approach:** BuildGoal LLM adds `"group": "error-handling"` to related steps. ApplyStep sends each group to BuildStep as a batch. BuildStep prompt shows all steps in the group + their action specs. Result: higher confidence, fewer mapping errors for multi-step patterns.

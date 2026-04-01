@@ -75,6 +75,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
             i.Name == "IChannel"
             && i.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.modules");
 
+        // Check if it implements IAction
+        var implementsIAction = classSymbol.AllInterfaces.Any(i =>
+            i.Name == "IAction"
+            && i.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.modules");
+
         // Find partial properties (declared by author, needing generated implementation)
         var properties = new List<ActionPropertyInfo>();
         foreach (var member in classSymbol.GetMembers())
@@ -155,6 +160,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
             $"{classSymbol.ContainingNamespace}.{classSymbol.Name}",
             implementsIContext,
             implementsIChannel,
+            implementsIAction,
             properties);
     }
 
@@ -185,6 +191,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
         if (info.ImplementsIChannel)
         {
             sb.AppendLine("    public PLang.Runtime2.Engine.Channels.@this Channels { get; set; } = null!;");
+            sb.AppendLine();
+        }
+
+        // IAction auto-provision
+        if (info.ImplementsIAction)
+        {
+            sb.AppendLine("    public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;");
             sb.AppendLine();
         }
 
@@ -305,6 +318,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
         if (info.ImplementsIChannel)
         {
             sb.AppendLine("        Channels = (context.Actor ?? engine.User).Channels;");
+        }
+        if (info.ImplementsIAction)
+        {
+            sb.AppendLine("        Action = action;");
         }
         sb.AppendLine();
 
@@ -485,11 +502,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("            if (fullMatch.Success)");
         sb.AppendLine("            {");
         sb.AppendLine("                var __resolved = __memoryStack!.Get(fullMatch.Groups[1].Value);");
-        sb.AppendLine("                if (__resolved != null && !__resolved.Success)");
-        sb.AppendLine("                {");
-        sb.AppendLine("                    __resolutionError = __resolved;");
-        sb.AppendLine("                    return null;");
-        sb.AppendLine("                }");
+        sb.AppendLine("                // Data properties pass through regardless of Success — the Data IS the value");
         sb.AppendLine("                return __resolved;");
         sb.AppendLine("            }");
         sb.AppendLine("        }");
@@ -509,16 +522,18 @@ internal class ActionClassInfo
     public string FullName { get; }
     public bool ImplementsIContext { get; }
     public bool ImplementsIChannel { get; }
+    public bool ImplementsIAction { get; }
     public List<ActionPropertyInfo> Properties { get; }
 
     public ActionClassInfo(string ns, string className, string fullName,
-        bool implementsIContext, bool implementsIChannel, List<ActionPropertyInfo> properties)
+        bool implementsIContext, bool implementsIChannel, bool implementsIAction, List<ActionPropertyInfo> properties)
     {
         Namespace = ns;
         ClassName = className;
         FullName = fullName;
         ImplementsIContext = implementsIContext;
         ImplementsIChannel = implementsIChannel;
+        ImplementsIAction = implementsIAction;
         Properties = properties;
     }
 }

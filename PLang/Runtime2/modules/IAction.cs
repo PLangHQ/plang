@@ -1,14 +1,11 @@
-using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine.Memory;
-using EngineType = PLang.Runtime2.Engine.@this;
-
 namespace PLang.Runtime2.modules;
 
+/// <summary>
+/// Capability interface — gives the handler access to the Action that triggered it.
+/// The source generator wires Action = action in ExecuteAsync.
+/// Navigate: Action.Step.Goal for the full chain.
+/// </summary>
 public interface IAction
 {
-    EngineType Engine { get; }
-    PLangContext Context { get; }
-    System.Type? ParameterType { get; }
-    void Initialize(EngineType engine, PLangContext context);
-    Task<Data> ExecuteAsync(object? parameters);
+    PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; }
 }

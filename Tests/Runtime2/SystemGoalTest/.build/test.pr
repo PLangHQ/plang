@@ -48,11 +48,14 @@
           ]
         }
       ],
+      "onError": {
+        "ignoreError": true
+      },
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "write out 'should not print'",
+      "text": "write out 'after error ignored'",
       "lineNumber": 5,
       "indent": 0,
       "actions": [
@@ -60,7 +63,7 @@
           "module": "output",
           "action": "write",
           "parameters": [
-            {"name": "Data", "value": "should not print", "type": "string"}
+            {"name": "Data", "value": "after error ignored", "type": "string"}
           ]
         }
       ],

@@ -85,9 +85,7 @@ public partial class Data
             || key.Equals("Success", StringComparison.OrdinalIgnoreCase)
             || key.Equals("Error", StringComparison.OrdinalIgnoreCase)))
         {
-            var v = ownProp.GetValue(this);
-            Console.WriteLine($"[Nav.{key}] = {v} type={GetType().Name}");
-            return v;
+            return ownProp.GetValue(this);
         }
 
         var val = Value;

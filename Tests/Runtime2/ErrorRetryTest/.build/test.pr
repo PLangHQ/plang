@@ -1,0 +1,156 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %attempt% = 0",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {"name": "Name", "value": "%attempt%", "type": "string"},
+            {"name": "Value", "value": 0, "type": "int"}
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call FailThenSucceed, write to %result%",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {"name": "GoalName", "value": {"name": "FailThenSucceed"}, "type": "goal.call"}
+          ],
+          "return": [{"name": "result"}]
+        }
+      ],
+      "onError": {
+        "retryCount": 3
+      },
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out 'completed with result'",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {"name": "Data", "value": "completed after retries", "type": "string"}
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "FailThenSucceed",
+      "steps": [
+        {
+          "index": 0,
+          "text": "add 1 to %attempt%, write to %attempt%",
+          "lineNumber": 7,
+          "indent": 0,
+          "actions": [
+            {
+              "module": "math",
+              "action": "add",
+              "parameters": [
+                {"name": "A", "value": "%attempt%", "type": "int"},
+                {"name": "B", "value": 1, "type": "int"}
+              ],
+              "return": [{"name": "attempt"}]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "write out attempt number",
+          "lineNumber": 8,
+          "indent": 0,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {"name": "Data", "value": "%attempt%", "type": "object"}
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "if %attempt% < 3, throw error",
+          "lineNumber": 9,
+          "indent": 0,
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {"name": "Left", "value": "%attempt%", "type": "int"},
+                {"name": "Operator", "value": "<"},
+                {"name": "Right", "value": 3, "type": "int"}
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 3,
+          "text": "throw error 'not ready yet'",
+          "lineNumber": 10,
+          "indent": 1,
+          "actions": [
+            {
+              "module": "error",
+              "action": "throw",
+              "parameters": [
+                {"name": "Message", "value": "not ready yet", "type": "string"}
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 4,
+          "text": "write out 'success!'",
+          "lineNumber": 11,
+          "indent": 0,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {"name": "Data", "value": "success!", "type": "string"}
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Test.goal",
+      "prPath": "/.build/test.pr"
+    }
+  ],
+  "visibility": 1,
+  "path": "/Test.goal",
+  "prPath": "/.build/test.pr"
+}
