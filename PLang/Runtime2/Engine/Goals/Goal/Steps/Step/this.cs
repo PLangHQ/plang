@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules;
 using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
@@ -10,6 +11,33 @@ namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 /// </summary>
 public sealed partial class @this
 {
+    [JsonIgnore]
+    public PLangContext? Context { get; set; }
+
+    /// <summary>
+    /// Whether this step is disabled for the current execution.
+    /// Backed by context storage so concurrent executions don't interfere.
+    /// Set by the condition module when a condition is false — marks indented sub-steps.
+    /// </summary>
+    [JsonIgnore]
+    public bool Disabled
+    {
+        get
+        {
+            if (Context == null) return false;
+            return Context.Get<bool>(DisabledKey);
+        }
+        set
+        {
+            if (value)
+                Context?.Set(DisabledKey, true);
+            else
+                Context?.Set<bool>(DisabledKey, default); // removes from context
+        }
+    }
+
+    private string DisabledKey => $"step:{Goal?.PrPath}:{Index}:disabled";
+
     private modules.Events? _events;
     [JsonIgnore]
     public modules.Events Events

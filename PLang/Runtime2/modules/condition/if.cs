@@ -31,6 +31,19 @@ public partial class If : IContext
         if (Negate) conditionResult = !conditionResult;
         evalResult = Data.Ok(conditionResult);
 
+        // Mark indented sub-steps: disabled when false, clean when true
+        var userStep = Context.MemoryStack.GetValue("step") as PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;
+        if (userStep?.Goal != null)
+        {
+            var steps = userStep.Goal.Steps;
+            for (int i = userStep.Index + 1; i < steps.Count; i++)
+            {
+                if (steps[i].Indent <= userStep.Indent) break;
+                steps[i].Context = Context;
+                steps[i].Disabled = !conditionResult;
+            }
+        }
+
         var goalToCall = conditionResult ? GoalIfTrue : GoalIfFalse;
         if (goalToCall != null)
         {
