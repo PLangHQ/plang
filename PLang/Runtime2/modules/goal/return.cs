@@ -12,7 +12,9 @@ public partial class Return : IContext
 
     public Task<Data> Run()
     {
-        // Return the Data as-is — if it has an error, it propagates (RunSteps stops on !Success)
-        return Task.FromResult(Data ?? Engine.Memory.Data.Ok());
+        var result = Data ?? Engine.Memory.Data.Ok();
+        // Clear Handled so the error propagates through RunSteps
+        result.Handled = false;
+        return Task.FromResult(result);
     }
 }

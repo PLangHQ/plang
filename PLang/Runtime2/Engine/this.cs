@@ -355,7 +355,7 @@ public sealed class @this : IAsyncDisposable
             foreach (var action in step.Actions)
             {
                 result = await Run(action, context);
-                if (!result.Success) return result;
+                if (!result.Success && !result.Handled) return result;
             }
 
             // Sub-step control: false condition skips indented children

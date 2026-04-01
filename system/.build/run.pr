@@ -1,162 +1,57 @@
 {
   "name": "Run",
   "steps": [
-    {
-      "index": 0,
-      "text": "read file %goalFile%, write to %goal%",
-      "indent": 0,
-      "actions": [
-        {
-          "module": "file",
-          "action": "read",
-          "parameters": [
-            {"name": "Path", "value": "%goalFile%", "type": "path"}
-          ],
-          "return": [{"name": "goal"}]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 1,
-      "text": "foreach %goal.Steps%, call RunStep, item=%step%",
-      "indent": 0,
-      "actions": [
-        {
-          "module": "loop",
-          "action": "foreach",
-          "parameters": [
-            {"name": "Collection", "value": "%goal.Steps%", "type": "list"},
-            {"name": "GoalName", "value": {"name": "RunStep"}, "type": "goal.call"},
-            {"name": "ItemName", "value": "step", "type": "string"}
-          ]
-        }
-      ],
-      "waitForExecution": true
-    }
+    {"index": 0, "indent": 0, "text": "read file %goalFile%, write to %goal%",
+      "actions": [{"module": "file", "action": "read", "parameters": [{"name": "Path", "value": "%goalFile%", "type": "path"}], "return": [{"name": "goal"}]}], "waitForExecution": true},
+    {"index": 1, "indent": 0, "text": "foreach %goal.Steps%, call RunStep, item=%step%",
+      "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%goal.Steps%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunStep"}, "type": "goal.call"}, {"name": "ItemName", "value": "step", "type": "string"}]}], "waitForExecution": true}
   ],
-  "goals": [
-    {
-      "name": "RunStep",
-      "steps": [
-        {
-          "index": 0,
-          "text": "foreach %step.events.before%, call RunEvent, item=%event%",
-          "indent": 0,
-          "actions": [
-            {
-              "module": "loop",
-              "action": "foreach",
-              "parameters": [
-                {"name": "Collection", "value": "%step.events.before%", "type": "list"},
-                {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"},
-                {"name": "ItemName", "value": "event", "type": "string"}
-              ]
-            }
-          ],
-          "waitForExecution": true
-        },
-        {
-          "index": 1,
-          "text": "execute %step%, write to %__data__%",
-          "indent": 0,
-          "actions": [
-            {
-              "module": "engine",
-              "action": "execute",
-              "parameters": [
-                {"name": "Step", "value": "%step%", "type": "object"}
-              ],
-              "return": [{"name": "__data__"}]
-            }
-          ],
-          "waitForExecution": true
-        },
-        {
-          "index": 2,
-          "text": "if %__data__.Success% == false",
-          "indent": 0,
-          "actions": [
-            {
-              "module": "condition",
-              "action": "if",
-              "parameters": [
-                {"name": "Left", "value": "%__data__.Success%", "type": "bool"},
-                {"name": "Operator", "value": "==", "type": "string"},
-                {"name": "Right", "value": false, "type": "bool"}
-              ]
-            }
-          ],
-          "waitForExecution": true
-        },
-        {
-          "index": 3,
-          "text": "return %__data__%",
-          "indent": 1,
-          "actions": [
-            {
-              "module": "goal",
-              "action": "return",
-              "parameters": [
-                {"name": "Data", "value": "%__data__%", "type": "object"}
-              ]
-            }
-          ],
-          "waitForExecution": true
-        },
-        {
-          "index": 4,
-          "text": "foreach %step.events.after%, call RunEvent, item=%event%",
-          "indent": 0,
-          "actions": [
-            {
-              "module": "loop",
-              "action": "foreach",
-              "parameters": [
-                {"name": "Collection", "value": "%step.events.after%", "type": "list"},
-                {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"},
-                {"name": "ItemName", "value": "event", "type": "string"}
-              ]
-            }
-          ],
-          "waitForExecution": true
-        }
+  "goals": [{
+    "name": "RunStep",
+    "steps": [
+      {"index": 0, "indent": 0, "text": "foreach before events",
+        "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%step.events.before%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"}, {"name": "ItemName", "value": "event", "type": "string"}]}], "waitForExecution": true},
+      {"index": 1, "indent": 0, "text": "call ExecuteWithRetry",
+        "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "ExecuteWithRetry"}, "type": "goal.call"}]}], "waitForExecution": true},
+      {"index": 2, "indent": 0, "text": "if %__data__.Success% == false",
+        "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%__data__.Success%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": false, "type": "bool"}]}], "waitForExecution": true},
+      {"index": 3, "indent": 1, "text": "if %step.OnError.IgnoreError% != true",
+        "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%step.OnError.IgnoreError%", "type": "bool"}, {"name": "Operator", "value": "!="}, {"name": "Right", "value": true, "type": "bool"}]}], "waitForExecution": true},
+      {"index": 4, "indent": 2, "text": "return %__data__%",
+        "actions": [{"module": "goal", "action": "return", "parameters": [{"name": "Data", "value": "%__data__%", "type": "object"}]}], "waitForExecution": true},
+      {"index": 5, "indent": 0, "text": "remove %__retryAttempt__%",
+        "actions": [{"module": "variable", "action": "remove", "parameters": [{"name": "Name", "value": "%__retryAttempt__%", "type": "string"}]}], "waitForExecution": true},
+      {"index": 6, "indent": 0, "text": "foreach after events",
+        "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%step.events.after%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"}, {"name": "ItemName", "value": "event", "type": "string"}]}], "waitForExecution": true}
+    ],
+    "goals": [
+      {"name": "ExecuteWithRetry", "steps": [
+        {"index": 0, "indent": 0, "text": "set default %__retryAttempt__% = 0",
+          "actions": [{"module": "variable", "action": "set", "parameters": [{"name": "Name", "value": "%__retryAttempt__%", "type": "string"}, {"name": "Value", "value": 0, "type": "int"}, {"name": "AsDefault", "value": true, "type": "bool"}]}], "waitForExecution": true},
+        {"index": 1, "indent": 0, "text": "execute %step%, write to %__data__%",
+          "actions": [{"module": "engine", "action": "execute", "parameters": [{"name": "Step", "value": "%step%", "type": "object"}], "return": [{"name": "__data__"}]}], "waitForExecution": true},
+        {"index": 2, "indent": 0, "text": "if %__data__.Success% == false",
+          "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%__data__.Success%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": false, "type": "bool"}]}], "waitForExecution": true},
+        {"index": 3, "indent": 1, "text": "if %step.OnError.RetryCount% > %__retryAttempt__%",
+          "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%step.OnError.RetryCount%", "type": "int"}, {"name": "Operator", "value": ">"}, {"name": "Right", "value": "%__retryAttempt__%", "type": "int"}]}], "waitForExecution": true},
+        {"index": 4, "indent": 2, "text": "add 1 to %__retryAttempt__%",
+          "actions": [{"module": "math", "action": "add", "parameters": [{"name": "A", "value": "%__retryAttempt__%", "type": "int"}, {"name": "B", "value": 1, "type": "int"}], "return": [{"name": "__retryAttempt__"}]}], "waitForExecution": true},
+        {"index": 5, "indent": 2, "text": "call ExecuteWithRetry",
+          "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "ExecuteWithRetry"}, "type": "goal.call"}]}], "waitForExecution": true},
+        {"index": 6, "indent": 1, "text": "if %step.OnError.Goal% isnotempty, call error goal",
+          "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%step.OnError.Goal%", "type": "object"}, {"name": "Operator", "value": "isempty"}, {"name": "Negate", "value": true, "type": "bool"}, {"name": "GoalIfTrue", "value": {"name": "CallErrorGoal"}, "type": "goal.call"}]}], "waitForExecution": true}
       ],
       "goals": [
-        {
-          "name": "RunEvent",
-          "steps": [
-            {
-              "index": 0,
-              "text": "call goal %event%",
-              "indent": 0,
-              "actions": [
-                {
-                  "module": "goal",
-                  "action": "call",
-                  "parameters": [
-                    {"name": "GoalName", "value": "%event%", "type": "goal.call"}
-                  ]
-                }
-              ],
-              "waitForExecution": true
-            }
-          ],
-          "goals": [],
-          "visibility": 0,
-          "path": "/system/run.goal",
-          "prPath": "/system/.build/run.pr",
-          "isSystem": true
-        }
-      ],
-      "visibility": 0,
-      "path": "/system/run.goal",
-      "prPath": "/system/.build/run.pr",
-      "isSystem": true
-    }
-  ],
-  "visibility": 1,
-  "path": "/system/run.goal",
-  "prPath": "/system/.build/run.pr",
-  "isSystem": true
+        {"name": "CallErrorGoal", "steps": [
+          {"index": 0, "indent": 0, "text": "call %step.OnError.Goal%",
+            "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": "%step.OnError.Goal%", "type": "goal.call"}]}], "waitForExecution": true}
+        ], "goals": [], "visibility": 0, "path": "/system/run.goal", "prPath": "/system/.build/run.pr", "isSystem": true}
+      ], "visibility": 0, "path": "/system/run.goal", "prPath": "/system/.build/run.pr", "isSystem": true},
+      {"name": "RunEvent", "steps": [
+        {"index": 0, "indent": 0, "text": "call goal %event%",
+          "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": "%event%", "type": "goal.call"}]}], "waitForExecution": true}
+      ], "goals": [], "visibility": 0, "path": "/system/run.goal", "prPath": "/system/.build/run.pr", "isSystem": true}
+    ], "visibility": 0, "path": "/system/run.goal", "prPath": "/system/.build/run.pr", "isSystem": true
+  }],
+  "visibility": 1, "path": "/system/run.goal", "prPath": "/system/.build/run.pr", "isSystem": true
 }

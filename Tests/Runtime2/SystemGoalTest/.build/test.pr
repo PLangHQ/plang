@@ -36,7 +36,7 @@
     },
     {
       "index": 2,
-      "text": "throw error 'test error'",
+      "text": "throw error 'test error', on error ignore",
       "lineNumber": 4,
       "indent": 0,
       "actions": [

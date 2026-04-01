@@ -22,6 +22,9 @@ public partial class Execute : IContext
             if (!result.Success) break;
         }
 
+        // Return the result directly — PLang runtime handles errors
+        // Mark as handled so RunSteps doesn't stop execution
+        result.Handled = true;
         return result;
     }
 }

@@ -81,8 +81,14 @@ public partial class Data
         // First check properties on the Data object itself (e.g., PathData.Exists)
         var ownProp = GetType().GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (ownProp != null && ownProp.DeclaringType != typeof(Data))
-            return ownProp.GetValue(this);
+        if (ownProp != null && (ownProp.DeclaringType != typeof(Data)
+            || key.Equals("Success", StringComparison.OrdinalIgnoreCase)
+            || key.Equals("Error", StringComparison.OrdinalIgnoreCase)))
+        {
+            var v = ownProp.GetValue(this);
+            Console.WriteLine($"[Nav.{key}] = {v} type={GetType().Name}");
+            return v;
+        }
 
         var val = Value;
         if (val == null) return null;
