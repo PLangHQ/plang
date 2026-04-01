@@ -14,7 +14,7 @@
             {"name": "Path", "value": "%goalFile%", "type": "path"}
           ],
           "return": [
-            {"name": "goals"}
+            {"name": "goal"}
           ]
         }
       ],
@@ -30,7 +30,7 @@
           "module": "loop",
           "action": "foreach",
           "parameters": [
-            {"name": "Collection", "value": "%goals.Steps%", "type": "list"},
+            {"name": "Collection", "value": "%goal.Steps%", "type": "list"},
             {"name": "GoalName", "value": {"name": "RunStep"}, "type": "goal.call"},
             {"name": "ItemName", "value": "step", "type": "string"}
           ]

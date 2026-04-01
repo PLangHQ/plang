@@ -51,10 +51,6 @@ public class DefaultFileProvider : IFileProvider
                 }
             }
 
-            // Typed content (e.g., Goal from .pr) — return as Data, not PathData
-            if (clr != null && clr != typeof(string) && clr != typeof(byte[]))
-                return Data.Ok(content);
-
             return new PathData(path.Absolute, fs, content);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

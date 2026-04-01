@@ -14,7 +14,8 @@ public partial class Call : IContext
 
         // 1. Check sub-goals in current goal (already in memory)
         var currentGoal = Context.Goal;
-        Console.WriteLine($"[goal.call] looking for '{GoalName.Name}' in goal '{currentGoal?.Name}' with {currentGoal?.Goals?.Count ?? 0} sub-goals");
+        Console.Error.WriteLine($"[goal.call] looking for '{GoalName.Name}' in goal '{currentGoal?.Name}' with {currentGoal?.Goals?.Count ?? 0} sub-goals");
+        Console.Error.Flush();
         if (currentGoal != null)
         {
             var subGoal = currentGoal.Goals.FirstOrDefault(g =>

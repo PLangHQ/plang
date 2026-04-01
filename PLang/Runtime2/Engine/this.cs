@@ -298,7 +298,19 @@ public sealed class @this : IAsyncDisposable
         if (error != null)
             return Data.FromError(error);
 
-        return await executor!.ExecuteAsync(action.Parameters, this, context, action.Defaults);
+        var result = await executor!.ExecuteAsync(action.Parameters, this, context, action.Defaults);
+
+        // Handle return mapping — set variable on MemoryStack
+        if (action.Return != null)
+        {
+            foreach (var returnVar in action.Return)
+            {
+                result.Name = returnVar.Name;
+                context.MemoryStack.Put(result);
+            }
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -345,6 +357,22 @@ public sealed class @this : IAsyncDisposable
     public async Task<Data> RunGoalAsync(GoalCall goalCall, PLangContext? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
+
+        // Check sub-goals in current goal first
+        var currentGoal = context.Goal;
+        if (currentGoal != null)
+        {
+            var subGoal = currentGoal.Goals.FirstOrDefault(g =>
+                string.Equals(g.Name, goalCall.Name, StringComparison.OrdinalIgnoreCase));
+            if (subGoal != null)
+                return await RunGoalAsync(subGoal, context, ct);
+        }
+
+        // Inject parameters
+        if (goalCall.Parameters != null)
+            foreach (var param in goalCall.Parameters)
+                context.MemoryStack.Put(param);
+
         var goal = await goalCall.GetGoalAsync(this, context);
         if (goal == null)
             return Data.FromError(Errors.GoalError.NotFound(goalCall.Name ?? goalCall.PrPath ?? "unknown"));
