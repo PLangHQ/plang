@@ -49,8 +49,20 @@ public sealed class PLangContext : IDisposable
     /// <summary>
     /// Cancellation token for this execution.
     /// </summary>
-    public CancellationToken CancellationToken => _cts?.Token ?? CancellationToken.None;
+    public CancellationToken CancellationToken =>
+        _cancellationStack.Count > 0 ? _cancellationStack.Peek().Token : (_cts?.Token ?? CancellationToken.None);
     private CancellationTokenSource? _cts;
+    private readonly Stack<CancellationTokenSource> _cancellationStack = new();
+
+    /// <summary>
+    /// Pushes a timeout CTS so all sub-calls use it. Called by engine.execute for step.Timeout.
+    /// </summary>
+    public void PushCancellation(CancellationTokenSource cts) => _cancellationStack.Push(cts);
+
+    /// <summary>
+    /// Pops the timeout CTS, restoring the previous cancellation token.
+    /// </summary>
+    public void PopCancellation() { if (_cancellationStack.Count > 0) _cancellationStack.Pop(); }
 
     /// <summary>
     /// Parent context (if this is a child execution).
