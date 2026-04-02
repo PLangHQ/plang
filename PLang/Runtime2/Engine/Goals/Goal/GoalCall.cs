@@ -13,7 +13,8 @@ public sealed class GoalCall : modules.IEvent
     /// <summary>Event context — set by Events.Stamp when this GoalCall is an event binding.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public modules.EventContext? Event { get; set; }
-    /// <summary>Goal name to call (e.g., "ProcessData", "/Setup/Init").</summary>
+
+    /// <summary>Goal name to call (e.g., "ProcessData", "Setup/Init").</summary>
     [Store, LlmBuilder]
     public string Name { get; init; } = "";
     /// <summary>Description of what this goal does — used when GoalCall is a tool definition for an LLM.</summary>
@@ -36,71 +37,50 @@ public sealed class GoalCall : modules.IEvent
     public Steps.Step.Actions.Action.@this? Action { get; set; }
 
     /// <summary>
-    /// Resolves the Goal. Checks step's parent goal sub-goals first, then file.read.
+    /// Resolves the Goal. PrPath is authoritative when set — file.read only.
+    /// Otherwise: action chain → engine.Goals → file.read fallback.
     /// </summary>
     public async Task<@this?> GetGoalAsync(Engine.@this engine, PLangContext context)
     {
+        // PrPath is authoritative — load from file, no name-based search
+        if (!string.IsNullOrEmpty(PrPath))
+            return await LoadFromFile(PrPath, engine, context);
+
         // 1. Check via the action's step's goal chain (action → step → goal → walk up)
         var currentGoal = Action?.Step?.Goal;
         while (currentGoal != null)
         {
-            // Check if the goal itself matches (recursive call)
             if (string.Equals(currentGoal.Name, Name, StringComparison.OrdinalIgnoreCase))
                 return currentGoal;
 
-            // Check sub-goals
             var subGoal = currentGoal.Goals.FirstOrDefault(g =>
                 string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
             if (subGoal != null) return subGoal;
 
-            // Walk up — find parent goal that contains currentGoal
-            // TODO: Goal needs a Parent reference for proper walk-up
             break;
         }
 
-        // 2. Check engine's loaded goals (only when no PrPath — PrPath takes precedence)
-        if (string.IsNullOrEmpty(PrPath))
-        {
-            var loaded = engine.Goals.Get(Name);
-            if (loaded != null) return loaded;
-        }
+        // 2. Check engine's loaded goals
+        var loaded = engine.Goals.Get(Name);
+        if (loaded != null) return loaded;
 
-        // 3. File.read the .pr
-        var prPath = PrPath;
-        if (string.IsNullOrEmpty(prPath) && !string.IsNullOrEmpty(Name))
-            prPath = $".build/{Name.ToLowerInvariant()}.pr";
+        // 3. Derive PrPath from Name and file.read
+        var prPath = $".build/{Name.ToLowerInvariant()}.pr";
 
-        if (string.IsNullOrEmpty(prPath)) return null;
+        // Try root-relative first (for user goals calling other goals in same project)
+        var rootResult = await LoadFromFile("/" + prPath, engine, context);
+        if (rootResult != null) return rootResult;
 
+        // Try context-relative
+        return await LoadFromFile(prPath, engine, context);
+    }
+
+    private async Task<@this?> LoadFromFile(string prPath, Engine.@this engine, PLangContext context)
+    {
         // Inject parameters
         if (Parameters != null)
             foreach (var param in Parameters)
                 context.MemoryStack.Put(param);
-
-        // file.read the .pr — resolve relative paths against the user's goal folder,
-        // not the system goal (context.Goal may be system/run.pr)
-        var resolveContext = context;
-        if (!prPath.StartsWith('/') && !prPath.StartsWith('\\'))
-        {
-            // Find the user goal folder: action chain → or MemoryStack %step%
-            // Resolve against engine root (user's app directory)
-            var rootPath = "/" + prPath;
-            var readAction2 = new modules.file.Read
-            {
-                Context = context,
-                Path = new PathData(rootPath, context)
-            };
-            var result2 = await engine.RunAction(readAction2, context);
-            if (result2.Success && result2.Value is @this loadedGoal2)
-            {
-                @this? found2;
-                if (string.IsNullOrEmpty(Name) || string.Equals(loadedGoal2.Name, Name, StringComparison.OrdinalIgnoreCase))
-                    found2 = loadedGoal2;
-                else
-                    found2 = loadedGoal2.Goals.FirstOrDefault(g => string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
-                if (found2 != null) { found2.SetStepBackReferences(); return found2; }
-            }
-        }
 
         var readAction = new modules.file.Read
         {
