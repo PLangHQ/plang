@@ -69,20 +69,11 @@
         },
         {
           "index": 1,
-          "text": "runtime run %testFile.GoalCall%, write to %result%",
+          "text": "runtime run %testFile.GoalCall%, context=child",
           "indent": 0,
           "actions": [{"module": "runtime", "action": "run", "parameters": [
-            {"name": "GoalName", "value": "%testFile.GoalCall%", "type": "goal.call"}
-          ], "return": [{"name": "result"}]}],
-          "waitForExecution": true
-        },
-        {
-          "index": 2,
-          "text": "add result to %!test.results%",
-          "indent": 0,
-          "actions": [{"module": "list", "action": "add", "parameters": [
-            {"name": "ListName", "value": "testResults", "type": "string"},
-            {"name": "Value", "value": "%result%", "type": "object"}
+            {"name": "GoalName", "value": "%testFile.GoalCall%", "type": "goal.call"},
+            {"name": "ContextMode", "value": "child", "type": "string"}
           ]}],
           "waitForExecution": true
         }

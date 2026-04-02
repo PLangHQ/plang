@@ -1,29 +1,110 @@
 [
   {
     "name": "Start",
-    "description": "Single step that throws a not-implemented error (the requested LLM query/JSON-schema verification is not provided).",
+    "description": "Runs an LLM query with a JSON schema, writes the parsed response to %result%, then asserts the result and its sentiment field are not null.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw \u0022not implemented\u0022",
+        "text": "[llm] system: \u0027You analyze sentiment. Respond in JSON only.\u0027\nuser: \u0027Analyze: I love sunny days\u0027\nscheme: {sentiment:string, score:number}\nwrite to %result%",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "Query with JSON schema \u2014 verify response is parsed and dot-navigable (e.g., %result.sentiment%)",
+        "comment": "Query with JSON schema \u2014 verify response is parsed and dot-navigable",
         "actions": [
           {
-            "module": "error",
-            "action": "throw",
+            "module": "llm",
+            "action": "query",
             "parameters": [
               {
-                "name": "Message",
-                "value": "not implemented",
-                "type": "string"
+                "name": "Messages",
+                "value": [
+                  {
+                    "Role": "system",
+                    "Text": "You analyze sentiment. Respond in JSON only."
+                  },
+                  {
+                    "Role": "user",
+                    "Text": "Analyze: I love sunny days"
+                  }
+                ],
+                "type": "list"
               },
               {
-                "name": "StatusCode",
-                "value": 500,
-                "type": "int"
+                "name": "Schema",
+                "value": {
+                  "sentiment": "string",
+                  "score": "number"
+                },
+                "type": "json"
+              },
+              {
+                "name": "Cache",
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "OnValidateResponse",
+                "value": null,
+                "type": "goal.call?"
+              }
+            ],
+            "return": [
+              {
+                "name": "result",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %result% is not null",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%result%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %result.sentiment% is not null",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%result.sentiment%",
+                "type": "object"
               }
             ],
             "return": null,
@@ -41,7 +122,7 @@
     "visibility": 1,
     "path": "/LlmSchema.test.goal",
     "prPath": "/.build/llmschema.test.pr",
-    "hash": "efd3c678aa189b670c30bd15f1b988f98f6ce808da298c407ee5e77730b198df",
+    "hash": "57b6e9dc25ee4a37ebd54ad85cf6fb41fd0ae25e07784ca813a0088d059a06c4",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

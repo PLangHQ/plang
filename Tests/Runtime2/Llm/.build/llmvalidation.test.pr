@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Single step that throws an error indicating the requested behavior is not implemented.",
+    "description": "Single step that throws an error indicating the requested OnValidateResponse/LLM validation retry behavior is not implemented.",
     "comment": null,
     "steps": [
       {
@@ -22,13 +22,7 @@
               }
             ],
             "return": null,
-            "defaults": [
-              {
-                "name": "statuscode",
-                "value": 500,
-                "type": "int"
-              }
-            ]
+            "defaults": null
           }
         ],
         "intent": null,

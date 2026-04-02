@@ -22,13 +22,7 @@
               }
             ],
             "return": null,
-            "defaults": [
-              {
-                "name": "statuscode",
-                "value": 500,
-                "type": "int"
-              }
-            ]
+            "defaults": null
           }
         ],
         "intent": null,

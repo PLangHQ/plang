@@ -374,6 +374,23 @@ public class MemoryStack
     }
 
     /// <summary>
+    /// Saves a snapshot of current variable keys for later restore.
+    /// </summary>
+    public HashSet<string> Save() => new HashSet<string>(_variables.Keys, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Restores to a saved snapshot: removes any variables added after the snapshot.
+    /// </summary>
+    public void Restore(HashSet<string> snapshot)
+    {
+        foreach (var key in _variables.Keys)
+        {
+            if (!snapshot.Contains(key))
+                _variables.TryRemove(key, out _);
+        }
+    }
+
+    /// <summary>
     /// Converts the memory stack to a dictionary (for serialization/debugging).
     /// </summary>
     public Dictionary<string, object?> ToDictionary(bool includeSystem = false)

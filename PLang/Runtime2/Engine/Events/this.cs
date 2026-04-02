@@ -64,6 +64,27 @@ public sealed class @this
     }
 
     /// <summary>
+    /// Saves a snapshot of current bindings for later restore.
+    /// </summary>
+    public List<EventBinding> Save()
+    {
+        lock (_lock) { return new List<EventBinding>(_bindings); }
+    }
+
+    /// <summary>
+    /// Restores bindings from a saved snapshot.
+    /// </summary>
+    public void Restore(List<EventBinding> snapshot)
+    {
+        lock (_lock)
+        {
+            _bindings.Clear();
+            _bindings.AddRange(snapshot);
+        }
+        OnChanged?.Invoke();
+    }
+
+    /// <summary>
     /// Gets all bindings of a specific type.
     /// </summary>
     public IReadOnlyList<EventBinding> GetBindings(EventType type)

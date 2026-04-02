@@ -34,7 +34,7 @@ public partial class Foreach : IContext
                 Context.MemoryStack.Set(KeyName, key);
 
             var result = await engine.RunGoalAsync(GoalName, Context, Context.CancellationToken);
-            if (!result.Success) return result;
+            if (!result.Success && !result.Handled) return result;
             count++;
         }
 
