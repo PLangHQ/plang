@@ -441,6 +441,7 @@ public static class TypeMapping
         // GoalCall: convert from string, JsonElement, or Dictionary (UnwrapJsonElement output)
         if (targetType == typeof(PLang.Runtime2.Engine.Goals.Goal.GoalCall))
         {
+
             if (value is string goalName)
                 return (new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = goalName }, null);
             if (value is System.Text.Json.JsonElement je)
