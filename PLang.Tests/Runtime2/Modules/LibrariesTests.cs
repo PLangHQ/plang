@@ -393,6 +393,7 @@ public class LibrariesTests
     /// </summary>
     private class MockHandler : IAction
     {
+        public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
@@ -405,6 +406,7 @@ public class LibrariesTests
     /// </summary>
     private class MockCodeGenHandler : IAction, ICodeGenerated
     {
+        public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public string Tag { get; set; } = "";
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;

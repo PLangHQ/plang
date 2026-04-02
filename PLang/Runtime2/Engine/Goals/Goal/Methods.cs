@@ -1,86 +1,10 @@
 using System.Text.Json;
-using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine.Errors;
-using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Events;
 using Scriban;
 
 namespace PLang.Runtime2.Engine.Goals.Goal;
 
 public sealed partial class @this
 {
-    public async Task<Data> Load(PLangContext context)
-    {
-        var lifecycle = context.LifecycleFor(this);
-        var before = await lifecycle.Before.Run(context, EventType.OnBeforeGoalLoad);
-        if (!before.Success) return before;
-
-        var stepsResult = await Steps.Load(context);
-        if (!stepsResult.Success) return stepsResult;
-
-        var after = await lifecycle.After.Run(context, EventType.OnAfterGoalLoad);
-        return after;
-    }
-
-    public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken cancellationToken = default)
-    {
-        var savedGoal = context.Goal;
-        var savedStep = context.Step;
-        var savedConfigScope = context.ConfigScope;
-
-        context.Goal = this;
-        context.ConfigScope = null; // new goal starts with no local settings; inherits via Parent chain
-
-        if (cancellationToken.IsCancellationRequested)
-            return Data.FromError(GoalError.Cancelled(context));
-
-        var lifecycle = context.LifecycleFor(this);
-
-        Data beforeResult;
-        try
-        {
-            beforeResult = await lifecycle.Before.Run(context, EventType.BeforeGoal);
-        }
-        catch (Exception ex)
-        {
-            var eventError = new GoalError($"BeforeGoal event failed: {ex.Message}", context, "EventError", 500) { Exception = ex };
-            context.CallStack?.AddError(eventError);
-            return Data.FromError(eventError);
-        }
-        if (!beforeResult) return beforeResult;
-        if (beforeResult.Handled) return beforeResult;
-
-        context.CallStack?.Push(this);
-
-        try
-        {
-            var stepsResult = await Steps.RunAsync(engine, context, cancellationToken);
-            if (!stepsResult) return stepsResult;
-
-            try
-            {
-                var afterResult = await lifecycle.After.Run(context, EventType.AfterGoal);
-                if (!afterResult) return afterResult;
-            }
-            catch (Exception ex)
-            {
-                var eventError = new GoalError($"AfterGoal event failed: {ex.Message}", context, "EventError", 500) { Exception = ex };
-                context.CallStack?.AddError(eventError);
-                return Data.FromError(eventError);
-            }
-
-            return stepsResult;
-        }
-        finally
-        {
-            if (context.CallStack != null) await context.CallStack.PopAsync();
-            context.ConfigScope = savedConfigScope;
-            context.Goal = savedGoal;
-            context.Step = savedStep;
-        }
-    }
-
-
 	public async Task<string> FormatForLlm(PLang.Interfaces.PLangContext? context = null)
 	{
 		var fs = context?.Engine?.FileSystem;

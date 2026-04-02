@@ -110,20 +110,9 @@ namespace PLang.Utils
 				DirectoryHelper.Copy(planInstallerFolder, installerFolder);
 				//prParser.ForceLoadAllGoals();
 			}
-			try
-			{			
-
-				(var engine, var vars, var error) = Executor.RunGoal("/apps/Installer/InstallDependencies.goal", parameters).GetAwaiter().GetResult();
-				if (error != null)
-				{
-					throw new Exception(error.ToString());
-				}
-			}
-			catch (Exception ex)
-			{
-				int i = 0;
-				throw;
-			}
+			// v1 dependency installer — Executor.RunGoal was removed.
+			// TODO: migrate to v3 engine when dependency installation is needed.
+			throw new NotSupportedException("v1 dependency installer is not available. Migrate to v3 engine.");
 
 			var dllFiles = fileSystem.Directory.GetFiles(dirPath, "*.dll", SearchOption.AllDirectories);
 			foreach (var dll in dllFiles)

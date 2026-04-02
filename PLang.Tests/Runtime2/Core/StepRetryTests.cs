@@ -446,6 +446,7 @@ public class StepRetryTests
     /// </summary>
     private sealed class FlakyHandler : IAction, ICodeGenerated
     {
+        public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public int FailCount { get; set; } = 0;
         public int CallCount { get; private set; } = 0;
 

@@ -604,6 +604,7 @@ public class EngineTests
     // Handler that does NOT implement ICodeGenerated - used to test engine rejects it
     private class NonGeneratedHandler : IAction
     {
+        public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
@@ -614,6 +615,7 @@ public class EngineTests
 
     private class DisposableHandler : IAction, ICodeGenerated, IDisposable
     {
+        public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
@@ -631,6 +633,7 @@ public class EngineTests
 
     private class AsyncDisposableHandler : IAction, ICodeGenerated, IAsyncDisposable
     {
+        public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
@@ -648,6 +651,7 @@ public class EngineTests
 
     private class ThrowingHandler : IAction, ICodeGenerated
     {
+        public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;

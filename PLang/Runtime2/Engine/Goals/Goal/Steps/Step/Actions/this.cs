@@ -66,11 +66,6 @@ public sealed class @this : List<Action.@this>
         }).ToList();
     }
 
-    public Task<Data> Load(PLangContext context)
-    {
-        return Task.FromResult(Data.Ok());
-    }
-
     public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken ct = default)
     {
         Data result = Data.Ok();

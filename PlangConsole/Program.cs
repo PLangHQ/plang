@@ -59,22 +59,10 @@ if (runtime)
 	
 	var pLanguage = new Executor(container);
 
-	if (args.Length > 0 && args[0] == "p")
+	var result = pLanguage.Run(args, cts.Token).GetAwaiter().GetResult();
+	if (!result.Success && result.Error != null)
 	{
-		var result2 = pLanguage.Run2(args[1..], cts.Token).GetAwaiter().GetResult();
-		if (!result2.Success && result2.Error != null)
-		{
-			Console.Error.WriteLine(result2.Error.Format());
-		}
-	}
-	else
-	{
-		var result = pLanguage.Execute(args, ExecuteType.Runtime, cts.Token).GetAwaiter().GetResult();
-		if (result.Error != null)
-		{
-			var logger = container.GetInstance<ILogger>();
-			logger.LogError(result.Error.ToFormat("text").ToString());
-		}
+		Console.Error.WriteLine(result.Error.Format());
 	}
 	container.Dispose();
 }

@@ -386,6 +386,7 @@ public class StartGoalTests
     {
         public List<string> Lines { get; } = new();
 
+        public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;

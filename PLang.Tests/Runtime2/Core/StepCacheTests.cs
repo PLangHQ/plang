@@ -516,6 +516,7 @@ public class StepCacheTests
 
         public CountingHandler(object returnValue) { _returnValue = returnValue; }
 
+        public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public int CallCount { get; private set; }
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
@@ -537,6 +538,7 @@ public class StepCacheTests
     /// </summary>
     private class FailOnFirstCallHandler : IAction, ICodeGenerated
     {
+        public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public int CallCount { get; private set; }
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
@@ -564,6 +566,7 @@ public class StepCacheTests
 
         public SequenceHandler(params string[] values) { _values = values; }
 
+        public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public int CallCount { get; private set; }
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;

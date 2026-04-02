@@ -108,11 +108,6 @@ public sealed partial class @this
     [JsonIgnore]
     public Goals.Goal.@this? Goal { get; set; }
 
-    private StepCache? _stepCache;
-
-    [JsonIgnore]
-    public StepCache? StepCache => Cache != null ? (_stepCache ??= new StepCache(this, Cache)) : null;
-
     public @this Clone()
     {
         return new @this

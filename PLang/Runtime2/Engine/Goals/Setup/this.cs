@@ -85,10 +85,7 @@ public sealed class @this
         {
             foreach (var goal in Goals)
             {
-                var loadResult = await goal.Load(context);
-                if (!loadResult.Success) return loadResult;
-
-                var result = await goal.RunAsync(engine, context, ct);
+                var result = await engine.RunGoalAsync(goal, context, ct);
                 if (!result.Success) return result;
             }
             return Data.Ok();

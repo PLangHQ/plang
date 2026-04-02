@@ -289,14 +289,6 @@ public sealed class PLangContext : IDisposable
             foreach (var b in userEvents.GetMatchingBindings(EventType.AfterStep, goalName: goalName, stepText: step.Text))
                 lifecycle.After.Add(b);
 
-            if (step.StepCache != null)
-            {
-                foreach (var b in userEvents.GetMatchingBindings(EventType.OnCacheHit, goalName: goalName, stepText: step.Text))
-                    step.StepCache.Hit.Add(b);
-                foreach (var b in userEvents.GetMatchingBindings(EventType.OnCacheMiss, goalName: goalName, stepText: step.Text))
-                    step.StepCache.Miss.Add(b);
-            }
-
             return lifecycle;
         });
     }

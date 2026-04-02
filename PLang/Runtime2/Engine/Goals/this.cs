@@ -300,23 +300,8 @@ public sealed class @this
         return loaded;
     }
 
-    public async Task<Data> Run(string name, PLangContext? context = null, CancellationToken cancellationToken = default)
-    {
-        var callingFolderPath = context?.Goal?.FolderPath;
-        var goal = await GetAsync(name, callingFolderPath, cancellationToken);
-        if (goal == null)
-            return Data.FromError(GoalError.NotFound(name));
-
-        context ??= Engine.Context;
-
-        var loadResult = await goal.Load(context);
-        if (!loadResult.Success) return loadResult;
-
-        return await goal.RunAsync(Engine, context, cancellationToken);
-    }
-
     /// <summary>
-    /// Loads a goal from a .pr file, deserializes, calls goal.Load(context), and adds to this collection.
+    /// Loads a goal from a .pr file, deserializes and adds to this collection.
     /// </summary>
     public async Task<Data> LoadFromFileAsync(Engine.@this engine, string prFilePath, PLangContext? context = null, CancellationToken cancellationToken = default)
     {
@@ -350,12 +335,6 @@ public sealed class @this
             {
                 foreach (var step in goal.Steps)
                     step.Goal = goal;
-
-                if (context != null)
-                {
-                    var loadResult = await goal.Load(context);
-                    if (!loadResult.Success) return loadResult;
-                }
 
                 Add(goal);
                 primary ??= goal;
