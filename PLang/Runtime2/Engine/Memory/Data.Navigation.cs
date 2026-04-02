@@ -113,7 +113,8 @@ public partial class Data
 
         return method.ToLowerInvariant() switch
         {
-            "grep" => Grep(str, ParseStringArg(args)),
+            "grep" => InvokeGrep(args),
+            "grepcount" => InvokeGrepCount(args),
             "maxlength" => MaxLength(str, ParseIntArg(args)),
             "trim" => new Data(Name, str?.Trim()),
             "tolower" => new Data(Name, str?.ToLowerInvariant()),
@@ -123,22 +124,45 @@ public partial class Data
         };
     }
 
-    private Data Grep(string? text, string? pattern)
+    private Data InvokeGrep(string args)
     {
-        if (text == null || pattern == null) return new Data(Name, "");
-        try
+        var provider = ResolveGrepProvider();
+        var (pattern, contextLines) = ParseGrepArgs(args);
+        return provider.Grep(this, pattern ?? "", contextLines);
+    }
+
+    private Data InvokeGrepCount(string args)
+    {
+        var provider = ResolveGrepProvider();
+        return provider.GrepCount(this, ParseStringArg(args) ?? "");
+    }
+
+    private Providers.IGrepProvider ResolveGrepProvider()
+    {
+        var engine = _context?.Engine;
+        if (engine != null)
         {
-            var lines = text.Split('\n');
-            var matched = lines.Where(l => Regex.IsMatch(l, pattern, RegexOptions.IgnoreCase));
-            return new Data(Name, string.Join("\n", matched));
+            var result = engine.Providers.Get<Providers.IGrepProvider>();
+            if (result?.Value is Providers.IGrepProvider provider) return provider;
         }
-        catch
+        return new Providers.DefaultGrepProvider();
+    }
+
+    private static (string? pattern, int contextLines) ParseGrepArgs(string args)
+    {
+        // grep("pattern") or grep("pattern", 3)
+        var parts = Regex.Matches(args, @"""([^""]*)""|'([^']*)'|(\d+)");
+        string? pattern = null;
+        int contextLines = 0;
+
+        foreach (Match m in parts)
         {
-            // Fallback to simple contains if regex fails
-            var lines = text.Split('\n');
-            var matched = lines.Where(l => l.Contains(pattern, StringComparison.OrdinalIgnoreCase));
-            return new Data(Name, string.Join("\n", matched));
+            if (m.Groups[1].Success) pattern ??= m.Groups[1].Value;
+            else if (m.Groups[2].Success) pattern ??= m.Groups[2].Value;
+            else if (m.Groups[3].Success && pattern != null) int.TryParse(m.Groups[3].Value, out contextLines);
         }
+
+        return (pattern, contextLines);
     }
 
     private Data MaxLength(string? text, int max)

@@ -224,5 +224,6 @@ public sealed class @this
         Register<ITemplateProvider>(new FluidProvider());
         Register<modules.llm.providers.ILlmProvider>(new modules.llm.providers.OpenAiProvider());
         Register<modules.builder.providers.IBuilderProvider>(new modules.builder.providers.DefaultBuilderProvider());
+        Register<Memory.Providers.IGrepProvider>(new Memory.Providers.DefaultGrepProvider());
     }
 }
