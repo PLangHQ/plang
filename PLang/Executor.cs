@@ -102,15 +102,39 @@ namespace PLang
 					if (results == null) return "No test results";
 					var passed = results.Count(r => r is Runtime2.Engine.Memory.Data d && d.Success);
 					var failed = results.Count - passed;
-					var failures = results
-						.OfType<Runtime2.Engine.Memory.Data>()
-						.Where(r => !r.Success)
-						.Select(r => $"  FAIL: {r.Error?.Message ?? "unknown"}")
-						.ToList();
-					var summary = $"\n{passed} passed, {failed} failed out of {results.Count} tests";
-					if (failures.Count > 0)
-						summary += "\n" + string.Join("\n", failures);
-					return summary;
+
+					var sb = new System.Text.StringBuilder();
+					sb.AppendLine();
+					sb.AppendLine($"{passed} passed, {failed} failed out of {results.Count} tests");
+
+					foreach (var r in results.OfType<Runtime2.Engine.Memory.Data>().Where(r => !r.Success))
+					{
+						var error = r.Error;
+						var step = error?.Step;
+						var goalPath = step?.Goal?.Path ?? error?.Goal?.Path;
+
+						sb.AppendLine();
+						sb.AppendLine($"  \u2717 {r.Name}");
+						if (step != null)
+							sb.AppendLine($"    Step {step.Index}: {step.Text}");
+						if (goalPath != null && step != null)
+							sb.AppendLine($"      at {goalPath}:{step.LineNumber}");
+						sb.AppendLine($"    {error?.Message ?? "unknown error"}");
+
+						// Variable snapshot — show variables updated during this test
+						if (r.Properties["variables"] != null)
+						{
+							var vars = r.Properties["variables"]?.Value as IDictionary<string, string>;
+							if (vars != null && vars.Count > 0)
+							{
+								sb.AppendLine("    Variables:");
+								foreach (var (name, value) in vars)
+									sb.AppendLine($"      %{name}% = {value}");
+							}
+						}
+					}
+
+					return sb.ToString().TrimEnd();
 				});
 				engine.System.Context.Test = testData;
 				systemMs.Set("!test", testData);

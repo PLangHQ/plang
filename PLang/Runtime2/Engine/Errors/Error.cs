@@ -151,8 +151,10 @@ public class Error : IError
             sb.AppendLine($"{indent}\ud83d\udedd  Call stack:");
             foreach (var frame in error.CallFrames)
             {
-                var stepInfo = frame.Step != null ? $":{frame.Step.LineNumber}" : "";
-                sb.AppendLine($"{indent}    {frame.Goal.Name} - {frame.Goal.Path}{stepInfo}");
+                var fStep = frame.Action.Step;
+                var fGoal = fStep?.Goal;
+                var stepInfo = fStep != null ? $":{fStep.LineNumber}" : "";
+                sb.AppendLine($"{indent}    {fGoal?.Name ?? frame.Action.Module} - {fGoal?.Path}{stepInfo}");
             }
         }
 

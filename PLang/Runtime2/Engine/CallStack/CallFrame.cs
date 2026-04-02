@@ -33,19 +33,15 @@ public sealed class CallFrame : IAsyncDisposable
     public string Id { get; }
 
     /// <summary>
-    /// The goal being executed. Stored as object reference (OBP rule #3).
+    /// The action being executed. Gives us the full tree: action.Step.Goal.
     /// </summary>
-    public Goal Goal { get; }
+    public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; }
 
     /// <summary>
-    /// Current execution phase.
+    /// Variable snapshot — variables that changed during this frame's execution.
+    /// Captured in SnapshotVariables() using Data.Updated > StartedAt.
     /// </summary>
-    public ExecutionPhase Phase { get; set; }
-
-    /// <summary>
-    /// The step currently being executed in this frame.
-    /// </summary>
-    public Step? Step { get; set; }
+    public Dictionary<string, string>? Variables { get; private set; }
 
     /// <summary>
     /// Parent frame (caller).
@@ -83,10 +79,15 @@ public sealed class CallFrame : IAsyncDisposable
     /// </summary>
     public int Indent { get; }
 
-    public CallFrame(Goal goal, CallFrame? parent = null)
+    /// <summary>
+    /// Current execution phase.
+    /// </summary>
+    public ExecutionPhase Phase { get; set; }
+
+    public CallFrame(PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action, CallFrame? parent = null)
     {
         Id = Guid.NewGuid().ToString("N")[..8];
-        Goal = goal;
+        Action = action;
         Parent = parent;
         Phase = ExecutionPhase.None;
         StartedAt = DateTime.UtcNow;
@@ -126,6 +127,15 @@ public sealed class CallFrame : IAsyncDisposable
     /// Gets all executed steps in this frame.
     /// </summary>
     public IReadOnlyList<ExecutedStep> ExecutedSteps => _executedSteps;
+
+    /// <summary>
+    /// Snapshots variables that changed during this frame's execution.
+    /// Captures Data.Updated > StartedAt from the MemoryStack.
+    /// </summary>
+    public void SnapshotVariables(PLang.Runtime2.Engine.Memory.MemoryStack memoryStack)
+    {
+        Variables = memoryStack.GetChangedSince(StartedAt);
+    }
 
     /// <summary>
     /// Marks the frame as completed.
@@ -173,11 +183,13 @@ public sealed class CallFrame : IAsyncDisposable
     /// </summary>
     public string GetStackTrace()
     {
-        var trace = $"  at {Goal.Name}";
-        if (Step != null)
-            trace += $" (step {Step.Index + 1})";
-        if (!string.IsNullOrEmpty(Goal.Path))
-            trace += $" in {Goal.Path}";
+        var goal = Action.Step?.Goal;
+        var step = Action.Step;
+        var trace = $"  at {goal?.Name ?? Action.Module}.{Action.ActionName}";
+        if (step != null)
+            trace += $" (step {step.Index + 1})";
+        if (!string.IsNullOrEmpty(goal?.Path))
+            trace += $" in {goal.Path}";
         trace += $" [{Duration.TotalMilliseconds:F1}ms]";
         return trace;
     }
@@ -212,18 +224,18 @@ public sealed class CallFrame : IAsyncDisposable
     public SerializableCallFrame ToSerializable() => new()
     {
         Id = Id,
-        GoalName = Goal.Name,
-        GoalPath = Goal.Path,
+        GoalName = Action.Step?.Goal?.Name ?? Action.Module,
+        GoalPath = Action.Step?.Goal?.Path,
         Phase = Phase.ToString(),
-        CurrentStepIndex = Step?.Index ?? -1,
-        CurrentStepText = Step?.Text,
+        CurrentStepIndex = Action.Step?.Index ?? -1,
+        CurrentStepText = Action.Step?.Text,
         StartedAt = StartedAt,
         Duration = Duration,
         Depth = Depth,
         HasErrors = Errors.Count > 0
     };
 
-    public override string ToString() => $"[{Id}] {Goal.Name} - {Phase}";
+    public override string ToString() => $"[{Id}] {Action.Step?.Goal?.Name ?? Action.Module} - {Phase}";
 
     public const int MaxStepsPerFrame = 100_000;
 }

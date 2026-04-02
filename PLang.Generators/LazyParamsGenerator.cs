@@ -347,6 +347,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
             sb.AppendLine("        Step = action.Step;");
         }
 
+        // Push callstack frame for this action
+        sb.AppendLine("        var __frame = context.CallStack?.Push(action);");
+        sb.AppendLine();
+
         // Save and set context.Step/Goal/Event — restored in finally after Run()
         sb.AppendLine("        var __previousStep = context.Step;");
         sb.AppendLine("        var __previousGoal = context.Goal;");
@@ -444,6 +448,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine("        finally");
         sb.AppendLine("        {");
+        sb.AppendLine("            __frame?.SnapshotVariables(context.MemoryStack);");
+        sb.AppendLine("            if (context.CallStack != null) context.CallStack.PopAsync().GetAwaiter().GetResult();");
         sb.AppendLine("            context.Step = __previousStep;");
         sb.AppendLine("            context.Goal = __previousGoal;");
         sb.AppendLine("            context.Event = __previousEvent;");

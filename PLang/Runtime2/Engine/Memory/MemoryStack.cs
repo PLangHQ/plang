@@ -238,6 +238,21 @@ public class MemoryStack
     }
 
     /// <summary>
+    /// Returns variables that changed since the given time. Uses Data.Updated timestamp.
+    /// </summary>
+    public Dictionary<string, string> GetChangedSince(DateTime since)
+    {
+        var result = new Dictionary<string, string>();
+        foreach (var (name, data) in _variables)
+        {
+            if (name.StartsWith("!")) continue; // skip system variables
+            if (data.Updated > since)
+                result[name] = data.Value?.ToString() ?? "(null)";
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Resolves %variable% references in a string using this memory stack.
     /// Returns the input unchanged if no %var% patterns are found.
     /// </summary>

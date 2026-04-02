@@ -38,16 +38,16 @@ public sealed class @this
     /// <summary>
     /// Pushes a new frame onto the call stack.
     /// </summary>
-    public CallFrame Push(Goal goal)
+    public CallFrame Push(PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action)
     {
         if (!IsEnabled)
-            return new CallFrame(goal);
+            return new CallFrame(action);
 
         if (_frames.Count >= MaxDepth)
             throw new CallStackOverflowException(MaxDepth);
 
         var parent = Current;
-        var frame = new CallFrame(goal, parent);
+        var frame = new CallFrame(action, parent);
         _frames.Push(frame);
         return frame;
     }
@@ -80,7 +80,6 @@ public sealed class @this
         var frame = Current;
         if (frame == null) return;
 
-        frame.Step = step;
         frame.RecordStep(step);
     }
 
@@ -166,7 +165,7 @@ public sealed class @this
     /// </summary>
     public bool ContainsGoal(string goalName)
     {
-        return _frames.Any(f => f.Goal.Name.Equals(goalName, StringComparison.OrdinalIgnoreCase));
+        return _frames.Any(f => (f.Action.Step?.Goal?.Name ?? f.Action.Module).Equals(goalName, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
