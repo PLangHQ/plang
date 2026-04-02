@@ -164,14 +164,15 @@ public sealed class @this : IAsyncDisposable
     public Actor User => _user ??= new Actor("User", this);
 
     /// <summary>
-    /// The currently executing actor. Set by Start() and engine.execute during context switches.
+    /// The currently executing actor. Defaults to User. Changed to System during bootstrap (Start).
+    /// engine.execute switches temporarily for context-crossing dispatch.
     /// </summary>
-    public Actor? CurrentActor { get; set; }
+    public Actor CurrentActor { get; set; } = null!; // initialized to User in constructor
 
     /// <summary>
-    /// Context of the current executor. Falls back to User if no actor is set.
+    /// Context of the current executor.
     /// </summary>
-    public PLangContext Context => (CurrentActor ?? User).Context;
+    public PLangContext Context => CurrentActor.Context;
     public Memory.MemoryStack MemoryStack => Context.MemoryStack;
 
     /// <summary>
@@ -248,6 +249,9 @@ public sealed class @this : IAsyncDisposable
 
         Providers.RegisterDefaults();
         Types.RegisterDomainTypes();
+
+        // Default actor is User — Start() switches to System for bootstrap
+        CurrentActor = User;
     }
 
     /// <summary>
