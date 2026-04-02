@@ -58,6 +58,14 @@ public sealed class Actor : IAsyncDisposable
     /// </summary>
     public static string[] ValidValues => ["user", "service", "system"];
 
+    /// <summary>
+    /// Escalation level. System (2) can execute as anyone. User/Service (1) only as themselves.
+    /// </summary>
+    public int EscalationLevel => Name.ToLowerInvariant() switch
+    {
+        "system" => 2, "service" => 1, "user" => 1, _ => 0
+    };
+
     public Actor(string name, Engine.@this engine)
     {
         Name = name;

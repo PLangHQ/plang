@@ -80,6 +80,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
             i.Name == "IAction"
             && i.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.modules");
 
+        // Check if it implements IStep
+        var implementsIStep = classSymbol.AllInterfaces.Any(i =>
+            i.Name == "IStep"
+            && i.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.modules");
+
         // Find partial properties (declared by author, needing generated implementation)
         var properties = new List<ActionPropertyInfo>();
         foreach (var member in classSymbol.GetMembers())
@@ -161,6 +166,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
             implementsIContext,
             implementsIChannel,
             implementsIAction,
+            implementsIStep,
             properties);
     }
 
@@ -198,6 +204,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
         if (info.ImplementsIAction)
         {
             sb.AppendLine("    public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;");
+            sb.AppendLine();
+        }
+
+        // IStep auto-provision
+        if (info.ImplementsIStep)
+        {
+            sb.AppendLine("    public PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this Step { get; set; } = null!;");
             sb.AppendLine();
         }
 
@@ -322,6 +335,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
         if (info.ImplementsIAction)
         {
             sb.AppendLine("        Action = action;");
+        }
+        if (info.ImplementsIStep)
+        {
+            sb.AppendLine("        Step = action.Step;");
         }
         sb.AppendLine();
 
@@ -517,10 +534,11 @@ internal class ActionClassInfo
     public bool ImplementsIContext { get; }
     public bool ImplementsIChannel { get; }
     public bool ImplementsIAction { get; }
+    public bool ImplementsIStep { get; }
     public List<ActionPropertyInfo> Properties { get; }
 
     public ActionClassInfo(string ns, string className, string fullName,
-        bool implementsIContext, bool implementsIChannel, bool implementsIAction, List<ActionPropertyInfo> properties)
+        bool implementsIContext, bool implementsIChannel, bool implementsIAction, bool implementsIStep, List<ActionPropertyInfo> properties)
     {
         Namespace = ns;
         ClassName = className;
@@ -528,6 +546,7 @@ internal class ActionClassInfo
         ImplementsIContext = implementsIContext;
         ImplementsIChannel = implementsIChannel;
         ImplementsIAction = implementsIAction;
+        ImplementsIStep = implementsIStep;
         Properties = properties;
     }
 }

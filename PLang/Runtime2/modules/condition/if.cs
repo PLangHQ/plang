@@ -9,7 +9,7 @@ namespace PLang.Runtime2.modules.condition;
 [Example("if not %flag%, call HandleFalse", "Left=%flag%, Operator===, Right=true, Negate=true, GoalIfTrue=HandleFalse")]
 [Example("if %name% equals 'Alice'\n    - write 'Hello Alice'", "Left=%name%, Operator===, Right=Alice")]
 [Action("if")]
-public partial class If : IContext
+public partial class If : IContext, IStep
 {
     public partial Data? Left { get; init; }
     public partial Operator Operator { get; init; }
@@ -32,7 +32,8 @@ public partial class If : IContext
         evalResult = Data.Ok(conditionResult);
 
         // Mark indented sub-steps: disabled when false, clean when true
-        var userStep = Context.MemoryStack.GetValue("step") as PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;
+        // Step comes from IStep capability (action.Step = the user step being executed)
+        var userStep = Step;
         if (userStep?.Goal != null)
         {
             var steps = userStep.Goal.Steps;

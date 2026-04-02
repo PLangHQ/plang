@@ -163,8 +163,16 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public Actor User => _user ??= new Actor("User", this);
 
-    public PLangContext Context => User.Context;
-    public Memory.MemoryStack MemoryStack => User.Context.MemoryStack;
+    /// <summary>
+    /// The currently executing actor. Set by Start() and engine.execute during context switches.
+    /// </summary>
+    public Actor? CurrentActor { get; set; }
+
+    /// <summary>
+    /// Context of the current executor. Falls back to User if no actor is set.
+    /// </summary>
+    public PLangContext Context => (CurrentActor ?? User).Context;
+    public Memory.MemoryStack MemoryStack => Context.MemoryStack;
 
     /// <summary>
     /// Resolves an actor by name. Returns error instead of null — object reports its own errors.
@@ -303,7 +311,8 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public async Task<Data> Start(PLangContext? context = null)
     {
-        context ??= User.Context;
+        context ??= System.Context;
+        CurrentActor = System;
 
         var goalCall = new GoalCall { PrPath = "system/.build/run.pr" };
         var goal = await goalCall.GetGoalAsync(this, context);

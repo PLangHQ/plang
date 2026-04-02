@@ -46,10 +46,17 @@ namespace PLang
 			var engine = new Runtime2.Engine.@this(fileSystem);
 			engine.SystemDirectory = fileSystem.SystemDirectory;
 
-			// All CLI parameters go on the MemoryStack
-			// --build → %!build%, --test → %!test%, --debug → %!debug%
+			var systemMs = engine.System.Context.MemoryStack;
+			var userMs = engine.User.Context.MemoryStack;
+
+			// Route CLI parameters: system params (!prefix) → system MemoryStack, user params → user MemoryStack
 			foreach (var param in parameters)
-				engine.MemoryStack.Set(param.Key, param.Value);
+			{
+				if (param.Key.StartsWith("!"))
+					systemMs.Set(param.Key, param.Value);
+				else
+					userMs.Set(param.Key, param.Value);
+			}
 
 			// Debug wiring
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
@@ -59,9 +66,8 @@ namespace PLang
 			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
 			{
 				engine.Building.IsEnabled = true;
-				// Set %path% to the absolute path of the project being built
 				if (!parameters.ContainsKey("path"))
-					engine.MemoryStack.Set("path", fileSystem.RootDirectory);
+					systemMs.Set("path", fileSystem.RootDirectory);
 			}
 
 			// Set the goal file for the PLang runtime (only for non-build)
@@ -70,10 +76,10 @@ namespace PLang
 				var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
 				if (!prPath.StartsWith(".build"))
 					prPath = ".build/" + prPath;
-				engine.MemoryStack.Set("goalFile", "/" + prPath.ToLowerInvariant());
+				systemMs.Set("goalFile", "/" + prPath.ToLowerInvariant());
 			}
 
-			// Start the engine — reads system/.build/run.pr
+			// Start the engine — system actor runs system/.build/run.pr
 			return await engine.Start();
 		}
 	}
