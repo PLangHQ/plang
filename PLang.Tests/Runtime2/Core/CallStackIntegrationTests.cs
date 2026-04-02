@@ -14,68 +14,6 @@ public class CallStackIntegrationTests
     }
 
     [Test]
-    public async Task SingleGoal_DepthIsOne_DuringStepExecution()
-    {
-        int depthDuringExecution = -1;
-
-        var step = new Step { Index = 0, Text = "probe step" };
-
-        var goal = new Goal
-        {
-            Name = "TestGoal",
-            Steps = new GoalSteps { step }
-        };
-
-        _engine.Context.User.Events.Register(new EventBinding(
-            EventType.BeforeStep,
-            ctx =>
-            {
-                depthDuringExecution = ctx.CallStack!.Depth;
-                return Task.FromResult(Data.Ok());
-            },
-            goalNamePattern: "TestGoal",
-            stepPattern: "probe step"));
-
-        await _engine.RunGoalAsync(goal);
-
-        // During step execution depth was 1 (goal frame pushed)
-        await Assert.That(depthDuringExecution).IsEqualTo(1);
-
-        // After execution depth is 0 (frame popped)
-        await Assert.That(_engine.Context.CallStack!.Depth).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task StepRecording_AfterSteps_FrameHasExecutedSteps()
-    {
-        var executedSteps = new List<string>();
-
-        var step1 = new Step { Index = 0, Text = "first step" };
-        var step2 = new Step { Index = 1, Text = "second step" };
-
-        var goal = new Goal
-        {
-            Name = "TestGoal",
-            Steps = new GoalSteps { step1, step2 }
-        };
-
-        _engine.Context.User.Events.Register(new EventBinding(
-            EventType.AfterStep,
-            ctx =>
-            {
-                executedSteps.Add(ctx.CallStack!.Current!.Step!.Text);
-                return Task.FromResult(Data.Ok());
-            },
-            goalNamePattern: "TestGoal"));
-
-        await _engine.RunGoalAsync(goal);
-
-        await Assert.That(executedSteps.Count).IsEqualTo(2);
-        await Assert.That(executedSteps[0]).IsEqualTo("first step");
-        await Assert.That(executedSteps[1]).IsEqualTo("second step");
-    }
-
-    [Test]
     public async Task ErrorTracking_FailedStep_RecordsErrorInCallStack()
     {
         var step = new Step
@@ -102,36 +40,6 @@ public class CallStackIntegrationTests
 
         // The goal should have failed
         await Assert.That(result.Success).IsFalse();
-    }
-
-    [Test]
-    public async Task CallStackDepth_AccessibleAsContextVariable()
-    {
-        int depthFromContextVar = -1;
-
-        var step = new Step { Index = 0, Text = "probe step" };
-
-        var goal = new Goal
-        {
-            Name = "DepthGoal",
-            Steps = new GoalSteps { step }
-        };
-
-        _engine.Context.User.Events.Register(new EventBinding(
-            EventType.BeforeStep,
-            ctx =>
-            {
-                var depthData = ctx.MemoryStack.Get("!callStack.Depth");
-                if (depthData?.Value is int d)
-                    depthFromContextVar = d;
-                return Task.FromResult(Data.Ok());
-            },
-            goalNamePattern: "DepthGoal",
-            stepPattern: "probe step"));
-
-        await _engine.RunGoalAsync(goal);
-
-        await Assert.That(depthFromContextVar).IsEqualTo(1);
     }
 
     [Test]

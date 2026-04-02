@@ -234,31 +234,32 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var engine = action.Context.Engine;
         var context = action.Context;
+        var fs = engine.FileSystem;
 
         var basePath = string.IsNullOrWhiteSpace(action.Path) || action.Path == "." ? "" : action.Path;
         var appPrPath = string.IsNullOrEmpty(basePath)
             ? ".build/app.pr"
             : basePath.TrimEnd('/', '\\') + "/.build/app.pr";
 
-        var readAction = new file.Read
+        // Read as raw text — app.pr is AppData JSON, not a PLang goal.
+        // Using file.Read would interpret .pr as application/plang-goal and deserialize as Goal.
+        var absolutePath = fs.ValidatePath(appPrPath);
+        if (fs.File.Exists(absolutePath))
         {
-            Context = context,
-            Path = new PLangPath(appPrPath, context)
-        };
-        var readResult = await engine.RunAction(readAction, context);
-
-        if (readResult.Success && readResult.Value?.ToString() is string json && !string.IsNullOrWhiteSpace(json))
-        {
-            try
+            var json = await fs.File.ReadAllTextAsync(absolutePath);
+            if (!string.IsNullOrWhiteSpace(json))
             {
-                var existing = JsonSerializer.Deserialize<AppData>(json, Json.CaseInsensitiveRead);
-                if (existing != null)
-                    return Data.Ok(existing);
-            }
-            catch (JsonException ex)
-            {
-                return Data.FromError(new Engine.Errors.ActionError(
-                    $"Failed to parse app.pr: {ex.Message}", "CorruptAppFile", 400));
+                try
+                {
+                    var existing = JsonSerializer.Deserialize<AppData>(json, Json.CaseInsensitiveRead);
+                    if (existing != null)
+                        return Data.Ok(existing);
+                }
+                catch (JsonException ex)
+                {
+                    return Data.FromError(new Engine.Errors.ActionError(
+                        $"Failed to parse app.pr: {ex.Message}", "CorruptAppFile", 400));
+                }
             }
         }
 

@@ -55,6 +55,10 @@ public sealed class GoalCall
             break;
         }
 
+        // 2. Check engine's loaded goals
+        var loaded = engine.Goals.Get(Name);
+        if (loaded != null) return loaded;
+
         // 3. Not a sub-goal — file.read the .pr
         var prPath = PrPath;
         if (string.IsNullOrEmpty(prPath) && !string.IsNullOrEmpty(Name))

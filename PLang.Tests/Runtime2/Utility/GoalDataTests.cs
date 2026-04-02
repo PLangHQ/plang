@@ -42,7 +42,7 @@ public class GoalSerializationTests
         await Assert.That(deserialized.IsEvent).IsFalse();
         await Assert.That(deserialized.Hash).IsEqualTo("abc123");
         await Assert.That(deserialized.InputParameters!["param1"]).IsEqualTo("string");
-        await Assert.That(deserialized.Goals[0]).IsEqualTo("SubGoal1");
+        await Assert.That(deserialized.Goals[0].Name).IsEqualTo("SubGoal1");
     }
 
     [Test]

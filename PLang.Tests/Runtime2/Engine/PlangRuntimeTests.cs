@@ -56,8 +56,9 @@ public class PlangRuntimeTests : IDisposable
             }
         };
 
+        var steps = new GoalSteps { step };
         var context = _engine.CreateContext();
-        var result = await _engine.Execute(step, context);
+        var result = await _engine.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
 

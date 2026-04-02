@@ -111,8 +111,8 @@ public class GoalFileTests
         var goals = Goal.Parse("Public\n- step\n\nPrivateA\n- step\n\nPrivateB\n- step", "/Sub.goal");
 
         await Assert.That(goals[0].Goals.Count).IsEqualTo(2);
-        await Assert.That(goals[0].Goals[0]).IsEqualTo("PrivateA");
-        await Assert.That(goals[0].Goals[1]).IsEqualTo("PrivateB");
+        await Assert.That(goals[0].Goals[0].Name).IsEqualTo("PrivateA");
+        await Assert.That(goals[0].Goals[1].Name).IsEqualTo("PrivateB");
     }
 
     [Test]

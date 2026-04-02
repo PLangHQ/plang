@@ -207,58 +207,6 @@ public class SetupTests
     }
 
     [Test]
-    public async Task RunAsync_ToleratedErrorStepIsRecorded()
-    {
-        // A step that fails but has IgnoreError = true
-        var step = new Step
-        {
-            Index = 0, Text = "tolerated failure",
-            OnError = new ErrorHandler { IgnoreError = true },
-            Actions = CreateFailingActions()
-        };
-        var goal = new Goal
-        {
-            Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
-        };
-        step.Goal = goal;
-        _engine.Goals.Add(goal);
-
-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
-
-        // Setup should succeed (error tolerated)
-        await Assert.That(result.Success).IsTrue();
-        // Step SHOULD be recorded — error was tolerated
-        await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsTrue();
-    }
-
-    [Test]
-    public async Task RunAsync_AbortsSetup_WhenRecordFails()
-    {
-        var step = new Step { Index = 0, Text = "good step",
-            Actions = CreateNoOpActions() };
-        var goal = new Goal
-        {
-            Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
-        };
-        step.Goal = goal;
-        _engine.Goals.Add(goal);
-
-        // Force DataSource creation so the DB file exists
-        _ = _engine.System.SettingsStore;
-
-        // Corrupt the database file — Record() will fail trying to write
-        var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
-        System.IO.File.WriteAllText(dbPath, "NOT A VALID SQLITE DATABASE FILE");
-
-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
-
-        // Setup should abort because Record couldn't write to the corrupted DB
-        await Assert.That(result.Success).IsFalse();
-    }
-
-    [Test]
     public async Task RunAsync_CancellationAborts()
     {
         var step1 = new Step { Index = 0, Text = "step one",

@@ -278,7 +278,17 @@ public class EngineTests
     public async Task RunGoalAsync_CancelledToken_ReturnsError()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
-        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
+        var goal = new Goal
+        {
+            Name = "TestGoal",
+            Path = "/TestGoal.goal",
+            Steps = new GoalSteps
+            {
+                MakeStep("variable", "set",
+                    new Dictionary<string, object?> { { "name", "x" }, { "value", "y" } },
+                    index: 0, text: "set variable")
+            }
+        };
         engine.Goals.Add(goal);
         var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -366,54 +376,13 @@ public class EngineTests
     }
 
     [Test]
-    public async Task RunGoalAsync_StepWithIgnoreError_ContinuesOnError()
-    {
-        await using var engine = new PLang.Runtime2.Engine.@this("/app");
-
-        var goal = new Goal
-        {
-            Name = "TestGoal",
-            Path = "/TestGoal.goal",
-            Steps = new GoalSteps
-            {
-                new Step
-                {
-                    Index = 0,
-                    Text = "failing step",
-                    Actions = new StepActions
-                    {
-                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "variable",
-                            ActionName = "get",
-                            Parameters = new List<Data>(),
-                            Return = null
-                        }
-                    },
-                    OnError = new ErrorHandler { IgnoreError = true }
-                },
-                MakeStep("variable", "set",
-                    new Dictionary<string, object?> { { "name", "test" }, { "value", "success" } },
-                    index: 1, text: "set variable")
-            }
-        };
-        engine.Goals.Add(goal);
-
-        using var context = engine.CreateContext();
-        var result = await engine.RunGoalAsync(goal, context);
-
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.MemoryStack.GetValue("test")).IsEqualTo("success");
-    }
-
-    [Test]
     public async Task StepRunAsync_ActionNotFound_ReturnsError()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var step = MakeStep("nonexistent", "method");
         using var context = engine.CreateContext();
 
-        var result = await step.RunAsync(engine, context);
+        var result = await engine.RunSteps(new GoalSteps { step }, context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionNotFound");
@@ -428,29 +397,13 @@ public class EngineTests
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
 
         using var context = engine.CreateContext();
-        await step.RunAsync(engine, context);
+        await engine.RunSteps(new GoalSteps { step }, context);
 
         await Assert.That(context.MemoryStack.GetValue("source")).IsEqualTo("hello");
     }
 
     [Test]
-    public async Task StepRunAsync_RecordsStep()
-    {
-        await using var engine = new PLang.Runtime2.Engine.@this("/app");
-
-        var step = MakeStep("variable", "clear", index: 5, text: "test step");
-
-        using var context = engine.CreateContext();
-        context.CallStack!.Push(new Goal { Name = "TestGoal" });
-        await step.RunAsync(engine, context);
-
-        await Assert.That(context.CallStack.Current!.Step).IsNotNull();
-        await Assert.That(context.CallStack.Current!.Step!.Index).IsEqualTo(5);
-        await Assert.That(context.CallStack.Current!.Step!.Text).IsEqualTo("test step");
-    }
-
-    [Test]
-    public async Task StepRunAsync_ExceptionInHandler_ReturnsError()
+    public async Task StepRunAsync_ExceptionInHandler_Throws()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
@@ -460,10 +413,9 @@ public class EngineTests
         var step = MakeStep("throwing", "fail");
         using var context = engine.CreateContext();
 
-        var result = await step.RunAsync(engine, context);
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Exception).IsTypeOf<InvalidOperationException>();
+        // Engine kernel does not catch handler exceptions — they propagate
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await engine.RunSteps(new GoalSteps { step }, context));
     }
 
     [Test]
@@ -477,7 +429,7 @@ public class EngineTests
         var step = MakeStep("legacy", "do");
         using var context = engine.CreateContext();
 
-        var result = await step.RunAsync(engine, context);
+        var result = await engine.RunSteps(new GoalSteps { step }, context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionError");

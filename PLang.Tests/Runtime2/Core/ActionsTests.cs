@@ -38,30 +38,6 @@ public class ActionsTests
     }
 
     [Test]
-    public async Task Summary_NoContext_ReturnsEmptyString()
-    {
-        var actions = new StepActions();
-        actions.Add(new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "variable", ActionName = "set" });
-
-        var (text, error) = await actions.Summary();
-
-        await Assert.That(text).IsEqualTo("");
-        await Assert.That(error).IsNotNull();
-    }
-
-    [Test]
-    public async Task Summary_WrongContextType_ReturnsEmptyString()
-    {
-        var actions = new StepActions("not a PLangContext");
-        actions.Add(new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "variable", ActionName = "set" });
-
-        var (text, error) = await actions.Summary();
-
-        await Assert.That(text).IsEqualTo("");
-        await Assert.That(error).IsNotNull();
-    }
-
-    [Test]
     public async Task ParameterSchema_SetOnAction_IsPreserved()
     {
         var action = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this

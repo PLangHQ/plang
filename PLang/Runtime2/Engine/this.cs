@@ -342,8 +342,12 @@ public sealed class @this : IAsyncDisposable
             }
 
             // Sub-step control: false condition skips indented children
+            // Only condition module actions control sub-step flow — other modules
+            // may return bool values (e.g., variable.set with false) without intent to skip.
             if (i + 1 < steps.Count && steps[i + 1].Indent > step.Indent
-                && result.Value is bool conditionResult && !conditionResult)
+                && result.Value is bool conditionResult && !conditionResult
+                && step.Actions.Count > 0
+                && string.Equals(step.Actions[0].Module, "condition", StringComparison.OrdinalIgnoreCase))
             {
                 skipBelowIndent = step.Indent;
             }
@@ -370,7 +374,20 @@ public sealed class @this : IAsyncDisposable
     public async Task<Data> RunGoalAsync(Goal goal, PLangContext? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
-        return await RunSteps(goal.Steps, context);
+
+        if (ct.IsCancellationRequested)
+            return Data.FromError(new Errors.Error("Operation was cancelled", "Cancelled", 499));
+
+        var previousGoal = context.Goal;
+        context.Goal = goal;
+        try
+        {
+            return await RunSteps(goal.Steps, context);
+        }
+        finally
+        {
+            context.Goal = previousGoal;
+        }
     }
 
     /// <summary>

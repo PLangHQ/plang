@@ -129,7 +129,7 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(1, 4, "should-be-skipped")
         };
         var context = CreateContext();
-        var result = await steps.RunAsync(_engine, context);
+        var result = await _engine.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(getOutput()).DoesNotContain("should-be-skipped");
@@ -145,7 +145,7 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(1, 4, "child-executed")
         };
         var context = CreateContext();
-        var result = await steps.RunAsync(_engine, context);
+        var result = await _engine.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(getOutput()).Contains("child-executed");
@@ -162,7 +162,7 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(2, 0, "next-runs")
         };
         var context = CreateContext();
-        var result = await steps.RunAsync(_engine, context);
+        var result = await _engine.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         var output = getOutput();
@@ -182,7 +182,7 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(3, 4, "outer-runs")     // outer child at indent 4
         };
         var context = CreateContext();
-        var result = await steps.RunAsync(_engine, context);
+        var result = await _engine.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         var output = getOutput();
@@ -200,7 +200,7 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(1, 0, "next-runs") // same indent — not a child
         };
         var context = CreateContext();
-        var result = await steps.RunAsync(_engine, context);
+        var result = await _engine.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(getOutput()).Contains("next-runs");
@@ -218,7 +218,7 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(3, 4, "child-B-runs")
         };
         var context = CreateContext();
-        var result = await steps.RunAsync(_engine, context);
+        var result = await _engine.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         var output = getOutput();
@@ -237,7 +237,7 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(2, 8, "leaf-runs")
         };
         var context = CreateContext();
-        var result = await steps.RunAsync(_engine, context);
+        var result = await _engine.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(getOutput()).Contains("leaf-runs");
@@ -256,7 +256,7 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(1, 4, "child-runs")
         };
         var context = CreateContext();
-        var result = await steps.RunAsync(_engine, context);
+        var result = await _engine.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         // variable.set returns Data.Ok({name, value, type}) — Value is a variable object, not bool false
