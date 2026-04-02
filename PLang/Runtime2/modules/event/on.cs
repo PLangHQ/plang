@@ -48,7 +48,20 @@ public partial class On : IContext
         var targetActor = Actor ?? Context.Actor ?? Context.Engine!.User;
 
         Func<Engine.Context.PLangContext, Task<Data>> handler = async ctx =>
-            await ctx.Engine!.RunGoalAsync(GoalToCall, targetActor.Context, ctx.CancellationToken);
+        {
+            // Set the triggering step so %!event.step% resolves in the handler
+            var execCtx = targetActor.Context;
+            var previousEventStep = execCtx.EventStep;
+            execCtx.EventStep = GoalToCall.Action?.Step;
+            try
+            {
+                return await ctx.Engine!.RunGoalAsync(GoalToCall, execCtx, ctx.CancellationToken);
+            }
+            finally
+            {
+                execCtx.EventStep = previousEventStep;
+            }
+        };
 
         var binding = new EventBinding(
             eventType,

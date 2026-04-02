@@ -1,8 +1,8 @@
 {
   "name": "DebugBeforeStep",
   "steps": [
-    {"index": 0, "indent": 0, "text": "write to debugger '[step %!step.Index%] %!step.Text%'",
-      "actions": [{"module": "output", "action": "write", "parameters": [{"name": "Data", "value": "[step %!step.Index%] %!step.Text%", "type": "string"}, {"name": "Channels", "value": "debugger", "type": "string"}]}], "waitForExecution": true}
+    {"index": 0, "indent": 0, "text": "write to debugger '[step %!event.step.Index%] %!event.step.Text%'",
+      "actions": [{"module": "output", "action": "write", "parameters": [{"name": "Data", "value": "[step %!event.step.Index%] %!event.step.Text%", "type": "string"}, {"name": "Channels", "value": "debugger", "type": "string"}]}], "waitForExecution": true}
   ],
   "goals": [
     {
