@@ -13,8 +13,8 @@ public partial class Return : IContext
     public Task<Data> Run()
     {
         var result = Data ?? Engine.Memory.Data.Ok();
-        // Clear Handled so the error propagates through RunSteps
-        result.Handled = false;
+        // Signal RunSteps to stop iteration — even for successful returns
+        result.Returned = true;
         return Task.FromResult(result);
     }
 }

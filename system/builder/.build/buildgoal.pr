@@ -227,7 +227,8 @@
             {
               "name": "OnValidateResponse",
               "value": {
-                "name": "ValidateBuildResponse"
+                "name": "ValidateBuildResponse",
+                "prPath": "/system/builder/.build/validatebuildresponse.pr"
               },
               "type": "goal.call"
             }
@@ -243,7 +244,8 @@
       ],
       "onError": {
         "goal": {
-          "name": "HandleBuildGoalFailure"
+          "name": "HandleBuildGoalFailure",
+          "prPath": "/system/builder/.build/handlebuildgoalfailure.pr"
         },
         "ignoreError": false
       },

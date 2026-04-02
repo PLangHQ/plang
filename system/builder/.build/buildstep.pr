@@ -206,7 +206,8 @@
       ],
       "onError": {
         "goal": {
-          "name": "HandleBuildStepFailure"
+          "name": "HandleBuildStepFailure",
+          "prPath": "/system/builder/.build/handlebuildstepfailure.pr"
         },
         "ignoreError": false
       },

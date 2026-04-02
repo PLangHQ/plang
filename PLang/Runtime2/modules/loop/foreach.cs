@@ -6,7 +6,7 @@ namespace PLang.Runtime2.modules.loop;
 [Action("foreach")]
 public partial class Foreach : IContext
 {
-    public partial object Collection { get; init; }
+    public partial object? Collection { get; init; }
     public partial GoalCall GoalName { get; init; }
     [VariableName]
     public partial string? ItemName { get; init; }
@@ -15,6 +15,9 @@ public partial class Foreach : IContext
 
     public async Task<Data> Run()
     {
+        if (Collection == null)
+            return Data.Ok(new types.loop { itemCount = 0, completed = true });
+
         var engine = Context.Engine!;
         var variableName = ItemName ?? "item";
         int count = 0;

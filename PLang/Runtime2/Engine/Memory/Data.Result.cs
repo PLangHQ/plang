@@ -16,6 +16,12 @@ public partial class Data
     [JsonIgnore]
     public bool Handled { get; set; }
 
+    /// <summary>
+    /// Set by goal.return to signal RunSteps to stop iteration — even for successful results.
+    /// </summary>
+    [JsonIgnore]
+    public bool Returned { get; set; }
+
     [JsonIgnore]
     public IError? Error { get; set; }
 

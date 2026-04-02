@@ -339,6 +339,7 @@ public sealed class @this : IAsyncDisposable
             {
                 result = await Run(action, context);
                 if (!result.Success && !result.Handled) return result;
+                if (result.Returned) return result;
             }
 
             // Sub-step control: false condition skips indented children

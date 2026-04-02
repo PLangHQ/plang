@@ -22,7 +22,8 @@
       ],
       "onError": {
         "goal": {
-          "name": "HandleValidationError"
+          "name": "HandleValidationError",
+          "prPath": "/system/builder/.build/handlevalidationerror.pr"
         },
         "ignoreError": false
       },
@@ -86,7 +87,8 @@
             {
               "name": "GoalIfTrue",
               "value": {
-                "name": "BuildStep"
+                "name": "BuildStep",
+                "prPath": "/system/builder/.build/buildstep.pr"
               },
               "type": "goal.call"
             }

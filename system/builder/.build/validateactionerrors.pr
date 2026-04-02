@@ -30,7 +30,8 @@
             {
               "name": "GoalIfTrue",
               "value": {
-                "name": "ThrowActionErrors"
+                "name": "ThrowActionErrors",
+                "prPath": "/system/builder/.build/throwactionerrors.pr"
               },
               "type": "goal.call"
             }
