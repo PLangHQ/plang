@@ -68,6 +68,12 @@ public sealed class CallFrame : IAsyncDisposable
     public List<IError> Errors { get; } = new();
 
     /// <summary>
+    /// The current error being handled. Set by error.check before calling the error goal.
+    /// Accessible via %!error% DynamicData. Future: %!error.Previous% walks Parent frames.
+    /// </summary>
+    public IError? Error { get; set; }
+
+    /// <summary>
     /// Associated event (if executing within an event handler).
     /// </summary>
     public string? EventId { get; set; }

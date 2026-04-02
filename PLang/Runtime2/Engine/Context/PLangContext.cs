@@ -101,6 +101,12 @@ public sealed class PLangContext : IDisposable
     public Data? EventOverride { get; set; }
 
     /// <summary>
+    /// The current error being handled. Set by error.check before calling the error goal.
+    /// Accessible via %!error%. Falls back to CallStack.Current.Error when callstack is active.
+    /// </summary>
+    public IError? CurrentError { get; set; }
+
+    /// <summary>
     /// Set during setup execution, null otherwise.
     /// Steps check this to implement run-once semantics.
     /// Propagates through goal.call since Goal.RunAsync uses the same context object.
@@ -155,6 +161,7 @@ public sealed class PLangContext : IDisposable
         // Dynamic references (change per goal/step)
         ms.Put(new DynamicData("!goal", () => Goal));
         ms.Put(new DynamicData("!step", () => Step));
+        ms.Put(new DynamicData("!error", () => CurrentError ?? CallStack?.Current?.Error));
     }
 
     /// <summary>

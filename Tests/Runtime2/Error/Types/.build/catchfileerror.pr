@@ -1,7 +1,7 @@
 [
   {
     "name": "CatchFileError",
-    "description": "Sets the %fileErrorCaught% flag to true (the \u0027\u003C= pr: null\u0027 note is ignored by the compiler since it is not an engine action).",
+    "description": "Set a flag variable %fileErrorCaught% to true (file error caught).",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -37,7 +43,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/CatchFileError.goal",
     "prPath": "/.build/catchfileerror.pr",

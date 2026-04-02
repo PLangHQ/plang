@@ -1,7 +1,7 @@
 [
   {
     "name": "CatchError",
-    "description": "Sets %caughtMessage% to the caught error message (from %!error.Message%) with a null fallback as indicated by the step.",
+    "description": "Set %caughtMessage% to the caught error message (from %!error.Message%).",
     "comment": null,
     "steps": [
       {
@@ -27,11 +27,11 @@
               },
               {
                 "name": "Type",
-                "value": "object",
+                "value": "string",
                 "type": "string"
               }
             ],
-            "return": [],
+            "return": null,
             "defaults": [
               {
                 "name": "asdefault",
@@ -48,7 +48,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/CatchError.goal",
     "prPath": "/.build/catcherror.pr",

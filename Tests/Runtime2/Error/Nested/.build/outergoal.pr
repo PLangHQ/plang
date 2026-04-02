@@ -1,7 +1,7 @@
 [
   {
     "name": "OuterGoal",
-    "description": "OuterGoal calls InnerGoal, then sets the %outerCompleted% variable to true.",
+    "description": "OuterGoal calls InnerGoal, then sets %outerCompleted% to true.",
     "comment": null,
     "steps": [
       {
@@ -17,11 +17,8 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": {
-                  "name": "InnerGoal",
-                  "parameters": []
-                },
-                "type": "goal.call"
+                "value": "",
+                "type": "string"
               }
             ],
             "return": null,
@@ -57,7 +54,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -67,7 +70,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/OuterGoal.goal",
     "prPath": "/.build/outergoal.pr",

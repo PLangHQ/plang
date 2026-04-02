@@ -1,7 +1,7 @@
 [
   {
     "name": "ThrowUserError",
-    "description": "Maps ThrowUserError to an error.throw action with message and key.",
+    "description": "Throws an error with message \u0022user error\u0022 and key \u0022TestKey\u0022 (status code defaults to 500).",
     "comment": null,
     "steps": [
       {
@@ -21,6 +21,11 @@
                 "type": "string"
               },
               {
+                "name": "StatusCode",
+                "value": 500,
+                "type": "int"
+              },
+              {
                 "name": "Key",
                 "value": "TestKey",
                 "type": "string"
@@ -37,7 +42,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/ThrowUserError.goal",
     "prPath": "/.build/throwusererror.pr",

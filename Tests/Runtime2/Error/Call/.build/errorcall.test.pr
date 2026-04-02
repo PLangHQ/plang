@@ -1,39 +1,22 @@
 [
   {
     "name": "Start",
-    "description": "Sets caughtMessage to empty, calls ThrowTestError with an on-error handler that calls CatchError, then asserts caughtMessage equals \u0027test error\u0027.",
-    "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %caughtMessage% = \u0022\u0022",
+        "text": "set %caughtMessage% = \"\"",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "on error call goal catches error from called goal",
         "actions": [
           {
             "module": "variable",
             "action": "set",
             "parameters": [
-              {
-                "name": "Name",
-                "value": "%caughtMessage%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
+              {"name": "Name", "value": "%caughtMessage%", "type": "string"},
+              {"name": "Value", "value": "", "type": "string"}
+            ]
           }
         ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
         "waitForExecution": true
       },
       {
@@ -41,89 +24,42 @@
         "text": "call ThrowTestError, on error call CatchError",
         "lineNumber": 4,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "goal",
             "action": "call",
             "parameters": [
-              {
-                "name": "GoalName",
-                "value": {
-                  "name": "ThrowTestError",
-                  "parameters": []
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
+              {"name": "GoalName", "value": {"name": "ThrowTestError"}, "type": "goal.call"}
+            ]
           }
         ],
-        "intent": null,
         "onError": {
-          "goal": {
-            "name": "CatchError",
-            "description": null,
-            "parallel": false,
-            "parameters": null,
-            "prPath": null
-          },
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
+          "goal": {"name": "CatchError"}
         },
-        "cache": null,
-        "timeout": null,
         "waitForExecution": true
       },
       {
         "index": 2,
-        "text": "assert %caughtMessage% equals \u0022test error\u0022",
+        "text": "assert %caughtMessage% equals \"test error\"",
         "lineNumber": 5,
         "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "assert",
             "action": "equals",
             "parameters": [
-              {
-                "name": "Expected",
-                "value": "test error",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%caughtMessage%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
+              {"name": "Expected", "value": "test error", "type": "string"},
+              {"name": "Actual", "value": "%caughtMessage%", "type": "string"}
+            ]
           }
         ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/ErrorCall.test.goal",
     "prPath": "/.build/errorcall.test.pr",
-    "hash": "8c21fb451d36f668ff578e8d092ed6e203cfced3aa3ec24de873a6fafb88d34d",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
+    "isSystem": false
   }
 ]

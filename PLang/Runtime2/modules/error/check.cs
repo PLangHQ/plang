@@ -112,9 +112,25 @@ public partial class Check : IContext, IAction
     {
         if (onError.Goal == null) return;
 
-        // Stamp Action so GoalCall can navigate to sub-goals
-        onError.Goal.Action ??= userStep.Actions.FirstOrDefault();
-        await engine.RunGoalAsync(onError.Goal, Context);
+        // Set error on context so %!error% resolves during the error goal
+        var previousError = Context.CurrentError;
+        Context.CurrentError = Data.Error;
+
+        // Also set on callstack frame if available (for future %!error.Previous% support)
+        var frame = Context.CallStack?.Current;
+        if (frame != null) frame.Error = Data.Error;
+
+        try
+        {
+            // Stamp Action so GoalCall can navigate to sub-goals
+            onError.Goal.Action ??= userStep.Actions.FirstOrDefault();
+            await engine.RunGoalAsync(onError.Goal, Context);
+        }
+        finally
+        {
+            Context.CurrentError = previousError;
+            if (frame != null) frame.Error = previousError;
+        }
     }
 
     /// <summary>
