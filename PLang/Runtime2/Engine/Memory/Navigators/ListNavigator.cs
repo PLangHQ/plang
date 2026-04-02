@@ -48,12 +48,14 @@ public class ListNavigator : IValueNavigator
 
     private static IList? WrapGenericList(object value)
     {
-        // Find IList<T> and use Count + indexer via reflection
         var iface = value.GetType().GetInterfaces().FirstOrDefault(i =>
             i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
         if (iface == null) return null;
 
-        var count = (int)iface.GetProperty("Count")!.GetValue(value)!;
+        // Count is on ICollection<T>, not IList<T> directly
+        var collectionIface = value.GetType().GetInterfaces().FirstOrDefault(i =>
+            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICollection<>));
+        var count = (int)(collectionIface?.GetProperty("Count")?.GetValue(value) ?? 0);
         var indexer = iface.GetProperty("Item")!;
         var wrapper = new object?[count];
         for (int i = 0; i < count; i++)

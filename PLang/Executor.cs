@@ -55,9 +55,14 @@ namespace PLang
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
 				engine.Debug.Apply(debugValue);
 
-			// Build mode — set engine flag
+			// Build mode — set engine flag and resolve build path
 			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
+			{
 				engine.Building.IsEnabled = true;
+				// Set %path% to the absolute path of the project being built
+				if (!parameters.ContainsKey("path"))
+					engine.MemoryStack.Set("path", fileSystem.RootDirectory);
+			}
 
 			// Set the goal file for the PLang runtime (only for non-build)
 			if (!engine.Building.IsEnabled)
