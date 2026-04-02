@@ -88,7 +88,27 @@ public sealed class GoalCall
             foreach (var param in Parameters)
                 context.MemoryStack.Put(param);
 
-        // file.read the .pr
+        // file.read the .pr — resolve relative paths against the user's goal folder,
+        // not the system goal (context.Goal may be system/run.pr)
+        var resolveContext = context;
+        if (!prPath.StartsWith('/') && !prPath.StartsWith('\\'))
+        {
+            // Find the user goal folder: action chain → or MemoryStack %step%
+            // Resolve against engine root (user's app directory)
+            var rootPath = "/" + prPath;
+            var readAction2 = new modules.file.Read
+            {
+                Context = context,
+                Path = new PathData(rootPath, context)
+            };
+            var result2 = await engine.RunAction(readAction2, context);
+            if (result2.Success && result2.Value is @this foundGoal)
+            {
+                foundGoal.SetStepBackReferences();
+                return foundGoal;
+            }
+        }
+
         var readAction = new modules.file.Read
         {
             Context = context,

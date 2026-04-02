@@ -309,7 +309,7 @@ public static class TypeMapping
             return TryConvertTo(value, underlying);
 
         // String → complex type: try JSON deserialization before list handling
-        // (e.g., file.read of .pr returns JSON string → List<Goal>)
+        // (e.g., file.read of .pr returns JSON string → Goal)
         if (value is string jsonStr && !targetType.IsPrimitive && targetType != typeof(string))
         {
             try
@@ -317,8 +317,21 @@ public static class TypeMapping
                 var jsonResult = System.Text.Json.JsonSerializer.Deserialize(jsonStr, targetType, Json.CaseInsensitiveRead);
                 if (jsonResult != null) return (jsonResult, null);
             }
-            catch (Exception ex)
+            catch
             {
+                // If target is a single object but JSON is an array, try deserializing as List<T> and take first
+                if (jsonStr.TrimStart().StartsWith('['))
+                {
+                    try
+                    {
+                        var listType = typeof(List<>).MakeGenericType(targetType);
+                        var listResult = System.Text.Json.JsonSerializer.Deserialize(jsonStr, listType, Json.CaseInsensitiveRead)
+                            as System.Collections.IList;
+                        if (listResult != null && listResult.Count > 0)
+                            return (listResult[0], null);
+                    }
+                    catch { }
+                }
             }
         }
 
