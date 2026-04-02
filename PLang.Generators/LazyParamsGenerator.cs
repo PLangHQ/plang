@@ -548,6 +548,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("                // Data properties pass through regardless of Success — the Data IS the value");
         sb.AppendLine("                return __resolved;");
         sb.AppendLine("            }");
+        sb.AppendLine("            // Interpolate %var% patterns in mixed strings");
+        sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
+        sb.AppendLine("                var __r = __memoryStack!.Get(m.Groups[1].Value);");
+        sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
+        sb.AppendLine("                return __FormatValue(__r?.Value);");
+        sb.AppendLine("            });");
+        sb.AppendLine("            return new PLang.Runtime2.Engine.Memory.Data(data.Name, interpolated);");
         sb.AppendLine("        }");
         sb.AppendLine("        return data;");
         sb.AppendLine("    }");
