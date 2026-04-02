@@ -1,38 +1,344 @@
 [
   {
     "name": "Start",
-    "description": "Step placeholder: the goal currently only contains a throw/not implemented marker, so no engine actions for identity creation/default switching can be mapped yet.",
+    "description": "Archives two identities, creates TestSwitchA as default, creates TestSwitchB, switches default to TestSwitchB, reads the default identity into %defaultId%, and asserts its Name is TestSwitchB. Then archives both identities.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw \u0022not implemented\u0022",
+        "text": "archive identity \u0027TestSwitchA\u0027, on error ignore",
         "lineNumber": 3,
         "indent": 0,
         "comment": "Test: create two identities, switch default, verify %MyIdentity% reflects the new default",
         "actions": [
           {
-            "module": "error",
-            "action": "throw",
+            "module": "identity",
+            "action": "archive",
             "parameters": [
               {
-                "name": "Message",
-                "value": "not implemented",
+                "name": "Name",
+                "value": "TestSwitchA",
                 "type": "string"
               }
             ],
             "return": null,
-            "defaults": [
-              {
-                "name": "statuscode",
-                "value": 500,
-                "type": "int"
-              }
-            ]
+            "defaults": null
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "archive identity \u0027TestSwitchB\u0027, on error ignore",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "archive",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestSwitchB",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "create identity \u0027TestSwitchA\u0027, set as default",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "create",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestSwitchA",
+                "type": "string"
+              },
+              {
+                "name": "SetAsDefault",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "create identity \u0027TestSwitchB\u0027",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "create",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestSwitchB",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "set default identity to \u0027TestSwitchB\u0027",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "setDefault",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestSwitchB",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "get identity, write to %defaultId%",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "get",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "",
+                "type": "string"
+              }
+            ],
+            "return": [
+              {
+                "name": "defaultId",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 6,
+        "text": "assert %defaultId.Name% equals \u0027TestSwitchB\u0027",
+        "lineNumber": 9,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "TestSwitchB",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%defaultId.Name%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 7,
+        "text": "archive identity \u0027TestSwitchA\u0027",
+        "lineNumber": 10,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "archive",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestSwitchA",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 8,
+        "text": "archive identity \u0027TestSwitchB\u0027",
+        "lineNumber": 11,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "archive",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestSwitchB",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -42,7 +348,7 @@
     "visibility": 1,
     "path": "/IdentitySwitchDefault.test.goal",
     "prPath": "/.build/identityswitchdefault.test.pr",
-    "hash": "efd3c678aa189b670c30bd15f1b988f98f6ce808da298c407ee5e77730b198df",
+    "hash": "a9762310cf2abbdc247e62a2fef02e73f531dce6824a2c230089cbdeb6b11676",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

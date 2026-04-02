@@ -1,3 +1,11 @@
 Start
 / Test: create two identities, switch default, verify %MyIdentity% reflects the new default
-- throw "not implemented"
+- archive identity 'TestSwitchA', on error ignore
+- archive identity 'TestSwitchB', on error ignore
+- create identity 'TestSwitchA', set as default
+- create identity 'TestSwitchB'
+- set default identity to 'TestSwitchB'
+- get identity, write to %defaultId%
+- assert %defaultId.Name% equals 'TestSwitchB'
+- archive identity 'TestSwitchA'
+- archive identity 'TestSwitchB'

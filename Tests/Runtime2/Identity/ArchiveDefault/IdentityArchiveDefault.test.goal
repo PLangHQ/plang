@@ -1,3 +1,7 @@
 Start
 / Test: try to archive the default identity, verify error is returned
-- throw "not implemented"
+- archive identity 'TestArchiveDefault', on error ignore
+- create identity 'TestArchiveDefault', set as default
+- archive identity 'TestArchiveDefault', write to %result%
+- assert %result.Error% is not null
+- archive identity 'TestArchiveDefault'

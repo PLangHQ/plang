@@ -1,3 +1,7 @@
 Start
 / Test: export private key and verify non-empty string returned
-- throw "not implemented"
+- archive identity 'TestExportId', on error ignore
+- create identity 'TestExportId', set as default
+- export identity 'TestExportId', write to %exported%
+- assert %exported% is not null
+- archive identity 'TestExportId'

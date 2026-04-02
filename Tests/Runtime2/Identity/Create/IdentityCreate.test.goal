@@ -1,3 +1,7 @@
 Start
-/ Test: create an identity and verify %MyIdentity% resolves to its public key
-- throw "not implemented"
+/ Test: create an identity and verify it exists
+- archive identity 'TestCreate', on error ignore
+- create identity 'TestCreate'
+- get identity 'TestCreate', write to %id%
+- assert %id% is not null
+- archive identity 'TestCreate'

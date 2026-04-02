@@ -1,38 +1,186 @@
 [
   {
     "name": "Start",
-    "description": "Single step that throws an error with message \u0027not implemented\u0027.",
+    "description": "Archives a test identity (ignoring errors), creates it and sets it as default, archives it again while capturing the result, asserts the result contains a non-null Error, then archives it a final time.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "throw \u0022not implemented\u0022",
+        "text": "archive identity \u0027TestArchiveDefault\u0027, on error ignore",
         "lineNumber": 3,
         "indent": 0,
         "comment": "Test: try to archive the default identity, verify error is returned",
         "actions": [
           {
-            "module": "error",
-            "action": "throw",
+            "module": "identity",
+            "action": "archive",
             "parameters": [
               {
-                "name": "Message",
-                "value": "not implemented",
+                "name": "Name",
+                "value": "TestArchiveDefault",
                 "type": "string"
               }
             ],
             "return": null,
-            "defaults": [
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "create identity \u0027TestArchiveDefault\u0027, set as default",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "create",
+            "parameters": [
               {
-                "name": "statuscode",
-                "value": 500,
-                "type": "int"
+                "name": "Name",
+                "value": "TestArchiveDefault",
+                "type": "string"
+              },
+              {
+                "name": "SetAsDefault",
+                "value": true,
+                "type": "bool"
               }
-            ]
+            ],
+            "return": null,
+            "defaults": null
           }
         ],
         "intent": null,
         "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "archive identity \u0027TestArchiveDefault\u0027, write to %result%",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "archive",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestArchiveDefault",
+                "type": "string"
+              }
+            ],
+            "return": [
+              {
+                "name": "result",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "assert %result.Error% is not null",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%result.Error%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "archive identity \u0027TestArchiveDefault\u0027",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "archive",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestArchiveDefault",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -42,7 +190,7 @@
     "visibility": 1,
     "path": "/IdentityArchiveDefault.test.goal",
     "prPath": "/.build/identityarchivedefault.test.pr",
-    "hash": "efd3c678aa189b670c30bd15f1b988f98f6ce808da298c407ee5e77730b198df",
+    "hash": "326880064020a70c8af0b73896258626bc1180d8eb76e1d3c8a326ce97360a68",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

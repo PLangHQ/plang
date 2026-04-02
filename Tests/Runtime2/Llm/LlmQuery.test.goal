@@ -1,3 +1,6 @@
 Start
 / Simple system+user query — verify we get a non-null response from the LLM
-- throw "not implemented"
+- [llm] system: 'You are a helpful assistant'
+    user: 'What is 2+2? Reply with just the number'
+    write to %result%
+- assert %result% is not null

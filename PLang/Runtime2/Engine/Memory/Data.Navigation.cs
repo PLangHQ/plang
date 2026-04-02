@@ -222,7 +222,8 @@ public partial class Data
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
         if (ownProp != null && (ownProp.DeclaringType != typeof(Data)
             || key.Equals("Success", StringComparison.OrdinalIgnoreCase)
-            || key.Equals("Error", StringComparison.OrdinalIgnoreCase)))
+            || key.Equals("Error", StringComparison.OrdinalIgnoreCase)
+            || key.Equals("Name", StringComparison.OrdinalIgnoreCase)))
         {
             return ownProp.GetValue(this);
         }

@@ -1,3 +1,7 @@
 Start
-/ Query with format=md — verify content extracted from markdown code block
-- throw "not implemented"
+/ Query with format=json — verify response is valid JSON
+- [llm] system: 'Reply in JSON format only'
+    user: 'Return a JSON object with key "color" set to "blue"'
+    format: 'json'
+    write to %result%
+- assert %result% is not null

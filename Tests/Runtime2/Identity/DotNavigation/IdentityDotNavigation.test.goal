@@ -1,3 +1,9 @@
 Start
 / Test: access %MyIdentity.Name% and %MyIdentity.PublicKey% via dot navigation
-- throw "not implemented"
+- archive identity 'TestDotNav', on error ignore
+- create identity 'TestDotNav', set as default
+- get identity 'TestDotNav', write to %id%
+- assert %identity.Name% is not null
+- assert %identity.PublicKey% is not null
+- assert %identity.IsDefault% is true
+- archive identity 'TestDotNav'

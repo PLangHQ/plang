@@ -1,3 +1,15 @@
 Start
 / Test: archive an identity then unarchive it, verify it is accessible again
-- throw "not implemented"
+- archive identity 'TestUnarchiveId', on error ignore
+- archive identity 'TestUnarchiveExtra', on error ignore
+- create identity 'TestUnarchiveId', set as default
+- create identity 'TestUnarchiveExtra'
+- archive identity 'TestUnarchiveExtra'
+- get identity 'TestUnarchiveExtra', write to %archived%
+- assert %archived% is null
+- unarchive identity 'TestUnarchiveExtra'
+- get identity 'TestUnarchiveExtra', write to %restored%
+- assert %restored% is not null
+- assert %restored.Name% equals 'TestUnarchiveExtra'
+- archive identity 'TestUnarchiveExtra'
+- archive identity 'TestUnarchiveId'
