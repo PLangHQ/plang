@@ -69,10 +69,10 @@
         },
         {
           "index": 1,
-          "text": "call goal %testFile%, write to %result%",
+          "text": "call %testFile.GoalCall%, write to %result%",
           "indent": 0,
           "actions": [{"module": "goal", "action": "call", "parameters": [
-            {"name": "GoalName", "value": "%testFile%", "type": "goal.call"}
+            {"name": "GoalName", "value": "%testFile.GoalCall%", "type": "goal.call"}
           ], "return": [{"name": "result"}]}],
           "onError": {"ignoreError": true},
           "waitForExecution": true
@@ -82,8 +82,8 @@
           "text": "add result to %!test.results%",
           "indent": 0,
           "actions": [{"module": "list", "action": "add", "parameters": [
-            {"name": "List", "value": "%!test.results%", "type": "list"},
-            {"name": "Item", "value": "%result%", "type": "object"}
+            {"name": "ListName", "value": "testResults", "type": "string"},
+            {"name": "Value", "value": "%data%", "type": "object"}
           ]}],
           "waitForExecution": true
         }

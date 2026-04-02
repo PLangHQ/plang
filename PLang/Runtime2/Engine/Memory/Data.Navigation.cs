@@ -227,8 +227,21 @@ public partial class Data
             return ownProp.GetValue(this);
         }
 
+        // Check Data.Properties (extensible key-value pairs on the Data)
+        var prop = Properties[key];
+        if (prop != null) return prop.Value;
+
         var val = Value;
         if (val == null) return null;
+
+        // If Value is a Data object, navigate into IT (check its Properties, Value, etc.)
+        if (val is Data dataVal)
+        {
+            var dataProp = dataVal.Properties[key];
+            if (dataProp != null) return dataProp.Value;
+            return dataVal.GetChildValue(key);
+        }
+
         return ValueNavigators.Navigate(val, key);
     }
 }

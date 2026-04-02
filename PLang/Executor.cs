@@ -88,17 +88,23 @@ namespace PLang
 				}
 			}
 
-			// Test mode — set context.Test as a Data with properties
+			// Test mode — set up test context
 			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
 			{
-				var results = new List<Runtime2.Engine.Memory.Data>();
+				// Results list on system MemoryStack — test.pr adds to it via list.add
+				systemMs.Set("testResults", new List<object?>());
+
+				// !test Data with summary that reads from testResults
 				var testData = new Runtime2.Engine.Memory.Data("!test", true);
-				testData.Properties["results"] = new Runtime2.Engine.Memory.Data("results", results);
 				testData.Properties["summary"] = new Runtime2.Engine.Memory.DynamicData("summary", () =>
 				{
-					var passed = results.Count(r => r.Success);
+					var results = systemMs.GetValue("testResults") as List<object?>;
+					if (results == null) return "No test results";
+					var passed = results.Count(r => r is Runtime2.Engine.Memory.Data d && d.Success);
 					var failed = results.Count - passed;
-					var failures = results.Where(r => !r.Success)
+					var failures = results
+						.OfType<Runtime2.Engine.Memory.Data>()
+						.Where(r => !r.Success)
 						.Select(r => $"  FAIL: {r.Error?.Message ?? "unknown"}")
 						.ToList();
 					var summary = $"\n{passed} passed, {failed} failed out of {results.Count} tests";

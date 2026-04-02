@@ -104,6 +104,28 @@ public class PathData : Data
     public bool IsFile => !string.IsNullOrEmpty(Extension);
     public bool IsDirectory => string.IsNullOrEmpty(Extension);
 
+    /// <summary>
+    /// Converts this path to a GoalCall. Derives PrPath from the .goal file path.
+    /// E.g., "SettingsCrud/Start.test.goal" → GoalCall { Name = "Start", PrPath = "/SettingsCrud/.build/start.test.pr" }
+    /// </summary>
+    public Goals.Goal.GoalCall GoalCall
+    {
+        get
+        {
+            var rel = Relative.Replace('\\', '/');
+            var dir = _fs.Path.GetDirectoryName(rel)?.Replace('\\', '/') ?? "";
+            var baseName = _fs.Path.GetFileNameWithoutExtension(rel);
+            // Strip .test or .goal suffix for the name
+            var name = baseName;
+            if (name.EndsWith(".test", StringComparison.OrdinalIgnoreCase))
+                name = name[..^5];
+            // Build PrPath: dir/.build/basename.pr
+            var prDir = string.IsNullOrEmpty(dir) ? ".build" : $"{dir}/.build";
+            var prPath = $"/{prDir}/{baseName.ToLowerInvariant()}.pr";
+            return new Goals.Goal.GoalCall { Name = name, PrPath = prPath };
+        }
+    }
+
     // --- Live filesystem properties ---
 
     public bool Exists => _fs.File.Exists(_absolutePath) || _fs.Directory.Exists(_absolutePath);
