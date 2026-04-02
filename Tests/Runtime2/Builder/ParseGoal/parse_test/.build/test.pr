@@ -1,0 +1,84 @@
+[
+  {
+    "name": "TestGoal",
+    "description": "Mapped two placeholder steps for TestGoal; each step includes a valid engine action. The original \u0027pr: null\u0027 content is not a recognized step instruction, so actions are minimal no-op style writes.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "step one",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "step one",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "step two",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "step two",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/ParseGoal/parse_test/Test.goal",
+    "prPath": "/ParseGoal/parse_test/.build/test.pr",
+    "hash": "a61e4828752e9706c892324fac9ff77098e3301722657cac993ddb5c405a5191",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

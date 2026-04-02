@@ -1,7 +1,7 @@
 [
   {
     "name": "Inner",
-    "description": "Compiles two output-write steps for the Inner goal, writing a literal string containing a callStack depth placeholder and then writing the callStack object itself.",
+    "description": "Writes two debug lines to output, referencing call stack variables %!callStack.Depth% and %!callStack%.",
     "comment": null,
     "steps": [
       {
@@ -18,6 +18,11 @@
               {
                 "name": "Data",
                 "value": "Inner depth: %!callStack.Depth%",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
                 "type": "string"
               }
             ],
@@ -45,7 +50,12 @@
               {
                 "name": "Data",
                 "value": "%!callStack%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -59,7 +69,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Inner.goal",
     "prPath": "/.build/inner.pr",

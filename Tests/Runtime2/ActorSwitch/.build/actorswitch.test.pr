@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Writes two output messages to different actors (default and system), sets a boolean variable, and asserts it equals true.",
+    "description": "Writes two output messages (default actor and system actor), sets a flag variable, then asserts the flag is true.",
     "comment": null,
     "steps": [
       {
@@ -18,6 +18,11 @@
               {
                 "name": "Data",
                 "value": "user message",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
                 "type": "string"
               }
             ],
@@ -49,7 +54,7 @@
               },
               {
                 "name": "Channels",
-                "value": "",
+                "value": "this",
                 "type": "string"
               }
             ],
@@ -81,12 +86,23 @@
               },
               {
                 "name": "Value",
-                "value": true,
-                "type": "bool"
+                "value": "true",
+                "type": "string"
+              },
+              {
+                "name": "Type",
+                "value": "bool",
+                "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -115,6 +131,11 @@
                 "name": "Actual",
                 "value": "%actorTestDone%",
                 "type": "bool"
+              },
+              {
+                "name": "Message",
+                "value": "assert %actorTestDone% equals true",
+                "type": "string"
               }
             ],
             "return": null,
@@ -128,7 +149,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/ActorSwitch.test.goal",
     "prPath": "/.build/actorswitch.test.pr",

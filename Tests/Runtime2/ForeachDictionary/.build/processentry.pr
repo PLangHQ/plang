@@ -1,7 +1,7 @@
 [
   {
     "name": "ProcessEntry",
-    "description": "Increments %count% by 1 using variable.set with an expression value (as provided).",
+    "description": "Increments %count% by 1 using a variable.set step (expression evaluation assumed by engine).",
     "comment": null,
     "steps": [
       {
@@ -43,7 +43,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/ProcessEntry.goal",
     "prPath": "/.build/processentry.pr",

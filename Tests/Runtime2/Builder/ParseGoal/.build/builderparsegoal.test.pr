@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Saves a sample .goal file, invokes builder.getGoals to parse goals from the directory, and asserts the returned goals collection is not empty.",
+    "description": "Saves a sample .goal file, loads/parses goals from the directory into %goals%, then asserts the parsed goals list is not empty.",
     "comment": null,
     "steps": [
       {
@@ -16,12 +16,12 @@
             "action": "save",
             "parameters": [
               {
-                "name": "Path",
+                "name": "path",
                 "value": "parse_test/Test.goal",
                 "type": "path"
               },
               {
-                "name": "Value",
+                "name": "data",
                 "value": "TestGoal\n- step one\n- step two",
                 "type": "string"
               }
@@ -44,22 +44,11 @@
         "comment": null,
         "actions": [
           {
-            "module": "goal",
-            "action": "call",
+            "module": "builder",
+            "action": "goals",
             "parameters": [
               {
-                "name": "GoalName",
-                "value": {
-                  "name": "builder.getGoals",
-                  "description": null,
-                  "parallel": false,
-                  "parameters": null,
-                  "prPath": null
-                },
-                "type": "goal.call"
-              },
-              {
-                "name": "directoryPath",
+                "name": "Path",
                 "value": "parse_test/",
                 "type": "string"
               }
@@ -112,10 +101,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/BuilderParseGoal.test.goal",
-    "prPath": "/.build/builderparsegoal.test.pr",
+    "path": "/ParseGoal/BuilderParseGoal.test.goal",
+    "prPath": "/ParseGoal/.build/builderparsegoal.test.pr",
     "hash": "124ac9dd777260ed1d72b1a350fec934df26d20c2daeafac54fcf653c87312c2",
     "builderVersion": "0.3",
     "isSetup": false,

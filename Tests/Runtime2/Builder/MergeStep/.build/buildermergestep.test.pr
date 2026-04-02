@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Single-step goal that throws an error indicating the builder.mergeStep behavior is not implemented in PLang and is deferred to C# tests.",
+    "description": "Single-step goal that throws an error indicating the test is not implemented in PLang and is deferred to C# tests.",
     "comment": null,
     "steps": [
       {
@@ -22,7 +22,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "statuscode",
+                "value": 500,
+                "type": "int"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -32,10 +38,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/BuilderMergeStep.test.goal",
-    "prPath": "/.build/buildermergestep.test.pr",
+    "path": "/MergeStep/BuilderMergeStep.test.goal",
+    "prPath": "/MergeStep/.build/buildermergestep.test.pr",
     "hash": "f902ef75117c04fdc5acc19d48f99f0cc29b33725fecba8ab0dd035549da35c3",
     "builderVersion": "0.3",
     "isSetup": false,

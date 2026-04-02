@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "No executable steps provided: the goal only contains a comment and a placeholder throw indicating the implementation is missing.",
+    "description": "No executable steps provided: the goal only contains a placeholder throw statement.",
     "comment": null,
     "steps": [
       {
@@ -19,6 +19,11 @@
                 "name": "Message",
                 "value": "not implemented",
                 "type": "string"
+              },
+              {
+                "name": "StatusCode",
+                "value": 500,
+                "type": "int"
               }
             ],
             "return": null,
@@ -32,7 +37,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/IdentityUnarchive.test.goal",
     "prPath": "/.build/identityunarchive.test.pr",

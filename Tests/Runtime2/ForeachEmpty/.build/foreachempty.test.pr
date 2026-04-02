@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Initializes an empty %items% list and %count% to 0, iterates over %items% calling ProcessItem for each %item%, then asserts %count% remains 0.",
+    "description": "Initializes an empty items list and count, iterates over items calling ProcessItem for each item, then asserts count remains 0.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -59,7 +65,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -91,7 +103,7 @@
                   "description": null,
                   "parallel": false,
                   "parameters": null,
-                  "prPath": null
+                  "prPath": "/.build/processitem.pr"
                 },
                 "type": "goal.call"
               },
@@ -130,7 +142,7 @@
               {
                 "name": "Actual",
                 "value": "%count%",
-                "type": "object"
+                "type": "int"
               }
             ],
             "return": null,
@@ -144,7 +156,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/ForeachEmpty.test.goal",
     "prPath": "/.build/foreachempty.test.pr",

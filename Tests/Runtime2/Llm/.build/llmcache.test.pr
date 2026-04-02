@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Single step that throws a not-implemented error (placeholder).",
+    "description": "Single step that throws an error because the requested cache-hit behavior is not implemented.",
     "comment": null,
     "steps": [
       {
@@ -19,6 +19,11 @@
                 "name": "Message",
                 "value": "not implemented",
                 "type": "string"
+              },
+              {
+                "name": "StatusCode",
+                "value": 500,
+                "type": "int"
               }
             ],
             "return": null,
@@ -32,7 +37,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/LlmCache.test.goal",
     "prPath": "/.build/llmcache.test.pr",

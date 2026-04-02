@@ -1,7 +1,7 @@
 [
   {
     "name": "HandleRetryError",
-    "description": "Sets the %retryErrorHandled% flag to true in HandleRetryError.",
+    "description": "Set the %retryErrorHandled% flag to true in HandleRetryError.",
     "comment": null,
     "steps": [
       {
@@ -24,10 +24,21 @@
                 "name": "Value",
                 "value": true,
                 "type": "bool"
+              },
+              {
+                "name": "Type",
+                "value": "bool",
+                "type": "string"
               }
             ],
-            "return": null,
-            "defaults": null
+            "return": [],
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -37,7 +48,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/HandleRetryError.goal",
     "prPath": "/.build/handleretryerror.pr",

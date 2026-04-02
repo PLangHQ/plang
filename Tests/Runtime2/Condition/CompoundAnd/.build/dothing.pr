@@ -1,7 +1,7 @@
 [
   {
     "name": "DoThing",
-    "description": "Sets %result% to the string \u0022both-true\u0022 in the DoThing goal.",
+    "description": "Sets %result% to the literal string \u0022both-true\u0022.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -39,8 +45,8 @@
     ],
     "goals": [],
     "visibility": 1,
-    "path": "/CompoundAnd/DoThing.goal",
-    "prPath": "/CompoundAnd/.build/dothing.pr",
+    "path": "/DoThing.goal",
+    "prPath": "/.build/dothing.pr",
     "hash": "c9ef2a4feef41411dca98e9dfc8891e7c57d1b2cd95a3e7d46290e11d80adbac",
     "builderVersion": "0.3",
     "isSetup": false,

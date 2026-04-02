@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets a JSON object, hashes it twice, then asserts both hashes are identical to verify consistency.",
+    "description": "Sets a JSON object, hashes it twice, and asserts both hashes are identical to verify consistency.",
     "comment": null,
     "steps": [
       {
@@ -30,7 +30,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -90,7 +96,7 @@
               {
                 "name": "Data",
                 "value": "%obj%",
-                "type": "string"
+                "type": "json"
               },
               {
                 "name": "Algorithm",
@@ -127,12 +133,12 @@
               {
                 "name": "Expected",
                 "value": "%hash2%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Actual",
                 "value": "%hash1%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -151,10 +157,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/HashObject.test.goal",
-    "prPath": "/.build/hashobject.test.pr",
+    "path": "/HashObject/HashObject.test.goal",
+    "prPath": "/HashObject/.build/hashobject.test.pr",
     "hash": "b5a9e3b23c5def12f12f8b8e7337e4b70f9ec04aad833d1092d8b38f09c15e75",
     "builderVersion": "0.3",
     "isSetup": false,

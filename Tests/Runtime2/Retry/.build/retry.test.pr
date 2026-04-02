@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Compiles two tests: (1) verifies that after retry exhaustion with ignore, execution continues; (2) verifies that after retry exhaustion, a specified error-handling goal is called and sets a flag.",
+    "description": "Builds two tests: (1) verifies that after retry exhaustion with ignore, execution continues; (2) verifies that after retry exhaustion, a specified error-handling goal is called and sets a flag.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -50,7 +56,12 @@
               {
                 "name": "Value",
                 "value": "%beforeRetry%",
-                "type": "data"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "execution should have %beforeRetry% = true before triggering the retry/ignore behavior",
+                "type": "string"
               }
             ],
             "return": null,
@@ -78,6 +89,11 @@
                 "name": "Message",
                 "value": "temporary failure",
                 "type": "string"
+              },
+              {
+                "name": "StatusCode",
+                "value": 500,
+                "type": "int"
               }
             ],
             "return": null,
@@ -89,7 +105,7 @@
           "goal": null,
           "retryCount": 2,
           "retryOverMs": null,
-          "order": 1,
+          "order": null,
           "ignoreError": true,
           "message": null,
           "statusCode": null,
@@ -122,7 +138,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -145,7 +167,7 @@
               {
                 "name": "Value",
                 "value": "%afterRetryIgnore%",
-                "type": "data"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -178,9 +200,19 @@
                 "name": "Message",
                 "value": "retry then goal",
                 "type": "string"
+              },
+              {
+                "name": "StatusCode",
+                "value": 500,
+                "type": "int"
+              },
+              {
+                "name": "Key",
+                "value": "retry-then-goal",
+                "type": "string"
               }
             ],
-            "return": null,
+            "return": [],
             "defaults": null
           }
         ],
@@ -219,7 +251,7 @@
               {
                 "name": "Value",
                 "value": "%retryErrorHandled%",
-                "type": "data"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -238,7 +270,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Retry.test.goal",
     "prPath": "/.build/retry.test.pr",

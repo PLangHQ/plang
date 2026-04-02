@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets variable %x% to \u0027hello\u0027, then asserts that the special %__stepResult% value is not null (expected to be available after the step).",
+    "description": "Sets variable x to \u0027hello\u0027, then asserts that the engine-provided %__stepResult% is not null.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -49,8 +55,13 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%__stepResult%",
-                "type": "object"
+                "value": "%__stepResult% ",
+                "type": "json"
+              },
+              {
+                "name": "Message",
+                "value": "Step result must not be null.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -64,7 +75,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/StepResult.test.goal",
     "prPath": "/.build/stepresult.test.pr",

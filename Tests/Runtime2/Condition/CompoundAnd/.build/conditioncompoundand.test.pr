@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %a% and %b%, evaluates a compound AND condition (both comparisons must be true), then asserts %result% equals \u0027both-true\u0027.",
+    "description": "Sets %a% and %b%, evaluates a compound AND condition (%a% \u003E 1 and %b% \u003C 10) to call DoThing, then asserts %result% equals \u0027both-true\u0027.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -59,7 +65,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -82,7 +94,7 @@
               {
                 "name": "Left",
                 "value": "%a%",
-                "type": "int"
+                "type": "string"
               },
               {
                 "name": "Operator",
@@ -92,7 +104,7 @@
               {
                 "name": "Right",
                 "value": 1,
-                "type": "int"
+                "type": "long"
               }
             ],
             "return": [
@@ -116,7 +128,7 @@
               {
                 "name": "Left",
                 "value": "%b%",
-                "type": "int"
+                "type": "string"
               },
               {
                 "name": "Operator",
@@ -126,7 +138,7 @@
               {
                 "name": "Right",
                 "value": 10,
-                "type": "int"
+                "type": "long"
               }
             ],
             "return": [
@@ -150,7 +162,7 @@
               {
                 "name": "Left",
                 "value": "%__conditionReturn1__%",
-                "type": "bool"
+                "type": "string"
               },
               {
                 "name": "Operator",
@@ -160,12 +172,12 @@
               {
                 "name": "Right",
                 "value": "%__conditionReturn2__%",
-                "type": "bool"
+                "type": "string"
               },
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "",
+                  "name": "DoThing",
                   "description": null,
                   "parallel": false,
                   "parameters": null,
@@ -209,7 +221,7 @@
               {
                 "name": "Actual",
                 "value": "%result%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -230,8 +242,8 @@
     ],
     "goals": [],
     "visibility": 1,
-    "path": "/CompoundAnd/ConditionCompoundAnd.test.goal",
-    "prPath": "/CompoundAnd/.build/conditioncompoundand.test.pr",
+    "path": "/ConditionCompoundAnd.test.goal",
+    "prPath": "/.build/conditioncompoundand.test.pr",
     "hash": "1b2c7e71ed1ee4211f422eeead71eb38e7c7849066e50b810718f63ada6ea335",
     "builderVersion": "0.3",
     "isSetup": false,

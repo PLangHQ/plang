@@ -1,7 +1,7 @@
 [
   {
     "name": "WildcardHandler",
-    "description": "Increments %matchCount% by 1 using variable.set with an expression, with a note that the step has pr: null.",
+    "description": "Increment %matchCount% by 1 using variable.set with an expression value.",
     "comment": null,
     "steps": [
       {
@@ -26,7 +26,7 @@
                 "type": "string"
               }
             ],
-            "return": null,
+            "return": [],
             "defaults": [
               {
                 "name": "asdefault",
@@ -43,10 +43,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/WildcardHandler.goal",
-    "prPath": "/.build/wildcardhandler.pr",
+    "path": "/Wildcard/WildcardHandler.goal",
+    "prPath": "/Wildcard/.build/wildcardhandler.pr",
     "hash": "2a9513cfc493396e6d0768080e72679fa0eb256c7f02b9410676b28c35a2a3fe",
     "builderVersion": "0.3",
     "isSetup": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %name% to \u0027PLang\u0027, renders the file template.html into %result%, then asserts %result% equals \u0027Hello PLang!\u0027.",
+    "description": "Sets %name% to \u0027PLang\u0027, renders template.html to %result%, then asserts the rendered result equals \u0027Hello PLang!\u0027.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -93,6 +99,11 @@
                 "name": "Actual",
                 "value": "%result%",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Rendered %result% should equal \u0027Hello PLang!\u0027",
+                "type": "string"
               }
             ],
             "return": null,
@@ -106,10 +117,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/RenderFile.test.goal",
-    "prPath": "/.build/renderfile.test.pr",
+    "path": "/RenderFile/RenderFile.test.goal",
+    "prPath": "/RenderFile/.build/renderfile.test.pr",
     "hash": "0fc14d1a392d5187223f8d6e4e82cb96a2d1a4752ae6c5fe88759c290e98f2d3",
     "builderVersion": "0.3",
     "isSetup": false,

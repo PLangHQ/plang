@@ -1,7 +1,7 @@
 [
   {
     "name": "HandleRecursionError",
-    "description": "Sets the %recursionErrorCaught% variable to true (with pr: null indicating no prior value).",
+    "description": "Set the %recursionErrorCaught% flag to true (pr: null indicates no additional value).",
     "comment": null,
     "steps": [
       {
@@ -22,12 +22,18 @@
               },
               {
                 "name": "Value",
-                "value": true,
-                "type": "bool"
+                "value": "true",
+                "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -37,7 +43,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/HandleRecursionError.goal",
     "prPath": "/.build/handlerecursionerror.pr",

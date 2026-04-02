@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Single step that throws an error indicating the requested dot-navigation access via %MyIdentity.Name% and %MyIdentity.PublicKey% is not implemented.",
+    "description": "Throws an error indicating the requested test (accessing %MyIdentity.Name% and %MyIdentity.PublicKey% via dot navigation) is not implemented.",
     "comment": null,
     "steps": [
       {
@@ -22,7 +22,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "statuscode",
+                "value": 500,
+                "type": "int"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -32,7 +38,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/IdentityDotNavigation.test.goal",
     "prPath": "/.build/identitydotnavigation.test.pr",

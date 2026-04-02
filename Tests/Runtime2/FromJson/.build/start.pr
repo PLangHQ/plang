@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Parses two JSON literals into %obj% and %arr%, then writes selected nested/array fields to output.",
+    "description": "Parses two JSON literals into %obj% and %arr%, then writes selected fields/indices to output.",
     "comment": null,
     "steps": [
       {
@@ -62,6 +62,11 @@
                 "name": "Data",
                 "value": "%obj.name%",
                 "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -88,6 +93,11 @@
               {
                 "name": "Data",
                 "value": "%obj.values[0]%",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
                 "type": "string"
               }
             ],
@@ -116,6 +126,11 @@
                 "name": "Data",
                 "value": "%obj.values[2]%",
                 "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -142,6 +157,11 @@
               {
                 "name": "Data",
                 "value": "%obj.nested.flag%",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
                 "type": "string"
               }
             ],
@@ -213,6 +233,11 @@
                 "name": "Data",
                 "value": "%arr[0].id%",
                 "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -240,6 +265,11 @@
                 "name": "Data",
                 "value": "%arr[1].id%",
                 "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -253,7 +283,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Start.goal",
     "prPath": "/.build/start.pr",

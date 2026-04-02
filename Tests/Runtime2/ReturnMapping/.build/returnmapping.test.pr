@@ -18,7 +18,12 @@
               {
                 "name": "Path",
                 "value": "testfile.txt",
-                "type": "path"
+                "type": "string"
+              },
+              {
+                "name": "ResolveVariables",
+                "value": false,
+                "type": "bool"
               }
             ],
             "return": [
@@ -55,7 +60,7 @@
               {
                 "name": "Actual",
                 "value": "%content%",
-                "type": "object"
+                "type": "string"
               }
             ],
             "return": null,
@@ -81,14 +86,8 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": {
-                  "name": "ComputeValue",
-                  "description": null,
-                  "parallel": false,
-                  "parameters": null,
-                  "prPath": "/.build/computevalue.pr"
-                },
-                "type": "goal.call"
+                "value": "ComputeValue",
+                "type": "string"
               }
             ],
             "return": [
@@ -120,7 +119,12 @@
               {
                 "name": "Value",
                 "value": "%result%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %result% to be not null.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -134,7 +138,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/ReturnMapping.test.goal",
     "prPath": "/.build/returnmapping.test.pr",

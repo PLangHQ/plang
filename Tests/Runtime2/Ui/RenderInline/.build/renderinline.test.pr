@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %name% to \u0027World\u0027, renders an inline template \u0027Hello {{ name }}!\u0027 into %result%, then asserts %result% equals \u0027Hello World!\u0027.",
+    "description": "Sets name variable, renders an inline template with variable substitution into result, then asserts the rendered output equals the expected string.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -54,10 +60,8 @@
               },
               {
                 "name": "Parameters",
-                "value": [
-                  ""
-                ],
-                "type": "list\u003Cobject\u003E"
+                "value": [],
+                "type": "list"
               },
               {
                 "name": "IsFile",
@@ -100,6 +104,11 @@
                 "name": "Actual",
                 "value": "%result%",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %result% to equal \u0027Hello World!\u0027",
+                "type": "string"
               }
             ],
             "return": null,
@@ -113,10 +122,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/RenderInline.test.goal",
-    "prPath": "/.build/renderinline.test.pr",
+    "path": "/RenderInline/RenderInline.test.goal",
+    "prPath": "/RenderInline/.build/renderinline.test.pr",
     "hash": "7972161a6d5fa7ca9f24db193bba0b27b0ba42e02d48402f58c503c2bc0aad36",
     "builderVersion": "0.3",
     "isSetup": false,

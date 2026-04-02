@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Compiles a mock-driven test flow: intercepts file.read and output.write, asserts initial mock state, reads a file to trigger the intercepted action, verifies call count, then resets the mock and asserts call count is cleared.",
+    "description": "Sets up mocks for file.read and output.write, asserts initial mock state, triggers an intercepted file.read by reading a file, verifies call count, then resets the mock and asserts callCount is cleared.",
     "comment": null,
     "steps": [
       {
@@ -24,6 +24,16 @@
                 "name": "ReturnValue",
                 "value": "mocked content",
                 "type": "string"
+              },
+              {
+                "name": "GoalToCall",
+                "value": null,
+                "type": "goal.call"
+              },
+              {
+                "name": "Parameters",
+                "value": {},
+                "type": "dict"
               }
             ],
             "return": [
@@ -60,7 +70,7 @@
               {
                 "name": "Actual",
                 "value": "%mockRead.callCount%",
-                "type": "object"
+                "type": "int"
               },
               {
                 "name": "Message",
@@ -97,7 +107,12 @@
               {
                 "name": "Actual",
                 "value": "%mockRead.actionPattern%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Assert the mock actionPattern is \u0027file.read\u0027.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -129,7 +144,12 @@
               {
                 "name": "Actual",
                 "value": "%mockRead.isSpy%",
-                "type": "object"
+                "type": "bool"
+              },
+              {
+                "name": "Message",
+                "value": "Assert the mock isSpy flag is false initially.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -165,7 +185,13 @@
               },
               {
                 "name": "GoalToCall",
-                "value": null,
+                "value": {
+                  "name": "",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": null
+                },
                 "type": "goal.call"
               },
               {
@@ -208,7 +234,12 @@
               {
                 "name": "Actual",
                 "value": "%spyWrite.isSpy%",
-                "type": "object"
+                "type": "bool"
+              },
+              {
+                "name": "Message",
+                "value": "Assert the output.write mock is marked as a spy (isSpy == true).",
+                "type": "string"
               }
             ],
             "return": null,
@@ -277,7 +308,7 @@
               {
                 "name": "Actual",
                 "value": "%mockRead.callCount%",
-                "type": "object"
+                "type": "int"
               },
               {
                 "name": "Message",
@@ -309,7 +340,7 @@
               {
                 "name": "Mock",
                 "value": "%mockRead%",
-                "type": "mockhandle"
+                "type": "string"
               },
               {
                 "name": "ExpectedCount",
@@ -318,8 +349,8 @@
               },
               {
                 "name": "Message",
-                "value": null,
-                "type": "string?"
+                "value": "",
+                "type": "string"
               }
             ],
             "return": null,
@@ -346,7 +377,7 @@
               {
                 "name": "Mock",
                 "value": "%mockRead%",
-                "type": "mockhandle"
+                "type": "string"
               }
             ],
             "return": null,
@@ -378,7 +409,7 @@
               {
                 "name": "Actual",
                 "value": "%mockRead.callCount%",
-                "type": "object"
+                "type": "int"
               },
               {
                 "name": "Message",
@@ -397,7 +428,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Mock.test.goal",
     "prPath": "/.build/mock.test.pr",

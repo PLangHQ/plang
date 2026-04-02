@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Calls goal Greet twice with different name parameters, then asserts the returned %greeting% matches the expected greeting for each call.",
+    "description": "Calls goal Greet twice with different name parameters, then asserts the returned %greeting% matches the expected string each time.",
     "comment": null,
     "steps": [
       {
@@ -17,17 +17,13 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": {
-                  "name": "Greet",
-                  "parameters": [
-                    {
-                      "name": "name",
-                      "value": "world",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "type": "goal.call"
+                "value": "Greet",
+                "type": "string"
+              },
+              {
+                "name": "name",
+                "value": "world",
+                "type": "string"
               }
             ],
             "return": null,
@@ -60,6 +56,11 @@
                 "name": "Actual",
                 "value": "%greeting%",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Assert that %greeting% equals the literal \u0022hello world\u0022 after the first Greet call.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -85,17 +86,13 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": {
-                  "name": "Greet",
-                  "parameters": [
-                    {
-                      "name": "name",
-                      "value": "plang",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "type": "goal.call"
+                "value": "Greet",
+                "type": "string"
+              },
+              {
+                "name": "name",
+                "value": "plang",
+                "type": "string"
               }
             ],
             "return": null,
@@ -128,6 +125,11 @@
                 "name": "Actual",
                 "value": "%greeting%",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Assert that %greeting% equals the literal \u0022hello plang\u0022 after the second Greet call.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -141,7 +143,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/GoalCall.test.goal",
     "prPath": "/.build/goalcall.test.pr",

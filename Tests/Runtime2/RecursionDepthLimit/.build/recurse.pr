@@ -1,7 +1,7 @@
 [
   {
     "name": "Recurse",
-    "description": "Recurse step increments %depth% by 1 and then recursively calls the Recurse goal.",
+    "description": "Recurse by incrementing %depth% and then calling the Recurse goal again.",
     "comment": null,
     "steps": [
       {
@@ -55,11 +55,8 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": {
-                  "name": "Recurse",
-                  "parameters": []
-                },
-                "type": "goal.call"
+                "value": "Recurse",
+                "type": "string"
               }
             ],
             "return": null,
@@ -73,7 +70,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Recurse.goal",
     "prPath": "/.build/recurse.pr",

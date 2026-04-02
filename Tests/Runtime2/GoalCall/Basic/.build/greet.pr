@@ -1,7 +1,7 @@
 [
   {
     "name": "Greet",
-    "description": "Sets the %greeting% variable to the literal string \u0022hello %name%\u0022 (no interpolation performed by the compiler).",
+    "description": "Sets %greeting% to a templated greeting string using the provided %name% variable reference.",
     "comment": null,
     "steps": [
       {
@@ -24,10 +24,21 @@
                 "name": "Value",
                 "value": "hello %name%",
                 "type": "string"
+              },
+              {
+                "name": "Type",
+                "value": "string",
+                "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -37,7 +48,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Greet.goal",
     "prPath": "/.build/greet.pr",

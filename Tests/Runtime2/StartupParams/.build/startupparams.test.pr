@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %name% to a literal, asserts it equals the expected value, then sets %greeting% using the %name% variable placeholder and asserts %greeting% contains the injected name.",
+    "description": "Sets %name% and asserts it, then sets %greeting% using %name% and asserts it contains the expected substring.",
     "comment": null,
     "steps": [
       {
@@ -24,10 +24,21 @@
                 "name": "Value",
                 "value": "TestUser",
                 "type": "string"
+              },
+              {
+                "name": "Type",
+                "value": "string",
+                "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -55,6 +66,11 @@
               {
                 "name": "Actual",
                 "value": "%name%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %name% to equal \u0022TestUser\u0022",
                 "type": "string"
               }
             ],
@@ -88,10 +104,21 @@
                 "name": "Value",
                 "value": "Hello %name%",
                 "type": "string"
+              },
+              {
+                "name": "Type",
+                "value": "string",
+                "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -120,6 +147,11 @@
                 "name": "Container",
                 "value": "TestUser",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %greeting% to contain \u0022TestUser\u0022",
+                "type": "string"
               }
             ],
             "return": null,
@@ -133,7 +165,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/StartupParams.test.goal",
     "prPath": "/.build/startupparams.test.pr",

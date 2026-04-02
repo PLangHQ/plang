@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %title% to \u0027Welcome\u0027, renders page.html into %result%, then asserts the rendered output contains expected header and body content.",
+    "description": "Sets title, renders page.html into %result%, then asserts the rendered output contains expected header and body content (template includes partial via include tag).",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -51,11 +57,6 @@
                 "name": "Template",
                 "value": "page.html",
                 "type": "string"
-              },
-              {
-                "name": "Parameters",
-                "value": [],
-                "type": "list"
               },
               {
                 "name": "IsFile",
@@ -101,7 +102,7 @@
               },
               {
                 "name": "Message",
-                "value": "Expected rendered output to contain \u0027Header: Welcome\u0027",
+                "value": "Expected %result% to contain \u0027Header: Welcome\u0027",
                 "type": "string"
               }
             ],
@@ -138,7 +139,7 @@
               },
               {
                 "name": "Message",
-                "value": "Rendered output should contain expected body content text.",
+                "value": "Expected rendered %result% to contain \u0027Body content\u0027.",
                 "type": "string"
               }
             ],
@@ -153,10 +154,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/RenderInclude.test.goal",
-    "prPath": "/.build/renderinclude.test.pr",
+    "path": "/RenderInclude/RenderInclude.test.goal",
+    "prPath": "/RenderInclude/.build/renderinclude.test.pr",
     "hash": "f5a069c0614dc3f898da793a4ec9531776bcedcffe6f9dede75a085ab6878f43",
     "builderVersion": "0.3",
     "isSetup": false,

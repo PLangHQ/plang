@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Single step placeholder: the goal currently only contains a throw action with message \u0027not implemented\u0027. No identity creation/switching/verification steps are present yet.",
+    "description": "Step placeholder: the goal currently only contains a throw/not implemented marker, so no engine actions for identity creation/default switching can be mapped yet.",
     "comment": null,
     "steps": [
       {
@@ -22,7 +22,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "statuscode",
+                "value": 500,
+                "type": "int"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -32,7 +38,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/IdentitySwitchDefault.test.goal",
     "prPath": "/.build/identityswitchdefault.test.pr",

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Converts two JSON literals into %obj% and %arr%, then asserts expected fields/array elements using variable-based comparisons.",
+    "description": "Parse two JSON literals into %obj% and %arr%, then assert expected fields/array elements.",
     "comment": null,
     "steps": [
       {
@@ -22,8 +22,19 @@
               },
               {
                 "name": "Value",
-                "value": "{\u0022name\u0022:\u0022test\u0022,\u0022values\u0022:[1,2,3],\u0022nested\u0022:{\u0022flag\u0022:true,\u0022data\u0022:null}}",
-                "type": "string"
+                "value": {
+                  "name": "test",
+                  "values": [
+                    1,
+                    2,
+                    3
+                  ],
+                  "nested": {
+                    "flag": true,
+                    "data": null
+                  }
+                },
+                "type": "dict\u003Cstring,object\u003E"
               },
               {
                 "name": "Type",
@@ -99,6 +110,11 @@
                 "name": "Actual",
                 "value": "%obj.values[0]%",
                 "type": "int"
+              },
+              {
+                "name": "Message",
+                "value": "Assert %obj.values[0]% equals 1",
+                "type": "string"
               }
             ],
             "return": null,
@@ -131,6 +147,11 @@
                 "name": "Actual",
                 "value": "%obj.values[2]%",
                 "type": "int"
+              },
+              {
+                "name": "Message",
+                "value": "Assert %obj.values[2]% equals 3",
+                "type": "string"
               }
             ],
             "return": null,
@@ -157,7 +178,12 @@
               {
                 "name": "Value",
                 "value": "%obj.nested.flag%",
-                "type": "bool"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %obj.nested.flag% to be true",
+                "type": "string"
               }
             ],
             "return": null,
@@ -193,7 +219,7 @@
               },
               {
                 "name": "Type",
-                "value": "json",
+                "value": "json[]",
                 "type": "string"
               }
             ],
@@ -265,6 +291,11 @@
                 "name": "Actual",
                 "value": "%arr[1].id%",
                 "type": "int"
+              },
+              {
+                "name": "Message",
+                "value": "Assert %arr[1].id% equals 2",
+                "type": "string"
               }
             ],
             "return": null,
@@ -278,7 +309,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/FromJson.test.goal",
     "prPath": "/.build/fromjson.test.pr",

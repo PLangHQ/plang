@@ -1,7 +1,7 @@
 [
   {
     "name": "Setup",
-    "description": "Sets the %setupDone% variable to true with pr: null (no explicit value payload).",
+    "description": "Sets the %setupDone% variable to true (with pr: null meaning no additional value).",
     "comment": null,
     "steps": [
       {
@@ -24,15 +24,16 @@
                 "name": "Value",
                 "value": true,
                 "type": "bool"
-              },
-              {
-                "name": "Type",
-                "value": "bool",
-                "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -42,7 +43,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Setup.goal",
     "prPath": "/.build/setup.pr",

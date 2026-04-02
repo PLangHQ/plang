@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets up a JSON string, converts it into a dictionary, iterates over dictionary entries calling ProcessEntry for each item, increments a counter, and asserts the counter equals 3.",
+    "description": "Sets a JSON string into %json%, converts it to a dictionary %dict%, initializes %count%, iterates over %dict% calling ProcessEntry for each item, then asserts %count% equals 3.",
     "comment": null,
     "steps": [
       {
@@ -24,10 +24,21 @@
                 "name": "Value",
                 "value": "{\u0022name\u0022: \u0022Alice\u0022, \u0022age\u0022: \u002230\u0022, \u0022city\u0022: \u0022Reykjavik\u0022}",
                 "type": "string"
+              },
+              {
+                "name": "Type",
+                "value": "json",
+                "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -59,7 +70,7 @@
               },
               {
                 "name": "Type",
-                "value": "dict",
+                "value": "dictionary",
                 "type": "string"
               }
             ],
@@ -99,10 +110,21 @@
                 "name": "Value",
                 "value": 0,
                 "type": "int"
+              },
+              {
+                "name": "Type",
+                "value": "int",
+                "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -125,26 +147,16 @@
               {
                 "name": "Collection",
                 "value": "%dict%",
-                "type": "dictionary"
+                "type": "dict"
               },
               {
                 "name": "GoalName",
                 "value": {
                   "name": "ProcessEntry",
-                  "description": "",
+                  "description": null,
                   "parallel": false,
-                  "parameters": [
-                    {
-                      "name": "item",
-                      "value": "%entry%",
-                      "type": "object"
-                    },
-                    {
-                      "name": "key",
-                      "value": "%key%",
-                      "type": "string"
-                    }
-                  ]
+                  "parameters": null,
+                  "prPath": "/.build/processentry.pr"
                 },
                 "type": "goal.call"
               },
@@ -189,6 +201,11 @@
                 "name": "Actual",
                 "value": "%count%",
                 "type": "int"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %count% to equal 3 after processing entries.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -202,7 +219,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/ForeachDictionary.test.goal",
     "prPath": "/.build/foreachdictionary.test.pr",

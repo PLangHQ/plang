@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Asserts that the engine name variable is not null, then asserts it equals the literal string \u0022Runtime2\u0022.",
+    "description": "Asserts that the engine name variable is set (not null) and equals \u0027Runtime2\u0027.",
     "comment": null,
     "steps": [
       {
@@ -18,7 +18,7 @@
               {
                 "name": "Value",
                 "value": "%!engine.Name%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -55,7 +55,12 @@
               {
                 "name": "Actual",
                 "value": "%!engine.Name%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "engine name should equal Runtime2",
+                "type": "string"
               }
             ],
             "return": null,
@@ -69,10 +74,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ContextVars.test.goal",
-    "prPath": "/.build/contextvars.test.pr",
+    "path": "/Basic/ContextVars.test.goal",
+    "prPath": "/Basic/.build/contextvars.test.pr",
     "hash": "b0e581625fc2ac575c4d940196f0d15530b79441fdf4163a7b44e35af674398d",
     "builderVersion": "0.3",
     "isSetup": false,

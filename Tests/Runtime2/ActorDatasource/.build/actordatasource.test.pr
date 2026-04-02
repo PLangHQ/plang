@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets a settings value, reads it back into a variable, asserts it matches the expected value, then removes the setting.",
+    "description": "Sets a settings key, reads it back into a variable, asserts the value matches, then removes the settings key.",
     "comment": null,
     "steps": [
       {
@@ -88,6 +88,11 @@
                 "name": "Actual",
                 "value": "%val%",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "assert %val% equals \u0027actorValue\u0027",
+                "type": "string"
               }
             ],
             "return": null,
@@ -128,7 +133,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/ActorDatasource.test.goal",
     "prPath": "/.build/actordatasource.test.pr",

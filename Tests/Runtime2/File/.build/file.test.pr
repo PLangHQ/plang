@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Saves a string to a file, reads it back and asserts content, checks existence, copies and verifies, moves and verifies, lists files in the current directory, asserts list is non-null, then deletes created files for cleanup.",
+    "description": "Saves a file, reads and asserts its contents, checks existence, copies and verifies, moves and verifies, lists files, then deletes created files.",
     "comment": null,
     "steps": [
       {
@@ -93,6 +93,11 @@
                 "name": "Actual",
                 "value": "%content%",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %content% to equal \u0022hello world\u0022",
+                "type": "string"
               }
             ],
             "return": null,
@@ -151,7 +156,12 @@
               {
                 "name": "Value",
                 "value": "%info%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Assert that %info% is not null.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -369,6 +379,11 @@
                 "name": "Actual",
                 "value": "%moved%",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Assert that %moved% equals the expected string.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -393,9 +408,9 @@
             "action": "list",
             "parameters": [
               {
-                "name": "Path",
+                "name": "path",
                 "value": ".",
-                "type": "path"
+                "type": "string"
               },
               {
                 "name": "Pattern",
@@ -437,7 +452,12 @@
               {
                 "name": "Value",
                 "value": "%files%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Assert that %files% is not null.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -525,7 +545,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/File.test.goal",
     "prPath": "/.build/file.test.pr",

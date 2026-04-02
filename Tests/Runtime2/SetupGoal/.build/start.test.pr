@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Asserts that %setupDone% is true to ensure the setup goal ran before this goal.",
+    "description": "Asserts that %setupDone% is true (setup goal must have run before this step).",
     "comment": null,
     "steps": [
       {
@@ -23,7 +23,12 @@
               {
                 "name": "Actual",
                 "value": "%setupDone%",
-                "type": "object"
+                "type": "bool"
+              },
+              {
+                "name": "Message",
+                "value": "Setup must be completed before continuing.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -37,7 +42,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Start.test.goal",
     "prPath": "/.build/start.test.pr",

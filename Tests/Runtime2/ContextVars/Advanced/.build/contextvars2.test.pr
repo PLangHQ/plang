@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Builds a goal that asserts the runtime context variables (%!goal.Name%, %!step%, %!context%, %!fileSystem%, %!callStack%) are accessible and not null (except %!goal.Name% which must equal \u0022Start\u0022).",
+    "description": "Asserts that goal metadata and runtime context objects (%!goal.Name%, %!step%, %!context%, %!fileSystem%, %!callStack%) are accessible and not null (or equal to \u0027Start\u0027).",
     "comment": null,
     "steps": [
       {
@@ -23,6 +23,11 @@
               {
                 "name": "Actual",
                 "value": "%!goal.Name%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected goal name to equal \u0027Start\u0027.",
                 "type": "string"
               }
             ],
@@ -50,7 +55,12 @@
               {
                 "name": "Value",
                 "value": "%!step%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Step is accessible",
+                "type": "string"
               }
             ],
             "return": null,
@@ -77,7 +87,12 @@
               {
                 "name": "Value",
                 "value": "%!context%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %!context% to be not null.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -104,7 +119,12 @@
               {
                 "name": "Value",
                 "value": "%!fileSystem%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "fileSystem must not be null",
+                "type": "string"
               }
             ],
             "return": null,
@@ -131,7 +151,12 @@
               {
                 "name": "Value",
                 "value": "%!callStack%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "callStack must not be null",
+                "type": "string"
               }
             ],
             "return": null,
@@ -145,10 +170,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ContextVars2.test.goal",
-    "prPath": "/.build/contextvars2.test.pr",
+    "path": "/Advanced/ContextVars2.test.goal",
+    "prPath": "/Advanced/.build/contextvars2.test.pr",
     "hash": "85619f863448eb43ec701fc1850de420df2fea3a522ce131303290d8f6ae53de",
     "builderVersion": "0.3",
     "isSetup": false,

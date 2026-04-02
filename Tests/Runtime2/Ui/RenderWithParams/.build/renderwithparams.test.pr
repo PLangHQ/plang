@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %title%, renders page.html with explicit author parameter into %result%, then asserts %result% contains the expected Title and Author strings.",
+    "description": "Sets title, renders page.html with explicit author parameter into %result%, then asserts the rendered output contains the expected Title and Author strings.",
     "comment": null,
     "steps": [
       {
@@ -32,7 +32,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -103,11 +109,16 @@
               {
                 "name": "Value",
                 "value": "%result%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Container",
                 "value": "Title: My Page",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %result% to contain \u0027Title: My Page\u0027.",
                 "type": "string"
               }
             ],
@@ -135,11 +146,16 @@
               {
                 "name": "Value",
                 "value": "%result%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Container",
                 "value": "Author: Ingi",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %result% to contain \u0027Author: Ingi\u0027.",
                 "type": "string"
               }
             ],
@@ -154,10 +170,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/RenderWithParams.test.goal",
-    "prPath": "/.build/renderwithparams.test.pr",
+    "path": "/RenderWithParams/RenderWithParams.test.goal",
+    "prPath": "/RenderWithParams/.build/renderwithparams.test.pr",
     "hash": "fd5f4292a59df89e78557a09e4d3b9eb657498f8eff94f7a748741cf33b9ec27",
     "builderVersion": "0.3",
     "isSetup": false,

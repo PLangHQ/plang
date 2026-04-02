@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Single placeholder step that throws a not-implemented error; no engine actions for identity access are defined because the goal is not implemented.",
+    "description": "Single placeholder step that throws an error indicating the test is not implemented yet.",
     "comment": null,
     "steps": [
       {
@@ -22,7 +22,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "statuscode",
+                "value": 500,
+                "type": "int"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -32,7 +38,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/IdentityAutoCreate.test.goal",
     "prPath": "/.build/identityautocreate.test.pr",

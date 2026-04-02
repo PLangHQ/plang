@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Compiles a sequence of assertion steps: not-equals, is-false (with variable set), is-null (with variable set), greater-than, and less-than.",
+    "description": "Builds a sequence of assertion steps: not-equals, is-false (with variable set), is-null (with variable set), greater-than, and less-than.",
     "comment": null,
     "steps": [
       {
@@ -24,6 +24,11 @@
                 "name": "Actual",
                 "value": 5,
                 "type": "int"
+              },
+              {
+                "name": "Message",
+                "value": "",
+                "type": "string"
               }
             ],
             "return": null,
@@ -59,7 +64,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -82,7 +93,12 @@
               {
                 "name": "Value",
                 "value": "%flag%",
-                "type": "bool"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %flag% to be false",
+                "type": "string"
               }
             ],
             "return": null,
@@ -113,12 +129,17 @@
               },
               {
                 "name": "Value",
-                "value": null,
-                "type": "object"
+                "value": null
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -141,7 +162,12 @@
               {
                 "name": "Value",
                 "value": "%nothing%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "",
+                "type": "string"
               }
             ],
             "return": null,
@@ -174,6 +200,11 @@
                 "name": "B",
                 "value": 5,
                 "type": "int"
+              },
+              {
+                "name": "Message",
+                "value": "Expected 10 to be greater than 5",
+                "type": "string"
               }
             ],
             "return": null,
@@ -206,6 +237,11 @@
                 "name": "B",
                 "value": 7,
                 "type": "int"
+              },
+              {
+                "name": "Message",
+                "value": "",
+                "type": "string"
               }
             ],
             "return": null,
@@ -219,7 +255,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Assert.test.goal",
     "prPath": "/.build/assert.test.pr",

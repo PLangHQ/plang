@@ -16,12 +16,12 @@
             "action": "save",
             "parameters": [
               {
-                "name": "Path",
+                "name": "path",
                 "value": "testfile.txt",
                 "type": "path"
               },
               {
-                "name": "Value",
+                "name": "data",
                 "value": "hello from file",
                 "type": "string"
               }
@@ -37,7 +37,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Setup.goal",
     "prPath": "/.build/setup.pr",

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets a template string containing a callGoal tag, renders it to %result%, then asserts the rendered output contains \u0027Error\u0027 because the referenced goal is not loaded/does not exist.",
+    "description": "Sets a template string containing a callGoal tag, renders it to %result%, then asserts the output contains \u0027Error\u0027 because the referenced goal is not loaded/existent.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -51,6 +57,11 @@
                 "name": "Template",
                 "value": "%template%",
                 "type": "string"
+              },
+              {
+                "name": "IsFile",
+                "value": false,
+                "type": "bool"
               }
             ],
             "return": [
@@ -82,12 +93,17 @@
               {
                 "name": "Value",
                 "value": "%result%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Container",
                 "value": "Error",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %result% to contain substring \u0027Error\u0027 when the goal does not exist.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -101,10 +117,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/RenderCallGoal.test.goal",
-    "prPath": "/.build/rendercallgoal.test.pr",
+    "path": "/RenderCallGoal/RenderCallGoal.test.goal",
+    "prPath": "/RenderCallGoal/.build/rendercallgoal.test.pr",
     "hash": "59103672d31071799eaf8404345ad2c389b1ca7b32019366e4f2029e89e8c560",
     "builderVersion": "0.3",
     "isSetup": false,

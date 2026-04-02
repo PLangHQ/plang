@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets depthBefore from callStack.Depth, asserts it is available, calls InnerTest, then captures depthAfter and asserts depth returns to the same value after the call.",
+    "description": "Capture call stack depth before and after calling InnerTest, asserting depth is available and returns to the same value.",
     "comment": null,
     "steps": [
       {
@@ -23,11 +23,17 @@
               {
                 "name": "Value",
                 "value": "%!callStack.Depth%",
-                "type": "object"
+                "type": "long"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -49,8 +55,8 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%depthBefore%",
-                "type": "object"
+                "value": "%depthBefore%?",
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -81,11 +87,8 @@
             "parameters": [
               {
                 "name": "GoalName",
-                "value": {
-                  "name": "InnerTest",
-                  "parameters": []
-                },
-                "type": "goal.call"
+                "value": "InnerTest",
+                "type": "string"
               }
             ],
             "return": null,
@@ -117,11 +120,17 @@
               {
                 "name": "Value",
                 "value": "%!callStack.Depth%",
-                "type": "object"
+                "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -144,12 +153,12 @@
               {
                 "name": "Expected",
                 "value": "%depthBefore%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Actual",
                 "value": "%depthAfter%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -168,7 +177,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/CallStack.test.goal",
     "prPath": "/.build/callstack.test.pr",

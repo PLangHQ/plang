@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Writes call stack depth before and after calling Inner twice, using %!callStack.Depth% runtime variable references.",
+    "description": "Writes call stack depth before and after calling Inner twice, using the provided %!callStack.Depth% placeholder.",
     "comment": null,
     "steps": [
       {
@@ -18,6 +18,11 @@
               {
                 "name": "Data",
                 "value": "Depth before: %!callStack.Depth%\\n",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
                 "type": "string"
               }
             ],
@@ -45,7 +50,11 @@
               {
                 "name": "GoalName",
                 "value": {
-                  "name": "Inner"
+                  "name": "Inner",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": "/.build/inner.pr"
                 },
                 "type": "goal.call"
               }
@@ -75,6 +84,11 @@
                 "name": "Data",
                 "value": "Depth after: %!callStack.Depth%\\n",
                 "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -101,7 +115,11 @@
               {
                 "name": "GoalName",
                 "value": {
-                  "name": "Inner"
+                  "name": "Inner",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": "/.build/inner.pr"
                 },
                 "type": "goal.call"
               }
@@ -117,7 +135,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Start.goal",
     "prPath": "/.build/start.pr",

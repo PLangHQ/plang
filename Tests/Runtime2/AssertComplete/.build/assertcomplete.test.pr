@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Maps each goal step to engine actions: assertions for equality, truthiness, non-nullness, and substring containment, with variable setting for the latter three checks.",
+    "description": "Maps each assertion-related step to the corresponding assert action, with preceding variable set steps where specified.",
     "comment": null,
     "steps": [
       {
@@ -59,7 +59,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -82,7 +88,7 @@
               {
                 "name": "Value",
                 "value": "%flag%",
-                "type": "bool"
+                "type": "string"
               }
             ],
             "return": null,
@@ -118,7 +124,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -141,7 +153,7 @@
               {
                 "name": "Value",
                 "value": "%val%",
-                "type": "object"
+                "type": "string"
               }
             ],
             "return": null,
@@ -177,7 +189,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -206,6 +224,11 @@
                 "name": "Container",
                 "value": "world",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %text% to contain \u0022world\u0022",
+                "type": "string"
               }
             ],
             "return": null,
@@ -219,7 +242,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/AssertComplete.test.goal",
     "prPath": "/.build/assertcomplete.test.pr",

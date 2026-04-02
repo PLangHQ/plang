@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Single step goal currently marked as not implemented; compiler maps it to an error throw action.",
+    "description": "Single step placeholder that throws a not-implemented error (no identity actions provided).",
     "comment": null,
     "steps": [
       {
@@ -22,7 +22,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "statuscode",
+                "value": 500,
+                "type": "int"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -32,7 +38,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/IdentityArchiveNonDefault.test.goal",
     "prPath": "/.build/identityarchivenondefault.test.pr",

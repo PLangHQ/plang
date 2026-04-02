@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets nested object %deep% and list %list%, then asserts specific nested fields match expected values.",
+    "description": "Sets nested object %deep% and list %list%, then asserts specific nested values are present and equal to expected literals.",
     "comment": null,
     "steps": [
       {
@@ -42,7 +42,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -64,8 +70,13 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%deep.a%",
-                "type": "object"
+                "value": "%deep.a%?",
+                "type": "json"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %deep.a% to not be null",
+                "type": "string"
               }
             ],
             "return": null,
@@ -97,7 +108,12 @@
               {
                 "name": "Actual",
                 "value": "%deep.a.b.c.d.e%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "",
+                "type": "string"
               }
             ],
             "return": null,
@@ -147,16 +163,17 @@
                     ]
                   }
                 ],
-                "type": "array"
-              },
-              {
-                "name": "Type",
-                "value": "array",
-                "type": "string"
+                "type": "object"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -184,7 +201,12 @@
               {
                 "name": "Actual",
                 "value": "%list[0].items[0].val%",
-                "type": "object"
+                "type": "int"
+              },
+              {
+                "name": "Message",
+                "value": "",
+                "type": "string"
               }
             ],
             "return": null,
@@ -216,7 +238,12 @@
               {
                 "name": "Actual",
                 "value": "%list[0].items[1].val%",
-                "type": "object"
+                "type": "int"
+              },
+              {
+                "name": "Message",
+                "value": "",
+                "type": "string"
               }
             ],
             "return": null,
@@ -248,7 +275,12 @@
               {
                 "name": "Actual",
                 "value": "%list[1].items[0].val%",
-                "type": "object"
+                "type": "int"
+              },
+              {
+                "name": "Message",
+                "value": "",
+                "type": "string"
               }
             ],
             "return": null,
@@ -262,7 +294,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/DeepNavigation.test.goal",
     "prPath": "/.build/deepnavigation.test.pr",

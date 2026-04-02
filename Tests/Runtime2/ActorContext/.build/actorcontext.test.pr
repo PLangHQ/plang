@@ -18,7 +18,12 @@
               {
                 "name": "Value",
                 "value": "%!engine%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %!engine% to be not null.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -45,7 +50,12 @@
               {
                 "name": "Value",
                 "value": "%!context%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %!context% to be not null.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -72,7 +82,12 @@
               {
                 "name": "Value",
                 "value": "%!memoryStack%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "memoryStack must not be null",
+                "type": "string"
               }
             ],
             "return": null,
@@ -86,7 +101,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/ActorContext.test.goal",
     "prPath": "/.build/actorcontext.test.pr",

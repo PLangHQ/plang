@@ -1,7 +1,7 @@
 [
   {
     "name": "ComputeValue",
-    "description": "Sets the %answer% variable to 42.",
+    "description": "Sets the %answer% variable to 42 in the ComputeValue goal.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -37,7 +43,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/ComputeValue.goal",
     "prPath": "/.build/computevalue.pr",

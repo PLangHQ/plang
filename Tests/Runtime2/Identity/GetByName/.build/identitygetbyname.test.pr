@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Single step goal: throw a not implemented error (placeholder).",
+    "description": "Single step: throw an error indicating the goal is not implemented.",
     "comment": null,
     "steps": [
       {
@@ -22,7 +22,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "statuscode",
+                "value": 500,
+                "type": "int"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -32,7 +38,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/IdentityGetByName.test.goal",
     "prPath": "/.build/identitygetbyname.test.pr",

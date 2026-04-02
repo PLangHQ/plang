@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Creates a file, sets an inner flag, checks whether the file exists, conditionally sets the flag to yes, then asserts the flag is yes.",
+    "description": "Saves a file, sets an inner flag, checks file existence with an if condition, sets the flag in the true branch, then asserts the flag value.",
     "comment": null,
     "steps": [
       {
@@ -59,7 +59,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -76,12 +82,30 @@
         "comment": null,
         "actions": [
           {
+            "module": "file",
+            "action": "exists",
+            "parameters": [
+              {
+                "name": "Path",
+                "value": "testfile.txt",
+                "type": "path"
+              }
+            ],
+            "return": [
+              {
+                "name": "fileInfo",
+                "value": null
+              }
+            ],
+            "defaults": null
+          },
+          {
             "module": "condition",
             "action": "if",
             "parameters": [
               {
                 "name": "Left",
-                "value": "testfile.txt exists",
+                "value": "%fileInfo.Exists%",
                 "type": "bool"
               },
               {
@@ -99,6 +123,44 @@
             "defaults": [
               {
                 "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "set %innerRan% = \u0022yes\u0022",
+        "lineNumber": 6,
+        "indent": 1,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%innerRan%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "yes",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "asdefault",
                 "value": false,
                 "type": "bool"
               }
@@ -151,8 +213,8 @@
     ],
     "goals": [],
     "visibility": 1,
-    "path": "/FileExistsSubSteps/ConditionFileExistsSubSteps.test.goal",
-    "prPath": "/FileExistsSubSteps/.build/conditionfileexistssubsteps.test.pr",
+    "path": "/ConditionFileExistsSubSteps.test.goal",
+    "prPath": "/.build/conditionfileexistssubsteps.test.pr",
     "hash": "d420210fbe207ea104aa6663b47743ef3fd803669e8b75f2f608316b10da4d95",
     "builderVersion": "0.3",
     "isSetup": false,

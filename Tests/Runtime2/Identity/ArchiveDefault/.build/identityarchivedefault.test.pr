@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Single-step goal that throws an error with message \u0022not implemented\u0022 (used as a placeholder for the intended archive/verification logic).",
+    "description": "Single step that throws an error with message \u0027not implemented\u0027.",
     "comment": null,
     "steps": [
       {
@@ -22,7 +22,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "statuscode",
+                "value": 500,
+                "type": "int"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -32,7 +38,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/IdentityArchiveDefault.test.goal",
     "prPath": "/.build/identityarchivedefault.test.pr",

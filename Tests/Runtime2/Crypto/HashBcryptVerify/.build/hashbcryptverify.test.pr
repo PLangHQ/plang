@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets a password, hashes it with bcrypt, verifies the hash against the original password, then asserts the verification result is true.",
+    "description": "Sets a password, hashes it with bcrypt, verifies the hash against the original password, then asserts verification succeeds.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -54,7 +60,7 @@
               },
               {
                 "name": "Algorithm",
-                "value": "bcrypt",
+                "value": "keccak256",
                 "type": "string"
               }
             ],
@@ -129,7 +135,7 @@
               {
                 "name": "Value",
                 "value": "%isValid%",
-                "type": "data"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -148,10 +154,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/HashBcryptVerify.test.goal",
-    "prPath": "/.build/hashbcryptverify.test.pr",
+    "path": "/HashBcryptVerify/HashBcryptVerify.test.goal",
+    "prPath": "/HashBcryptVerify/.build/hashbcryptverify.test.pr",
     "hash": "ea4ef9d721512fe5c8172833d5ef04ae86edbd498b5aef2b2c081c9a9464c146",
     "builderVersion": "0.3",
     "isSetup": false,

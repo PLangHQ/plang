@@ -1,7 +1,7 @@
 [
   {
     "name": "HandleMockPost",
-    "description": "Skips the current action in response to a mock/event condition, setting the skip value to the literal string \u0022post handled\u0022.",
+    "description": "Skips the current action in response to the event, setting the skip value to \u0027post handled\u0027.",
     "comment": null,
     "steps": [
       {
@@ -18,7 +18,7 @@
               {
                 "name": "Value",
                 "value": "post handled",
-                "type": "object"
+                "type": "string"
               }
             ],
             "return": null,
@@ -32,7 +32,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/HandleMockPost.goal",
     "prPath": "/.build/handlemockpost.pr",

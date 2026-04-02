@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Single-step goal that throws an error indicating the implementation is not provided.",
+    "description": "Single step that throws an error indicating the goal is not implemented.",
     "comment": null,
     "steps": [
       {
@@ -22,7 +22,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "statuscode",
+                "value": 500,
+                "type": "int"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -32,7 +38,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/LlmQuery.test.goal",
     "prPath": "/.build/llmquery.test.pr",

@@ -43,7 +43,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/ProcessItem.goal",
     "prPath": "/.build/processitem.pr",

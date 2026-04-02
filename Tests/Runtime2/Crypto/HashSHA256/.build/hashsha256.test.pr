@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %data% to a literal string, hashes it using explicit sha256, writes the result to %hash%, then asserts the hash is not empty.",
+    "description": "Sets %data% to \u0027hello world\u0027, hashes it using explicit sha256 into %hash%, then asserts the resulting hash is not empty.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -65,30 +71,6 @@
               }
             ],
             "defaults": null
-          },
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%hash%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "hash",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
           }
         ],
         "intent": null,
@@ -130,10 +112,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/HashSHA256.test.goal",
-    "prPath": "/.build/hashsha256.test.pr",
+    "path": "/HashSHA256/HashSHA256.test.goal",
+    "prPath": "/HashSHA256/.build/hashsha256.test.pr",
     "hash": "e83eb8a0c38286de08c91dcc6f3dfc3f86bfa97079e4fcec5880969447188917",
     "builderVersion": "0.3",
     "isSetup": false,

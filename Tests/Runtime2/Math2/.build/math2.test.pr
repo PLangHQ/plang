@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Generates a random number between 1 and 100, stores it in %rand%, then asserts it is not null and falls within (0, 101).",
+    "description": "Generates a random number between 1 and 100, stores it in %rand%, then asserts it is not null and within the expected bounds.",
     "comment": null,
     "steps": [
       {
@@ -55,7 +55,12 @@
               {
                 "name": "Value",
                 "value": "%rand%",
-                "type": "object"
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %rand% to not be null.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -82,12 +87,17 @@
               {
                 "name": "A",
                 "value": "%rand%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "B",
-                "value": 0,
-                "type": "int"
+                "value": "0",
+                "type": "data"
+              },
+              {
+                "name": "Message",
+                "value": "Assert that %rand% is greater than 0.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -114,12 +124,17 @@
               {
                 "name": "A",
                 "value": "%rand%",
-                "type": "object"
+                "type": "data"
               },
               {
                 "name": "B",
-                "value": 101,
-                "type": "int"
+                "value": "101",
+                "type": "data"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %rand% to be less than 101.",
+                "type": "string"
               }
             ],
             "return": null,
@@ -133,7 +148,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Math2.test.goal",
     "prPath": "/.build/math2.test.pr",

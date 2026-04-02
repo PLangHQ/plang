@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Writes the engine name variable reference to output.",
+    "description": "Writes an output line containing the engine name variable reference.",
     "comment": null,
     "steps": [
       {
@@ -17,7 +17,12 @@
             "parameters": [
               {
                 "name": "Data",
-                "value": "%!engine.Name%  \u003C= pr: null",
+                "value": "%!engine.Name%",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
                 "type": "string"
               }
             ],
@@ -32,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/Start.goal",
-    "prPath": "/.build/start.pr",
+    "path": "/Basic/Start.goal",
+    "prPath": "/Basic/.build/start.pr",
     "hash": "1b3aff6e10b82b9c003d84e8015b6b2c6d5a0d00029529bafcc80efb3f6359a3",
     "builderVersion": "0.3",
     "isSetup": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %data% to a literal string, hashes it using the default algorithm (keccak256) into %hash%, then asserts that %hash% is not empty.",
+    "description": "Set %data% to \u0027hello world\u0027, hash it with default algorithm (keccak256) into %hash%, then assert the hash is not empty.",
     "comment": null,
     "steps": [
       {
@@ -27,7 +27,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -51,11 +57,6 @@
                 "name": "Data",
                 "value": "%data%",
                 "type": "string"
-              },
-              {
-                "name": "Algorithm",
-                "value": "keccak256",
-                "type": "string"
               }
             ],
             "return": [
@@ -64,29 +65,11 @@
                 "value": null
               }
             ],
-            "defaults": null
-          },
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%hash%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "hash",
-                "type": "string"
-              }
-            ],
-            "return": null,
             "defaults": [
               {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
+                "name": "algorithm",
+                "value": "keccak256",
+                "type": "string"
               }
             ]
           }
@@ -106,10 +89,15 @@
         "actions": [
           {
             "module": "assert",
-            "action": "isNotNull",
+            "action": "notEquals",
             "parameters": [
               {
-                "name": "Value",
+                "name": "Expected",
+                "value": "",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
                 "value": "%hash%",
                 "type": "string"
               },
@@ -130,10 +118,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/HashDefault.test.goal",
-    "prPath": "/.build/hashdefault.test.pr",
+    "path": "/HashDefault/HashDefault.test.goal",
+    "prPath": "/HashDefault/.build/hashdefault.test.pr",
     "hash": "88e9c5eef8970c8e3db91c82c916d642254d5fb0f21b9f61e6d9ab99ef30eaf6",
     "builderVersion": "0.3",
     "isSetup": false,

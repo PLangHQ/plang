@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Builds and mutates %myList%, then derives count/first/last/contains/joined/split results and writes them to output.",
+    "description": "Builds a list, appends an item, then writes the list and derived values (count, first, last, contains check, join, and split).",
     "comment": null,
     "steps": [
       {
@@ -33,6 +33,11 @@
                 "name": "Type",
                 "value": "list",
                 "type": "string"
+              },
+              {
+                "name": "AsDefault",
+                "value": false,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -64,6 +69,11 @@
               {
                 "name": "Value",
                 "value": 40,
+                "type": "object"
+              },
+              {
+                "name": "AtIndex",
+                "value": -1,
                 "type": "int"
               }
             ],
@@ -92,6 +102,11 @@
                 "name": "Data",
                 "value": "After add: %myList%",
                 "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -118,7 +133,7 @@
               {
                 "name": "ListName",
                 "value": "%myList%",
-                "type": "list"
+                "type": "string"
               }
             ],
             "return": [
@@ -150,6 +165,11 @@
               {
                 "name": "Data",
                 "value": "Count: %count%",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
                 "type": "string"
               }
             ],
@@ -236,7 +256,7 @@
               {
                 "name": "ListName",
                 "value": "%myList%",
-                "type": "string"
+                "type": "list"
               }
             ],
             "return": [
@@ -268,6 +288,11 @@
               {
                 "name": "Data",
                 "value": "Last: %last%",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
                 "type": "string"
               }
             ],
@@ -333,6 +358,11 @@
                 "name": "Data",
                 "value": "Contains 20: %has20%",
                 "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -396,6 +426,11 @@
               {
                 "name": "Data",
                 "value": "Joined: %joined%",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
                 "type": "string"
               }
             ],
@@ -466,6 +501,11 @@
                 "name": "Data",
                 "value": "Split: %parts%",
                 "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
               }
             ],
             "return": null,
@@ -479,7 +519,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Start.goal",
     "prPath": "/.build/start.pr",

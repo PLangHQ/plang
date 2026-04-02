@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Asserts that Now and NowUtc are not null, then snapshots GUID into guid1 and guid2, asserts both are not null, and asserts guid1 differs from guid2.",
+    "description": "Asserts that Now and NowUtc are not null, then snapshots GUID into guid1 and guid2, asserts both are not null, and asserts guid1 != guid2.",
     "comment": null,
     "steps": [
       {
@@ -18,7 +18,7 @@
               {
                 "name": "Value",
                 "value": "%Now%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -50,7 +50,7 @@
               {
                 "name": "Value",
                 "value": "%NowUtc%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -87,11 +87,11 @@
               {
                 "name": "Value",
                 "value": "%GUID%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Type",
-                "value": null,
+                "value": "guid",
                 "type": "string"
               },
               {
@@ -129,11 +129,6 @@
               {
                 "name": "Value",
                 "value": "%GUID%",
-                "type": "object"
-              },
-              {
-                "name": "Type",
-                "value": null,
                 "type": "string"
               },
               {
@@ -166,7 +161,7 @@
               {
                 "name": "Value",
                 "value": "%guid1%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -198,7 +193,7 @@
               {
                 "name": "Value",
                 "value": "%guid2%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -230,12 +225,12 @@
               {
                 "name": "Expected",
                 "value": "%guid2%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Actual",
                 "value": "%guid1%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -254,7 +249,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/SystemVariables.test.goal",
     "prPath": "/.build/systemvariables.test.pr",

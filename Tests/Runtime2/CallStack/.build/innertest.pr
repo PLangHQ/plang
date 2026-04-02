@@ -23,11 +23,17 @@
               {
                 "name": "Value",
                 "value": "%!callStack.Depth%",
-                "type": "object"
+                "type": "string"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -50,7 +56,7 @@
               {
                 "name": "Value",
                 "value": "%innerDepth%",
-                "type": "object"
+                "type": "string"
               },
               {
                 "name": "Message",
@@ -69,7 +75,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/InnerTest.goal",
     "prPath": "/.build/innertest.pr",
