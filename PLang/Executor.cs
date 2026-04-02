@@ -100,14 +100,14 @@ namespace PLang
 				{
 					var results = systemMs.GetValue("testResults") as List<object?>;
 					if (results == null) return "No test results";
-					var passed = results.Count(r => r is Runtime2.Engine.Memory.Data d && d.Success);
+					var passed = results.Count(r => r is not Runtime2.Engine.Memory.Data d || d.Success);
 					var failed = results.Count - passed;
 
 					var sb = new System.Text.StringBuilder();
 					sb.AppendLine();
 					sb.AppendLine($"{passed} passed, {failed} failed out of {results.Count} tests");
 
-					foreach (var r in results.OfType<Runtime2.Engine.Memory.Data>().Where(r => !r.Success))
+					foreach (var r in results.OfType<Runtime2.Engine.Memory.Data>().Where(r => r.Success == false))
 					{
 						var error = r.Error;
 						var step = error?.Step;

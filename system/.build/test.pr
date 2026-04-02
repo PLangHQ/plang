@@ -83,7 +83,7 @@
           "indent": 0,
           "actions": [{"module": "list", "action": "add", "parameters": [
             {"name": "ListName", "value": "testResults", "type": "string"},
-            {"name": "Value", "value": "%data%", "type": "object"}
+            {"name": "Value", "value": "%result%", "type": "object"}
           ]}],
           "waitForExecution": true
         }

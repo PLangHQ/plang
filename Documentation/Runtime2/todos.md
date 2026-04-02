@@ -612,3 +612,7 @@ The guidance text from BuildGoal's LLM would flow into BuildStep's prompt as add
 **Context:** Setup (run-once DDL/init at app startup) exists in C# (`Setup.RunAsync`). Needs to move to PLang orchestration like error handling and caching did. Blocked on db module — setup needs to read/write the "setup" table in system.sqlite to track executed steps by hash.
 
 **Approach:** C# actions: `setup.discover` (find setup.pr files), `setup.check` (is step hash executed), `setup.record` (mark step done). PLang orchestration in run.pr before user goal. Tolerable errors (already exists, duplicate column) handled via error.check filtering. Requires db module for the settings store queries.
+
+## Everything in PLang should be Data<T>
+**Date:** 2026-04-02
+**Context:** Engine, Goal, Step, Action — all should be `Data<T>`. This allows them to be used directly in PLang variable expressions. Engine becomes `Data<Engine>`, accessible as `%!engine.Name%` etc. No special wrapping needed — the type IS the Data.
