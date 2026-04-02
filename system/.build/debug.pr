@@ -8,8 +8,8 @@
     {
       "name": "DebugAfterStep",
       "steps": [
-        {"index": 0, "indent": 0, "text": "write to debugger '  => success=%__data__.Success% value=%__data__%'",
-          "actions": [{"module": "output", "action": "write", "parameters": [{"name": "Data", "value": "  => success=%__data__.Success% value=%__data__%", "type": "string"}, {"name": "Channels", "value": "debugger", "type": "string"}]}], "waitForExecution": true}
+        {"index": 0, "indent": 0, "text": "write to debugger '  => success=%data.Success% value=%data%'",
+          "actions": [{"module": "output", "action": "write", "parameters": [{"name": "Data", "value": "  => success=%data.Success% value=%data%", "type": "string"}, {"name": "Channels", "value": "debugger", "type": "string"}]}], "waitForExecution": true}
       ],
       "goals": [], "visibility": 0, "path": "/system/debug.goal", "prPath": "/system/.build/debug.pr", "isSystem": true
     }
