@@ -255,7 +255,7 @@
       "waitForExecution": true
     }
   ],
-  "subGoals": [],
+  "goals": [],
   "visibility": 0,
   "path": "/system/builder/BuildGoal.goal",
   "prPath": "/system/builder/.build/handlebuildgoalfailure.pr",

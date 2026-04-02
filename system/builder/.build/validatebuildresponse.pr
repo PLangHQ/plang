@@ -69,12 +69,12 @@
             },
             {
               "name": "GoalName",
-              "value": "ValidateStep",
+              "value": {"name": "ValidateStep"},
               "type": "goal.call"
             },
             {
               "name": "ItemName",
-              "value": "%step%",
+              "value": "step",
               "type": "string"
             }
           ]
@@ -83,7 +83,7 @@
       "waitForExecution": true
     }
   ],
-  "subGoals": [],
+  "goals": [],
   "visibility": 1,
   "path": "/system/builder/ValidateBuildResponse.goal",
   "prPath": "/system/builder/.build/validatebuildresponse.pr",

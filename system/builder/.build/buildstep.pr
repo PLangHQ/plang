@@ -280,7 +280,7 @@
       "waitForExecution": true
     }
   ],
-  "subGoals": [],
+  "goals": [],
   "visibility": 0,
   "path": "/system/builder/BuildStep.goal",
   "prPath": "/system/builder/.build/buildstep.pr",

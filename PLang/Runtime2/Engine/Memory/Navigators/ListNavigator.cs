@@ -9,11 +9,12 @@ namespace PLang.Runtime2.Engine.Memory.Navigators;
 public class ListNavigator : IValueNavigator
 {
     public bool CanNavigate(object value)
-        => value is IList;
+        => value is IList || IsGenericList(value);
 
     public object? GetProperty(object value, string key)
     {
-        if (value is not IList list || list.Count == 0)
+        var list = value as IList ?? WrapGenericList(value);
+        if (list == null || list.Count == 0)
             return null;
 
         // Numeric index
@@ -39,5 +40,24 @@ public class ListNavigator : IValueNavigator
         // Implicit first: delegate to first element's navigator
         // e.g. %addresses.street% → addresses[0].street
         return ValueNavigators.Navigate(list[0]!, key);
+    }
+
+    private static bool IsGenericList(object value)
+        => value.GetType().GetInterfaces().Any(i =>
+            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+
+    private static IList? WrapGenericList(object value)
+    {
+        // Find IList<T> and use Count + indexer via reflection
+        var iface = value.GetType().GetInterfaces().FirstOrDefault(i =>
+            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+        if (iface == null) return null;
+
+        var count = (int)iface.GetProperty("Count")!.GetValue(value)!;
+        var indexer = iface.GetProperty("Item")!;
+        var wrapper = new object?[count];
+        for (int i = 0; i < count; i++)
+            wrapper[i] = indexer.GetValue(value, [i]);
+        return wrapper;
     }
 }

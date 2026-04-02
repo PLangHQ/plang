@@ -48,7 +48,7 @@
       "waitForExecution": true
     }
   ],
-  "subGoals": [],
+  "goals": [],
   "visibility": 0,
   "path": "/system/builder/ValidateBuildResponse.goal",
   "prPath": "/system/builder/.build/validatestep.pr",

@@ -107,7 +107,7 @@
       "waitForExecution": true
     }
   ],
-  "subGoals": [],
+  "goals": [],
   "visibility": 0,
   "path": "/system/builder/ApplyStep.goal",
   "prPath": "/system/builder/.build/processstep.pr",

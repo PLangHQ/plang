@@ -190,12 +190,12 @@
             },
             {
               "name": "GoalName",
-              "value": "BuildGoal",
+              "value": {"name": "BuildGoal"},
               "type": "goal.call"
             },
             {
               "name": "ItemName",
-              "value": "%goal%",
+              "value": "goal",
               "type": "string"
             }
           ],
@@ -232,7 +232,7 @@
       "waitForExecution": true
     }
   ],
-  "subGoals": [],
+  "goals": [],
   "visibility": 1,
   "inputParameters": {
     "%path%": "The folder path to build, defaults to '.' if not provided."

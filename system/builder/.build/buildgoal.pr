@@ -268,12 +268,12 @@
             },
             {
               "name": "GoalName",
-              "value": "ApplyStep",
+              "value": {"name": "ApplyStep"},
               "type": "goal.call"
             },
             {
               "name": "ItemName",
-              "value": "%stepResult%",
+              "value": "stepResult",
               "type": "string"
             }
           ],
@@ -335,7 +335,7 @@
       "waitForExecution": true
     }
   ],
-  "subGoals": [],
+  "goals": [],
   "visibility": 1,
   "path": "/system/builder/BuildGoal.goal",
   "prPath": "/system/builder/.build/buildgoal.pr",
