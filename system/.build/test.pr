@@ -69,12 +69,11 @@
         },
         {
           "index": 1,
-          "text": "call %testFile.GoalCall%, write to %result%",
+          "text": "runtime run %testFile.GoalCall%, write to %result%",
           "indent": 0,
-          "actions": [{"module": "goal", "action": "call", "parameters": [
+          "actions": [{"module": "runtime", "action": "run", "parameters": [
             {"name": "GoalName", "value": "%testFile.GoalCall%", "type": "goal.call"}
           ], "return": [{"name": "result"}]}],
-          "onError": {"ignoreError": true},
           "waitForExecution": true
         },
         {

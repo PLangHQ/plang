@@ -106,7 +106,11 @@ public sealed partial class @this
     public void SetStepBackReferences()
     {
         foreach (var step in Steps) step.Goal = this;
-        foreach (var sub in Goals) sub.SetStepBackReferences();
+        foreach (var sub in Goals)
+        {
+            sub.Parent = this;
+            sub.SetStepBackReferences();
+        }
     }
 
     /// <summary>

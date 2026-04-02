@@ -115,14 +115,10 @@ public class PathData : Data
             var rel = Relative.Replace('\\', '/');
             var dir = _fs.Path.GetDirectoryName(rel)?.Replace('\\', '/') ?? "";
             var baseName = _fs.Path.GetFileNameWithoutExtension(rel);
-            // Strip .test or .goal suffix for the name
-            var name = baseName;
-            if (name.EndsWith(".test", StringComparison.OrdinalIgnoreCase))
-                name = name[..^5];
             // Build PrPath: dir/.build/basename.pr
             var prDir = string.IsNullOrEmpty(dir) ? ".build" : $"{dir}/.build";
             var prPath = $"/{prDir}/{baseName.ToLowerInvariant()}.pr";
-            return new Goals.Goal.GoalCall { Name = name, PrPath = prPath };
+            return new Goals.Goal.GoalCall { Name = "", PrPath = prPath };
         }
     }
 

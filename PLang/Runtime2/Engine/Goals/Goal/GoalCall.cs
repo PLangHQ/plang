@@ -57,7 +57,7 @@ public sealed class GoalCall : modules.IEvent
                 string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
             if (subGoal != null) return subGoal;
 
-            break;
+            currentGoal = currentGoal.Parent;
         }
 
         // 2. Check engine's loaded goals

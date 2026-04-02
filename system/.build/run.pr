@@ -15,12 +15,22 @@
       "actions": [{"module": "goal", "action": "return", "parameters": []}], "waitForExecution": true},
     {"index": 6, "indent": 0, "text": "if %!debug% != false, call SetupDebug",
       "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%!debug%", "type": "bool"}, {"name": "Operator", "value": "!="}, {"name": "Right", "value": false, "type": "bool"}, {"name": "GoalIfTrue", "value": {"name": "SetupDebug"}, "type": "goal.call"}]}], "waitForExecution": true},
-    {"index": 7, "indent": 0, "text": "read file %goalFile%, write to %goal%",
-      "actions": [{"module": "file", "action": "read", "parameters": [{"name": "Path", "value": "%goalFile%", "type": "path"}], "return": [{"name": "goal"}]}], "waitForExecution": true},
-    {"index": 8, "indent": 0, "text": "foreach %goal.Steps%, call RunStep, item=%step%",
-      "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%goal.Steps%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunStep"}, "type": "goal.call"}, {"name": "ItemName", "value": "step", "type": "string"}]}], "waitForExecution": true}
+    {"index": 7, "indent": 0, "text": "call RunGoal",
+      "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "RunGoal"}, "type": "goal.call"}]}], "waitForExecution": true}
   ],
   "goals": [
+    {
+      "name": "RunGoal",
+      "steps": [
+        {"index": 0, "indent": 0, "text": "if %goal% is null",
+          "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%goal%", "type": "object"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": null, "type": "object"}]}], "waitForExecution": true},
+        {"index": 1, "indent": 1, "text": "read file %goalFile%, write to %goal%",
+          "actions": [{"module": "file", "action": "read", "parameters": [{"name": "Path", "value": "%goalFile%", "type": "path"}], "return": [{"name": "goal"}]}], "waitForExecution": true},
+        {"index": 2, "indent": 0, "text": "foreach %goal.Steps%, call RunStep, item=%step%",
+          "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%goal.Steps%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunStep"}, "type": "goal.call"}, {"name": "ItemName", "value": "step", "type": "string"}]}], "waitForExecution": true}
+      ],
+      "goals": [], "visibility": 0, "path": "/system/run.goal", "prPath": "/system/.build/run.pr", "isSystem": true
+    },
     {
       "name": "SetupDebug",
       "steps": [
