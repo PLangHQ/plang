@@ -33,8 +33,8 @@
         "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%!debug%", "type": "bool"}, {"name": "Operator", "value": "!="}, {"name": "Right", "value": false, "type": "bool"}]}], "waitForExecution": true},
       {"index": 8, "indent": 1, "text": "write to debugger result",
         "actions": [{"module": "output", "action": "write", "parameters": [{"name": "Data", "value": "  => success=%data.Success% value=%data%", "type": "string"}, {"name": "Channels", "value": "debugger", "type": "string"}]}], "waitForExecution": true},
-      {"index": 9, "indent": 0, "text": "check %data%",
-        "actions": [{"module": "error", "action": "check", "parameters": [{"name": "Data", "value": "%data%", "type": "object"}]}], "waitForExecution": true},
+      {"index": 9, "indent": 0, "text": "check %data% %step%",
+        "actions": [{"module": "error", "action": "check", "parameters": [{"name": "Data", "value": "%data%", "type": "object"}, {"name": "Step", "value": "%step%", "type": "object"}]}], "waitForExecution": true},
       {"index": 10, "indent": 0, "text": "foreach after events",
         "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%step.events.after%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"}, {"name": "ItemName", "value": "event", "type": "string"}]}], "waitForExecution": true}
     ],

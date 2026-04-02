@@ -14,13 +14,13 @@ namespace PLang.Runtime2.modules.error;
 public partial class Check : IContext, IAction
 {
     public partial Data Data { get; init; }
+    public partial Step? Step { get; init; }
 
     public async Task<Data> Run()
     {
         if (Data == null || Data.Success) return Data ?? Engine.Memory.Data.Ok();
 
-        var userStep = Context.MemoryStack.GetValue("step") as PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;
-        var onError = userStep?.OnError;
+        var onError = Step?.OnError;
 
         // No error handler — propagate
         if (onError == null)
@@ -46,9 +46,9 @@ public partial class Check : IContext, IAction
         if (order == ErrorOrder.GoalFirst)
         {
             // Goal first (e.g. fix preconditions), then retry
-            await CallErrorGoal(engine, userStep!, onError);
+            await CallErrorGoal(engine, Step!, onError);
 
-            var retryResult = await Retry(engine, userStep!);
+            var retryResult = await Retry(engine, Step!);
             if (retryResult != null) return retryResult;
 
             // Goal ran but no retry or retry failed — goal alone counts as handled
@@ -57,12 +57,12 @@ public partial class Check : IContext, IAction
         else
         {
             // Retry first (default), then error goal as fallback
-            var retryResult = await Retry(engine, userStep!);
+            var retryResult = await Retry(engine, Step!);
             if (retryResult != null) return retryResult;
 
             if (onError.Goal != null)
             {
-                await CallErrorGoal(engine, userStep!, onError);
+                await CallErrorGoal(engine, Step!, onError);
                 return Engine.Memory.Data.Ok();
             }
         }
@@ -76,9 +76,9 @@ public partial class Check : IContext, IAction
     /// Retry the step up to RetryCount times, with delay spread over RetryOverMs.
     /// Returns Data.Ok() on success, null if retries exhausted or not configured.
     /// </summary>
-    private async Task<Data?> Retry(Engine.@this engine, PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this userStep)
+    private async Task<Data?> Retry(Engine.@this engine, PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this Step)
     {
-        var onError = userStep.OnError!;
+        var onError = Step.OnError!;
         if (onError.RetryCount == null || onError.RetryCount <= 0) return null;
 
         var delayMs = onError.RetryOverMs != null && onError.RetryCount > 0
@@ -93,7 +93,7 @@ public partial class Check : IContext, IAction
             // Re-execute the user step's actions on the user actor's context
             var userContext = engine.User.Context;
             Data result = Engine.Memory.Data.Ok();
-            foreach (var action in userStep.Actions)
+            foreach (var action in Step.Actions)
             {
                 result = await engine.Run(action, userContext);
                 if (!result.Success) break;
@@ -109,7 +109,7 @@ public partial class Check : IContext, IAction
     /// Call the error goal if configured. Stamps Action for sub-goal navigation.
     /// </summary>
     private async Task CallErrorGoal(Engine.@this engine,
-        PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this userStep, ErrorHandler onError)
+        PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this Step, ErrorHandler onError)
     {
         if (onError.Goal == null) return;
 
@@ -124,7 +124,7 @@ public partial class Check : IContext, IAction
         try
         {
             // Stamp Action so GoalCall can navigate to sub-goals
-            onError.Goal.Action ??= userStep.Actions.FirstOrDefault();
+            onError.Goal.Action ??= Step.Actions.FirstOrDefault();
             await engine.RunGoalAsync(onError.Goal, Context);
         }
         finally
