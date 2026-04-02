@@ -26,8 +26,17 @@ public partial class Data
                 $"Navigation path exceeds maximum depth ({MaxNavigationDepth})",
                 "NavigationDepthExceeded", 400));
 
-        // Parse next segment — respects parentheses (method calls) and quotes
+        // Parse next segment — respects parentheses (method calls), brackets, and quotes
         var (segment, remaining) = ParseNextSegment(path);
+
+        // Handle bracket notation: [0] or [key] — extract content
+        if (segment.StartsWith('[') && segment.EndsWith(']'))
+        {
+            segment = segment[1..^1];
+            // Strip leading dot from remaining if present
+            if (remaining.StartsWith('.'))
+                remaining = remaining[1..];
+        }
 
         // Check for method call: segment contains (...)
         var parenIndex = segment.IndexOf('(');
@@ -88,6 +97,12 @@ public partial class Data
             // Track parentheses depth
             if (c == '(') { depth++; continue; }
             if (c == ')') { depth--; continue; }
+
+            // Split at open bracket at depth 0: "Steps[0]" → ("Steps", "[0]")
+            if (c == '[' && depth == 0 && i > 0)
+            {
+                return (path[..i], path[i..]);
+            }
 
             // Track bracket depth
             if (c == '[') { depth++; continue; }

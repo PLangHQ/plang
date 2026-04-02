@@ -22,7 +22,7 @@
               },
               {
                 "name": "Channels",
-                "value": "pr",
+                "value": "this",
                 "type": "string"
               }
             ],
