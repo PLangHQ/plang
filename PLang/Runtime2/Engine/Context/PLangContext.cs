@@ -163,6 +163,7 @@ public sealed class PLangContext : IDisposable
         ms.Put(new DynamicData("!goal", () => Goal));
         ms.Put(new DynamicData("!step", () => Step));
         ms.Put(new DynamicData("!error", () => CurrentError ?? CallStack?.Current?.Error));
+        ms.Put(new DynamicData("!data", () => Engine.System.Context.MemoryStack.GetValue("data")));
     }
 
     /// <summary>

@@ -35,14 +35,20 @@ public partial class On : IContext
     [Default(0)]
     public partial int Priority { get; init; }
 
+    /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
+    public partial Engine.Context.Actor? Actor { get; init; }
+
     public Task<Data> Run()
     {
         if (!Enum.TryParse<EventType>(Type, ignoreCase: true, out var eventType))
             return Task.FromResult(Data.FromError(
                 new Engine.Errors.ValidationError($"Unknown event type: '{Type}'", "InvalidEventType", 400)));
 
+        // Resolve target actor — default to current context's actor
+        var targetActor = Actor ?? Context.Actor ?? Context.Engine!.User;
+
         Func<Engine.Context.PLangContext, Task<Data>> handler = async ctx =>
-            await ctx.Engine!.RunGoalAsync(GoalToCall, ctx, ctx.CancellationToken);
+            await ctx.Engine!.RunGoalAsync(GoalToCall, targetActor.Context, ctx.CancellationToken);
 
         var binding = new EventBinding(
             eventType,
@@ -54,7 +60,8 @@ public partial class On : IContext
             isRegex: IsRegex,
             goalToCall: GoalToCall);
 
-        Context.User.Events.Register(binding);
+        // Register on the target actor's event scope
+        targetActor.Context.User.Events.Register(binding);
 
         return Task.FromResult(Data.Ok(binding.Id));
     }

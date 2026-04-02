@@ -50,17 +50,43 @@ namespace PLang
 			var userMs = engine.User.Context.MemoryStack;
 
 			// Route CLI parameters: system params (!prefix) → system MemoryStack, user params → user MemoryStack
+			// !debug is handled separately (routed per actor)
 			foreach (var param in parameters)
 			{
+				if (param.Key == "!debug") continue;
 				if (param.Key.StartsWith("!"))
 					systemMs.Set(param.Key, param.Value);
 				else
 					userMs.Set(param.Key, param.Value);
 			}
 
-			// Debug wiring
+			// Debug wiring — route to target actor, default user
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
+			{
 				engine.Debug.Apply(debugValue);
+
+				// Parse actor from JSON debug value, default "user"
+				string targetActor = "user";
+				if (debugValue is IDictionary<string, object?> dict &&
+					dict.TryGetValue("actor", out var actorVal) && actorVal is string actorStr)
+					targetActor = actorStr.ToLowerInvariant();
+				else if (debugValue is Newtonsoft.Json.Linq.JObject jobj &&
+					jobj.TryGetValue("actor", StringComparison.OrdinalIgnoreCase, out var actorToken))
+					targetActor = actorToken.ToString().ToLowerInvariant();
+
+				// Set on target actor(s) + system (run.pr checks %!debug% to setup events)
+				systemMs.Set("!debug", debugValue);
+				switch (targetActor)
+				{
+					case "system": break; // already on system
+					case "all":
+						userMs.Set("!debug", debugValue);
+						break;
+					default: // "user"
+						userMs.Set("!debug", debugValue);
+						break;
+				}
+			}
 
 			// Build mode — set engine flag and resolve build path
 			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)

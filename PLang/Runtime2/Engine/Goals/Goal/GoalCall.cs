@@ -102,10 +102,10 @@ public sealed class GoalCall
                 Path = new PathData(rootPath, context)
             };
             var result2 = await engine.RunAction(readAction2, context);
-            if (result2.Success && result2.Value is @this foundGoal)
+            if (result2.Success && result2.Value is @this loadedGoal2)
             {
-                foundGoal.SetStepBackReferences();
-                return foundGoal;
+                var found2 = FindGoalByName(loadedGoal2, Name);
+                if (found2 != null) { found2.SetStepBackReferences(); return found2; }
             }
         }
 
@@ -119,8 +119,27 @@ public sealed class GoalCall
 
         if (result.Value is not @this goal) return null;
 
-        // Set back-references: steps know their goal
-        goal.SetStepBackReferences();
-        return goal;
+        // Find the goal by name — may be the loaded goal, a sub-goal, or in the same .pr array
+        // If no Name specified (PrPath-only resolution), return the first goal
+        var found = string.IsNullOrEmpty(Name) ? goal : FindGoalByName(goal, Name);
+        if (found == null) return null;
+
+        found.SetStepBackReferences();
+        return found;
+    }
+
+    /// <summary>
+    /// Searches a goal and its sub-goals for a matching name.
+    /// </summary>
+    private static @this? FindGoalByName(@this goal, string name)
+    {
+        if (string.Equals(goal.Name, name, StringComparison.OrdinalIgnoreCase))
+            return goal;
+        foreach (var sub in goal.Goals)
+        {
+            var found = FindGoalByName(sub, name);
+            if (found != null) return found;
+        }
+        return null;
     }
 }

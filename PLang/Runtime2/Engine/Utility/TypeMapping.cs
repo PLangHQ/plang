@@ -461,6 +461,7 @@ public static class TypeMapping
             if (value is IDictionary<string, object?> dict)
             {
                 var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
+                var prPath = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
                 List<Memory.Data>? parameters = null;
                 if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)
                 {
@@ -471,7 +472,7 @@ public static class TypeMapping
                             d.TryGetValue("value", out var dv) ? dv : null))
                         .ToList();
                 }
-                return (new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = name, Parameters = parameters }, null);
+                return (new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = name, PrPath = prPath, Parameters = parameters }, null);
             }
         }
 
