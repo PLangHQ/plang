@@ -14,6 +14,12 @@ public sealed class @this
     /// </summary>
     public bool IsEnabled { get; set; }
 
+    /// <summary>
+    /// Optional file filter. When set, only these files are built.
+    /// Set via --build={files:"test.goal"} or --build={files:["test.goal","run.goal"]}
+    /// </summary>
+    public List<string> Files { get; set; } = new();
+
     public @this(Engine.@this engine)
     {
         _engine = engine;

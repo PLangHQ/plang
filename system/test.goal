@@ -1,0 +1,13 @@
+Test
+/ Discovers and runs *.test.goal files. Results collected in %!test.results%.
+- set default %path% = '.'
+- find files '*.test.goal' in %path% recursive, write to %testFiles%
+- write out 'Found %testFiles.Length% test files'
+- foreach %testFiles%, call RunTest, item=%testFile%
+- write out %!test.summary%
+
+RunTest
+/ Runs a single test goal through the full RunStep pipeline
+- write out 'Running %testFile%'
+- runtime run %testFile.GoalCall%, write to %result%
+- add %result% to testResults

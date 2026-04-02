@@ -143,11 +143,31 @@ namespace PLang
 			}
 
 			// Build mode — set engine flag and resolve build path
+			// Supports: --build (all), --build={files:"test.goal"}, --build={files:["a.goal","b.goal"]}
 			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
 			{
 				engine.Building.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
 					systemMs.Set("path", fileSystem.RootDirectory);
+
+				// Extract files filter from JSON build value → engine.Building.Files
+				if (buildValue is IDictionary<string, object?> buildDict &&
+					buildDict.TryGetValue("files", out var filesVal))
+				{
+					if (filesVal is string singleFile)
+						engine.Building.Files.Add(singleFile);
+					else if (filesVal is System.Collections.IEnumerable fileList)
+						foreach (var f in fileList)
+							if (f?.ToString() is string s) engine.Building.Files.Add(s);
+				}
+				else if (buildValue is Newtonsoft.Json.Linq.JObject buildJobj &&
+					buildJobj.TryGetValue("files", StringComparison.OrdinalIgnoreCase, out var filesToken))
+				{
+					if (filesToken is Newtonsoft.Json.Linq.JArray arr)
+						foreach (var item in arr) engine.Building.Files.Add(item.ToString());
+					else
+						engine.Building.Files.Add(filesToken.ToString());
+				}
 			}
 
 			// Set the goal file for the PLang runtime (only for non-build)
