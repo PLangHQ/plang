@@ -616,3 +616,7 @@ The guidance text from BuildGoal's LLM would flow into BuildStep's prompt as add
 ## Everything in PLang should be Data<T>
 **Date:** 2026-04-02
 **Context:** Engine, Goal, Step, Action — all should be `Data<T>`. This allows them to be used directly in PLang variable expressions. Engine becomes `Data<Engine>`, accessible as `%!engine.Name%` etc. No special wrapping needed — the type IS the Data.
+
+## Rich debug output format
+**Date:** 2026-04-02
+**Context:** Debug currently shows `[step N] text => success`. Should show: `[actor] Goal:Step — text → module.action Params ← result Δ variable diffs`. All data available via OBP: `%!event.step%` for step info, `%!context.CallStack.Variables.diff%` for variable changes. The callstack frame already snapshots variables. Just needs formatting in debug.pr.
