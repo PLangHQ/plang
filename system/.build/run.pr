@@ -2,7 +2,7 @@
   "name": "Run",
   "steps": [
     {"index": 0, "indent": 0, "text": "if %!build% == true, call /system/Build",
-      "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%!build%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": true, "type": "bool"}, {"name": "GoalIfTrue", "value": {"name": "/system/Build"}, "type": "goal.call"}]}], "waitForExecution": true},
+      "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%!build%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": true, "type": "bool"}, {"name": "GoalIfTrue", "value": {"name": "Build", "prPath": "/system/.build/build.pr"}, "type": "goal.call"}]}], "waitForExecution": true},
     {"index": 1, "indent": 0, "text": "if %!build% == true",
       "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%!build%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": true, "type": "bool"}]}], "waitForExecution": true},
     {"index": 2, "indent": 1, "text": "return",

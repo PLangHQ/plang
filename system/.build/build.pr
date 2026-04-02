@@ -14,7 +14,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "/system/builder/Build"
+                "name": "Build",
+                "prPath": "/system/builder/.build/build.pr"
               },
               "type": "goal.call"
             }

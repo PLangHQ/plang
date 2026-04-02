@@ -63,26 +63,10 @@ public sealed class GoalCall : modules.IEvent
         if (loaded != null) return loaded;
 
         // 3. Not a sub-goal — file.read the .pr
+        // PrPath has the path, Name is just the goal name
         var prPath = PrPath;
         if (string.IsNullOrEmpty(prPath) && !string.IsNullOrEmpty(Name))
-        {
-            var isAbsolute = Name.StartsWith('/');
-            var name = Name.TrimStart('/');
-            // Insert .build before the last segment: system/builder/Build → system/builder/.build/build.pr
-            var lastSep = name.LastIndexOf('/');
-            if (lastSep >= 0)
-            {
-                var folder = name[..lastSep];
-                var goalName = name[(lastSep + 1)..];
-                prPath = $"{folder}/.build/{goalName.ToLowerInvariant()}.pr";
-            }
-            else
-            {
-                prPath = $".build/{name.ToLowerInvariant()}.pr";
-            }
-            // Preserve leading / so PathData treats it as absolute (not relative to goal folder)
-            if (isAbsolute) prPath = "/" + prPath;
-        }
+            prPath = $".build/{Name.ToLowerInvariant()}.pr";
 
         if (string.IsNullOrEmpty(prPath)) return null;
 
@@ -107,7 +91,11 @@ public sealed class GoalCall : modules.IEvent
             var result2 = await engine.RunAction(readAction2, context);
             if (result2.Success && result2.Value is @this loadedGoal2)
             {
-                var found2 = FindGoalByName(loadedGoal2, Name);
+                @this? found2;
+                if (string.IsNullOrEmpty(Name) || string.Equals(loadedGoal2.Name, Name, StringComparison.OrdinalIgnoreCase))
+                    found2 = loadedGoal2;
+                else
+                    found2 = loadedGoal2.Goals.FirstOrDefault(g => string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
                 if (found2 != null) { found2.SetStepBackReferences(); return found2; }
             }
         }
@@ -122,27 +110,16 @@ public sealed class GoalCall : modules.IEvent
 
         if (result.Value is not @this goal) return null;
 
-        // Find the goal by name — may be the loaded goal, a sub-goal, or in the same .pr array
-        // If no Name specified (PrPath-only resolution), return the first goal
-        var found = string.IsNullOrEmpty(Name) ? goal : FindGoalByName(goal, Name);
+        // Match by name — the loaded goal or one of its sub-goals
+        @this? found;
+        if (string.IsNullOrEmpty(Name) || string.Equals(goal.Name, Name, StringComparison.OrdinalIgnoreCase))
+            found = goal;
+        else
+            found = goal.Goals.FirstOrDefault(g => string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
+
         if (found == null) return null;
 
         found.SetStepBackReferences();
         return found;
-    }
-
-    /// <summary>
-    /// Searches a goal and its sub-goals for a matching name.
-    /// </summary>
-    private static @this? FindGoalByName(@this goal, string name)
-    {
-        if (string.Equals(goal.Name, name, StringComparison.OrdinalIgnoreCase))
-            return goal;
-        foreach (var sub in goal.Goals)
-        {
-            var found = FindGoalByName(sub, name);
-            if (found != null) return found;
-        }
-        return null;
     }
 }
