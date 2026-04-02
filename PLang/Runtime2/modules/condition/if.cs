@@ -36,11 +36,14 @@ public partial class If : IContext, IStep
         var userStep = Step;
         if (userStep?.Goal != null)
         {
+            // Use system context for disabled flags — the GoalSteps enumerator
+            // runs on system context (run.pr iterates steps)
+            var disableContext = Context.Engine!.System.Context;
             var steps = userStep.Goal.Steps;
             for (int i = userStep.Index + 1; i < steps.Count; i++)
             {
                 if (steps[i].Indent <= userStep.Indent) break;
-                steps[i].Context = Context;
+                steps[i].Context = disableContext;
                 steps[i].Disabled = !conditionResult;
             }
         }

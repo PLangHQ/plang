@@ -90,11 +90,12 @@ public partial class Check : IContext, IAction
             if (delayMs > 0)
                 await Task.Delay(delayMs);
 
-            // Re-execute the user step's actions
+            // Re-execute the user step's actions on the user actor's context
+            var userContext = engine.User.Context;
             Data result = Engine.Memory.Data.Ok();
             foreach (var action in userStep.Actions)
             {
-                result = await engine.Run(action, Context);
+                result = await engine.Run(action, userContext);
                 if (!result.Success) break;
             }
 
