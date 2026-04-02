@@ -8,17 +8,17 @@ Things the bot (Claude) should know when building, running, and debugging PLang.
 
 | Flag | Usage | Effect |
 |------|-------|--------|
-| `!debug` | `plang p !debug` | Debug all steps — prints variable values, step .pr details to stderr |
-| `!debug=GoalName` | `plang p !debug=Start` | Debug only steps in a specific goal |
-| `!debug=GoalName:N` | `plang p !debug=Start:3` | Debug a specific step index within a goal |
-| `!test` | `plang p !test` | Discover and run all `*.test.goal` files recursively. Exit code 1 if any fail |
-| `key=value` | `plang p MyGoal.goal count=5` | Set a memory stack variable with automatic type inference |
+| `!debug` | `plang !debug` | Debug all steps — prints variable values, step .pr details to stderr |
+| `!debug=GoalName` | `plang !debug=Start` | Debug only steps in a specific goal |
+| `!debug=GoalName:N` | `plang !debug=Start:3` | Debug a specific step index within a goal |
+| `!test` | `plang !test` | Discover and run all `*.test.goal` files recursively. Exit code 1 if any fail |
+| `key=value` | `plang MyGoal.goal count=5` | Set a memory stack variable with automatic type inference |
 
 ### Goal selection
 
 - `plang p` — runs `Start.goal` by default
-- `plang p MyGoal.goal` — runs a specific goal file
-- `plang p build` — builds all .goal files in current folder
+- `plang MyGoal.goal` — runs a specific goal file
+- `plang build` — builds all .goal files in current folder
 
 ---
 
@@ -27,7 +27,7 @@ Things the bot (Claude) should know when building, running, and debugging PLang.
 | Flag | Usage | Effect |
 |------|-------|--------|
 | `--csdebug` | `plang --csdebug build` | Launches Visual Studio debugger (Debugger.Launch) |
-| `--detailerror` | `plang p --detailerror` | Full stack traces in error output |
+| `--detailerror` | `plang --detailerror` | Full stack traces in error output |
 | `--debug` | `plang --debug build` | Legacy debug mode flag |
 | `--strictbuild` | `plang --strictbuild build` | Exact line number matching in .goal files |
 | `--llmservice=openai` | `plang build --llmservice=openai` | Use OpenAI instead of default PLang LLM service |
@@ -61,20 +61,20 @@ When passing `key=value` on the command line, values are automatically converted
 
 ### Debugging a failing step
 ```bash
-plang p !debug=Start:3           # Debug step index 3 in Start.goal
-plang p --detailerror             # Get full stack trace
+plang !debug=Start:3           # Debug step index 3 in Start.goal
+plang --detailerror             # Get full stack trace
 plang --csdebug p                 # Attach VS debugger
 ```
 
 ### Running tests
 ```bash
-plang p !test                     # All *.test.goal files
-plang p MyTest.test.goal          # Single test file
+plang !test                     # All *.test.goal files
+plang MyTest.test.goal          # Single test file
 ```
 
 ### Building
 ```bash
-plang p build                     # Runtime2 builder (all .goal files)
+plang build                     # Runtime2 builder (all .goal files)
 plang build                       # Legacy v1 builder (used for system/builder/*.goal)
 plang build --watch               # Auto-rebuild on changes
 plang --strictbuild build         # Strict line matching
@@ -82,7 +82,7 @@ plang --strictbuild build         # Strict line matching
 
 ### Running with parameters
 ```bash
-plang p Start name="John" count=5 enabled=true
+plang Start name="John" count=5 enabled=true
 ```
 
 ---

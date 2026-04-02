@@ -19,7 +19,7 @@ C# tests run fast and catch logic bugs. PLang tests catch builder misunderstandi
 
 ### Rules
 
-1. **Goal name MUST be `Start`** — the test runner (`plang p !test`) looks for a goal named `Start` in each `.test.pr` file. Any other name causes `"Goal 'Start' not found"`.
+1. **Goal name MUST be `Start`** — the test runner (`plang !test`) looks for a goal named `Start` in each `.test.pr` file. Any other name causes `"Goal 'Start' not found"`.
 
 2. **One test suite per directory** — each `Tests/Runtime2/<ModuleName>/` folder has one `<Name>.test.goal` and optionally supporting `.goal` files.
 
@@ -54,21 +54,21 @@ dotnet build PlangConsole/PlangConsole.csproj
 
 # 2. Build PLang tests (from Tests/Runtime2 directory)
 cd Tests/Runtime2
-plang p build
+plang build
 
 # 3. ALWAYS read the generated .pr file and verify correctness
 #    Check: module name, action name, parameter names/values/types, return variables
 
 # 4. Run a single test
-plang p "Mock/Mock.test.goal"
+plang "Mock/Mock.test.goal"
 
 # 5. Run all tests
-plang p !test
+plang !test
 ```
 
 ### After Building — Always Verify the .pr File
 
-This is the most critical step. The LLM builder can misunderstand your intent. After `plang p build`, read the generated `.pr` file and check:
+This is the most critical step. The LLM builder can misunderstand your intent. After `plang build`, read the generated `.pr` file and check:
 
 - **Module name** — is it the correct module? (e.g., `mock` not `event`)
 - **Action name** — is it the correct action? (e.g., `intercept` not `mock`)
@@ -86,7 +86,7 @@ If the .pr file is wrong, the step will fail at runtime with confusing errors. D
 | `ActionNotFound` error during build | LLM mapped to wrong module.action (e.g., `mock.mock` instead of `mock.intercept`) |
 | `Goal 'Start' not found` | Goal name in .goal file isn't `Start` |
 | Step runs but assertion fails with wrong value | Parameter value in .pr is wrong — check the .pr file |
-| `Built .pr file not found` | Run `plang p build` first |
+| `Built .pr file not found` | Run `plang build` first |
 | Build says "approved" but .pr has old data | Content hash matched — delete .pr and rebuild |
 
 ---
@@ -251,7 +251,7 @@ When a PLang test fails at runtime:
 
 ## Test Runner Internals
 
-- `plang p !test` runs `TestMode.RunAsync()` in `PLang/Runtime2/Core/TestMode.cs`
+- `plang !test` runs `TestMode.RunAsync()` in `PLang/Runtime2/Core/TestMode.cs`
 - Discovers `*.test.goal` files recursively from engine root
 - Each test gets a **fresh Engine** — full isolation (no leaked events, variables, or goals)
 - Derives .pr path: `<dir>/.build/<name>.test.pr` (e.g., `Mock/.build/mock.test.pr`)

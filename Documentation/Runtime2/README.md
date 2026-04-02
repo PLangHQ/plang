@@ -48,7 +48,7 @@ Each level calls `.Load()` then `.RunAsync()`. Events fire before/after each pha
 ## Execution Flow
 
 ```
-plang p Start.goal
+plang Start.goal
   → Engine loads .build/start.pr (JSON → Goal)
   → Engine.RunGoalAsync(goal, context)
     → goal.RunAsync() → for each Step:
@@ -76,7 +76,7 @@ plang p Start.goal
 
 **Entity events**: Goal, Step, and Action each have a `Lifecycle` with `Before`/`After` `Bindings`, plus pattern-matched event bindings via `EngineEvents`.
 
-**Optional debugging**: CallStack is opt-in. When enabled, tracks frames with step history. Use `plang p !debug` to enable. Debug mode is owned by `engine.Debug` (EngineDebug).
+**Optional debugging**: CallStack is opt-in. When enabled, tracks frames with step history. Use `plang !debug` to enable. Debug mode is owned by `engine.Debug` (EngineDebug).
 
 ## Handler Pattern
 
@@ -135,7 +135,7 @@ The bridge is `PLang/Modules/PlangModule/Program.cs` — exposes Runtime2 operat
 
 ### Build commands
 - `plang build` — old v1 builder (used to build the builder goals in system/)
-- `plang p build` — Runtime2 builder (builds user .goal files)
+- `plang build` — Runtime2 builder (builds user .goal files)
 
 ## Components
 

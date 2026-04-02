@@ -5,7 +5,7 @@
 PLang tests today are "print and eyeball it" — no assertions, no pass/fail, no counts. Every module added means more manual verification. C# has 1023 tests with TUnit giving structured pass/fail. PLang needs the same foundation so every future module gets proper PLang-level tests from day one.
 
 The user wants:
-- `plang p !test` to discover and run `*.test.goal` files
+- `plang !test` to discover and run `*.test.goal` files
 - An `assert` module for assertions (equals, true, false, notNull, contains, etc.)
 - Minimal C# — the test runner itself should be PLang, C# just provides the `!test` entry point
 - `Goal.IsTest` set automatically if a goal uses the assert module
@@ -54,7 +54,7 @@ Action handlers following the standard `[Action]` pattern:
 ### 2. Test Runner (`!test` flag)
 
 **How `!debug` works today (same pattern for `!test`):**
-1. `plang p !test` → CommandLineParser parses `!test` → `parameters["test"] = true`
+1. `plang !test` → CommandLineParser parses `!test` → `parameters["test"] = true`
 2. `Executor.Run2()` checks `parameters.TryGetValue("test", ...)` → calls `TestMode.Apply(engine)`
 3. `TestMode.Apply` is a C# class that:
    - Sets `engine.IsTestMode = true`
@@ -151,7 +151,7 @@ Keep existing `Start.goal` files for manual/demo usage. The `.test.goal` files a
 4. **TestMode.cs** — discovery, execution, reporting
 5. **Wire `!test` in Executor.Run2** and Engine
 6. **Write `.test.goal` files** — convert existing 5 test suites
-7. **Build and run** — `plang p build` then `plang p !test`
+7. **Build and run** — `plang build` then `plang !test`
 8. **Goal.IsTest** — optional, add if time permits
 
 ---
@@ -160,8 +160,8 @@ Keep existing `Start.goal` files for manual/demo usage. The `.test.goal` files a
 
 1. `dotnet build PlangConsole/PlangConsole.csproj` — 0 errors
 2. `dotnet run --project PLang.Tests` — all tests pass (including new assert tests)
-3. `cd Tests/Runtime2 && plang p build` — all test.goal files build successfully
-4. `cd Tests/Runtime2 && plang p !test` — discovers and runs all *.test.goal, prints summary like:
+3. `cd Tests/Runtime2 && plang build` — all test.goal files build successfully
+4. `cd Tests/Runtime2 && plang !test` — discovers and runs all *.test.goal, prints summary like:
    ```
    Test run summary: Passed!
      total: 5 suites, 40+ assertions

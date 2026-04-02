@@ -11,15 +11,15 @@ PLang supports two kinds of startup parameters:
 
 ```bash
 # System parameters use -- prefix
-plang p --build={"cache":false}
-plang p --debug={"goal":"Start","step":3}
-plang p --test
+plang --build={"cache":false}
+plang --debug={"goal":"Start","step":3}
+plang --test
 
 # User parameters have no prefix
-plang p myGoal.goal name="Alice" count=5
+plang myGoal.goal name="Alice" count=5
 
 # Mix both
-plang p --debug=true name="Alice"
+plang --debug=true name="Alice"
 ```
 
 ## System Parameters
@@ -36,10 +36,10 @@ System parameters use `--` on the CLI and `%!` in PLang code:
 
 ```bash
 # Default build (LLM cache enabled)
-plang p --build
+plang --build
 
 # Force fresh LLM calls
-plang p --build={"cache":false}
+plang --build={"cache":false}
 ```
 
 Accessible in PLang as `%!build.cache%`. The builder sets defaults:
@@ -51,25 +51,25 @@ Accessible in PLang as `%!build.cache%`. The builder sets defaults:
 
 ```bash
 # Debug all steps
-plang p --debug=true
+plang --debug=true
 
 # Debug specific goal
-plang p --debug={"goal":"Start"}
+plang --debug={"goal":"Start"}
 
 # Debug specific step in a goal
-plang p --debug={"goal":"BuildGoal","step":6}
+plang --debug={"goal":"BuildGoal","step":6}
 
 # Full output, no truncation
-plang p --debug={"goal":"BuildGoal","step":3,"maxLength":0}
+plang --debug={"goal":"BuildGoal","step":3,"maxLength":0}
 
 # Filter output with regex
-plang p --debug={"goal":"BuildGoal","step":3,"grep":"condition"}
+plang --debug={"goal":"BuildGoal","step":3,"grep":"condition"}
 
 # Full content, filtered
-plang p --debug={"goal":"BuildGoal","step":3,"maxLength":0,"grep":"# condition"}
+plang --debug={"goal":"BuildGoal","step":3,"maxLength":0,"grep":"# condition"}
 
 # Combine with build
-plang p --build={"cache":false} --debug={"goal":"BuildGoal","step":6}
+plang --build={"cache":false} --debug={"goal":"BuildGoal","step":6}
 ```
 
 Schema:
@@ -90,10 +90,10 @@ Or just `true` for debug everything.
 
 ```bash
 # Run all tests
-plang p --test
+plang --test
 
 # Run tests with debug
-plang p --test --debug=true
+plang --test --debug=true
 ```
 
 ## User Parameters
@@ -101,7 +101,7 @@ plang p --test --debug=true
 User parameters go directly on the MemoryStack without prefix:
 
 ```bash
-plang p myGoal.goal name="Alice" count=5 debug=1
+plang myGoal.goal name="Alice" count=5 debug=1
 ```
 
 In PLang code:
@@ -118,7 +118,7 @@ Note: `debug=1` (no `--`) is a user variable `%debug%`, NOT the system debug mod
 Parameters support JSON objects as values. The CLI parser handles commas inside braces:
 
 ```bash
-plang p --build={"cache":false,"model":"gpt-4o","temperature":0.2}
+plang --build={"cache":false,"model":"gpt-4o","temperature":0.2}
 ```
 
 Each property becomes navigable via dot-path: `%!build.cache%`, `%!build.model%`, `%!build.temperature%`.

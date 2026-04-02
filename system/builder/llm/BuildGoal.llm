@@ -28,11 +28,24 @@ For each step, produce (in this order):
 1. `guidance` — your reasoning: what module.action, why, any concerns
 2. `actions` — the mapped actions with parameters
 3. `level` + `confidence` — how sure you are
+4. `group` (optional) — group name for related steps that should be built together
 
 Levels:
 - **high** (80-100%) — fully built, all parameters
 - **medium** (40-79%) — module/action identified, parameters uncertain
 - **low** (0-39%) — best guess
+
+## Step Grouping
+
+When steps are logically related and understanding one helps build the others, assign them the same `group` name. If any step in a group needs the detail pass (medium/low), ALL steps in the group are sent together so the LLM sees the full flow.
+
+Group when:
+- Steps form a multi-step pattern (e.g., read file → process → write result)
+- A condition step and its indented sub-steps are related
+- Steps share variables or data flow between them
+- Error handling spans multiple steps
+
+Do NOT group unrelated steps. Steps without a group are processed individually. Use short descriptive names: "file-processing", "auth-flow", "data-transform", etc.
 
 ## Step Modifiers
 
@@ -54,16 +67,17 @@ Goal:
 ```plang
 Start
 - call goal Greet name="world"
-- write out "done"
 - read file 'config.json', write to %config%
     cache for 5 minutes
+- if %config.debug% is true
+    - write out "debug mode"
 - call Save, on error retry 2 times, then call HandleError
 ```
 
 Response:
 ```json
 {
-  "description": "Calls Greet with parameter, writes output, reads cached config, calls Save with retry error handling.",
+  "description": "Calls Greet, reads cached config, conditional debug output, saves with retry.",
   "steps": [
     {
       "index": 0,
@@ -73,19 +87,28 @@ Response:
     },
     {
       "index": 1,
-      "guidance": "output.write with literal string",
-      "actions": [{"module": "output", "action": "write", "parameters": [{"name": "Data", "value": "done", "type": "string"}]}],
-      "level": "high", "confidence": 98
-    },
-    {
-      "index": 2,
-      "guidance": "file.read with path, cache modifier 5 min = 300000ms",
+      "guidance": "file.read with path, cache modifier 5 min = 300000ms. Grouped with condition that uses config.",
       "actions": [{"module": "file", "action": "read", "parameters": [{"name": "Path", "value": "config.json", "type": "path"}], "return": [{"name": "config"}]}],
       "cache": {"durationMs": 300000},
+      "group": "config-check",
       "level": "high", "confidence": 95
     },
     {
+      "index": 2,
+      "guidance": "condition checking config.debug, sub-step below handles true case",
+      "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%config.debug%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": true, "type": "bool"}]}],
+      "group": "config-check",
+      "level": "high", "confidence": 90
+    },
+    {
       "index": 3,
+      "guidance": "output.write indented under condition — only runs if config.debug is true",
+      "actions": [{"module": "output", "action": "write", "parameters": [{"name": "Data", "value": "debug mode", "type": "string"}]}],
+      "group": "config-check",
+      "level": "high", "confidence": 98
+    },
+    {
+      "index": 4,
       "guidance": "goal.call to Save with retry+goal error handling",
       "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "Save"}, "type": "goal.call"}]}],
       "onError": {"retryCount": 2, "order": "RetryFirst", "goal": {"name": "HandleError"}},

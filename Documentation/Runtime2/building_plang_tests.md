@@ -75,7 +75,7 @@ One-liners are fine for simple steps:
 
 ## Test File Naming
 
-- Test files: `*.test.goal` — discovered by `plang p !test`
+- Test files: `*.test.goal` — discovered by `plang !test`
 - Supporting goals can be in the same `.goal` file or separate files
 
 ## Builder Behavior — What Goes Wrong
@@ -173,15 +173,15 @@ Any change to the builder (prompt, validator, .pr files) means all previously pa
 ## Build & Run Commands
 
 ```
-plang p --build                                                          # Build from current directory
-plang p --build={"cache":false}                                          # Build without LLM cache
-plang p --test                                                           # Run tests from current directory
-plang p --debug=true                                                     # Debug all steps
-plang p --debug={"goal":"GoalName","step":3}                             # Debug specific step
-plang p --debug={"goal":"BuildGoal","step":3,"maxLength":0}              # No truncation
-plang p --debug={"goal":"BuildGoal","step":3,"grep":"condition"}         # Filter output (regex)
-plang p --debug={"goal":"BuildGoal","step":3,"maxLength":0,"grep":"if"}  # Full content, filtered
-plang p --build --debug={"goal":"BuildGoal"}                             # Build with debug
+plang --build                                                          # Build from current directory
+plang --build={"cache":false}                                          # Build without LLM cache
+plang --test                                                           # Run tests from current directory
+plang --debug=true                                                     # Debug all steps
+plang --debug={"goal":"GoalName","step":3}                             # Debug specific step
+plang --debug={"goal":"BuildGoal","step":3,"maxLength":0}              # No truncation
+plang --debug={"goal":"BuildGoal","step":3,"grep":"condition"}         # Filter output (regex)
+plang --debug={"goal":"BuildGoal","step":3,"maxLength":0,"grep":"if"}  # Full content, filtered
+plang --build --debug={"goal":"BuildGoal"}                             # Build with debug
 ```
 
 ### Debug Options
@@ -201,7 +201,7 @@ The builder caches LLM responses by default in `.db/system.sqlite` (`LlmCache` t
 
 To force fresh LLM calls (e.g., after changing the builder prompt):
 ```
-plang p --build={"cache":false}
+plang --build={"cache":false}
 ```
 
 To clear the cache manually:

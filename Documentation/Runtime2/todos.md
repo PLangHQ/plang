@@ -157,7 +157,7 @@ Target audiences:
 
 ## Set Up PLang Test Environment for Bot Pipeline
 **Date:** 2026-02-21
-**Context:** Tester bot cannot run PLang .goal tests because (1) `plang` binary is not on PATH (PlangConsole not built), (2) `OPENAI_API_KEY` env var not set. Both needed for `plang p build && plang p !test`.
+**Context:** Tester bot cannot run PLang .goal tests because (1) `plang` binary is not on PATH (PlangConsole not built), (2) `OPENAI_API_KEY` env var not set. Both needed for `plang build && plang !test`.
 
 **Action items:**
 - Build PlangConsole and add to PATH (or symlink)

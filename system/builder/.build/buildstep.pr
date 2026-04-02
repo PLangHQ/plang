@@ -29,6 +29,36 @@
     },
     {
       "index": 1,
+      "text": "render template \"/system/builder/templates/v2/stepGroupContext.template\", write to %groupContext%",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "ui",
+          "action": "render",
+          "parameters": [
+            {
+              "name": "Template",
+              "value": "/system/builder/templates/v2/stepGroupContext.template",
+              "type": "string"
+            },
+            {
+              "name": "IsFile",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "return": [
+            {
+              "name": "groupContext"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
       "text": "render template \"/system/builder/templates/v2/stepForLlm.template\", write to %stepForLlm%",
       "lineNumber": 5,
       "indent": 0,
@@ -58,7 +88,7 @@
       "waitForExecution": true
     },
     {
-      "index": 2,
+      "index": 3,
       "text": "render template \"/system/builder/templates/v2/stepActionDetails.template\", write to %actionDetails%",
       "lineNumber": 6,
       "indent": 0,
@@ -88,7 +118,7 @@
       "waitForExecution": true
     },
     {
-      "index": 3,
+      "index": 4,
       "text": "read file \"llm/BuildStep.llm\", load vars, write to %buildStepPrompt%",
       "lineNumber": 7,
       "indent": 0,
@@ -118,7 +148,7 @@
       "waitForExecution": true
     },
     {
-      "index": 4,
+      "index": 5,
       "text": "[llm] system: %buildStepPrompt% user: %stepForLlm%",
       "lineNumber": 8,
       "indent": 0,
@@ -183,7 +213,7 @@
       "waitForExecution": true
     },
     {
-      "index": 5,
+      "index": 6,
       "text": "call ValidateBuildStepResult",
       "lineNumber": 19,
       "indent": 0,
@@ -205,7 +235,7 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 7,
       "text": "set %goal.Steps[stepResult.index].Actions% = %result.actions%",
       "lineNumber": 20,
       "indent": 0,
@@ -230,7 +260,7 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 8,
       "text": "[plang] ValidateActions, actions=%goal.Steps[stepResult.index].Actions%",
       "lineNumber": 21,
       "indent": 0,
