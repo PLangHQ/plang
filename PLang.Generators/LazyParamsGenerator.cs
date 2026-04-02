@@ -340,6 +340,12 @@ public class LazyParamsGenerator : IIncrementalGenerator
         {
             sb.AppendLine("        Step = action.Step;");
         }
+
+        // Save and set context.Step/Goal — restored in finally after Run()
+        sb.AppendLine("        var __previousStep = context.Step;");
+        sb.AppendLine("        var __previousGoal = context.Goal;");
+        sb.AppendLine("        context.Step = action.Step;");
+        sb.AppendLine("        context.Goal = action.Step?.Goal;");
         sb.AppendLine();
 
         // Resolve [Provider] properties from engine.Providers
@@ -405,7 +411,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
             }
         }
 
-        sb.AppendLine("        if (__resolutionError != null) return __resolutionError;");
+        sb.AppendLine("        if (__resolutionError != null) { context.Step = __previousStep; context.Goal = __previousGoal; return __resolutionError; }");
         sb.AppendLine();
         sb.AppendLine("        try");
         sb.AppendLine("        {");
@@ -415,6 +421,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        {");
         sb.AppendLine("            return PLang.Runtime2.Engine.Memory.Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(");
         sb.AppendLine("                ex.Message, __step, __callFrames, \"ServiceError\", 400) { Exception = ex });");
+        sb.AppendLine("        }");
+        sb.AppendLine("        finally");
+        sb.AppendLine("        {");
+        sb.AppendLine("            context.Step = __previousStep;");
+        sb.AppendLine("            context.Goal = __previousGoal;");
         sb.AppendLine("        }");
         sb.AppendLine("    }");
         sb.AppendLine();
