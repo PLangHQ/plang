@@ -1,9 +1,9 @@
 Start
 / Test: create two identities, archive non-default, verify default unchanged
-- archive identity 'TestArcNonDefA', on error ignore
-- archive identity 'TestArcNonDefB', on error ignore
+- archive identity 'TestArcNonDefA', force, on error ignore, force
+- archive identity 'TestArcNonDefB', force, on error ignore, force
 - create identity 'TestArcNonDefA', set as default
 - create identity 'TestArcNonDefB'
-- archive identity 'TestArcNonDefB'
+- archive identity 'TestArcNonDefB', force
 - assert %MyIdentity.Name% equals 'TestArcNonDefA'
-- archive identity 'TestArcNonDefA'
+- archive identity 'TestArcNonDefA', force

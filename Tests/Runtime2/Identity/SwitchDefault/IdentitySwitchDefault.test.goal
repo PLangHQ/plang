@@ -1,10 +1,10 @@
 Start
 / Test: create two identities, switch default, verify %MyIdentity.Name% reflects new default
-- archive identity 'TestSwitchA', on error ignore
-- archive identity 'TestSwitchB', on error ignore
+- archive identity 'TestSwitchA', force, on error ignore, force
+- archive identity 'TestSwitchB', force, on error ignore, force
 - create identity 'TestSwitchA', set as default
 - create identity 'TestSwitchB'
 - set default identity to 'TestSwitchB'
 - assert %MyIdentity.Name% equals 'TestSwitchB'
-- archive identity 'TestSwitchA'
-- archive identity 'TestSwitchB'
+- archive identity 'TestSwitchA', force
+- archive identity 'TestSwitchB', force

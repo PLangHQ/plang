@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Asserts that %MyIdentity% is auto-created (not null) and that its Name property is also not null when no identities exist.",
+    "description": "Test asserts that %MyIdentity% is auto-created (default identity) when no identities exist, and that its Name is not null.",
     "comment": null,
     "steps": [
       {
@@ -18,7 +18,7 @@
               {
                 "name": "Value",
                 "value": "%MyIdentity%",
-                "type": "object"
+                "type": "identitydata"
               }
             ],
             "return": null,
@@ -45,7 +45,7 @@
               {
                 "name": "Value",
                 "value": "%MyIdentity.Name%",
-                "type": "object"
+                "type": "string"
               }
             ],
             "return": null,

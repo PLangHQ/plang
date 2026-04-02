@@ -1,12 +1,12 @@
 [
   {
     "name": "Start",
-    "description": "Archives and recreates an identity named TestDotNav, then asserts that dot-navigated identity fields (Name, PublicKey, IsDefault) are present and correct; final archive cleans up. Error on first archive is ignored.",
+    "description": "Archives and recreates an identity, then asserts that dot-navigation access to %MyIdentity.Name%, %MyIdentity.PublicKey%, and %MyIdentity.IsDefault% yields non-null values and a true default flag. Archive steps ignore errors.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "archive identity \u0027TestDotNav\u0027, on error ignore",
+        "text": "archive identity \u0027TestDotNav\u0027, force, on error ignore, force",
         "lineNumber": 3,
         "indent": 0,
         "comment": "Test: access %MyIdentity.Name%, %MyIdentity.PublicKey%, %MyIdentity.IsDefault% via dot navigation",
@@ -19,6 +19,11 @@
                 "name": "Name",
                 "value": "TestDotNav",
                 "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -155,7 +160,7 @@
       },
       {
         "index": 5,
-        "text": "archive identity \u0027TestDotNav\u0027",
+        "text": "archive identity \u0027TestDotNav\u0027, force",
         "lineNumber": 8,
         "indent": 0,
         "comment": null,
@@ -168,6 +173,11 @@
                 "name": "Name",
                 "value": "TestDotNav",
                 "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -175,7 +185,16 @@
           }
         ],
         "intent": null,
-        "onError": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -185,7 +204,7 @@
     "visibility": 1,
     "path": "/IdentityDotNavigation.test.goal",
     "prPath": "/.build/identitydotnavigation.test.pr",
-    "hash": "6e433193e7844113cdfb352f71c9f9dfdde0f916cad30048733c1bd73b4ff470",
+    "hash": "547f9ad6d1e97746936a490ed53285414c13889b2f923a1226f3ac93382ca33e",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

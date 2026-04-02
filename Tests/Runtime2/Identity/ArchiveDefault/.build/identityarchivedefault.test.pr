@@ -1,12 +1,12 @@
 [
   {
     "name": "Start",
-    "description": "Archives a default identity (with ignore-on-error), recreates it as default, archives again capturing the result, asserts an error was returned, then archives once more ignoring errors.",
+    "description": "Archives a default identity, recreates it as default, attempts to archive again while capturing the result, asserts an error is returned, then performs a final archive attempt with error ignored.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "archive identity \u0027TestArchiveDefault\u0027, on error ignore",
+        "text": "archive identity \u0027TestArchiveDefault\u0027, force, on error ignore, force",
         "lineNumber": 3,
         "indent": 0,
         "comment": "Test: try to archive the default identity, verify error is returned",
@@ -19,6 +19,11 @@
                 "name": "Name",
                 "value": "TestArchiveDefault",
                 "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -74,7 +79,7 @@
       },
       {
         "index": 2,
-        "text": "archive identity \u0027TestArchiveDefault\u0027, write to %result%, on error ignore",
+        "text": "archive identity \u0027TestArchiveDefault\u0027, write to %result%, force, on error ignore, force",
         "lineNumber": 5,
         "indent": 0,
         "comment": null,
@@ -87,6 +92,11 @@
                 "name": "Name",
                 "value": "TestArchiveDefault",
                 "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": [
@@ -142,7 +152,7 @@
       },
       {
         "index": 4,
-        "text": "archive identity \u0027TestArchiveDefault\u0027, on error ignore",
+        "text": "archive identity \u0027TestArchiveDefault\u0027, force, on error ignore, force",
         "lineNumber": 7,
         "indent": 0,
         "comment": null,
@@ -155,6 +165,11 @@
                 "name": "Name",
                 "value": "TestArchiveDefault",
                 "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -181,7 +196,7 @@
     "visibility": 1,
     "path": "/IdentityArchiveDefault.test.goal",
     "prPath": "/.build/identityarchivedefault.test.pr",
-    "hash": "800bc70f125f76ca406a77c48e7dd07aa7107e347fdfc1e3bac80815c8e3c6bd",
+    "hash": "91c9577a8c7146adf144062ddf8b9d4689833f3dd62d979f74efc429b485bc62",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

@@ -1,12 +1,12 @@
 [
   {
     "name": "Start",
-    "description": "Archives any existing identity, creates \u0027TestGetByName\u0027 as the default identity, then asserts the default identity\u0027s name and public key are present, and finally archives the identity.",
+    "description": "Archives an identity, recreates it as default, asserts its name and public key, then archives it again. Includes on-error ignore for the first archive.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "archive identity \u0027TestGetByName\u0027, on error ignore",
+        "text": "archive identity \u0027TestGetByName\u0027, force, on error ignore, force",
         "lineNumber": 3,
         "indent": 0,
         "comment": "Test: create a named identity as default, verify %MyIdentity.Name% equals the name",
@@ -19,6 +19,11 @@
                 "name": "Name",
                 "value": "TestGetByName",
                 "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -133,7 +138,7 @@
       },
       {
         "index": 4,
-        "text": "archive identity \u0027TestGetByName\u0027",
+        "text": "archive identity \u0027TestGetByName\u0027, force",
         "lineNumber": 7,
         "indent": 0,
         "comment": null,
@@ -146,6 +151,11 @@
                 "name": "Name",
                 "value": "TestGetByName",
                 "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -163,7 +173,7 @@
     "visibility": 1,
     "path": "/IdentityGetByName.test.goal",
     "prPath": "/.build/identitygetbyname.test.pr",
-    "hash": "dedc2b1bf145e2c4e1980907392555be3a289e5376a443b8951e7c309e3d112e",
+    "hash": "3a52cacb10b52640c3baf3853e282e78aa53f36096be52879bb8e1c267de6a45",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

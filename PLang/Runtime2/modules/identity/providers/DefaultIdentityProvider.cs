@@ -40,7 +40,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
         var all = await LoadAllAsync(action);
         if (!all.Success) return all.ToError<IdentityData>();
-        if (all.Exists(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase)))
+        if (all.Exists(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase) && !i.IsArchived))
             return Data.FromError<IdentityData>(new ActionError($"Identity '{action.Name}' already exists", "DuplicateName", 409));
 
         var identity = GenerateIdentity(action, action.Name, action.SetAsDefault, action.Provider);
@@ -70,10 +70,10 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         var identity = await LoadAsync(action, action.Name);
         if (!identity.Success) return identity;
 
-        if (identity.IsDefault)
+        if (identity.IsDefault && !action.Force)
         {
             identity.Error = new ActionError(
-                "Cannot archive the default identity. Set a different default first.",
+                "Cannot archive the default identity. Set a different default first, or use force.",
                 "CannotArchiveDefault", 400);
             return identity;
         }
