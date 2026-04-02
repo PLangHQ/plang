@@ -65,7 +65,7 @@ namespace PLang.Modules.PlangModule
 		{
 			var modules = new EngineModules();
 
-			var actions = new Actions(this.context);
+			var actions = new Actions();
 
 			foreach (var ns in modules.Names)
 			{

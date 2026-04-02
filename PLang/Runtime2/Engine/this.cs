@@ -248,23 +248,6 @@ public sealed class @this : IAsyncDisposable
     // --- [Method] primitives — the kernel ---
 
     /// <summary>
-    /// Kernel: dispatches a step's actions. No retry. No events. No error handling.
-    /// The PLang runtime (system/runtime/run.goal) wraps this with orchestration.
-    /// </summary>
-    [modules.Method("engine", "execute")]
-    public async Task<Data> Execute(
-        Goals.Goal.Steps.Step.@this step, PLangContext context, CancellationToken ct = default)
-    {
-        return await step.Actions.RunAsync(this, context, ct);
-    }
-
-    [modules.Method("test", "echo")]
-    public Task<Data> TestEcho(string message, string prefix = "echo")
-    {
-        return Task.FromResult(Data.Ok($"{prefix}: {message}"));
-    }
-
-    /// <summary>
     /// Runs a module action through the same code-generated execution path as steps.
     /// Set properties via init, then call RunAction — engine wires context, memory, validation, error handling.
     /// Usage: var result = await engine.RunAction&lt;Hash, string&gt;(new Hash { Data = x, Algorithm = "keccak256" }, context);
