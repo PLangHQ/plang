@@ -347,9 +347,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
             sb.AppendLine("        Step = action.Step;");
         }
 
-        // Save and set context.Step/Goal — restored in finally after Run()
+        // Save and set context.Step/Goal/Event — restored in finally after Run()
         sb.AppendLine("        var __previousStep = context.Step;");
         sb.AppendLine("        var __previousGoal = context.Goal;");
+        sb.AppendLine("        var __previousEvent = context.Event;");
         sb.AppendLine("        context.Step = action.Step;");
         sb.AppendLine("        context.Goal = action.Step?.Goal;");
         sb.AppendLine();
@@ -445,7 +446,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        {");
         sb.AppendLine("            context.Step = __previousStep;");
         sb.AppendLine("            context.Goal = __previousGoal;");
-        sb.AppendLine("            context.Event = null;");
+        sb.AppendLine("            context.Event = __previousEvent;");
         sb.AppendLine("        }");
         sb.AppendLine("    }");
         sb.AppendLine();
