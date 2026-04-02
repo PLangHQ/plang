@@ -1,0 +1,102 @@
+{
+  "name": "Test",
+  "description": "Discovers and runs *.test.goal files. Results collected in %!test.results%.",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set default %path% = '.'",
+      "indent": 0,
+      "actions": [{"module": "variable", "action": "set", "parameters": [
+        {"name": "Name", "value": "%path%", "type": "string"},
+        {"name": "Value", "value": ".", "type": "string"},
+        {"name": "AsDefault", "value": true, "type": "bool"}
+      ]}],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "find files '*.test.goal' in %path% recursive, write to %testFiles%",
+      "indent": 0,
+      "actions": [{"module": "file", "action": "list", "parameters": [
+        {"name": "Path", "value": "%path%", "type": "path"},
+        {"name": "Pattern", "value": "*.test.goal", "type": "string"},
+        {"name": "Recursive", "value": true, "type": "bool"}
+      ], "return": [{"name": "testFiles"}]}],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out 'Found %testFiles.Length% test files'",
+      "indent": 0,
+      "actions": [{"module": "output", "action": "write", "parameters": [
+        {"name": "Data", "value": "Found %testFiles.Length% test files", "type": "string"}
+      ]}],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "foreach %testFiles%, call RunTest, item=%testFile%",
+      "indent": 0,
+      "actions": [{"module": "loop", "action": "foreach", "parameters": [
+        {"name": "Collection", "value": "%testFiles%", "type": "list"},
+        {"name": "GoalName", "value": {"name": "RunTest"}, "type": "goal.call"},
+        {"name": "ItemName", "value": "testFile", "type": "string"}
+      ]}],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "write out %!test.summary%",
+      "indent": 0,
+      "actions": [{"module": "output", "action": "write", "parameters": [
+        {"name": "Data", "value": "%!test.summary%", "type": "string"}
+      ]}],
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "RunTest",
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out 'Running %testFile%'",
+          "indent": 0,
+          "actions": [{"module": "output", "action": "write", "parameters": [
+            {"name": "Data", "value": "Running %testFile%", "type": "string"}
+          ]}],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "call goal %testFile%, write to %result%",
+          "indent": 0,
+          "actions": [{"module": "goal", "action": "call", "parameters": [
+            {"name": "GoalName", "value": "%testFile%", "type": "goal.call"}
+          ], "return": [{"name": "result"}]}],
+          "onError": {"ignoreError": true},
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "add result to %!test.results%",
+          "indent": 0,
+          "actions": [{"module": "list", "action": "add", "parameters": [
+            {"name": "List", "value": "%!test.results%", "type": "list"},
+            {"name": "Item", "value": "%result%", "type": "object"}
+          ]}],
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/system/test.goal",
+      "prPath": "/system/.build/test.pr",
+      "isSystem": true
+    }
+  ],
+  "visibility": 1,
+  "path": "/system/test.goal",
+  "prPath": "/system/.build/test.pr",
+  "isSystem": true
+}

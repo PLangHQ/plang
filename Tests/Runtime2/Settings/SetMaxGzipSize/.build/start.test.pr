@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets settings.archive.max to 20971520, reads it back into %maxSize%, and asserts the value matches.",
+    "description": "Sets settings.archive.max, reads it back into %maxSize%, then asserts the value equals 20971520.",
     "comment": null,
     "steps": [
       {

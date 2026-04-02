@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Tests basic CRUD operations on settings: set, get, update, remove.",
+    "description": "CRUD test for settings: set initial value, get and assert, update via set, get and assert, then remove.",
     "comment": "Tests basic CRUD operations on settings: set, get, update, remove",
     "steps": [
       {

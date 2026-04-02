@@ -108,6 +108,13 @@ public sealed class PLangContext : IDisposable
     public IError? CurrentError { get; set; }
 
     /// <summary>
+    /// Test context — a Data with Properties for results, summary, etc.
+    /// Set when --test flag is active. Accessible via %!test%.
+    /// Properties are extensible — results, summary can be GoalCalls.
+    /// </summary>
+    public Data? Test { get; set; }
+
+    /// <summary>
     /// The current event context. Set by the source generator when a parameter implements IEvent.
     /// Accessible via %!event%. Contains .step (triggering step), .phase, etc.
     /// Null when not in an event handler.
@@ -172,6 +179,7 @@ public sealed class PLangContext : IDisposable
         ms.Put(new DynamicData("!error", () => CurrentError ?? CallStack?.Current?.Error));
         ms.Put(new DynamicData("!data", () => Engine.System.Context.MemoryStack.GetValue("data")));
         ms.Put(new DynamicData("!event", () => Event ?? Engine.System?.Context?.Event));
+        ms.Put(new DynamicData("!test", () => Test));
     }
 
     /// <summary>

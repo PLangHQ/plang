@@ -88,6 +88,30 @@ namespace PLang
 				}
 			}
 
+			// Test mode — set context.Test as a Data with properties
+			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
+			{
+				var results = new List<Runtime2.Engine.Memory.Data>();
+				var testData = new Runtime2.Engine.Memory.Data("!test", true);
+				testData.Properties["results"] = new Runtime2.Engine.Memory.Data("results", results);
+				testData.Properties["summary"] = new Runtime2.Engine.Memory.DynamicData("summary", () =>
+				{
+					var passed = results.Count(r => r.Success);
+					var failed = results.Count - passed;
+					var failures = results.Where(r => !r.Success)
+						.Select(r => $"  FAIL: {r.Error?.Message ?? "unknown"}")
+						.ToList();
+					var summary = $"\n{passed} passed, {failed} failed out of {results.Count} tests";
+					if (failures.Count > 0)
+						summary += "\n" + string.Join("\n", failures);
+					return summary;
+				});
+				engine.System.Context.Test = testData;
+				systemMs.Set("!test", testData);
+				if (!parameters.ContainsKey("path"))
+					systemMs.Set("path", fileSystem.RootDirectory);
+			}
+
 			// Build mode — set engine flag and resolve build path
 			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
 			{
