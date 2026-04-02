@@ -1,0 +1,6 @@
+{"name": "Start", "steps": [
+  {"index": 0, "text": "set var", "indent": 0,
+    "actions": [{"module": "variable", "action": "set", "parameters": [{"name": "Name", "value": "%__data__%", "type": "string"}, {"name": "Value", "value": "testval", "type": "string"}]}], "waitForExecution": true},
+  {"index": 1, "text": "write", "indent": 0,
+    "actions": [{"module": "output", "action": "write", "parameters": [{"name": "Data", "value": "direct=%__data__% nav=%__data__.maxLength(5)%", "type": "string"}]}], "waitForExecution": true}
+], "goals": [], "visibility": 1, "path": "/Test.goal", "prPath": "/.build/debugvartest.pr"}
