@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Events;
 using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
