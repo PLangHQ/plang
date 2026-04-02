@@ -1,10 +1,9 @@
 Start
-/ Test: create two identities, archive non-default, verify success and default unchanged
+/ Test: create two identities, archive non-default, verify default unchanged
 - archive identity 'TestArcNonDefA', on error ignore
 - archive identity 'TestArcNonDefB', on error ignore
 - create identity 'TestArcNonDefA', set as default
 - create identity 'TestArcNonDefB'
 - archive identity 'TestArcNonDefB'
-- get identity, write to %defaultId%
-- assert %defaultId.Name% equals 'TestArcNonDefA'
+- assert %MyIdentity.Name% equals 'TestArcNonDefA'
 - archive identity 'TestArcNonDefA'

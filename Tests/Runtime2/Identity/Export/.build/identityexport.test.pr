@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Archives/creates an identity, exports it to %exported%, asserts the exported value is not null, then archives the identity again. Error on each step is ignored.",
+    "description": "Archives any existing identity, creates and exports identity, asserts exported value is not null, then archives the identity again. Errors on all steps are ignored.",
     "comment": null,
     "steps": [
       {
@@ -9,7 +9,7 @@
         "text": "archive identity \u0027TestExportId\u0027, on error ignore",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "Test: export private key and verify non-empty string returned",
+        "comment": "Test: export identity and verify non-empty result",
         "actions": [
           {
             "module": "identity",

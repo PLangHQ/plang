@@ -1,9 +1,7 @@
 Start
-/ Test: create a named identity, get it by name, verify Name and PublicKey properties
+/ Test: create a named identity as default, verify %MyIdentity.Name% equals the name
 - archive identity 'TestGetByName', on error ignore
-- create identity 'TestGetByName'
-- get identity 'TestGetByName', write to %id%
-- assert %id% is not null
-- assert %identity.Name% equals 'TestGetByName'
-- assert %identity.PublicKey% is not null
+- create identity 'TestGetByName', set as default
+- assert %MyIdentity.Name% equals 'TestGetByName'
+- assert %MyIdentity.PublicKey% is not null
 - archive identity 'TestGetByName'

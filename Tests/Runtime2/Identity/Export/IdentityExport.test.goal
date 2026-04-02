@@ -1,5 +1,5 @@
 Start
-/ Test: export private key and verify non-empty string returned
+/ Test: export identity and verify non-empty result
 - archive identity 'TestExportId', on error ignore
 - create identity 'TestExportId', set as default
 - export identity 'TestExportId', write to %exported%

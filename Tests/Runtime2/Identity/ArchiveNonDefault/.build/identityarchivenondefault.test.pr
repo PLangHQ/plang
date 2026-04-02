@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Archives two non-default identities, creates them (setting only the first as default), archives the second and then the default, and verifies the default identity remains unchanged until the final archive.",
+    "description": "Archives two non-default identities, creates them (setting only the first as default), archives one non-default, asserts the default identity remains unchanged, then archives the default identity. Ignores errors on archive steps as specified.",
     "comment": null,
     "steps": [
       {
@@ -9,7 +9,7 @@
         "text": "archive identity \u0027TestArcNonDefA\u0027, on error ignore",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "Test: create two identities, archive non-default, verify success and default unchanged",
+        "comment": "Test: create two identities, archive non-default, verify default unchanged",
         "actions": [
           {
             "module": "identity",
@@ -103,16 +103,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -139,16 +130,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -191,49 +173,8 @@
       },
       {
         "index": 5,
-        "text": "get identity, write to %defaultId%",
+        "text": "assert %MyIdentity.Name% equals \u0027TestArcNonDefA\u0027",
         "lineNumber": 8,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "identity",
-            "action": "get",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "",
-                "type": "string"
-              }
-            ],
-            "return": [
-              {
-                "name": "defaultId",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
-        "text": "assert %defaultId.Name% equals \u0027TestArcNonDefA\u0027",
-        "lineNumber": 9,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -248,7 +189,12 @@
               },
               {
                 "name": "Actual",
-                "value": "%defaultId.Name%",
+                "value": "%MyIdentity.Name%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "assert %MyIdentity.Name% equals \u0027TestArcNonDefA\u0027",
                 "type": "string"
               }
             ],
@@ -257,24 +203,15 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
       },
       {
-        "index": 7,
+        "index": 6,
         "text": "archive identity \u0027TestArcNonDefA\u0027",
-        "lineNumber": 10,
+        "lineNumber": 9,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -312,7 +249,7 @@
     "visibility": 1,
     "path": "/IdentityArchiveNonDefault.test.goal",
     "prPath": "/.build/identityarchivenondefault.test.pr",
-    "hash": "171cdace0f6759ab09306a437de2d4fad678e28155410afd2f2a7a02ac76cc5e",
+    "hash": "4db04b1ed0786e6ed6c67e3b6813a042f8a41c5922f13ee5c35ddbe7f3d3bbf5",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

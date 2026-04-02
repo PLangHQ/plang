@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Archives (ignoring errors), creates a named identity, retrieves it by name, asserts it exists and that Name/PublicKey match expectations, then archives it again.",
+    "description": "Archives any existing identity, creates \u0027TestGetByName\u0027 as the default identity, then asserts the default identity\u0027s name and public key are present, and finally archives the identity.",
     "comment": null,
     "steps": [
       {
@@ -9,7 +9,7 @@
         "text": "archive identity \u0027TestGetByName\u0027, on error ignore",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "Test: create a named identity, get it by name, verify Name and PublicKey properties",
+        "comment": "Test: create a named identity as default, verify %MyIdentity.Name% equals the name",
         "actions": [
           {
             "module": "identity",
@@ -42,7 +42,7 @@
       },
       {
         "index": 1,
-        "text": "create identity \u0027TestGetByName\u0027",
+        "text": "create identity \u0027TestGetByName\u0027, set as default",
         "lineNumber": 4,
         "indent": 0,
         "comment": null,
@@ -55,6 +55,11 @@
                 "name": "Name",
                 "value": "TestGetByName",
                 "type": "string"
+              },
+              {
+                "name": "SetAsDefault",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -69,27 +74,27 @@
       },
       {
         "index": 2,
-        "text": "get identity \u0027TestGetByName\u0027, write to %id%",
+        "text": "assert %MyIdentity.Name% equals \u0027TestGetByName\u0027",
         "lineNumber": 5,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "identity",
-            "action": "get",
+            "module": "assert",
+            "action": "equals",
             "parameters": [
               {
-                "name": "Name",
+                "name": "Expected",
                 "value": "TestGetByName",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%MyIdentity.Name%",
                 "type": "string"
               }
             ],
-            "return": [
-              {
-                "name": "id",
-                "value": null
-              }
-            ],
+            "return": null,
             "defaults": null
           }
         ],
@@ -101,7 +106,7 @@
       },
       {
         "index": 3,
-        "text": "assert %id% is not null",
+        "text": "assert %MyIdentity.PublicKey% is not null",
         "lineNumber": 6,
         "indent": 0,
         "comment": null,
@@ -112,7 +117,7 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%id%",
+                "value": "%MyIdentity.PublicKey%",
                 "type": "object"
               }
             ],
@@ -128,77 +133,8 @@
       },
       {
         "index": 4,
-        "text": "assert %identity.Name% equals \u0027TestGetByName\u0027",
-        "lineNumber": 7,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "TestGetByName",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%identity.Name%",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "assert %identity.Name% equals \u0027TestGetByName\u0027",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 5,
-        "text": "assert %identity.PublicKey% is not null",
-        "lineNumber": 8,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "isNotNull",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%identity.PublicKey%",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "assert %identity.PublicKey% is not null",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
         "text": "archive identity \u0027TestGetByName\u0027",
-        "lineNumber": 9,
+        "lineNumber": 7,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -227,7 +163,7 @@
     "visibility": 1,
     "path": "/IdentityGetByName.test.goal",
     "prPath": "/.build/identitygetbyname.test.pr",
-    "hash": "cf7f8e402511f270f301d491ce10fc2624e6dff83847ef6c5564494a9a8316a8",
+    "hash": "dedc2b1bf145e2c4e1980907392555be3a289e5376a443b8951e7c309e3d112e",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

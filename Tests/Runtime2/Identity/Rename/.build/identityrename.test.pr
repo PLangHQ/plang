@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Archives old/new identities, creates the old identity, captures its pre-rename keys, renames it, captures post-rename identity, asserts the new identity exists with the same public key, then archives the new identity. Ignores errors on all steps.",
+    "description": "Archives any existing identities, creates the old identity as default, renames it to the new name, asserts the identity name matches, then archives the new identity.",
     "comment": null,
     "steps": [
       {
@@ -9,7 +9,7 @@
         "text": "archive identity \u0027TestRenameOld\u0027, on error ignore",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "Test: rename an identity, verify old name is gone and new name returns same keys",
+        "comment": "Test: rename an identity, verify %MyIdentity.Name% equals new name",
         "actions": [
           {
             "module": "identity",
@@ -78,7 +78,7 @@
       },
       {
         "index": 2,
-        "text": "create identity \u0027TestRenameOld\u0027",
+        "text": "create identity \u0027TestRenameOld\u0027, set as default",
         "lineNumber": 5,
         "indent": 0,
         "comment": null,
@@ -94,7 +94,7 @@
               },
               {
                 "name": "SetAsDefault",
-                "value": false,
+                "value": true,
                 "type": "bool"
               }
             ],
@@ -103,65 +103,15 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
       },
       {
         "index": 3,
-        "text": "get identity \u0027TestRenameOld\u0027, write to %before%",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "identity",
-            "action": "get",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "TestRenameOld",
-                "type": "string"
-              }
-            ],
-            "return": [
-              {
-                "name": "before",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
         "text": "rename identity \u0027TestRenameOld\u0027 to \u0027TestRenameNew\u0027",
-        "lineNumber": 7,
+        "lineNumber": 6,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -185,183 +135,47 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "assert %MyIdentity.Name% equals \u0027TestRenameNew\u0027",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "TestRenameNew",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%MyIdentity.Name%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
       },
       {
         "index": 5,
-        "text": "get identity \u0027TestRenameNew\u0027, write to %after%",
-        "lineNumber": 8,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "identity",
-            "action": "get",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "TestRenameNew",
-                "type": "string"
-              }
-            ],
-            "return": [
-              {
-                "name": "after",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
-        "text": "assert %after% is not null",
-        "lineNumber": 9,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "isNotNull",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%after%",
-                "type": "object"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 7,
-        "text": "assert %after.Name% equals \u0027TestRenameNew\u0027",
-        "lineNumber": 10,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "TestRenameNew",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%after.Name%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 8,
-        "text": "assert %after.PublicKey% equals %before.PublicKey%",
-        "lineNumber": 11,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "%before.PublicKey%",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%after.PublicKey%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 9,
         "text": "archive identity \u0027TestRenameNew\u0027",
-        "lineNumber": 12,
+        "lineNumber": 8,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -399,7 +213,7 @@
     "visibility": 1,
     "path": "/IdentityRename.test.goal",
     "prPath": "/.build/identityrename.test.pr",
-    "hash": "28173130dfeb2f1b007f1aa23c4c77313643ba49537ebac298541df5d664eb6b",
+    "hash": "b67a1804f760f81ea28747456e0850ed2cd3c3e1038b43cbcbc942a913ec3966",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

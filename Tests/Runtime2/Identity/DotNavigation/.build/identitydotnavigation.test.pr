@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Archives/creates/loads an identity named \u0027TestDotNav\u0027, then asserts dot-navigation access to identity fields (Name, PublicKey, IsDefault) via %identity.*% variables, ignoring errors on the initial archive.",
+    "description": "Archives and recreates an identity named TestDotNav, then asserts that dot-navigated identity fields (Name, PublicKey, IsDefault) are present and correct; final archive cleans up. Error on first archive is ignored.",
     "comment": null,
     "steps": [
       {
@@ -9,7 +9,7 @@
         "text": "archive identity \u0027TestDotNav\u0027, on error ignore",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "Test: access %MyIdentity.Name% and %MyIdentity.PublicKey% via dot navigation",
+        "comment": "Test: access %MyIdentity.Name%, %MyIdentity.PublicKey%, %MyIdentity.IsDefault% via dot navigation",
         "actions": [
           {
             "module": "identity",
@@ -74,27 +74,22 @@
       },
       {
         "index": 2,
-        "text": "get identity \u0027TestDotNav\u0027, write to %id%",
+        "text": "assert %MyIdentity.Name% is not null",
         "lineNumber": 5,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "identity",
-            "action": "get",
+            "module": "assert",
+            "action": "isNotNull",
             "parameters": [
               {
-                "name": "Name",
-                "value": "TestDotNav",
-                "type": "string"
+                "name": "Value",
+                "value": "%MyIdentity.Name%",
+                "type": "object"
               }
             ],
-            "return": [
-              {
-                "name": "id",
-                "value": null
-              }
-            ],
+            "return": null,
             "defaults": null
           }
         ],
@@ -106,7 +101,7 @@
       },
       {
         "index": 3,
-        "text": "assert %identity.Name% is not null",
+        "text": "assert %MyIdentity.PublicKey% is not null",
         "lineNumber": 6,
         "indent": 0,
         "comment": null,
@@ -117,13 +112,8 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%identity.Name%",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "assert that %identity.Name% is not null",
-                "type": "string"
+                "value": "%MyIdentity.PublicKey%",
+                "type": "object"
               }
             ],
             "return": null,
@@ -138,24 +128,19 @@
       },
       {
         "index": 4,
-        "text": "assert %identity.PublicKey% is not null",
+        "text": "assert %MyIdentity.IsDefault% is true",
         "lineNumber": 7,
         "indent": 0,
         "comment": null,
         "actions": [
           {
             "module": "assert",
-            "action": "isNotNull",
+            "action": "isTrue",
             "parameters": [
               {
                 "name": "Value",
-                "value": "%identity.PublicKey%",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "assert that %identity.PublicKey% is not null (Value=%identity.PublicKey%)",
-                "type": "string"
+                "value": "%MyIdentity.IsDefault%",
+                "type": "bool"
               }
             ],
             "return": null,
@@ -170,40 +155,8 @@
       },
       {
         "index": 5,
-        "text": "assert %identity.IsDefault% is true",
-        "lineNumber": 8,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "isTrue",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%identity.IsDefault%",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "assert that %identity.IsDefault% is true (Value=%identity.IsDefault%)",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
         "text": "archive identity \u0027TestDotNav\u0027",
-        "lineNumber": 9,
+        "lineNumber": 8,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -232,7 +185,7 @@
     "visibility": 1,
     "path": "/IdentityDotNavigation.test.goal",
     "prPath": "/.build/identitydotnavigation.test.pr",
-    "hash": "71db476751f66f183f7828726cf0ff324a3b432776470b9a355d69b71c2b4d56",
+    "hash": "6e433193e7844113cdfb352f71c9f9dfdde0f916cad30048733c1bd73b4ff470",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

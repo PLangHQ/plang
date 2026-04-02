@@ -218,30 +218,37 @@ public partial class Data
     private object? GetChildValue(string key)
     {
         // First check properties on the Data object itself (e.g., PathData.Exists)
+        var val = Value;
+
+        // If Value is a Data object (e.g., DynamicData wrapping IdentityData),
+        // navigate into the VALUE first — it's the real object
+        if (val is Data dataVal)
+        {
+            var dataProp = dataVal.Properties[key];
+            if (dataProp != null) return dataProp.Value;
+            var dataChild = dataVal.GetChildValue(key);
+            if (dataChild != null) return dataChild;
+        }
+
+        // Check properties on the actual type (subclass properties + whitelisted Data properties)
         var ownProp = GetType().GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (ownProp != null && (ownProp.DeclaringType != typeof(Data)
-            || key.Equals("Success", StringComparison.OrdinalIgnoreCase)
-            || key.Equals("Error", StringComparison.OrdinalIgnoreCase)
-            || key.Equals("Name", StringComparison.OrdinalIgnoreCase)))
+        if (ownProp != null)
         {
-            return ownProp.GetValue(this);
+            if (ownProp.DeclaringType != typeof(Data)
+                || key.Equals("Success", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("Error", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("Name", StringComparison.OrdinalIgnoreCase))
+            {
+                return ownProp.GetValue(this);
+            }
         }
 
         // Check Data.Properties (extensible key-value pairs on the Data)
         var prop = Properties[key];
         if (prop != null) return prop.Value;
 
-        var val = Value;
         if (val == null) return null;
-
-        // If Value is a Data object, navigate into IT (check its Properties, Value, etc.)
-        if (val is Data dataVal)
-        {
-            var dataProp = dataVal.Properties[key];
-            if (dataProp != null) return dataProp.Value;
-            return dataVal.GetChildValue(key);
-        }
 
         return ValueNavigators.Navigate(val, key);
     }

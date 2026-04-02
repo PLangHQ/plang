@@ -5,11 +5,11 @@ Start
 - create identity 'TestUnarchiveId', set as default
 - create identity 'TestUnarchiveExtra'
 - archive identity 'TestUnarchiveExtra'
-- get identity 'TestUnarchiveExtra', write to %archived%
-- assert %archived% is null
+- get identity 'TestUnarchiveExtra', write to %result%
+- assert %result% is null
 - unarchive identity 'TestUnarchiveExtra'
-- get identity 'TestUnarchiveExtra', write to %restored%
-- assert %restored% is not null
-- assert %restored.Name% equals 'TestUnarchiveExtra'
+- get identity 'TestUnarchiveExtra', write to %result%
+- assert %result% is not null
+- assert %result.Name% equals 'TestUnarchiveExtra'
 - archive identity 'TestUnarchiveExtra'
 - archive identity 'TestUnarchiveId'

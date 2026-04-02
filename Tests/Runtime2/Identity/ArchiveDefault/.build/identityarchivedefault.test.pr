@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Archives a test identity (ignoring errors), creates it and sets it as default, archives it again while capturing the result, asserts the result contains a non-null Error, then archives it a final time.",
+    "description": "Archives a default identity (with ignore-on-error), recreates it as default, archives again capturing the result, asserts an error was returned, then archives once more ignoring errors.",
     "comment": null,
     "steps": [
       {
@@ -74,7 +74,7 @@
       },
       {
         "index": 2,
-        "text": "archive identity \u0027TestArchiveDefault\u0027, write to %result%",
+        "text": "archive identity \u0027TestArchiveDefault\u0027, write to %result%, on error ignore",
         "lineNumber": 5,
         "indent": 0,
         "comment": null,
@@ -135,23 +135,14 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
       },
       {
         "index": 4,
-        "text": "archive identity \u0027TestArchiveDefault\u0027",
+        "text": "archive identity \u0027TestArchiveDefault\u0027, on error ignore",
         "lineNumber": 7,
         "indent": 0,
         "comment": null,
@@ -190,7 +181,7 @@
     "visibility": 1,
     "path": "/IdentityArchiveDefault.test.goal",
     "prPath": "/.build/identityarchivedefault.test.pr",
-    "hash": "326880064020a70c8af0b73896258626bc1180d8eb76e1d3c8a326ce97360a68",
+    "hash": "800bc70f125f76ca406a77c48e7dd07aa7107e347fdfc1e3bac80815c8e3c6bd",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

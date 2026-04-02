@@ -1,7 +1,6 @@
 Start
-/ Test: create an identity and verify it exists
+/ Test: create an identity as default and verify %MyIdentity% is not null
 - archive identity 'TestCreate', on error ignore
-- create identity 'TestCreate'
-- get identity 'TestCreate', write to %id%
-- assert %id% is not null
+- create identity 'TestCreate', set as default
+- assert %MyIdentity% is not null
 - archive identity 'TestCreate'

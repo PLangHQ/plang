@@ -2,6 +2,6 @@ Start
 / Test: try to archive the default identity, verify error is returned
 - archive identity 'TestArchiveDefault', on error ignore
 - create identity 'TestArchiveDefault', set as default
-- archive identity 'TestArchiveDefault', write to %result%
+- archive identity 'TestArchiveDefault', write to %result%, on error ignore
 - assert %result.Error% is not null
-- archive identity 'TestArchiveDefault'
+- archive identity 'TestArchiveDefault', on error ignore

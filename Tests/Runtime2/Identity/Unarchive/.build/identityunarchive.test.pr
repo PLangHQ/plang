@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Archives two identities, recreates one, verifies archived identity is inaccessible (null), unarchives it, verifies it is accessible again (non-null and correct name), then archives both identities at the end. Ignores errors on all identity operations as specified.",
+    "description": "Archives two identities (ignoring errors), creates them, archives one, verifies it is inaccessible (null), unarchives it, verifies it is accessible again (non-null and correct name), then archives both identities again (ignoring errors).",
     "comment": null,
     "steps": [
       {
@@ -191,7 +191,7 @@
       },
       {
         "index": 5,
-        "text": "get identity \u0027TestUnarchiveExtra\u0027, write to %archived%",
+        "text": "get identity \u0027TestUnarchiveExtra\u0027, write to %result%",
         "lineNumber": 8,
         "indent": 0,
         "comment": null,
@@ -208,7 +208,7 @@
             ],
             "return": [
               {
-                "name": "archived",
+                "name": "result",
                 "value": null
               }
             ],
@@ -232,7 +232,7 @@
       },
       {
         "index": 6,
-        "text": "assert %archived% is null",
+        "text": "assert %result% is null",
         "lineNumber": 9,
         "indent": 0,
         "comment": null,
@@ -243,7 +243,7 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%archived%",
+                "value": "%result%",
                 "type": "object"
               }
             ],
@@ -304,7 +304,7 @@
       },
       {
         "index": 8,
-        "text": "get identity \u0027TestUnarchiveExtra\u0027, write to %restored%",
+        "text": "get identity \u0027TestUnarchiveExtra\u0027, write to %result%",
         "lineNumber": 11,
         "indent": 0,
         "comment": null,
@@ -321,7 +321,7 @@
             ],
             "return": [
               {
-                "name": "restored",
+                "name": "result",
                 "value": null
               }
             ],
@@ -345,7 +345,7 @@
       },
       {
         "index": 9,
-        "text": "assert %restored% is not null",
+        "text": "assert %result% is not null",
         "lineNumber": 12,
         "indent": 0,
         "comment": null,
@@ -356,7 +356,7 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%restored%",
+                "value": "%result%",
                 "type": "object"
               }
             ],
@@ -381,7 +381,7 @@
       },
       {
         "index": 10,
-        "text": "assert %restored.Name% equals \u0027TestUnarchiveExtra\u0027",
+        "text": "assert %result.Name% equals \u0027TestUnarchiveExtra\u0027",
         "lineNumber": 13,
         "indent": 0,
         "comment": null,
@@ -397,12 +397,12 @@
               },
               {
                 "name": "Actual",
-                "value": "%restored.Name%",
+                "value": "%result.Name%",
                 "type": "string"
               },
               {
                 "name": "Message",
-                "value": "assert %restored.Name% equals \u0027TestUnarchiveExtra\u0027",
+                "value": "assert that %result.Name% equals \u0027TestUnarchiveExtra\u0027",
                 "type": "string"
               }
             ],
@@ -502,7 +502,7 @@
     "visibility": 1,
     "path": "/IdentityUnarchive.test.goal",
     "prPath": "/.build/identityunarchive.test.pr",
-    "hash": "0ad337d7698a765dd11ea86e65abb482e068a2c4e5849f180ed4dd86af56a3e8",
+    "hash": "fe27aa125bc5c5b05a3b686352c4fd61436c89dfadadc28ba9503650f82f5d7f",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

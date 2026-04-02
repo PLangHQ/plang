@@ -1,5 +1,4 @@
 Start
 / Test: access %MyIdentity% when no identities exist, verify auto-created default identity
-- get identity, write to %id%
-- assert %id% is not null
-- assert %identity.Name% is not null
+- assert %MyIdentity% is not null
+- assert %MyIdentity.Name% is not null

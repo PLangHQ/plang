@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Archives (ignores errors), creates an identity, fetches it into %id%, asserts it exists (not null), then archives it again (ignoring errors).",
+    "description": "Archives any existing identity named TestCreate, creates it as the default identity, asserts %MyIdentity% is not null, then archives TestCreate again. Errors on the first archive are ignored.",
     "comment": null,
     "steps": [
       {
@@ -9,7 +9,7 @@
         "text": "archive identity \u0027TestCreate\u0027, on error ignore",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "Test: create an identity and verify it exists",
+        "comment": "Test: create an identity as default and verify %MyIdentity% is not null",
         "actions": [
           {
             "module": "identity",
@@ -42,7 +42,7 @@
       },
       {
         "index": 1,
-        "text": "create identity \u0027TestCreate\u0027",
+        "text": "create identity \u0027TestCreate\u0027, set as default",
         "lineNumber": 4,
         "indent": 0,
         "comment": null,
@@ -55,6 +55,11 @@
                 "name": "Name",
                 "value": "TestCreate",
                 "type": "string"
+              },
+              {
+                "name": "SetAsDefault",
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -62,65 +67,15 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
       },
       {
         "index": 2,
-        "text": "get identity \u0027TestCreate\u0027, write to %id%",
+        "text": "assert %MyIdentity% is not null",
         "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "identity",
-            "action": "get",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "TestCreate",
-                "type": "string"
-              }
-            ],
-            "return": [
-              {
-                "name": "id",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "assert %id% is not null",
-        "lineNumber": 6,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -130,7 +85,7 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%id%",
+                "value": "%MyIdentity%",
                 "type": "object"
               }
             ],
@@ -139,24 +94,15 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
       },
       {
-        "index": 4,
+        "index": 3,
         "text": "archive identity \u0027TestCreate\u0027",
-        "lineNumber": 7,
+        "lineNumber": 6,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -175,16 +121,7 @@
           }
         ],
         "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
+        "onError": null,
         "cache": null,
         "timeout": null,
         "waitForExecution": true
@@ -194,7 +131,7 @@
     "visibility": 1,
     "path": "/IdentityCreate.test.goal",
     "prPath": "/.build/identitycreate.test.pr",
-    "hash": "942331590e117b516f9a37cfb40d1c7029c2985719db408b24d0766e0f6300f5",
+    "hash": "d49ce7cb2c081e91ab8e0fcf9ddd7581ece91855ce40ae35df86ba75dfc73764",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

@@ -1,47 +1,15 @@
 [
   {
     "name": "Start",
-    "description": "Test flow: get identity %MyIdentity% (expected auto-created default when none exist), then assert the returned identity object and its Name are not null.",
+    "description": "Asserts that %MyIdentity% is auto-created (not null) and that its Name property is also not null when no identities exist.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "get identity, write to %id%",
+        "text": "assert %MyIdentity% is not null",
         "lineNumber": 3,
         "indent": 0,
         "comment": "Test: access %MyIdentity% when no identities exist, verify auto-created default identity",
-        "actions": [
-          {
-            "module": "identity",
-            "action": "get",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%MyIdentity%",
-                "type": "string"
-              }
-            ],
-            "return": [
-              {
-                "name": "id",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "assert %id% is not null",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
         "actions": [
           {
             "module": "assert",
@@ -49,7 +17,7 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%id%",
+                "value": "%MyIdentity%",
                 "type": "object"
               }
             ],
@@ -64,9 +32,9 @@
         "waitForExecution": true
       },
       {
-        "index": 2,
-        "text": "assert %identity.Name% is not null",
-        "lineNumber": 5,
+        "index": 1,
+        "text": "assert %MyIdentity.Name% is not null",
+        "lineNumber": 4,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -76,13 +44,8 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": "%identity.Name%",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "Expected %identity.Name% to be not null.",
-                "type": "string"
+                "value": "%MyIdentity.Name%",
+                "type": "object"
               }
             ],
             "return": null,
@@ -100,7 +63,7 @@
     "visibility": 1,
     "path": "/IdentityAutoCreate.test.goal",
     "prPath": "/.build/identityautocreate.test.pr",
-    "hash": "92f6e507ee6f8b97b523149ec8e2e4b56e4a2fed6a05db061ab3f5e7b2950be5",
+    "hash": "153fa75d2609153132a67b1d80f090a0b6f9ced940f1a62e514bf3835b590fe1",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
