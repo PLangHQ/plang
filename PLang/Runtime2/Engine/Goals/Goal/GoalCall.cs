@@ -58,12 +58,14 @@ public sealed class GoalCall : modules.IEvent
             break;
         }
 
-        // 2. Check engine's loaded goals
-        var loaded = engine.Goals.Get(Name);
-        if (loaded != null) return loaded;
+        // 2. Check engine's loaded goals (only when no PrPath — PrPath takes precedence)
+        if (string.IsNullOrEmpty(PrPath))
+        {
+            var loaded = engine.Goals.Get(Name);
+            if (loaded != null) return loaded;
+        }
 
-        // 3. Not a sub-goal — file.read the .pr
-        // PrPath has the path, Name is just the goal name
+        // 3. File.read the .pr
         var prPath = PrPath;
         if (string.IsNullOrEmpty(prPath) && !string.IsNullOrEmpty(Name))
             prPath = $".build/{Name.ToLowerInvariant()}.pr";
