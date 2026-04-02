@@ -1,14 +1,9 @@
 
 using LightInject;
-using Microsoft.Extensions.Logging;
 using PLang;
 using PLang.Container;
 using PLang.Interfaces;
-using PLang.Runtime;
 using PLang.Utils;
-using System.Collections;
-using System.ComponentModel;
-using static PLang.Executor;
 
 using var cts = new CancellationTokenSource();
 
@@ -18,54 +13,30 @@ Console.CancelKeyPress += (_, e) =>
 {
 	e.Cancel = true;
 	cts.Cancel();
-
 	Environment.Exit(0);
-	
 };
 
+// Both builder and runtime go through the same v3 engine path
+(string currentDirectory, args) = GetCurrentDirectory(args);
 
+var container = new ServiceContainer();
 if (builder)
 {
 	AppContext.SetSwitch("Builder", true);
-
-	var container = new ServiceContainer();
 	container.RegisterForPLangBuilderConsole(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString());
-
-
-	var pLanguage = new Executor(container);
-	var result = pLanguage.Execute(args, ExecuteType.Builder, cts.Token).GetAwaiter().GetResult();
-	if (result.Error != null)
-	{
-		var logger = container.GetInstance<ILogger>();
-		logger.LogError(result.Error.ToString());
-	}
-
-	container.Dispose();
 }
-
-if (runtime)
+else
 {
-	(string currentDirectory, args) = GetCurrentDirectory(args);
-
-	var container = new ServiceContainer();
 	container.RegisterForPLangConsole(currentDirectory, Path.DirectorySeparatorChar.ToString());
-
-	var context = container.GetInstance<PLangAppContext>();
-
-	var fileAccessHandler = container.GetInstance<PLang.SafeFileSystem.IFileAccessHandler>();
-	fileAccessHandler.GiveAccess(Environment.CurrentDirectory, Path.Join(AppContext.BaseDirectory, "os"));
-	var engine = container.GetInstance<IEngine>();
-	engine.Name = "Console";
-	
-	var pLanguage = new Executor(container);
-
-	var result = pLanguage.Run(args, cts.Token).GetAwaiter().GetResult();
-	if (!result.Success && result.Error != null)
-	{
-		Console.Error.WriteLine(result.Error.Format());
-	}
-	container.Dispose();
 }
+
+var pLanguage = new Executor(container);
+var result = pLanguage.Run(args, cts.Token).GetAwaiter().GetResult();
+if (!result.Success && result.Error != null)
+{
+	Console.Error.WriteLine(result.Error.Format());
+}
+container.Dispose();
 
 
 (string, string[]) GetCurrentDirectory(string[] args)

@@ -606,3 +606,9 @@ The guidance text from BuildGoal's LLM would flow into BuildStep's prompt as add
 **Context:** BuildGoal LLM returns steps. Related steps (e.g., error check → retry → throw) could be grouped with a `group` field. BuildStep then receives the whole group at once, seeing all related steps + their module details. This gives the LLM more context for parameter mapping — it sees the full flow instead of one step at a time.
 
 **Approach:** BuildGoal LLM adds `"group": "error-handling"` to related steps. ApplyStep sends each group to BuildStep as a batch. BuildStep prompt shows all steps in the group + their action specs. Result: higher confidence, fewer mapping errors for multi-step patterns.
+
+## Module setup — move to PLang
+**Date:** 2026-04-02
+**Context:** Setup (run-once DDL/init at app startup) exists in C# (`Setup.RunAsync`). Needs to move to PLang orchestration like error handling and caching did. Blocked on db module — setup needs to read/write the "setup" table in system.sqlite to track executed steps by hash.
+
+**Approach:** C# actions: `setup.discover` (find setup.pr files), `setup.check` (is step hash executed), `setup.record` (mark step done). PLang orchestration in run.pr before user goal. Tolerable errors (already exists, duplicate column) handled via error.check filtering. Requires db module for the settings store queries.

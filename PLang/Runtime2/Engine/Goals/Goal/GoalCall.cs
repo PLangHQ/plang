@@ -63,8 +63,22 @@ public sealed class GoalCall
         var prPath = PrPath;
         if (string.IsNullOrEmpty(prPath) && !string.IsNullOrEmpty(Name))
         {
+            var isAbsolute = Name.StartsWith('/');
             var name = Name.TrimStart('/');
-            prPath = $".build/{name.ToLowerInvariant()}.pr";
+            // Insert .build before the last segment: system/builder/Build → system/builder/.build/build.pr
+            var lastSep = name.LastIndexOf('/');
+            if (lastSep >= 0)
+            {
+                var folder = name[..lastSep];
+                var goalName = name[(lastSep + 1)..];
+                prPath = $"{folder}/.build/{goalName.ToLowerInvariant()}.pr";
+            }
+            else
+            {
+                prPath = $".build/{name.ToLowerInvariant()}.pr";
+            }
+            // Preserve leading / so PathData treats it as absolute (not relative to goal folder)
+            if (isAbsolute) prPath = "/" + prPath;
         }
 
         if (string.IsNullOrEmpty(prPath)) return null;

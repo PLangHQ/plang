@@ -1,9 +1,15 @@
 {
   "name": "Run",
   "steps": [
-    {"index": 0, "indent": 0, "text": "read file %goalFile%, write to %goal%",
+    {"index": 0, "indent": 0, "text": "if %!build% == true, call /system/Build",
+      "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%!build%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": true, "type": "bool"}, {"name": "GoalIfTrue", "value": {"name": "/system/Build"}, "type": "goal.call"}]}], "waitForExecution": true},
+    {"index": 1, "indent": 0, "text": "if %!build% == true, return",
+      "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%!build%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": true, "type": "bool"}]}], "waitForExecution": true},
+    {"index": 2, "indent": 1, "text": "return",
+      "actions": [{"module": "goal", "action": "return", "parameters": []}], "waitForExecution": true},
+    {"index": 3, "indent": 0, "text": "read file %goalFile%, write to %goal%",
       "actions": [{"module": "file", "action": "read", "parameters": [{"name": "Path", "value": "%goalFile%", "type": "path"}], "return": [{"name": "goal"}]}], "waitForExecution": true},
-    {"index": 1, "indent": 0, "text": "foreach %goal.Steps%, call RunStep, item=%step%",
+    {"index": 4, "indent": 0, "text": "foreach %goal.Steps%, call RunStep, item=%step%",
       "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%goal.Steps%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunStep"}, "type": "goal.call"}, {"name": "ItemName", "value": "step", "type": "string"}]}], "waitForExecution": true}
   ],
   "goals": [{
