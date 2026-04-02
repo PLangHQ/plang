@@ -255,6 +255,36 @@
     },
     {
       "index": 7,
+      "text": "foreach %stepResults.steps%, call PreValidateStep, item=%stepResult%",
+      "lineNumber": 28,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%stepResults.steps%",
+              "type": "object"
+            },
+            {
+              "name": "GoalName",
+              "value": {"name": "PreValidateStep"},
+              "type": "goal.call"
+            },
+            {
+              "name": "ItemName",
+              "value": "stepResult",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
       "text": "foreach %stepResults.steps%, call ApplyStep, item=%stepResult%",
       "lineNumber": 29,
       "indent": 0,
@@ -288,8 +318,8 @@
       "waitForExecution": true
     },
     {
-      "index": 8,
-      "text": "set %goal.BuilderVersion% = \"0.2.1\"",
+      "index": 9,
+      "text": "set %goal.BuilderVersion% = \"0.3\"",
       "lineNumber": 30,
       "indent": 0,
       "actions": [
@@ -313,7 +343,7 @@
       "waitForExecution": true
     },
     {
-      "index": 9,
+      "index": 10,
       "text": "[plang] call SaveGoal %goal%",
       "lineNumber": 31,
       "indent": 0,

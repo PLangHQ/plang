@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Writes \u0027Hello World\u0027 to the output channel \u0027this\u0027 as specified by the step.",
+    "description": "Writes \u0027Hello World\u0027 to the output channel.",
     "comment": null,
     "steps": [
       {
@@ -22,7 +22,7 @@
               },
               {
                 "name": "Channels",
-                "value": "this",
+                "value": "pr",
                 "type": "string"
               }
             ],
