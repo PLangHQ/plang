@@ -108,10 +108,11 @@ public sealed class PLangContext : IDisposable
     public IError? CurrentError { get; set; }
 
     /// <summary>
-    /// The step that triggered the current event. Set by the event system before calling the handler.
-    /// Accessible via %!event.step%. Null when not in an event handler.
+    /// The current event context. Set by the source generator when a parameter implements IEvent.
+    /// Accessible via %!event%. Contains .step (triggering step), .phase, etc.
+    /// Null when not in an event handler.
     /// </summary>
-    public Step? EventStep { get; set; }
+    public modules.EventContext? Event { get; set; }
 
     /// <summary>
     /// Set during setup execution, null otherwise.
@@ -170,7 +171,7 @@ public sealed class PLangContext : IDisposable
         ms.Put(new DynamicData("!step", () => Step));
         ms.Put(new DynamicData("!error", () => CurrentError ?? CallStack?.Current?.Error));
         ms.Put(new DynamicData("!data", () => Engine.System.Context.MemoryStack.GetValue("data")));
-        ms.Put(new DynamicData("!event", () => new { step = EventStep }));
+        ms.Put(new DynamicData("!event", () => Event ?? Engine.System?.Context?.Event));
     }
 
     /// <summary>

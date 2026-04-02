@@ -8,8 +8,11 @@ namespace PLang.Runtime2.Engine.Goals.Goal;
 /// Strongly-typed reference to a goal, carrying name, parameters, and optional pre-resolved PrPath.
 /// PrPath is nullable because dynamic goal names (containing %variable%) can't resolve at build time.
 /// </summary>
-public sealed class GoalCall
+public sealed class GoalCall : modules.IEvent
 {
+    /// <summary>Event context — set by Events.Stamp when this GoalCall is an event binding.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public modules.EventContext? Event { get; set; }
     /// <summary>Goal name to call (e.g., "ProcessData", "/Setup/Init").</summary>
     [Store, LlmBuilder]
     public string Name { get; init; } = "";

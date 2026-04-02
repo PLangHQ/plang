@@ -144,6 +144,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 var isDataType = rawType.Name == "Data"
                     && rawType.ContainingNamespace?.ToDisplayString() == "PLang.Runtime2.Engine.Memory";
 
+                var implementsIEvent = rawType is INamedTypeSymbol evt
+                    && evt.AllInterfaces.Any(i =>
+                        i.Name == "IEvent"
+                        && i.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.modules");
+
                 properties.Add(new ActionPropertyInfo(
                     prop.Name,
                     prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -155,7 +160,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     isProvider,
                     isDataType,
                     isInitiated,
-                    isNotNull));
+                    isNotNull,
+                    implementsIEvent));
             }
         }
 
@@ -359,6 +365,19 @@ public class LazyParamsGenerator : IIncrementalGenerator
             sb.AppendLine();
         }
 
+        // Check for IEvent on resolved properties — set context.Event if present
+        // The object tells us at runtime if it carries event context
+        foreach (var prop in info.Properties)
+        {
+            if (prop.IsProvider || prop.IsVariableName || prop.IsValueType || prop.IsDataType) continue;
+            if (prop.TypeName is "string" or "global::System.String") continue;
+            // Only emit for types that implement IEvent (compile-time safe)
+            if (!prop.ImplementsIEvent) continue;
+            sb.AppendLine($"        if ({prop.Name}?.Event != null)");
+            sb.AppendLine($"            context.Event = {prop.Name}.Event;");
+        }
+        sb.AppendLine();
+
         // Validate non-nullable, non-defaulted properties
         foreach (var prop in info.Properties)
         {
@@ -426,6 +445,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        {");
         sb.AppendLine("            context.Step = __previousStep;");
         sb.AppendLine("            context.Goal = __previousGoal;");
+        sb.AppendLine("            context.Event = null;");
         sb.AppendLine("        }");
         sb.AppendLine("    }");
         sb.AppendLine();
@@ -575,11 +595,12 @@ internal class ActionPropertyInfo
     public bool IsDataType { get; }
     public bool IsInitiated { get; }
     public bool IsNotNull { get; }
+    public bool ImplementsIEvent { get; }
 
     public ActionPropertyInfo(string name, string typeName, bool isNullable,
         bool isValueType, string? defaultValue, bool isVariableName = false,
         bool isEngineResolvable = false, bool isProvider = false, bool isDataType = false,
-        bool isInitiated = false, bool isNotNull = false)
+        bool isInitiated = false, bool isNotNull = false, bool implementsIEvent = false)
     {
         Name = name;
         TypeName = typeName;
@@ -592,5 +613,6 @@ internal class ActionPropertyInfo
         IsDataType = isDataType;
         IsInitiated = isInitiated;
         IsNotNull = isNotNull;
+        ImplementsIEvent = implementsIEvent;
     }
 }
