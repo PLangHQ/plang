@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %name% to a string, checks whether it contains a substring, calls WhenContains if true, then asserts that %result% equals \u0027contains\u0027 to confirm the correct branch executed.",
+    "description": "Sets %name% to \u0027hello world\u0027, checks whether it contains \u0027world\u0027 and calls WhenContains if true, then asserts %result% equals \u0027contains\u0027.",
     "comment": null,
     "steps": [
       {
@@ -118,10 +118,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionContains.test.goal",
-    "prPath": "/.build/conditioncontains.test.pr",
+    "path": "/Contains/ConditionContains.test.goal",
+    "prPath": "/Contains/.build/conditioncontains.test.pr",
     "hash": "9ffdba833592c772bb37f764984e7b08eccddd6431e756d5aaa861b9befcb91c",
     "builderVersion": "0.3",
     "isSetup": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Checks whether a file exists; if it exists calls WhenExists, otherwise calls WhenMissing. Then asserts that %result% equals \u0027missing\u0027 to confirm the else branch ran when the file is absent.",
+    "description": "Check whether a file exists; if it does, call WhenExists, otherwise call WhenMissing. Then assert the result is \u0027missing\u0027 when the file does not exist.",
     "comment": null,
     "steps": [
       {
@@ -51,22 +51,14 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenExists",
-                  "description": null,
-                  "parallel": false,
-                  "parameters": null,
-                  "prPath": "/.build/whenexists.pr"
+                  "name": "WhenExists"
                 },
                 "type": "goal.call"
               },
               {
                 "name": "GoalIfFalse",
                 "value": {
-                  "name": "WhenMissing",
-                  "description": null,
-                  "parallel": false,
-                  "parameters": null,
-                  "prPath": null
+                  "name": "WhenMissing"
                 },
                 "type": "goal.call"
               },
@@ -124,10 +116,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionFileNotExists.test.goal",
-    "prPath": "/.build/conditionfilenotexists.test.pr",
+    "path": "/FileNotExists/ConditionFileNotExists.test.goal",
+    "prPath": "/FileNotExists/.build/conditionfilenotexists.test.pr",
     "hash": "b17b110757d9dbd9b8ed32e12ba0e0a180835dcc3db2e8913153d6317998fd72",
     "builderVersion": "0.3",
     "isSetup": false,

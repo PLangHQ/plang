@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenMissing",
-    "description": "Sets %result% to the literal string \u0022missing\u0022 when the provided value is null (as indicated by \u003C= pr: null).",
+    "description": "WhenMissing goal: sets %result% to the literal string \u0022missing\u0022.",
     "comment": null,
     "steps": [
       {
@@ -37,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/WhenMissing.goal",
-    "prPath": "/.build/whenmissing.pr",
+    "path": "/FileNotExists/WhenMissing.goal",
+    "prPath": "/FileNotExists/.build/whenmissing.pr",
     "hash": "7d583ce279569ddf336cbb7c7453473420e4935986969420c7206fd300c1c73c",
     "builderVersion": "0.3",
     "isSetup": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "CaptureItem",
-    "description": "Sets the %captured% variable by appending the current %item% to the existing %captured% value (comma-separated).",
+    "description": "Set %captured% by appending %item% to the existing captured value (comma-separated).",
     "comment": null,
     "steps": [
       {
@@ -27,13 +27,7 @@
               }
             ],
             "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
+            "defaults": null
           }
         ],
         "intent": null,
@@ -43,7 +37,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/CaptureItem.goal",
     "prPath": "/.build/captureitem.pr",

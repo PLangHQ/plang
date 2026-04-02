@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %flag% to false, uses a negated condition to call WhenFalse when %flag% is falsy, then asserts that %result% equals \u0027negated\u0027 to verify NOT negation behavior.",
+    "description": "Sets %flag% to false, then uses a negated condition to call WhenFalse when the NOT flag is true, and finally asserts %result% equals \u0027negated\u0027.",
     "comment": null,
     "steps": [
       {
@@ -50,7 +50,7 @@
               {
                 "name": "Left",
                 "value": "%flag%",
-                "type": "string"
+                "type": "bool"
               },
               {
                 "name": "Operator",
@@ -59,8 +59,8 @@
               },
               {
                 "name": "Right",
-                "value": "true",
-                "type": "string"
+                "value": true,
+                "type": "bool"
               },
               {
                 "name": "GoalIfTrue",
@@ -69,7 +69,7 @@
                   "description": null,
                   "parallel": false,
                   "parameters": null,
-                  "prPath": "/.build/whenfalse.pr"
+                  "prPath": null
                 },
                 "type": "goal.call"
               },
@@ -127,10 +127,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionNot.test.goal",
-    "prPath": "/.build/conditionnot.test.pr",
+    "path": "/Not/ConditionNot.test.goal",
+    "prPath": "/Not/.build/conditionnot.test.pr",
     "hash": "a7710ec1237c989fb1f6596ef87bf1e0552553ce70930fc5fa07832bf42e060a",
     "builderVersion": "0.3",
     "isSetup": false,

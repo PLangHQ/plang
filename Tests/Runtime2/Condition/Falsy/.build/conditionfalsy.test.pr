@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %flag% to false, uses a conditional to call HandleFalse when the flag is falsy, then asserts that %result% equals the expected false-branch value.",
+    "description": "Sets %flag% to false, then uses an if condition to call HandleTrue when %flag% is true or HandleFalse otherwise; finally asserts that %result% equals the expected false-branch value.",
     "comment": null,
     "steps": [
       {
@@ -125,10 +125,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionFalsy.test.goal",
-    "prPath": "/.build/conditionfalsy.test.pr",
+    "path": "/Falsy/ConditionFalsy.test.goal",
+    "prPath": "/Falsy/.build/conditionfalsy.test.pr",
     "hash": "dc5a504602162b53b08ccae42a594e1cb8bcac00e9b7b91321f6229bf1868c4e",
     "builderVersion": "0.3",
     "isSetup": false,

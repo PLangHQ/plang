@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Compiles the provided Start goal into engine actions: sets variables, evaluates conditions, calls corresponding goals, and asserts expected results for greater-than, less-than, equals, not-equals, string-contains, and a false-condition branch.",
+    "description": "Sets variables and runs conditional goal calls for greater-than, less-than, equals, not-equals, string-contains, and a false (else) condition, then asserts expected result variables.",
     "comment": null,
     "steps": [
       {
@@ -660,10 +660,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionCompound.test.goal",
-    "prPath": "/.build/conditioncompound.test.pr",
+    "path": "/Compound/ConditionCompound.test.goal",
+    "prPath": "/Compound/.build/conditioncompound.test.pr",
     "hash": "9b189b9e28d5b45c9a83ddf05681b7b878ce40779e9bde3e606bf33dccdd647e",
     "builderVersion": "0.3",
     "isSetup": false,

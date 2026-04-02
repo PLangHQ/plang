@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Compiles three tests that set/check existence of variables, remove a variable and re-check, then clear all variables and verify they no longer exist.",
+    "description": "Tests variable lifecycle: existence after set, removal, and clearing all variables.",
     "comment": null,
     "steps": [
       {
@@ -326,7 +326,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/VariableOps.test.goal",
     "prPath": "/.build/variableops.test.pr",

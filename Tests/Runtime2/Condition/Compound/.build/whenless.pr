@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenLess",
-    "description": "Sets the variable %lessResult% to the literal string \u0022yes\u0022 when the condition indicates a null/less-than case (as provided by the step text).",
+    "description": "Set %lessResult% to literal \u0022yes\u0022 when the goal step is executed.",
     "comment": null,
     "steps": [
       {
@@ -27,13 +27,7 @@
               }
             ],
             "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
+            "defaults": null
           }
         ],
         "intent": null,
@@ -43,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/WhenLess.goal",
-    "prPath": "/.build/whenless.pr",
+    "path": "/Compound/WhenLess.goal",
+    "prPath": "/Compound/.build/whenless.pr",
     "hash": "428a59343c2ef05617772887e106049b900979acae829a08f03039b4122c9886",
     "builderVersion": "0.3",
     "isSetup": false,

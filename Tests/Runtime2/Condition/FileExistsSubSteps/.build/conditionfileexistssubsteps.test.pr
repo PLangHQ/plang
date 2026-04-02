@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Saves a file, initializes an inner flag, conditionally sets the flag if the file exists, then asserts the flag is set to \u0027yes\u0027.",
+    "description": "Creates a file, sets an inner flag, checks whether the file exists, conditionally sets the flag to yes, then asserts the flag is yes.",
     "comment": null,
     "steps": [
       {
@@ -112,44 +112,6 @@
         "waitForExecution": true
       },
       {
-        "index": 3,
-        "text": "set %innerRan% = \u0022yes\u0022",
-        "lineNumber": 6,
-        "indent": 1,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%innerRan%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "yes",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
         "index": 4,
         "text": "assert %innerRan% equals \u0022yes\u0022, \u0022sub-steps should execute when file exists\u0022",
         "lineNumber": 7,
@@ -187,10 +149,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionFileExistsSubSteps.test.goal",
-    "prPath": "/.build/conditionfileexistssubsteps.test.pr",
+    "path": "/FileExistsSubSteps/ConditionFileExistsSubSteps.test.goal",
+    "prPath": "/FileExistsSubSteps/.build/conditionfileexistssubsteps.test.pr",
     "hash": "d420210fbe207ea104aa6663b47743ef3fd803669e8b75f2f608316b10da4d95",
     "builderVersion": "0.3",
     "isSetup": false,

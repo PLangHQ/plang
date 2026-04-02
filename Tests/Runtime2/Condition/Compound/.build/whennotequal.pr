@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenNotEqual",
-    "description": "Sets %notEqualResult% to \u0027yes\u0027 when the provided condition indicates it is not equal (\u003C= pr: null).",
+    "description": "Sets %notEqualResult% to \u0027yes\u0027 (string).",
     "comment": null,
     "steps": [
       {
@@ -27,13 +27,7 @@
               }
             ],
             "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
+            "defaults": null
           }
         ],
         "intent": null,
@@ -43,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/WhenNotEqual.goal",
-    "prPath": "/.build/whennotequal.pr",
+    "path": "/Compound/WhenNotEqual.goal",
+    "prPath": "/Compound/.build/whennotequal.pr",
     "hash": "63094fc1d603d21557ff55e1e388dea437e0804ccd1f0fa964903093d823e476",
     "builderVersion": "0.3",
     "isSetup": false,

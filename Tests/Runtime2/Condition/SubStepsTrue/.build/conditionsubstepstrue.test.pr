@@ -1,15 +1,15 @@
 [
   {
     "name": "Start",
-    "description": "Sets %a% and %b%, evaluates a compound OR condition (a==1 OR b==2) and calls DoThing when true, then asserts %result% equals \u0027or-true\u0027.",
+    "description": "Sets a flag to true, initializes inner variables, then runs an if condition where the indented steps set innerRan/innerValue and asserts they executed.",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "set %a% = 99",
+        "text": "set %flag% = true",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "Test: compound OR condition \u2014 first false, second true \u2192 goal called",
+        "comment": "Test: sub-steps under a true condition execute",
         "actions": [
           {
             "module": "variable",
@@ -17,13 +17,13 @@
             "parameters": [
               {
                 "name": "Name",
-                "value": "%a%",
+                "value": "%flag%",
                 "type": "string"
               },
               {
                 "name": "Value",
-                "value": 99,
-                "type": "int"
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -38,7 +38,7 @@
       },
       {
         "index": 1,
-        "text": "set %b% = 2",
+        "text": "set %innerRan% = false",
         "lineNumber": 4,
         "indent": 0,
         "comment": null,
@@ -49,13 +49,13 @@
             "parameters": [
               {
                 "name": "Name",
-                "value": "%b%",
+                "value": "%innerRan%",
                 "type": "string"
               },
               {
                 "name": "Value",
-                "value": 2,
-                "type": "int"
+                "value": false,
+                "type": "bool"
               }
             ],
             "return": null,
@@ -70,7 +70,7 @@
       },
       {
         "index": 2,
-        "text": "if %a% == 1 or %b% == 2, call DoThing",
+        "text": "if %flag%",
         "lineNumber": 5,
         "indent": 0,
         "comment": null,
@@ -81,8 +81,8 @@
             "parameters": [
               {
                 "name": "Left",
-                "value": "%a%",
-                "type": "int"
+                "value": "%flag%",
+                "type": "bool"
               },
               {
                 "name": "Operator",
@@ -91,87 +91,8 @@
               },
               {
                 "name": "Right",
-                "value": 1,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "__conditionReturn1__",
-                "value": null
-              }
-            ],
-            "defaults": [
-              {
-                "name": "negate",
-                "value": false,
+                "value": true,
                 "type": "bool"
-              }
-            ]
-          },
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%b%",
-                "type": "int"
-              },
-              {
-                "name": "Operator",
-                "value": "==",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": 2,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "__conditionReturn2__",
-                "value": null
-              }
-            ],
-            "defaults": [
-              {
-                "name": "negate",
-                "value": false,
-                "type": "bool"
-              }
-            ]
-          },
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%__conditionReturn1__%",
-                "type": "bool"
-              },
-              {
-                "name": "Operator",
-                "value": "or",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": "%__conditionReturn2__%",
-                "type": "bool"
-              },
-              {
-                "name": "GoalIfTrue",
-                "value": {
-                  "name": "DoThing",
-                  "description": null,
-                  "parallel": false,
-                  "parameters": null,
-                  "prPath": null
-                },
-                "type": "goal.call"
               }
             ],
             "return": null,
@@ -191,9 +112,41 @@
         "waitForExecution": true
       },
       {
-        "index": 3,
-        "text": "assert %result% equals \u0022or-true\u0022, \u0022OR condition should pass when at least one side true\u0022",
-        "lineNumber": 6,
+        "index": 5,
+        "text": "assert %innerRan% is true, \u0022indented steps should execute when condition is true\u0022",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isTrue",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%innerRan%",
+                "type": "bool"
+              },
+              {
+                "name": "Message",
+                "value": "indented steps should execute when condition is true",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 6,
+        "text": "assert %innerValue% equals \u0022executed\u0022, \u0022indented set should have run\u0022",
+        "lineNumber": 9,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -203,17 +156,17 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": "or-true",
+                "value": "executed",
                 "type": "string"
               },
               {
                 "name": "Actual",
-                "value": "%result%",
-                "type": "data"
+                "value": "%innerValue%",
+                "type": "string"
               },
               {
                 "name": "Message",
-                "value": "OR condition should pass when at least one side true",
+                "value": "indented set should have run",
                 "type": "string"
               }
             ],
@@ -230,9 +183,9 @@
     ],
     "goals": [],
     "visibility": 1,
-    "path": "/CompoundOr/ConditionCompoundOr.test.goal",
-    "prPath": "/CompoundOr/.build/conditioncompoundor.test.pr",
-    "hash": "6c6289984cfa2e19a7b7e38b91b7484f35053cc39a507882b9ee29cd5163698c",
+    "path": "/SubStepsTrue/ConditionSubStepsTrue.test.goal",
+    "prPath": "/SubStepsTrue/.build/conditionsubstepstrue.test.pr",
+    "hash": "eea24c21cb5c72743bd936eef55669c6a34a956ccc23930f100498a728220900",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

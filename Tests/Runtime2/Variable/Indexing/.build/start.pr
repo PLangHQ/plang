@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets up list and index variables, then writes selected list elements to output using variable-based indexing.",
+    "description": "Sets list and index variables, then writes selected list elements at specified indices.",
     "comment": null,
     "steps": [
       {
@@ -253,7 +253,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Start.goal",
     "prPath": "/.build/start.pr",

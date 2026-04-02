@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %flag% to true, conditionally calls SetTrue, asserts the true-branch result, then sets %noFlag% to false, conditionally calls SetWrong or SetFalse via else, and asserts the false-branch result.",
+    "description": "Sets flags, conditionally calls goals based on flag values, and asserts that the expected branch variables were set.",
     "comment": null,
     "steps": [
       {
@@ -50,7 +50,7 @@
               {
                 "name": "Left",
                 "value": "%flag%",
-                "type": "data"
+                "type": "bool"
               },
               {
                 "name": "Operator",
@@ -65,13 +65,23 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "SetTrue"
+                  "name": "SetTrue",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": null
                 },
                 "type": "goal.call"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -158,7 +168,7 @@
               {
                 "name": "Left",
                 "value": "%noFlag%",
-                "type": "data"
+                "type": "string"
               },
               {
                 "name": "Operator",
@@ -167,26 +177,40 @@
               },
               {
                 "name": "Right",
-                "value": true,
-                "type": "bool"
+                "value": "true",
+                "type": "string"
               },
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "SetWrong"
+                  "name": "SetWrong",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": null
                 },
                 "type": "goal.call"
               },
               {
                 "name": "GoalIfFalse",
                 "value": {
-                  "name": "SetFalse"
+                  "name": "SetFalse",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": null
                 },
                 "type": "goal.call"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -228,10 +252,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/Condition.test.goal",
-    "prPath": "/.build/condition.test.pr",
+    "path": "/Basic/Condition.test.goal",
+    "prPath": "/Basic/.build/condition.test.pr",
     "hash": "afeace710baab1e7e08bdde31918fa94ca3f912ba6b7e051437914824fdf6640",
     "builderVersion": "0.3",
     "isSetup": false,

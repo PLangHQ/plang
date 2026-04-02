@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %user% to a JSON object, then asserts multiple nested fields (including array indexing and variable-based index) match expected literal values.",
+    "description": "Sets a JSON user object into %user%, then asserts multiple nested fields (including array indexing) and finally sets %idx% and asserts using that index.",
     "comment": null,
     "steps": [
       {
@@ -326,7 +326,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Variables.test.goal",
     "prPath": "/.build/variables.test.pr",

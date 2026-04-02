@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %user% to a JSON object, then writes various nested properties/paths from %user% to output, including array indexing and special index-like paths (idx, first, last, random).",
+    "description": "Sets %user% object, then writes various nested properties (including array indexing and variable-based index) to output.",
     "comment": null,
     "steps": [
       {
@@ -360,7 +360,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Start.goal",
     "prPath": "/.build/start.pr",

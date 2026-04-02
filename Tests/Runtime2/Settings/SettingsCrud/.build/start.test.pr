@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Maps CRUD operations on settings: set initial value, get and assert, update via set, get and assert updated value, then remove.",
+    "description": "Tests basic CRUD operations on settings: set, get, update, remove.",
     "comment": "Tests basic CRUD operations on settings: set, get, update, remove",
     "steps": [
       {
@@ -224,7 +224,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Start.test.goal",
     "prPath": "/.build/start.test.pr",

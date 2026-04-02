@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenGTE",
-    "description": "Sets %result% to the literal string \u0022gte\u0022.",
+    "description": "Set %result% to the string \u0022gte\u0022.",
     "comment": null,
     "steps": [
       {
@@ -37,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/WhenGTE.goal",
-    "prPath": "/.build/whengte.pr",
+    "path": "/GTE/WhenGTE.goal",
+    "prPath": "/GTE/.build/whengte.pr",
     "hash": "beb3790989e3cd356f51555827b10c86bff35ea07dcd4df208b06eddb0f787aa",
     "builderVersion": "0.3",
     "isSetup": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %x% to 5, checks condition %x% \u003C= 5 and calls WhenLTE when true, then asserts that %result% equals \u0027lte\u0027.",
+    "description": "Sets x=5, checks condition x \u003C= 5 and calls WhenLTE, then asserts result equals \u0027lte\u0027.",
     "comment": null,
     "steps": [
       {
@@ -118,10 +118,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionLTE.test.goal",
-    "prPath": "/.build/conditionlte.test.pr",
+    "path": "/LTE/ConditionLTE.test.goal",
+    "prPath": "/LTE/.build/conditionlte.test.pr",
     "hash": "1b6398a4e6e7df9232d3cc7d2161d3ee6f274993dda7cfb44143e32f547f9879",
     "builderVersion": "0.3",
     "isSetup": false,

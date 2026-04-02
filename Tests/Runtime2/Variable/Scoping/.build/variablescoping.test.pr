@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Compiles steps: set %x%, call InnerGoal, assert %x% was modified; then build %items%, capture each item via CaptureItem, and assert %captured% contains both alpha and beta.",
+    "description": "Sets %x% then calls InnerGoal and asserts %x% was modified; then builds %items%, captures each item via CaptureItem, and asserts %captured% contains both alpha and beta.",
     "comment": null,
     "steps": [
       {
@@ -50,8 +50,7 @@
               {
                 "name": "GoalName",
                 "value": {
-                  "name": "InnerGoal",
-                  "parameters": []
+                  "name": "InnerGoal"
                 },
                 "type": "goal.call"
               }
@@ -217,7 +216,7 @@
                   "description": null,
                   "parallel": false,
                   "parameters": null,
-                  "prPath": null
+                  "prPath": "/.build/captureitem.pr"
                 },
                 "type": "goal.call"
               },
@@ -302,7 +301,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/VariableScoping.test.goal",
     "prPath": "/.build/variablescoping.test.pr",

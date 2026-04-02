@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Performs basic math operations (add, subtract, multiply, divide, abs, round, min, max, random) and writes the computed results to output using %var% placeholders.",
+    "description": "Performs basic math operations (add, subtract, multiply, divide, abs, round, min, max, random) and writes formatted results to output.",
     "comment": null,
     "steps": [
       {
@@ -576,7 +576,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Start.goal",
     "prPath": "/.build/start.pr",

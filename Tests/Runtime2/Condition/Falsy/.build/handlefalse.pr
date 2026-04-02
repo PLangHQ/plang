@@ -1,7 +1,7 @@
 [
   {
     "name": "HandleFalse",
-    "description": "Sets the %result% variable to the literal string \u0027false-branch\u0027 in goal HandleFalse.",
+    "description": "Set %result% to the literal string \u0022false-branch\u0022 in HandleFalse.",
     "comment": null,
     "steps": [
       {
@@ -37,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/HandleFalse.goal",
-    "prPath": "/.build/handlefalse.pr",
+    "path": "/Falsy/HandleFalse.goal",
+    "prPath": "/Falsy/.build/handlefalse.pr",
     "hash": "661aa8ff41aeda89a2c135d3233173c7404c02fb01a82652306063cd4cf53ff3",
     "builderVersion": "0.3",
     "isSetup": false,

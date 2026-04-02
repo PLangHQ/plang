@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %x% to 2, evaluates an if condition (%x% \u003E 100) and calls WhenBig if true or WhenSmall if false, then asserts that %result% equals \u0027small\u0027 to verify the else branch executed.",
+    "description": "Sets %x% to 2, checks if %x% \u003E 100; if false calls WhenSmall, then asserts %result% equals \u0027small\u0027.",
     "comment": null,
     "steps": [
       {
@@ -125,10 +125,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionElseBranch.test.goal",
-    "prPath": "/.build/conditionelsebranch.test.pr",
+    "path": "/ElseBranch/ConditionElseBranch.test.goal",
+    "prPath": "/ElseBranch/.build/conditionelsebranch.test.pr",
     "hash": "1e47a3ea8ece27ced425e78c62abeb15ec688a4e4e4b3cef98ab293a43b3efa7",
     "builderVersion": "0.3",
     "isSetup": false,

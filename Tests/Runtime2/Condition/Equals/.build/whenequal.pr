@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenEqual",
-    "description": "Sets %result% to the literal string \u0022equal\u0022 in the WhenEqual goal step.",
+    "description": "Sets %result% to the string \u0022equal\u0022.",
     "comment": null,
     "steps": [
       {
@@ -37,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/WhenEqual.goal",
-    "prPath": "/.build/whenequal.pr",
+    "path": "/Equals/WhenEqual.goal",
+    "prPath": "/Equals/.build/whenequal.pr",
     "hash": "830e91bfee72d07e3af29591fa2533c6fd399afd470dadce05fd29da117af8ab",
     "builderVersion": "0.3",
     "isSetup": false,

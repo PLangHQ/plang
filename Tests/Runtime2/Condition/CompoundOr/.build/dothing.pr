@@ -1,7 +1,7 @@
 [
   {
     "name": "DoThing",
-    "description": "Sets the %result% variable to the literal string \u0022or-true\u0022. The \u003C= pr: null annotation is not mapped to any engine action because no corresponding action/property exists for it.",
+    "description": "DoThing sets the %result% variable to the string \u0022or-true\u0022.",
     "comment": null,
     "steps": [
       {
@@ -37,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/DoThing.goal",
-    "prPath": "/.build/dothing.pr",
+    "path": "/CompoundOr/DoThing.goal",
+    "prPath": "/CompoundOr/.build/dothing.pr",
     "hash": "d2b74b329a943baecc77a760819ad11f1c52335964c1e8876c0c1b03fb3d8fea",
     "builderVersion": "0.3",
     "isSetup": false,

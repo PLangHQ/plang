@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Builds the goal steps: sets %flag% and %innerRan%, conditionally sets %innerRan% to yes when %flag% is true, then asserts %innerRan% remains \u0027no\u0027 when the condition is false.",
+    "description": "Sets a false flag, attempts to run an indented step under a false condition, then asserts the inner step did not run.",
     "comment": null,
     "steps": [
       {
@@ -95,19 +95,8 @@
                 "type": "bool"
               }
             ],
-            "return": [
-              {
-                "name": "__conditionReturn__",
-                "value": null
-              }
-            ],
-            "defaults": [
-              {
-                "name": "negate",
-                "value": false,
-                "type": "bool"
-              }
-            ]
+            "return": null,
+            "defaults": null
           }
         ],
         "intent": null,
@@ -139,7 +128,13 @@
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -186,10 +181,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionSubStepsFalse.test.goal",
-    "prPath": "/.build/conditionsubstepsfalse.test.pr",
+    "path": "/SubStepsFalse/ConditionSubStepsFalse.test.goal",
+    "prPath": "/SubStepsFalse/.build/conditionsubstepsfalse.test.pr",
     "hash": "aba9fc62f9d3e416c4db1f905ff96240e82c5cf5dcb2427bde91772360352467",
     "builderVersion": "0.3",
     "isSetup": false,

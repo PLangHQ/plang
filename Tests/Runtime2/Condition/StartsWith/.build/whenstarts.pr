@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenStarts",
-    "description": "Sets %result% to the literal string \u0022starts\u0022.",
+    "description": "WhenStarts sets the %result% variable to the literal string \u0022starts\u0022.",
     "comment": null,
     "steps": [
       {
@@ -37,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/WhenStarts.goal",
-    "prPath": "/.build/whenstarts.pr",
+    "path": "/StartsWith/WhenStarts.goal",
+    "prPath": "/StartsWith/.build/whenstarts.pr",
     "hash": "687cd4c1ba3c0ba014f512aa9a6901ae14c9bcefe965e1cc618c82970dff8cd5",
     "builderVersion": "0.3",
     "isSetup": false,

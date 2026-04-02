@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Creates a file, checks whether it exists, and conditionally calls ProcessFile; then asserts the expected result when the file exists.",
+    "description": "Saves a file, checks if it exists, then conditionally calls ProcessFile (intended) and asserts the expected result.",
     "comment": null,
     "steps": [
       {
@@ -87,7 +87,7 @@
                   "description": null,
                   "parallel": false,
                   "parameters": null,
-                  "prPath": "/.build/processfile.pr"
+                  "prPath": null
                 },
                 "type": "goal.call"
               }
@@ -146,10 +146,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionFileExists.test.goal",
-    "prPath": "/.build/conditionfileexists.test.pr",
+    "path": "/FileExists/ConditionFileExists.test.goal",
+    "prPath": "/FileExists/.build/conditionfileexists.test.pr",
     "hash": "21b50d07eca29a81b2dac983c8fe78b09fa0195b1841ddcd8c8da5fb3e4feb35",
     "builderVersion": "0.3",
     "isSetup": false,

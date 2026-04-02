@@ -1,7 +1,7 @@
 [
   {
     "name": "InnerGoal",
-    "description": "Sets variable %x% to the literal string \u0022modified\u0022. The \u003C= pr: null modifier is not a recognized engine step modifier, so it is ignored by the compiler.",
+    "description": "InnerGoal sets the variable %x% to the string \u0022modified\u0022 using variable.set.",
     "comment": null,
     "steps": [
       {
@@ -37,7 +37,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/InnerGoal.goal",
     "prPath": "/.build/innergoal.pr",

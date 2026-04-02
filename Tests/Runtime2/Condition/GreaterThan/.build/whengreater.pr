@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenGreater",
-    "description": "Sets %result% to the literal string \u0022greater\u0022 for the WhenGreater step.",
+    "description": "Sets %result% to the string \u0022greater\u0022 when the goal is invoked.",
     "comment": null,
     "steps": [
       {
@@ -37,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/WhenGreater.goal",
-    "prPath": "/.build/whengreater.pr",
+    "path": "/GreaterThan/WhenGreater.goal",
+    "prPath": "/GreaterThan/.build/whengreater.pr",
     "hash": "8549bd74cad02b311cec50cff51455adff0761b51391d3756636c7d5678e7de5",
     "builderVersion": "0.3",
     "isSetup": false,

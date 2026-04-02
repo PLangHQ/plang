@@ -1,7 +1,7 @@
 [
   {
     "name": "SetWrong",
-    "description": "Sets the %wasWrong% variable to true (with a null-like value provided in the step).",
+    "description": "Sets the %wasWrong% variable to true.",
     "comment": null,
     "steps": [
       {
@@ -27,13 +27,7 @@
               }
             ],
             "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
+            "defaults": null
           }
         ],
         "intent": null,
@@ -43,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/SetWrong.goal",
-    "prPath": "/.build/setwrong.pr",
+    "path": "/Basic/SetWrong.goal",
+    "prPath": "/Basic/.build/setwrong.pr",
     "hash": "9a328158bcd3fea39002d861281fa7b89be9c46b471209ab9cc3349558a60267",
     "builderVersion": "0.3",
     "isSetup": false,

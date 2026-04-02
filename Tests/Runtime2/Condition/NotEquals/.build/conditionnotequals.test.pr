@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %a% to 7, conditionally calls WhenNotEqual when %a% != 3, then asserts %result% equals \u0022not-equal\u0022.",
+    "description": "Sets %a% to 7, conditionally calls WhenNotEqual when %a% != 3, then asserts %result% equals \u0027not-equal\u0027.",
     "comment": null,
     "steps": [
       {
@@ -118,10 +118,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionNotEquals.test.goal",
-    "prPath": "/.build/conditionnotequals.test.pr",
+    "path": "/NotEquals/ConditionNotEquals.test.goal",
+    "prPath": "/NotEquals/.build/conditionnotequals.test.pr",
     "hash": "ad76488613c6199f810beebffe95d913d476903f632a43cdb8832c2219815027",
     "builderVersion": "0.3",
     "isSetup": false,

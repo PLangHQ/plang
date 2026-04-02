@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenSmall",
-    "description": "Sets %result% to the literal string \u0022small\u0022 for the WhenSmall goal step.",
+    "description": "Set %result% to the literal string \u0022small\u0022.",
     "comment": null,
     "steps": [
       {
@@ -37,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/WhenSmall.goal",
-    "prPath": "/.build/whensmall.pr",
+    "path": "/ElseBranch/WhenSmall.goal",
+    "prPath": "/ElseBranch/.build/whensmall.pr",
     "hash": "b78a89b034c5389d7f2ad908f0dcb266f543b5c1700219da912e6bf2a4c4029f",
     "builderVersion": "0.3",
     "isSetup": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets the settings value archive.max, reads it back into %maxSize%, then asserts it equals 20971520.",
+    "description": "Sets settings.archive.max to 20971520, reads it back into %maxSize%, and asserts the value matches.",
     "comment": null,
     "steps": [
       {
@@ -101,7 +101,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Start.test.goal",
     "prPath": "/.build/start.test.pr",

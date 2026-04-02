@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %x% to 5, conditionally calls WhenGTE when %x% \u003E= 5, then asserts that %result% equals \u0027gte\u0027.",
+    "description": "Sets x=5, checks condition x \u003E= 5 and calls WhenGTE if true, then asserts result equals \u0027gte\u0027.",
     "comment": null,
     "steps": [
       {
@@ -50,12 +50,12 @@
               {
                 "name": "Left",
                 "value": "%x%",
-                "type": "data"
+                "type": "int"
               },
               {
                 "name": "Operator",
                 "value": "\u003E=",
-                "type": "operator"
+                "type": "string"
               },
               {
                 "name": "Right",
@@ -65,13 +65,23 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenGTE"
+                  "name": "WhenGTE",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": null
                 },
                 "type": "goal.call"
               }
             ],
             "return": null,
-            "defaults": null
+            "defaults": [
+              {
+                "name": "negate",
+                "value": false,
+                "type": "bool"
+              }
+            ]
           }
         ],
         "intent": null,
@@ -118,10 +128,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionGTE.test.goal",
-    "prPath": "/.build/conditiongte.test.pr",
+    "path": "/GTE/ConditionGTE.test.goal",
+    "prPath": "/GTE/.build/conditiongte.test.pr",
     "hash": "234f3042235ab436cebb469be11e44b3dd2ee4f16b68113748704c09f29c7810",
     "builderVersion": "0.3",
     "isSetup": false,

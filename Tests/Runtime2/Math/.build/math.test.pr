@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Performs arithmetic operations (add, subtract, multiply, divide, abs, round, min, max, power, sqrt, floor, ceiling, modulo) and asserts each computed result matches the expected value.",
+    "description": "Performs a sequence of math operations (add, subtract, multiply, divide, abs, round, min, max, power, sqrt, floor, ceiling, modulo) and asserts each result.",
     "comment": null,
     "steps": [
       {
@@ -17,12 +17,12 @@
             "parameters": [
               {
                 "name": "A",
-                "value": 5,
+                "value": "5",
                 "type": "int"
               },
               {
                 "name": "B",
-                "value": 3,
+                "value": "3",
                 "type": "int"
               }
             ],
@@ -54,7 +54,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": 8,
+                "value": "8",
                 "type": "int"
               },
               {
@@ -86,12 +86,12 @@
             "parameters": [
               {
                 "name": "A",
-                "value": 10,
+                "value": "10",
                 "type": "int"
               },
               {
                 "name": "B",
-                "value": 3,
+                "value": "3",
                 "type": "int"
               }
             ],
@@ -123,7 +123,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": 7,
+                "value": "7",
                 "type": "int"
               },
               {
@@ -155,12 +155,12 @@
             "parameters": [
               {
                 "name": "A",
-                "value": 6,
+                "value": "6",
                 "type": "int"
               },
               {
                 "name": "B",
-                "value": 7,
+                "value": "7",
                 "type": "int"
               }
             ],
@@ -192,7 +192,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": 42,
+                "value": "42",
                 "type": "int"
               },
               {
@@ -224,12 +224,12 @@
             "parameters": [
               {
                 "name": "A",
-                "value": 10,
+                "value": "10",
                 "type": "int"
               },
               {
                 "name": "B",
-                "value": 4,
+                "value": "4",
                 "type": "int"
               }
             ],
@@ -293,7 +293,7 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": -42,
+                "value": "-42",
                 "type": "int"
               }
             ],
@@ -325,7 +325,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": 42,
+                "value": "42",
                 "type": "int"
               },
               {
@@ -357,12 +357,12 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": 3.14159,
+                "value": "3.14159",
                 "type": "double"
               },
               {
                 "name": "Decimals",
-                "value": 2,
+                "value": "2",
                 "type": "int"
               }
             ],
@@ -426,12 +426,12 @@
             "parameters": [
               {
                 "name": "A",
-                "value": 5,
+                "value": "5",
                 "type": "int"
               },
               {
                 "name": "B",
-                "value": 3,
+                "value": "3",
                 "type": "int"
               }
             ],
@@ -463,7 +463,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": 3,
+                "value": "3",
                 "type": "int"
               },
               {
@@ -495,12 +495,12 @@
             "parameters": [
               {
                 "name": "A",
-                "value": 5,
+                "value": "5",
                 "type": "int"
               },
               {
                 "name": "B",
-                "value": 3,
+                "value": "3",
                 "type": "int"
               }
             ],
@@ -532,7 +532,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": 5,
+                "value": "5",
                 "type": "int"
               },
               {
@@ -564,12 +564,12 @@
             "parameters": [
               {
                 "name": "Base",
-                "value": 2,
+                "value": "2",
                 "type": "int"
               },
               {
                 "name": "Exponent",
-                "value": 3,
+                "value": "3",
                 "type": "int"
               }
             ],
@@ -601,7 +601,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": 8,
+                "value": "8",
                 "type": "int"
               },
               {
@@ -633,7 +633,7 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": 16,
+                "value": "16",
                 "type": "int"
               }
             ],
@@ -665,7 +665,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": 4,
+                "value": "4",
                 "type": "int"
               },
               {
@@ -697,7 +697,7 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": 3.7,
+                "value": "3.7",
                 "type": "double"
               }
             ],
@@ -729,7 +729,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": 3,
+                "value": "3",
                 "type": "int"
               },
               {
@@ -761,7 +761,7 @@
             "parameters": [
               {
                 "name": "Value",
-                "value": 3.2,
+                "value": "3.2",
                 "type": "double"
               }
             ],
@@ -793,7 +793,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": 4,
+                "value": "4",
                 "type": "int"
               },
               {
@@ -825,12 +825,12 @@
             "parameters": [
               {
                 "name": "A",
-                "value": 10,
+                "value": "10",
                 "type": "int"
               },
               {
                 "name": "B",
-                "value": 3,
+                "value": "3",
                 "type": "int"
               }
             ],
@@ -862,7 +862,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": 1,
+                "value": "1",
                 "type": "int"
               },
               {
@@ -882,7 +882,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Math.test.goal",
     "prPath": "/.build/math.test.pr",

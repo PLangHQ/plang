@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %name%, checks whether it starts with a given prefix using condition.if, calls WhenStarts if true, then asserts that %result% equals \u0027starts\u0027.",
+    "description": "Sets %name% to \u0027hello world\u0027, checks whether it starts with \u0027hello\u0027 and calls WhenStarts if true, then asserts %result% equals \u0027starts\u0027.",
     "comment": null,
     "steps": [
       {
@@ -65,23 +65,13 @@
               {
                 "name": "GoalIfTrue",
                 "value": {
-                  "name": "WhenStarts",
-                  "description": null,
-                  "parallel": false,
-                  "parameters": null,
-                  "prPath": null
+                  "name": "WhenStarts"
                 },
                 "type": "goal.call"
               }
             ],
             "return": null,
-            "defaults": [
-              {
-                "name": "negate",
-                "value": false,
-                "type": "bool"
-              }
-            ]
+            "defaults": null
           }
         ],
         "intent": null,
@@ -128,10 +118,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionStartsWith.test.goal",
-    "prPath": "/.build/conditionstartswith.test.pr",
+    "path": "/StartsWith/ConditionStartsWith.test.goal",
+    "prPath": "/StartsWith/.build/conditionstartswith.test.pr",
     "hash": "9eab1ffa0ef05bb7e8e7db4591b6dea6797252c0dd395f5a1171047c13377dd2",
     "builderVersion": "0.3",
     "isSetup": false,

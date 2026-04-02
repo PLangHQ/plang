@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets up an items list and index variables, then asserts that the list elements at those indices match expected values.",
+    "description": "Sets up items and indices, then asserts that items at specific indices match expected values.",
     "comment": null,
     "steps": [
       {
@@ -213,6 +213,11 @@
                 "name": "Actual",
                 "value": "%items[i]%",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "verify %items[i]% equals \u0027a\u0027",
+                "type": "string"
               }
             ],
             "return": null,
@@ -245,6 +250,11 @@
                 "name": "Actual",
                 "value": "%items[j]%",
                 "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "verify %items[j]% equals \u0027c\u0027",
+                "type": "string"
               }
             ],
             "return": null,
@@ -258,7 +268,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/VariableIndexing.test.goal",
     "prPath": "/.build/variableindexing.test.pr",

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %y% to 3, checks condition %y% \u003C 10, calls goal WhenLess if true, then asserts %result% equals \u0027less\u0027.",
+    "description": "Sets %y% to 3, checks if %y% \u003C 10 and calls goal WhenLess when true, then asserts %result% equals \u0027less\u0027.",
     "comment": null,
     "steps": [
       {
@@ -118,10 +118,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionLessThan.test.goal",
-    "prPath": "/.build/conditionlessthan.test.pr",
+    "path": "/LessThan/ConditionLessThan.test.goal",
+    "prPath": "/LessThan/.build/conditionlessthan.test.pr",
     "hash": "b4b4a4c64a60145503c6c66e5743d1be6e41e579c8b2f9bd02c39a39f16bd75c",
     "builderVersion": "0.3",
     "isSetup": false,

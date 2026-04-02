@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Writes a test output message, sets a boolean flag variable, then asserts the flag is true to confirm the write step completed without error.",
+    "description": "Writes a test output message, sets %afterWrite% to true, then asserts %afterWrite% is true.",
     "comment": null,
     "steps": [
       {
@@ -96,7 +96,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/Output.test.goal",
     "prPath": "/.build/output.test.pr",

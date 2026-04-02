@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Sets %flag% to true, conditionally calls HandleTrue when %flag% is truthy, then asserts %result% equals the expected value to verify the correct branch was taken.",
+    "description": "Sets %flag% to true, conditionally calls HandleTrue when %flag% is true, then asserts %result% equals the expected value from the true branch.",
     "comment": null,
     "steps": [
       {
@@ -69,7 +69,7 @@
                   "description": null,
                   "parallel": false,
                   "parameters": null,
-                  "prPath": "/.build/handletrue.pr"
+                  "prPath": null
                 },
                 "type": "goal.call"
               }
@@ -128,10 +128,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/ConditionTruthy.test.goal",
-    "prPath": "/.build/conditiontruthy.test.pr",
+    "path": "/Truthy/ConditionTruthy.test.goal",
+    "prPath": "/Truthy/.build/conditiontruthy.test.pr",
     "hash": "7c148bf8428f1b535a357771e74061460e768a153f269c0620f8b165fe03f340",
     "builderVersion": "0.3",
     "isSetup": false,

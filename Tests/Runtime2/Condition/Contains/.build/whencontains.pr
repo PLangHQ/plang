@@ -1,7 +1,7 @@
 [
   {
     "name": "WhenContains",
-    "description": "Sets the variable %result% to the literal string \u0022contains\u0022.",
+    "description": "Sets %result% to the literal string \u0022contains\u0022.",
     "comment": null,
     "steps": [
       {
@@ -37,10 +37,10 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
-    "path": "/WhenContains.goal",
-    "prPath": "/.build/whencontains.pr",
+    "path": "/Contains/WhenContains.goal",
+    "prPath": "/Contains/.build/whencontains.pr",
     "hash": "bc412b7ad89619bbdcdf8753e5dfb056749bc5e2681bd0b75abbb68bec344182",
     "builderVersion": "0.3",
     "isSetup": false,
