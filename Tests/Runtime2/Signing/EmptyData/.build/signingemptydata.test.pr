@@ -1,15 +1,56 @@
 [
   {
     "name": "Start",
-    "description": "Creates an identity provider for signing, sets empty JSON data, signs it, verifies the signature against provided contracts, then asserts verification succeeded.",
+    "description": "Archives and recreates an identity, signs empty/minimal data, verifies it against contract C0, and asserts verification succeeds (ignoring errors on the archive step).",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "create identity testSigner",
+        "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
         "lineNumber": 3,
         "indent": 0,
         "comment": "Test: sign empty/minimal data, verify succeeds",
+        "actions": [
+          {
+            "module": "identity",
+            "action": "archive",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "testSigner",
+                "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "create identity testSigner",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
         "actions": [
           {
             "module": "identity",
@@ -19,11 +60,6 @@
                 "name": "Name",
                 "value": "testSigner",
                 "type": "string"
-              },
-              {
-                "name": "SetAsDefault",
-                "value": false,
-                "type": "bool"
               }
             ],
             "return": null,
@@ -37,9 +73,9 @@
         "waitForExecution": true
       },
       {
-        "index": 1,
+        "index": 2,
         "text": "set %data% = {}",
-        "lineNumber": 4,
+        "lineNumber": 5,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -69,9 +105,9 @@
         "waitForExecution": true
       },
       {
-        "index": 2,
+        "index": 3,
         "text": "sign %data%",
-        "lineNumber": 5,
+        "lineNumber": 6,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -96,9 +132,9 @@
         "waitForExecution": true
       },
       {
-        "index": 3,
+        "index": 4,
         "text": "verify %data% with contracts [\u0027C0\u0027], write to %verifyResult%",
-        "lineNumber": 6,
+        "lineNumber": 7,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -126,30 +162,6 @@
               }
             ],
             "defaults": null
-          },
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%verifyResult%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "verifyResult",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
           }
         ],
         "intent": null,
@@ -159,9 +171,9 @@
         "waitForExecution": true
       },
       {
-        "index": 4,
+        "index": 5,
         "text": "assert %verifyResult.Success% is true, \u0022empty data should sign and verify\u0022",
-        "lineNumber": 7,
+        "lineNumber": 8,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -191,11 +203,11 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/SigningEmptyData.test.goal",
     "prPath": "/.build/signingemptydata.test.pr",
-    "hash": "2c6688e2cf107f0e1249107ccaa65069adfc000c22c22e8a425dfafc034c5713",
+    "hash": "33ef93ba488d8e07892aff6515c98fe60f15a4a982802063ab676b551932d252",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

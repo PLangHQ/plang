@@ -1,5 +1,6 @@
 Start
 / Test: sign with custom contracts, verify with matching contracts
+- archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data% = { "payload": 42 }
 - sign %data% with contracts ['C0', 'C1']

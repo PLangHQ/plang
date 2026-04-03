@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Archives/creates an identity, signs provided data, then asserts that signature fields are accessible via dot navigation on the returned %data% object.",
+    "description": "Archives and recreates an identity, sets data and headers, signs the data with the headers, verifies against contract C0 using the same headers, then asserts verification success.",
     "comment": null,
     "steps": [
       {
@@ -9,7 +9,7 @@
         "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
         "lineNumber": 3,
         "indent": 0,
-        "comment": "Test: access SignedData properties via dot navigation",
+        "comment": "Test: sign with headers, verify with matching headers",
         "actions": [
           {
             "module": "identity",
@@ -74,7 +74,7 @@
       },
       {
         "index": 2,
-        "text": "set %data% = { \u0022payload\u0022: \u0022nav\u0022 }",
+        "text": "set %data% = { \u0022body\u0022: \u0022content\u0022 }",
         "lineNumber": 5,
         "indent": 0,
         "comment": null,
@@ -91,9 +91,9 @@
               {
                 "name": "Value",
                 "value": {
-                  "payload": "nav"
+                  "body": "content"
                 },
-                "type": "object"
+                "type": "json"
               }
             ],
             "return": null,
@@ -108,19 +108,27 @@
       },
       {
         "index": 3,
-        "text": "sign %data%",
+        "text": "set %headers% = { \u0022method\u0022: \u0022POST\u0022, \u0022url\u0022: \u0022/api/send\u0022 }",
         "lineNumber": 6,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "signing",
-            "action": "sign",
+            "module": "variable",
+            "action": "set",
             "parameters": [
               {
-                "name": "Data",
-                "value": "%data%",
+                "name": "Name",
+                "value": "%headers%",
                 "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": {
+                  "method": "POST",
+                  "url": "/api/send"
+                },
+                "type": "json"
               }
             ],
             "return": null,
@@ -135,32 +143,32 @@
       },
       {
         "index": 4,
-        "text": "assert %data.Signature.Algorithm% equals \u0027ed25519\u0027, \u0022algorithm should be ed25519\u0022",
+        "text": "sign %data% with headers %headers%",
         "lineNumber": 7,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "assert",
-            "action": "equals",
+            "module": "signing",
+            "action": "sign",
             "parameters": [
               {
-                "name": "Expected",
-                "value": "ed25519",
+                "name": "Data",
+                "value": "%data%",
                 "type": "string"
               },
               {
-                "name": "Actual",
-                "value": "%data.Signature.Algorithm%",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "algorithm should be ed25519",
-                "type": "string"
+                "name": "Headers",
+                "value": "%headers%",
+                "type": "dict"
               }
             ],
-            "return": null,
+            "return": [
+              {
+                "name": "signature",
+                "value": null
+              }
+            ],
             "defaults": null
           }
         ],
@@ -172,32 +180,39 @@
       },
       {
         "index": 5,
-        "text": "assert %data.Signature.Type% equals \u0027signature\u0027, \u0022type should be signature\u0022",
+        "text": "verify %data% with contracts [\u0027C0\u0027] and headers %headers%, write to %verifyResult%",
         "lineNumber": 8,
         "indent": 0,
         "comment": null,
         "actions": [
           {
-            "module": "assert",
-            "action": "equals",
+            "module": "signing",
+            "action": "verify",
             "parameters": [
               {
-                "name": "Expected",
-                "value": "signature",
+                "name": "Data",
+                "value": "%data%",
                 "type": "string"
               },
               {
-                "name": "Actual",
-                "value": "%data.Signature.Type%",
-                "type": "string"
+                "name": "Contracts",
+                "value": [
+                  "C0"
+                ],
+                "type": "list\u003Cobject\u003E"
               },
               {
-                "name": "Message",
-                "value": "type should be signature",
+                "name": "Headers",
+                "value": "%headers%",
                 "type": "string"
               }
             ],
-            "return": null,
+            "return": [
+              {
+                "name": "verifyResult",
+                "value": null
+              }
+            ],
             "defaults": null
           }
         ],
@@ -209,55 +224,23 @@
       },
       {
         "index": 6,
-        "text": "assert %data.Signature.Identity% is not empty, \u0022identity should be public key\u0022",
+        "text": "assert %verifyResult.Success% is true, \u0022matching headers should verify\u0022",
         "lineNumber": 9,
         "indent": 0,
         "comment": null,
         "actions": [
           {
             "module": "assert",
-            "action": "isNotNull",
+            "action": "isTrue",
             "parameters": [
               {
                 "name": "Value",
-                "value": "%data.Signature.Identity%",
-                "type": "string"
+                "value": "%verifyResult.Success%",
+                "type": "bool"
               },
               {
                 "name": "Message",
-                "value": "identity should be public key",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 7,
-        "text": "assert %data.Signature.Nonce% is not empty, \u0022nonce should be present\u0022",
-        "lineNumber": 10,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "isNotNull",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%data.Signature.Nonce%",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "nonce should be present",
+                "value": "matching headers should verify",
                 "type": "string"
               }
             ],
@@ -274,9 +257,9 @@
     ],
     "goals": [],
     "visibility": 1,
-    "path": "/SigningDotNavigation.test.goal",
-    "prPath": "/.build/signingdotnavigation.test.pr",
-    "hash": "6dbb1c5e18774987285f6d2743ed655f4001e37fe71e9d40cf80427196afa971",
+    "path": "/SigningWithHeaders.test.goal",
+    "prPath": "/.build/signingwithheaders.test.pr",
+    "hash": "50db935291681ff124a0177cc3b0b04b35178ca76197ee3ecca9afe30c3c620f",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

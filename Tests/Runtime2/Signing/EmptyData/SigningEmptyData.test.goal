@@ -1,5 +1,6 @@
 Start
 / Test: sign empty/minimal data, verify succeeds
+- archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data% = {}
 - sign %data%

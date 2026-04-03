@@ -1,5 +1,6 @@
 Start
 / Test: verify same signed data twice, second fails as nonce replay
+- archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data% = { "payload": "once" }
 - sign %data%

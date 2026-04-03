@@ -1,135 +1,7 @@
 [
   {
-    "name": "Start",
-    "description": "Sets %data% to an unsigned payload, attempts to sign it with error handling that calls HandleNoIdentity, then asserts that %noIdentity% is true to confirm signing fails without creating an identity first.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %data% = { \u0022payload\u0022: \u0022unsigned\u0022 }",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "Test: sign without creating identity first, should error",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%data%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": {
-                  "payload": "unsigned"
-                },
-                "type": "object"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "sign %data%, on error call HandleNoIdentity",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "signing",
-            "action": "sign",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "%data%",
-                "type": "object"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": {
-            "name": "HandleNoIdentity",
-            "description": null,
-            "parallel": false,
-            "parameters": null,
-            "prPath": null
-          },
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "assert %noIdentity% is true, \u0022sign without identity should fail\u0022",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "isTrue",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%noIdentity%",
-                "type": "object"
-              },
-              {
-                "name": "Message",
-                "value": "sign without identity should fail",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [
-      "HandleNoIdentity"
-    ],
-    "visibility": 1,
-    "path": "/SigningNoIdentity.test.goal",
-    "prPath": "/.build/signingnoidentity.test.pr",
-    "hash": "75ae4cb14e476c542ca21c5a53af118b078854e7561b17caf91d6b3c05f3b80f",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  },
-  {
     "name": "HandleNoIdentity",
-    "description": "Sets the %noIdentity% variable to true (with a null PR note).",
+    "description": "Sets the %noIdentity% flag to true (with no identity payload).",
     "comment": null,
     "steps": [
       {
@@ -165,7 +37,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 0,
     "path": "/SigningNoIdentity.test.goal",
     "prPath": "/.build/signingnoidentity.test.pr",

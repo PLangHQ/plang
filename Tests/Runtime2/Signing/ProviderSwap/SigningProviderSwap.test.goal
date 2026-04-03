@@ -3,6 +3,7 @@ Start
 / Note: at PLang level we only have ed25519 (no DLL loading), so this exercises
 / the provider param → resolution path. C# tests cover real swap with mocks.
 / We test two things: (1) explicit provider param works, (2) algorithm field reflects it.
+- archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data1% = { "payload": "default" }
 - sign %data1%

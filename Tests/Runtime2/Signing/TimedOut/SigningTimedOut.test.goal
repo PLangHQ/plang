@@ -1,5 +1,6 @@
 Start
 / Test: verify fails when Created is older than timeout setting
+- archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data% = { "payload": "old" }
 - sign %data%

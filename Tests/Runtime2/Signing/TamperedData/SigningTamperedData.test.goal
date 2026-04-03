@@ -1,5 +1,6 @@
 Start
 / Test: tamper data after signing, verify fails with hash mismatch
+- archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data% = { "amount": 100 }
 - sign %data%

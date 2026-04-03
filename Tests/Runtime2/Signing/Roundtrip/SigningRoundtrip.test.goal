@@ -1,5 +1,6 @@
 Start
 / Test: sign data and verify succeeds
+- archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data% = { "message": "hello world" }
 - sign %data%

@@ -1,5 +1,6 @@
 Start
 / Test: verify fails when expected headers don't match signed headers
+- archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data% = { "body": "content" }
 - set %signHeaders% = { "method": "POST", "url": "/api/send" }

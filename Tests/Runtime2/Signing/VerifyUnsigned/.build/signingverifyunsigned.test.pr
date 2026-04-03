@@ -1,145 +1,7 @@
 [
   {
-    "name": "Start",
-    "description": "Sets %data% to an unsigned payload, verifies it against contract C0 with error handling that calls HandleNoSig on failure, then asserts that %noSig% is true to confirm unsigned verification fails.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %data% = { \u0022payload\u0022: \u0022unsigned\u0022 }",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "Test: verify data that was never signed",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%data%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": {
-                  "payload": "unsigned"
-                },
-                "type": "json"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "verify %data% with contracts [\u0027C0\u0027], on error call HandleNoSig",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "crypto",
-            "action": "verify",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "%data%",
-                "type": "string"
-              },
-              {
-                "name": "Hash",
-                "value": "C0",
-                "type": "string"
-              },
-              {
-                "name": "Algorithm",
-                "value": "keccak256",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": {
-            "name": "HandleNoSig",
-            "description": null,
-            "parallel": false,
-            "parameters": null,
-            "prPath": null
-          },
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "assert %noSig% is true, \u0022verify unsigned data should fail\u0022",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "isTrue",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%noSig%",
-                "type": "data"
-              },
-              {
-                "name": "Message",
-                "value": "verify unsigned data should fail",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [
-      "HandleNoSig"
-    ],
-    "visibility": 1,
-    "path": "/SigningVerifyUnsigned.test.goal",
-    "prPath": "/.build/signingverifyunsigned.test.pr",
-    "hash": "ff337cd6a33b420d9649fef0fec77910e00acbd9ee5037fe17efb1b750aa106d",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  },
-  {
     "name": "HandleNoSig",
-    "description": "Sets the %noSig% variable to true (with a note that the provided value is null in the step source).",
+    "description": "Sets the %noSig% flag to true (with pr set to null as provided).",
     "comment": null,
     "steps": [
       {
@@ -175,7 +37,7 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 0,
     "path": "/SigningVerifyUnsigned.test.goal",
     "prPath": "/.build/signingverifyunsigned.test.pr",

@@ -1,15 +1,56 @@
 [
   {
     "name": "Start",
-    "description": "Creates an identity for signing, sets input data, signs it, verifies the signature against provided contracts, then asserts verification succeeded.",
+    "description": "Archives an existing test identity, creates a signer identity, signs provided data, verifies it against contract C0, and asserts verification succeeds (ignoring errors on the archive step).",
     "comment": null,
     "steps": [
       {
         "index": 0,
-        "text": "create identity testSigner",
+        "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
         "lineNumber": 3,
         "indent": 0,
         "comment": "Test: sign data and verify succeeds",
+        "actions": [
+          {
+            "module": "identity",
+            "action": "archive",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "testSigner",
+                "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "create identity testSigner",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
         "actions": [
           {
             "module": "identity",
@@ -32,9 +73,9 @@
         "waitForExecution": true
       },
       {
-        "index": 1,
+        "index": 2,
         "text": "set %data% = { \u0022message\u0022: \u0022hello world\u0022 }",
-        "lineNumber": 4,
+        "lineNumber": 5,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -66,9 +107,9 @@
         "waitForExecution": true
       },
       {
-        "index": 2,
+        "index": 3,
         "text": "sign %data%",
-        "lineNumber": 5,
+        "lineNumber": 6,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -79,15 +120,10 @@
               {
                 "name": "Data",
                 "value": "%data%",
-                "type": "string"
+                "type": "json"
               }
             ],
-            "return": [
-              {
-                "name": "signature",
-                "value": null
-              }
-            ],
+            "return": null,
             "defaults": null
           }
         ],
@@ -98,9 +134,9 @@
         "waitForExecution": true
       },
       {
-        "index": 3,
+        "index": 4,
         "text": "verify %data% with contracts [\u0027C0\u0027], write to %verifyResult%",
-        "lineNumber": 6,
+        "lineNumber": 7,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -128,30 +164,6 @@
               }
             ],
             "defaults": null
-          },
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%verifyResult%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "%verifyResult%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
           }
         ],
         "intent": null,
@@ -161,9 +173,9 @@
         "waitForExecution": true
       },
       {
-        "index": 4,
+        "index": 5,
         "text": "assert %verifyResult.Success% is true, \u0022valid signature should verify\u0022",
-        "lineNumber": 7,
+        "lineNumber": 8,
         "indent": 0,
         "comment": null,
         "actions": [
@@ -174,7 +186,7 @@
               {
                 "name": "Value",
                 "value": "%verifyResult.Success%",
-                "type": "object"
+                "type": "bool"
               },
               {
                 "name": "Message",
@@ -193,11 +205,11 @@
         "waitForExecution": true
       }
     ],
-    "subGoals": [],
+    "goals": [],
     "visibility": 1,
     "path": "/SigningRoundtrip.test.goal",
     "prPath": "/.build/signingroundtrip.test.pr",
-    "hash": "a73b5c9f8534f4a98b61541f76aec6483e8ac8ce9c6a9d7a2950894f4dde30b2",
+    "hash": "94f05c75792f560c2ef8c029b3472270819e94560e27d9ee253b0b34c3271cfe",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,
