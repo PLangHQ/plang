@@ -217,7 +217,6 @@ public partial class Data
 
     private object? GetChildValue(string key)
     {
-        // First check properties on the Data object itself (e.g., PathData.Exists)
         var val = Value;
 
         // If Value is a Data object (e.g., DynamicData wrapping IdentityData),
@@ -230,26 +229,35 @@ public partial class Data
             if (dataChild != null) return dataChild;
         }
 
-        // Check properties on the actual type (subclass properties + whitelisted Data properties)
+        // Check Data subclass properties (e.g., PathData.Exists, IdentityData.PublicKey)
+        // These are declared on the subclass, not on Data itself.
         var ownProp = GetType().GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (ownProp != null)
-        {
-            if (ownProp.DeclaringType != typeof(Data)
-                || key.Equals("Success", StringComparison.OrdinalIgnoreCase)
-                || key.Equals("Error", StringComparison.OrdinalIgnoreCase)
-                || key.Equals("Name", StringComparison.OrdinalIgnoreCase))
-            {
-                return ownProp.GetValue(this);
-            }
-        }
+        if (ownProp != null && ownProp.DeclaringType != typeof(Data))
+            return ownProp.GetValue(this);
 
         // Check Data.Properties (extensible key-value pairs on the Data)
         var prop = Properties[key];
         if (prop != null) return prop.Value;
 
-        if (val == null) return null;
+        // Navigate the Value object via reflection (JSON objects, CLR types, etc.)
+        if (val != null)
+        {
+            var valueResult = ValueNavigators.Navigate(val, key);
+            if (valueResult != null) return valueResult;
+        }
 
-        return ValueNavigators.Navigate(val, key);
+        // Fallback: whitelisted Data base properties (Success, Error, Name)
+        // These are checked last so %user.name% navigates to the Value's "name"
+        // property rather than Data.Name.
+        if (ownProp != null && (
+            key.Equals("Success", StringComparison.OrdinalIgnoreCase)
+            || key.Equals("Error", StringComparison.OrdinalIgnoreCase)
+            || key.Equals("Name", StringComparison.OrdinalIgnoreCase)))
+        {
+            return ownProp.GetValue(this);
+        }
+
+        return null;
     }
 }
