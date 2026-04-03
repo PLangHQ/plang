@@ -65,14 +65,27 @@ public sealed class GoalCall : modules.IEvent
         if (loaded != null) return loaded;
 
         // 3. Derive PrPath from Name and file.read
-        var prPath = $".build/{Name.ToLowerInvariant()}.pr";
+        var prFile = $".build/{Name.ToLowerInvariant()}.pr";
 
-        // Try root-relative first (for user goals calling other goals in same project)
-        var rootResult = await LoadFromFile("/" + prPath, engine, context);
+        // Try relative to the calling goal's folder first (e.g., test sub-goals)
+        var callingGoal = Action?.Step?.Goal;
+        if (callingGoal?.Path != null)
+        {
+            var goalDir = callingGoal.Path;
+            var lastSlash = goalDir.LastIndexOf('/');
+            if (lastSlash >= 0)
+                goalDir = goalDir[..lastSlash];
+            var goalRelative = $"{goalDir}/{prFile}";
+            var goalResult = await LoadFromFile(goalRelative, engine, context);
+            if (goalResult != null) return goalResult;
+        }
+
+        // Try root-relative (for user goals calling other goals in same project)
+        var rootResult = await LoadFromFile("/" + prFile, engine, context);
         if (rootResult != null) return rootResult;
 
         // Try context-relative
-        return await LoadFromFile(prPath, engine, context);
+        return await LoadFromFile(prFile, engine, context);
     }
 
     private async Task<@this?> LoadFromFile(string prPath, Engine.@this engine, PLangContext context)
