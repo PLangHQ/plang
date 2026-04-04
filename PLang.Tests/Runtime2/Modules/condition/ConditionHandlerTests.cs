@@ -272,7 +272,7 @@ public class ConditionHandlerTests : IDisposable
         // Assert: fileResult is in memory
         var fileData = context.MemoryStack.Get("fileResult");
         await Assert.That(fileData).IsNotNull();
-        var fileObj = fileData as PLang.Runtime2.Engine.FileSystem.PathData;
+        var fileObj = fileData as PLang.Runtime2.Engine.FileSystem.Path;
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(fileObj!.Exists).IsTrue();
 

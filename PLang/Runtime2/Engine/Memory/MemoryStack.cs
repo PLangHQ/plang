@@ -359,8 +359,8 @@ public class MemoryStack
             // System context vars (! prefix) — skip, they're per-execution
             if (kvp.Key.StartsWith("!")) continue;
 
-            // SettingsData — share by reference (stateless, loads from DB each time)
-            if (kvp.Value is PLang.Runtime2.Engine.Settings.SettingsData)
+            // SettingsVariable — share by reference (stateless, loads from DB each time)
+            if (kvp.Value is PLang.Runtime2.Engine.Settings.SettingsVariable)
             {
                 clone._variables[kvp.Key] = kvp.Value;
             }

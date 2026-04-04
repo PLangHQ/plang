@@ -42,7 +42,7 @@ public class PathTests : IDisposable
     public async Task ToBoolean_FileExists_ReturnsTrue()
     {
         var path = TempFile("exists.txt");
-        var pd = new PathData(path, _fs);
+        var pd = new Path(path, _fs);
 
         await Assert.That(pd.ToBoolean()).IsTrue();
     }
@@ -50,7 +50,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task ToBoolean_FileDoesNotExist_ReturnsFalse()
     {
-        var pd = new PathData(_fs.Path.Combine(_tempDir, "nope.txt"), _fs);
+        var pd = new Path(_fs.Path.Combine(_tempDir, "nope.txt"), _fs);
 
         await Assert.That(pd.ToBoolean()).IsFalse();
     }
@@ -59,7 +59,7 @@ public class PathTests : IDisposable
     public async Task IsTruthy_PathDataExists_ReturnsTrue()
     {
         var path = TempFile("truthy.txt");
-        var pd = new PathData(path, _fs);
+        var pd = new Path(path, _fs);
 
         await Assert.That(PLang.Runtime2.modules.condition.Operator.IsTruthy(pd)).IsTrue();
     }
@@ -67,7 +67,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task IsTruthy_PathDataNotExists_ReturnsFalse()
     {
-        var pd = new PathData(_fs.Path.Combine(_tempDir, "missing.txt"), _fs);
+        var pd = new Path(_fs.Path.Combine(_tempDir, "missing.txt"), _fs);
 
         await Assert.That(PLang.Runtime2.modules.condition.Operator.IsTruthy(pd)).IsFalse();
     }
@@ -337,7 +337,7 @@ public class PathTests : IDisposable
         var result = _provider.Read(new Read { Context = _engine.Context, Path = p });
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PathData;
+        var f = result as Path;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Value).IsEqualTo("test content");
     }
@@ -366,7 +366,7 @@ public class PathTests : IDisposable
         var result = _provider.List(new List { Context = _engine.Context, Path = p, Pattern = "*" });
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PathData[];
+        var files = result.Value as Path[];
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Length).IsEqualTo(2);
         var names = files.Select(f => _fs.Path.GetFileName(f.Absolute)).OrderBy(n => n).ToArray();
@@ -385,7 +385,7 @@ public class PathTests : IDisposable
         var result = _provider.List(new List { Context = _engine.Context, Path = p, Pattern = "*.txt" });
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PathData[];
+        var files = result.Value as Path[];
         await Assert.That(files!.Length).IsEqualTo(1);
     }
 
@@ -402,7 +402,7 @@ public class PathTests : IDisposable
         var result = _provider.List(new List { Context = _engine.Context, Path = p, Pattern = "*", Recursive = true });
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PathData[];
+        var files = result.Value as Path[];
         await Assert.That(files!.Length).IsEqualTo(2);
     }
 
@@ -469,7 +469,7 @@ public class PathTests : IDisposable
         var result = _provider.Exists(new Exists { Context = _engine.Context, Path = p });
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PathData;
+        var f = result as Path;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Exists).IsTrue();
     }

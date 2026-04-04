@@ -11,7 +11,7 @@ namespace PLang.Tests.Runtime2.Modules.identity;
 /// <summary>
 /// Tests for identity module error paths:
 /// - GetOrCreateDefaultAsync promote/auto-create save failures (via Get action)
-/// - Handler catch blocks (export.cs, get.cs, IdentityData.cs)
+/// - Handler catch blocks (export.cs, get.cs, Identity.cs)
 /// - Handler save/remove failures (create, setDefault, rename, archive, unarchive)
 /// - LoadAllAsync when DataSource.GetAll fails (via GetAll action)
 /// - Deserialize with unrecognized value types (via Get action)
@@ -288,14 +288,14 @@ public class IdentityErrorPathTests
     [Test]
     public async Task Get_UnrecognizedValueType_ReturnsEmptyIdentity()
     {
-        // Store a raw integer in the identity table — deserializes as IdentityData with empty fields
+        // Store a raw integer in the identity table — deserializes as Identity with empty fields
         var ds = _engine.System.SettingsStore;
         await ds.Set("identity", "weird", new Data("weird", 42));
 
         var result = await new Get { Context = Ctx, Name = "weird" }.Run();
-        // IdentityData deserializes but has empty PublicKey — valid but useless
+        // Identity deserializes but has empty PublicKey — valid but useless
         await Assert.That(result.Success).IsTrue();
-        var identity = result as IdentityData;
+        var identity = result as Identity;
         await Assert.That(identity!.PublicKey).IsEqualTo("");
     }
 
@@ -308,15 +308,15 @@ public class IdentityErrorPathTests
         var create = new Create { Context = Ctx, Name = "valid", SetAsDefault = true };
         await create.Run();
 
-        // Store a non-identity value directly — deserializes as IdentityData with empty fields
+        // Store a non-identity value directly — deserializes as Identity with empty fields
         await ds.Set("identity", "garbage", new Data("garbage", "just a string"));
 
         var handler = new list { Context = Ctx };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 
-        var list = result as DataList<IdentityData>;
-        // Both deserialize as IdentityData — no type filtering anymore
+        var list = result as DataList<Identity>;
+        // Both deserialize as Identity — no type filtering anymore
         await Assert.That(list!.Count).IsEqualTo(2);
     }
 

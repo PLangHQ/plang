@@ -8,10 +8,10 @@ namespace PLang.Runtime2.modules.identity;
 /// Data subclass — lives on MemoryStack, navigable via %MyIdentity.PublicKey%.
 /// Persistence is owned by IIdentityProvider.
 /// </summary>
-public sealed class IdentityData : Data
+public sealed class Identity : Data
 {
-    public IdentityData() : base("Identity") { }
-    public IdentityData(string name) : base(name) { }
+    public Identity() : base("Identity") { }
+    public Identity(string name) : base(name) { }
 
     /// <summary>Base64-encoded Ed25519 public key. Used as the identity in signed envelopes.</summary>
     public string PublicKey { get; set; } = "";
@@ -36,7 +36,7 @@ public sealed class IdentityData : Data
 
     public override Data Clone()
     {
-        var clone = new IdentityData(Name)
+        var clone = new Identity(Name)
         {
             PublicKey = PublicKey,
             PrivateKey = PrivateKey,

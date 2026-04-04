@@ -14,29 +14,29 @@ namespace PLang.Runtime2.modules.identity.providers;
 public interface IIdentityProvider : IProvider
 {
     /// <summary>Gets an identity by name, or the default if name is null.</summary>
-    Task<IdentityData> GetAsync(Get action);
+    Task<Identity> GetAsync(Get action);
 
     /// <summary>Creates a new identity with a generated key pair.</summary>
-    Task<IdentityData> CreateAsync(Create action);
+    Task<Identity> CreateAsync(Create action);
 
     /// <summary>Soft-deletes an identity. Cannot archive the default.</summary>
-    Task<IdentityData> ArchiveAsync(Archive action);
+    Task<Identity> ArchiveAsync(Archive action);
 
     /// <summary>Restores a previously archived identity.</summary>
-    Task<IdentityData> UnarchiveAsync(Unarchive action);
+    Task<Identity> UnarchiveAsync(Unarchive action);
 
     /// <summary>Switches the default identity. Cannot set an archived identity as default.</summary>
-    Task<IdentityData> SetDefaultAsync(SetDefault action);
+    Task<Identity> SetDefaultAsync(SetDefault action);
 
     /// <summary>Renames an identity. Atomic: saves new name first, then removes old.</summary>
-    Task<IdentityData> RenameAsync(Rename action);
+    Task<Identity> RenameAsync(Rename action);
 
     /// <summary>Lists all non-archived identities.</summary>
-    Task<DataList<IdentityData>> ListAsync(list action);
+    Task<DataList<Identity>> ListAsync(list action);
 
     /// <summary>Exports the full identity including sensitive fields.</summary>
-    Task<IdentityData> ExportAsync(Export action);
+    Task<Identity> ExportAsync(Export action);
 
     /// <summary>Gets the default identity, promoting or auto-creating one if needed.</summary>
-    Task<IdentityData> GetOrCreateDefaultAsync(IContext action);
+    Task<Identity> GetOrCreateDefaultAsync(IContext action);
 }

@@ -96,6 +96,11 @@ public sealed class @this : IAsyncDisposable
     public EngineProviders Providers { get; } = new();
 
     /// <summary>
+    /// Per-type navigator registry for Data navigation.
+    /// </summary>
+    public Navigators.@this Navigators { get; } = new();
+
+    /// <summary>
     /// The loaded goals.
     /// </summary>
     public EngineGoals Goals => _goals;
@@ -122,11 +127,11 @@ public sealed class @this : IAsyncDisposable
     public Config.@this Config { get; }
 
     /// <summary>
-    /// Shared SettingsData instance registered on every actor's MemoryStack.
+    /// Shared SettingsVariable instance registered on every actor's MemoryStack.
     /// Provides %Settings.X% variable resolution from system DataSource.
     /// Single instance — all actors share the same object.
     /// </summary>
-    internal SettingsData SettingsVariable { get; }
+    internal SettingsVariable SettingsVariable { get; }
 
     /// <summary>
     /// Debug mode controller. Registers event handlers for step/goal debug output.
@@ -241,7 +246,7 @@ public sealed class @this : IAsyncDisposable
         Building = new Build.@this(this);
         Types = new Types.@this();
         Config = new Config.@this();
-        SettingsVariable = new SettingsData(this);
+        SettingsVariable = new SettingsVariable(this);
         _modules = modules ?? new EngineModules();
         _goals = new EngineGoals { Engine = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
@@ -249,6 +254,7 @@ public sealed class @this : IAsyncDisposable
 
         Providers.RegisterDefaults();
         Types.RegisterDomainTypes();
+        Navigators.RegisterDefaults();
 
         // Default actor is User — Start() switches to System for bootstrap
         CurrentActor = User;

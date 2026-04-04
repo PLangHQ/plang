@@ -317,7 +317,7 @@ public class RenderTests : IDisposable
         WriteTemplateFile("goals/templates/page.html", "Page content");
         var ctx = CreateContext();
         // Simulate a goal at goals/MyGoal.goal by setting Goal.Path
-        // PathData resolves relative to goal's directory
+        // Path resolves relative to goal's directory
         var action = new Render { Context = ctx, Template = "goals/templates/page.html", IsFile = true };
 
         var result = await _provider.Render(action);

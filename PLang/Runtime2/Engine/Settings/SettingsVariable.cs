@@ -12,13 +12,13 @@ namespace PLang.Runtime2.Engine.Settings;
 ///   intercepts %Settings.ApiKey% via GetChild and loads from the settings store.
 /// - Storage (JsonConstructor): value already loaded, used for store round-trips.
 /// </summary>
-public class SettingsData : Data
+public class SettingsVariable : Data
 {
     private const string SettingsTable = "settings";
     private readonly Engine.@this? _engine;
 
     /// <summary>Runtime constructor — intercepts navigation and loads from settings store.</summary>
-    public SettingsData(Engine.@this engine)
+    public SettingsVariable(Engine.@this engine)
         : base("Settings", null)
     {
         _engine = engine;
@@ -26,7 +26,7 @@ public class SettingsData : Data
 
     /// <summary>Storage constructor — value already set, no lazy resolution needed.</summary>
     [JsonConstructor]
-    public SettingsData(string name, object? value = null, Memory.Type? type = null)
+    public SettingsVariable(string name, object? value = null, Memory.Type? type = null)
         : base(name, value, type)
     {
     }
@@ -64,7 +64,7 @@ public class SettingsData : Data
         // .GetAwaiter().GetResult() is safe here because Microsoft.Data.Sqlite
         // is synchronous under the hood — SQLite has no async I/O.
         var store = _engine.System.SettingsStore;
-        var result = store.Get<SettingsData>(SettingsTable, key).GetAwaiter().GetResult();
+        var result = store.Get<SettingsVariable>(SettingsTable, key).GetAwaiter().GetResult();
 
         if (!result.Success)
             return result;

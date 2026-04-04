@@ -44,7 +44,7 @@ public sealed class Actor : IAsyncDisposable
     /// For System actor: resolved via DynamicData %MyIdentity% on first access.
     /// For User/Service: set externally by HTTP/signing layer.
     /// </summary>
-    public IdentityData? Identity { get; set; }
+    public Identity? Identity { get; set; }
 
     /// <summary>
     /// Resolves an actor by name using the engine.
@@ -78,7 +78,7 @@ public sealed class Actor : IAsyncDisposable
         Context.Actor = this;
         Channels = new EngineChannels(engine);
 
-        // Register shared SettingsData — same object for all actors.
+        // Register shared SettingsVariable — same object for all actors.
         // %Settings.ApiKey% resolves identically in User, Service, and System contexts.
         Context.MemoryStack.Put(engine.SettingsVariable);
 

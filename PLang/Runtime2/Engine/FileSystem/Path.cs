@@ -11,7 +11,7 @@ namespace PLang.Runtime2.Engine.FileSystem;
 /// Exists and Size are live (lazy filesystem checks).
 /// Value holds file content when set by the provider (e.g., Read).
 /// </summary>
-public class PathData : Data
+public class Path : Data
 {
     private readonly IPLangFileSystem _fs;
     private readonly string _absolutePath;
@@ -24,9 +24,9 @@ public class PathData : Data
     private string? _relative;
 
     /// <summary>
-    /// Creates a PathData from an absolute path. Used by providers to build results.
+    /// Creates a Path from an absolute path. Used by providers to build results.
     /// </summary>
-    public PathData(string absolutePath, IPLangFileSystem fs, object? content = null, string? source = null)
+    public Path(string absolutePath, IPLangFileSystem fs, object? content = null, string? source = null)
         : base("", content, content != null ? Memory.Type.FromMime(TypeMapping.GetMimeType(
             fs.Path.GetExtension(absolutePath))) : null)
     {
@@ -36,10 +36,10 @@ public class PathData : Data
     }
 
     /// <summary>
-    /// Creates a PathData from a raw path string, resolving relative paths against the goal folder.
+    /// Creates a Path from a raw path string, resolving relative paths against the goal folder.
     /// Used by the source generator via Resolve().
     /// </summary>
-    public PathData(string rawPath, PLangContext context)
+    public Path(string rawPath, PLangContext context)
         : base("", null)
     {
         ArgumentNullException.ThrowIfNull(rawPath);
@@ -65,8 +65,8 @@ public class PathData : Data
     }
 
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
-    public static PathData Resolve(string rawPath, PLangContext context)
-        => new PathData(rawPath, context);
+    public static Path Resolve(string rawPath, PLangContext context)
+        => new Path(rawPath, context);
 
     // --- Path properties ---
 
@@ -149,7 +149,7 @@ public class PathData : Data
 
     public override bool Equals(object? obj) => obj switch
     {
-        PathData other => string.Equals(_absolutePath, other._absolutePath, StringComparison.OrdinalIgnoreCase),
+        Path other => string.Equals(_absolutePath, other._absolutePath, StringComparison.OrdinalIgnoreCase),
         string str => string.Equals(_absolutePath, str, StringComparison.OrdinalIgnoreCase),
         _ => false
     };
@@ -158,7 +158,7 @@ public class PathData : Data
 
     public override Data Clone()
     {
-        var clone = new PathData(_absolutePath, _fs, Value, Source)
+        var clone = new Path(_absolutePath, _fs, Value, Source)
         {
             Name = Name,
             Properties = Properties.Clone()

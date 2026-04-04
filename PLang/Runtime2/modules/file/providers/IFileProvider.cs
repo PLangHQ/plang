@@ -12,5 +12,5 @@ public interface IFileProvider : IProvider
     Data Copy(Copy action);
     Data Move(Move action);
     Data List(List action);
-    PathData Exists(Exists action);
+    PLangPath Exists(Exists action);
 }

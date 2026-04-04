@@ -61,7 +61,7 @@ public class FakeBasicAction : PLang.Runtime2.modules.ICodeGenerated
         PLang.Runtime2.Engine.Context.PLangContext context) => Task.FromResult(Data.Ok());
 }
 
-// Fake return type simulating PathData-like properties
+// Fake return type simulating Path-like properties
 public class FakePathResult : Data
 {
     public FakePathResult() : base("") { }

@@ -16,7 +16,7 @@ public partial class Set : IContext
     public async Task<Data> Run()
     {
         var store = Context.Engine.System.SettingsStore;
-        var result = await store.Set("settings", Key, new SettingsData(Key, Value));
+        var result = await store.Set("settings", Key, new SettingsVariable(Key, Value));
 
         if (!result.Success)
             return result;

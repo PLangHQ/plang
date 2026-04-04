@@ -51,7 +51,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PathData;
+        var f = result as Path;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Absolute).IsEqualTo(TempPath("test.txt"));
         await Assert.That(f.Relative).IsEqualTo("test.txt");
@@ -77,7 +77,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PathData;
+        var f = result as Path;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Relative).IsEqualTo("read.txt");
     }
@@ -89,7 +89,7 @@ public class FileHandlerTests : IDisposable
 
         var action = new Read { Context = CreateContext(), Path = MakePath("lazy.txt") };
         var result = await action.Run();
-        var f = result as PathData;
+        var f = result as Path;
 
         await Assert.That(f!.Value).IsEqualTo("lazy content");
     }
@@ -114,7 +114,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PathData;
+        var f = result as Path;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Source).IsNotNull();
         await Assert.That(f.Relative).IsEqualTo("dst.txt");
@@ -154,7 +154,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PathData;
+        var f = result as Path;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Source).IsNotNull();
         await Assert.That(f.Relative).IsEqualTo("move_dst.txt");
@@ -195,7 +195,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PathData;
+        var f = result as Path;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Exists).IsFalse();
     }
@@ -243,7 +243,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PathData;
+        var f = result as Path;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Exists).IsTrue();
     }
@@ -255,7 +255,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PathData;
+        var f = result as Path;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Exists).IsFalse();
     }
@@ -274,7 +274,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PathData[];
+        var files = result.Value as Path[];
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Length).IsEqualTo(2);
     }
@@ -291,7 +291,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PathData[];
+        var files = result.Value as Path[];
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Length).IsEqualTo(1);
     }
@@ -310,7 +310,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PathData[];
+        var files = result.Value as Path[];
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Length).IsEqualTo(2);
     }
@@ -333,7 +333,7 @@ public class FileHandlerTests : IDisposable
 
         var action = new Read { Context = CreateContext(), Path = MakePath("doc.md") };
         var result = await action.Run();
-        var f = result as PathData;
+        var f = result as Path;
 
         await Assert.That(f!.MimeType).IsEqualTo("text/markdown");
     }
@@ -345,7 +345,7 @@ public class FileHandlerTests : IDisposable
 
         var action = new Read { Context = CreateContext(), Path = MakePath("sized.txt") };
         var result = await action.Run();
-        var f = result as PathData;
+        var f = result as Path;
 
         await Assert.That(f!.Size).IsEqualTo(5);
     }
@@ -357,7 +357,7 @@ public class FileHandlerTests : IDisposable
 
         var action = new Read { Context = CreateContext(), Path = MakePath("tostring.txt") };
         var result = await action.Run();
-        var f = result as PathData;
+        var f = result as Path;
 
         await Assert.That(f!.ToString()).IsEqualTo("file-content");
     }
@@ -422,7 +422,7 @@ public class FileHandlerTests : IDisposable
 
         var fileData = context.MemoryStack.Get("fileResult");
         await Assert.That(fileData).IsNotNull();
-        var fileObj = fileData as PathData;
+        var fileObj = fileData as Path;
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(fileObj!.Exists).IsTrue();
 

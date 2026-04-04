@@ -98,7 +98,7 @@ public sealed class GoalCall : modules.IEvent
         var readAction = new modules.file.Read
         {
             Context = context,
-            Path = new PathData(prPath, context)
+            Path = new PLangPath(prPath, context)
         };
         var result = await engine.RunAction(readAction, context);
         if (!result.Success) return null;

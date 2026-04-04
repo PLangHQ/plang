@@ -19,7 +19,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     public string Name => "default";
     public bool IsDefault { get; set; }
 
-    public async Task<IdentityData> GetAsync(Get action)
+    public async Task<Identity> GetAsync(Get action)
     {
         var result = await ResolveIdentityAsync(action, action.Name);
         if (!result.Success) return result;
@@ -31,17 +31,17 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         return result;
     }
 
-    public async Task<IdentityData> CreateAsync(Create action)
+    public async Task<Identity> CreateAsync(Create action)
     {
         var engine = action.Context.Engine;
 
         if (string.IsNullOrWhiteSpace(action.Name))
-            return Data.FromError<IdentityData>(new ActionError("Identity name cannot be empty", "ValidationError", 400));
+            return Data.FromError<Identity>(new ActionError("Identity name cannot be empty", "ValidationError", 400));
 
         var all = await LoadAllAsync(action);
-        if (!all.Success) return all.ToError<IdentityData>();
+        if (!all.Success) return all.ToError<Identity>();
         if (all.Exists(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase) && !i.IsArchived))
-            return Data.FromError<IdentityData>(new ActionError($"Identity '{action.Name}' already exists", "DuplicateName", 409));
+            return Data.FromError<Identity>(new ActionError($"Identity '{action.Name}' already exists", "DuplicateName", 409));
 
         var identity = GenerateIdentity(action, action.Name, action.SetAsDefault, action.Provider);
         if (!identity.Success) return identity;
@@ -65,7 +65,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         return identity;
     }
 
-    public async Task<IdentityData> ArchiveAsync(Archive action)
+    public async Task<Identity> ArchiveAsync(Archive action)
     {
         var identity = await LoadAsync(action, action.Name);
         if (!identity.Success) return identity;
@@ -85,7 +85,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         return await SaveAsync(action, identity);
     }
 
-    public async Task<IdentityData> UnarchiveAsync(Unarchive action)
+    public async Task<Identity> UnarchiveAsync(Unarchive action)
     {
         var identity = await LoadAsync(action, action.Name);
         if (!identity.Success) return identity;
@@ -100,15 +100,15 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         return identity;
     }
 
-    public async Task<IdentityData> SetDefaultAsync(SetDefault action)
+    public async Task<Identity> SetDefaultAsync(SetDefault action)
     {
         var engine = action.Context.Engine;
         var all = await LoadAllAsync(action);
-        if (!all.Success) return all.ToError<IdentityData>();
+        if (!all.Success) return all.ToError<Identity>();
 
         var target = all.Find(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase));
         if (target == null)
-            return Data.FromError<IdentityData>(new ActionError($"Identity '{action.Name}' not found", "NotFound", 404));
+            return Data.FromError<Identity>(new ActionError($"Identity '{action.Name}' not found", "NotFound", 404));
 
         if (target.IsArchived)
         {
@@ -134,18 +134,18 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         return target;
     }
 
-    public async Task<IdentityData> RenameAsync(Rename action)
+    public async Task<Identity> RenameAsync(Rename action)
     {
         var engine = action.Context.Engine;
 
         if (string.IsNullOrWhiteSpace(action.NewName))
-            return Data.FromError<IdentityData>(new ActionError("New name cannot be empty", "ValidationError", 400));
+            return Data.FromError<Identity>(new ActionError("New name cannot be empty", "ValidationError", 400));
 
         var identity = await LoadAsync(action, action.Name);
         if (!identity.Success) return identity;
 
         var all = await LoadAllAsync(action);
-        if (!all.Success) return all.ToError<IdentityData>();
+        if (!all.Success) return all.ToError<Identity>();
         if (all.Exists(i => string.Equals(i.Name, action.NewName, StringComparison.OrdinalIgnoreCase)))
         {
             identity.Error = new ActionError($"Identity '{action.NewName}' already exists", "DuplicateName", 409);
@@ -169,17 +169,17 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         return identity;
     }
 
-    public async Task<DataList<IdentityData>> ListAsync(list action)
+    public async Task<DataList<Identity>> ListAsync(list action)
     {
         var all = await LoadAllAsync(action);
         if (!all.Success) return all;
-        var active = new DataList<IdentityData>();
+        var active = new DataList<Identity>();
         foreach (var identity in all)
             if (!identity.IsArchived) active.Add(identity);
         return active;
     }
 
-    public async Task<IdentityData> ExportAsync(Export action)
+    public async Task<Identity> ExportAsync(Export action)
     {
         return await ResolveIdentityAsync(action, action.Name);
     }
@@ -189,7 +189,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>
     /// Resolves an identity by name, or gets/creates the default if name is null.
     /// </summary>
-    private async Task<IdentityData> ResolveIdentityAsync(IContext action, string? name)
+    private async Task<Identity> ResolveIdentityAsync(IContext action, string? name)
     {
         if (name != null)
             return await LoadAsync(action, name);
@@ -200,35 +200,35 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     // --- Persistence helpers ---
 
     /// <summary>Loads a single identity by name from the settings store.</summary>
-    internal async Task<IdentityData> LoadAsync(IContext action, string name)
+    internal async Task<Identity> LoadAsync(IContext action, string name)
     {
         var store = action.Context.Engine.System.SettingsStore;
-        var result = await store.Get<IdentityData>(Table, name);
+        var result = await store.Get<Identity>(Table, name);
 
-        if (result is IdentityData identity)
+        if (result is Identity identity)
             return identity;
 
         if (!result.Success)
-            return result.ToError<IdentityData>();
+            return result.ToError<Identity>();
 
-        return Data.FromError<IdentityData>(new ActionError($"Identity '{name}' not found", "NotFound", 404));
+        return Data.FromError<Identity>(new ActionError($"Identity '{name}' not found", "NotFound", 404));
     }
 
     /// <summary>Loads all identities (including archived) from the settings store.</summary>
-    internal async Task<DataList<IdentityData>> LoadAllAsync(IContext action)
+    internal async Task<DataList<Identity>> LoadAllAsync(IContext action)
     {
         var store = action.Context.Engine.System.SettingsStore;
-        return await store.GetAll<IdentityData>(Table);
+        return await store.GetAll<Identity>(Table);
     }
 
     /// <summary>
     /// Gets the default non-archived identity, or auto-creates one if none exist.
     /// </summary>
-    public async Task<IdentityData> GetOrCreateDefaultAsync(IContext action)
+    public async Task<Identity> GetOrCreateDefaultAsync(IContext action)
     {
         var all = await LoadAllAsync(action);
         if (!all.Success)
-            return all.ToError<IdentityData>();
+            return all.ToError<Identity>();
         var def = all.Find(i => i.IsDefault && !i.IsArchived);
         if (def != null) return def;
 
@@ -247,7 +247,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     }
 
     /// <summary>Persists an identity to the settings store. Sets error on the identity if save fails.</summary>
-    private async Task<IdentityData> SaveAsync(IContext action, IdentityData identity)
+    private async Task<Identity> SaveAsync(IContext action, Identity identity)
     {
         var store = action.Context.Engine.System.SettingsStore;
         var result = await store.Set(Table, identity.Name, identity);
@@ -256,7 +256,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     }
 
     /// <summary>Removes an identity from store. Sets error on the identity if remove fails.</summary>
-    private async Task<IdentityData> RemoveAsync(IContext action, IdentityData identity)
+    private async Task<Identity> RemoveAsync(IContext action, Identity identity)
     {
         var store = action.Context.Engine.System.SettingsStore;
         var result = await store.Remove(Table, identity.Name);
@@ -266,22 +266,22 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
     /// <summary>
     /// Generates a new identity with keys from the configured key provider.
-    /// Owns the full sequence: resolve provider → generate keys → build IdentityData.
+    /// Owns the full sequence: resolve provider → generate keys → build Identity.
     /// </summary>
-    private IdentityData GenerateIdentity(IContext action, string name, bool isDefault, string? providerName = null)
+    private Identity GenerateIdentity(IContext action, string name, bool isDefault, string? providerName = null)
     {
         var engine = action.Context.Engine;
         var keyResult = engine.Providers.Get<IKeyProvider>(providerName);
         if (!keyResult.Success)
-            return keyResult.ToError<IdentityData>();
+            return keyResult.ToError<Identity>();
 
         var keysResult = keyResult.Value!.GenerateKeyPair();
         if (!keysResult.Success)
-            return keysResult.ToError<IdentityData>();
+            return keysResult.ToError<Identity>();
 
         var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
 
-        return new IdentityData(name)
+        return new Identity(name)
         {
             PublicKey = keysResult.Value!.PublicKey,
             PrivateKey = keysResult.Value.PrivateKey,

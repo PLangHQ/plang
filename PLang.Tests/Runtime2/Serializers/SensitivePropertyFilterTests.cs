@@ -34,7 +34,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_ExcludedFromJsonStreamSerializer()
     {
-        var identity = new IdentityData
+        var identity = new Identity
         {
             Name = "test",
             PublicKey = "pubkey123",
@@ -55,7 +55,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_IncludedInRawJsonSerializer()
     {
-        var identity = new IdentityData
+        var identity = new Identity
         {
             Name = "test",
             PublicKey = "pubkey123",
@@ -86,7 +86,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_WorksAlongsideViewAttributes()
     {
-        var identity = new IdentityData
+        var identity = new Identity
         {
             Name = "test",
             PublicKey = "pubkey123",
@@ -99,7 +99,7 @@ public class SensitivePropertyFilterTests
         var storeSerializer = serializer.ForView(View.Store);
         var storeJson = storeSerializer.Serialize(identity);
 
-        // IdentityData doesn't use view attributes, so Store view serializes all non-sensitive
+        // Identity doesn't use view attributes, so Store view serializes all non-sensitive
         await Assert.That(storeJson).DoesNotContain("secret456");
     }
 
@@ -109,7 +109,7 @@ public class SensitivePropertyFilterTests
         // End-to-end: create real identity, serialize, verify PrivateKey absent
         var create = new Create { Context = _engine.System.Context, Name = "e2e", SetAsDefault = true };
         var result = await create.Run();
-        var identity = result as IdentityData;
+        var identity = result as Identity;
 
         var serializer = new JsonStreamSerializer();
         var json = serializer.Serialize(identity);

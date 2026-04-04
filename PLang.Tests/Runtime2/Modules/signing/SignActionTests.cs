@@ -89,7 +89,7 @@ public class SignActionTests
     {
         // Create identity first to capture public key
         var identityResult = await new Get { Context = Ctx, Name = null }.Run();
-        var publicKey = (identityResult as IdentityData)!.PublicKey;
+        var publicKey = (identityResult as Identity)!.PublicKey;
 
         var result = await SignData("test data");
 

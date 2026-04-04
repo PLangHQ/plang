@@ -30,7 +30,7 @@ public class IdentityDataTests
         catch { /* best effort cleanup */ }
     }
 
-    private IdentityData CreateTestIdentity() => new("test")
+    private Identity CreateTestIdentity() => new("test")
     {
         PublicKey = "dGVzdHB1YmxpY2tleQ==",
         PrivateKey = "dGVzdHByaXZhdGVrZXk=",

@@ -219,7 +219,7 @@ public partial class Data
     {
         var val = Value;
 
-        // If Value is a Data object (e.g., DynamicData wrapping IdentityData),
+        // If Value is a Data object (e.g., DynamicData wrapping Identity),
         // navigate into the VALUE first — it's the real object
         if (val is Data dataVal)
         {
@@ -229,7 +229,7 @@ public partial class Data
             if (dataChild != null) return dataChild;
         }
 
-        // Check Data subclass properties (e.g., PathData.Exists, IdentityData.PublicKey)
+        // Check Data subclass properties (e.g., Path.Exists, Identity.PublicKey)
         // These are declared on the subclass, not on Data itself.
         var ownProp = GetType().GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
@@ -240,11 +240,16 @@ public partial class Data
         var prop = Properties[key];
         if (prop != null) return prop.Value;
 
-        // Navigate the Value object via reflection (JSON objects, CLR types, etc.)
+        // Navigate the Value object via registered navigator (dict, list, CLR reflection, etc.)
         if (val != null)
         {
-            var valueResult = ValueNavigators.Navigate(val, key);
-            if (valueResult != null) return valueResult;
+            var navigator = _context?.Engine?.Navigators?.Get(val.GetType());
+            var navResult = navigator?.Navigate(this, key);
+            if (navResult != null) return navResult;
+
+            // Fallback when no engine context (e.g., during deserialization)
+            var fallbackResult = Navigators.ValueNavigators.Navigate(val, key);
+            if (fallbackResult != null) return fallbackResult;
         }
 
         // Fallback: whitelisted Data base properties (Success, Error, Name)

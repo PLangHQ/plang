@@ -29,7 +29,7 @@ global using SerializeOptions = PLang.Runtime2.Engine.Channels.Serializers.Seria
 global using DeserializeOptions = PLang.Runtime2.Engine.Channels.Serializers.DeserializeOptions;
 
 // FileSystem types
-global using PLangPath = PLang.Runtime2.Engine.FileSystem.PathData;
+global using PLangPath = PLang.Runtime2.Engine.FileSystem.Path;
 
 // Config subsystem
 global using EngineConfig = PLang.Runtime2.Engine.Config.@this;

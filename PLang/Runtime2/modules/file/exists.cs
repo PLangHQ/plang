@@ -14,5 +14,5 @@ public partial class Exists : IContext
     [Provider]
     public partial IFileProvider Files { get; }
 
-    public Task<PathData> Run() => Task.FromResult(Files.Exists(this));
+    public Task<PLangPath> Run() => Task.FromResult(Files.Exists(this));
 }
