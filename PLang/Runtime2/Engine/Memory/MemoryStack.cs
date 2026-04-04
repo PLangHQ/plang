@@ -180,7 +180,9 @@ public class MemoryStack
         string? remaining;
         if (name.Length > rootName.Length)
         {
-            remaining = name[rootName.Length] == '.'
+            var sep = name[rootName.Length];
+            // Strip leading . (but keep ! as it's the infrastructure marker for GetChild)
+            remaining = sep == '.'
                 ? name[(rootName.Length + 1)..]
                 : name[rootName.Length..];
         }
@@ -452,16 +454,17 @@ public class MemoryStack
     {
         var dotIndex = path.IndexOf('.');
         var bracketIndex = path.IndexOf('[');
+        var bangIndex = path.IndexOf('!');
+        // ! at position 0 is part of the variable name (!engine), not a separator
+        if (bangIndex == 0) bangIndex = path.IndexOf('!', 1);
 
-        if (dotIndex < 0 && bracketIndex < 0)
-            return path;
+        // Find the earliest separator
+        int min = int.MaxValue;
+        if (dotIndex >= 0) min = Math.Min(min, dotIndex);
+        if (bracketIndex >= 0) min = Math.Min(min, bracketIndex);
+        if (bangIndex > 0) min = Math.Min(min, bangIndex);
 
-        if (dotIndex < 0)
-            return path[..bracketIndex];
-        if (bracketIndex < 0)
-            return path[..dotIndex];
-
-        return path[..Math.Min(dotIndex, bracketIndex)];
+        return min == int.MaxValue ? path : path[..min];
     }
 }
 

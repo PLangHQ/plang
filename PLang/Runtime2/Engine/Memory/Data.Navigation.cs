@@ -52,8 +52,15 @@ public partial class Data
             return result.GetChild(remaining, depth + 1);
         }
 
-        // Get child value from current value
-        var childValue = GetChildValue(segment);
+        // ! prefix = Data infrastructure access (Name, Error, Success, Type, Properties)
+        // . prefix (default) = domain/value navigation
+        bool isInfrastructure = segment.StartsWith('!');
+        if (isInfrastructure)
+            segment = segment[1..]; // strip the !
+
+        var childValue = isInfrastructure
+            ? GetInfrastructureValue(segment)
+            : GetChildValue(segment);
         if (childValue == null)
             return null;
 
@@ -264,5 +271,23 @@ public partial class Data
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Accesses Data's own infrastructure properties (Name, Type, Error, Success, Properties, etc.).
+    /// Used when navigating with ! prefix: %user!Name%, %result!Error%, etc.
+    /// Full hierarchy reflection — reaches any property on the Data class itself.
+    /// </summary>
+    private object? GetInfrastructureValue(string key)
+    {
+        var prop = typeof(Data).GetProperty(key,
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        if (prop != null)
+            return prop.GetValue(this);
+
+        // Also check subclass properties (e.g., Path.Exists IS infrastructure too)
+        prop = GetType().GetProperty(key,
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        return prop?.GetValue(this);
     }
 }
