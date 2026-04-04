@@ -189,20 +189,42 @@ ms.Put(new Data("!engine", engine));
 ms.Put(engine);  // Engine IS Data, Key set by caller via Data.Name
 ```
 
-### Source Generator — `__Source` Companion
+### Source Generator — `Data()` Accessor and `GetValue<T>()` Conversion
 
-Independent of the Data<T> hierarchy, the source generator adds a `__Source` companion for primitive parameters:
+The source generator creates a `Data(string)` method that gives the handler access to the underlying Data for any parameter. No companion properties — one method covers all parameters:
 
 ```csharp
-// Generated
-public partial long Size { get; init; }          // the strongly-typed value
-internal Data? Size__Source { get; private set; } // the Data it came from
+// Source generator creates:
+private Dictionary<string, Data> __paramData;
+protected Data Data(string paramName) => __paramData[paramName];
 
-// For domain types extending Data<T>, no __Source needed:
-public partial Path FilePath { get; init; }      // Path IS Data — .Error, .Properties accessible
+// Generated ExecuteAsync — no __TryConvert, Data converts itself:
+__paramData = new(StringComparer.OrdinalIgnoreCase);
+
+var __sizeData = __memoryStack.Get("size");
+__paramData["Size"] = __sizeData;
+Size = __sizeData.GetValue<long>();       // Data knows how to convert to long
+
+var __pathData = __memoryStack.Get("filePath");
+__paramData["FilePath"] = __pathData;
+FilePath = __pathData.GetValue<Path>();   // Path.From(string, context) kicks in
 ```
 
-`__TryConvert<T>` knows: for primitives, extract from Data.Value. For domain types, the Data IS the type — return it directly.
+Handler code:
+```csharp
+public Task<Data> Run()
+{
+    var sizeData = Data(nameof(Size));              // clean, compile-time safe via nameof
+    if (!sizeData.Success) return Task.FromResult(sizeData);  // error passthrough
+
+    // normal work with Size (the long value)
+    // ...
+}
+```
+
+**What goes away:** `__TryConvert<T>` helper, `Size__Source` companion properties. The conversion logic lives on Data (`GetValue<T>()`) and on target types (`From`), not duplicated in generated code. The source generator simplifies to: get from MemoryStack, store in dictionary, call `GetValue<T>()`.
+
+For domain types that ARE Data (like Path), `Data(nameof(FilePath))` works but is unnecessary — `FilePath.Error`, `FilePath.Success` are already accessible directly.
 
 ### Type Conversion — Target Owns It
 
