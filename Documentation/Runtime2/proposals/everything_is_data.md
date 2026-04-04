@@ -307,8 +307,22 @@ public class Engine : Data<Engine>
 
 ## Risks and Considerations
 
-### Name collision: Data.Name vs Goal.Name vs Engine.Name
-Currently `Data.Name` is the variable name ("!engine"), while `Engine.Name` is the engine name ("Runtime2"). When Engine extends Data<Engine>, these merge — `Name` serves both roles. The `!` navigation convention resolves access: `%engine.Name%` → the domain property (engine name), `%engine!Name%` → the Data metadata property (variable name). For Engine, these may be the same value. For cases where they differ (e.g., Goal named "Start" stored as variable "goal"), the `!` prefix provides explicit access to the variable name.
+### Name — one property, one purpose
+Subclasses (Engine, Goal, Step, etc.) drop their own `Name` property. `Data.Name` is the single identity — it's how the object is found on the MemoryStack.
+
+- `Data.Name = "!engine"` → found via `%!engine%` (system variable, `!` is part of the name)
+- `Data.Name = "Start"` → found via `%goal%` when stored as goal, name used for goal resolution
+- `Data.Name = "myEngine"` → `create new engine, write to %myEngine%` → name is "myEngine"
+
+The name IS the MemoryStack key. No "variable name" vs "display name" — one field. For Engine : Data<Engine>, the old `Engine.Name = "Runtime2"` is removed — it was never meaningful. The system engine is `"!engine"`, a user-created engine would be `"myEngine"`.
+
+For navigation:
+- `%!engine.Goals%` → navigates to Engine's Goals property (`.` navigates own properties since Value = this via CRTP)
+- `%!engine!Name%` → Data metadata access → `"!engine"`
+- `%user.name%` → navigates Value (the JSON dict) → `"john"` (Value ≠ this, so `.` navigates the dict)
+- `%user!Name%` → Data metadata → `"user"`
+
+The `.` vs `!` distinction only matters when Value holds something different from the Data itself (e.g., plain Data wrapping JSON). For domain types where Value = this (CRTP), `.` and `!` reach the same properties.
 
 ### Serialization
 Data has `[JsonPropertyName("name")]` and `[JsonPropertyName("value")]` on its properties. When Engine extends Data, Engine serialization includes these. Need to verify that serialization modifiers (`[JsonIgnore]`, `[Sensitive]`, `TransportPropertyFilter`) work correctly with the deeper inheritance.
