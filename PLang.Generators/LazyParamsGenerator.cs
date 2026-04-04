@@ -315,6 +315,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
             sb.AppendLine();
         }
 
+        // ParamData() accessor — gives handler access to the underlying Data for any parameter
+        // Usage: ParamData(nameof(Size))?.Error, ParamData(nameof(FilePath))?.Success
+        sb.AppendLine("    private System.Collections.Generic.Dictionary<string, PLang.Runtime2.Engine.Memory.Data?>? __paramData;");
+        sb.AppendLine("    protected PLang.Runtime2.Engine.Memory.Data? ParamData(string paramName)");
+        sb.AppendLine("        => __paramData != null && __paramData.TryGetValue(paramName, out var d) ? d : null;");
+        sb.AppendLine();
+
         // ExecuteAsync
         sb.AppendLine("    private PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
         sb.AppendLine();
@@ -327,6 +334,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        __memoryStack = context.MemoryStack;");
         sb.AppendLine("        __engine = engine;");
         sb.AppendLine("        __resolutionError = null;");
+        sb.AppendLine("        __paramData = new(StringComparer.OrdinalIgnoreCase);");
         sb.AppendLine("        var __step = action.Step;");
         sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<PLang.Runtime2.Engine.CallStack.CallFrame>)System.Array.Empty<PLang.Runtime2.Engine.CallStack.CallFrame>();");
 
@@ -470,6 +478,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("            if (fullMatch.Success)");
         sb.AppendLine("            {");
         sb.AppendLine("                var __resolved = __memoryStack!.Get(fullMatch.Groups[1].Value);");
+        sb.AppendLine("                __paramData?[name] = __resolved;");
         sb.AppendLine("                if (__resolved != null && !__resolved.Success)");
         sb.AppendLine("                {");
         sb.AppendLine("                    __resolutionError = __resolved;");
@@ -488,8 +497,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        if (data?.Value is System.Collections.IList || data?.Value is System.Collections.IDictionary)");
         sb.AppendLine("        {");
         sb.AppendLine("            var __deepResolved = __memoryStack!.ResolveDeep(data.Value);");
+        sb.AppendLine("            __paramData?[name] = data;");
         sb.AppendLine("            return __TryConvert<T>(__deepResolved, name);");
         sb.AppendLine("        }");
+        sb.AppendLine("        __paramData?[name] = data;");
         sb.AppendLine("        return data != null");
         sb.AppendLine("            ? __TryConvert<T>(data.Value, name)");
         sb.AppendLine("            : default;");
