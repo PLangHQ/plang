@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine.Memory;
 namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action;
 
-public sealed partial class @this
+public sealed partial class @this : Memory.Data<@this>
 {
     [JsonIgnore]
     public System.Type? ParameterSchema { get; init; }

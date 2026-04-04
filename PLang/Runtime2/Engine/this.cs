@@ -13,7 +13,7 @@ namespace PLang.Runtime2.Engine;
 /// Executes goals and manages the execution lifecycle.
 /// Self-contained: owns all app-level state (environment, culture, shutdown, key-value store).
 /// </summary>
-public sealed class @this : IAsyncDisposable
+public sealed class @this : Data<@this>, IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly EngineModules _modules;
@@ -38,7 +38,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// Relative root path, always "/".
     /// </summary>
-    public string Path => "/";
+    public new string Path => "/";
 
     /// <summary>
     /// The OS absolute path of the application (e.g. C:\myapp or /home/user/app).
@@ -234,9 +234,9 @@ public sealed class @this : IAsyncDisposable
     public @this(string absolutePath, EngineModules? modules = null,
         Interfaces.IPLangFileSystem? fileSystem = null,
         string? environment = null)
+        : base("!engine")
     {
         Id = Guid.NewGuid().ToString("N")[..12];
-        Name = "Runtime2";
         AbsolutePath = absolutePath;
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;

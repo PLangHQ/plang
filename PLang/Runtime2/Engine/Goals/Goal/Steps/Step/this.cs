@@ -9,10 +9,10 @@ namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 /// <summary>
 /// Represents a step within a goal for Runtime2.
 /// </summary>
-public sealed partial class @this
+public sealed partial class @this : Memory.Data<@this>
 {
     [JsonIgnore]
-    public PLangContext? Context { get; set; }
+    public new PLangContext? Context { get; set; }
 
     /// <summary>
     /// Whether this step is disabled for the current execution.

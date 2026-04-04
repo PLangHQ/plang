@@ -17,7 +17,7 @@ public enum Visibility
 /// <summary>
 /// Represents a goal (a .goal file or sub-goal) for Runtime2.
 /// </summary>
-public sealed partial class @this
+public sealed partial class @this : Memory.Data<@this>
 {
     private modules.Events? _events;
     [JsonIgnore]
@@ -27,7 +27,7 @@ public sealed partial class @this
         set => _events = value;
     }
     [Store, LlmBuilder, Debug, Default]
-    public string Name { get; init; } = "";
+    public new string Name { get; init; } = "";
 
     [Store, LlmBuilder, Debug, Default]
     public string? Description { get; set; }
@@ -45,7 +45,7 @@ public sealed partial class @this
     public Visibility Visibility { get; init; } = Visibility.Private;
 
     [Store, Debug]
-    public string? Path { get; set; }
+    public new string? Path { get; set; }
 
     [Store, Debug]
     public string? PrPath
@@ -141,7 +141,7 @@ public sealed partial class @this
 
     [LlmIgnore]
     [JsonIgnore]
-    public @this? Parent { get; set; }
+    public new @this? Parent { get; set; }
 
     [LlmIgnore]
     [JsonIgnore]
