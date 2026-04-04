@@ -26,7 +26,7 @@ Data (base)
 ms.Put(new Data("!engine", Engine));  // Engine wrapped in Data.Value
 ```
 
-**The problem**: Navigation must choose between Data's own properties and Value's properties. `%user.name%` → is it `Data.Name` or `Value.name`? Current fix: priority ordering in `GetChildValue()`. Fragile, already caused bugs.
+**Navigation convention**: `%user.name%` always navigates the Value object's properties. `%user!name%` (with `!`) accesses Data's own metadata properties (Name, Success, Error, Properties). The `!` prefix distinguishes data-level access from value-level access. This is not ambiguous — the convention is clear. The current priority ordering bug in `GetChildValue()` was a code issue, not a design issue.
 
 ## Proposed Architecture
 
@@ -270,7 +270,7 @@ public class Engine : Data<Engine>
 ## Risks and Considerations
 
 ### Name collision: Data.Name vs Goal.Name vs Engine.Name
-Currently `Data.Name` is the variable name ("!engine"), while `Engine.Name` is the engine name ("Runtime2"). When Engine extends Data, these become the same property. Resolution: `Data.Name` stores the variable name, domain-specific names use different property names if needed, or accept that the variable name IS the domain name (e.g., Goal name = variable name).
+Currently `Data.Name` is the variable name ("!engine"), while `Engine.Name` is the engine name ("Runtime2"). When Engine extends Data<Engine>, these merge — `Name` serves both roles. The `!` navigation convention resolves access: `%engine.Name%` → the domain property (engine name), `%engine!Name%` → the Data metadata property (variable name). For Engine, these may be the same value. For cases where they differ (e.g., Goal named "Start" stored as variable "goal"), the `!` prefix provides explicit access to the variable name.
 
 ### Serialization
 Data has `[JsonPropertyName("name")]` and `[JsonPropertyName("value")]` on its properties. When Engine extends Data, Engine serialization includes these. Need to verify that serialization modifiers (`[JsonIgnore]`, `[Sensitive]`, `TransportPropertyFilter`) work correctly with the deeper inheritance.
