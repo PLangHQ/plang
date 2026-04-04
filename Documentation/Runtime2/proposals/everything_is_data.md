@@ -284,8 +284,28 @@ Data has `virtual Clone()`. Every new subclass must override it correctly (the c
 ### Performance
 Data carries Properties (dictionary), Type (lazy), Context (reference), Error, Warnings. For high-frequency objects like Step or Action, this overhead may matter. Measure before assuming it's fine.
 
-### Data<T> — central to the design
-`Data<T>` is the CRTP base. Domain types extend `Data<T>` where T is themselves: `Engine : Data<Engine>`, `Path : Data<Path>`. This gives:
+### Why inheritance, not an interface?
+
+Considered `IData<T>` instead of `Data<T>` base class. Rejected because:
+
+- **Data's value is its state** — Properties dictionary, Error, Handled, Navigation implementation, Clone, Context. An interface declares the contract but can't carry instance state. Every implementing class would duplicate 15+ fields and methods.
+- **Default interface methods** (C# 8+) can't hold instance state. You'd need a backing field on each class anyway — that's what a base class provides.
+- **Composition** (`Engine._data = new Data(...)`) creates the same wrapper gap — MemoryStack stores Data, and Engine isn't one. Navigation doesn't work transparently.
+- **No inheritance conflict** — Engine, Goal, Step, Path, Identity don't extend any other class today. They implement interfaces (IAsyncDisposable, IList<T>) which are unaffected by a base class.
+
+Inheritance is the right call. The state IS the point.
+
+### Data<T> — CRTP constraint
+
+`Data<T>` uses the Curiously Recurring Template Pattern with a constraint:
+
+```csharp
+public class Data<T> : Data where T : Data<T>
+```
+
+The `where T : Data<T>` constraint ensures you can only write `Engine : Data<Engine>`, never `Engine : Data<Foo>`. This is strict by design — each type's CRTP self-reference is enforced at compile time.
+
+Domain types extend `Data<T>` where T is themselves: `Engine : Data<Engine>`, `Path : Data<Path>`. This gives:
 - Typed `Value` property that returns `T?` (self-reference for domain types, primitive for wrappers)
 - Typed `Ok(T value)` factory
 - Typed `FromError(IError)` factory
@@ -293,7 +313,7 @@ Data carries Properties (dictionary), Type (lazy), Context (reference), Error, W
 
 The current `Data<T>` needs a small change to support CRTP — when `T` is the subclass itself and `base.Value` is null, `Value` should return `(T)this`:
 ```csharp
-public class Data<T> : Data
+public class Data<T> : Data where T : Data<T>
 {
     public new T? Value
     {
@@ -307,6 +327,6 @@ public class Data<T> : Data
 
 ## Summary
 
-The core insight: **Data wrapping objects via Value creates an ambiguity layer** (whose property is it?). Making objects inherit Data removes that layer. Navigation becomes direct — own properties first, no priority chain, no whitelist.
+Making objects inherit `Data<T>` gives them navigation, error handling, properties, and metadata for free. The `!` navigation convention (`%obj.prop%` for value, `%obj!prop%` for Data metadata) eliminates ambiguity. The CRTP constraint enforces type safety at compile time.
 
-The migration is incremental (leaf → entity → engine → generator). Each phase is independently valuable and testable. Phase 1 (renaming existing Data subclasses) is zero-risk. Phase 3 (Engine : Data) is the transformative step.
+The migration is incremental (leaf → entity → engine → generator). Each phase is independently valuable and testable. Phase 1 (renaming existing Data subclasses) is zero-risk. Phase 3 (Engine : Data<Engine>) is the transformative step.
