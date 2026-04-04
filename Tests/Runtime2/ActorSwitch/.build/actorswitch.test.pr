@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Writes two output messages (default actor and system actor), sets a flag variable, then asserts the flag is true.",
+    "description": "Writes two output messages to different actors (default user, then system), sets a flag variable, and asserts the flag is true.",
     "comment": null,
     "steps": [
       {
@@ -23,7 +23,7 @@
               {
                 "name": "Channels",
                 "value": "this",
-                "type": "string"
+                "type": "this"
               }
             ],
             "return": null,
@@ -44,17 +44,17 @@
         "comment": null,
         "actions": [
           {
-            "module": "output",
-            "action": "write",
+            "module": "engine",
+            "action": "execute",
             "parameters": [
               {
-                "name": "Data",
-                "value": "system message",
+                "name": "Step",
+                "value": "",
                 "type": "string"
               },
               {
-                "name": "Channels",
-                "value": "this",
+                "name": "Actor",
+                "value": "system",
                 "type": "string"
               }
             ],
@@ -86,23 +86,12 @@
               },
               {
                 "name": "Value",
-                "value": "true",
-                "type": "string"
-              },
-              {
-                "name": "Type",
-                "value": "bool",
-                "type": "string"
+                "value": true,
+                "type": "bool"
               }
             ],
             "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
+            "defaults": null
           }
         ],
         "intent": null,
@@ -131,11 +120,6 @@
                 "name": "Actual",
                 "value": "%actorTestDone%",
                 "type": "bool"
-              },
-              {
-                "name": "Message",
-                "value": "assert %actorTestDone% equals true",
-                "type": "string"
               }
             ],
             "return": null,

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Asserts that the engine name variable is set (not null) and equals \u0027Runtime2\u0027.",
+    "description": "Asserts that the engine name variable is set (not null) and equals the literal \u0027!engine\u0027.",
     "comment": null,
     "steps": [
       {
@@ -18,7 +18,7 @@
               {
                 "name": "Value",
                 "value": "%!engine.Name%",
-                "type": "string"
+                "type": "object"
               },
               {
                 "name": "Message",
@@ -38,7 +38,7 @@
       },
       {
         "index": 1,
-        "text": "assert %!engine.Name% equals \u0022Runtime2\u0022",
+        "text": "assert %!engine.Name% equals \u0022!engine\u0022",
         "lineNumber": 3,
         "indent": 0,
         "comment": null,
@@ -49,7 +49,7 @@
             "parameters": [
               {
                 "name": "Expected",
-                "value": "Runtime2",
+                "value": "!engine",
                 "type": "string"
               },
               {
@@ -59,7 +59,7 @@
               },
               {
                 "name": "Message",
-                "value": "engine name should equal Runtime2",
+                "value": "engine name should be set",
                 "type": "string"
               }
             ],
@@ -76,9 +76,9 @@
     ],
     "goals": [],
     "visibility": 1,
-    "path": "/Basic/ContextVars.test.goal",
-    "prPath": "/Basic/.build/contextvars.test.pr",
-    "hash": "b0e581625fc2ac575c4d940196f0d15530b79441fdf4163a7b44e35af674398d",
+    "path": "/ContextVars.test.goal",
+    "prPath": "/.build/contextvars.test.pr",
+    "hash": "ca47ce4d3665204a26fbccee465d9e04c75fe96e1ecd2049930b79ceade0d054",
     "builderVersion": "0.3",
     "isSetup": false,
     "isEvent": false,

@@ -1,7 +1,7 @@
 [
   {
     "name": "Start",
-    "description": "Writes an output line containing the engine name variable reference.",
+    "description": "Writes the engine name (from %!engine.Name%) to the output channel.",
     "comment": null,
     "steps": [
       {
@@ -39,8 +39,8 @@
     ],
     "goals": [],
     "visibility": 1,
-    "path": "/Basic/Start.goal",
-    "prPath": "/Basic/.build/start.pr",
+    "path": "/Start.goal",
+    "prPath": "/.build/start.pr",
     "hash": "1b3aff6e10b82b9c003d84e8015b6b2c6d5a0d00029529bafcc80efb3f6359a3",
     "builderVersion": "0.3",
     "isSetup": false,

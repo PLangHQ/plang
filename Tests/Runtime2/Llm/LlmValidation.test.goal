@@ -1,3 +1,0 @@
-Start
-/ OnValidateResponse — validation goal rejects response, verify LLM retries
-- throw "not implemented"
