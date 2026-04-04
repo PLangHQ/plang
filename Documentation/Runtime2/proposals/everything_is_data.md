@@ -152,27 +152,22 @@ This is safe because:
 
 The `new` keyword is only needed for colliding names. Most domain properties (Email, PublicKey, Exists, Size, Goals) don't collide. And the collision-prone names (Name, Type, Path) are the minority.
 
-### What Becomes Data\<T\> — Scoping
+### What Becomes Data\<T\> — Everything
 
-**YES — value system participants:**
+Everything is Data. No exceptions.
 
-| Type | Why |
-|------|-----|
-| Path (was PathData) | Created by handlers, stored in variables, navigated |
-| Identity (was IdentityData) | Created by handlers, stored in variables |
-| Settings (was SettingsData) | Stored in variables, navigated |
-| Engine | Root runtime object, may be created/stored by PLang developers |
-| Future domain types (User, Message, etc.) | Any handler-created object that flows through variables |
+| Type | Data\<T\> | Property collisions (use `new`) |
+|------|----------|--------------------------------|
+| Path (was PathData) | `Data<Path>` | Path (file path vs navigation path) |
+| Identity (was IdentityData) | `Data<Identity>` | — |
+| Settings (was SettingsData) | `Data<Settings>` | — |
+| Engine | `Data<Engine>` | Name |
+| Goal | `Data<Goal>` | Name, Path |
+| Step | `Data<Step>` | — |
+| Action | `Data<Action>` | — |
+| Future domain types | `Data<T>` | Name, Type, Path as needed |
 
-**NO — program structure:**
-
-| Type | Why |
-|------|-----|
-| Goal | The program itself. Users call goals, don't store them in variables. |
-| Step | Internal execution unit. Never flows through the value system. |
-| Action | Internal execution unit. Dispatch target, not a value. |
-
-The system variables `%!step%` and `%!goal%` exist for debugging. They continue to use the current wrapping approach (`new Data("!step", step)`) — this is system registration code, not a handler, so the one-line constraint doesn't apply.
+System variables (`%!goal%`, `%!step%`, `%!engine%`) are stored directly on MemoryStack — no wrapping. `%!goal.Name%` navigates via DeclaredOnly to Goal.Name = "Start". `%!goal!Name%` reaches Data.Name = "!goal".
 
 ### Handler Ergonomics — One Line
 
@@ -277,10 +272,12 @@ public class Identity : Data<Identity>
 - Remove the GetChildValue priority chain
 - Remove ValueNavigators static class (replaced by registry)
 
-### Phase 3: Engine (high impact)
-- `Engine : Data<Engine>` — the root becomes a value system participant
-- `ms.Put(this)` instead of wrapping
-- Navigation works via registered navigator
+### Phase 3: Engine + Entities (high impact)
+- `Engine : Data<Engine>` — the root becomes Data, `ms.Put(this)` instead of wrapping
+- `Goal : Data<Goal>` — `new` on Name and Path, system variable `%!goal%` stored directly
+- `Step : Data<Step>` — system variable `%!step%` stored directly
+- `Action : Data<Action>` — accessible via `%!step.Actions%`
+- All use DeclaredOnly navigation via registered navigators
 
 ### Phase 4: Source Generator
 - Add `__Source` companion for primitive parameters
