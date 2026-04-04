@@ -5,14 +5,47 @@
       "id": "c1a2b3d4-5e6f-7890-abcd-ef1234567890",
       "bot": "coder",
       "timestamp_start": "2026-04-02T22:05:00Z",
-      "intent": "Fix LLM tests (subfolder structure + rebuild) and Identity test failures, continue Runtime2 test work",
+      "intent": "Fix LLM tests and Identity test failures",
       "before": {
-        "assumptions": "Identity 7/10 pass, LLM tests all throw 'not implemented' due to builder being editor. Test runner stops on first error.",
-        "risk": "Builder may again convert LLM test logic to throw. Need to verify .pr files after every build."
+        "assumptions": "Identity 7/10 pass, LLM tests all throw not implemented",
+        "risk": "Builder may convert LLM test logic"
       },
       "plan": "",
       "actions": [],
       "after": {}
+    },
+    {
+      "id": "a7b8c9d0-e1f2-3456-7890-abcdef123456",
+      "bot": "architect",
+      "timestamp_start": "2026-04-04T00:00:00Z",
+      "timestamp_end": "2026-04-04T01:00:00Z",
+      "intent": "Revise everything_is_data.md proposal based on design conversation",
+      "before": {
+        "assumptions": "Original proposal has CRTP constraint, __ prefix, DataList. Conversation refined all of these.",
+        "risk": "Low - proposal document only, no code changes."
+      },
+      "plan": "Rewrite everything_is_data.md with: Data<T> without CRTP, . vs ! navigation, DeclaredOnly, registered navigators, no special DataList class.",
+      "actions": [
+        {
+          "paths": ["Documentation/Runtime2/proposals/everything_is_data.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Complete rewrite of proposal incorporating design decisions from architecture conversation. Dropped CRTP, __ prefix, DataList. Added . vs ! navigation, DeclaredOnly, registered navigators, scoped inheritance."
+        },
+        {
+          "paths": [".bot/system-goals-architecture/architect/v1/plan.md", ".bot/system-goals-architecture/architect/v1/summary.md", ".bot/system-goals-architecture/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session artifacts — plan, summary, bot root summary."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "Proposal rewritten. Ready for test-designer to create test suites for navigation split and navigator registry."
+      }
     }
   ]
 }
