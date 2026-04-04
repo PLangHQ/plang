@@ -129,11 +129,15 @@ private object? GetChildValue(string key)
 }
 ```
 
-**After** (everything is Data):
+**After** (everything is Data — polymorphic navigation):
+
+The simplification isn't "one code path" — it's "each type owns its own navigation." `GetChildValue` becomes virtual. No priority chain, no whitelist — each Data type knows how to traverse its content.
+
 ```csharp
-private object? GetChildValue(string key)
+// Data base class — default implementation
+protected virtual object? GetChildValue(string key)
 {
-    // 1. Own properties (subclass + Data base — ALL are valid, no whitelist needed)
+    // 1. Own properties via reflection (works for strongly-typed Data<T> subclasses)
     var ownProp = GetType().GetProperty(key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
     if (ownProp != null) return ownProp.GetValue(this);
     
@@ -141,14 +145,35 @@ private object? GetChildValue(string key)
     var prop = Properties[key];
     if (prop != null) return prop.Value;
     
-    // 3. Value navigation (for Data objects that still wrap plain values — strings, dicts, etc.)
-    if (Value != null && Value != this) return ValueNavigators.Navigate(Value, key);
-    
     return null;
 }
 ```
 
-No more priority ordering. No more whitelist. Own properties always win because there's no `Value` competing with them.
+Types override when reflection isn't the right strategy:
+
+```csharp
+// Data wrapping a JSON/dictionary value — key lookup, not reflection
+protected override object? GetChildValue(string key)
+{
+    if (Value is IDictionary<string, object?> dict)
+        return dict.TryGetValue(key, out var v) ? v : null;
+    return base.GetChildValue(key);
+}
+
+// Data wrapping a list — index access
+protected override object? GetChildValue(string key)
+{
+    if (Value is IList list && int.TryParse(key, out var idx) && idx < list.Count)
+        return list[idx];
+    return base.GetChildValue(key);
+}
+
+// Path : Data<Path> — no override needed, reflection finds Exists, Size, Extension
+// Engine : Data<Engine> — no override needed, reflection finds Goals, FileSystem, etc.
+// Identity : Data<Identity> — no override needed, reflection finds PublicKey, IsDefault, etc.
+```
+
+Strongly-typed `Data<T>` subclasses get correct navigation for free via the base reflection. Only plain Data wrapping untyped content (JSON dicts, lists) needs an override. The current fragile priority chain (check Value? check subclass? check whitelist? check ValueNavigators?) collapses into: **each type handles itself.**
 
 ### 4. MemoryStack storage
 
