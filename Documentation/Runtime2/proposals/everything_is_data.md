@@ -193,34 +193,47 @@ MemoryStack.Put takes Data directly. No wrapping.
 
 ### 5. Source generator — parameter resolution
 
+PLang is strongly typed — all action parameters have concrete types (`long`, `string`, `Path`, `User`, etc.). No `object?` parameters. The source generator resolves each parameter from MemoryStack to its declared type.
+
 **Before:**
 ```csharp
-var __resolved = __memoryStack!.Get("result");     // returns Data wrapper
-return __TryConvert<T>(__resolved?.Value, name);    // extract .Value → loses Data
+// Handler declares: public partial long Size { get; init; }
+// Generator resolves %size% from MemoryStack:
+var __resolved = __memoryStack!.Get("size");       // returns Data wrapper
+Size = __TryConvert<long>(__resolved?.Value);       // extract .Value → loses Data
 ```
 
 **After:**
 ```csharp
-var __resolved = __memoryStack!.Get("result");      // returns the object (which IS Data)
-return __TryConvert<T>(__resolved, name);            // object IS the value, no extraction
+// Same handler declaration: public partial long Size { get; init; }
+// Generator resolves %size% from MemoryStack:
+var __data = __memoryStack!.Get("size");            // returns Data (which may BE the value)
+Size = __TryConvert<long>(__data);                   // converts Data → long
+Size__Source = __data;                               // keeps reference to the Data
 ```
 
-For primitive parameters (long, string, bool), `__TryConvert<T>` converts from the Data's typed properties. For `object?` parameters, the Data object passes through directly.
+The key change: `__TryConvert<T>` knows how to extract from Data. For primitives (`long`, `string`, `bool`), it pulls from `Data.Value`. For domain types (`Path`, `Identity`, `User`), the Data IS the type — `__TryConvert<Path>` returns the Data directly since `Path : Data<Path>`. No `.Value` extraction needed.
 
 ### 6. Handler ergonomics — __Source companion
 
-When the generator resolves `%size%` (a long) from MemoryStack, it extracts the primitive. The handler code works with `long Size`. But sometimes the handler needs the Data metadata (error, properties).
+All parameters are strongly typed at the handler level. The developer writes `long Size`, `Path FilePath`, `Identity Signer` — concrete types, not Data. But sometimes the handler needs the Data metadata (error state, properties).
 
-The generator emits a companion:
+The generator emits a companion for each parameter:
 ```csharp
 // Generated
-public partial long Size { get; init; }          // the primitive value
+public partial long Size { get; init; }          // the strongly-typed value
 internal Data? Size__Source { get; private set; } // the Data it came from
 
+public partial Path FilePath { get; init; }      // Path IS Data<Path>, already has metadata
+// No __Source needed — FilePath.Error, FilePath.Properties already accessible
+
 // In ExecuteAsync:
-Size__Source = __memoryStack.Get("size");
-// Size is resolved from Size__Source via __TryConvert<long>
+var __sizeData = __memoryStack.Get("size");
+Size__Source = __sizeData;
+Size = __TryConvert<long>(__sizeData);
 ```
+
+For domain types extending `Data<T>`, no `__Source` companion is needed — the parameter itself IS Data. `FilePath.Error`, `FilePath.Properties`, `FilePath.Success` are directly accessible. `__Source` is only needed for primitive parameters where the Data wrapper would otherwise be lost.
 
 Handler code:
 ```csharp
