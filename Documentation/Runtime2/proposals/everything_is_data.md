@@ -209,6 +209,56 @@ public partial Path FilePath { get; init; }      // Path IS Data — .Error, .Pr
 
 `__TryConvert<T>` knows: for primitives, extract from Data.Value. For domain types, the Data IS the type — return it directly.
 
+### Type Conversion — Target Owns It
+
+When `Data<string>` needs to become a `Path` (e.g., handler declares `Path FilePath` but MemoryStack holds a string), the **target type** owns the conversion. This is OBP applied to type conversion — behavior belongs to the owner.
+
+The conversion point is `GetValue<T>()` in Data:
+
+```csharp
+public T? GetValue<T>()
+{
+    if (Value is T already) return already;
+
+    // Does T know how to create itself from this value?
+    // Mechanism TBD — static From() as placeholder, will evolve
+    var fromMethod = typeof(T).GetMethod("From", ...);
+    if (fromMethod != null) return (T)fromMethod.Invoke(null, new[] { Value, Context });
+
+    // Fallback: primitive conversions only (string→long, int→double, etc.)
+    return TypeMapping.TryConvertTo<T>(Value);
+}
+```
+
+Each type declares what it can convert from:
+
+```csharp
+public class Path : Data<Path>
+{
+    public static Path From(string raw, PLangContext context) => new Path(raw, context);
+    // string → Path: resolve the raw path against context's filesystem
+}
+
+public class Identity : Data<Identity>
+{
+    public static Identity From(string publicKey, PLangContext context) => ...;
+    // string → Identity: lookup by public key
+}
+```
+
+**TypeMapping.TryConvertTo simplifies dramatically** — it becomes a small lookup table for primitive conversions (`string→long`, `int→double`, `string→bool`). All interesting conversions (string→Path, string→Identity, dict→User) live on the target type. The Swiss army knife becomes a utility drawer.
+
+**Note:** The static `From` convention is a placeholder. The principle — target type owns conversion — is the architectural decision. The exact mechanism (static method, interface, registered converter) will be refined during implementation.
+
+**The movie for parameter injection:**
+1. PLang developer writes: `- read file.txt, write to %content%` then `- file.read %content%`
+2. Step 1 stores `Data<string>` with Value = "./readme.md"
+3. Step 2's handler declares `Path FilePath`
+4. Source generator calls `GetValue<Path>()` on the Data<string>
+5. `Value is Path` → false
+6. `Path.From("./readme.md", context)` → resolves to absolute path, returns Path
+7. Handler receives a proper Path with Exists, Size, Extension — not a raw string
+
 ## Migration Strategy
 
 ### Phase 1: Rename + Navigator Registry (low risk)
