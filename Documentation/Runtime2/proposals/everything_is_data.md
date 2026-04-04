@@ -30,23 +30,26 @@ ms.Put(new Data("!engine", Engine));  // Engine wrapped in Data.Value
 
 ## Proposed Architecture
 
+Everything extends `Data<T>` where `T` is itself — the CRTP (Curiously Recurring Template Pattern). This gives typed access to the object while inheriting all Data infrastructure.
+
 ```
 Data (base)
 ├── Name, Type, Properties, Error, Success, Handled
 ├── Navigation (GetChild) — navigates THIS object's properties
 │
-├── Engine : Data            ← Id, Name, Goals, FileSystem, etc.
-├── Goal : Data              ← Name, Steps, Path, Parent
-├── Step : Data              ← Index, Text, Actions
-├── Action : Data            ← Module, ActionName, Parameters
-├── Path : Data              ← Exists, Size, Extension (was PathData)
-├── Identity : Data          ← PublicKey, PrivateKey (was IdentityData)
-├── DynamicData : Data       ← lazy value computation
-├── DataList<T> : Data       ← typed list
-└── Data<T> : Data           ← generic typed access
+Data<T> : Data               ← generic typed access, T? Value with typed getter
+│
+├── Engine : Data<Engine>     ← Id, Name, Goals, FileSystem, etc.
+├── Goal : Data<Goal>         ← Name, Steps, Path, Parent
+├── Step : Data<Step>         ← Index, Text, Actions
+├── Action : Data<Action>     ← Module, ActionName, Parameters
+├── Path : Data<Path>         ← Exists, Size, Extension (was PathData)
+├── Identity : Data<Identity> ← PublicKey, PrivateKey (was IdentityData)
+├── DynamicData : Data        ← lazy value computation (no typed self-ref needed)
+└── DataList<T> : Data        ← typed list
 ```
 
-No more `Value` as the primary content holder for domain objects. The object IS the content.
+No more `Value` as the primary content holder for domain objects. The object IS the content. `Data<T>` provides typed `Value` access — for domain types, `Value` returns `this`.
 
 ## What Changes
 
@@ -66,11 +69,11 @@ public sealed class @this : IAsyncDisposable  // Engine
 
 **After:**
 ```csharp
-public sealed class @this : Data, IAsyncDisposable  // Engine
+public sealed class @this : Data<@this>, IAsyncDisposable  // Engine : Data<Engine>
 {
     public @this(string absolutePath, ...) : base("engine")
     {
-        // Data properties: Name = "engine", no Value to set — this IS the value
+        // Data properties: Name = "engine", Value returns this (CRTP)
     }
     
     public string Id { get; }
@@ -211,31 +214,26 @@ public Task<Data> Run()
 
 | Object type | Value behavior |
 |-------------|---------------|
-| `Engine : Data` | `Value` returns `this` (the engine IS the value) |
-| `Path : Data` | `Value` holds file content when read, null otherwise |
-| `Identity : Data` | `Value` returns `this` |
+| `Engine : Data<Engine>` | `Value` returns `this` (the engine IS the value, via CRTP) |
+| `Path : Data<Path>` | `Value` holds file content when read, `this` otherwise |
+| `Identity : Data<Identity>` | `Value` returns `this` |
 | Plain `Data("x", 42)` | `Value` = 42 (wraps primitives, dicts, lists) |
 | `DynamicData` | `Value` = factory() result |
 
-For domain objects that ARE Data, `Value` defaults to `this`. For plain Data wrapping primitives, `Value` holds the primitive. The `ToString()` override on each type controls string representation.
+For domain objects extending `Data<T>`, `Data<T>.Value` returns the typed self-reference via CRTP. For plain Data wrapping primitives, `Value` holds the primitive. The `ToString()` override on each type controls string representation.
 
 Override pattern:
 ```csharp
-public class Path : Data
+public class Path : Data<Path>
 {
-    // Value = file content (after read) or null (before read)
-    // Navigation: %path.Exists% → own property, %path.Value% → file content
-    
-    public override object? Value
-    {
-        get => base.Value;  // file content, or null
-        set => base.Value = value;
-    }
+    // Value = file content (after read) via base.Value
+    // Data<Path>.Value returns this when base.Value is null
+    // Navigation: %path.Exists% → own property, %path.Content% → file content
 }
 
-public class Engine : Data  
+public class Engine : Data<Engine>
 {
-    // No Value override needed — Data.Value returns null by default
+    // Data<Engine>.Value returns this (CRTP)
     // All properties are own properties, navigable directly
     // ToString() → Engine.Name
 }
@@ -244,19 +242,19 @@ public class Engine : Data
 ## Migration Strategy
 
 ### Phase 1: Leaf types (low risk)
-- Rename `PathData` → `Path`, already extends Data ✓
-- Rename `IdentityData` → `Identity`, already extends Data ✓
-- Rename `SettingsData` → `Settings`, already extends Data ✓
+- Rename `PathData` → `Path : Data<Path>`, already extends Data ✓
+- Rename `IdentityData` → `Identity : Data<Identity>`, already extends Data ✓
+- Rename `SettingsData` → `Settings : Data<Settings>`, already extends Data ✓
 - Update GlobalUsings, all references
 
 ### Phase 2: Entity types (medium risk)
-- `Goal : Data` — Name and Path already exist on both, need reconciliation
-- `Step : Data` — Index, Text become navigable
-- `Action : Data` — Module, ActionName become navigable
+- `Goal : Data<Goal>` — Name and Path already exist on both, need reconciliation
+- `Step : Data<Step>` — Index, Text become navigable
+- `Action : Data<Action>` — Module, ActionName become navigable
 - Each gains Error, Success, Properties, Handled for free
 
 ### Phase 3: Engine (high impact)
-- `Engine : Data` — the root becomes navigable
+- `Engine : Data<Engine>` — the root becomes navigable
 - `%!engine.Name%` works without special registration
 - MemoryStack registration simplifies — Engine puts itself: `ms.Put(this)`
 
@@ -286,8 +284,26 @@ Data has `virtual Clone()`. Every new subclass must override it correctly (the c
 ### Performance
 Data carries Properties (dictionary), Type (lazy), Context (reference), Error, Warnings. For high-frequency objects like Step or Action, this overhead may matter. Measure before assuming it's fine.
 
-### Data<T> — does it still make sense?
-`Data<T>` provides `new T? Value` with typed access. If objects ARE Data, do we still need `Data<T>`? Yes — for handler return types: `Task<Data<string>>` communicates the expected value type. But the pattern shifts: `Data<T>` wraps primitives, domain types extend Data directly.
+### Data<T> — central to the design
+`Data<T>` is the CRTP base. Domain types extend `Data<T>` where T is themselves: `Engine : Data<Engine>`, `Path : Data<Path>`. This gives:
+- Typed `Value` property that returns `T?` (self-reference for domain types, primitive for wrappers)
+- Typed `Ok(T value)` factory
+- Typed `FromError(IError)` factory
+- Handler return types: `Task<Data<string>>` for primitives, `Task<Data>` for general use
+
+The current `Data<T>` needs a small change to support CRTP — when `T` is the subclass itself and `base.Value` is null, `Value` should return `(T)this`:
+```csharp
+public class Data<T> : Data
+{
+    public new T? Value
+    {
+        get => base.Value is T typed ? typed 
+             : base.Value == null && this is T self ? self  // CRTP: self-reference
+             : GetValue<T>();
+        set => base.Value = value;
+    }
+}
+```
 
 ## Summary
 
