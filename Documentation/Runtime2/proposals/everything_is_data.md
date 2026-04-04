@@ -167,7 +167,7 @@ Everything is Data. No exceptions.
 | Action | `Data<Action>` | — |
 | Future domain types | `Data<T>` | Name, Type, Path as needed |
 
-System variables (`%!goal%`, `%!step%`, `%!engine%`) are DynamicData on MemoryStack — factories that return the current context value (`context.Goal`, `context.Step`, etc.). Since Goal, Step, and Engine are now `Data<T>`, the factory returns the typed Data directly. `%!goal.Name%` navigates via DeclaredOnly to Goal.Name = "Start". `%!goal!Name%` reaches Data.Name = "!goal".
+All `!` system variables (`%!goal%`, `%!step%`, `%!engine%`, etc.) are DynamicData on MemoryStack — factories that compute the current value at time of access. Since all runtime types are now `Data<T>`, the factory returns typed Data directly. `%!goal.Name%` navigates via DeclaredOnly to Goal.Name = "Start". `%!goal!Name%` reaches Data.Name = "!goal".
 
 ### Handler Ergonomics — One Line
 
