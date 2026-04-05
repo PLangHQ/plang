@@ -61,7 +61,7 @@ public partial class On : IContext
             goalToCall: GoalToCall);
 
         // Register on the target actor's event scope
-        targetActor.Context.User.Events.Register(binding);
+        targetActor.Context.Events.Register(binding);
 
         return Task.FromResult(Data.Ok(binding.Id));
     }

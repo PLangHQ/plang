@@ -43,7 +43,7 @@ public sealed class @this
                 ParseJsonFilter(converted, out goalFilter, out stepFilter);
         }
 
-        var events = _engine.Context.User.Events;
+        var events = _engine.Context.Events;
 
         events.Register(new EventBinding(
             EventType.BeforeStep,

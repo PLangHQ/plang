@@ -68,7 +68,7 @@ public partial class MockAction : IContext
         // Tag binding so mock.reset can find all mock bindings
         binding.Targets.Add(handle);
 
-        Context.User.Events.Register(binding);
+        Context.Events.Register(binding);
 
         return Task.FromResult(Data.Ok(handle));
     }

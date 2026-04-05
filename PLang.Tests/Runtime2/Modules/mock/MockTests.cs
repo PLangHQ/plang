@@ -69,9 +69,9 @@ public class MockTests
             ReturnValue = "mocked"
         };
 
-        var beforeCount = context.User.Events.Count;
+        var beforeCount = context.Events.Count;
         await action.Run();
-        var afterCount = context.User.Events.Count;
+        var afterCount = context.Events.Count;
 
         await Assert.That(afterCount).IsEqualTo(beforeCount + 1);
     }
@@ -184,7 +184,7 @@ public class MockTests
         var mockResult = await mockAction.Run();
         var handle = (MockHandle)mockResult.Value!;
 
-        var countBefore = context.User.Events.Count;
+        var countBefore = context.Events.Count;
 
         // Reset the specific mock
         var reset = new Reset
@@ -194,7 +194,7 @@ public class MockTests
         };
         var resetResult = await reset.Run();
         await Assert.That(resetResult.Success).IsTrue();
-        await Assert.That(context.User.Events.Count).IsEqualTo(countBefore - 1);
+        await Assert.That(context.Events.Count).IsEqualTo(countBefore - 1);
     }
 
     [Test]
@@ -219,7 +219,7 @@ public class MockTests
         };
         await mock2.Run();
 
-        await Assert.That(context.User.Events.Count).IsGreaterThanOrEqualTo(2);
+        await Assert.That(context.Events.Count).IsGreaterThanOrEqualTo(2);
 
         // Reset all mocks
         var reset = new Reset
@@ -229,7 +229,7 @@ public class MockTests
         };
         var resetResult = await reset.Run();
         await Assert.That(resetResult.Success).IsTrue();
-        await Assert.That(context.User.Events.Count).IsEqualTo(0);
+        await Assert.That(context.Events.Count).IsEqualTo(0);
     }
 
     // --- MockHandle tracking ---

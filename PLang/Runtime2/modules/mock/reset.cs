@@ -12,18 +12,18 @@ public partial class Reset : IContext
     {
         if (Mock != null)
         {
-            Context.User.Events.Unregister(Mock.EventBindingId);
+            Context.Events.Unregister(Mock.EventBindingId);
             Mock.Calls.Clear();
         }
         else
         {
             // Clear all mocks — remove all BeforeAction bindings tagged as mock
-            var bindings = Context.User.Events.GetBindings(EventType.BeforeAction);
+            var bindings = Context.Events.GetBindings(EventType.BeforeAction);
             foreach (var binding in bindings)
             {
                 if (binding.Targets.OfType<types.MockHandle>().Any())
                 {
-                    Context.User.Events.Unregister(binding.Id);
+                    Context.Events.Unregister(binding.Id);
                 }
             }
         }

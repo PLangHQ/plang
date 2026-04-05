@@ -20,7 +20,7 @@ public class EventCacheInvalidationTests
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register first event
-        context.User.Events.Register(new EventBinding(
+        context.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             async ctx => Data.Ok(),
             goalNamePattern: "TestGoal"));
@@ -30,7 +30,7 @@ public class EventCacheInvalidationTests
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register second event at runtime
-        context.User.Events.Register(new EventBinding(
+        context.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             async ctx => Data.Ok(),
             goalNamePattern: "TestGoal"));
@@ -50,7 +50,7 @@ public class EventCacheInvalidationTests
         step.Goal = goal;
 
         // Register first step event
-        context.User.Events.Register(new EventBinding(
+        context.Events.Register(new EventBinding(
             EventType.BeforeStep,
             async ctx => Data.Ok(),
             goalNamePattern: "TestGoal",
@@ -61,7 +61,7 @@ public class EventCacheInvalidationTests
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register another step event at runtime
-        context.User.Events.Register(new EventBinding(
+        context.Events.Register(new EventBinding(
             EventType.BeforeStep,
             async ctx => Data.Ok(),
             goalNamePattern: "TestGoal",
@@ -84,7 +84,7 @@ public class EventCacheInvalidationTests
         };
 
         // Register first action event
-        context.User.Events.Register(new EventBinding(
+        context.Events.Register(new EventBinding(
             EventType.BeforeAction,
             async ctx => Data.Ok(),
             actionPattern: "variable.set"));
@@ -94,7 +94,7 @@ public class EventCacheInvalidationTests
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register another action event at runtime
-        context.User.Events.Register(new EventBinding(
+        context.Events.Register(new EventBinding(
             EventType.BeforeAction,
             async ctx => Data.Ok(),
             actionPattern: "variable.set"));
@@ -112,7 +112,7 @@ public class EventCacheInvalidationTests
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register and cache
-        context.User.Events.Register(new EventBinding(
+        context.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             async ctx => Data.Ok(),
             goalNamePattern: "TestGoal"));
@@ -120,7 +120,7 @@ public class EventCacheInvalidationTests
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register new event + manually invalidate cache
-        context.User.Events.Register(new EventBinding(
+        context.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             async ctx => Data.Ok(),
             goalNamePattern: "TestGoal"));

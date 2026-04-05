@@ -139,7 +139,7 @@ public sealed class @this
             return Data.FromError(new ServiceError("GoalNotFound", $"Goal '{testGoalName}' not found in {prPath}", 404));
 
         // Register assertion failure tracking
-        var events = testEngine.Context.User.Events;
+        var events = testEngine.Context.Events;
         events.Register(new EventBinding(
             EventType.AfterStep,
             context => TrackAssertionFailures(context, result),

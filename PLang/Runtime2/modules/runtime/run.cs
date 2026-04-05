@@ -44,9 +44,9 @@ public partial class run : IContext
         var isChild = string.Equals(ContextMode, "child", StringComparison.OrdinalIgnoreCase);
 
         // Save user actor state before execution (child mode = isolation)
-        var userContext = engine.User.Context;
-        var savedEvents = isChild ? userContext.User.Events.Save() : null;
-        var savedMemory = isChild ? userContext.MemoryStack.Save() : null;
+        var execContext = engine.Context;
+        var savedEvents = isChild ? execContext.Events.Save() : null;
+        var savedMemory = isChild ? execContext.MemoryStack.Save() : null;
 
         try
         {
@@ -67,9 +67,9 @@ public partial class run : IContext
         {
             // Restore user actor state (child mode)
             if (savedEvents != null)
-                userContext.User.Events.Restore(savedEvents);
+                execContext.Events.Restore(savedEvents);
             if (savedMemory != null)
-                userContext.MemoryStack.Restore(savedMemory);
+                execContext.MemoryStack.Restore(savedMemory);
         }
     }
 }

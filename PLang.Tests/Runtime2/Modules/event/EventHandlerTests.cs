@@ -41,7 +41,7 @@ public class EventHandlerTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value is string).IsTrue(); // returns binding id
-        await Assert.That(context.User.Events.Count).IsEqualTo(1);
+        await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -51,7 +51,7 @@ public class EventHandlerTests
         var result = await MakeOn(context, "AfterGoal", "LogGoal", goalPattern: "*").Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.User.Events.Count).IsEqualTo(1);
+        await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -61,7 +61,7 @@ public class EventHandlerTests
         var result = await MakeOn(context, "BeforeStep", "LogStep", goalPattern: "TestGoal", stepPattern: "set*").Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.User.Events.Count).IsEqualTo(1);
+        await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -71,7 +71,7 @@ public class EventHandlerTests
         var result = await MakeOn(context, "AfterStep", "LogStep", priority: 5).Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.User.Events.Count).IsEqualTo(1);
+        await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -81,7 +81,7 @@ public class EventHandlerTests
         var result = await MakeOn(context, "BeforeAction", "OnVarSet", actionPattern: "variable.set").Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.User.Events.Count).IsEqualTo(1);
+        await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -91,7 +91,7 @@ public class EventHandlerTests
         var result = await MakeOn(context, "AfterAction", "OnAfterAction", actionPattern: "variable.*").Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.User.Events.Count).IsEqualTo(1);
+        await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -111,13 +111,13 @@ public class EventHandlerTests
         var registerResult = await MakeOn(context, "BeforeGoal", "LogGoal", goalPattern: "*").Run();
         var eventId = (string)registerResult.Value!;
 
-        await Assert.That(context.User.Events.Count).IsEqualTo(1);
+        await Assert.That(context.Events.Count).IsEqualTo(1);
 
         var removeHandler = new Remove { Context = context, EventId = eventId };
         var removeResult = await removeHandler.Run();
 
         await Assert.That(removeResult.Success).IsTrue();
-        await Assert.That(context.User.Events.Count).IsEqualTo(0);
+        await Assert.That(context.Events.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -126,10 +126,10 @@ public class EventHandlerTests
         var context = CreateContext();
         await MakeOn(context, "BeforeGoal", "LogGoal", goalPattern: "^Admin", isRegex: true).Run();
 
-        var match = context.User.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "AdminGoal");
+        var match = context.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "AdminGoal");
         await Assert.That(match.Count).IsEqualTo(1);
 
-        var noMatch = context.User.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "UserGoal");
+        var noMatch = context.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "UserGoal");
         await Assert.That(noMatch.Count).IsEqualTo(0);
     }
 
@@ -139,10 +139,10 @@ public class EventHandlerTests
         var context = CreateContext();
         await MakeOn(context, "BeforeGoal", "LogGoal", goalPattern: "/admin/*").Run();
 
-        var match = context.User.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "/admin/Users");
+        var match = context.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "/admin/Users");
         await Assert.That(match.Count).IsEqualTo(1);
 
-        var noMatch = context.User.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "/public/Home");
+        var noMatch = context.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "/public/Home");
         await Assert.That(noMatch.Count).IsEqualTo(0);
     }
 
@@ -152,10 +152,10 @@ public class EventHandlerTests
         var context = CreateContext();
         await MakeOn(context, "BeforeAction", "OnVar", actionPattern: "variable.*").Run();
 
-        var match = context.User.Events.GetMatchingBindings(EventType.BeforeAction, module: "variable", actionName: "set");
+        var match = context.Events.GetMatchingBindings(EventType.BeforeAction, module: "variable", actionName: "set");
         await Assert.That(match.Count).IsEqualTo(1);
 
-        var noMatch = context.User.Events.GetMatchingBindings(EventType.BeforeAction, module: "file", actionName: "read");
+        var noMatch = context.Events.GetMatchingBindings(EventType.BeforeAction, module: "file", actionName: "read");
         await Assert.That(noMatch.Count).IsEqualTo(0);
     }
 
@@ -167,7 +167,7 @@ public class EventHandlerTests
 
         await MakeOn(context1, "BeforeGoal", "LogGoal", goalPattern: "TestGoal").Run();
 
-        await Assert.That(context1.User.Events.Count).IsEqualTo(1);
-        await Assert.That(context2.User.Events.Count).IsEqualTo(0);
+        await Assert.That(context1.Events.Count).IsEqualTo(1);
+        await Assert.That(context2.Events.Count).IsEqualTo(0);
     }
 }

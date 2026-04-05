@@ -76,14 +76,10 @@ public sealed class PLangContext : IDisposable
     public Actor? Actor { get; internal set; }
 
     /// <summary>
-    /// System-level event scope.
+    /// Event bindings registered on this context.
+    /// Each actor's context has its own event collection.
     /// </summary>
-    public EventScope System { get; }
-
-    /// <summary>
-    /// User-level event scope.
-    /// </summary>
-    public EventScope User { get; }
+    public EngineEvents Events { get; } = new();
 
     /// <summary>
     /// The goal currently being executed.
@@ -143,12 +139,8 @@ public sealed class PLangContext : IDisposable
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
         _cts = CancellationTokenSource.CreateLinkedTokenSource(engine.ShutdownToken);
-        System = new EventScope();
-        User = new EventScope();
-
         // Wire event registration to invalidate the resolved-events cache
-        System.Events.OnChanged = InvalidateEventCache;
-        User.Events.OnChanged = InvalidateEventCache;
+        Events.OnChanged = InvalidateEventCache;
 
         // Stamp context on MemoryStack (propagates to all existing Data)
         MemoryStack.Context = this;
@@ -279,15 +271,15 @@ public sealed class PLangContext : IDisposable
         return (Lifecycle)_eventContainers.GetOrAdd(goal, _ =>
         {
             var lifecycle = new Lifecycle();
-            var userEvents = User.Events;
+            var events = Events;
 
-            foreach (var b in userEvents.GetMatchingBindings(EventType.OnBeforeGoalLoad, goalName: goal.Name))
+            foreach (var b in events.GetMatchingBindings(EventType.OnBeforeGoalLoad, goalName: goal.Name))
                 lifecycle.Before.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(EventType.OnAfterGoalLoad, goalName: goal.Name))
+            foreach (var b in events.GetMatchingBindings(EventType.OnAfterGoalLoad, goalName: goal.Name))
                 lifecycle.After.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(EventType.BeforeGoal, goalName: goal.Name))
+            foreach (var b in events.GetMatchingBindings(EventType.BeforeGoal, goalName: goal.Name))
                 lifecycle.Before.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(EventType.AfterGoal, goalName: goal.Name))
+            foreach (var b in events.GetMatchingBindings(EventType.AfterGoal, goalName: goal.Name))
                 lifecycle.After.Add(b);
 
             return lifecycle;
@@ -302,16 +294,16 @@ public sealed class PLangContext : IDisposable
         return (Lifecycle)_eventContainers.GetOrAdd(step, _ =>
         {
             var lifecycle = new Lifecycle();
-            var userEvents = User.Events;
+            var events = Events;
             var goalName = step.Goal?.Name;
 
-            foreach (var b in userEvents.GetMatchingBindings(EventType.OnBeforeStepLoad, goalName: goalName, stepText: step.Text))
+            foreach (var b in events.GetMatchingBindings(EventType.OnBeforeStepLoad, goalName: goalName, stepText: step.Text))
                 lifecycle.Before.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(EventType.OnAfterStepLoad, goalName: goalName, stepText: step.Text))
+            foreach (var b in events.GetMatchingBindings(EventType.OnAfterStepLoad, goalName: goalName, stepText: step.Text))
                 lifecycle.After.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(EventType.BeforeStep, goalName: goalName, stepText: step.Text))
+            foreach (var b in events.GetMatchingBindings(EventType.BeforeStep, goalName: goalName, stepText: step.Text))
                 lifecycle.Before.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(EventType.AfterStep, goalName: goalName, stepText: step.Text))
+            foreach (var b in events.GetMatchingBindings(EventType.AfterStep, goalName: goalName, stepText: step.Text))
                 lifecycle.After.Add(b);
 
             return lifecycle;
@@ -326,11 +318,11 @@ public sealed class PLangContext : IDisposable
         return (Lifecycle)_eventContainers.GetOrAdd(action, _ =>
         {
             var lifecycle = new Lifecycle();
-            var userEvents = User.Events;
+            var events = Events;
 
-            foreach (var b in userEvents.GetMatchingBindings(EventType.BeforeAction, module: action.Module, actionName: action.ActionName))
+            foreach (var b in events.GetMatchingBindings(EventType.BeforeAction, module: action.Module, actionName: action.ActionName))
                 lifecycle.Before.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(EventType.AfterAction, module: action.Module, actionName: action.ActionName))
+            foreach (var b in events.GetMatchingBindings(EventType.AfterAction, module: action.Module, actionName: action.ActionName))
                 lifecycle.After.Add(b);
 
             return lifecycle;
@@ -344,7 +336,7 @@ public sealed class PLangContext : IDisposable
     /// </summary>
     public List<GoalCall> GetEventBindings(object owner, modules.EventPhase phase)
     {
-        var userEvents = User.Events;
+        var events = Events;
         var (beforeType, afterType) = owner switch
         {
             Step step => (EventType.BeforeStep, EventType.AfterStep),
@@ -362,7 +354,7 @@ public sealed class PLangContext : IDisposable
         };
         string? stepText = owner is Step s ? s.Text : null;
 
-        var bindings = userEvents.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText);
+        var bindings = events.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText);
         return bindings
             .Where(b => b.GoalToCall != null)
             .Select(b => b.GoalToCall!)
