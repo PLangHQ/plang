@@ -1,14 +1,14 @@
 using System.Text.Json;
-using App.Actor.Context;
-using App.Variables;
-using App.Utils;
-using App.modules.builder;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.Utils;
+using global::App.modules.builder;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 
 /// <summary>
-/// Tests for builder.getApp and builder.saveApp — load/create and save app.pr metadata.
+/// Tests for builder.app and builder.app.save — load and save app.pr metadata.
 /// </summary>
 public class AppTests
 {
@@ -43,80 +43,56 @@ public class AppTests
         // Create existing app.pr
         var buildDir = System.IO.Path.Combine(_tempDir, ".build");
         System.IO.Directory.CreateDirectory(buildDir);
-        var existingApp = new AppData
-        {
-            Id = "test-id-123",
-            Created = DateTime.UtcNow.AddDays(-1),
-            Updated = DateTime.UtcNow.AddDays(-1),
-            Version = "0.2",
-            Name = "TestApp"
-        };
-        var json = JsonSerializer.Serialize(existingApp, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
+        var json = JsonSerializer.Serialize(new { id = "test-id-123", name = "TestApp", created = DateTime.UtcNow.AddDays(-1), updated = DateTime.UtcNow.AddDays(-1), version = "0.2" });
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "app.pr"), json);
 
-        var action = new app { Context = _engine.Context, Path = "." };
-        var result = await _engine.RunAction(action, _engine.Context);
+        // Load triggers reading app.pr
+        await _engine.Load();
 
-        await Assert.That(result.Success).IsTrue();
-        var app = result.Value as AppData;
-        await Assert.That(app).IsNotNull();
-        await Assert.That(app!.Id).IsEqualTo("test-id-123");
-        await Assert.That(app.Name).IsEqualTo("TestApp");
+        await Assert.That(_engine.Id).IsEqualTo("test-id-123");
+        await Assert.That(_engine.Name).IsEqualTo("TestApp");
     }
 
     [Test]
-    public async Task GetApp_ReturnsNullWhenMissing()
+    public async Task GetApp_ReturnsAppWithGeneratedId()
     {
-        var action = new app { Context = _engine.Context, Path = "." };
-        var result = await _engine.RunAction(action, _engine.Context);
+        // No app.pr exists — app keeps its generated Id
+        await _engine.Load();
 
-        await Assert.That(result.Success).IsTrue();
-        // No app.pr exists — returns a new default AppData with generated Id
-        await Assert.That(result.Value).IsNotNull();
-        await Assert.That(result.Value).IsTypeOf<AppData>();
-        var appData = (AppData)result.Value!;
-        await Assert.That(appData.Id).IsNotNullOrEmpty();
+        await Assert.That(_engine.Id).IsNotNull();
+        await Assert.That(_engine.Id.Length).IsGreaterThan(0);
     }
 
     [Test]
     public async Task SaveApp_UpdatesTimestamp()
     {
-        var app = new AppData
-        {
-            Id = "test-id",
-            Created = DateTime.UtcNow.AddDays(-1),
-            Updated = DateTime.UtcNow,
-            Version = "0.2"
-        };
+        _engine.Id = "test-id";
+        _engine.Version = "0.2";
 
-        var action = new appSave { Context = _engine.Context, App = app, Path = ".build/app.pr" };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var result = await _engine.Save();
 
         await Assert.That(result.Success).IsTrue();
 
         // Verify file content
         var appPrPath = System.IO.Path.Combine(_tempDir, ".build", "app.pr");
         var json = System.IO.File.ReadAllText(appPrPath);
-        var saved = JsonSerializer.Deserialize<AppData>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        await Assert.That(saved).IsNotNull();
-        await Assert.That(saved!.Id).IsEqualTo("test-id");
-        await Assert.That(saved.Version).IsEqualTo("0.2");
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        await Assert.That(root.GetProperty("id").GetString()).IsEqualTo("test-id");
+        await Assert.That(root.GetProperty("version").GetString()).IsEqualTo("0.2");
     }
 
     [Test]
-    public async Task GetApp_CorruptJson_ReturnsError()
+    public async Task GetApp_CorruptJson_KeepsGeneratedId()
     {
         var buildDir = System.IO.Path.Combine(_tempDir, ".build");
         System.IO.Directory.CreateDirectory(buildDir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "app.pr"), "{ broken json {{");
 
-        var action = new app { Context = _engine.Context, Path = "." };
-        var result = await _engine.RunAction(action, _engine.Context);
+        // Corrupt app.pr — Load() silently keeps generated identity
+        await _engine.Load();
 
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("CorruptAppFile");
+        await Assert.That(_engine.Id).IsNotNull();
+        await Assert.That(_engine.Id.Length).IsGreaterThan(0);
     }
 }

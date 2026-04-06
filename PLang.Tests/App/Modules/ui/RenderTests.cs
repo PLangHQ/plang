@@ -1,22 +1,22 @@
 using App;
-using App.Actor.Context;
-using App.Variables;
-using App.modules.ui;
-using App.modules.ui.providers;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.modules.ui;
+using global::App.modules.ui.providers;
 
 namespace PLang.Tests.App.Modules.ui;
 
 public class RenderTests : IDisposable
 {
     private readonly string _tempDir;
-    private readonly App.@this _engine;
+    private readonly global::App.@this _engine;
     private readonly FluidProvider _provider;
 
     public RenderTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_ui_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new App.@this(_tempDir);
+        _engine = new global::App.@this(_tempDir);
         _provider = new FluidProvider();
     }
 
@@ -698,7 +698,7 @@ public class RenderTests : IDisposable
             Text = text,
             Actions = new StepActions
             {
-                new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = actionClass,
                     ActionName = method,

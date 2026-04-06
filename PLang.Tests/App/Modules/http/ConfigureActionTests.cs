@@ -1,11 +1,11 @@
 using System.Net;
 using System.Text;
-using App.Actor.Context;
-using App.Variables;
-using App.Providers;
-using App.modules.http;
-using App.modules.http.providers;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.Providers;
+using global::App.modules.http;
+using global::App.modules.http.providers;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.http;
 

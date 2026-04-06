@@ -1,5 +1,5 @@
-using App.Variables;
-using App.Modules;
+using global::App.Variables;
+using AppModules = global::App.Modules.@this;
 
 namespace PLang.Tests.App.Modules;
 
@@ -8,7 +8,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_ActionWithConcreteReturnType_IncludesReturnTypeProperties()
     {
-        var modules = new @this();
+        var modules = new AppModules();
         modules.RegisterType("testmod", "getpath", typeof(FakeGetPath));
 
         var actions = modules.Describe();
@@ -29,7 +29,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_ActionReturningData_HasNullReturnType()
     {
-        var modules = new @this();
+        var modules = new AppModules();
         modules.RegisterType("testmod", "basic", typeof(FakeBasicAction));
 
         var actions = modules.Describe();
@@ -40,24 +40,24 @@ public class DescribeTests
 }
 
 // Fake action with concrete return type
-[App.modules.Action("getpath")]
-public class FakeGetPath : App.modules.ICodeGenerated
+[global::App.modules.Action("getpath")]
+public class FakeGetPath : global::App.modules.ICodeGenerated
 {
     public Task<FakePathResult> Run() => Task.FromResult(new FakePathResult());
 
-    public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        App.@this engine,
+    public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action,
+        global::App.@this engine,
         global::App.Actor.Context.@this context) => Task.FromResult(Data.Ok());
 }
 
 // Fake action returning plain Data
-[App.modules.Action("basic")]
-public class FakeBasicAction : App.modules.ICodeGenerated
+[global::App.modules.Action("basic")]
+public class FakeBasicAction : global::App.modules.ICodeGenerated
 {
     public Task<Data> Run() => Task.FromResult(Data.Ok("hello"));
 
-    public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        App.@this engine,
+    public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action,
+        global::App.@this engine,
         global::App.Actor.Context.@this context) => Task.FromResult(Data.Ok());
 }
 

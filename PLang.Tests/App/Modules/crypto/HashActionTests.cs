@@ -1,9 +1,9 @@
-using App.Actor.Context;
-using App.Errors;
-using App.Variables;
-using App.modules.crypto;
-using App.modules.crypto.providers;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Errors;
+using global::App.Variables;
+using global::App.modules.crypto;
+using global::App.modules.crypto.providers;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
 
@@ -92,7 +92,7 @@ public class HashActionTests
     {
         // [IsNotNull] validation runs in ExecuteAsync
         var action = new Hash { Data = new Data(""), Algorithm = "keccak256" };
-        var result = await action.ExecuteAsync(new App.Goals.Goal.Steps.Step.Actions.Action.@this(), _engine, Ctx);
+        var result = await action.ExecuteAsync(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this(), _engine, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -171,7 +171,7 @@ public class HashActionTests
     public async Task Verify_NullHash_ReturnsError()
     {
         var verifyAction = new Verify { Data = Data.Ok("hello"), Hash = null!, Algorithm = "keccak256" };
-        var result = await verifyAction.ExecuteAsync(new App.Goals.Goal.Steps.Step.Actions.Action.@this(), _engine, Ctx);
+        var result = await verifyAction.ExecuteAsync(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this(), _engine, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -183,7 +183,7 @@ public class HashActionTests
     public async Task Verify_NullInput_ReturnsError()
     {
         var verifyAction = new Verify { Data = new Data(""), Hash = "abc123", Algorithm = "keccak256" };
-        var result = await verifyAction.ExecuteAsync(new App.Goals.Goal.Steps.Step.Actions.Action.@this(), _engine, Ctx);
+        var result = await verifyAction.ExecuteAsync(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this(), _engine, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();

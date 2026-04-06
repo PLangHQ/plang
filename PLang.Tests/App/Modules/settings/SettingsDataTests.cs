@@ -1,8 +1,8 @@
-using App.Actor.Context;
-using App.Settings;
-using App.Errors;
-using App.Variables;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Settings;
+using global::App.Errors;
+using global::App.Variables;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.settings;
 
@@ -105,7 +105,7 @@ public class SettingsDataTests
     {
         // Use the settings.set action handler
         var context = _engine.System.Context;
-        var handler = new App.modules.settings.Set
+        var handler = new global::App.modules.settings.Set
         {
             Context = context,
             Key = "HandlerKey",
@@ -126,7 +126,7 @@ public class SettingsDataTests
     {
         await _engine.System.SettingsStore.Set("settings", "TestKey", new SettingsVariable("TestKey", "TestValue"));
 
-        var handler = new App.modules.settings.Get
+        var handler = new global::App.modules.settings.Get
         {
             Context = _engine.System.Context,
             Key = "TestKey"
@@ -140,7 +140,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Get_MissingKey_ReturnsAskError()
     {
-        var handler = new App.modules.settings.Get
+        var handler = new global::App.modules.settings.Get
         {
             Context = _engine.System.Context,
             Key = "MissingKey"
@@ -156,7 +156,7 @@ public class SettingsDataTests
     {
         await _engine.System.SettingsStore.Set("settings", "ToRemove", new SettingsVariable("ToRemove", "value"));
 
-        var handler = new App.modules.settings.Remove
+        var handler = new global::App.modules.settings.Remove
         {
             Context = _engine.System.Context,
             Key = "ToRemove"

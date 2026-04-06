@@ -211,7 +211,7 @@ public partial class @this
     public virtual bool ToBoolean() => IsInitialized;
 
     /// <summary>
-    /// Virtual so subclasses (DataList) can override with proper cloning.
+    /// Virtual so subclasses can override with proper cloning.
     /// SettingsVariable and DynamicData should not be cloned — they are stateless/factory-based.
     /// </summary>
     public virtual @this Clone()
@@ -370,52 +370,3 @@ public class DynamicData : @this
     public override object? Value => _valueFactory();
 }
 
-/// <summary>
-/// Typed list that carries error state. Extends Data so it can be returned from handlers.
-/// On success, use as a list directly. On error, check Success/Error.
-/// </summary>
-public class DataList<T> : @this, IList<T>
-{
-    private readonly List<T> _items = new();
-
-    public DataList(string name = "") : base(name) { }
-
-    public static DataList<T> FromError(IError error) => new() { Error = error };
-
-    // IList<T>
-    public T this[int index] { get => _items[index]; set => _items[index] = value; }
-    public int Count => _items.Count;
-    public bool IsReadOnly => false;
-    public void Add(T item) => _items.Add(item);
-    public void Clear() => _items.Clear();
-    public bool Contains(T item) => _items.Contains(item);
-    public void CopyTo(T[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
-    public IEnumerator<T> GetEnumerator() => _items.GetEnumerator();
-    public int IndexOf(T item) => _items.IndexOf(item);
-    public void Insert(int index, T item) => _items.Insert(index, item);
-    public bool Remove(T item) => _items.Remove(item);
-    public void RemoveAt(int index) => _items.RemoveAt(index);
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-
-    // List helpers
-    public T? Find(Predicate<T> match) => _items.Find(match);
-    public bool Exists(Predicate<T> match) => _items.Exists(match);
-    public List<T> Where(Func<T, bool> predicate) => _items.Where(predicate).ToList();
-
-    /// <summary>
-    /// Creates an independent copy with its own item list.
-    /// </summary>
-    public override @this Clone()
-    {
-        var clone = new DataList<T>(Name);
-        foreach (var item in _items)
-            clone._items.Add(item);
-        clone.Error = Error;
-        clone.Handled = Handled;
-        clone.Warnings = Warnings != null ? new List<Info>(Warnings) : null;
-        clone.Signature = Signature;
-        clone.Properties = Properties.Clone();
-        clone.Context = Context;
-        return clone;
-    }
-}

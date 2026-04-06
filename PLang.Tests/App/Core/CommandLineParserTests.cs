@@ -1,4 +1,4 @@
-using App.Utils;
+using global::App.Utils;
 
 namespace PLang.Tests.App.Core;
 

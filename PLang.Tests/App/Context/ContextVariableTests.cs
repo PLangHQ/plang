@@ -1,17 +1,17 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Variables;
+using global::App.Variables;
 
 namespace PLang.Tests.App.Context;
 
 public class ContextVariableTests
 {
-    private App.@this _engine = null!;
+    private global::App.@this _engine = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new App.@this("/test");
+        _engine = new global::App.@this("/test");
     }
 
     [Test]

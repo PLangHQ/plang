@@ -1,8 +1,8 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Variables;
-using App.modules;
-using App.modules.module;
+using global::App.Variables;
+using global::App.modules;
+using global::App.modules.module;
 
 namespace PLang.Tests.App.Modules.module;
 
@@ -12,11 +12,11 @@ public class ModuleAddTests
     /// Creates an engine rooted at the directory containing the PLang assembly,
     /// so the sandboxed filesystem can find the assembly file via fs.File.Exists.
     /// </summary>
-    private static (global::App.Actor.Context.@this context, App.@this engine, string assemblyPath) CreateContextWithAssembly()
+    private static (global::App.Actor.Context.@this context, global::App.@this engine, string assemblyPath) CreateContextWithAssembly()
     {
-        var assemblyPath = typeof(App.@this).Assembly.Location;
+        var assemblyPath = typeof(global::App.@this).Assembly.Location;
         var assemblyDir = global::System.IO.Path.GetDirectoryName(assemblyPath)!;
-        var engine = new App.@this(assemblyDir);
+        var engine = new global::App.@this(assemblyDir);
         var context = engine.CreateContext();
         return (context, engine, assemblyPath);
     }
@@ -24,7 +24,7 @@ public class ModuleAddTests
     [Test]
     public async Task Add_NonexistentPath_ReturnsError()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
         using var context = engine.CreateContext();
 
         var add = new Add

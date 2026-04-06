@@ -1,4 +1,4 @@
-using App.Variables;
+using global::App.Variables;
 
 namespace PLang.Tests.App.Foundation;
 

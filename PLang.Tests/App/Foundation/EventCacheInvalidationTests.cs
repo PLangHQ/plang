@@ -1,6 +1,6 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Variables;
+using global::App.Variables;
 
 namespace PLang.Tests.App.Foundation;
 
@@ -15,7 +15,7 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Goal_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
         using var context = new global::App.Actor.Context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
@@ -43,7 +43,7 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Step_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
         using var context = new global::App.Actor.Context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
         var step = new Step { Text = "do something" };
@@ -75,9 +75,9 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Action_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
         using var context = new global::App.Actor.Context.@this(engine);
-        var action = new App.Goals.Goal.Steps.Step.Actions.Action.@this
+        var action = new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
         {
             Module = "variable",
             ActionName = "set"
@@ -107,7 +107,7 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_ManualInvalidation_Works()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
         using var context = new global::App.Actor.Context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 

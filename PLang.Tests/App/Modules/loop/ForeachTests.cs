@@ -1,19 +1,19 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Variables;
-using App.modules.loop;
-using LoopResult = App.modules.loop.types.loop;
+using global::App.Variables;
+using global::App.modules.loop;
+using LoopResult = global::App.modules.loop.types.loop;
 
 namespace PLang.Tests.App.actions.loop;
 
 public class ForeachTests
 {
-    private App.@this _engine = null!;
+    private global::App.@this _engine = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new App.@this("/app");
+        _engine = new global::App.@this("/app");
     }
 
     private global::App.Actor.Context.@this CreateContext(Variables? memory = null)
@@ -43,7 +43,7 @@ public class ForeachTests
                     Text = "capture item",
                     Actions = new StepActions
                     {
-                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "variable",
                             ActionName = "set",

@@ -1,7 +1,7 @@
-using App.Actor.Context;
-using App.Variables;
-using App.modules.builder;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.modules.builder;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 

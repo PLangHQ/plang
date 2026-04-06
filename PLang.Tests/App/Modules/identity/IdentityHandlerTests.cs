@@ -1,7 +1,7 @@
-using App.Actor.Context;
-using App.Variables;
-using App.modules.identity;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.modules.identity;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.identity;
 
@@ -260,9 +260,9 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 
-        var list = result as DataList<Identity>;
-        await Assert.That(list!.Count).IsEqualTo(2);
-        await Assert.That(list.Any(i => i.Name == "archived")).IsFalse();
+        var list = result as global::App.Data.@this<List<Identity>>;
+        await Assert.That(list!.Value!.Count).IsEqualTo(2);
+        await Assert.That(list.Value!.Any(i => i.Name == "archived")).IsFalse();
     }
 
     [Test]
@@ -278,8 +278,8 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 
-        var list = result as DataList<Identity>;
-        await Assert.That(list!.Count).IsEqualTo(0);
+        var list = result as global::App.Data.@this<List<Identity>>;
+        await Assert.That(list!.Value!.Count).IsEqualTo(0);
     }
 
     // --- archive ---

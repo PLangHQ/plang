@@ -1,17 +1,17 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Errors;
-using App.Variables;
-using App.modules.mock;
-using App.modules.mock.types;
+using global::App.Errors;
+using global::App.Variables;
+using global::App.modules.mock;
+using global::App.modules.mock.types;
 
 namespace PLang.Tests.App.Modules.mock;
 
 public class MockTests
 {
-    private (global::App.Actor.Context.@this context, Variables memory, App.@this engine) CreateContext()
+    private (global::App.Actor.Context.@this context, Variables memory, global::App.@this engine) CreateContext()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         var memory = new Variables();
         var context = new global::App.Actor.Context.@this(engine, memory);
         return (context, memory, engine);

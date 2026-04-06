@@ -1,6 +1,6 @@
-using App.Variables;
-using App.modules.condition;
-using App.modules.condition.providers;
+using global::App.Variables;
+using global::App.modules.condition;
+using global::App.modules.condition.providers;
 
 namespace PLang.Tests.App.Modules.condition;
 

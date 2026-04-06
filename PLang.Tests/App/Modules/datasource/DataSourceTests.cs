@@ -1,8 +1,8 @@
-using App.Actor.Context;
-using App.Settings;
-using App.Errors;
-using App.Variables;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Settings;
+using global::App.Errors;
+using global::App.Variables;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.datasource;
 
@@ -175,7 +175,7 @@ public class DataSourceTests
     [Test]
     public async Task ResolveTableName_ReturnsLastNamespaceSegment()
     {
-        var result = ISettingsStore.ResolveTableName(typeof(App.modules.settings.Set));
+        var result = ISettingsStore.ResolveTableName(typeof(global::App.modules.settings.Set));
         await Assert.That(result).IsEqualTo("settings");
     }
 

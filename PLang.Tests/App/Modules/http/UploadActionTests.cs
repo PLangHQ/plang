@@ -1,12 +1,12 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
-using App.Actor.Context;
-using App.Variables;
-using App.modules.http;
-using App.modules.http.providers;
-using PLangEngine = App.@this;
-using HttpMethod = App.modules.http.HttpMethod;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.modules.http;
+using global::App.modules.http.providers;
+using PLangEngine = global::App.@this;
+using HttpMethod = global::App.modules.http.HttpMethod;
 
 namespace PLang.Tests.App.Modules.http;
 

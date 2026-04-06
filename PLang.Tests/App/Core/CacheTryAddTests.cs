@@ -1,6 +1,6 @@
-using App.Cache;
-using App.Goals.Goal.Steps.Step;
-using App.Variables;
+using global::App.Cache;
+using global::App.Goals.Goal.Steps.Step;
+using global::App.Variables;
 
 namespace PLang.Tests.App.Core;
 

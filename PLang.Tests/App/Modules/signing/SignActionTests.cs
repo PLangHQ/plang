@@ -1,13 +1,13 @@
 using System.Text.Json;
-using App.Actor.Context;
-using App.Errors;
-using App.Variables;
-using App.Providers;
-using App.modules.signing.providers;
-using App.modules.crypto;
-using App.modules.identity;
-using App.modules.signing;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Errors;
+using global::App.Variables;
+using global::App.Providers;
+using global::App.modules.signing.providers;
+using global::App.modules.crypto;
+using global::App.modules.identity;
+using global::App.modules.signing;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.signing;
 
@@ -288,7 +288,7 @@ public class SignActionTests
 
         public MockSigningProvider(string name) { Name = name; }
 
-        public Data<KeyPair> GenerateKeyPair() => _inner.GenerateKeyPair();
+        public global::App.Data.@this<KeyPair> GenerateKeyPair() => _inner.GenerateKeyPair();
         public Data Sign(byte[] data, string privateKey) => _inner.Sign(data, privateKey);
         public Data Verify(byte[] data, byte[] signature, string publicKey) => _inner.Verify(data, signature, publicKey);
         public async Task<Data> SignAsync(sign action) { SignCalled = true; return await _inner.SignAsync(action); }
@@ -299,7 +299,7 @@ public class SignActionTests
     {
         public string Name => "throwing";
         public bool IsDefault { get; set; }
-        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
+        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
         public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
         public Task<Data> SignAsync(sign action) => Task.FromResult(Data.FromError(new ActionError("Sign failed", "SigningError", 500)));
@@ -310,6 +310,6 @@ public class SignActionTests
     {
         public string Name => "throwing-key";
         public bool IsDefault { get; set; }
-        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
+        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
     }
 }

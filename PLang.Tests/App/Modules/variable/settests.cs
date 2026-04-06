@@ -1,8 +1,8 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Variables;
-using App.modules.variable;
-using Type = App.Variables.Type;
+using global::App.Variables;
+using global::App.modules.variable;
+using Type = global::App.Data.Type;
 
 namespace PLang.Tests.App.actions.variable;
 
@@ -11,7 +11,7 @@ public class SetTests
     private (global::App.Actor.Context.@this context, Variables memory) CreateContext(Variables? variables = null)
     {
         var memory = variables ?? new Variables();
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         var context = new global::App.Actor.Context.@this(engine, memory);
         return (context, memory);
     }

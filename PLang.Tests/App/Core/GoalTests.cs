@@ -1,5 +1,5 @@
 using App;
-using App.Variables;
+using global::App.Variables;
 
 namespace PLang.Tests.App.Core;
 
@@ -20,7 +20,7 @@ public class GoalTests
             IsSetup = true,
             IsEvent = false,
             InputParameters = new Dictionary<string, string> { { "param1", "string" } },
-            Goals = new List<App.Goals.Goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
+            Goals = new List<global::App.Goals.Goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
             Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "first step" },
@@ -256,7 +256,7 @@ public class GoalTests
                     Text = "write out \"hello\"",
                     Actions = new StepActions(new[]
                     {
-                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -325,7 +325,7 @@ public class GoalTests
                     Text = "select * from users, write to %users%",
                     Actions = new StepActions(new[]
                     {
-                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "db",
                             ActionName = "select",
@@ -356,7 +356,7 @@ public class GoalTests
                     Text = "write out \"hello\"",
                     Actions = new StepActions(new[]
                     {
-                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",

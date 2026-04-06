@@ -1,5 +1,5 @@
-using App.FileSystem;
-using App.FileSystem.Default;
+using global::App.FileSystem;
+using global::App.FileSystem.Default;
 using Path = System.IO.Path;
 
 namespace PLang.Tests.App.IO;

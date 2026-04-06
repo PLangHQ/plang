@@ -1,4 +1,4 @@
-using App.Utils;
+using global::App.Utils;
 
 namespace PLang.Tests.App.Utils;
 
@@ -635,18 +635,18 @@ public class TypeMappingTests
     [Test]
     public async Task TryConvertTo_IObject_ValidString_CreatesInstance()
     {
-        var (result, error) = TypeMapping.TryConvertTo("==", typeof(App.modules.condition.Operator));
+        var (result, error) = TypeMapping.TryConvertTo("==", typeof(global::App.modules.condition.Operator));
 
         await Assert.That(error).IsNull();
         await Assert.That(result).IsNotNull();
-        await Assert.That(result).IsTypeOf<App.modules.condition.Operator>();
-        await Assert.That(((App.modules.condition.Operator)result!).Value).IsEqualTo("==");
+        await Assert.That(result).IsTypeOf<global::App.modules.condition.Operator>();
+        await Assert.That(((global::App.modules.condition.Operator)result!).Value).IsEqualTo("==");
     }
 
     [Test]
     public async Task TryConvertTo_IObject_InvalidString_ReturnsError()
     {
-        var (result, error) = TypeMapping.TryConvertTo("equals", typeof(App.modules.condition.Operator));
+        var (result, error) = TypeMapping.TryConvertTo("equals", typeof(global::App.modules.condition.Operator));
 
         await Assert.That(error).IsNotNull();
         await Assert.That(error!.Key).IsEqualTo("IObjectConversionFailed");
@@ -655,7 +655,7 @@ public class TypeMappingTests
     [Test]
     public async Task TryConvertTo_IObject_Null_ReturnsNull()
     {
-        var (result, error) = TypeMapping.TryConvertTo(null, typeof(App.modules.condition.Operator));
+        var (result, error) = TypeMapping.TryConvertTo(null, typeof(global::App.modules.condition.Operator));
 
         await Assert.That(error).IsNull();
         await Assert.That(result).IsNull();

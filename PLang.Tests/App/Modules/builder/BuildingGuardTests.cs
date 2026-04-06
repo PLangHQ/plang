@@ -1,9 +1,9 @@
-using App.Actor.Context;
-using App.Variables;
-using App.Utils;
-using App.modules.builder;
-using Action = App.Goals.Goal.Steps.Step.Actions.Action.@this;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.Utils;
+using global::App.modules.builder;
+using Action = global::App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 
@@ -79,7 +79,7 @@ public class BuildingGuardTests
     [Test]
     public async Task GetApp_BuildingDisabled_ReturnsError()
     {
-        var action = new app { Context = _engine.Context, Path = "." };
+        var action = new app { Context = _engine.Context };
         var result = await _engine.RunAction(action, _engine.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
@@ -88,8 +88,7 @@ public class BuildingGuardTests
     [Test]
     public async Task SaveApp_BuildingDisabled_ReturnsError()
     {
-        var app = new AppData { Id = "x", Version = "0.2" };
-        var action = new appSave { Context = _engine.Context, App = app, Path = ".build/app.pr" };
+        var action = new appSave { Context = _engine.Context };
         var result = await _engine.RunAction(action, _engine.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");

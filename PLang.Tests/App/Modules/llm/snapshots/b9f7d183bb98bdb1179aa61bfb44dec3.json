@@ -1,0 +1,1 @@
+{"id":"snapshot","object":"chat.completion","model":"gpt-5.4-nano","choices":[{"index":0,"message":{"role":"assistant","content":"Hi Alice! Nice to meet you. How can I help today?"},"finish_reason":"stop"}],"usage":{"prompt_tokens":25,"completion_tokens":17,"total_tokens":42}}

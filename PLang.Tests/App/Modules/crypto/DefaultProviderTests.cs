@@ -1,6 +1,6 @@
-using App.Variables;
-using App.modules.crypto;
-using App.modules.crypto.providers;
+using global::App.Variables;
+using global::App.modules.crypto;
+using global::App.modules.crypto.providers;
 
 namespace PLang.Tests.App.Modules.crypto;
 

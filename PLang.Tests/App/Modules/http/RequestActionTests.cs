@@ -3,15 +3,15 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using App.Channels.Serializers;
-using App.Actor.Context;
-using App.Variables;
-using App.Providers;
-using App.modules.http;
-using App.modules.http.providers;
-using App.modules.signing;
-using PLangEngine = App.@this;
-using HttpMethod = App.modules.http.HttpMethod;
+using global::App.Channels.Serializers;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.Providers;
+using global::App.modules.http;
+using global::App.modules.http.providers;
+using global::App.modules.signing;
+using PLangEngine = global::App.@this;
+using HttpMethod = global::App.modules.http.HttpMethod;
 
 namespace PLang.Tests.App.Modules.http;
 
@@ -378,7 +378,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream",
-            OnStream = new App.Goals.Goal.GoalCall { Name = "ProcessChunk" },
+            OnStream = new global::App.Goals.Goal.GoalCall { Name = "ProcessChunk" },
             Unsigned = true
         };
 
@@ -488,7 +488,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream",
-            OnStream = new App.Goals.Goal.GoalCall { Name = "HandleLine" },
+            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleLine" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -514,7 +514,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/sse",
-            OnStream = new App.Goals.Goal.GoalCall { Name = "HandleSSE" },
+            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleSSE" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -538,7 +538,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/sse-multi",
-            OnStream = new App.Goals.Goal.GoalCall { Name = "HandleSSE" },
+            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleSSE" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -564,7 +564,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/bytes",
-            OnStream = new App.Goals.Goal.GoalCall { Name = "HandleBytes" },
+            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleBytes" },
             StreamAs = StreamFormat.Bytes,
             Unsigned = true
         };
@@ -591,7 +591,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream-err",
-            OnStream = new App.Goals.Goal.GoalCall { Name = "HandleLine" },
+            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleLine" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -613,7 +613,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream",
-            OnStream = new App.Goals.Goal.GoalCall
+            OnStream = new global::App.Goals.Goal.GoalCall
             {
                 Name = "HandleChunk",
                 Parameters = new List<Data> { new Data("myChunk") }
@@ -640,7 +640,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/plang-stream",
-            OnStream = new App.Goals.Goal.GoalCall { Name = "HandlePlang" },
+            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandlePlang" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -685,7 +685,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/plang-stream",
-            OnStream = new App.Goals.Goal.GoalCall { Name = "HandlePlang" },
+            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandlePlang" },
             Unsigned = false
         };
         var result = await action.Run();
@@ -724,7 +724,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/plang-bad-stream",
-            OnStream = new App.Goals.Goal.GoalCall { Name = "HandlePlang" },
+            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandlePlang" },
             Unsigned = false
         };
         var result = await action.Run();
@@ -989,7 +989,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/sse-overflow",
-            OnStream = new App.Goals.Goal.GoalCall { Name = "HandleSSE" },
+            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleSSE" },
             Unsigned = true
         };
         var result = await action.Run();

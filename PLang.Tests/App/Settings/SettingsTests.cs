@@ -1,9 +1,9 @@
 using System.IO.Compression;
 using App;
-using App.Actor.Context;
-using App.Variables;
-using App.Config;
-using EngineType = App.@this;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.Config;
+using EngineType = global::App.@this;
 
 namespace PLang.Tests.App.Settings;
 

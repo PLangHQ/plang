@@ -1,8 +1,8 @@
 using App;
-using App.Errors;
-using App.Variables;
-using App.Utils;
-using R2 = App.Variables;
+using global::App.Errors;
+using global::App.Variables;
+using global::App.Utils;
+using R2 = global::App.Data;
 
 namespace PLang.Tests.App;
 
@@ -45,8 +45,8 @@ public class Phase0Proof
     [Test]
     public async Task Phase01_GenericDataFromError()
     {
-        // INPUT: generic Data<T>.FromError
-        var result = Data<string>.FromError(new Error("oops"));
+        // INPUT: generic global::App.Data.@this<T>.FromError
+        var result = global::App.Data.@this<string>.FromError(new Error("oops"));
 
         // OUTPUT: typed error result
         await Assert.That(result.Success).IsFalse();
@@ -145,7 +145,7 @@ public class Phase0Proof
     public async Task Phase04_ListType_IsPreserved()
     {
         // INPUT: Data.Ok with a list value and explicit list type
-        var listValue = new App.modules.list.types.list
+        var listValue = new global::App.modules.list.types.list
         {
             count = 3,
             value = new List<object?> { 1, 2, 3 }
@@ -265,7 +265,7 @@ public class Phase0Proof
     public async Task Phase05_CultureInfo_DefaultsToInvariant()
     {
         // INPUT: new Engine
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         // OUTPUT: culture defaults to InvariantCulture
         await Assert.That(engine.Culture).IsEqualTo(System.Globalization.CultureInfo.InvariantCulture);

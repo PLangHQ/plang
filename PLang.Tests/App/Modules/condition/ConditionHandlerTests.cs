@@ -1,23 +1,23 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Variables;
-using App.modules.condition;
-using App.FileSystem;
-using App.FileSystem.Default;
+using global::App.Variables;
+using global::App.modules.condition;
+using global::App.FileSystem;
+using global::App.FileSystem.Default;
 namespace PLang.Tests.App.actions.condition;
 
 public class ConditionHandlerTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly App.@this _engine;
+    private readonly global::App.@this _engine;
 
     public ConditionHandlerTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new App.@this(_tempDir, fileSystem: _fs);
+        _engine = new global::App.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
@@ -79,7 +79,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write true branch",
                     Actions = new StepActions
                     {
-                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -132,7 +132,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write false branch",
                     Actions = new StepActions
                     {
-                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -208,7 +208,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write file exists",
                     Actions = new StepActions
                     {
-                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -232,7 +232,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "check if file exists",
                     Actions = new StepActions
                     {
-                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
@@ -247,7 +247,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "if file exists call WriteExists",
                     Actions = new StepActions
                     {
-                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "condition",
                             ActionName = "if",
@@ -273,7 +273,7 @@ public class ConditionHandlerTests : IDisposable
         // Assert: fileResult is in memory
         var fileData = context.Variables.Get("fileResult");
         await Assert.That(fileData).IsNotNull();
-        var fileObj = fileData as App.FileSystem.Path;
+        var fileObj = fileData as global::App.FileSystem.Path;
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(fileObj!.Exists).IsTrue();
 

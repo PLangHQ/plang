@@ -1,6 +1,6 @@
-using App.Actor.Context;
-using App.Variables;
-using App.modules.list;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.modules.list;
 
 namespace PLang.Tests.App.actions.list;
 
@@ -8,7 +8,7 @@ public class ListSetTests
 {
     private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         var memory = new Variables();
         var context = new global::App.Actor.Context.@this(engine, memory);
         return (context, memory);

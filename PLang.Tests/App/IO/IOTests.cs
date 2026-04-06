@@ -6,7 +6,7 @@ public class IOTests
 {
     private static EngineChannels CreateIO()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         return new EngineChannels(engine);
     }
 

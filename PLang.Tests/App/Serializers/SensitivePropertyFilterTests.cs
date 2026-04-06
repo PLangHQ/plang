@@ -1,8 +1,8 @@
 using System.Text.Json;
 using App;
-using App.Channels.Serializers.Serializer;
-using App.modules.identity;
-using PLangEngine = App.@this;
+using global::App.Channels.Serializers.Serializer;
+using global::App.modules.identity;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Serializers;
 

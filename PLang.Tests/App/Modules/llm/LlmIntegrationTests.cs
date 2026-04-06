@@ -1,13 +1,13 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using App.Actor.Context;
-using App.Goals.Goal;
-using App.Variables;
-using App.modules.http.providers;
-using App.modules.llm;
-using App.modules.llm.providers;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Goals.Goal;
+using global::App.Variables;
+using global::App.modules.http.providers;
+using global::App.modules.llm;
+using global::App.modules.llm.providers;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.llm;
 
@@ -193,7 +193,7 @@ public class LlmIntegrationTests
                 Description = "Gets the current weather for a city",
                 Parameters = new List<Data>
                 {
-                    new Data("city", null, App.Variables.Type.String)
+                    new Data("city", null, global::App.Data.Type.String)
                 }
             }
         };

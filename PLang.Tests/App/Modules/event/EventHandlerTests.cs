@@ -1,19 +1,19 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Variables;
-using App.Events;
-using App.modules.@event;
+using global::App.Variables;
+using global::App.Events;
+using global::App.modules.@event;
 
 namespace PLang.Tests.App.actions.EventTests;
 
 public class EventHandlerTests
 {
-    private App.@this _engine = null!;
+    private global::App.@this _engine = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new App.@this("/test");
+        _engine = new global::App.@this("/test");
     }
 
     private global::App.Actor.Context.@this CreateContext() => _engine.CreateContext();

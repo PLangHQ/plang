@@ -33,6 +33,12 @@ global using Serializers = App.Channels.Serializers.@this;
 global using SerializeOptions = App.Channels.Serializers.SerializeOptions;
 global using DeserializeOptions = App.Channels.Serializers.DeserializeOptions;
 
+// Data (universal type)
+global using Data = global::App.Data.@this;
+global using Properties = global::App.Data.Properties;
+global using DynamicData = global::App.Data.DynamicData;
+global using TString = global::App.Data.TString;
+
 // Variables (was MemoryStack)
 global using Variables = App.Variables.@this;
 

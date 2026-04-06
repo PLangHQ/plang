@@ -1,12 +1,12 @@
-using App.Actor.Context;
-using App.Errors;
-using App.Variables;
-using App.Providers;
-using App.modules.signing.providers;
-using App.modules.crypto;
-using App.modules.identity;
-using App.modules.signing;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Errors;
+using global::App.Variables;
+using global::App.Providers;
+using global::App.modules.signing.providers;
+using global::App.modules.crypto;
+using global::App.modules.identity;
+using global::App.modules.signing;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.signing;
 
@@ -170,7 +170,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper(new { amount = 100 }, contracts: new List<string> { "C0" });
         // Tamper the hash
-        signed.Signature!.Hash = Data.Ok(new byte[32], App.Variables.Type.FromName("keccak256"));
+        signed.Signature!.Hash = Data.Ok(new byte[32], global::App.Data.Type.FromName("keccak256"));
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(result.Success).IsFalse();
@@ -478,7 +478,7 @@ public class VerifyActionTests
     {
         public string Name => "throwing";
         public bool IsDefault { get; set; }
-        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
+        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
         public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
         public Task<Data> SignAsync(sign action) => Task.FromResult(Data.FromError(new ActionError("Sign failed", "SigningError", 500)));

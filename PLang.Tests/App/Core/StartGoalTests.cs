@@ -1,6 +1,6 @@
-using App.Actor.Context;
-using App.Variables;
-using App.modules;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.modules;
 using Path = System.IO.Path;
 
 namespace PLang.Tests.App.Core;
@@ -12,7 +12,7 @@ public class StartGoalTests
     [Test]
     public async Task StartGoal_Programmatic_SetsVariablesAndWritesOutput()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
@@ -61,7 +61,7 @@ public class StartGoalTests
     [Test]
     public async Task StartGoal_LoadFromPrJson_SetsVariablesAndWritesOutput()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
@@ -70,7 +70,7 @@ public class StartGoalTests
         // Find the .pr.json file and set FileSystem root to repo root so it's accessible
         var prJsonPath = FindPrJsonPath();
         var repoRoot = Path.GetDirectoryName(Path.GetDirectoryName(prJsonPath))!; // parent of Tests/Builder
-        engine.FileSystem = new App.FileSystem.Default.PLangFileSystem(repoRoot, "");
+        engine.FileSystem = new global::App.FileSystem.Default.PLangFileSystem(repoRoot, "");
 
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,prJsonPath);
         await Assert.That(loadResult.Success).IsTrue();
@@ -96,7 +96,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_FullVariableReference_ReturnsTypedValue()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var goal = new Goal
         {
@@ -124,7 +124,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_StringInterpolation_ReturnsInterpolatedString()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var capture = new CapturingWriteHandler();
         engine.Modules.Register("output", "write", capture);
@@ -155,7 +155,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_LiteralString_RemainsUnchanged()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var capture = new CapturingWriteHandler();
         engine.Modules.Register("output", "write", capture);
@@ -183,7 +183,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_MissingVariable_ResolvesToEmptyString()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var capture = new CapturingWriteHandler();
         engine.Modules.Register("output", "write", capture);
@@ -211,7 +211,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_FullMissingVariable_ResolvesToNull()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var goal = new Goal
         {
@@ -240,7 +240,7 @@ public class StartGoalTests
     [Test]
     public async Task Defaults_ResolvedWhenParameterMissing()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         // "type" is NOT in parameters — developer didn't set it
         // "type" IS in defaults — builder captured it at build time
@@ -272,7 +272,7 @@ public class StartGoalTests
     [Test]
     public async Task Defaults_ParameterOverridesDefault()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         // "type" is in BOTH parameters and defaults — parameter wins
         var goal = new Goal
@@ -301,7 +301,7 @@ public class StartGoalTests
     [Test]
     public async Task Defaults_NullDefaultsStillWorksWithAttributeFallback()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         // No defaults at all — falls through to [Default] attribute on the action
         var goal = new Goal
@@ -346,7 +346,7 @@ public class StartGoalTests
             Text = text,
             Actions = new StepActions
             {
-                new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = actionClass,
                     ActionName = method,
@@ -386,12 +386,12 @@ public class StartGoalTests
     {
         public List<string> Lines { get; } = new();
 
-        public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this App { get; private set; } = null!;
+        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(App.@this engine, global::App.Actor.Context.@this context)
+        public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context)
         {
             App = engine;
             Context = context;
@@ -399,7 +399,7 @@ public class StartGoalTests
 
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
 
-        public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, global::App.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.@this engine, global::App.Actor.Context.@this context)
         {
             Initialize(engine, context);
             var contentData = action.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));

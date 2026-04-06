@@ -1,5 +1,5 @@
-using App.Variables;
-using Type = App.Variables.Type;
+using global::App.Variables;
+using Type = global::App.Data.Type;
 
 namespace PLang.Tests.App.Memory;
 
@@ -739,7 +739,7 @@ public class VariablesTests
     [Test]
     public async Task PLangContext_StampsContextOnVariablesData()
     {
-        await using var engine = new App.@this("/test");
+        await using var engine = new global::App.@this("/test");
         var context = new global::App.Actor.Context.@this(engine);
 
         // Variables set through global::App.Actor.Context.@this's Variables get context stamped
@@ -751,7 +751,7 @@ public class VariablesTests
     [Test]
     public async Task PLangContext_Put_StampsContext()
     {
-        await using var engine = new App.@this("/test");
+        await using var engine = new global::App.@this("/test");
         var context = new global::App.Actor.Context.@this(engine);
 
         var data = new Data("test", "hello");
@@ -770,7 +770,7 @@ public class VariablesTests
         // Data has no context before global::App.Actor.Context.@this creation
         await Assert.That(stack.Get("name")!.Context).IsNull();
 
-        await using var engine = new App.@this("/test");
+        await using var engine = new global::App.@this("/test");
         var context = new global::App.Actor.Context.@this(engine, stack);
 
         // After global::App.Actor.Context.@this creation, existing data gets context
@@ -780,7 +780,7 @@ public class VariablesTests
     [Test]
     public async Task Clone_PreservesDataContext()
     {
-        await using var engine = new App.@this("/test");
+        await using var engine = new global::App.@this("/test");
         var context = new global::App.Actor.Context.@this(engine);
 
         context.Variables.Set("name", "John");
@@ -794,7 +794,7 @@ public class VariablesTests
     [Test]
     public async Task ChildContext_StampsClonedData()
     {
-        await using var engine = new App.@this("/test");
+        await using var engine = new global::App.@this("/test");
         var parentContext = new global::App.Actor.Context.@this(engine);
         parentContext.Variables.Set("name", "John");
 
@@ -872,7 +872,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Current_ReturnsNewStackIfNotSet()
     {
-        var accessor = new VariablesAccessor();
+        var accessor = new global::App.Variables.@thisAccessor();
 
         var stack = accessor.Current;
 
@@ -882,7 +882,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Current_SetAndGet_ReturnsSameStack()
     {
-        var accessor = new VariablesAccessor();
+        var accessor = new global::App.Variables.@thisAccessor();
         var stack = new Variables();
 
         accessor.Current = stack;
@@ -893,7 +893,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Clone_PreservesContext()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         var context = new global::App.Actor.Context.@this(engine, new Variables());
         context.Variables.Set("x", 1);
 

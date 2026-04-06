@@ -1,33 +1,47 @@
 using App;
-using App.Errors;
+using global::App.Errors;
 
 namespace PLang.Tests.App.Core;
 
 public class CallFrameTests
 {
+    /// <summary>
+    /// Creates a minimal Action wired to a Goal, matching the new CallFrame(Action) API.
+    /// </summary>
+    private static global::App.Goals.Goal.Steps.Step.Actions.Action.@this MakeAction(Goal goal)
+    {
+        var step = new Step { Index = 0, Text = "test", Goal = goal };
+        var action = new global::App.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "test", ActionName = "test" };
+        action.Step = step;
+        return action;
+    }
+
+    private static global::App.Goals.Goal.Steps.Step.Actions.Action.@this MakeAction(string goalName, string? path = null)
+        => MakeAction(new Goal { Name = goalName, Path = path ?? "" });
+
     [Test]
     public async Task Constructor_SetsGoal()
     {
         var goal = new Goal { Name = "TestGoal" };
-        var frame = new CallFrame(goal);
+        var frame = new CallFrame(MakeAction(goal));
 
-        await Assert.That(frame.Goal).IsEqualTo(goal);
-        await Assert.That(frame.Goal.Name).IsEqualTo("TestGoal");
+        await Assert.That(frame.Action.Step!.Goal).IsEqualTo(goal);
+        await Assert.That(frame.Action.Step!.Goal!.Name).IsEqualTo("TestGoal");
     }
 
     [Test]
     public async Task Constructor_SetsGoalWithPath()
     {
         var goal = new Goal { Name = "TestGoal", Path = "/path/to/goal.pr" };
-        var frame = new CallFrame(goal);
+        var frame = new CallFrame(MakeAction(goal));
 
-        await Assert.That(frame.Goal.Path).IsEqualTo("/path/to/goal.pr");
+        await Assert.That(frame.Action.Step!.Goal!.Path).IsEqualTo("/path/to/goal.pr");
     }
 
     [Test]
     public async Task Constructor_GeneratesId()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         await Assert.That(frame.Id).IsNotNull();
         await Assert.That(frame.Id.Length).IsEqualTo(8);
@@ -38,7 +52,7 @@ public class CallFrameTests
     {
         var before = DateTime.UtcNow;
 
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         var after = DateTime.UtcNow;
         await Assert.That(frame.StartedAt).IsGreaterThanOrEqualTo(before);
@@ -48,24 +62,25 @@ public class CallFrameTests
     [Test]
     public async Task Constructor_DefaultsPhaseToNone()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         await Assert.That(frame.Phase).IsEqualTo(ExecutionPhase.None);
     }
 
     [Test]
-    public async Task Constructor_DefaultsStepToNull()
+    public async Task Constructor_SetsActionStep()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
-        await Assert.That(frame.Step).IsNull();
+        await Assert.That(frame.Action.Step).IsNotNull();
+        await Assert.That(frame.Action.Step!.Goal!.Name).IsEqualTo("TestGoal");
     }
 
     [Test]
     public async Task Constructor_SetsParent()
     {
-        var parent = new CallFrame(new Goal { Name = "ParentGoal" });
-        var child = new CallFrame(new Goal { Name = "ChildGoal" }, parent: parent);
+        var parent = new CallFrame(MakeAction("ParentGoal"));
+        var child = new CallFrame(MakeAction("ChildGoal"), parent: parent);
 
         await Assert.That(child.Parent).IsEqualTo(parent);
     }
@@ -73,8 +88,8 @@ public class CallFrameTests
     [Test]
     public async Task Constructor_SetsIndent()
     {
-        var parent = new CallFrame(new Goal { Name = "ParentGoal" });
-        var child = new CallFrame(new Goal { Name = "ChildGoal" }, parent: parent);
+        var parent = new CallFrame(MakeAction("ParentGoal"));
+        var child = new CallFrame(MakeAction("ChildGoal"), parent: parent);
 
         await Assert.That(parent.Indent).IsEqualTo(0);
         await Assert.That(child.Indent).IsEqualTo(1);
@@ -83,7 +98,7 @@ public class CallFrameTests
     [Test]
     public async Task CompletedAt_DefaultsToNull()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         await Assert.That(frame.CompletedAt).IsNull();
     }
@@ -91,7 +106,7 @@ public class CallFrameTests
     [Test]
     public async Task Errors_DefaultsToEmpty()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         await Assert.That(frame.Errors.Count).IsEqualTo(0);
     }
@@ -99,7 +114,7 @@ public class CallFrameTests
     [Test]
     public async Task Phase_CanBeSet()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         frame.Phase = ExecutionPhase.ExecutingGoal;
 
@@ -109,20 +124,20 @@ public class CallFrameTests
     [Test]
     public async Task Step_CanBeSet()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         var step = new Step { Index = 5, Text = "call http endpoint", LineNumber = 6 };
 
-        frame.Step = step;
+        frame.Action.Step = step;
 
-        await Assert.That(frame.Step).IsEqualTo(step);
-        await Assert.That(frame.Step!.Index).IsEqualTo(5);
-        await Assert.That(frame.Step!.Text).IsEqualTo("call http endpoint");
+        await Assert.That(frame.Action.Step).IsEqualTo(step);
+        await Assert.That(frame.Action.Step!.Index).IsEqualTo(5);
+        await Assert.That(frame.Action.Step!.Text).IsEqualTo("call http endpoint");
     }
 
     [Test]
     public async Task EventId_CanBeSet()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         frame.EventId = "event123";
 
@@ -132,7 +147,7 @@ public class CallFrameTests
     [Test]
     public async Task Duration_ReturnsPositiveTimeSpan()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         await Task.Delay(10);
 
         var duration = frame.Duration;
@@ -143,7 +158,7 @@ public class CallFrameTests
     [Test]
     public async Task RecordStep_AddsStep()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         var step = new Step { Index = 0, Text = "first step" };
 
         frame.RecordStep(step);
@@ -158,7 +173,7 @@ public class CallFrameTests
     {
         var before = DateTime.UtcNow;
 
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         frame.RecordStep(new Step { Index = 0, Text = "step" });
 
         var after = DateTime.UtcNow;
@@ -169,7 +184,7 @@ public class CallFrameTests
     [Test]
     public async Task RecordStep_RespectsMaxStepsLimit()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         for (int i = 0; i <= CallFrame.MaxStepsPerFrame; i++)
         {
@@ -182,7 +197,7 @@ public class CallFrameTests
     [Test]
     public async Task CompleteCurrentStep_SetsCompletedAt()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         frame.RecordStep(new Step { Index = 0, Text = "step" });
 
         frame.CompleteCurrentStep();
@@ -193,7 +208,7 @@ public class CallFrameTests
     [Test]
     public async Task CompleteCurrentStep_SetsDuration()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         frame.RecordStep(new Step { Index = 0, Text = "step" });
         await Task.Delay(10);
 
@@ -206,7 +221,7 @@ public class CallFrameTests
     [Test]
     public async Task CompleteCurrentStep_WithExplicitDuration_UsesDuration()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         frame.RecordStep(new Step { Index = 0, Text = "step" });
 
         frame.CompleteCurrentStep(TimeSpan.FromMilliseconds(100));
@@ -217,7 +232,7 @@ public class CallFrameTests
     [Test]
     public async Task CompleteCurrentStep_NoSteps_DoesNotThrow()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         frame.CompleteCurrentStep();
 
@@ -227,7 +242,7 @@ public class CallFrameTests
     [Test]
     public async Task Complete_SetsCompletedAt()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         frame.Complete();
 
@@ -237,7 +252,7 @@ public class CallFrameTests
     [Test]
     public async Task Complete_SetsPhaseToNone_WhenNoErrors()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         frame.Complete();
 
@@ -247,7 +262,7 @@ public class CallFrameTests
     [Test]
     public async Task Complete_SetsPhaseToError_WhenHasErrors()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         frame.AddError(new Error("Test error"));
 
         frame.Complete();
@@ -258,7 +273,7 @@ public class CallFrameTests
     [Test]
     public async Task AddError_AddsToErrorsList()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         var error = new Error("Test error");
 
         frame.AddError(error);
@@ -270,7 +285,7 @@ public class CallFrameTests
     [Test]
     public async Task IsInEvent_ReturnsFalse_WhenNoEventId()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         await Assert.That(frame.IsInEvent).IsFalse();
     }
@@ -278,7 +293,7 @@ public class CallFrameTests
     [Test]
     public async Task IsInEvent_ReturnsTrue_WhenHasEventId()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         frame.EventId = "event123";
 
         await Assert.That(frame.IsInEvent).IsTrue();
@@ -287,9 +302,9 @@ public class CallFrameTests
     [Test]
     public async Task IsInEvent_ReturnsTrue_WhenParentIsInEvent()
     {
-        var parent = new CallFrame(new Goal { Name = "ParentGoal" });
+        var parent = new CallFrame(MakeAction("ParentGoal"));
         parent.EventId = "event123";
-        var child = new CallFrame(new Goal { Name = "ChildGoal" }, parent: parent);
+        var child = new CallFrame(MakeAction("ChildGoal"), parent: parent);
 
         await Assert.That(child.IsInEvent).IsTrue();
     }
@@ -297,7 +312,7 @@ public class CallFrameTests
     [Test]
     public async Task Depth_ReturnsZero_WhenNoParent()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         await Assert.That(frame.Depth).IsEqualTo(0);
     }
@@ -305,8 +320,8 @@ public class CallFrameTests
     [Test]
     public async Task Depth_ReturnsOne_WhenHasParent()
     {
-        var parent = new CallFrame(new Goal { Name = "ParentGoal" });
-        var child = new CallFrame(new Goal { Name = "ChildGoal" }, parent: parent);
+        var parent = new CallFrame(MakeAction("ParentGoal"));
+        var child = new CallFrame(MakeAction("ChildGoal"), parent: parent);
 
         await Assert.That(child.Depth).IsEqualTo(1);
     }
@@ -314,9 +329,9 @@ public class CallFrameTests
     [Test]
     public async Task Depth_ReturnsTwoForGrandchild()
     {
-        var grandparent = new CallFrame(new Goal { Name = "GrandparentGoal" });
-        var parent = new CallFrame(new Goal { Name = "ParentGoal" }, parent: grandparent);
-        var child = new CallFrame(new Goal { Name = "ChildGoal" }, parent: parent);
+        var grandparent = new CallFrame(MakeAction("GrandparentGoal"));
+        var parent = new CallFrame(MakeAction("ParentGoal"), parent: grandparent);
+        var child = new CallFrame(MakeAction("ChildGoal"), parent: parent);
 
         await Assert.That(child.Depth).IsEqualTo(2);
     }
@@ -324,7 +339,7 @@ public class CallFrameTests
     [Test]
     public async Task GetStackTrace_IncludesGoalName()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
 
         var trace = frame.GetStackTrace();
 
@@ -334,8 +349,8 @@ public class CallFrameTests
     [Test]
     public async Task GetStackTrace_IncludesStepIndex()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
-        frame.Step = new Step { Index = 5, Text = "test step", LineNumber = 6 };
+        var frame = new CallFrame(MakeAction("TestGoal"));
+        frame.Action.Step = new Step { Index = 5, Text = "test step", LineNumber = 6 };
 
         var trace = frame.GetStackTrace();
 
@@ -345,7 +360,7 @@ public class CallFrameTests
     [Test]
     public async Task GetStackTrace_IncludesGoalPath()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal", Path = "/path/to/goal.pr" });
+        var frame = new CallFrame(MakeAction("TestGoal", "/path/to/goal.pr"));
 
         var trace = frame.GetStackTrace();
 
@@ -355,7 +370,7 @@ public class CallFrameTests
     [Test]
     public async Task GetStackTrace_IncludesDuration()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         await Task.Delay(10);
 
         var trace = frame.GetStackTrace();
@@ -366,7 +381,7 @@ public class CallFrameTests
     [Test]
     public async Task ToString_ReturnsFormattedString()
     {
-        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var frame = new CallFrame(MakeAction("TestGoal"));
         frame.Phase = ExecutionPhase.ExecutingStep;
 
         var str = frame.ToString();

@@ -1,5 +1,5 @@
-using App.Variables;
-using Type = App.Variables.Type;
+using global::App.Variables;
+using Type = global::App.Data.Type;
 
 namespace PLang.Tests.App.Memory;
 

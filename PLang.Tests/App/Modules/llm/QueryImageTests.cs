@@ -1,8 +1,8 @@
-using App.Actor.Context;
-using App.Variables;
-using App.modules.llm;
-using App.modules.llm.providers;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.modules.llm;
+using global::App.modules.llm.providers;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.llm;
 

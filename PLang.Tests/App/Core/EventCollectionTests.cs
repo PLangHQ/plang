@@ -1,7 +1,7 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Errors;
-using App.Variables;
+using global::App.Errors;
+using global::App.Variables;
 
 namespace PLang.Tests.App.Core;
 
@@ -9,7 +9,7 @@ public class EventsTests
 {
     private static global::App.Actor.Context.@this CreateContext()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         return new global::App.Actor.Context.@this(engine);
     }
 

@@ -1,8 +1,8 @@
-using App.Actor.Context;
-using App.Variables;
-using App.Config;
-using App.modules.http;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.Config;
+using global::App.modules.http;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Settings;
 

@@ -2,10 +2,10 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using App.Goals.Goal;
-using App.Variables;
-using App.modules.llm;
-using App.modules.llm.providers;
+using global::App.Goals.Goal;
+using global::App.Variables;
+using global::App.modules.llm;
+using global::App.modules.llm.providers;
 
 namespace PLang.Tests.App.Modules.llm;
 

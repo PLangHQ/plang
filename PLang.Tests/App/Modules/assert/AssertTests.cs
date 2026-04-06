@@ -1,16 +1,16 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Errors;
-using App.Variables;
-using AssertEquals = App.modules.assert.Equals;
-using AssertNotEquals = App.modules.assert.NotEquals;
-using AssertIsTrue = App.modules.assert.IsTrue;
-using AssertIsFalse = App.modules.assert.IsFalse;
-using AssertIsNull = App.modules.assert.IsNull;
-using AssertIsNotNull = App.modules.assert.IsNotNull;
-using AssertContains = App.modules.assert.Contains;
-using AssertGreaterThan = App.modules.assert.GreaterThan;
-using AssertLessThan = App.modules.assert.LessThan;
+using global::App.Errors;
+using global::App.Variables;
+using AssertEquals = global::App.modules.assert.Equals;
+using AssertNotEquals = global::App.modules.assert.NotEquals;
+using AssertIsTrue = global::App.modules.assert.IsTrue;
+using AssertIsFalse = global::App.modules.assert.IsFalse;
+using AssertIsNull = global::App.modules.assert.IsNull;
+using AssertIsNotNull = global::App.modules.assert.IsNotNull;
+using AssertContains = global::App.modules.assert.Contains;
+using AssertGreaterThan = global::App.modules.assert.GreaterThan;
+using AssertLessThan = global::App.modules.assert.LessThan;
 
 namespace PLang.Tests.App.actions.assert;
 
@@ -18,7 +18,7 @@ public class AssertTests
 {
     private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         var memory = new Variables();
         var context = new global::App.Actor.Context.@this(engine, memory);
         return (context, memory);

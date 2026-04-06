@@ -1,5 +1,5 @@
-using App.Variables;
-using App.modules.condition;
+using global::App.Variables;
+using global::App.modules.condition;
 
 namespace PLang.Tests.App.Modules.condition;
 
@@ -109,7 +109,7 @@ public class OperatorTests
     public async Task ImplementsIObject()
     {
         var op = new Operator("==");
-        await Assert.That(op is App.modules.IObject).IsTrue();
+        await Assert.That(op is global::App.modules.IObject).IsTrue();
     }
 
     // --- Implicit conversion ---

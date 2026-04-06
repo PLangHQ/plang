@@ -1,11 +1,11 @@
-using App.Actor.Context;
-using App.Errors;
-using App.Variables;
-using App.Providers;
-using App.modules.signing;
-using App.modules.signing.providers;
-using App.modules.crypto.providers;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Errors;
+using global::App.Variables;
+using global::App.Providers;
+using global::App.modules.signing;
+using global::App.modules.signing.providers;
+using global::App.modules.crypto.providers;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.provider;
 
@@ -74,7 +74,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Load_NonExistentDll_ReturnsLoadError()
     {
-        var action = new App.modules.provider.load
+        var action = new global::App.modules.provider.load
         {
             Context = Ctx,
             Path = "/nonexistent/path/fake.dll"
@@ -88,7 +88,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Load_NullPath_ReturnsValidationError()
     {
-        var action = new App.modules.provider.load
+        var action = new global::App.modules.provider.load
         {
             Context = Ctx,
             Path = null
@@ -109,7 +109,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new App.modules.provider.load
+        var action = new global::App.modules.provider.load
         {
             Context = Ctx,
             Path = dllPath
@@ -132,7 +132,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new App.modules.provider.load
+        var action = new global::App.modules.provider.load
         {
             Context = Ctx,
             Path = dllPath
@@ -153,7 +153,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new App.modules.provider.load
+        var action = new global::App.modules.provider.load
         {
             Context = Ctx,
             Path = dllPath
@@ -174,7 +174,7 @@ public class ProviderModuleTests
         _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("first"));
         _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("second"));
 
-        var action = new App.modules.provider.remove
+        var action = new global::App.modules.provider.remove
         {
             Context = Ctx,
             Name = "second",
@@ -190,7 +190,7 @@ public class ProviderModuleTests
     public async Task Remove_Default_ReturnsError()
     {
         // ed25519 is registered as default at engine startup
-        var action = new App.modules.provider.remove
+        var action = new global::App.modules.provider.remove
         {
             Context = Ctx,
             Name = "ed25519",
@@ -205,7 +205,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Remove_NonExistent_ReturnsError()
     {
-        var action = new App.modules.provider.remove
+        var action = new global::App.modules.provider.remove
         {
             Context = Ctx,
             Name = "unknown",
@@ -220,7 +220,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Remove_UnknownType_ReturnsError()
     {
-        var action = new App.modules.provider.remove
+        var action = new global::App.modules.provider.remove
         {
             Context = Ctx,
             Name = "anything",
@@ -244,7 +244,7 @@ public class ProviderModuleTests
         _engine.Providers.Register<ISigningProvider>(first);
         _engine.Providers.Register<ISigningProvider>(second);
 
-        var action = new App.modules.provider.setDefault
+        var action = new global::App.modules.provider.setDefault
         {
             Context = Ctx,
             Name = "second",
@@ -262,7 +262,7 @@ public class ProviderModuleTests
     {
         _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("first"));
 
-        var action = new App.modules.provider.setDefault
+        var action = new global::App.modules.provider.setDefault
         {
             Context = Ctx,
             Name = "unknown",
@@ -277,7 +277,7 @@ public class ProviderModuleTests
     [Test]
     public async Task SetDefault_UnknownType_ReturnsError()
     {
-        var action = new App.modules.provider.setDefault
+        var action = new global::App.modules.provider.setDefault
         {
             Context = Ctx,
             Name = "anything",
@@ -322,7 +322,7 @@ public class ProviderModuleTests
     {
         _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("extra"));
 
-        var action = new App.modules.provider.list
+        var action = new global::App.modules.provider.list
         {
             Context = Ctx,
             Type = null
@@ -340,7 +340,7 @@ public class ProviderModuleTests
     {
         _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("extra"));
 
-        var action = new App.modules.provider.list
+        var action = new global::App.modules.provider.list
         {
             Context = Ctx,
             Type = "signing"
@@ -353,7 +353,7 @@ public class ProviderModuleTests
     [Test]
     public async Task ListAction_UnknownType_ReturnsError()
     {
-        var action = new App.modules.provider.list
+        var action = new global::App.modules.provider.list
         {
             Context = Ctx,
             Type = "quantum"
@@ -373,7 +373,7 @@ public class ProviderModuleTests
 
         public MockSigningProvider(string name) { Name = name; }
 
-        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));
+        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));
         public Data Sign(byte[] data, string privateKey) => Data.Ok(new byte[64]);
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.Ok(true);
         public Task<Data> SignAsync(sign action) => Task.FromResult(Data.Ok());

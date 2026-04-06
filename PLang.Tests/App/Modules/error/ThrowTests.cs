@@ -1,7 +1,7 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Variables;
-using App.modules.error;
+using global::App.Variables;
+using global::App.modules.error;
 
 namespace PLang.Tests.App.actions.error;
 
@@ -9,7 +9,7 @@ public class ThrowTests
 {
     private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         var memory = new Variables();
         var context = new global::App.Actor.Context.@this(engine, memory);
         return (context, memory);

@@ -1,8 +1,8 @@
-using App.Utils;
+using global::App.Utils;
 
 namespace PLang.Tests.App.Memory;
 
-using R2 = App.Variables;
+using R2 = global::App.Data;
 
 public class TStringTests
 {

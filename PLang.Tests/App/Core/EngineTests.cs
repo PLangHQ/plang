@@ -1,6 +1,6 @@
-using App.Actor.Context;
-using App.Variables;
-using App.modules;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.modules;
 
 namespace PLang.Tests.App.Core;
 
@@ -14,7 +14,7 @@ public class EngineTests
             Text = text,
             Actions = new StepActions
             {
-                new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = actionClass,
                     ActionName = method,
@@ -35,7 +35,7 @@ public class EngineTests
             Text = text,
             Actions = new StepActions
             {
-                new App.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = actionClass,
                     ActionName = method,
@@ -53,7 +53,7 @@ public class EngineTests
     [Test]
     public async Task System_ReturnsActorWithCorrectName()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var system = engine.System;
 
@@ -63,7 +63,7 @@ public class EngineTests
     [Test]
     public async Task Service_ReturnsActorWithCorrectName()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var service = engine.Service;
 
@@ -73,7 +73,7 @@ public class EngineTests
     [Test]
     public async Task User_ReturnsActorWithCorrectName()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var user = engine.User;
 
@@ -83,7 +83,7 @@ public class EngineTests
     [Test]
     public async Task Actors_AreLazilyCreated()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         // Access only User actor
         var user = engine.User;
@@ -97,7 +97,7 @@ public class EngineTests
     [Test]
     public async Task Actors_HaveIsolatedContexts()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         engine.User.Context.Variables.Set("key", "user-value");
         engine.System.Context.Variables.Set("key", "system-value");
@@ -109,7 +109,7 @@ public class EngineTests
     [Test]
     public async Task Actors_HaveIsolatedIO()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         engine.User.Channels.CreateMemoryChannel("test");
         engine.System.Channels.CreateMemoryChannel("test");
@@ -123,7 +123,7 @@ public class EngineTests
     [Test]
     public async Task Actor_Context_HasBackReference()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         await Assert.That(engine.User.Context.Actor).IsEqualTo(engine.User);
         await Assert.That(engine.System.Context.Actor).IsEqualTo(engine.System);
@@ -133,7 +133,7 @@ public class EngineTests
     [Test]
     public async Task Actor_SameInstanceOnMultipleAccess()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var user1 = engine.User;
         var user2 = engine.User;
@@ -146,7 +146,7 @@ public class EngineTests
     [Test]
     public async Task Constructor_SetsProperties()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
         await Assert.That(engine.Modules).IsNotNull();
@@ -158,7 +158,7 @@ public class EngineTests
     [Test]
     public async Task Constructor_GeneratesId()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         await Assert.That(engine.Id).IsNotNull();
         await Assert.That(engine.Id.Length).IsEqualTo(12);
@@ -167,7 +167,7 @@ public class EngineTests
     [Test]
     public async Task Constructor_DefaultsNameToApp()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         await Assert.That(engine.Name).IsEqualTo("App");
     }
@@ -175,7 +175,7 @@ public class EngineTests
     [Test]
     public async Task Name_CanBeChanged()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         engine.Name = "CustomEngine";
 
@@ -185,7 +185,7 @@ public class EngineTests
     [Test]
     public async Task Debug_IsEnabled_ReflectsEngine()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         engine.Debug.IsEnabled = true;
 
@@ -196,7 +196,7 @@ public class EngineTests
     public async Task Constructor_AcceptsCustomModules()
     {
         var modules = new EngineModules();
-        await using var engine = new App.@this("/app", modules);
+        await using var engine = new global::App.@this("/app", modules);
 
         await Assert.That(engine.Modules).IsEqualTo(modules);
     }
@@ -204,7 +204,7 @@ public class EngineTests
     [Test]
     public async Task Channels_HasSerializers()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         await Assert.That(engine.Channels.Serializers).IsNotNull();
         await Assert.That(engine.Channels.Serializers.GetByContentType("application/json")).IsNotNull();
@@ -213,7 +213,7 @@ public class EngineTests
     [Test]
     public async Task Modules_HasVariableActions()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         await Assert.That(engine.Modules.Contains("variable", "set")).IsTrue();
         await Assert.That(engine.Modules.Contains("variable", "get")).IsTrue();
@@ -222,7 +222,7 @@ public class EngineTests
     [Test]
     public async Task Modules_HasOutputActions()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         await Assert.That(engine.Modules.Contains("output", "write")).IsTrue();
     }
@@ -230,7 +230,7 @@ public class EngineTests
     [Test]
     public async Task CreateContext_CreatesNewContext()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         using var context = engine.CreateContext();
 
@@ -242,7 +242,7 @@ public class EngineTests
     [Test]
     public async Task CreateContext_AcceptsCustomVariables()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
         var variables = new Variables();
         variables.Set("test", "value");
 
@@ -254,7 +254,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_NonexistentGoal_ReturnsError()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "NonexistentGoal" });
 
@@ -265,7 +265,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_EmptyGoal_ReturnsSuccess()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
         var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
         engine.Goals.Add(goal);
 
@@ -277,7 +277,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_CancelledToken_ReturnsError()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
         var goal = new Goal
         {
             Name = "TestGoal",
@@ -302,7 +302,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_SetsContextGoal()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         engine.Goals.Add(goal);
         using var context = engine.CreateContext();
@@ -317,7 +317,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_PushesCallFrame()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         engine.Goals.Add(goal);
 
@@ -331,7 +331,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_ExecutesSteps()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var goal = new Goal
         {
@@ -356,7 +356,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_StepFailure_ReturnsError()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var goal = new Goal
         {
@@ -378,7 +378,7 @@ public class EngineTests
     [Test]
     public async Task StepRunAsync_ActionNotFound_ReturnsError()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
         var step = MakeStep("nonexistent", "method");
         using var context = engine.CreateContext();
 
@@ -391,7 +391,7 @@ public class EngineTests
     [Test]
     public async Task StepRunAsync_SetsReturnVariable()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var step = MakeStep("variable", "set",
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
@@ -405,7 +405,7 @@ public class EngineTests
     [Test]
     public async Task StepRunAsync_ExceptionInHandler_Throws()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var throwingHandler = new ThrowingHandler();
         engine.Modules.Register("throwing", "fail", throwingHandler);
@@ -421,7 +421,7 @@ public class EngineTests
     [Test]
     public async Task StepRunAsync_HandlerWithoutICodeGenerated_ReturnsError()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var nonGeneratedHandler = new NonGeneratedHandler();
         engine.Modules.Register("legacy", "do", nonGeneratedHandler);
@@ -438,7 +438,7 @@ public class EngineTests
     [Test]
     public async Task DisposeAsync_DisposesDisposableHandlers()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         var disposableHandler = new DisposableHandler();
         engine.Modules.Register("disposable", "do", disposableHandler);
 
@@ -450,7 +450,7 @@ public class EngineTests
     [Test]
     public async Task DisposeAsync_DisposesAsyncDisposableHandlers()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         var asyncDisposableHandler = new AsyncDisposableHandler();
         engine.Modules.Register("asyncdisposable", "do", asyncDisposableHandler);
 
@@ -462,7 +462,7 @@ public class EngineTests
     [Test]
     public async Task DisposeAsync_CalledTwice_DoesNotThrow()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
 
         await engine.DisposeAsync();
         await engine.DisposeAsync();
@@ -473,7 +473,7 @@ public class EngineTests
     [Test]
     public async Task DisposeAsync_DisposesCreatedActors()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
 
         // Access actors to create them
         var user = engine.User;
@@ -494,7 +494,7 @@ public class EngineTests
     [Test]
     public async Task DisposeAsync_HandlesUncreatedActors()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
 
         // Don't access any actors
         await engine.DisposeAsync();
@@ -506,7 +506,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_WithActor_UsesActorContext()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var goal = new Goal
         {
@@ -532,7 +532,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_ByName_WithActor_UsesActorContext()
     {
-        await using var engine = new App.@this("/app");
+        await using var engine = new global::App.@this("/app");
 
         var goal = new Goal
         {
@@ -556,26 +556,26 @@ public class EngineTests
     // Handler that does NOT implement ICodeGenerated - used to test engine rejects it
     private class NonGeneratedHandler : IAction
     {
-        public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this App { get; private set; } = null!;
+        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
+        public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
     }
 
     private class DisposableHandler : IAction, ICodeGenerated, IDisposable
     {
-        public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this App { get; private set; } = null!;
+        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
-        public void Initialize(App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
+        public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
-        public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, global::App.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.@this engine, global::App.Actor.Context.@this context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);
@@ -585,15 +585,15 @@ public class EngineTests
 
     private class AsyncDisposableHandler : IAction, ICodeGenerated, IAsyncDisposable
     {
-        public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this App { get; private set; } = null!;
+        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
-        public void Initialize(App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
+        public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
-        public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, global::App.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.@this engine, global::App.Actor.Context.@this context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);
@@ -603,17 +603,17 @@ public class EngineTests
 
     private class ThrowingHandler : IAction, ICodeGenerated
     {
-        public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this App { get; private set; } = null!;
+        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
+        public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters)
         {
             throw new InvalidOperationException("Test exception");
         }
-        public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, global::App.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.@this engine, global::App.Actor.Context.@this context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);

@@ -1,9 +1,9 @@
 using App;
-using App.Actor.Context;
-using App.Variables;
-using App.Config;
-using SigningConfig = App.modules.signing.Config;
-using EngineType = App.@this;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.Config;
+using SigningConfig = global::App.modules.signing.Config;
+using EngineType = global::App.@this;
 
 namespace PLang.Tests.App.Settings;
 

@@ -40,7 +40,8 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
         var all = await LoadAllAsync(action);
         if (!all.Success) return all.ToError<Identity>();
-        if (all.Exists(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase) && !i.IsArchived))
+        var items = all.Value!;
+        if (items.Exists(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase) && !i.IsArchived))
             return App.Data.@this.FromError<Identity>(new ActionError($"Identity '{action.Name}' already exists", "DuplicateName", 409));
 
         var identity = GenerateIdentity(action, action.Name, action.SetAsDefault, action.Provider);
@@ -48,7 +49,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
         if (action.SetAsDefault)
         {
-            foreach (var existing in all.Where(i => i.IsDefault))
+            foreach (var existing in items.Where(i => i.IsDefault))
             {
                 existing.IsDefault = false;
                 var saveResult = await SaveAsync(action, existing);
@@ -105,8 +106,9 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         var app = action.Context.App;
         var all = await LoadAllAsync(action);
         if (!all.Success) return all.ToError<Identity>();
+        var items = all.Value!;
 
-        var target = all.Find(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase));
+        var target = items.Find(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase));
         if (target == null)
             return App.Data.@this.FromError<Identity>(new ActionError($"Identity '{action.Name}' not found", "NotFound", 404));
 
@@ -119,7 +121,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         if (target.IsDefault)
             return target;
 
-        foreach (var identity in all.Where(i => i.IsDefault))
+        foreach (var identity in items.Where(i => i.IsDefault))
         {
             identity.IsDefault = false;
             var result = await SaveAsync(action, identity);
@@ -146,7 +148,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
         var all = await LoadAllAsync(action);
         if (!all.Success) return all.ToError<Identity>();
-        if (all.Exists(i => string.Equals(i.Name, action.NewName, StringComparison.OrdinalIgnoreCase)))
+        if (all.Value!.Exists(i => string.Equals(i.Name, action.NewName, StringComparison.OrdinalIgnoreCase)))
         {
             identity.Error = new ActionError($"Identity '{action.NewName}' already exists", "DuplicateName", 409);
             return identity;
@@ -169,14 +171,12 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         return identity;
     }
 
-    public async Task<Data.DataList<Identity>> ListAsync(list action)
+    public async Task<Data.@this<List<Identity>>> ListAsync(list action)
     {
         var all = await LoadAllAsync(action);
-        if (!all.Success) return all;
-        var active = new Data.DataList<Identity>();
-        foreach (var identity in all)
-            if (!identity.IsArchived) active.Add(identity);
-        return active;
+        if (!all.Success) return Data.@this<List<Identity>>.FromError(all.Error!);
+        var active = all.Value!.Where(i => !i.IsArchived).ToList();
+        return Data.@this<List<Identity>>.Ok(active);
     }
 
     public async Task<Identity> ExportAsync(Export action)
@@ -215,7 +215,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     }
 
     /// <summary>Loads all identities (including archived) from the settings store.</summary>
-    internal async Task<Data.DataList<Identity>> LoadAllAsync(IContext action)
+    internal async Task<Data.@this<List<Identity>>> LoadAllAsync(IContext action)
     {
         var store = action.Context.App.System.SettingsStore;
         return await store.GetAll<Identity>(Table);
@@ -229,11 +229,12 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         var all = await LoadAllAsync(action);
         if (!all.Success)
             return all.ToError<Identity>();
-        var def = all.Find(i => i.IsDefault && !i.IsArchived);
+        var items = all.Value!;
+        var def = items.Find(i => i.IsDefault && !i.IsArchived);
         if (def != null) return def;
 
         // Promote an existing non-archived identity
-        var candidate = all.Find(i => !i.IsArchived);
+        var candidate = items.Find(i => !i.IsArchived);
         if (candidate != null)
         {
             candidate.IsDefault = true;

@@ -1,6 +1,6 @@
-using App.Actor.Context;
-using App.Variables;
-using App.modules;
+using global::App.Actor.Context;
+using global::App.Variables;
+using global::App.modules;
 
 namespace PLang.Tests.App.actions;
 
@@ -177,7 +177,7 @@ public class LibrariesTests
     public async Task GetCodeGenerated_BuiltInAction_ReturnsAction()
     {
         var modules = new EngineModules();
-        await using var engine = new App.@this("/app", modules);
+        await using var engine = new global::App.@this("/app", modules);
         using var context = engine.CreateContext();
 
         var (action, error) = modules.GetCodeGenerated("variable", "set", context);
@@ -192,7 +192,7 @@ public class LibrariesTests
         var modules = new EngineModules();
         var action = new MockCodeGenHandler();
         modules.Register("custom", "run", action);
-        await using var engine = new App.@this("/app", modules);
+        await using var engine = new global::App.@this("/app", modules);
         using var context = engine.CreateContext();
 
         var (result, error) = modules.GetCodeGenerated("custom", "run", context);
@@ -206,7 +206,7 @@ public class LibrariesTests
     {
         var modules = new EngineModules();
         modules.Register("legacy", "do", new MockHandler());
-        await using var engine = new App.@this("/app", modules);
+        await using var engine = new global::App.@this("/app", modules);
         using var context = engine.CreateContext();
 
         var (action, error) = modules.GetCodeGenerated("legacy", "do", context);
@@ -220,7 +220,7 @@ public class LibrariesTests
     public async Task GetCodeGenerated_NotFound_ReturnsActionNotFound()
     {
         var modules = new EngineModules();
-        await using var engine = new App.@this("/app", modules);
+        await using var engine = new global::App.@this("/app", modules);
         using var context = engine.CreateContext();
 
         var (action, error) = modules.GetCodeGenerated("nonexistent_xyz", "nope", context);
@@ -239,7 +239,7 @@ public class LibrariesTests
         modules.Register("custom", "run", handler1);
         modules.Register("custom", "run", handler2);
 
-        await using var engine = new App.@this("/app", modules);
+        await using var engine = new global::App.@this("/app", modules);
         using var context = engine.CreateContext();
 
         var (result, error) = modules.GetCodeGenerated("custom", "run", context);
@@ -252,7 +252,7 @@ public class LibrariesTests
     public async Task GetCodeGenerated_TypeBased_CreatesNewInstance()
     {
         var modules = new EngineModules();
-        await using var engine = new App.@this("/app", modules);
+        await using var engine = new global::App.@this("/app", modules);
         using var context = engine.CreateContext();
 
         // variable.set is type-registered (discovered via [Action] attribute)
@@ -275,7 +275,7 @@ public class LibrariesTests
         var modules = new EngineModules();
         modules.Clear(); // start fresh
 
-        var count = modules.Discover(typeof(App.@this).Assembly, "Some.Completely.Wrong.Namespace");
+        var count = modules.Discover(typeof(global::App.@this).Assembly, "Some.Completely.Wrong.Namespace");
 
         await Assert.That(count).IsEqualTo(0);
     }
@@ -286,7 +286,7 @@ public class LibrariesTests
         var modules = new EngineModules();
         modules.Clear(); // start fresh
 
-        var count = modules.Discover(typeof(App.@this).Assembly, "App.modules");
+        var count = modules.Discover(typeof(global::App.@this).Assembly, "App.modules");
 
         await Assert.That(modules.Contains("variable", "set")).IsTrue();
         await Assert.That(modules.Contains("output", "write")).IsTrue();
@@ -393,11 +393,11 @@ public class LibrariesTests
     /// </summary>
     private class MockHandler : IAction
     {
-        public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this App { get; private set; } = null!;
+        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
-        public void Initialize(App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
+        public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
     }
 
@@ -406,14 +406,14 @@ public class LibrariesTests
     /// </summary>
     private class MockCodeGenHandler : IAction, ICodeGenerated
     {
-        public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public string Tag { get; set; } = "";
-        public App.@this App { get; private set; } = null!;
+        public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
-        public void Initialize(App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
+        public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
-        public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, global::App.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.@this engine, global::App.Actor.Context.@this context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);

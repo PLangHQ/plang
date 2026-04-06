@@ -2,9 +2,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using App;
-using App.Channels.Serializers;
-using App.Variables;
-using App.modules.signing;
+using global::App.Channels.Serializers;
+using global::App.Variables;
+using global::App.modules.signing;
 
 namespace PLang.Tests.App.Serializers;
 

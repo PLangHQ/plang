@@ -1,10 +1,10 @@
 using System.Reflection;
-using App.Actor.Context;
-using App.Settings;
-using App.Errors;
-using App.Variables;
-using App.modules.identity;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Settings;
+using global::App.Errors;
+using global::App.Variables;
+using global::App.modules.identity;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.identity;
 
@@ -315,9 +315,9 @@ public class IdentityErrorPathTests
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 
-        var list = result as DataList<Identity>;
+        var list = result as global::App.Data.@this<List<Identity>>;
         // Both deserialize as Identity — no type filtering anymore
-        await Assert.That(list!.Count).IsEqualTo(2);
+        await Assert.That(list!.Value!.Count).IsEqualTo(2);
     }
 
     // --- Helpers ---
@@ -344,7 +344,7 @@ public class IdentityErrorPathTests
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
         public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
         public Task<Data> GetAll(string table) => _inner.GetAll(table);
-        public Task<DataList<T>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
+        public Task<global::App.Data.@this<List<T>>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
         public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(
                 new SettingsError("Simulated save failure", "IOError", 500)
@@ -366,7 +366,7 @@ public class IdentityErrorPathTests
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
         public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
         public Task<Data> GetAll(string table) => _inner.GetAll(table);
-        public Task<DataList<T>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
+        public Task<global::App.Data.@this<List<T>>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
         public Task<Data> Set(string table, string key, Data data) => _inner.Set(table, key, data);
         public Task<Data> Remove(string table, string key)
             => Task.FromResult(Data.FromError(
@@ -387,8 +387,8 @@ public class IdentityErrorPathTests
         public Task<Data> Get<T>(string table, string key) where T : Data => Get(table, key);
         public Task<Data> GetAll(string table)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated GetAll failure")));
-        public Task<DataList<T>> GetAll<T>(string table) where T : Data
-            => Task.FromResult(DataList<T>.FromError(new SettingsError("Simulated GetAll failure")));
+        public Task<global::App.Data.@this<List<T>>> GetAll<T>(string table) where T : Data
+            => Task.FromResult(global::App.Data.@this<List<T>>.FromError(new SettingsError("Simulated GetAll failure")));
         public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
         public Task<Data> Remove(string table, string key)

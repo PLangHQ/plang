@@ -1,10 +1,21 @@
 using App;
-using App.Errors;
+using global::App.Errors;
 
 namespace PLang.Tests.App.Core;
 
 public class CallStackTests
 {
+    private static global::App.Goals.Goal.Steps.Step.Actions.Action.@this MakeAction(Goal goal)
+    {
+        var step = new Step { Index = 0, Text = "test", Goal = goal };
+        var action = new global::App.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "test", ActionName = "test" };
+        action.Step = step;
+        return action;
+    }
+
+    private static global::App.Goals.Goal.Steps.Step.Actions.Action.@this MakeAction(string goalName)
+        => MakeAction(new Goal { Name = goalName });
+
     [Test]
     public async Task Constructor_DefaultsToEnabled()
     {
@@ -35,7 +46,7 @@ public class CallStackTests
     {
         var stack = new CallStack();
 
-        var frame = stack.Push(new Goal { Name = "TestGoal" });
+        var frame = stack.Push(MakeAction("TestGoal"));
 
         await Assert.That(stack.Depth).IsEqualTo(1);
         await Assert.That(stack.Current).IsEqualTo(frame);
@@ -47,10 +58,10 @@ public class CallStackTests
         var stack = new CallStack();
         var goal = new Goal { Name = "TestGoal" };
 
-        var frame = stack.Push(goal);
+        var frame = stack.Push(MakeAction(goal));
 
-        await Assert.That(frame.Goal).IsEqualTo(goal);
-        await Assert.That(frame.Goal.Name).IsEqualTo("TestGoal");
+        await Assert.That(frame.Action.Step!.Goal!).IsEqualTo(goal);
+        await Assert.That(frame.Action.Step!.Goal!.Name).IsEqualTo("TestGoal");
     }
 
     [Test]
@@ -59,18 +70,18 @@ public class CallStackTests
         var stack = new CallStack();
         var goal = new Goal { Name = "TestGoal", Path = "/path/to/goal.pr" };
 
-        var frame = stack.Push(goal);
+        var frame = stack.Push(MakeAction(goal));
 
-        await Assert.That(frame.Goal.Path).IsEqualTo("/path/to/goal.pr");
+        await Assert.That(frame.Action.Step!.Goal!.Path).IsEqualTo("/path/to/goal.pr");
     }
 
     [Test]
     public async Task Push_SetsParent()
     {
         var stack = new CallStack();
-        var parent = stack.Push(new Goal { Name = "ParentGoal" });
+        var parent = stack.Push(MakeAction("ParentGoal"));
 
-        var child = stack.Push(new Goal { Name = "ChildGoal" });
+        var child = stack.Push(MakeAction("ChildGoal"));
 
         await Assert.That(child.Parent).IsEqualTo(parent);
     }
@@ -80,7 +91,7 @@ public class CallStackTests
     {
         var stack = new CallStack { IsEnabled = false };
 
-        var frame = stack.Push(new Goal { Name = "TestGoal" });
+        var frame = stack.Push(MakeAction("TestGoal"));
 
         await Assert.That(frame).IsNotNull();
         await Assert.That(stack.Depth).IsEqualTo(0);
@@ -90,13 +101,13 @@ public class CallStackTests
     public async Task Push_ExceedsMaxDepth_ThrowsException()
     {
         var stack = new CallStack { MaxDepth = 3 };
-        stack.Push(new Goal { Name = "Goal1" });
-        stack.Push(new Goal { Name = "Goal2" });
-        stack.Push(new Goal { Name = "Goal3" });
+        stack.Push(MakeAction("Goal1"));
+        stack.Push(MakeAction("Goal2"));
+        stack.Push(MakeAction("Goal3"));
 
         await Assert.ThrowsAsync<CallStackOverflowException>(async () =>
         {
-            await Task.Run(() => stack.Push(new Goal { Name = "Goal4" }));
+            await Task.Run(() => stack.Push(MakeAction("Goal4")));
         });
     }
 
@@ -104,7 +115,7 @@ public class CallStackTests
     public async Task Pop_RemovesFrame()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "TestGoal" });
+        stack.Push(MakeAction("TestGoal"));
 
         var frame = await stack.PopAsync();
 
@@ -116,7 +127,7 @@ public class CallStackTests
     public async Task Pop_ReturnsFrame()
     {
         var stack = new CallStack();
-        var pushed = stack.Push(new Goal { Name = "TestGoal" });
+        var pushed = stack.Push(MakeAction("TestGoal"));
 
         var popped = await stack.PopAsync();
 
@@ -127,7 +138,7 @@ public class CallStackTests
     public async Task Pop_CompletesFrame()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "TestGoal" });
+        stack.Push(MakeAction("TestGoal"));
 
         var frame = await stack.PopAsync();
 
@@ -138,7 +149,7 @@ public class CallStackTests
     public async Task Pop_WhenDisabled_ReturnsNull()
     {
         var stack = new CallStack { IsEnabled = false };
-        stack.Push(new Goal { Name = "TestGoal" });
+        stack.Push(MakeAction("TestGoal"));
 
         var frame = await stack.PopAsync();
 
@@ -159,7 +170,7 @@ public class CallStackTests
     public async Task Peek_ReturnsCurrent()
     {
         var stack = new CallStack();
-        var pushed = stack.Push(new Goal { Name = "TestGoal" });
+        var pushed = stack.Push(MakeAction("TestGoal"));
 
         var peeked = stack.Peek();
 
@@ -181,21 +192,21 @@ public class CallStackTests
     public async Task RecordStep_UpdatesCurrentFrame()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "TestGoal" });
+        stack.Push(MakeAction("TestGoal"));
         var step = new Step { Index = 5, Text = "test step", LineNumber = 6 };
 
         stack.RecordStep(step);
 
-        await Assert.That(stack.Current!.Step).IsEqualTo(step);
-        await Assert.That(stack.Current!.Step!.Index).IsEqualTo(5);
-        await Assert.That(stack.Current!.Step!.Text).IsEqualTo("test step");
+        await Assert.That(stack.Current!.ExecutedSteps.Count).IsEqualTo(1);
+        await Assert.That(stack.Current!.ExecutedSteps[0].Step.Index).IsEqualTo(5);
+        await Assert.That(stack.Current!.ExecutedSteps[0].Step.Text).IsEqualTo("test step");
     }
 
     [Test]
     public async Task RecordStep_AddsExecutedStep()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "TestGoal" });
+        stack.Push(MakeAction("TestGoal"));
         var step = new Step { Index = 0, Text = "test step", LineNumber = 1 };
 
         stack.RecordStep(step);
@@ -207,7 +218,7 @@ public class CallStackTests
     public async Task RecordStep_WhenDisabled_DoesNothing()
     {
         var stack = new CallStack { IsEnabled = false };
-        stack.Push(new Goal { Name = "TestGoal" });
+        stack.Push(MakeAction("TestGoal"));
         var step = new Step { Index = 0, Text = "test step", LineNumber = 1 };
 
         stack.RecordStep(step);
@@ -243,7 +254,7 @@ public class CallStackTests
     public async Task AddError_AddsToCurrentFrame()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "TestGoal" });
+        stack.Push(MakeAction("TestGoal"));
         var error = new Error("Test error");
 
         stack.AddError(error);
@@ -292,9 +303,9 @@ public class CallStackTests
     public async Task GetFrames_ReturnsAllFrames()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "Goal1" });
-        stack.Push(new Goal { Name = "Goal2" });
-        stack.Push(new Goal { Name = "Goal3" });
+        stack.Push(MakeAction("Goal1"));
+        stack.Push(MakeAction("Goal2"));
+        stack.Push(MakeAction("Goal3"));
 
         var frames = stack.GetFrames();
 
@@ -305,8 +316,8 @@ public class CallStackTests
     public async Task GetStackTrace_ReturnsFormattedTrace()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "Goal1" });
-        stack.Push(new Goal { Name = "Goal2" });
+        stack.Push(MakeAction("Goal1"));
+        stack.Push(MakeAction("Goal2"));
 
         var trace = stack.GetStackTrace();
 
@@ -338,9 +349,9 @@ public class CallStackTests
     public async Task GetExecutionHistory_ReturnsFrameStepPairs()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "Goal1" });
+        stack.Push(MakeAction("Goal1"));
         stack.RecordStep(new Step { Index = 0, Text = "step1" });
-        stack.Push(new Goal { Name = "Goal2" });
+        stack.Push(MakeAction("Goal2"));
         stack.RecordStep(new Step { Index = 0, Text = "step2" });
 
         var history = stack.GetExecutionHistory().ToList();
@@ -352,7 +363,7 @@ public class CallStackTests
     public async Task IsInEvent_ReturnsFalse_WhenNotInEvent()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "TestGoal" });
+        stack.Push(MakeAction("TestGoal"));
 
         await Assert.That(stack.IsInEvent).IsFalse();
     }
@@ -361,7 +372,7 @@ public class CallStackTests
     public async Task IsInEvent_ReturnsTrue_WhenCurrentFrameHasEventId()
     {
         var stack = new CallStack();
-        var frame = stack.Push(new Goal { Name = "TestGoal" });
+        var frame = stack.Push(MakeAction("TestGoal"));
         frame.EventId = "event123";
 
         await Assert.That(stack.IsInEvent).IsTrue();
@@ -371,8 +382,8 @@ public class CallStackTests
     public async Task ContainsGoal_ReturnsTrue_WhenGoalInStack()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "Goal1" });
-        stack.Push(new Goal { Name = "Goal2" });
+        stack.Push(MakeAction("Goal1"));
+        stack.Push(MakeAction("Goal2"));
 
         await Assert.That(stack.ContainsGoal("Goal1")).IsTrue();
     }
@@ -381,7 +392,7 @@ public class CallStackTests
     public async Task ContainsGoal_ReturnsFalse_WhenGoalNotInStack()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "Goal1" });
+        stack.Push(MakeAction("Goal1"));
 
         await Assert.That(stack.ContainsGoal("Goal2")).IsFalse();
     }
@@ -390,7 +401,7 @@ public class CallStackTests
     public async Task ContainsGoal_CaseInsensitive()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "TestGoal" });
+        stack.Push(MakeAction("TestGoal"));
 
         await Assert.That(stack.ContainsGoal("testgoal")).IsTrue();
         await Assert.That(stack.ContainsGoal("TESTGOAL")).IsTrue();
@@ -400,8 +411,8 @@ public class CallStackTests
     public async Task Clear_RemovesAllFramesAndErrors()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "Goal1" });
-        stack.Push(new Goal { Name = "Goal2" });
+        stack.Push(MakeAction("Goal1"));
+        stack.Push(MakeAction("Goal2"));
         stack.AddError(new Error("Error"));
 
         stack.Clear();
@@ -414,8 +425,8 @@ public class CallStackTests
     public async Task ToSerializable_ReturnsSerializableRepresentation()
     {
         var stack = new CallStack();
-        stack.Push(new Goal { Name = "Goal1" });
-        stack.Push(new Goal { Name = "Goal2" });
+        stack.Push(MakeAction("Goal1"));
+        stack.Push(MakeAction("Goal2"));
 
         var serializable = stack.ToSerializable();
 

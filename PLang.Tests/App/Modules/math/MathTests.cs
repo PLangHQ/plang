@@ -1,7 +1,7 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Variables;
-using App.modules.math;
+using global::App.Variables;
+using global::App.modules.math;
 
 namespace PLang.Tests.App.actions.math;
 
@@ -9,7 +9,7 @@ public class MathTests
 {
     private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         var memory = new Variables();
         var context = new global::App.Actor.Context.@this(engine, memory);
         return (context, memory);
@@ -225,7 +225,7 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new App.modules.math.Random { Context = context, Min = 1, Max = 10 };
+        var action = new global::App.modules.math.Random { Context = context, Min = 1, Max = 10 };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

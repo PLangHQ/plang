@@ -1,10 +1,10 @@
-using App.Actor.Context;
-using App.Errors;
-using App.Variables;
-using App.Providers;
-using App.modules.signing.providers;
-using App.modules.identity;
-using PLangEngine = App.@this;
+using global::App.Actor.Context;
+using global::App.Errors;
+using global::App.Variables;
+using global::App.Providers;
+using global::App.modules.signing.providers;
+using global::App.modules.identity;
+using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.signing;
 
@@ -136,13 +136,13 @@ public class IdentityKeyProviderTests
             _privKey = privKey;
         }
 
-        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.Ok(new KeyPair(_pubKey, _privKey));
+        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.Ok(new KeyPair(_pubKey, _privKey));
     }
 
     private class ThrowingKeyProvider : IKeyProvider
     {
         public string Name => "throwing";
         public bool IsDefault { get; set; }
-        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
+        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
     }
 }

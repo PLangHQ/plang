@@ -1,8 +1,8 @@
-using App.Actor.Context;
+using global::App.Actor.Context;
 using App;
-using App.Variables;
-using App.modules.list;
-using ListResult = App.modules.list.types.list;
+using global::App.Variables;
+using global::App.modules.list;
+using ListResult = global::App.modules.list.types.list;
 
 namespace PLang.Tests.App.actions.list;
 
@@ -10,7 +10,7 @@ public class ListTests
 {
     private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
     {
-        var engine = new App.@this("/app");
+        var engine = new global::App.@this("/app");
         var memory = new Variables();
         var context = new global::App.Actor.Context.@this(engine, memory);
         return (context, memory);
@@ -289,7 +289,7 @@ public class ListTests
     {
         var (context, _) = CreateContext();
 
-        var action = new App.modules.list.Range { Context = context, Start = 1, End = 5, Step = 1 };
+        var action = new global::App.modules.list.Range { Context = context, Start = 1, End = 5, Step = 1 };
         var result = await action.Run();
 
         var listResult = result.Value as ListResult;
