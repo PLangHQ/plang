@@ -1,266 +1,426 @@
-# The Object-Based Pattern
+# The Object-Based Pattern (OBP)
 
-## 1. Introduction
+## The Problem: Friction
 
-The Object-Based Pattern is an architectural pattern for organizing behavior in object-oriented systems. It places every operation on the object that owns the data the operation acts upon. Instead of external managers, services, or controllers that reach into objects to manipulate their state, objects expose behavior as methods and expose their sub-components as navigable properties.
+Consider what happens when you save user data in a traditional codebase. A controller receives a request. It extracts fields. It passes them to a service. The service validates, transforms, calls a repository. The repository maps to an entity, calls a database. Every layer knows the shape of the data. Every layer has parameters threaded through it. Every layer adds code, adds coupling, adds CPU cycles.
 
-The result is a system that reads like natural language: `order.Items.CalculateTotal()` — "the order's items calculate their total."
+Now count: how many lines of code? How many method signatures? How many objects created just to move data from A to B?
 
-This document defines the pattern formally so that a developer encountering it for the first time can understand and apply it consistently. It is language-agnostic — the principles apply to any object-oriented system.
+That is friction. Every parameter pass, every service layer, every eager load, every abstraction that exists "just in case" — friction. Wasted CPU. Wasted complexity. Wasted context for anyone reading the code, human or LLM.
 
-## 2. Definitions
+Traditional architecture says: know everything, everywhere. Every method signature declares exactly what it needs. Every constructor loads what it might use. Every layer transforms data into its own shape.
 
-**Owner**: The object that holds the data. If an `Order` contains a list of items, the `Order` owns that list.
+OBP says: stop. Most of that work is unnecessary.
 
-**Behavior**: Any operation that reads, transforms, or produces data. Loading, running, merging, serializing.
+## The Insight: Data Flows Blind
 
-**Navigation**: Reaching a sub-component through a property chain. `engine.Projects.Get("alpha")` navigates from the engine to its project collection, then queries it.
-
-**Root**: The top-level object from which all capabilities are reachable. In a runtime system, this is typically the engine or application object.
-
-**Context**: A request-scoped object carrying execution state (memory, call stack, current position). It is passed as a parameter and never stored on shared objects.
-
-**Collection Wrapper**: A typed class that extends a generic collection (e.g., `Stages : List<Stage>`) and adds domain-specific operations.
-
-## 3. Core Principles
-
-### 3.1 Behavior Lives on the Owner
-
-Every operation belongs to the object whose data it operates on. If an operation iterates a collection, it belongs on the collection. If it transforms a result, it belongs on the result type.
-
-**Test**: Ask "whose data does this method read or write?" The answer is the owner. If the method is not on the owner, move it.
+In PLang, a program looks like this:
 
 ```
-Stages.Load(context)             -- Stages owns the list, so Load belongs here
-Operations.RunAsync(engine, context)  -- Operations owns the list, so RunAsync belongs here
-Result.Merge(other)              -- Result owns the data, so Merge belongs here
+- read file.txt, write to %data%
+- store %data%
+- write out %data%
 ```
 
-A parent delegates to its children. It does not iterate them:
+Three lines. Read a file, stored it in a database, printed it out. The programmer has no idea what's in `%data%`. It's just there. It flows.
 
-```
-Task.Load(context):
-    Task.Stages.Load(context)       -- Task delegates to Stages; it does not loop over stages itself
+This is not a limitation — it's a design principle. The caller doesn't need to know the shape of the data. Only the endpoint that actually works with the data needs to know.
 
-Stage.RunAsync(engine, context):
-    Stage.Operations.RunAsync(engine, context)  -- Stage delegates to Operations
-```
+So when building the C# runtime for PLang, the question became: **what if the runtime worked the same way?**
 
-### 3.2 Navigate, Don't Inject
+What if incoming data is always just `Data`? You don't know what's inside. You don't need to. You receive it, you pass it along, you let the thing that actually owns it do the work.
 
-All capabilities are reachable by navigating from a root object through properties. A handler that needs file I/O accesses `engine.FileSystem`. A handler that needs to resolve a project accesses `engine.Projects`. There is no need to pass individual dependencies as parameters — pass the root, navigate from there.
+If only one place knows the shape, then that place must own all the logic. There's nowhere else to put it.
 
-```
-engine
-  .Projects       -- find/load projects
-  .Handlers        -- find operation handlers
-  .Channels        -- named channel routing
-  .FileSystem      -- file operations
-  .Serializers     -- serialization
+## The Consequence: Objects Own Everything
+
+Take a `Goal` class. In traditional architecture, it's a DTO — maybe a `Name` property, a `ToString()` override. All the real work happens in a `GoalService` or `GoalManager` or `GoalProcessor` somewhere else.
+
+In OBP, Goal gets `Load()` and `Save()`. The middle layer disappears:
+
+```csharp
+var data = request.Form["data"];
+app.Goal.Save(data);
 ```
 
-**Test**: If a method signature has more than two domain parameters (excluding context and cancellation tokens), something should be reachable through navigation instead.
+Two lines. The middle layer that used to be hundreds of lines of parameter threading, validation chains, and service orchestration — gone. And look what `app.Goal.Save` tells you: you're saving a goal. Beautiful. Readable. Navigate from the root, arrive at what you need.
 
-### 3.3 Names Describe What the Object Is
+"But you just moved the logic!" — yes. Look where. The object that owns the data now owns the behavior. The thing that knows what a Goal looks like is the only thing that touches Goal internals. Everything else just passes it along.
 
-Every property name should tell you what the object *is*, not what it *does*. When you look at the object graph, the name alone should tell you where to navigate.
+## Friction to Zero: Lazy Everything
 
-**Good names** describe the thing:
-```
-engine.Goals          -- "Goals" — manages goals
-engine.Libraries      -- "Libraries" — manages action handler libraries
-engine.Channels       -- "Channels" — manages named I/O channels
-engine.FileSystem     -- "FileSystem" — manages file access
-engine.Serializers    -- "Serializers" — manages serialization
+Consider a file path:
+
+```csharp
+var path = new Path("/file.txt");
+path.Size  // how big is the file?
 ```
 
-**Bad names** describe a verb or are too broad:
-```
-engine.IO             -- "IO" — input/output of what? Files? Channels? Everything?
-engine.Run            -- "Run" — is this a method? A runner object?
-engine.Data           -- "Data" — what data?
-```
+Traditional code:
 
-**Test**: If the name could reasonably describe two different things in the system, it is too broad. `IO` could mean file I/O or channel I/O — rename to `Channels` or `FileSystem` depending on what it actually is.
+```csharp
+public class Path
+{
+    private FileInfo _fileInfo;
 
-**Consequence**: When a name is accurate, responsibilities don't bleed. Nobody asks "should filesystem operations go through Channels?" because the name makes the boundary obvious. But when a name is vague like `IO`, the boundary is unclear and responsibilities drift.
-
-#### Structures Are Things
-
-A class that exists as a compositional structure — with properties that each take care of themselves — IS a thing. Name it after what it is.
-
-A `Lifecycle` with `.Before` and `.After` IS a lifecycle. A `Bindings` with `.Add()` and `.Run()` IS a collection of bindings. These are not managers, dispatchers, or handlers — they are the things themselves.
-
-```
-// Correct: the structure IS the thing
-goal.Lifecycle              -- the goal's lifecycle
-goal.Lifecycle.Before       -- the before bindings
-goal.Lifecycle.Before.Run() -- run them
-
-// Wrong: naming the structure after what it does
-goal.EventManager           -- what events? How does it manage them?
-goal.EventDispatcher        -- "dispatch" is a verb, not a thing
-```
-
-Do not rename structures to "Manager", "Dispatcher", "Handler", or "Service". These suffixes describe behavior, not identity. The structure already does what it does — each property takes care of itself.
-
-#### Properties Are Nouns, Methods Are Verbs
-
-A property describes what something IS. It is a structure sitting there. If something needs to happen to it, that is a method on it.
-
-Never put a verb in a property name.
-
-```
-// Wrong: "Load" is a verb — this property is not loading anything
-lifecycle.Load.Before
-
-// Correct: it is just "Before" — a structure with bindings
-lifecycle.Before            -- the before bindings
-lifecycle.Before.Run()      -- need to run them? Call a method
-```
-
-**Test**: Read the property name. If it sounds like an instruction — "load", "run", "create", "process" — it is a verb and belongs as a method. Properties answer "what is this?", methods answer "what should happen?"
-
-### 3.4 Properties Read as Natural Language
-
-Property chains should form a readable phrase. The pattern is **Subject.Component.Operation** or **Subject.Component.Sub-component**.
-
-```
-engine.Goals.Get("alpha")                -- "the engine's goals — get alpha"
-stage.Operations.Load(context)           -- "the stage's operations — load them"
-goal.Lifecycle.Before.Run(context)       -- "the goal's lifecycle, before — run the bindings"
-```
-
-If a chain does not read naturally, the structure is wrong. Likely a component is on the wrong object or named poorly.
-
-### 3.5 Distinguish Object State from Request State
-
-Some data belongs to the object (its structure, its configuration, its event bindings). Other data belongs to the current request (which user is executing, what the current position is, the memory stack). These two categories must not be mixed.
-
-- **Object state** is stored as properties on the object. It is set once (typically at load time) and shared across requests.
-- **Request state** is carried in a context object and passed as a method parameter. It is per-request and per-thread.
-
-**Violation**: Storing a request-scoped context reference on a shared object.
-
-```
-// Wrong: Task is shared across threads, _context is per-request
-class Task {
-    Context _context
+    public Path(string path)
+    {
+        _fileInfo = new FileInfo(path);  // loads size, dates, attributes — everything
+    }
 }
 ```
 
-**Correct**: Pass context as a parameter to every method that needs it.
+All that info is loaded in the constructor. But we never asked for it. We just wanted a path. Loading everything costs CPU. There is friction. We wasted cycles on something we might never need.
+
+In OBP, `new Path("/file.txt")` stores only the string. Nothing else happens. When you access `path.Size`, *then* it does the work. Only the CPU that's needed, only when it's needed.
+
+Friction goes to almost zero. Four references in memory, maybe 10 nanoseconds. Compare that to what traditional code does just to save user info — how many objects constructed, how many fields populated, how many layers traversed.
+
+## The Root: One Entry Point
+
+OBP requires a root object. In PLang Runtime2, it's `Engine`. Everything hangs off it:
 
 ```
-task.RunAsync(engine, context)
-stage.RunAsync(engine, context)
-events.Before.Run(context)
+Engine
+  .Goals         — loaded goals, lookup by name
+  .Libraries     — discovers and resolves handlers
+  .Serializers   — serialize/deserialize
+  .FileSystem    — sandboxed file operations
+  .Channels      — named I/O routing (stdin, stdout, stderr, custom)
+  .Events        — app-level event collection
+  .Cache         — pluggable step cache
 ```
 
-**Rule**: If multiple threads can access the same object instance, that object must not hold any request-scoped state. All request-scoped data flows through parameters.
+Any code that has `Engine` can reach anything. No dependency injection frameworks. No parameter lists that grow every time you need one more thing. Navigate to what you need:
 
-### 3.6 Preserve Object Identity
-
-When referencing an object from another object, store the object itself — not a decomposed copy of its fields. If a `StageError` needs to know which stage caused it, it holds a reference to the `Stage`, not a copy of `Stage.Text`.
-
-**Rationale**: Decomposing objects into primitive fields discards information. The consumer can always access `.Text` on the stage, but cannot reconstruct the stage from just a text string. Keeping the reference preserves the full object graph and avoids redundant data.
-
-```
-// Wrong: decomposing Stage into a string
-class StageError {
-    text: string
-}
-
-// Correct: keeping the Stage reference
-class StageError {
-    stage: Stage
-}
+```csharp
+Engine.Channels.WriteTextAsync(StdOut, text);
+Engine.FileSystem.File.ReadAllTextAsync(path);
+Engine.Goals.Get("Start");
 ```
 
-### 3.7 Results Own Their Composition
+Read it like English: "the engine's channels — write text to stdout." "The engine's file system's file — read all text." The code tells you exactly what it's doing and where it lives.
 
-When multiple operations produce results that must be combined, the merge logic belongs on the result type. The result knows its own internal structure (what fields exist, how duplicates are resolved), so it is the correct owner of the merge operation.
+## The Rules
 
+These rules aren't arbitrary — they all derive from the same insight: minimize friction, let objects own their data, defer everything until needed.
+
+### 1. Behavior belongs to the owner
+
+Every operation belongs to the object whose data it acts on. If it iterates a collection, it belongs on the collection. If it transforms a result, it belongs on the result type.
+
+**Test**: "Whose data does this method touch?" That's the owner.
+
+```csharp
+// Correct: Steps owns the step list, so Load belongs here
+goal.Steps.Load(context);
+
+// Wrong: the loop belongs on Steps, not on whoever calls this
+foreach (var step in goal.Steps)
+    await step.Load(context);
 ```
-class Result {
-    merge(other: Result) -> Result    -- knows how to combine two results
-}
-```
 
-The collection that produces multiple results calls `merge` in a loop. It does not inspect or restructure the result — it delegates composition to the result itself.
+Parents delegate. They never iterate their children directly:
 
-### 3.8 No Redundant Wrapper Objects
-
-If the information a callee needs already exists on an object the caller has, pass that object. Do not construct a new object that copies fields from the existing one into a different shape.
-
-**Violation**: Creating a `NotificationContext` with `userName`, `requestId`, `timestamp` when those are already on `RequestContext` as `User.Name`, `Id`, `CreatedAt`.
-
-**Correct**: The handler receives `RequestContext` directly. It accesses what it needs through the existing properties.
-
-**Test**: Before creating a new class to pass data, check if every field on the new class already exists (or is trivially derivable) from an object the caller already holds. If yes, pass the existing object.
-
-## 4. Collection Wrappers
-
-A typed collection wrapper extends a generic collection and adds domain operations:
-
-```
-class Stages : List<Stage> {
-    load(context)
-}
-
-class Operations : List<Operation> {
-    load(context)
-    runAsync(engine, context, ct) -> Result
+```csharp
+public async Task Load(PLangContext context)
+{
+    await Lifecycle.Before.Run(context);
+    await Steps.Load(context);              // delegates, does not loop
+    await Lifecycle.After.Run(context);
 }
 ```
 
-The wrapper:
-- Inherits standard list operations (indexing, iteration, Count)
-- Adds domain-specific batch operations (load, runAsync)
-- Exposes a `value` property returning the underlying list for uniform access
+### 2. Navigate, don't pass
 
-Parents delegate to the wrapper. They do not iterate the collection themselves.
+Reach dependencies through the object graph. Never decompose an object into separate parameters:
 
-**When to use**: When you have an ordered collection of domain objects and need batch operations on them.
+```csharp
+// Wrong: passing each thing separately
+async Task RunStep(Engine engine, IO io, Goals goals) { }
 
-**When not to use**: When the collection needs to intercept individual add/remove (use composition instead of inheritance in that case).
+// Correct: reach them through engine
+async Task RunStep(Engine engine)
+{
+    engine.Channels ...
+    engine.Goals ...
+}
+```
 
-## 5. The Root Object
+This applies to the caller too. If a handler calls `Path.Delete(recursive, ignoreIfNotFound)`, it's decomposing itself into parameters. The OBP form is `Path.Delete(actionRecord)` — let the callee navigate the action record for what it needs.
 
-The root object serves as the single access point for all system capabilities. Any object in the system that receives the root can reach any other capability through navigation.
+**Why**: Coupling stays one-directional. The callee knows about the caller's structure, but the caller doesn't know what the callee needs. If the callee needs a new property later, only the callee changes.
 
-The root holds:
-- **Domain collections** (Projects, Handlers) — registered behavior and data
-- **Infrastructure** (IO, FileSystem, Serializers) — system capabilities
-- **Actors** (System, User, Service) — identity and trust boundaries
+### 3. Names describe what the object IS
 
-The root does not hold business logic. It is a composition point. Actual behavior lives on the leaf objects (Task.RunAsync, Stage.Load, Operations.RunAsync).
+Property names are nouns. They tell you what the thing is, not what it does. When you look at the object graph, the name alone tells you where to navigate.
 
-## 6. Decision Procedure
+```
+engine.Goals        — "Goals" manages goals
+engine.Channels     — "Channels" manages I/O channels
+engine.FileSystem   — "FileSystem" manages file access
+```
 
-When adding a new operation, follow this sequence:
+Not:
+```
+engine.IO           — IO of what? Files? Channels?
+engine.Run          — is this a method or an object?
+engine.Data         — what data?
+```
 
-1. **Identify the data**: What data does this operation read or modify?
-2. **Identify the owner**: Which object holds that data?
-3. **Place the method on the owner**.
-4. **Check readability**: Does `owner.Method()` read naturally? If not, the owner may be wrong, or an intermediate collection wrapper is needed.
-5. **Check parameters**: Does the method need request-scoped state? Pass context. Does it need system capabilities? Pass the root (or navigate from root).
-6. **Check for redundancy**: Are you creating a new class to pass data? Check if the data already exists on an object the caller holds.
+**Test**: If the name could describe two different things, it's too broad.
 
-## 7. Summary of Rules
+Structures are things. A `Lifecycle` with `.Before` and `.After` IS a lifecycle — don't rename it to `EventManager`. Properties are nouns, methods are verbs — `lifecycle.Before.Run()`, not `lifecycle.Load.Before`.
 
-| # | Rule | Test |
-|---|------|------|
-| 1 | Behavior lives on the object that owns the data | "Whose data does this method touch?" |
-| 2 | Navigate through properties; don't pass individual dependencies | "Can I reach this from the root?" |
-| 3 | Names describe what the object is, not what it does | "Could this name mean two different things?" |
-| 3a | Structures are things — name them after what they are | "Am I naming the structure or the behavior?" |
-| 3b | Properties are nouns, methods are verbs | "Does this property name sound like an action?" |
-| 4 | Property chains read as natural language | "Does this read like a sentence?" |
-| 5 | Request state is passed as parameters, never stored on shared objects | "Can two threads see this field?" |
-| 6 | Store object references, not decomposed fields | "Am I discarding information?" |
-| 7 | Results own their composition logic | "Who knows how to merge these?" |
-| 8 | Don't create wrapper objects for data that already exists elsewhere | "Is every field already on an existing object?" |
-| 9 | Collections own batch operations on their items | "Who owns the loop?" |
-| 10 | The root is a composition point, not a behavior owner | "Does the root do work, or does it delegate?" |
-| 11 | Methods do one thing | "Can I describe this method in one clause without 'and'?" |
+### 4. Keep object references, not extracted fields
+
+Store `Step`, not `step.Text`. Store `Goal`, not `goal.Name`. Decomposing objects into primitives discards information.
+
+```csharp
+// Wrong: decomposing Step into a string
+public class StepError { public string StepText { get; init; } }
+
+// Correct: keeping the reference
+public class StepError { public Step? Step { get; init; } }
+```
+
+Wrapper DTOs are only allowed at serialization boundaries.
+
+### 5. Collections own their loops
+
+Collection types inherit `List<T>` and add domain operations. Parents delegate — they never iterate directly:
+
+```csharp
+public sealed class Steps : List<Step>
+{
+    public async Task Load(PLangContext context)
+    {
+        foreach (var step in this)
+            await step.Load(context);
+    }
+}
+
+public sealed class Actions : List<Action>
+{
+    public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
+    {
+        Data merged = Data.Ok();
+        foreach (var action in this)
+        {
+            var result = await action.RunAsync(engine, context, ct);
+            if (!result.Success) return result;
+            merged = merged.Merge(result);
+        }
+        return merged;
+    }
+}
+```
+
+### 6. Request state is a parameter, never stored
+
+Goal and Step objects may be shared between threads. Storing `PLangContext` on them creates race conditions.
+
+```csharp
+// Wrong: _context is shared, multiple threads overwrite it
+public sealed partial class Goal
+{
+    internal PLangContext? _context;
+}
+
+// Correct: context passed as parameter
+await goal.Steps.Load(context);
+await Lifecycle.Before.Run(context);
+```
+
+**Rule**: If something is per-request, pass it. If something is per-object, store it.
+
+### 7. Data flows — relay, don't repackage
+
+`Data` is created at the boundary where the value originates. Once created, it flows through every layer unchanged. Intermediate layers may inspect it (`.Success`, `.Error`) but never decompose it and rebuild it.
+
+```csharp
+// Wrong: extracting and rewrapping
+return Data.Ok(result.Value);   // loses Type, Properties, Signature
+
+// Correct: relay as-is
+return result;
+```
+
+Data owns its own composition through `Merge()`. The collection calls merge — it never inspects the data structure directly.
+
+### 8. No redundant wrappers
+
+If the data a callee needs already exists on an object the caller has, pass that object. Don't create a new class that copies fields into a different shape.
+
+```csharp
+// Wrong: EventContext duplicates what PLangContext already has
+var result = await Events.Before.RunAsync(new EventContext
+{
+    GoalName = context.CurrentGoalName,
+    StepIndex = context.CurrentStepIndex,
+});
+
+// Correct: PLangContext already has everything
+var result = await Events.Before.Run(context);
+```
+
+## Why This Matters for LLMs
+
+An LLM reading OBP code can traverse the object graph like a map. `Engine.Goals.Get("Start")` — it knows exactly where goals live. `step.Actions.RunAsync(engine, context)` — it knows actions own their execution.
+
+Traditional architecture scatters behavior across services, managers, and utilities. An LLM (or a human) must hold the entire service graph in context to understand what happens when you save a goal. More context, worse results.
+
+OBP collapses that context. The object graph IS the architecture. Navigate to what you need. Read it like English. Every object does its own work.
+
+## Entity Hierarchy (PLang Runtime2)
+
+```
+Goal
+  .Name             — string
+  .Steps            — Steps (collection wrapper)
+  .Lifecycle        — Lifecycle (Before/After bindings)
+  .Path / .PrPath   — file system locations
+  .Parent           — Goal? (back-reference)
+
+Step
+  .Index            — int
+  .Text             — string (the PLang instruction)
+  .Actions          — Actions (collection wrapper)
+  .Lifecycle        — Lifecycle
+  .Goal             — Goal? (back-reference)
+
+Action
+  .Class            — string (module name, e.g. "variable")
+  .Method           — string (action name, e.g. "set")
+  .Parameters       — List<Data>
+  .Return           — List<Data>?
+  .Lifecycle        — Lifecycle
+```
+
+Navigation reads naturally:
+```csharp
+goal.Steps[0]                   // "goal's first step"
+step.Actions[0].Class           // "step's first action's class"
+goal.Steps[0].Actions[0]        // full chain from goal to action
+```
+
+## Events: Entity-Owned Lifecycle
+
+Every entity (Goal, Step, Action) has the same `Lifecycle` structure:
+
+```csharp
+public sealed class Lifecycle
+{
+    public Bindings Before { get; }
+    public Bindings After { get; }
+}
+```
+
+Execution flow:
+```
+goal.Lifecycle.Before.Run(context)
+  step.Lifecycle.Before.Run(context)
+    action.Lifecycle.Before.Run(context)
+    action.RunAsync(engine, context)
+    action.Lifecycle.After.Run(context)
+  step.Lifecycle.After.Run(context)
+goal.Lifecycle.After.Run(context)
+```
+
+## Handlers Navigate Through Engine
+
+Handlers extend `BaseClass<TParams>` and receive `Engine` and `Context` via `Initialize()`. They navigate to capabilities:
+
+```csharp
+// Writing to a channel
+Engine.Channels.WriteTextAsync(IO.Channels.StdOut, text);
+
+// Reading a file
+Engine.FileSystem.File.ReadAllTextAsync(path);
+
+// Calling another goal
+Engine.RunGoalAsync(goalName, Context, CancellationToken);
+
+// Resolving a handler
+Engine.Libraries.GetCodeGenerated("variable", "set", Context);
+
+// Serializing
+Engine.Serializers.SerializeAsync(options);
+```
+
+### Handler naming conventions
+
+| Element | Convention | Example |
+|---------|-----------|---------|
+| **Record** (parameters) | lowercase action name | `set`, `save`, `@if` |
+| **Handler** (execution) | PascalCase + `Handler`, `partial` | `SetHandler`, `IfHandler` |
+| **Namespace** | `PLang.Runtime2.modules.{module}` | `modules.condition` |
+| **Registry key** | `{module}.{record}` | `condition.if` |
+
+## Context and Engine: What You Can Access
+
+### Engine (system-level)
+
+```
+Engine
+  .Goals              Goals — loaded goals
+  .Libraries          Libraries — handler resolution
+  .Serializers        SerializerRegistry
+  .FileSystem         IPLangFileSystem — sandboxed I/O
+  .Channels           Channels — named streams
+  .Events             Events — app-level events
+  .Cache              ICache
+  .System/.Service/.User   Actor — trust levels (lazy)
+  .Path               string — always "/"
+  .AbsolutePath       string — OS path
+  .Environment        string — "production", etc.
+  .Property           Property — key-value store
+```
+
+### PLangContext (request-level)
+
+```
+Context
+  .Id                 string — unique execution id
+  .Engine             Engine — back-reference
+  .MemoryStack        MemoryStack — all %variables%
+  .CallStack          CallStack? — frames, errors
+  .Goal               Goal? — currently executing
+  .Step               Step? — currently executing
+  .Actor              Actor?
+  .Parent             PLangContext? — for nested calls
+  .CancellationToken  CancellationToken
+```
+
+### Quick reference
+
+| Need | Navigation |
+|------|-----------|
+| Read/write a variable | `MemoryStack.Get("name")` / `.Set("name", value)` |
+| Write to stdout | `Engine.Channels.WriteTextAsync(StdOut, text)` |
+| Read/write files | `Engine.FileSystem.File.ReadAllTextAsync(path)` |
+| Call another goal | `Engine.RunGoalAsync(goalName, Context, ct)` |
+| Resolve a handler | `Engine.Libraries.GetCodeGenerated("module", "method", Context)` |
+| Check environment | `Engine.Environment` |
+| Store request data | `Context["key"] = value` |
+| Store app data | `Engine.Property["key"] = value` |
+
+## Common OBP Violations
+
+If you're doing any of these, stop:
+
+1. **Iterating someone else's collection** — the loop belongs on the collection
+2. **Passing extracted fields instead of the object** — pass the root, navigate from there
+3. **Eager loading in constructors** — defer until accessed
+4. **Creating a service/manager class** — put the method on the object that owns the data
+5. **Wrapping data into a new DTO** — pass the existing object
+6. **Extracting `.Value` from Data to rewrap it** — relay the Data as-is
+7. **Caching context on a shared object** — pass it as a parameter
+
+The fix progression:
+1. Create the type, use it everywhere (basic plumbing)
+2. Move behavior to the owner (behavior belongs to owner)
+3. Store the root, navigate internally (object graph navigation)
+4. Pass the caller as a whole (don't decompose the caller)
+
+Each step feels "done" but may still violate OBP at the next level. The test: are you pulling fields out of an object to hand them individually to another method? If yes, pass the object instead.
