@@ -1,4 +1,5 @@
-﻿using App.SafeFileSystem;
+﻿using App.FileSystem;
+using App.FileSystem.Default;
 using System;
 using System.Collections.Generic;
 using System.IO.Abstractions;
@@ -6,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace App.SafeFileSystem
+namespace App.FileSystem.Default
 {
 	[Serializable]
 	public sealed class PLangFileInfoFactory : IFileInfoFactory

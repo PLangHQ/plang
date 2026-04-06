@@ -1,11 +1,12 @@
-﻿using App.SafeFileSystem;
+﻿using App.FileSystem;
+using App.FileSystem.Default;
 using App.Utils;
 using System.IO.Abstractions;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Websocket.Client.Logging;
 
-namespace App.SafeFileSystem
+namespace App.FileSystem.Default
 {
 
 	public record FileAccessControl(string appName, string path, DateTime? expires = null, string? ProcessId = null);
@@ -77,7 +78,7 @@ namespace App.SafeFileSystem
 
 
 			this.fileAccesses = new List<FileAccessControl>();
-			fileAccesses.Add(new SafeFileSystem.FileAccessControl(appStartupPath, SystemDirectory, ProcessId: Id));
+			fileAccesses.Add(new FileAccessControl(appStartupPath, SystemDirectory, ProcessId: Id));
 
 			this.IsRootApp = (relativeAppPath == Path.DirectorySeparatorChar.ToString());
 			if (AppContext.GetData("sharedPath") != null)

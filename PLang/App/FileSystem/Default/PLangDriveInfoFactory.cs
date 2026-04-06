@@ -1,7 +1,8 @@
-﻿using App.SafeFileSystem;
+﻿using App.FileSystem;
+using App.FileSystem.Default;
 using System.IO.Abstractions;
 
-namespace App.SafeFileSystem
+namespace App.FileSystem.Default
 {
 	[Serializable]
 	internal class PLangDriveInfoFactory : IDriveInfoFactory

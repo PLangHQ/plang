@@ -1,9 +1,10 @@
 ﻿using Microsoft.Win32.SafeHandles;
-using App.SafeFileSystem;
+using App.FileSystem;
+using App.FileSystem.Default;
 using System.IO.Abstractions;
 
 
-namespace App.SafeFileSystem
+namespace App.FileSystem.Default
 {
 	[Serializable]
 	public sealed class PLangFileStreamFactory : IFileStreamFactory

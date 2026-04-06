@@ -16,7 +16,7 @@ public class SetupTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-setup-test-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        var fs = new App.SafeFileSystem.PLangFileSystem(_tempDir, "");
+        var fs = new App.FileSystem.Default.PLangFileSystem(_tempDir, "");
         _engine = new App.@this(fs);
     }
 

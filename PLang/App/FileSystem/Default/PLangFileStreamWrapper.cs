@@ -1,7 +1,7 @@
 ﻿using System.IO.Abstractions;
 using System.Runtime.Versioning;
 using System.Security.AccessControl;
-namespace App.SafeFileSystem
+namespace App.FileSystem.Default
 {
 	internal sealed class PLangFileStreamWrapper : FileSystemStream, IFileSystemAclSupport
 	{

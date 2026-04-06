@@ -1,8 +1,9 @@
 ﻿using global::System.IO.Abstractions;
-using App.SafeFileSystem;
+using App.FileSystem;
+using App.FileSystem.Default;
 using System.IO;
 
-namespace App.SafeFileSystem
+namespace App.FileSystem.Default
 {
 
 	/// <inheritdoc />

@@ -15,7 +15,7 @@ New test at `GoalFileTests.cs:159` exercises `trimmed == "-"` at `Parse()` line 
 New test at `ValidateActionsTests.cs:153` uses `http.configure` (which implements `IConfigure<Config>`). Verifies defaults are populated. Complete. This test proves the entire IConfigure<T> path including `Activator.CreateInstance`, property scanning, and value extraction.
 
 ### Finding #5: Runtime1 type in FormatForLlm — NOT ADDRESSED
-`Goal/Methods.cs:84` still references `App.SafeFileSystem.PLangContext`. This was flagged as needing architect input and is not a blocker for the builder module itself. The method predates this branch (confirmed: it's builder infrastructure, not new code from this branch). **Deferring.**
+`Goal/Methods.cs:84` still references `App.FileSystem.Default.PLangContext`. This was flagged as needing architect input and is not a blocker for the builder module itself. The method predates this branch (confirmed: it's builder infrastructure, not new code from this branch). **Deferring.**
 
 ## Fix-Introduced Code Review
 

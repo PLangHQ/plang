@@ -154,7 +154,7 @@ Step-by-step:
 For example, creating a custom logger:
 
 ```csharp
-using App.SafeFileSystem;
+using App.FileSystem.Default;
 
 public class MyAmazingCompression : IArchiver
 {

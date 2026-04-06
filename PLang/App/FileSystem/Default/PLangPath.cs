@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.IO.Abstractions;
 
-namespace App.SafeFileSystem
+namespace App.FileSystem.Default
 {
 	public sealed class Path : PathWrapper, IPath
 	{

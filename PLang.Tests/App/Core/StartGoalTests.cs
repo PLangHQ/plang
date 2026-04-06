@@ -70,7 +70,7 @@ public class StartGoalTests
         // Find the .pr.json file and set FileSystem root to repo root so it's accessible
         var prJsonPath = FindPrJsonPath();
         var repoRoot = Path.GetDirectoryName(Path.GetDirectoryName(prJsonPath))!; // parent of Tests/Builder
-        engine.FileSystem = new App.SafeFileSystem.PLangFileSystem(repoRoot, "");
+        engine.FileSystem = new App.FileSystem.Default.PLangFileSystem(repoRoot, "");
 
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,prJsonPath);
         await Assert.That(loadResult.Success).IsTrue();

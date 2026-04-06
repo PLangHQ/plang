@@ -102,7 +102,7 @@ public sealed class @this
     }
 
     private static async Task<Data> RunSingleTest(
-        App.SafeFileSystem.IPLangFileSystem fileSystem,
+        App.FileSystem.IPLangFileSystem fileSystem,
         string rootDir,
         string testFile,
         TestResult result,
@@ -121,7 +121,7 @@ public sealed class @this
 
         // Each test folder is its own PLang app root.
         // Setup discovery and goal resolution work relative to this root.
-        var testFs = new App.SafeFileSystem.PLangFileSystem(dir, "");
+        var testFs = new App.FileSystem.Default.PLangFileSystem(dir, "");
         await using var testEngine = new App.@this(testFs);
         testEngine.Testing.IsEnabled = true;
         if (debug) testEngine.Debug.Apply(true);

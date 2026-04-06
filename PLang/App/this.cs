@@ -128,7 +128,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// <summary>
     /// The file system abstraction.
     /// </summary>
-    public App.SafeFileSystem.IPLangFileSystem FileSystem { get; set; }
+    public App.FileSystem.IPLangFileSystem FileSystem { get; set; }
 
     /// <summary>
     /// I/O operations (file reading, channels).
@@ -246,13 +246,13 @@ public sealed class @this : Data<@this>, IAsyncDisposable
         else if (instance is IDisposable d) d.Dispose();
     }
 
-    public @this(App.SafeFileSystem.IPLangFileSystem fileSystem)
+    public @this(App.FileSystem.IPLangFileSystem fileSystem)
         : this(fileSystem.RootDirectory, fileSystem: fileSystem)
     {
     }
 
     public @this(string absolutePath, EngineModules? modules = null,
-        App.SafeFileSystem.IPLangFileSystem? fileSystem = null,
+        App.FileSystem.IPLangFileSystem? fileSystem = null,
         string? environment = null)
         : base("!engine")
     {
@@ -485,18 +485,18 @@ public sealed class @this : Data<@this>, IAsyncDisposable
         return context;
     }
 
-    private static App.SafeFileSystem.IPLangFileSystem CreateDefaultFileSystem(string rootPath)
+    private static App.FileSystem.IPLangFileSystem CreateDefaultFileSystem(string rootPath)
     {
         try
         {
             var fullPath = global::System.IO.Path.GetFullPath(rootPath);
-            return new App.SafeFileSystem.PLangFileSystem(fullPath, "");
+            return new App.FileSystem.Default.PLangFileSystem(fullPath, "");
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             // If rootPath is not a valid filesystem path (e.g., "/app" in tests),
             // fall back to PLangFileSystem with current directory
-            return new App.SafeFileSystem.PLangFileSystem(global::System.IO.Directory.GetCurrentDirectory(), "");
+            return new App.FileSystem.Default.PLangFileSystem(global::System.IO.Directory.GetCurrentDirectory(), "");
         }
     }
 

@@ -1,11 +1,12 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Win32.SafeHandles;
-using App.SafeFileSystem;
+using App.FileSystem;
+using App.FileSystem.Default;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Abstractions;
 using System.Text;
 
-namespace App.SafeFileSystem
+namespace App.FileSystem.Default
 {
 
 	public sealed class PLangFile : FileWrapper, IFile
