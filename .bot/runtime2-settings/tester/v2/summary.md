@@ -45,7 +45,7 @@ Requires plang binary + OpenAI key. Todo exists.
 
 ### Finding 1: MINOR — Cast<T> catch-all swallows all exceptions
 
-**File:** `PLang/App/Engine/Settings/this.cs:54`
+**File:** `PLang/App/Settings/this.cs:54`
 
 `Cast<T>` has a bare `catch { return fallback; }`. This swallows ANY exception from `Convert.ChangeType` or `Enum.ToObject`, including `OverflowException` (value too large for target type). For a settings system this is probably fine — falling back to default is better than crashing. But it means a setting set to `long.MaxValue` resolved as `int` would silently return the default without any indication.
 

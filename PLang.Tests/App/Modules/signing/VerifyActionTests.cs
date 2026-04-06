@@ -1,12 +1,12 @@
-using App.Engine.Context;
-using App.Engine.Errors;
-using App.Engine.Variables;
-using App.Engine.Providers;
+using App.Context;
+using App.Errors;
+using App.Variables;
+using App.Providers;
 using App.modules.signing.providers;
 using App.modules.crypto;
 using App.modules.identity;
 using App.modules.signing;
-using PLangEngine = App.Engine.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.signing;
 
@@ -170,7 +170,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper(new { amount = 100 }, contracts: new List<string> { "C0" });
         // Tamper the hash
-        signed.Signature!.Hash = Data.Ok(new byte[32], App.Engine.Variables.Type.FromName("keccak256"));
+        signed.Signature!.Hash = Data.Ok(new byte[32], App.Variables.Type.FromName("keccak256"));
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(result.Success).IsFalse();

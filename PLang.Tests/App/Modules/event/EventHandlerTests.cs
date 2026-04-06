@@ -1,19 +1,19 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Variables;
-using App.Engine.Events;
+using App.Context;
+using App;
+using App.Variables;
+using App.Events;
 using App.modules.@event;
 
 namespace PLang.Tests.App.actions.EventTests;
 
 public class EventHandlerTests
 {
-    private App.Engine.@this _engine = null!;
+    private App.@this _engine = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new App.Engine.@this("/test");
+        _engine = new App.@this("/test");
     }
 
     private PLangContext CreateContext() => _engine.CreateContext();

@@ -61,8 +61,8 @@ Implement the architect's action-based conditions design and make all 69 C# test
 | `PLang/App/modules/condition/providers/DefaultEvaluator.cs` | Create |
 | `PLang/App/modules/condition/if.cs` | Modify |
 | `PLang/App/modules/condition/compare.cs` | Create |
-| `PLang/App/Engine/Goals/Goal/Steps/this.cs` | Modify |
-| `PLang/App/Engine/Goals/Goal/Steps/this.cs` | Modify (sub-step logic) |
+| `PLang/App/Goals/Goal/Steps/this.cs` | Modify |
+| `PLang/App/Goals/Goal/Steps/this.cs` | Modify (sub-step logic) |
 | `PLang.Tests/App/Modules/condition/DefaultEvaluatorTests.cs` | Implement stubs |
 | `PLang.Tests/App/Modules/condition/IfHandlerTests.cs` | Implement stubs |
 | `PLang.Tests/App/Modules/condition/CompareHandlerTests.cs` | Implement stubs |

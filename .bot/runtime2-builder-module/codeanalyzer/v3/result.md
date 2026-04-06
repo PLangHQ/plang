@@ -6,7 +6,7 @@ This is a fresh-eyes re-analysis of the builder module. The v1/v2 analysis found
 
 ## Finding 1: `Describe()` leaks `[Provider]` properties into LLM builder prompt
 
-**File**: `PLang/App/Engine/Modules/this.cs`, lines 151-175
+**File**: `PLang/App/Modules/this.cs`, lines 151-175
 **Severity**: Medium (affects builder quality for ALL modules)
 
 ### The problem
@@ -53,7 +53,7 @@ The `Describe()` output feeds `BuildGoal.llm`. No C# test verifies that `[Provid
 
 ## Finding 2: `Step.Clone()` drops Action.Defaults, Errors, Warnings
 
-**File**: `PLang/App/Engine/Goals/Goal/Steps/Step/this.cs`, lines 77-83
+**File**: `PLang/App/Goals/Goal/Steps/Step/this.cs`, lines 77-83
 **Severity**: Minor (latent — no current callers, but public method on core entity)
 
 ### The problem
@@ -108,7 +108,7 @@ No test calls `Step.Clone()`. Could delete the entire method and no test fails. 
 
 ## Finding 3: Dead code in `Parse()` — tab check after tab replacement
 
-**File**: `PLang/App/Engine/Goals/Goal/this.cs`, line 314
+**File**: `PLang/App/Goals/Goal/this.cs`, line 314
 **Severity**: Nit
 
 ### The problem

@@ -1,5 +1,5 @@
-using App.Engine.Context;
-using App.Engine.Variables;
+using App.Context;
+using App.Variables;
 using App.modules.list;
 
 namespace PLang.Tests.App.actions.list;
@@ -8,7 +8,7 @@ public class ListSetTests
 {
     private (PLangContext context, Variables memory) CreateContext()
     {
-        var engine = new App.Engine.@this("/app");
+        var engine = new App.@this("/app");
         var memory = new Variables();
         var context = new PLangContext(engine, memory);
         return (context, memory);

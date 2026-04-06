@@ -57,7 +57,7 @@ All List test action records now set `Pattern = "*"` explicitly.
 - **#6** (operator ==) — Path not yet used in collections/LINQ. Low risk.
 
 ## Files modified
-- `PLang/App/Engine/Memory/Path.cs` — all code fixes
+- `PLang/App/Memory/Path.cs` — all code fixes
 - `PLang.Tests/App/Modules/Path/PathTests.cs` — namespace, explicit Pattern, 6 new edge-case tests
 
 ## Verification

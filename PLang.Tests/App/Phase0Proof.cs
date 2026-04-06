@@ -1,8 +1,8 @@
-using App.Engine;
-using App.Engine.Errors;
-using App.Engine.Variables;
-using App.Engine.Utility;
-using R2 = App.Engine.Variables;
+using App;
+using App.Errors;
+using App.Variables;
+using App.Utility;
+using R2 = App.Variables;
 
 namespace PLang.Tests.App;
 
@@ -265,7 +265,7 @@ public class Phase0Proof
     public async Task Phase05_CultureInfo_DefaultsToInvariant()
     {
         // INPUT: new Engine
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
 
         // OUTPUT: culture defaults to InvariantCulture
         await Assert.That(engine.Culture).IsEqualTo(System.Globalization.CultureInfo.InvariantCulture);

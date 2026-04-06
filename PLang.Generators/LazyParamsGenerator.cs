@@ -134,15 +134,15 @@ public class LazyParamsGenerator : IIncrementalGenerator
                         .Any(m => m.IsStatic
                             && m.Parameters.Length == 2
                             && m.Parameters[0].Type.SpecialType == SpecialType.System_String
-                            && (m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App.Engine"
-                                || m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App.Engine.Context"));
+                            && (m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App"
+                                || m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App.Context"));
 
                 // Check if property type is Data (pass through without unwrapping .Value)
                 var rawType = prop.Type;
                 if (rawType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullableType)
                     rawType = nullableType.TypeArguments[0];
                 var isDataType = rawType.Name == "Data"
-                    && rawType.ContainingNamespace?.ToDisplayString() == "App.Engine.Variables";
+                    && rawType.ContainingNamespace?.ToDisplayString() == "App.Variables";
 
                 var implementsIEvent = rawType is INamedTypeSymbol evt
                     && evt.AllInterfaces.Any(i =>
@@ -195,37 +195,37 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // IContext auto-provision
         if (info.ImplementsIContext)
         {
-            sb.AppendLine("    public App.Engine.Context.PLangContext Context { get; set; } = null!;");
+            sb.AppendLine("    public App.Context.PLangContext Context { get; set; } = null!;");
             sb.AppendLine();
         }
 
         // IChannel auto-provision
         if (info.ImplementsIChannel)
         {
-            sb.AppendLine("    public App.Engine.Channels.@this Channels { get; set; } = null!;");
+            sb.AppendLine("    public App.Channels.@this Channels { get; set; } = null!;");
             sb.AppendLine();
         }
 
         // IAction auto-provision
         if (info.ImplementsIAction)
         {
-            sb.AppendLine("    public App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;");
+            sb.AppendLine("    public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;");
             sb.AppendLine();
         }
 
         // IStep auto-provision
         if (info.ImplementsIStep)
         {
-            sb.AppendLine("    public App.Engine.Goals.Goal.Steps.Step.@this Step { get; set; } = null!;");
+            sb.AppendLine("    public App.Goals.Goal.Steps.Step.@this Step { get; set; } = null!;");
             sb.AppendLine();
         }
 
         // Resolution state
-        sb.AppendLine("    private List<App.Engine.Variables.Data>? __parameters;");
-        sb.AppendLine("    private List<App.Engine.Variables.Data>? __defaults;");
-        sb.AppendLine("    private App.Engine.Variables.@this? __memoryStack;");
-        sb.AppendLine("    private App.Engine.@this? __engine;");
-        sb.AppendLine("    private App.Engine.Variables.Data? __resolutionError;");
+        sb.AppendLine("    private List<App.Variables.Data>? __parameters;");
+        sb.AppendLine("    private List<App.Variables.Data>? __defaults;");
+        sb.AppendLine("    private App.Variables.@this? __memoryStack;");
+        sb.AppendLine("    private App.@this? __engine;");
+        sb.AppendLine("    private App.Variables.Data? __resolutionError;");
         sb.AppendLine();
 
         // Partial property implementations
@@ -317,16 +317,16 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
         // ParamData() accessor — gives handler access to the underlying Data for any parameter
         // Usage: ParamData(nameof(Size))?.Error, ParamData(nameof(FilePath))?.Success
-        sb.AppendLine("    private System.Collections.Generic.Dictionary<string, App.Engine.Variables.Data?>? __paramData;");
-        sb.AppendLine("    protected App.Engine.Variables.Data? ParamData(string paramName)");
+        sb.AppendLine("    private System.Collections.Generic.Dictionary<string, App.Variables.Data?>? __paramData;");
+        sb.AppendLine("    protected App.Variables.Data? ParamData(string paramName)");
         sb.AppendLine("        => __paramData != null && __paramData.TryGetValue(paramName, out var d) ? d : null;");
         sb.AppendLine();
 
         // ExecuteAsync
-        sb.AppendLine("    private App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
+        sb.AppendLine("    private App.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
         sb.AppendLine();
-        sb.AppendLine("    public async System.Threading.Tasks.Task<App.Engine.Variables.Data> ExecuteAsync(");
-        sb.AppendLine("        App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action, App.Engine.@this engine, App.Engine.Context.PLangContext context)");
+        sb.AppendLine("    public async System.Threading.Tasks.Task<App.Variables.Data> ExecuteAsync(");
+        sb.AppendLine("        App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, App.Context.PLangContext context)");
         sb.AppendLine("    {");
         sb.AppendLine("        __action = action;");
         sb.AppendLine("        __parameters = action.Parameters;");
@@ -336,7 +336,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        __resolutionError = null;");
         sb.AppendLine("        __paramData = new(StringComparer.OrdinalIgnoreCase);");
         sb.AppendLine("        var __step = action.Step;");
-        sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<App.Engine.CallStack.CallFrame>)System.Array.Empty<App.Engine.CallStack.CallFrame>();");
+        sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<App.CallStack.CallFrame>)System.Array.Empty<App.CallStack.CallFrame>();");
 
         if (info.ImplementsIContext)
         {
@@ -407,7 +407,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 {
                     sb.AppendLine($"        if ({prop.Name} == null)");
                 }
-                sb.AppendLine($"            return App.Engine.Variables.Data.FromError(new App.Engine.Errors.ServiceError(");
+                sb.AppendLine($"            return App.Variables.Data.FromError(new App.Errors.ServiceError(");
                 sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' is required\", __step, __callFrames, \"MissingParameter\", 400));");
             }
         }
@@ -423,21 +423,21 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     {
                         // IsNotNull implies IsInitiated — check both
                         sb.AppendLine($"        if (!{prop.Name}.IsInitialized || {prop.Name}.Value == null)");
-                        sb.AppendLine($"            return App.Engine.Variables.Data.FromError(new App.Engine.Errors.ServiceError(");
+                        sb.AppendLine($"            return App.Variables.Data.FromError(new App.Errors.ServiceError(");
                         sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
                     }
                     else
                     {
                         // IsInitiated only
                         sb.AppendLine($"        if (!{prop.Name}.IsInitialized)");
-                        sb.AppendLine($"            return App.Engine.Variables.Data.FromError(new App.Engine.Errors.ServiceError(");
+                        sb.AppendLine($"            return App.Variables.Data.FromError(new App.Errors.ServiceError(");
                         sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must be provided\", __step, __callFrames, \"ParameterRequired\", 400));");
                     }
                 }
                 else if (prop.IsNotNull && !prop.IsValueType)
                 {
                     sb.AppendLine($"        if ({prop.Name} == null)");
-                    sb.AppendLine($"            return App.Engine.Variables.Data.FromError(new App.Engine.Errors.ServiceError(");
+                    sb.AppendLine($"            return App.Variables.Data.FromError(new App.Errors.ServiceError(");
                     sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
                 }
             }
@@ -451,7 +451,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine("        catch (System.Exception ex)");
         sb.AppendLine("        {");
-        sb.AppendLine("            return App.Engine.Variables.Data.FromError(new App.Engine.Errors.ServiceError(");
+        sb.AppendLine("            return App.Variables.Data.FromError(new App.Errors.ServiceError(");
         sb.AppendLine("                ex.Message, __step, __callFrames, \"ServiceError\", 400) { Exception = ex });");
         sb.AppendLine("        }");
         sb.AppendLine("        finally");
@@ -508,18 +508,18 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine("    private T? __TryConvert<T>(object? value, string paramName)");
         sb.AppendLine("    {");
-        sb.AppendLine("        var (__result, __error) = App.Engine.Utility.TypeMapping.TryConvertTo(value, typeof(T));");
+        sb.AppendLine("        var (__result, __error) = App.Utility.TypeMapping.TryConvertTo(value, typeof(T));");
         sb.AppendLine("        if (__error != null)");
         sb.AppendLine("        {");
-        sb.AppendLine("            __resolutionError = App.Engine.Variables.Data.FromError(");
-        sb.AppendLine("                new App.Engine.Errors.ActionError(");
+        sb.AppendLine("            __resolutionError = App.Variables.Data.FromError(");
+        sb.AppendLine("                new App.Errors.ActionError(");
         sb.AppendLine("                    $\"Parameter '{paramName}': {__error.Message}\",");
         sb.AppendLine("                    \"ConversionError\", __error.StatusCode)");
         sb.AppendLine("                    { FixSuggestion = __error.FixSuggestion });");
         sb.AppendLine("            return default;");
         sb.AppendLine("        }");
         sb.AppendLine("        // Stamp GoalCalls with the action so goal resolution can navigate action → step → goal");
-        sb.AppendLine("        if (__result is App.Engine.Goals.Goal.GoalCall __gc && __gc.Action == null)");
+        sb.AppendLine("        if (__result is App.Goals.Goal.GoalCall __gc && __gc.Action == null)");
         sb.AppendLine("            __gc.Action = __action;");
         sb.AppendLine("        return (T?)__result;");
         sb.AppendLine("    }");
@@ -550,7 +550,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        return data?.Value?.ToString();");
         sb.AppendLine("    }");
         sb.AppendLine();
-        sb.AppendLine("    private App.Engine.Variables.Data? __ResolveData(string name)");
+        sb.AppendLine("    private App.Variables.Data? __ResolveData(string name)");
         sb.AppendLine("    {");
         sb.AppendLine("        var data = __parameters?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
@@ -571,7 +571,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
         sb.AppendLine("                return __FormatValue(__r?.Value);");
         sb.AppendLine("            });");
-        sb.AppendLine("            return new App.Engine.Variables.Data(data.Name, interpolated);");
+        sb.AppendLine("            return new App.Variables.Data(data.Name, interpolated);");
         sb.AppendLine("        }");
         sb.AppendLine("        return data;");
         sb.AppendLine("    }");

@@ -1,4 +1,4 @@
-using App.Engine.Variables;
+using App.Variables;
 
 namespace App.modules.list;
 
@@ -20,6 +20,6 @@ public partial class Split : IContext
         var parts = Value.Split(new[] { Separator }, options);
         var list = parts.Cast<object?>().ToList();
 
-        return Task.FromResult(Data.Ok(list, App.Engine.Variables.Type.FromName("list")));
+        return Task.FromResult(Data.Ok(list, App.Variables.Type.FromName("list")));
     }
 }

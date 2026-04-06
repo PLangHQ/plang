@@ -4,16 +4,16 @@
 Analyze all 17 changed files in the `data-envelope-architecture` branch (vs `runtime2` merge base). Three-pass analysis: OBP compliance, simplification, readability.
 
 ## Files to analyze (production code)
-1. `PLang/App/Engine/Memory/Data.cs` — core Data class (partial)
-2. `PLang/App/Engine/Memory/Data.Result.cs` — result/error concern
-3. `PLang/App/Engine/Memory/Data.Navigation.cs` — navigation concern
-4. `PLang/App/Engine/Memory/Data.Envelope.cs` — envelope/transport concern
-5. `PLang/App/Engine/Memory/Variables.cs` — variable storage
-6. `PLang/App/Engine/Types/this.cs` — centralized type knowledge
-7. `PLang/App/Engine/View.cs` — serialization view attributes
-8. `PLang/App/Engine/this.cs` — Engine root (changes only)
-9. `PLang/App/Engine/Context/PLangContext.cs` — context (changes only)
-10. `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` — action execution
+1. `PLang/App/Memory/Data.cs` — core Data class (partial)
+2. `PLang/App/Memory/Data.Result.cs` — result/error concern
+3. `PLang/App/Memory/Data.Navigation.cs` — navigation concern
+4. `PLang/App/Memory/Data.Envelope.cs` — envelope/transport concern
+5. `PLang/App/Memory/Variables.cs` — variable storage
+6. `PLang/App/Types/this.cs` — centralized type knowledge
+7. `PLang/App/View.cs` — serialization view attributes
+8. `PLang/App/this.cs` — Engine root (changes only)
+9. `PLang/App/Context/PLangContext.cs` — context (changes only)
+10. `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` — action execution
 11. `PLang/App/actions/convert/fromJson.cs` — fromJson handler
 12. `PLang/App/GlobalUsings.cs` — global aliases
 

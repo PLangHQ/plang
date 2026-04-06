@@ -1,7 +1,7 @@
-using App.Engine.Context;
-using App.Engine.Variables;
-using ActionType = App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
-using EngineType = App.Engine.@this;
+using App.Context;
+using App.Variables;
+using ActionType = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using EngineType = App.@this;
 
 namespace App.modules;
 

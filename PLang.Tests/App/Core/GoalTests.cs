@@ -1,5 +1,5 @@
-using App.Engine;
-using App.Engine.Variables;
+using App;
+using App.Variables;
 
 namespace PLang.Tests.App.Core;
 
@@ -20,7 +20,7 @@ public class GoalTests
             IsSetup = true,
             IsEvent = false,
             InputParameters = new Dictionary<string, string> { { "param1", "string" } },
-            Goals = new List<App.Engine.Goals.Goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
+            Goals = new List<App.Goals.Goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
             Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "first step" },
@@ -219,7 +219,7 @@ public class GoalTests
         var str = goal.ToString();
 
         // Goal does not override ToString; returns default type name
-        await Assert.That(str).IsEqualTo("App.Engine.Goals.Goal.this");
+        await Assert.That(str).IsEqualTo("App.Goals.Goal.this");
     }
 
     [Test]
@@ -256,7 +256,7 @@ public class GoalTests
                     Text = "write out \"hello\"",
                     Actions = new StepActions(new[]
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -325,7 +325,7 @@ public class GoalTests
                     Text = "select * from users, write to %users%",
                     Actions = new StepActions(new[]
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "db",
                             ActionName = "select",
@@ -356,7 +356,7 @@ public class GoalTests
                     Text = "write out \"hello\"",
                     Actions = new StepActions(new[]
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",

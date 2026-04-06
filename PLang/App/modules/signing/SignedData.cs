@@ -1,7 +1,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using App.Engine.Variables;
+using App.Variables;
 
 namespace App.modules.signing;
 
@@ -55,7 +55,7 @@ public class SignedData
                 if (prop == "type") type = reader.GetString() ?? "";
                 else if (prop == "value") value = reader.GetString() ?? "";
             }
-            var typeObj = string.IsNullOrEmpty(type) ? null : Engine.Variables.Type.FromName(type);
+            var typeObj = string.IsNullOrEmpty(type) ? null : Variables.Type.FromName(type);
             byte[] bytes;
             try { bytes = Convert.FromBase64String(value); } catch (FormatException) { bytes = Array.Empty<byte>(); }
             return Data.Ok(bytes, typeObj);

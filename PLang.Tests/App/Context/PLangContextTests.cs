@@ -1,6 +1,6 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Variables;
+using App.Context;
+using App;
+using App.Variables;
 
 namespace PLang.Tests.App.Context;
 
@@ -9,7 +9,7 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_SetsProperties()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         await Assert.That(context.Engine).IsEqualTo(engine);
@@ -20,7 +20,7 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_GeneratesId()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         await Assert.That(context.Id).IsNotNull();
@@ -30,7 +30,7 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_SetsCreatedAt()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         var before = DateTime.UtcNow;
 
         using var context = new PLangContext(engine);
@@ -43,7 +43,7 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_AcceptsCustomVariables()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         var memoryStack = new Variables();
         memoryStack.Set("test", "value");
 
@@ -55,7 +55,7 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_WithParent_SetsParent()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var parent = new PLangContext(engine);
 
         using var child = new PLangContext(engine, parent: parent);
@@ -66,7 +66,7 @@ public class PLangContextTests
     [Test]
     public async Task CallStack_DefaultsToNull()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         await Assert.That(context.CallStack).IsNull();
@@ -75,7 +75,7 @@ public class PLangContextTests
     [Test]
     public async Task CallStack_CanBeSet()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
         var callStack = new CallStack();
 
@@ -87,7 +87,7 @@ public class PLangContextTests
     [Test]
     public async Task IsAsync_DefaultsFalse()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         await Assert.That(context.IsAsync).IsFalse();
@@ -96,7 +96,7 @@ public class PLangContextTests
     [Test]
     public async Task IsAsync_CanBeSet()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         context.IsAsync = true;
@@ -107,7 +107,7 @@ public class PLangContextTests
     [Test]
     public async Task CancellationToken_LinkedToAppShutdown()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         engine.RequestShutdown();
@@ -118,7 +118,7 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_SetsAndGetsValue()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         context["key"] = "value";
@@ -129,7 +129,7 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_SetNull_RemovesKey()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
         context["key"] = "value";
 
@@ -141,7 +141,7 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_CaseInsensitive()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
         context["Key"] = "value";
 
@@ -152,7 +152,7 @@ public class PLangContextTests
     [Test]
     public async Task Get_ReturnsTypedValue()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
         context["count"] = 42;
 
@@ -164,7 +164,7 @@ public class PLangContextTests
     [Test]
     public async Task Get_NonexistentKey_ReturnsDefault()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         var value = context.Get<int>("nonexistent");
@@ -175,7 +175,7 @@ public class PLangContextTests
     [Test]
     public async Task Set_StoresTypedValue()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         context.Set("count", 42);
@@ -186,7 +186,7 @@ public class PLangContextTests
     [Test]
     public async Task Set_Null_RemovesKey()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
         context.Set<string>("key", "value");
 
@@ -198,7 +198,7 @@ public class PLangContextTests
     [Test]
     public async Task ContainsKey_ExistingKey_ReturnsTrue()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
         context["key"] = "value";
 
@@ -208,7 +208,7 @@ public class PLangContextTests
     [Test]
     public async Task ContainsKey_NonexistentKey_ReturnsFalse()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         await Assert.That(context.ContainsKey("nonexistent")).IsFalse();
@@ -217,7 +217,7 @@ public class PLangContextTests
     [Test]
     public async Task CreateChild_CreatesWithClonedVariables()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var parent = new PLangContext(engine);
         parent.Variables.Set("test", "value");
 
@@ -230,7 +230,7 @@ public class PLangContextTests
     [Test]
     public async Task CreateChild_SetsParent()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var parent = new PLangContext(engine);
 
         using var child = parent.CreateChild();
@@ -241,7 +241,7 @@ public class PLangContextTests
     [Test]
     public async Task CreateChild_AcceptsCustomVariables()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var parent = new PLangContext(engine);
         var customStack = new Variables();
         customStack.Set("custom", "value");
@@ -254,7 +254,7 @@ public class PLangContextTests
     [Test]
     public async Task Clone_CreatesIndependentCopy()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var original = new PLangContext(engine);
         original["key"] = "value";
         original.IsAsync = true;
@@ -268,7 +268,7 @@ public class PLangContextTests
     [Test]
     public async Task Clone_IndependentData()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var original = new PLangContext(engine);
         original["key"] = "value";
 
@@ -282,7 +282,7 @@ public class PLangContextTests
     [Test]
     public async Task Clone_AcceptsCustomVariables()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var original = new PLangContext(engine);
         var customStack = new Variables();
         customStack.Set("custom", "value");
@@ -295,7 +295,7 @@ public class PLangContextTests
     [Test]
     public async Task Cancel_CancelsCancellationToken()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         context.Cancel();
@@ -306,7 +306,7 @@ public class PLangContextTests
     [Test]
     public async Task Duration_ReturnsPositiveTimeSpan()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
         await Task.Delay(10);
 
@@ -318,7 +318,7 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_CancelsToken()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         var context = new PLangContext(engine);
         var token = context.CancellationToken;
 
@@ -330,7 +330,7 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_ClearsData()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         var context = new PLangContext(engine);
         context["key"] = "value";
 
@@ -342,7 +342,7 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_DisposesDisposableValues()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         var context = new PLangContext(engine);
         var disposable = new TestDisposable();
         context["disposable"] = disposable;
@@ -355,7 +355,7 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_CalledTwice_DoesNotThrow()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         var context = new PLangContext(engine);
 
         context.Dispose();
@@ -389,7 +389,7 @@ public class PLangContextAccessorTests
     public async Task Current_SetAndGet_ReturnsSameContext()
     {
         var accessor = new PLangContextAccessor();
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
 
         accessor.Current = context;
@@ -401,7 +401,7 @@ public class PLangContextAccessorTests
     public async Task Current_SetNull_ReturnsNull()
     {
         var accessor = new PLangContextAccessor();
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
         accessor.Current = context;
 

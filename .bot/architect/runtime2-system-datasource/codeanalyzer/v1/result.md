@@ -5,7 +5,7 @@ Analyzed: 2026-02-23
 
 ---
 
-## PLang/App/Engine/DataSource/IDataSource.cs
+## PLang/App/DataSource/IDataSource.cs
 
 ### OBP Violations
 None.
@@ -21,7 +21,7 @@ Well-designed interface. All methods return `Task<Data>`, never throw. XML docs 
 
 ---
 
-## PLang/App/Engine/DataSource/SqliteDataSource.cs
+## PLang/App/DataSource/SqliteDataSource.cs
 
 ### OBP Violations
 None. Constructor receives primitives (`string dbPath`, `IPLangFileSystem`) rather than navigating Engine, but this is acceptable at the infrastructure boundary â€” SqliteDataSource should not depend on the Engine graph.
@@ -44,7 +44,7 @@ Solid implementation. The bare `catch` in `DeserializeValue` is the main issue â
 
 ---
 
-## PLang/App/Engine/DataSource/SettingsData.cs
+## PLang/App/DataSource/SettingsData.cs
 
 ### OBP Violations
 None. Keeps engine reference (OBP rule 3), navigates via `_engine.System.DataSource` (OBP rule 2).
@@ -67,7 +67,7 @@ The Variables.Clone() type-loss is a design concern that should be addressed or 
 
 ---
 
-## PLang/App/Engine/Errors/AskError.cs
+## PLang/App/Errors/AskError.cs
 
 ### OBP Violations
 None.
@@ -82,7 +82,7 @@ Clean. 29 lines. Clear purpose.
 
 ---
 
-## PLang/App/Engine/Errors/DataSourceError.cs
+## PLang/App/Errors/DataSourceError.cs
 
 ### OBP Violations
 None.
@@ -97,7 +97,7 @@ Clean. 63 lines. `FormatExtra` follows the established pattern.
 
 ---
 
-## PLang/App/Engine/Memory/Data.Navigation.cs
+## PLang/App/Memory/Data.Navigation.cs
 
 ### OBP Violations
 None.
@@ -116,7 +116,7 @@ Minimal, surgical change. Correct.
 
 ---
 
-## PLang/App/Engine/Context/Actor.cs
+## PLang/App/Context/Actor.cs
 
 ### OBP Violations
 None. Actor owns its DataSource (OBP rule 1). Navigates Engine for file system and paths (OBP rule 2).

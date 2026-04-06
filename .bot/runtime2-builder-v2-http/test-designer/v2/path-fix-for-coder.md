@@ -14,7 +14,7 @@
 
 ## Root Cause
 
-`PLang/App/Engine/Memory/Path.cs:34`:
+`PLang/App/Memory/Path.cs:34`:
 
 ```csharp
 _absolutePath = _fs.ValidatePath(rawPath);
@@ -127,7 +127,7 @@ All 1912 tests should pass. The 3 existing failures are pre-existing TestFixture
 
 | File | Change |
 |------|--------|
-| `PLang/App/Engine/Memory/Path.cs` | Add context parameter, resolve relative paths against goal folder |
+| `PLang/App/Memory/Path.cs` | Add context parameter, resolve relative paths against goal folder |
 | `PLang.Generators/LazyParamsGenerator.cs` | Pass context to `Path.Resolve()` in generated code |
 | `PLang.Tests/App/Core/PrPipelineTests.cs` | Update `FilePaths_RelativeResolvesAgainstRoot_NotGoalFolder` to expect success |
 | `PLang.Tests/App/Fixtures/pr/sub/FilePathsFromSub.pr` | Re-add relative step (`subdata.txt`) |

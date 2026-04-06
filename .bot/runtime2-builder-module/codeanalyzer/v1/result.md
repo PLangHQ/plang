@@ -78,7 +78,7 @@ Single-line record. Carries builder type metadata.
 
 ---
 
-## PLang/App/Engine/Goals/Goal/this.cs (Parse, MergeFrom, ToText)
+## PLang/App/Goals/Goal/this.cs (Parse, MergeFrom, ToText)
 
 ### OBP Violations
 None. `Parse()` is static on Goal — Goal owns its text format. `MergeFrom()` is an instance method — Goal owns step matching. Both correct.
@@ -117,7 +117,7 @@ Two untested `Parse()` paths: implicit "Start" goal (step before any header) and
 
 ---
 
-## PLang/App/Engine/Goals/Goal/Methods.cs (FormatForLlm)
+## PLang/App/Goals/Goal/Methods.cs (FormatForLlm)
 
 ### OBP Violations
 None.
@@ -143,7 +143,7 @@ Runtime1 type reference (`PLang.Interfaces.PLangContext`) in `FormatForLlm`. Emp
 
 ---
 
-## PLang/App/Engine/Goals/Goal/Steps/Step/this.cs (Merge, Clone)
+## PLang/App/Goals/Goal/Steps/Step/this.cs (Merge, Clone)
 
 ### OBP Violations
 None. Step owns both `Merge()` and `Clone()`.
@@ -184,7 +184,7 @@ None.
 
 ---
 
-## PLang/App/Engine/Modules/this.cs (Describe, GetDefaults)
+## PLang/App/Modules/this.cs (Describe, GetDefaults)
 
 ### OBP Violations
 
@@ -212,14 +212,14 @@ None.
 
 ---
 
-## PLang/App/Engine/Utility/Json.cs
+## PLang/App/Utility/Json.cs
 
 ### Verdict: CLEAN
 Two static readonly options. Clean consolidation. Used consistently across the builder module.
 
 ---
 
-## PLang/App/Engine/Utility/TypeMapping.cs (ConvertTo, GetBuilderTypeNames, GetComplexTypeSchemas)
+## PLang/App/Utility/TypeMapping.cs (ConvertTo, GetBuilderTypeNames, GetComplexTypeSchemas)
 
 ### OBP Violations
 None. TypeMapping is a utility class (static, stateless).
@@ -244,7 +244,7 @@ None.
 
 ---
 
-## PLang/App/Engine/Providers/this.cs
+## PLang/App/Providers/this.cs
 
 ### Change: Line 203 — `"builder" or "ibuilderprovider" => typeof(modules.builder.providers.IBuilderProvider)`
 ### Change: Line 226 — `Register<modules.builder.providers.IBuilderProvider>(new modules.builder.providers.DefaultBuilderProvider())`

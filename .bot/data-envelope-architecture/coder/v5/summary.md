@@ -42,11 +42,11 @@ Removed the `?? typeof(object)` fallback in generic type parsing. Now `list<unkn
 
 | File | Change |
 |------|--------|
-| `PLang/App/Engine/Memory/Data.cs` | Depth limit on UnwrapJsonElement/Object/Array, made `internal static` |
-| `PLang/App/Engine/Memory/Data.Envelope.cs` | Depth limit on RehydrateNestedData, Verified → private set + SetVerified() |
-| `PLang/App/Engine/Memory/Data.Navigation.cs` | Depth limit on GetChild |
-| `PLang/App/Engine/Memory/Variables.cs` | Cycle detection on ResolveVariablesInPath |
-| `PLang/App/Engine/Types/this.cs` | Depth limit on Clr(), removed ?? typeof(object) fallback |
+| `PLang/App/Memory/Data.cs` | Depth limit on UnwrapJsonElement/Object/Array, made `internal static` |
+| `PLang/App/Memory/Data.Envelope.cs` | Depth limit on RehydrateNestedData, Verified → private set + SetVerified() |
+| `PLang/App/Memory/Data.Navigation.cs` | Depth limit on GetChild |
+| `PLang/App/Memory/Variables.cs` | Cycle detection on ResolveVariablesInPath |
+| `PLang/App/Types/this.cs` | Depth limit on Clr(), removed ?? typeof(object) fallback |
 | `PLang/App/actions/convert/fromJson.cs` | Deleted duplicate UnwrapJsonElement, calls Data's version |
 | `PLang/PLang.csproj` | Added InternalsVisibleTo for PLang.Tests |
 | `PLang.Tests/App/Memory/DataTests.cs` | 12 new tests + 2 updated |

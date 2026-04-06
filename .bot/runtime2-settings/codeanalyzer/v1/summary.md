@@ -48,8 +48,8 @@ public T Resolve<T>(string key, PLangContext context, T classDefault)
 Simple, readable, 18 lines. Walks the hierarchy, falls through. The only issue is the hard cast — a one-line fix.
 
 ## Files analyzed
-- `PLang/App/Engine/Settings/` (ISettings.cs, this.cs, Scope.cs, ModuleView.cs)
+- `PLang/App/Settings/` (ISettings.cs, this.cs, Scope.cs, ModuleView.cs)
 - `PLang/App/actions/archive/` (Settings.cs, types.cs)
-- `PLang/App/Engine/this.cs` (diff), `PLangContext.cs` (diff), `Goal/Methods.cs` (diff), `GlobalUsings.cs` (diff)
-- `PLang.Tests/App/Engine/Settings/` (3 test files)
+- `PLang/App/this.cs` (diff), `PLangContext.cs` (diff), `Goal/Methods.cs` (diff), `GlobalUsings.cs` (diff)
+- `PLang.Tests/App/Settings/` (3 test files)
 - `Tests/App/Settings/SetMaxGzipSize/Start.test.goal`

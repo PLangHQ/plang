@@ -1,4 +1,4 @@
-using App.Engine.Errors;
+using App.Errors;
 
 namespace PLang.Tests.App.Errors;
 

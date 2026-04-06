@@ -1,6 +1,6 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Variables;
+using App.Context;
+using App;
+using App.Variables;
 using App.modules;
 using App.modules.module;
 
@@ -12,11 +12,11 @@ public class ModuleAddTests
     /// Creates an engine rooted at the directory containing the PLang assembly,
     /// so the sandboxed filesystem can find the assembly file via fs.File.Exists.
     /// </summary>
-    private static (PLangContext context, App.Engine.@this engine, string assemblyPath) CreateContextWithAssembly()
+    private static (PLangContext context, App.@this engine, string assemblyPath) CreateContextWithAssembly()
     {
-        var assemblyPath = typeof(App.Engine.@this).Assembly.Location;
+        var assemblyPath = typeof(App.@this).Assembly.Location;
         var assemblyDir = global::System.IO.Path.GetDirectoryName(assemblyPath)!;
-        var engine = new App.Engine.@this(assemblyDir);
+        var engine = new App.@this(assemblyDir);
         var context = engine.CreateContext();
         return (context, engine, assemblyPath);
     }
@@ -24,7 +24,7 @@ public class ModuleAddTests
     [Test]
     public async Task Add_NonexistentPath_ReturnsError()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = engine.CreateContext();
 
         var add = new Add

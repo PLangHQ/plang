@@ -6,7 +6,7 @@ Align the codebase to consistent terminology: **Module** (grouping) and **Action
 
 ## What's Already Done
 
-The Action entity (`PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/this.cs`) is **already correct**:
+The Action entity (`PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs`) is **already correct**:
 - `Module` property with `[JsonPropertyName("module")]`
 - `ActionName` property with `[JsonPropertyName("action")]`
 - No `Class`/`Method` properties on the entity
@@ -15,20 +15,20 @@ The Action entity (`PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/this.c
 
 ### 1. Delete stale entity IAction interface
 
-**File:** `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/IAction.cs`
+**File:** `PLang/App/Goals/Goal/Steps/Step/Actions/Action/IAction.cs`
 
 This interface has old `Class`/`Method` properties and is **never referenced** anywhere. Delete it.
 
 Also remove the global using alias in `PLang/App/GlobalUsings.cs`:
 ```csharp
 // DELETE THIS LINE:
-global using IAction = App.Engine.Goals.Goal.Steps.Step.Actions.Action.IAction;
+global using IAction = App.Goals.Goal.Steps.Step.Actions.Action.IAction;
 ```
 
 And in `PLang.Tests/GlobalUsings.cs`:
 ```csharp
 // DELETE THIS LINE:
-global using IAction = App.Engine.Goals.Goal.Steps.Step.Actions.Action.IAction;
+global using IAction = App.Goals.Goal.Steps.Step.Actions.Action.IAction;
 ```
 
 ### 2. Rename folder `actions/` → `modules/`
@@ -75,13 +75,13 @@ public interface IAction
 ```
 
 References to update:
-- `PLang/App/Engine/Libraries/Library/this.cs` — field type `IClass` → `IAction`, method signatures
-- `PLang/App/Engine/Libraries/this.cs` — method signatures
+- `PLang/App/Libraries/Library/this.cs` — field type `IClass` → `IAction`, method signatures
+- `PLang/App/Libraries/this.cs` — method signatures
 - All test files that reference `IClass` (25 files in PLang.Tests)
 
 ### 4. Library/Libraries — rename internal variables
 
-**File:** `PLang/App/Engine/Libraries/Library/this.cs`
+**File:** `PLang/App/Libraries/Library/this.cs`
 
 | Before | After |
 |--------|-------|
@@ -89,7 +89,7 @@ References to update:
 | `handler` (variables/parameters) | `action` |
 | Comments: "handler" | "action" |
 
-**File:** `PLang/App/Engine/Libraries/this.cs`
+**File:** `PLang/App/Libraries/this.cs`
 
 | Before | After |
 |--------|-------|
@@ -141,11 +141,11 @@ Some test files have inner classes implementing `IClass` — update to `IAction`
 ### 8. Other references to old namespace outside actions/
 
 These files import `App.actions` but live outside the actions folder:
-- `PLang/App/Engine/this.cs` — Discover namespace string
-- `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`
-- `PLang/App/Engine/Libraries/Library/this.cs`
-- `PLang/App/Engine/Libraries/this.cs`
-- `PLang/App/Engine/Settings/this.cs`
+- `PLang/App/this.cs` — Discover namespace string
+- `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`
+- `PLang/App/Libraries/Library/this.cs`
+- `PLang/App/Libraries/this.cs`
+- `PLang/App/Settings/this.cs`
 
 Search pattern: `grep -rn "App.actions" --include="*.cs"` and update all.
 
@@ -174,7 +174,7 @@ Search pattern: `grep -rn "App.actions" --include="*.cs"` and update all.
 # Should find ZERO references after:
 grep -rn "IClass" --include="*.cs" PLang/ PLang.Tests/ PLang.Generators/
 grep -rn "PLang\.App\.actions" --include="*.cs" PLang/ PLang.Tests/ PLang.Generators/
-grep -rn "_handlers" --include="*.cs" PLang/App/Engine/Libraries/
+grep -rn "_handlers" --include="*.cs" PLang/App/Libraries/
 
 # Build
 dotnet build PLang/PLang.csproj

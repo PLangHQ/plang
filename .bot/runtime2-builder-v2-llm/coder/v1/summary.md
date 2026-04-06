@@ -15,8 +15,8 @@ The LLM module for PLang App — enables PLang developers to query LLMs (OpenAI-
 - `PLang.Tests/App/Modules/llm/LlmTestHelper.cs` — Shared test infrastructure (MockHttpMessageHandler, response builders)
 
 ### Files Modified
-- `PLang/App/Engine/Goals/Goal/GoalCall.cs` — Added `Description` (string?) and `Parallel` (bool) properties
-- `PLang/App/Engine/Providers/this.cs` — Added `"llm"` to ResolveType(), registered OpenAiProvider in RegisterDefaults()
+- `PLang/App/Goals/Goal/GoalCall.cs` — Added `Description` (string?) and `Parallel` (bool) properties
+- `PLang/App/Providers/this.cs` — Added `"llm"` to ResolveType(), registered OpenAiProvider in RegisterDefaults()
 - All 9 test files — Implemented all 61 test stubs (removed 1 API key test per Ingi's direction)
 
 ### Key Design Decisions

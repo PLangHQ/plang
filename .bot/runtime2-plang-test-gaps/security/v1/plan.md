@@ -21,9 +21,9 @@ Review the 7 changed runtime C# files on this branch for security implications. 
 ## Files to Review
 
 - `PLang/Executor.cs` — setup call consolidation
-- `PLang/App/Engine/Goals/Goal/Methods.cs` — return value propagation
-- `PLang/App/Engine/Goals/Goal/Steps/this.cs` — return value propagation
-- `PLang/App/Engine/Goals/Goal/this.cs` — PrPath empty guard
-- `PLang/App/Engine/Goals/Setup/this.cs` — convention-based discovery
-- `PLang/App/Engine/Goals/this.cs` — PrPath keying, Get() variations
-- `PLang/App/Engine/Test/this.cs` — per-test root isolation
+- `PLang/App/Goals/Goal/Methods.cs` — return value propagation
+- `PLang/App/Goals/Goal/Steps/this.cs` — return value propagation
+- `PLang/App/Goals/Goal/this.cs` — PrPath empty guard
+- `PLang/App/Goals/Setup/this.cs` — convention-based discovery
+- `PLang/App/Goals/this.cs` — PrPath keying, Get() variations
+- `PLang/App/Test/this.cs` — per-test root isolation

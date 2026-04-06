@@ -205,8 +205,8 @@ The LLM module's PLang goals need pre-built .pr files (same as the builder itsel
 
 | File | Change |
 |------|--------|
-| `PLang/App/Engine/Goals/Goal/GoalCall.cs` | Add `Description` property |
-| `PLang/App/Engine/Modules/this.cs` | Register llm module |
+| `PLang/App/Goals/Goal/GoalCall.cs` | Add `Description` property |
+| `PLang/App/Modules/this.cs` | Register llm module |
 
 ## Definition of Done
 

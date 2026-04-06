@@ -2,8 +2,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Nethereum.Util;
-using App.Engine.Errors;
-using App.Engine.Variables;
+using App.Errors;
+using App.Variables;
 
 namespace App.modules.crypto.providers;
 
@@ -27,7 +27,7 @@ public class DefaultCryptoProvider : ICryptoProvider
         if (hashBytes == null)
             return Data.FromError(new ActionError($"Algorithm '{action.Algorithm}' is not supported", "UnsupportedAlgorithm", 400));
 
-        return Data.Ok(hashBytes, Engine.Variables.Type.FromName(algorithm));
+        return Data.Ok(hashBytes, Variables.Type.FromName(algorithm));
     }
 
     public Data Verify(Verify action)

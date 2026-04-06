@@ -1,6 +1,6 @@
 using PLang.SafeFileSystem;
-using App.Engine.FileSystem;
-using App.Engine.Variables;
+using App.FileSystem;
+using App.Variables;
 using App.modules.file;
 using App.modules.file.providers;
 
@@ -10,7 +10,7 @@ public class PathTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly App.Engine.@this _engine;
+    private readonly App.@this _engine;
     private readonly DefaultFileProvider _provider;
 
     public PathTests()
@@ -18,7 +18,7 @@ public class PathTests : IDisposable
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_path_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new App.Engine.@this(_tempDir, fileSystem: _fs);
+        _engine = new App.@this(_tempDir, fileSystem: _fs);
         _provider = new DefaultFileProvider();
     }
 

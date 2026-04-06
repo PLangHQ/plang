@@ -1,4 +1,4 @@
-using App.Engine.Variables;
+using App.Variables;
 
 namespace App.modules.provider;
 
@@ -19,7 +19,7 @@ public partial class setDefault : IContext
     {
         var providerType = Context.Engine.Providers.ResolveType(Type);
         if (providerType == null)
-            return Data.FromError(new Engine.Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
+            return Data.FromError(new Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
 
         return Context.Engine.Providers.SetDefault(providerType, Name);
     }

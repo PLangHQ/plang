@@ -7,11 +7,11 @@ Review all code changes on branch `architect/runtime2-system-datasource` against
 ## Files to Analyze
 
 **New files (10):**
-- `PLang/App/Engine/DataSource/IDataSource.cs`
-- `PLang/App/Engine/DataSource/SqliteDataSource.cs`
-- `PLang/App/Engine/DataSource/SettingsData.cs`
-- `PLang/App/Engine/Errors/AskError.cs`
-- `PLang/App/Engine/Errors/DataSourceError.cs`
+- `PLang/App/DataSource/IDataSource.cs`
+- `PLang/App/DataSource/SqliteDataSource.cs`
+- `PLang/App/DataSource/SettingsData.cs`
+- `PLang/App/Errors/AskError.cs`
+- `PLang/App/Errors/DataSourceError.cs`
 - `PLang/App/actions/settings/get.cs`
 - `PLang/App/actions/settings/set.cs`
 - `PLang/App/actions/settings/remove.cs`
@@ -19,8 +19,8 @@ Review all code changes on branch `architect/runtime2-system-datasource` against
 - Test files (2)
 
 **Modified files (3):**
-- `PLang/App/Engine/Memory/Data.Navigation.cs` — GetChild made virtual
-- `PLang/App/Engine/Context/Actor.cs` — DataSource + SettingsData registration
+- `PLang/App/Memory/Data.Navigation.cs` — GetChild made virtual
+- `PLang/App/Context/Actor.cs` — DataSource + SettingsData registration
 - `PLang.Generators/LazyParamsGenerator.cs` — error propagation
 
 ## Analysis Method

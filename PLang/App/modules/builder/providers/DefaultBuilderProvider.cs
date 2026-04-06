@@ -1,9 +1,9 @@
 using System.Text.Json;
-using App.Engine.Goals.Goal;
-using App.Engine.Variables;
-using App.Engine.Utility;
-using Goal = App.Engine.Goals.Goal.@this;
-using Actions = App.Engine.Goals.Goal.Steps.Step.Actions.@this;
+using App.Goals.Goal;
+using App.Variables;
+using App.Utility;
+using Goal = App.Goals.Goal.@this;
+using Actions = App.Goals.Goal.Steps.Step.Actions.@this;
 
 namespace App.modules.builder.providers;
 
@@ -15,7 +15,7 @@ public class DefaultBuilderProvider : IBuilderProvider
     private static Data? BuildingGuard(IContext action)
     {
         if (!action.Context.Engine.Building.IsEnabled)
-            return Data.FromError(new Engine.Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
+            return Data.FromError(new Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
         return null;
     }
 
@@ -84,7 +84,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         }
 
         var allGoals = new List<Goal>();
-        var allErrors = new List<Engine.Info>();
+        var allErrors = new List<Info>();
 
         foreach (var file in files)
         {
@@ -92,7 +92,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             var readResult = await engine.RunAction(readAction, context);
             if (!readResult.Success)
             {
-                allErrors.Add(new Engine.Info
+                allErrors.Add(new Info
                 {
                     Key = "FileReadError",
                     Message = $"Failed to read {file.Raw}: {readResult.Error?.Message}"
@@ -134,7 +134,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var context = action.Context;
 
         if (action.Goals.Count == 0)
-            return Data.FromError(new Engine.Errors.ActionError("No goals to save", "NoGoals", 400));
+            return Data.FromError(new Errors.ActionError("No goals to save", "NoGoals", 400));
 
         // Apply LLM-generated description if available in the memory stack
         var stepResults = context.Variables.Get("stepResults");
@@ -148,7 +148,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var prPath = action.Goals[0].PrPath;
         if (string.IsNullOrEmpty(prPath))
-            return Data.FromError(new Engine.Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));
+            return Data.FromError(new Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));
 
         // Load existing goals from .pr file — merge by name (replace or append)
         var existingGoals = new List<Goal>();
@@ -209,7 +209,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         }
 
         if (notFound.Count > 0)
-            return Data.FromError(new Engine.Errors.ActionError(
+            return Data.FromError(new Errors.ActionError(
                 $"Actions not found: {string.Join(", ", notFound)}", "ActionNotFound", 400));
 
         await ResolveGoalCallPaths(action.Actions, engine, context);
@@ -269,7 +269,7 @@ public class DefaultBuilderProvider : IBuilderProvider
                 }
                 catch (JsonException ex)
                 {
-                    return Data.FromError(new Engine.Errors.ActionError(
+                    return Data.FromError(new Errors.ActionError(
                         $"Failed to parse app.pr: {ex.Message}", "CorruptAppFile", 400));
                 }
             }
@@ -335,10 +335,10 @@ public class DefaultBuilderProvider : IBuilderProvider
     /// <summary>
     /// Merges existing .pr data into a goal. Returns any errors encountered (corrupt .pr files).
     /// </summary>
-    private static async Task<List<Engine.Info>> MergePrData(Goal goal, Engine.@this engine,
-        Engine.Context.PLangContext context)
+    private static async Task<List<Info>> MergePrData(Goal goal, App.@this engine,
+        Context.PLangContext context)
     {
-        var errors = new List<Engine.Info>();
+        var errors = new List<Info>();
         var prPath = goal.PrPath;
         if (string.IsNullOrEmpty(prPath)) return errors;
 
@@ -366,7 +366,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         }
         catch (JsonException ex)
         {
-            errors.Add(new Engine.Info
+            errors.Add(new Info
             {
                 Key = "CorruptPrFile",
                 Message = $"Failed to parse .pr file at {prPath}: {ex.Message}"
@@ -376,8 +376,8 @@ public class DefaultBuilderProvider : IBuilderProvider
         return errors;
     }
 
-    private static async Task ResolveGoalCallPaths(Actions actions, Engine.@this engine,
-        Engine.Context.PLangContext context)
+    private static async Task ResolveGoalCallPaths(Actions actions, App.@this engine,
+        Context.PLangContext context)
     {
         foreach (var action in actions)
         {

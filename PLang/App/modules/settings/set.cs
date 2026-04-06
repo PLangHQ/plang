@@ -1,5 +1,5 @@
-using App.Engine.Variables;
-using App.Engine.Settings;
+using App.Variables;
+using App.Settings;
 
 namespace App.modules.settings;
 

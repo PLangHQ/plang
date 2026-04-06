@@ -1,8 +1,8 @@
-using App.Engine.Utility;
+using App.Utility;
 
 namespace PLang.Tests.App.Memory;
 
-using R2 = App.Engine.Variables;
+using R2 = App.Variables;
 
 public class TStringTests
 {

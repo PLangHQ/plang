@@ -37,7 +37,7 @@ Not blocking. Industry-standard behavior. Noted for future improvement.
 
 ## Files modified
 
-- `PLang/App/Engine/Memory/Path.cs` — added serialization catch clause
+- `PLang/App/Memory/Path.cs` — added serialization catch clause
 - `PLang.Tests/App/Modules/Path/PathTests.cs` — 1 new test, 3 strengthened assertions, 1 duplicate removed
 
 ## Verification

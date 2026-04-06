@@ -1,9 +1,9 @@
 using PLang.Interfaces;
-using App.Engine.Channels.Serializers;
-using App.Engine.Errors;
-using App.Engine.FileSystem;
-using App.Engine.Variables;
-using App.Engine.Utility;
+using App.Channels.Serializers;
+using App.Errors;
+using App.FileSystem;
+using App.Variables;
+using App.Utility;
 
 namespace App.modules.file.providers;
 
@@ -22,7 +22,7 @@ public class DefaultFileProvider : IFileProvider
         try
         {
             var mime = TypeMapping.GetMimeType(path.Extension);
-            var type = Engine.Variables.Type.FromMime(mime);
+            var type = Variables.Type.FromMime(mime);
             object content;
 
             if (type.ClrType == typeof(byte[]))
@@ -40,7 +40,7 @@ public class DefaultFileProvider : IFileProvider
                     content = converted ?? text;
 
                     // Set back-references for .pr deserialization (temporary — will be replaced by Variables provenance)
-                    if (content is Engine.Goals.Goal.@this prGoal)
+                    if (content is Goals.Goal.@this prGoal)
                         prGoal.SetStepBackReferences();
                 }
                 else

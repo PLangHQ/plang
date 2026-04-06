@@ -17,31 +17,31 @@ All design decisions are locked. No ambiguity. This is pure execution.
 
 ### Phase 1: Folder Restructure + Namespace Migration (one atomic commit)
 
-1. Create the folder structure under `PLang/App/Engine/`
+1. Create the folder structure under `PLang/App/`
 2. Move all files to their new locations per the tree map
 3. Update namespace declarations in every moved file
 4. Update `using` statements in ALL files (production + tests + PlangModule)
 5. Update LazyParamsGenerator.cs — 15 hardcoded namespace strings
-6. Update `Library.Discover("App.modules")` → `Library.Discover("App.Engine.modules")`
+6. Update `Library.Discover("App.modules")` → `Library.Discover("App.modules")`
 7. Build and fix any remaining references
 
 **Namespace search-and-replace** (order matters — longest match first):
 ```
-App.Memory.Navigators → App.Engine.Variables.Navigators
+App.Memory.Navigators → App.Variables.Navigators
 App.Core              → App.Engine
-App.Context           → App.Engine.Context
-App.Memory            → App.Engine.Variables
-App.IO                → App.Engine.Channels
-App.Errors            → App.Engine.Errors
-App.Serialization     → App.Engine.Serializers
-App.Utility           → App.Engine.Utility
-App.Parsing           → App.Engine.Parsing
-App.Mapping           → App.Engine.Mapping
+App.Context           → App.Context
+App.Memory            → App.Variables
+App.IO                → App.Channels
+App.Errors            → App.Errors
+App.Serialization     → App.Serializers
+App.Utility           → App.Utility
+App.Parsing           → App.Parsing
+App.Mapping           → App.Mapping
 ```
 
 **modules/ split:**
-- Infrastructure files (IClass, ICodeGenerated, Libraries, Library, ActionAttribute, DefaultAttribute, VariableNameAttribute, IContext) → `Engine/Libraries/` namespace `App.Engine.Libraries`
-- Handler subfolders (variable/, file/, etc.) → `Engine/modules/` namespace `App.Engine.modules`
+- Infrastructure files (IClass, ICodeGenerated, Libraries, Library, ActionAttribute, DefaultAttribute, VariableNameAttribute, IContext) → `Engine/Libraries/` namespace `App.Libraries`
+- Handler subfolders (variable/, file/, etc.) → `Engine/modules/` namespace `App.modules`
 
 **Data/Type split:**
 - `Memory/Data.cs` contains both `Data` and `Type` classes
@@ -50,7 +50,7 @@ App.Mapping           → App.Engine.Mapping
 - Remaining Memory files move to `Engine/Memory/`
 
 **EventScope move:**
-- `Context/EventScope.cs` → `Engine/Events/EventScope.cs` with namespace `App.Engine.Events`
+- `Context/EventScope.cs` → `Engine/Events/EventScope.cs` with namespace `App.Events`
 
 **External files to update:**
 - `PLang.Generators/LazyParamsGenerator.cs` — 15 namespace strings

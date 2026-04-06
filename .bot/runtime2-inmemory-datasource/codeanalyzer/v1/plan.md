@@ -8,14 +8,14 @@ Analyze all C# code changes on `runtime2-inmemory-datasource` branch vs its pare
 
 | File | Change type |
 |---|---|
-| `PLang/App/Engine/DataSource/SqliteDataSource.cs` | In-memory factory + sentinel |
-| `PLang/App/Engine/Build/this.cs` | New — Building object |
-| `PLang/App/Engine/Context/Actor.cs` | In-memory DataSource routing |
-| `PLang/App/Engine/this.cs` | Building property on Engine |
+| `PLang/App/DataSource/SqliteDataSource.cs` | In-memory factory + sentinel |
+| `PLang/App/Build/this.cs` | New — Building object |
+| `PLang/App/Context/Actor.cs` | In-memory DataSource routing |
+| `PLang/App/this.cs` | Building property on Engine |
 | `PLang/App/GlobalUsings.cs` | Building alias docs |
-| `PLang/App/Engine/Memory/Variables.cs` | Array index navigation fix |
-| `PLang/App/Engine/Goals/Goal/Steps/Step/Methods.cs` | AfterStep fires on failure |
-| `PLang/App/Engine/Test/this.cs` | AssertionError bubble-up handling |
+| `PLang/App/Memory/Variables.cs` | Array index navigation fix |
+| `PLang/App/Goals/Goal/Steps/Step/Methods.cs` | AfterStep fires on failure |
+| `PLang/App/Test/this.cs` | AssertionError bubble-up handling |
 | `PLang/App/actions/list/unique.cs` | Return type fix |
 | `PLang/Services/SettingsService/SqliteSettingsRepository.cs` | Settings → SettingsV1 rename |
 

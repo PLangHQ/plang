@@ -1,7 +1,7 @@
-using App.Engine;
-using App.Engine.Context;
-using App.Engine.Goals.Goal;
-using App.Engine.Variables;
+using App;
+using App.Context;
+using App.Goals.Goal;
+using App.Variables;
 
 namespace App.modules.runtime;
 
@@ -18,7 +18,7 @@ namespace App.modules.runtime;
 [Action("run")]
 public partial class run : IContext
 {
-    public partial Engine.Goals.Goal.@this? Goal { get; init; }
+    public partial Goals.Goal.@this? Goal { get; init; }
     public partial GoalCall? GoalName { get; init; }
     [Default("")]
     public partial string ContextMode { get; init; }
@@ -34,7 +34,7 @@ public partial class run : IContext
             goal = await GoalName.GetGoalAsync(engine, Context);
             if (goal == null)
             {
-                var result = Data.FromError(new Engine.Errors.ServiceError(
+                var result = Data.FromError(new Errors.ServiceError(
                     $"Goal '{GoalName.Name ?? GoalName.PrPath}' not found", "NotFound", 404));
                 result.Handled = true;
                 return result;

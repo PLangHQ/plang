@@ -1,11 +1,11 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
-using App.Engine.Context;
-using App.Engine.Variables;
+using App.Context;
+using App.Variables;
 using App.modules.http;
 using App.modules.http.providers;
-using PLangEngine = App.Engine.@this;
+using PLangEngine = App.@this;
 using HttpMethod = App.modules.http.HttpMethod;
 
 namespace PLang.Tests.App.Modules.http;

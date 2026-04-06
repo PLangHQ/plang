@@ -7,8 +7,8 @@ The builder module (`App.modules.builder`) provides native App actions that the 
 ## What was done
 
 ### Entity Methods (Phase 1)
-- **`Step.Merge(Step from)`** — Added to `PLang/App/Engine/Goals/Goal/Steps/Step/this.cs:100`. Copies LLM-derived fields (Actions, Cache, OnError, Errors, Warnings) while preserving structural fields (Text, Index, Indent, LineNumber). Only replaces Errors/Warnings when source has entries.
-- **`Goal.MergeFrom(Goal existing)`** — Added to `PLang/App/Engine/Goals/Goal/this.cs:140`. Matches steps by `Text`, delegates to `Step.Merge` for each match. Null/empty existing is a no-op.
+- **`Step.Merge(Step from)`** — Added to `PLang/App/Goals/Goal/Steps/Step/this.cs:100`. Copies LLM-derived fields (Actions, Cache, OnError, Errors, Warnings) while preserving structural fields (Text, Index, Indent, LineNumber). Only replaces Errors/Warnings when source has entries.
+- **`Goal.MergeFrom(Goal existing)`** — Added to `PLang/App/Goals/Goal/this.cs:140`. Matches steps by `Text`, delegates to `Step.Merge` for each match. Null/empty existing is a no-op.
 
 ### GoalFile (Phase 2)
 - **`PLang/App/modules/builder/GoalFile.cs`** — Instance class that IS the .goal file format. Parses .goal text into `List<Goal>` with Steps. Handles: blank lines, `/` line comments, `/* */` block comments, `- ` step lines, continuation lines, indentation (4 spaces = 1 level), tabs→spaces, goal headers (first=Public, rest=Private), SubGoals list, LineNumber tracking, SHA256 hash.

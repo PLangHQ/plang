@@ -9,7 +9,7 @@ Implement the UI module for PLang App: Liquid template rendering via Fluid libra
 - `PLang/App/modules/ui/providers/FluidProvider.cs` — default Liquid provider
 
 ## Files Modified
-- `PLang/App/Engine/Providers/this.cs` — register ITemplateProvider + type mapping
+- `PLang/App/Providers/this.cs` — register ITemplateProvider + type mapping
 - `PLang/PLang.csproj` — add Fluid.Core 2.31.0
 - `PLang.Tests/App/Modules/ui/RenderTests.cs` — implement 29 C# tests
 - `Tests/App/Ui/` — implement 5 PLang test goals + fixture files

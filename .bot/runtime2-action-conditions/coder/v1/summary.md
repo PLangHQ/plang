@@ -12,7 +12,7 @@ Implements action-based conditions for PLang App. Replaces the single `bool Cond
 2. **`PLang/App/modules/condition/providers/DefaultEvaluator.cs`** -- All operators (==, !=, >, <, >=, <=, contains, startswith, endswith, in, isEmpty, NOT, AND, OR), type normalization (int/long/double widening, string-to-number), case-insensitive string comparison, IsTruthy for null/bool/numeric/string/collection/object
 3. **`PLang/App/modules/condition/if.cs`** -- Refactored: `bool Condition` -> `Left/Operator/Right`. No operator = truthy check. With operator = evaluator. Stores `__condition__` in Variables for sub-step signaling.
 4. **`PLang/App/modules/condition/compare.cs`** -- New `[Action("compare")]`: pure bool evaluation, no branching. For compound AND/OR intermediates.
-5. **`PLang/App/Engine/Goals/Goal/Steps/this.cs`** -- Sub-step logic: indented steps default to NOT executing. Condition steps signal via `__condition__` in memory. Only `true` signal proves children. Non-condition steps don't trigger skipping.
+5. **`PLang/App/Goals/Goal/Steps/this.cs`** -- Sub-step logic: indented steps default to NOT executing. Condition steps signal via `__condition__` in memory. Only `true` signal proves children. Non-condition steps don't trigger skipping.
 
 ### Test implementations (5 files, 69 new + 6 updated)
 

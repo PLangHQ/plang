@@ -6,7 +6,7 @@ Setup goals run once-per-step at app startup. Steps are tracked persistently in 
 
 ## What was done
 
-### New file: `PLang/App/Engine/Goals/Setup/this.cs`
+### New file: `PLang/App/Goals/Setup/this.cs`
 The Setup object. Contains:
 - `Goals` — filtered+ordered setup goals ("Setup" first, then alphabetical)
 - `RunAsync(engine, context, ct)` — sets `context.Setup`, iterates goals, clears when done
@@ -16,10 +16,10 @@ The Setup object. Contains:
 No separate `Executions` class — uses the existing System actor's DataSource directly.
 
 ### Modified files:
-- **`PLang/App/Engine/Goals/this.cs`** (EngineGoals) — `Setup` property changed from `IEnumerable<Goal>` to `Setup.@this` object. Added constructor. Setup goals excluded from regular `Get()` lookup (can't be called from normal code).
-- **`PLang/App/Engine/Context/PLangContext.cs`** — Added `Setup` property (nullable). Included in `Clone()`.
-- **`PLang/App/Engine/Goals/Goal/Steps/this.cs`** (Steps) — Added `RunAsync` method that owns step iteration loop (moved from Goal). Includes setup run-once check: skip if already executed, record after running.
-- **`PLang/App/Engine/Goals/Goal/Methods.cs`** (Goal.RunAsync) — Replaced inline step loop with `Steps.RunAsync(engine, context, ct)` delegation (OBP rule 5).
+- **`PLang/App/Goals/this.cs`** (EngineGoals) — `Setup` property changed from `IEnumerable<Goal>` to `Setup.@this` object. Added constructor. Setup goals excluded from regular `Get()` lookup (can't be called from normal code).
+- **`PLang/App/Context/PLangContext.cs`** — Added `Setup` property (nullable). Included in `Clone()`.
+- **`PLang/App/Goals/Goal/Steps/this.cs`** (Steps) — Added `RunAsync` method that owns step iteration loop (moved from Goal). Includes setup run-once check: skip if already executed, record after running.
+- **`PLang/App/Goals/Goal/Methods.cs`** (Goal.RunAsync) — Replaced inline step loop with `Steps.RunAsync(engine, context, ct)` delegation (OBP rule 5).
 - **`PLang/Executor.cs`** (Run2) — Calls `Setup.RunAsync` before main goal. When goalName is "setup", only runs setup.
 - **`PLang.Tests/App/Core/GoalsTests.cs`** — Updated existing test to use `goals.Setup.Goals.ToList()`.
 

@@ -17,8 +17,8 @@ Pre-records step1 with a marker string via raw DataSource. After RunAsync, verif
 Passes a pre-cancelled token to `Setup.RunAsync`, verifies it returns `GoalError.Cancelled`.
 
 ## Files modified
-- `PLang/App/Engine/Goals/Setup/this.cs` — added `IsTolerableError` method
-- `PLang/App/Engine/Goals/Goal/Steps/this.cs` — unified tolerance check, Record() return checked
+- `PLang/App/Goals/Setup/this.cs` — added `IsTolerableError` method
+- `PLang/App/Goals/Goal/Steps/this.cs` — unified tolerance check, Record() return checked
 - `PLang.Tests/App/Goals/Setup/SetupTests.cs` — 7 new/rewritten tests
 
 ## Code example

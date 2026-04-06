@@ -1,5 +1,5 @@
-using App.Engine.Context;
-using App.Engine.Variables;
+using App.Context;
+using App.Variables;
 
 namespace App.modules.engine;
 
@@ -12,7 +12,7 @@ namespace App.modules.engine;
 public partial class Dispatch : IContext
 {
     [IsNotNull]
-    public partial Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; init; }
+    public partial Goals.Goal.Steps.Step.Actions.Action.@this Action { get; init; }
 
     /// <summary>
     /// Target actor to execute as. If null, executes on the current context.
@@ -29,7 +29,7 @@ public partial class Dispatch : IContext
         if (targetActor != null && targetActor != callingActor)
         {
             if (callingActor != null && callingActor.EscalationLevel < targetActor.EscalationLevel)
-                return Data.FromError(new Engine.Errors.ActionError(
+                return Data.FromError(new Errors.ActionError(
                     $"Actor '{callingActor.Name}' cannot escalate to '{targetActor.Name}'",
                     "EscalationDenied", 403));
 

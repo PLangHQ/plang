@@ -1,4 +1,4 @@
-using App.Engine.Config;
+using App.Config;
 
 namespace App.modules;
 

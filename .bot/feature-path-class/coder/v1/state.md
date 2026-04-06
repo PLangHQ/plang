@@ -3,7 +3,7 @@
 ## Status: Complete
 
 ## What is done
-- [x] Path class created at `PLang/App/Engine/Memory/Path.cs`
+- [x] Path class created at `PLang/App/Memory/Path.cs`
 - [x] Global aliases added (`PLangPath`) in both projects
 - [x] TypeMapping registration for "path" type
 - [x] All 7 file handlers updated: read, save, copy, move, delete, exists, list
@@ -14,9 +14,9 @@
 - [x] All 1195 C# tests passing
 
 ## Files modified
-- `PLang/App/Engine/Memory/Path.cs` (new)
+- `PLang/App/Memory/Path.cs` (new)
 - `PLang/App/GlobalUsings.cs`
-- `PLang/App/Engine/Utility/TypeMapping.cs`
+- `PLang/App/Utility/TypeMapping.cs`
 - `PLang/App/actions/file/read.cs`
 - `PLang/App/actions/file/save.cs`
 - `PLang/App/actions/file/copy.cs`

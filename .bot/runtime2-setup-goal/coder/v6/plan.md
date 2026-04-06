@@ -21,7 +21,7 @@ This method:
 - Discards non-setup goals (they remain lazy-loadable via `GetAsync`)
 - Returns `Data.Ok()` or `Data.FromError()` on failure
 
-**Files**: `PLang/App/Engine/Goals/Setup/this.cs`
+**Files**: `PLang/App/Goals/Setup/this.cs`
 
 ### 2. Replace `LoadFromDirectoryAsync` with `DiscoverAsync` in Executor.Run2
 

@@ -12,7 +12,7 @@ Isolated the coder's actual commit (`62e50ae8`) from the large diff against `run
 
 ### Findings
 
-**Finding 1 (major, merge-gap): SettingsData sharing** — `PLang/App/Engine/Context/Actor.cs:64`
+**Finding 1 (major, merge-gap): SettingsData sharing** — `PLang/App/Context/Actor.cs:64`
 
 The branch diverged from runtime2 before commit `af3b34a9` ("Share SettingsData across all actors — fix %Settings.X% unreachable from PLang code"). On this branch, SettingsData is only on the System actor's Variables. On runtime2, it's shared across all actors. When merging, the coder must preserve runtime2's shared pattern while adding the in-memory check. This is NOT a coder regression — it's a merge gap.
 
@@ -58,9 +58,9 @@ Both must be preserved in the merge.
 
 | File | Assessment |
 |---|---|
-| `PLang/App/Engine/DataSource/SqliteDataSource.cs` | Clean. Sentinel pattern correct. |
-| `PLang/App/Engine/Build/this.cs` | Clean. Follows Test/Debug pattern. |
-| `PLang/App/Engine/this.cs` | Clean. Building wired correctly. |
-| `PLang/App/Engine/Context/Actor.cs` | Clean code, merge gap with runtime2. |
+| `PLang/App/DataSource/SqliteDataSource.cs` | Clean. Sentinel pattern correct. |
+| `PLang/App/Build/this.cs` | Clean. Follows Test/Debug pattern. |
+| `PLang/App/this.cs` | Clean. Building wired correctly. |
+| `PLang/App/Context/Actor.cs` | Clean code, merge gap with runtime2. |
 | `PLang/App/GlobalUsings.cs` | Clean. Alias conflict documented. |
 | `PLang.Tests/App/Modules/datasource/DataSourceTests.cs` | 7 new tests, good intent verification. |

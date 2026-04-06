@@ -1,4 +1,4 @@
-using App.Engine.Settings;
+using App.Settings;
 
 namespace PLang.Tests.Runtime2.Engine.Settings;
 

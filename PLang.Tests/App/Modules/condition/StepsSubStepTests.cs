@@ -1,6 +1,6 @@
-using App.Engine;
-using App.Engine.Context;
-using App.Engine.Variables;
+using App;
+using App.Context;
+using App.Variables;
 using App.modules.condition;
 using PLang.SafeFileSystem;
 
@@ -10,14 +10,14 @@ public class StepsSubStepTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly App.Engine.@this _engine;
+    private readonly App.@this _engine;
 
     public StepsSubStepTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new App.Engine.@this(_tempDir, fileSystem: _fs);
+        _engine = new App.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
@@ -41,7 +41,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"if condition = {conditionResult}",
             Actions = new StepActions
             {
-                new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                new App.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = "condition",
                     ActionName = "if",
@@ -68,7 +68,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"write {marker}",
             Actions = new StepActions
             {
-                new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                new App.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = "output",
                     ActionName = "write",
@@ -90,7 +90,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"set {varName} = {value}",
             Actions = new StepActions
             {
-                new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                new App.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = "variable",
                     ActionName = "set",

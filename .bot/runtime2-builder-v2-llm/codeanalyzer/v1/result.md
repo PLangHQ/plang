@@ -61,7 +61,7 @@ Clean.
 
 ---
 
-## PLang/App/Engine/Goals/Goal/GoalCall.cs
+## PLang/App/Goals/Goal/GoalCall.cs
 
 ### OBP Violations
 None.
@@ -76,7 +76,7 @@ Clean. `Description` and `Parallel` are well-placed — GoalCall now serves dual
 
 ---
 
-## PLang/App/Engine/Providers/this.cs
+## PLang/App/Providers/this.cs
 
 ### OBP Violations
 None.

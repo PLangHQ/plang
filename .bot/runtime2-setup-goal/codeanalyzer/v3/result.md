@@ -101,12 +101,12 @@ Not worth a finding on its own, but worth noting for when child contexts become 
 
 | File | Verdict |
 |---|---|
-| `PLang/App/Engine/Context/Actor.cs` | NEEDS WORK — SettingsData registration scope |
-| `PLang/App/Engine/DataSource/SettingsData.cs` | CLEAN — code is correct, the wiring is wrong |
-| `PLang/App/Engine/this.cs` | CLEAN — Context → User.Context is correct design |
-| `PLang/App/Engine/Memory/Variables.cs` | CLEAN (observation noted) |
-| `PLang/App/Engine/Goals/Setup/this.cs` | CLEAN |
-| `PLang/App/Engine/Goals/Goal/Steps/this.cs` | CLEAN |
-| `PLang/App/Engine/Goals/this.cs` | CLEAN |
+| `PLang/App/Context/Actor.cs` | NEEDS WORK — SettingsData registration scope |
+| `PLang/App/DataSource/SettingsData.cs` | CLEAN — code is correct, the wiring is wrong |
+| `PLang/App/this.cs` | CLEAN — Context → User.Context is correct design |
+| `PLang/App/Memory/Variables.cs` | CLEAN (observation noted) |
+| `PLang/App/Goals/Setup/this.cs` | CLEAN |
+| `PLang/App/Goals/Goal/Steps/this.cs` | CLEAN |
+| `PLang/App/Goals/this.cs` | CLEAN |
 | `PLang/Executor.cs` | CLEAN |
 | `PLang.Tests/App/Modules/settings/SettingsDataTests.cs` | NEEDS WORK — all tests use wrong actor |

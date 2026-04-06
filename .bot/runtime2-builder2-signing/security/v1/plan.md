@@ -8,9 +8,9 @@ Full security audit of the signing, crypto, identity, and provider modules added
 - `PLang/App/modules/crypto/` — hash.cs, verify.cs, types.cs, providers/
 - `PLang/App/modules/identity/` — all handlers + types.cs, IdentityData.cs
 - `PLang/App/modules/provider/` — load.cs, list.cs, remove.cs, setDefault.cs
-- `PLang/App/Engine/Providers/` — Ed25519Provider, DefaultIdentityProvider, ISigningProvider, IKeyProvider, KeyPair, NamedProviderRegistry
-- `PLang/App/Engine/Memory/Data.Envelope.cs` — Signature property
-- `PLang/App/Engine/Cache/` — nonce replay dependency
+- `PLang/App/Providers/` — Ed25519Provider, DefaultIdentityProvider, ISigningProvider, IKeyProvider, KeyPair, NamedProviderRegistry
+- `PLang/App/Memory/Data.Envelope.cs` — Signature property
+- `PLang/App/Cache/` — nonce replay dependency
 
 ## Approach
 1. **Blue team**: Map attack surface — what's exposed, trust boundaries, mitigations, gaps

@@ -35,13 +35,13 @@ Reviewed all code changes (diff against runtime2), read full source files for co
 F1 and F2 are both major. F1 is a contract gap that could allow setup goals to run outside setup context. F2 means the feature doesn't work in production — the infrastructure is correct but the wiring is incomplete.
 
 ## Files reviewed
-- `PLang/App/Engine/Goals/Setup/this.cs`
-- `PLang/App/Engine/Goals/Goal/Steps/this.cs`
-- `PLang/App/Engine/Goals/Goal/Methods.cs`
-- `PLang/App/Engine/Goals/this.cs`
-- `PLang/App/Engine/Context/PLangContext.cs`
-- `PLang/App/Engine/Context/Actor.cs`
-- `PLang/App/Engine/this.cs`
+- `PLang/App/Goals/Setup/this.cs`
+- `PLang/App/Goals/Goal/Steps/this.cs`
+- `PLang/App/Goals/Goal/Methods.cs`
+- `PLang/App/Goals/this.cs`
+- `PLang/App/Context/PLangContext.cs`
+- `PLang/App/Context/Actor.cs`
+- `PLang/App/this.cs`
 - `PLang/Executor.cs`
 - `PLang.Tests/App/Goals/Setup/SetupTests.cs`
 - `PLang.Tests/App/Modules/settings/SettingsDataTests.cs`

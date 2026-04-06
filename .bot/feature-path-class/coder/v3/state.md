@@ -13,7 +13,7 @@
 - All 1219 tests passing
 
 ## Files modified
-- `PLang/App/Engine/Memory/Path.cs` — property semantics + Read/List/Save methods
+- `PLang/App/Memory/Path.cs` — property semantics + Read/List/Save methods
 - `PLang/App/actions/file/read.cs` — thin delegator
 - `PLang/App/actions/file/list.cs` — thin delegator
 - `PLang/App/actions/file/save.cs` — thin delegator

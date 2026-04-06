@@ -4,7 +4,7 @@ Tester verdict: PASS — but 3 gaps to fix (F3 skipped, not ready yet).
 
 ## F1 (Major): Steps.RunAsync discards Record() return value
 
-**File**: `PLang/App/Engine/Goals/Goal/Steps/this.cs`, line 47
+**File**: `PLang/App/Goals/Goal/Steps/this.cs`, line 47
 
 ```csharp
 await context.Setup.Record(step, engine, stepResult.Success ? null : stepResult.Error);
@@ -31,7 +31,7 @@ The test pre-records step1, runs setup, then checks both steps are recorded. But
 
 ## F4 (Minor): Cancellation check untested
 
-**File**: `PLang/App/Engine/Goals/Goal/Steps/this.cs`, line 56-57
+**File**: `PLang/App/Goals/Goal/Steps/this.cs`, line 56-57
 
 ```csharp
 if (cancellationToken.IsCancellationRequested)

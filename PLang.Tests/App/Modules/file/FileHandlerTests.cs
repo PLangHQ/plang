@@ -1,9 +1,9 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Variables;
+using App.Context;
+using App;
+using App.Variables;
 using App.modules.file;
 using PLang.SafeFileSystem;
-using App.Engine.FileSystem;
+using App.FileSystem;
 
 namespace PLang.Tests.App.actions.file;
 
@@ -11,14 +11,14 @@ public class FileHandlerTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly App.Engine.@this _engine;
+    private readonly App.@this _engine;
 
     public FileHandlerTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new App.Engine.@this(_tempDir, fileSystem: _fs);
+        _engine = new App.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
@@ -375,40 +375,40 @@ public class FileHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
-        var goal = new App.Engine.Goals.Goal.@this
+        var goal = new App.Goals.Goal.@this
         {
             Name = "TestFileExistsFlow",
-            Steps = new App.Engine.Goals.Goal.Steps.@this
+            Steps = new App.Goals.Goal.Steps.@this
             {
-                new App.Engine.Goals.Goal.Steps.Step.@this
+                new App.Goals.Goal.Steps.Step.@this
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new App.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new App.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
-                            Parameters = new System.Collections.Generic.List<App.Engine.Variables.Data>
-                                { new App.Engine.Variables.Data("path", TempPath("real.txt")) },
-                            Return = new System.Collections.Generic.List<App.Engine.Variables.Data>
-                                { new App.Engine.Variables.Data("fileResult") }
+                            Parameters = new System.Collections.Generic.List<App.Variables.Data>
+                                { new App.Variables.Data("path", TempPath("real.txt")) },
+                            Return = new System.Collections.Generic.List<App.Variables.Data>
+                                { new App.Variables.Data("fileResult") }
                         }
                     }
                 },
-                new App.Engine.Goals.Goal.Steps.Step.@this
+                new App.Goals.Goal.Steps.Step.@this
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new App.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new App.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<App.Engine.Variables.Data>
-                                { new App.Engine.Variables.Data("Data", "%fileResult.Exists%") },
+                            Parameters = new System.Collections.Generic.List<App.Variables.Data>
+                                { new App.Variables.Data("Data", "%fileResult.Exists%") },
                         }
                     }
                 }
@@ -444,40 +444,40 @@ public class FileHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
-        var goal = new App.Engine.Goals.Goal.@this
+        var goal = new App.Goals.Goal.@this
         {
             Name = "TestFileNotExistsFlow",
-            Steps = new App.Engine.Goals.Goal.Steps.@this
+            Steps = new App.Goals.Goal.Steps.@this
             {
-                new App.Engine.Goals.Goal.Steps.Step.@this
+                new App.Goals.Goal.Steps.Step.@this
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new App.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new App.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
-                            Parameters = new System.Collections.Generic.List<App.Engine.Variables.Data>
-                                { new App.Engine.Variables.Data("path", TempPath("ghost.txt")) },
-                            Return = new System.Collections.Generic.List<App.Engine.Variables.Data>
-                                { new App.Engine.Variables.Data("fileResult") }
+                            Parameters = new System.Collections.Generic.List<App.Variables.Data>
+                                { new App.Variables.Data("path", TempPath("ghost.txt")) },
+                            Return = new System.Collections.Generic.List<App.Variables.Data>
+                                { new App.Variables.Data("fileResult") }
                         }
                     }
                 },
-                new App.Engine.Goals.Goal.Steps.Step.@this
+                new App.Goals.Goal.Steps.Step.@this
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new App.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new App.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<App.Engine.Variables.Data>
-                                { new App.Engine.Variables.Data("Data", "%fileResult.Exists%") },
+                            Parameters = new System.Collections.Generic.List<App.Variables.Data>
+                                { new App.Variables.Data("Data", "%fileResult.Exists%") },
                         }
                     }
                 }

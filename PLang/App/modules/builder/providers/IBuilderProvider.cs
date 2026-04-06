@@ -1,8 +1,8 @@
-using App.Engine.Variables;
-using App.Engine.Providers;
-using App.Engine.Utility;
-using Goal = App.Engine.Goals.Goal.@this;
-using Actions = App.Engine.Goals.Goal.Steps.Step.Actions.@this;
+using App.Variables;
+using App.Providers;
+using App.Utility;
+using Goal = App.Goals.Goal.@this;
+using Actions = App.Goals.Goal.Steps.Step.Actions.@this;
 
 namespace App.modules.builder.providers;
 

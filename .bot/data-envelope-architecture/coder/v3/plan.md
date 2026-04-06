@@ -63,11 +63,11 @@ Split into:
 
 | File | Action |
 |------|--------|
-| `PLang/App/Engine/Memory/Data.cs` | Trim to core + mark `partial` |
-| `PLang/App/Engine/Memory/Data.Result.cs` | New — result concern |
-| `PLang/App/Engine/Memory/Data.Navigation.cs` | New — navigation concern |
-| `PLang/App/Engine/Memory/Data.Envelope.cs` | New — envelope stubs |
-| `PLang/App/Engine/View.cs` | Add `Out` enum value + attribute |
+| `PLang/App/Memory/Data.cs` | Trim to core + mark `partial` |
+| `PLang/App/Memory/Data.Result.cs` | New — result concern |
+| `PLang/App/Memory/Data.Navigation.cs` | New — navigation concern |
+| `PLang/App/Memory/Data.Envelope.cs` | New — envelope stubs |
+| `PLang/App/View.cs` | Add `Out` enum value + attribute |
 | `PLang.Tests/App/Memory/DataTests.cs` | Add envelope + Out attribute tests |
 
 ## Risk

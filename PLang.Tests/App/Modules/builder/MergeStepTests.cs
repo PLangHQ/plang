@@ -1,8 +1,8 @@
-using App.Engine.Context;
-using App.Engine.Variables;
+using App.Context;
+using App.Variables;
 using App.modules.builder;
-using Action = App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
-using PLangEngine = App.Engine.@this;
+using Action = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 

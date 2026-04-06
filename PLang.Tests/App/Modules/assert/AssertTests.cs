@@ -1,7 +1,7 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Errors;
-using App.Engine.Variables;
+using App.Context;
+using App;
+using App.Errors;
+using App.Variables;
 using AssertEquals = App.modules.assert.Equals;
 using AssertNotEquals = App.modules.assert.NotEquals;
 using AssertIsTrue = App.modules.assert.IsTrue;
@@ -18,7 +18,7 @@ public class AssertTests
 {
     private (PLangContext context, Variables memory) CreateContext()
     {
-        var engine = new App.Engine.@this("/app");
+        var engine = new App.@this("/app");
         var memory = new Variables();
         var context = new PLangContext(engine, memory);
         return (context, memory);

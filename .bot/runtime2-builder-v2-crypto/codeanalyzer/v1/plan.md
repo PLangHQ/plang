@@ -10,20 +10,20 @@ Crypto module + Engine.Providers + identity-related changes (SensitivePropertyFi
 - `PLang/App/modules/crypto/types.cs`
 - `PLang/App/modules/crypto/providers/ICryptoProvider.cs`
 - `PLang/App/modules/crypto/providers/DefaultProvider.cs`
-- `PLang/App/Engine/Providers/this.cs`
+- `PLang/App/Providers/this.cs`
 
 ### Files to analyze (identity — from merged branch)
-- `PLang/App/Engine/Context/Actor.cs` (Identity property, DynamicData registration)
-- `PLang/App/Engine/Channels/Serializers/SensitivePropertyFilter.cs`
+- `PLang/App/Context/Actor.cs` (Identity property, DynamicData registration)
+- `PLang/App/Channels/Serializers/SensitivePropertyFilter.cs`
 - `PLang/App/modules/identity/types.cs` (IdentityVariable)
 - `PLang/App/modules/identity/IdentityData.cs`
 
 ### Files to verify (wiring)
-- `PLang/App/Engine/this.cs` (Providers property)
+- `PLang/App/this.cs` (Providers property)
 - `PLang/App/GlobalUsings.cs` (EngineProviders alias)
-- `PLang/App/Engine/View.cs` (SensitiveAttribute)
-- `PLang/App/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs`
-- `PLang/App/Engine/Memory/Data.Envelope.cs`
+- `PLang/App/View.cs` (SensitiveAttribute)
+- `PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs`
+- `PLang/App/Memory/Data.Envelope.cs`
 
 ### Test files (review for coverage gaps)
 - `PLang.Tests/App/Modules/crypto/HashActionTests.cs`

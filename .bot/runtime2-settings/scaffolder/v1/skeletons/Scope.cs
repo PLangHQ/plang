@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace App.Engine.Settings;
+namespace App.Settings;
 
 /// <summary>
 /// One level of the settings scope chain — a key-value store for settings

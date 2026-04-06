@@ -41,13 +41,13 @@ var inbound = outbound.Decrypt().Decompress().Unwrap();
 Each pipeline method follows the same structure: check preconditions → return self → do work → return result. Self-contained, no external dependencies, fluent chain. This is OBP done right — Data owns its own transport transformation.
 
 ## Files analyzed
-- `PLang/App/Engine/Memory/Data.cs` (+ .Result.cs, .Navigation.cs, .Envelope.cs)
-- `PLang/App/Engine/Memory/Variables.cs`
-- `PLang/App/Engine/Types/this.cs`
-- `PLang/App/Engine/View.cs`
-- `PLang/App/Engine/this.cs`
-- `PLang/App/Engine/Context/PLangContext.cs`
-- `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`
+- `PLang/App/Memory/Data.cs` (+ .Result.cs, .Navigation.cs, .Envelope.cs)
+- `PLang/App/Memory/Variables.cs`
+- `PLang/App/Types/this.cs`
+- `PLang/App/View.cs`
+- `PLang/App/this.cs`
+- `PLang/App/Context/PLangContext.cs`
+- `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`
 - `PLang/App/actions/convert/fromJson.cs`
 - `PLang/App/GlobalUsings.cs`
 - `PLang.Tests/` (DataTests, VariablesTests, EngineTypesTests, GlobalUsings)

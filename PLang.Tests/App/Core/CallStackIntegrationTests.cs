@@ -1,16 +1,16 @@
-using App.Engine;
-using App.Engine.Variables;
+using App;
+using App.Variables;
 
 namespace PLang.Tests.App.Core;
 
 public class CallStackIntegrationTests
 {
-    private App.Engine.@this _engine = null!;
+    private App.@this _engine = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new App.Engine.@this("/test");
+        _engine = new App.@this("/test");
     }
 
     [Test]
@@ -22,7 +22,7 @@ public class CallStackIntegrationTests
             Text = "failing step",
             Actions = new StepActions(new[]
             {
-                new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                new App.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = "nonexistent",
                     ActionName = "fail"

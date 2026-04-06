@@ -1,5 +1,5 @@
-using App.Engine.Context;
-using App.Engine.Variables;
+using App.Context;
+using App.Variables;
 using App.modules;
 using PLang.SafeFileSystem;
 using Path = System.IO.Path;
@@ -18,7 +18,7 @@ public class PrPipelineTests
     public async Task FullPipeline_LoadAndExecute_VariablesOutputDefaults()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new App.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         var capture = new CapturingWriteHandler();
         engine.Modules.Register("output", "write", capture);
@@ -48,7 +48,7 @@ public class PrPipelineTests
     [Test]
     public async Task ReadFile_ReturnMapsResultToVariable()
     {
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
 
         // Capture output
         var capture = new CapturingWriteHandler();
@@ -83,7 +83,7 @@ public class PrPipelineTests
     public async Task FilePaths_FromRoot_RelativeAbsoluteSubfolderDotSlash()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new App.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,"FilePathsFromRoot.pr");
         await Assert.That(loadResult.Success).IsTrue();
@@ -109,7 +109,7 @@ public class PrPipelineTests
     public async Task FilePaths_FromSubfolder_AbsoluteRootWorks()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new App.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,Path.Combine("sub", "FilePathsFromSub.pr"));
         await Assert.That(loadResult.Success).IsTrue();
@@ -128,23 +128,23 @@ public class PrPipelineTests
     public async Task FilePaths_RelativeResolvesAgainstGoalFolder()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new App.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // A goal in /sub/ reads "subdata.txt" (relative)
         // This resolves to {root}/sub/subdata.txt — relative to goal folder
-        var goal = new App.Engine.Goals.Goal.@this
+        var goal = new App.Goals.Goal.@this
         {
             Name = "SubRelative",
             Path = "/sub/SubRelative.goal",
-            Steps = new App.Engine.Goals.Goal.Steps.@this
+            Steps = new App.Goals.Goal.Steps.@this
             {
-                new App.Engine.Goals.Goal.Steps.Step.@this
+                new App.Goals.Goal.Steps.Step.@this
                 {
                     Index = 0,
                     Text = "read subdata.txt, write to %content%",
-                    Actions = new App.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new App.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "read",
@@ -169,22 +169,22 @@ public class PrPipelineTests
     public async Task FilePaths_ParentTraversal_FromSubfolderToRoot()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new App.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // #3: Goal in /sub/ reads ../testdata.txt — should resolve to {root}/testdata.txt
-        var goal = new App.Engine.Goals.Goal.@this
+        var goal = new App.Goals.Goal.@this
         {
             Name = "ParentTraversal",
             Path = "/sub/ParentTraversal.goal",
-            Steps = new App.Engine.Goals.Goal.Steps.@this
+            Steps = new App.Goals.Goal.Steps.@this
             {
-                new App.Engine.Goals.Goal.Steps.Step.@this
+                new App.Goals.Goal.Steps.Step.@this
                 {
                     Index = 0,
                     Text = "read ../testdata.txt, write to %fromParent%",
-                    Actions = new App.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new App.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "read",
@@ -208,22 +208,22 @@ public class PrPipelineTests
     public async Task FilePaths_ParentTraversal_BackAndDown()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new App.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // #8: Goal in /sub/ reads ../sub/subdata.txt — parent then back down
-        var goal = new App.Engine.Goals.Goal.@this
+        var goal = new App.Goals.Goal.@this
         {
             Name = "ParentAndDown",
             Path = "/sub/ParentAndDown.goal",
-            Steps = new App.Engine.Goals.Goal.Steps.@this
+            Steps = new App.Goals.Goal.Steps.@this
             {
-                new App.Engine.Goals.Goal.Steps.Step.@this
+                new App.Goals.Goal.Steps.Step.@this
                 {
                     Index = 0,
                     Text = "read ../sub/subdata.txt, write to %backAndDown%",
-                    Actions = new App.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new App.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "read",
@@ -247,22 +247,22 @@ public class PrPipelineTests
     public async Task FilePaths_NonexistentFile_ReturnsError()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new App.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // Hand-build a goal that reads a nonexistent file
-        var goal = new App.Engine.Goals.Goal.@this
+        var goal = new App.Goals.Goal.@this
         {
             Name = "ReadMissing",
             Path = "/ReadMissing.goal",
-            Steps = new App.Engine.Goals.Goal.Steps.@this
+            Steps = new App.Goals.Goal.Steps.@this
             {
-                new App.Engine.Goals.Goal.Steps.Step.@this
+                new App.Goals.Goal.Steps.Step.@this
                 {
                     Index = 0,
                     Text = "read nonexistent.txt, write to %content%",
-                    Actions = new App.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new App.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "read",
@@ -287,22 +287,22 @@ public class PrPipelineTests
     public async Task FilePaths_EscapeAttempt_Blocked()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new App.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // Try to read ../../ — should be blocked by PLangFileSystem
-        var goal = new App.Engine.Goals.Goal.@this
+        var goal = new App.Goals.Goal.@this
         {
             Name = "ReadEscape",
             Path = "/ReadEscape.goal",
-            Steps = new App.Engine.Goals.Goal.Steps.@this
+            Steps = new App.Goals.Goal.Steps.@this
             {
-                new App.Engine.Goals.Goal.Steps.Step.@this
+                new App.Goals.Goal.Steps.Step.@this
                 {
                     Index = 0,
                     Text = "read ../../etc/passwd, write to %content%",
-                    Actions = new App.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new App.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "read",
@@ -350,12 +350,12 @@ public class PrPipelineTests
     {
         public List<string> Lines { get; } = new();
 
-        public App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.Engine.@this Engine { get; private set; } = null!;
+        public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public App.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(App.Engine.@this engine, PLangContext context)
+        public void Initialize(App.@this engine, PLangContext context)
         {
             Engine = engine;
             Context = context;
@@ -363,7 +363,7 @@ public class PrPipelineTests
 
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
 
-        public Task<Data> ExecuteAsync(App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action, App.Engine.@this engine, PLangContext context)
+        public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             var contentData = action.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));

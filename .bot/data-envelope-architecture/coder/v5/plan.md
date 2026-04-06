@@ -46,11 +46,11 @@ Responding to security audit (12 findings), auditor v4 (findings #9-10), and tes
 
 | File | Changes |
 |------|---------|
-| `PLang/App/Engine/Memory/Data.cs` | Depth param on UnwrapJsonElement/Object/Array, make internal static |
-| `PLang/App/Engine/Memory/Data.Envelope.cs` | Depth param on RehydrateNestedData, Verified → private set |
-| `PLang/App/Engine/Memory/Data.Navigation.cs` | Depth param on GetChild |
-| `PLang/App/Engine/Memory/Variables.cs` | Cycle detection on ResolveVariablesInPath |
-| `PLang/App/Engine/Types/this.cs` | Depth param on Clr() |
+| `PLang/App/Memory/Data.cs` | Depth param on UnwrapJsonElement/Object/Array, make internal static |
+| `PLang/App/Memory/Data.Envelope.cs` | Depth param on RehydrateNestedData, Verified → private set |
+| `PLang/App/Memory/Data.Navigation.cs` | Depth param on GetChild |
+| `PLang/App/Memory/Variables.cs` | Cycle detection on ResolveVariablesInPath |
+| `PLang/App/Types/this.cs` | Depth param on Clr() |
 | `PLang/App/actions/convert/fromJson.cs` | Delete duplicate UnwrapJsonElement, call Data's version |
 | `PLang.Tests/App/Memory/DataTests.cs` | Zip bomb test, Merge tests, StatusCode assertions, recursion depth tests |
 

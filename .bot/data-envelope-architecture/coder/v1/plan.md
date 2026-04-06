@@ -6,7 +6,7 @@ Replace three scattered type-knowledge sources with `Engine.Types` — a single 
 
 ## Current State (what exists)
 
-1. **`PLang/App/Engine/Utility/TypeMapping.cs`** — static class with:
+1. **`PLang/App/Utility/TypeMapping.cs`** — static class with:
    - `NameToType` dictionary (PLang name → CLR type, 50+ entries)
    - `TypeToName` dictionary (CLR type → PLang name, 15 entries)
    - `GetType(string)`, `GetTypeName(Type)`, `ConvertTo()`, `IsPrimitive()`, `GetMimeType()`, `GetBuilderTypeNames()`, `GetComplexTypeSchemas()`, `GetValidValues()`
@@ -38,12 +38,12 @@ Replace three scattered type-knowledge sources with `Engine.Types` — a single 
 
 ## What I'll Build
 
-### 1. New file: `PLang/App/Engine/Types/this.cs`
+### 1. New file: `PLang/App/Types/this.cs`
 
 The `@this` class (following OBP `@this` convention) that owns all type knowledge:
 
 ```csharp
-namespace App.Engine.Types;
+namespace App.Types;
 
 public sealed class @this
 {
@@ -76,7 +76,7 @@ public sealed class @this
 - Instance on Engine, not static
 - No `Get` prefix
 
-### 2. Modify: `PLang/App/Engine/this.cs`
+### 2. Modify: `PLang/App/this.cs`
 
 Add `Types` property to Engine:
 
@@ -88,7 +88,7 @@ public Types.@this Types { get; }
 ### 3. Add global using: `PLang/App/GlobalUsings.cs`
 
 ```csharp
-global using EngineTypes = App.Engine.Types.@this;
+global using EngineTypes = App.Types.@this;
 ```
 
 ### 4. Keep: Static helpers on old TypeMapping
@@ -115,15 +115,15 @@ FileModule has `.key` mapped to both "presentation" (line 87) and "certificate" 
 
 | File | Action | What |
 |------|--------|------|
-| `PLang/App/Engine/Types/this.cs` | **Create** | New Types class with all type knowledge |
-| `PLang/App/Engine/this.cs` | **Modify** | Add `Types` property, initialize in constructor |
+| `PLang/App/Types/this.cs` | **Create** | New Types class with all type knowledge |
+| `PLang/App/this.cs` | **Modify** | Add `Types` property, initialize in constructor |
 | `PLang/App/GlobalUsings.cs` | **Modify** | Add `EngineTypes` global alias |
 
 ## Testing Plan
 
 ### C# Tests
 
-- `PLang.Tests/App/Engine/Types/TypesTests.cs` — test all public methods:
+- `PLang.Tests/App/Types/TypesTests.cs` — test all public methods:
   - `Clr("string")` → `typeof(string)`, generics, nullable
   - `Name(typeof(string))` → `"string"`, arrays, generics
   - `Kind(".jpg")` → `"image"`, unknown extension → null

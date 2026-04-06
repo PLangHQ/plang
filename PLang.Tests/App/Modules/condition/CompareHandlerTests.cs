@@ -1,6 +1,6 @@
-using App.Engine;
-using App.Engine.Context;
-using App.Engine.Variables;
+using App;
+using App.Context;
+using App.Variables;
 using App.modules.condition;
 using PLang.SafeFileSystem;
 
@@ -10,14 +10,14 @@ public class CompareHandlerTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly App.Engine.@this _engine;
+    private readonly App.@this _engine;
 
     public CompareHandlerTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new App.Engine.@this(_tempDir, fileSystem: _fs);
+        _engine = new App.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()

@@ -1,9 +1,9 @@
 using System.Reflection;
 using System.Text.Json;
-using App.Engine;
-using App.Engine.Goals.Goal;
-using App.Engine.Variables;
-using App.Engine.Providers;
+using App;
+using App.Goals.Goal;
+using App.Variables;
+using App.Providers;
 using App.modules.llm;
 using App.modules.llm.providers;
 

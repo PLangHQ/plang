@@ -32,6 +32,6 @@ Line 375: `goalName.Equals("setup", ...) && engine.Goals.Setup.Goals.Any()` — 
 - Contract is now consistent: `Get()`, `GetAsync()`, `GetByPrPathAsync()` all filter IsSetup
 
 ## Files reviewed
-- `PLang/App/Engine/Goals/this.cs` — IsSetup filters verified at all 4 return points
+- `PLang/App/Goals/this.cs` — IsSetup filters verified at all 4 return points
 - `PLang/Executor.cs` — LoadFromDirectoryAsync ordering, conditional setup check
 - `PLang.Tests/App/Core/GoalsTests.cs` — 5 new tests read and verified

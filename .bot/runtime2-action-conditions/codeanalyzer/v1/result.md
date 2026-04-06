@@ -117,7 +117,7 @@ Clean. 19 lines, single-purpose.
 
 ---
 
-## PLang/App/Engine/Goals/Goal/Steps/this.cs
+## PLang/App/Goals/Goal/Steps/this.cs
 
 ### OBP Violations
 None. Steps owns its iteration loop (OBP rule 5). Sub-step logic lives where the loop is — correct placement.

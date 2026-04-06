@@ -16,9 +16,9 @@ Reviewed all code changes (C# runtime, builder prompt, template, tests, document
 
 ## Key files reviewed
 
-- `PLang/App/Engine/Goals/Goal/Steps/Step/ErrorHandler.cs` — Clean data class, init-only properties, no deserialization risk
-- `PLang/App/Engine/Goals/Goal/Steps/Step/Methods.cs` — RetryAsync, HandleErrorAsync, CallErrorGoalAsync
-- `PLang/App/Engine/Utility/GoalMapper.cs` — MapErrorHandler conversion
+- `PLang/App/Goals/Goal/Steps/Step/ErrorHandler.cs` — Clean data class, init-only properties, no deserialization risk
+- `PLang/App/Goals/Goal/Steps/Step/Methods.cs` — RetryAsync, HandleErrorAsync, CallErrorGoalAsync
+- `PLang/App/Utility/GoalMapper.cs` — MapErrorHandler conversion
 - `system/builder/llm/BuildGoal.llm` — Two new CRITICAL rules
 - `system/builder/BuildGoal.goal` — Schema rename
 - `system/builder/templates/goalFormatForLlm.template` — Template rename

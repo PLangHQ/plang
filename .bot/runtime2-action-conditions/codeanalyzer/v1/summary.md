@@ -13,7 +13,7 @@ Reviewed all 5 production files against OBP rules, simplification heuristics, re
 - `PLang/App/modules/condition/providers/DefaultEvaluator.cs` — NEEDS WORK (seal class, static array, Contains boxing bug)
 - `PLang/App/modules/condition/if.cs` — CLEAN (one known placeholder noted)
 - `PLang/App/modules/condition/compare.cs` — CLEAN
-- `PLang/App/Engine/Goals/Goal/Steps/this.cs` — NEEDS WORK (duplicate summary, public helper)
+- `PLang/App/Goals/Goal/Steps/this.cs` — NEEDS WORK (duplicate summary, public helper)
 
 ### Key findings
 1. **DefaultEvaluator.Contains boxed numeric mismatch** (medium) — `IEnumerable.Contains` uses reference equality for boxed values. `int.Equals(long)` returns false. A PLang `if %list% contains 5` where list has `5L` values would incorrectly return false. Fix: use `AreEqual` for element comparison.

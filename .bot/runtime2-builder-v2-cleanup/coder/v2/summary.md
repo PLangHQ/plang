@@ -57,7 +57,7 @@ Comprehensive cleanup of PLang App modules, enforcing consistent patterns: Data 
 
 ### Step Runner: Condition-Only Child Skipping
 - Fixed `RunAsync_NonConditionStep_FalseValue_DoesNotSkip` — `variable.set` returning `Data` with `.Value=false` was triggering child-skipping. Added `IsConditionStep()` check so only `condition` module steps can skip indented children on false result.
-- **File**: `PLang/App/Engine/Goals/Goal/Steps/this.cs`
+- **File**: `PLang/App/Goals/Goal/Steps/this.cs`
 
 ## Code example — before/after pattern
 

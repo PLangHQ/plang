@@ -1,7 +1,7 @@
-using App.Engine;
-using App.Engine.Errors;
-using App.Engine.Goals.Goal.Steps.Step;
-using App.Engine.Variables;
+using App;
+using App.Errors;
+using App.Goals.Goal.Steps.Step;
+using App.Variables;
 
 namespace App.modules.error;
 
@@ -18,7 +18,7 @@ public partial class Check : IContext, IAction
 
     public async Task<Data> Run()
     {
-        if (Data == null || Data.Success) return Data ?? Engine.Variables.Data.Ok();
+        if (Data == null || Data.Success) return Data ?? Variables.Data.Ok();
 
         var onError = Step?.OnError;
 
@@ -38,7 +38,7 @@ public partial class Check : IContext, IAction
 
         // Ignore — swallow
         if (onError.IgnoreError)
-            return Engine.Variables.Data.Ok();
+            return Variables.Data.Ok();
 
         var engine = Context.Engine!;
         var order = onError.Order ?? ErrorOrder.RetryFirst;
@@ -52,7 +52,7 @@ public partial class Check : IContext, IAction
             if (retryResult != null) return retryResult;
 
             // Goal ran but no retry or retry failed — goal alone counts as handled
-            if (onError.Goal != null) return Engine.Variables.Data.Ok();
+            if (onError.Goal != null) return Variables.Data.Ok();
         }
         else
         {
@@ -63,7 +63,7 @@ public partial class Check : IContext, IAction
             if (onError.Goal != null)
             {
                 await CallErrorGoal(engine, Step!, onError);
-                return Engine.Variables.Data.Ok();
+                return Variables.Data.Ok();
             }
         }
 
@@ -76,7 +76,7 @@ public partial class Check : IContext, IAction
     /// Retry the step up to RetryCount times, with delay spread over RetryOverMs.
     /// Returns Data.Ok() on success, null if retries exhausted or not configured.
     /// </summary>
-    private async Task<Data?> Retry(Engine.@this engine, App.Engine.Goals.Goal.Steps.Step.@this Step)
+    private async Task<Data?> Retry(App.@this engine, App.Goals.Goal.Steps.Step.@this Step)
     {
         var onError = Step.OnError!;
         if (onError.RetryCount == null || onError.RetryCount <= 0) return null;
@@ -92,7 +92,7 @@ public partial class Check : IContext, IAction
 
             // Re-execute the user step's actions on the user actor's context
             var userContext = engine.User.Context;
-            Data result = Engine.Variables.Data.Ok();
+            Data result = Variables.Data.Ok();
             foreach (var action in Step.Actions)
             {
                 result = await engine.Run(action, userContext);
@@ -108,8 +108,8 @@ public partial class Check : IContext, IAction
     /// <summary>
     /// Call the error goal if configured. Stamps Action for sub-goal navigation.
     /// </summary>
-    private async Task CallErrorGoal(Engine.@this engine,
-        App.Engine.Goals.Goal.Steps.Step.@this Step, ErrorHandler onError)
+    private async Task CallErrorGoal(App.@this engine,
+        App.Goals.Goal.Steps.Step.@this Step, ErrorHandler onError)
     {
         if (onError.Goal == null) return;
 

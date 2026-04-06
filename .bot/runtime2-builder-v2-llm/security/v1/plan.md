@@ -7,8 +7,8 @@ New files on `runtime2-builder-v2-llm`:
 - `PLang/App/modules/llm/ToolCall.cs` — tool call carrier
 - `PLang/App/modules/llm/providers/ILlmProvider.cs` — provider interface
 - `PLang/App/modules/llm/providers/OpenAiProvider.cs` — OpenAI provider (~846 lines)
-- `PLang/App/Engine/Goals/Goal/GoalCall.cs` — GoalCall additions (Description, Parallel)
-- `PLang/App/Engine/Providers/this.cs` — ILlmProvider registration
+- `PLang/App/Goals/Goal/GoalCall.cs` — GoalCall additions (Description, Parallel)
+- `PLang/App/Providers/this.cs` — ILlmProvider registration
 
 ## Approach
 1. **Blue Team**: Map attack surface — external data boundaries, tool execution, image handling, regex, caching, conversation state

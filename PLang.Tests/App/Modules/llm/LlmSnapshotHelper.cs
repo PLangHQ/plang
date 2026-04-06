@@ -2,8 +2,8 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using App.Engine.Goals.Goal;
-using App.Engine.Variables;
+using App.Goals.Goal;
+using App.Variables;
 using App.modules.llm;
 using App.modules.llm.providers;
 

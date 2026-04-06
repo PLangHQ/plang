@@ -1,4 +1,4 @@
-using App.Engine.Variables;
+using App.Variables;
 
 namespace App.modules.variable;
 
@@ -22,7 +22,7 @@ public partial class Set : IContext
         }
 
         Context.Variables.Set(Name, Value,
-            Type != null ? App.Engine.Variables.Type.FromName(Type) : null);
+            Type != null ? App.Variables.Type.FromName(Type) : null);
         return Task.FromResult(Context.Variables.Get(Name) ?? Data.Ok());
     }
 }

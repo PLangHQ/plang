@@ -21,6 +21,6 @@ Settings are runtime-wide (e.g., API keys). All actors should get the same Setti
 - Add test: all actors share the same SettingsData object (reference equality)
 
 ## Files
-- `PLang/App/Engine/this.cs` — add SettingsVariable
-- `PLang/App/Engine/Context/Actor.cs` — remove System-only check
+- `PLang/App/this.cs` — add SettingsVariable
+- `PLang/App/Context/Actor.cs` — remove System-only check
 - `PLang.Tests/App/Modules/settings/SettingsDataTests.cs` — fix all tests + add shared object test

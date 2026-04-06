@@ -14,11 +14,11 @@ Previously, type knowledge was spread across:
 Created `Engine.Types` as a new `@this` class following OBP conventions:
 
 ### Files created
-- **`PLang/App/Engine/Types/this.cs`** — New class owning all type knowledge with OBP-compliant API (noun names: `Clr`, `Name`, `Kind`, `Mime`, `Compressible`). Absorbs PLang name ↔ CLR type dictionaries, file extension → Kind mappings, extension → MIME mappings, and Kind compressibility data. Supports runtime extensibility via `Add`/`Remove`.
+- **`PLang/App/Types/this.cs`** — New class owning all type knowledge with OBP-compliant API (noun names: `Clr`, `Name`, `Kind`, `Mime`, `Compressible`). Absorbs PLang name ↔ CLR type dictionaries, file extension → Kind mappings, extension → MIME mappings, and Kind compressibility data. Supports runtime extensibility via `Add`/`Remove`.
 - **`PLang.Tests/App/Types/EngineTypesTests.cs`** — 62 TUnit tests covering all public methods.
 
 ### Files modified
-- **`PLang/App/Engine/this.cs`** — Added `Types` property, initialized in constructor.
+- **`PLang/App/this.cs`** — Added `Types` property, initialized in constructor.
 - **`PLang/App/GlobalUsings.cs`** — Added `EngineTypes` global alias.
 - **`PLang.Tests/GlobalUsings.cs`** — Added `EngineTypes` global alias for tests.
 

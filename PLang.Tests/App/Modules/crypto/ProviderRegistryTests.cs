@@ -1,9 +1,9 @@
-using App.Engine.Variables;
-using App.Engine.Providers;
+using App.Variables;
+using App.Providers;
 using App.modules.crypto;
 using App.modules.crypto.providers;
-using EngineProviders = App.Engine.Providers.@this;
-using PLangEngine = App.Engine.@this;
+using EngineProviders = App.Providers.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
 

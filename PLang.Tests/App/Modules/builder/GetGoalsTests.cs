@@ -1,8 +1,8 @@
 using System.Text.Json;
-using App.Engine.Context;
-using App.Engine.Variables;
+using App.Context;
+using App.Variables;
 using App.modules.builder;
-using PLangEngine = App.Engine.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 
@@ -108,7 +108,7 @@ public class GetGoalsTests
                     Text = "write out 'hello'",
                     Actions = new StepActions(new[]
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",

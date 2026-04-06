@@ -1,6 +1,6 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Errors;
+using App.Context;
+using App;
+using App.Errors;
 
 namespace PLang.Tests.App.Errors;
 
@@ -345,7 +345,7 @@ public class StepErrorTests
     public async Task FromException_CreatesStepErrorWithStep()
     {
         var ex = new Exception("Step crashed");
-        await using var engine = new App.Engine.@this("/app");
+        await using var engine = new App.@this("/app");
         using var context = new PLangContext(engine);
         var step = new Step { Text = "test step" };
         context.Step = step;

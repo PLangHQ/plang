@@ -33,7 +33,7 @@ All tests that called Copy/Move/Delete/List/Save now construct action records wi
 Handler `Run()` signatures unchanged. Internal delegation is transparent.
 
 ## Files modified
-- `PLang/App/Engine/Memory/Path.cs` — method signatures
+- `PLang/App/Memory/Path.cs` — method signatures
 - `PLang/App/actions/file/save.cs` — `Path.Save(this)`
 - `PLang/App/actions/file/delete.cs` — `Path.Delete(this)`
 - `PLang/App/actions/file/copy.cs` — `Source.Copy(this)`

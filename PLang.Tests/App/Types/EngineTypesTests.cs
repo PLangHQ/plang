@@ -603,14 +603,14 @@ public class EngineTypesTests
     [Test]
     public async Task Add_CustomType_LazyDerivationUsesEngineTypes()
     {
-        await using var engine = new App.Engine.@this("/test");
-        var context = new App.Engine.Context.PLangContext(engine);
+        await using var engine = new App.@this("/test");
+        var context = new App.Context.PLangContext(engine);
 
         // Add a custom type mapping that static TypeMapping does NOT have
         engine.Types.Add(".custom", "custom-kind", "application/custom");
 
-        var data = new App.Engine.Variables.Data("test", new byte[] { 1 },
-            App.Engine.Variables.Type.FromMime("application/custom"));
+        var data = new App.Variables.Data("test", new byte[] { 1 },
+            App.Variables.Type.FromMime("application/custom"));
         data.Context = context;
 
         // Type.Kind goes through Engine.Types.KindOf — which sees our custom mapping
@@ -622,7 +622,7 @@ public class EngineTypesTests
     [Test]
     public async Task Engine_HasTypesProperty()
     {
-        await using var engine = new App.Engine.@this("/test");
+        await using var engine = new App.@this("/test");
 
         await Assert.That(engine.Types).IsNotNull();
         await Assert.That(engine.Types.Clr("string")).IsEqualTo(typeof(string));

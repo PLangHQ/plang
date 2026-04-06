@@ -109,9 +109,9 @@ Context.Variables.Put(new AsyncDynamicData("MyIdentity", async () => await engin
 The source generator approach (Option A — pre-resolve in generated `Run()`) means we need to identify which vars are `AsyncDynamicData` and await them. The simplest: in the generated `Run()` wrapper, before calling the action's `Run()`, call a helper that scans parameters for `%var%` references, looks them up, and if any are `AsyncDynamicData`, awaits them. After that, the sync `__Resolve<T>` works because `.Value` returns the cached result.
 
 ## Files
-- `PLang/App/Engine/Memory/Data.cs` — add `AsyncDynamicData`
-- `PLang/App/Engine/Memory/Variables.cs` — add `GetAsync`, `GetValueAsync`
+- `PLang/App/Memory/Data.cs` — add `AsyncDynamicData`
+- `PLang/App/Memory/Variables.cs` — add `GetAsync`, `GetValueAsync`
 - `PLang/App/modules/identity/IdentityData.cs` — `GetAsync()`, remove sync hack
-- `PLang/App/Engine/Context/Actor.cs` — use `AsyncDynamicData`
+- `PLang/App/Context/Actor.cs` — use `AsyncDynamicData`
 - `PLang.Generators/LazyParamsGenerator.cs` — pre-resolve async vars in generated Run()
 - Tests

@@ -1,5 +1,5 @@
-using App.Engine;
-using App.Engine.Variables;
+using App;
+using App.Variables;
 
 namespace App.modules.identity;
 
@@ -47,7 +47,7 @@ public sealed class Identity : Data
         };
         clone.Error = Error;
         clone.Handled = Handled;
-        clone.Warnings = Warnings != null ? new List<Engine.Info>(Warnings) : null;
+        clone.Warnings = Warnings != null ? new List<Info>(Warnings) : null;
         clone.Signature = Signature;
         clone.Context = Context;
         return clone;

@@ -115,11 +115,11 @@ Variables.Clone() creates a new Variables without context — PLangContext.Creat
 
 | File | Action | What |
 |------|--------|------|
-| `PLang/App/Engine/Memory/Data.cs` | **Modify** | Add Context property to Data, lazy Type derivation, child context inheritance |
-| `PLang/App/Engine/Memory/Variables.cs` | **Modify** | Add Context property, stamp on Set/Put |
-| `PLang/App/Engine/Types/this.cs` | **Modify** | Add KindOf(), _allKinds, _mimeToKind |
-| `PLang/App/Engine/Context/PLangContext.cs` | **Modify** | Set Variables.Context, stamp on context variables |
-| `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` | **Modify** | Stamp context on result Data |
+| `PLang/App/Memory/Data.cs` | **Modify** | Add Context property to Data, lazy Type derivation, child context inheritance |
+| `PLang/App/Memory/Variables.cs` | **Modify** | Add Context property, stamp on Set/Put |
+| `PLang/App/Types/this.cs` | **Modify** | Add KindOf(), _allKinds, _mimeToKind |
+| `PLang/App/Context/PLangContext.cs` | **Modify** | Set Variables.Context, stamp on context variables |
+| `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` | **Modify** | Stamp context on result Data |
 | `PLang.Tests/App/Types/EngineTypesTests.cs` | **Modify** | Add KindOf tests |
 | `PLang.Tests/App/Memory/DataTests.cs` | **Modify or Create** | Test lazy derivation, context stamping, context inheritance |
 

@@ -10,7 +10,7 @@ The auditor found that setup goals (IsSetup=true) could "leak" into regular goal
 
 Added `if (loaded is { IsSetup: true }) return null;` at all disk-load return paths:
 
-**`PLang/App/Engine/Goals/this.cs`**:
+**`PLang/App/Goals/this.cs`**:
 - `GetAsync` relative path (line ~120): filter after loading from relative .pr file
 - `GetAsync` root path (line ~138): filter after loading from root-relative .pr file
 - `GetByPrPathAsync` cache check (line ~221): changed from `&& !cached.IsSetup` (which fell through to disk load) to `return cached.IsSetup ? null : cached;` (returns null immediately)
@@ -68,6 +68,6 @@ if (_byPath.TryGetValue(prPath, out var cached))
 ```
 
 ## Files modified
-- `PLang/App/Engine/Goals/this.cs` — IsSetup filters in GetAsync, GetByPrPathAsync
+- `PLang/App/Goals/this.cs` — IsSetup filters in GetAsync, GetByPrPathAsync
 - `PLang/Executor.cs` — goal loading order, conditional setup interception
 - `PLang.Tests/App/Core/GoalsTests.cs` — 5 new tests

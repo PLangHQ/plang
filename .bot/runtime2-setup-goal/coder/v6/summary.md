@@ -10,7 +10,7 @@ The auditor v6 (via security audit) found that `LoadFromDirectoryAsync` in `Exec
 
 OBP rule 1: behavior belongs to the owner. Setup now owns its own goal discovery.
 
-**`PLang/App/Engine/Goals/Setup/this.cs`** — new `DiscoverAsync` method:
+**`PLang/App/Goals/Setup/this.cs`** — new `DiscoverAsync` method:
 - Scans `engine.AbsolutePath` for `*.pr` files recursively
 - Parses each via `engine.Channels.ReadAsync<Goal.@this>`
 - Only adds goals where `IsSetup == true` to the collection
@@ -75,6 +75,6 @@ public async Task<Data> DiscoverAsync(Engine.@this engine, CancellationToken ct 
 ```
 
 ## Files modified
-- `PLang/App/Engine/Goals/Setup/this.cs` — added `DiscoverAsync` method
+- `PLang/App/Goals/Setup/this.cs` — added `DiscoverAsync` method
 - `PLang/Executor.cs` — replaced `LoadFromDirectoryAsync` with `Setup.DiscoverAsync`
 - `PLang.Tests/App/Goals/Setup/SetupTests.cs` — 3 new tests

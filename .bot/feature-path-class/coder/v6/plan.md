@@ -33,7 +33,7 @@ Set `Pattern = "*"` explicitly in all List test action records.
 - **#6** (operator ==) — Path is not used in collections/LINQ yet. Low risk. Can add later.
 
 ## Files to modify
-- `PLang/App/Engine/Memory/Path.cs` — all code fixes
+- `PLang/App/Memory/Path.cs` — all code fixes
 - `PLang.Tests/App/Modules/Path/PathTests.cs` — namespace, Pattern defaults, new tests for edge cases
 
 ## Verification

@@ -1,9 +1,9 @@
-using App.Engine.Context;
-using App.Engine.Goals.Goal;
-using App.Engine.Variables;
+using App.Context;
+using App.Goals.Goal;
+using App.Variables;
 using App.modules.llm;
 using App.modules.llm.providers;
-using PLangEngine = App.Engine.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.llm;
 

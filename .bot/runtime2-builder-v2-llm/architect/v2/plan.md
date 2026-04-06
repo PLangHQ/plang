@@ -750,8 +750,8 @@ PLang/App/modules/llm/
 
 | File | Change |
 |------|--------|
-| `PLang/App/Engine/Goals/Goal/GoalCall.cs` | Add `Description` and `Parallel` properties |
-| `PLang/App/Engine/Providers/this.cs` | Register ILlmProvider in ResolveType + RegisterDefaults |
+| `PLang/App/Goals/Goal/GoalCall.cs` | Add `Description` and `Parallel` properties |
+| `PLang/App/Providers/this.cs` | Register ILlmProvider in ResolveType + RegisterDefaults |
 
 ## Definition of Done
 

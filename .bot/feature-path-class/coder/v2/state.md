@@ -11,7 +11,7 @@
 
 ## Files modified
 
-- `PLang/App/Engine/Memory/Path.cs` — added using + 6 methods
+- `PLang/App/Memory/Path.cs` — added using + 6 methods
 - `PLang/App/actions/file/copy.cs` — rewritten as thin delegator
 - `PLang/App/actions/file/move.cs` — rewritten as thin delegator
 - `PLang/App/actions/file/delete.cs` — rewritten as thin delegator

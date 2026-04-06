@@ -1,6 +1,6 @@
-using App.Engine.Variables;
+using App.Variables;
 using App.modules.module;
-using PLangEngine = App.Engine.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.module;
 

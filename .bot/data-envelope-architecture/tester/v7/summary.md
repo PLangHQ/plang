@@ -23,7 +23,7 @@ Test quality analysis of coder v5: depth limits on 5 recursive methods, cycle de
 
 ### Finding #1 — MAJOR: ResolveVariablesInPath cycle detection completely untested
 
-**File**: `PLang/App/Engine/Memory/Variables.cs:203-237`
+**File**: `PLang/App/Memory/Variables.cs:203-237`
 **Test file**: `PLang.Tests/App/Memory/VariablesTests.cs`
 
 The cycle detection logic uses a `[ThreadStatic] HashSet<string>` to detect circular variable references in bracket-index paths (e.g., `array[x]` where `x` resolves to `y` and `y` resolves to `x`). Zero tests exist for this feature.
@@ -42,7 +42,7 @@ The cycle detection logic uses a `[ThreadStatic] HashSet<string>` to detect circ
 
 ### Finding #2 — MAJOR: GetChild depth error not tested through Variables integration
 
-**File**: `PLang/App/Engine/Memory/Variables.cs:90`
+**File**: `PLang/App/Memory/Variables.cs:90`
 **Test file**: `PLang.Tests/App/Memory/VariablesTests.cs`
 
 `Variables.Get()` at line 90 calls `root.GetChild(remaining)` and returns the result directly. GetChild now returns `Data.FromError(ServiceError("NavigationDepthExceeded"))` when depth exceeds 100. But `Variables.Get()` returns `Data?` — callers expect null for "not found" and a valid Data for "found."
@@ -66,7 +66,7 @@ The cycle detection logic uses a `[ThreadStatic] HashSet<string>` to detect circ
 
 ### Finding #4 — MINOR: Clr() depth limit not boundary-tested
 
-**File**: `PLang/App/Engine/Types/this.cs`
+**File**: `PLang/App/Types/this.cs`
 **Test file**: `PLang.Tests/App/Types/EngineTypesTests.cs:634`
 
 The test uses 25 levels (exceeds MaxGenericDepth=20) and asserts null. No test for exactly 20 (should succeed) or 21 (should fail). Off-by-one bugs in `depth > MaxGenericDepth` vs `depth >= MaxGenericDepth` would go undetected.

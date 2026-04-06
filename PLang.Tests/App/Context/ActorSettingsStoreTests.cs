@@ -1,6 +1,6 @@
-using App.Engine.Context;
-using App.Engine.Variables;
-using App.Engine.Settings;
+using App.Context;
+using App.Variables;
+using App.Settings;
 
 namespace PLang.Tests.App.Context;
 
@@ -25,14 +25,14 @@ public class ActorSettingsStoreTests
     public async Task SystemActor_DuringBuilding_PersistsCacheAcrossEngineInstances()
     {
         // First engine — write to System settings store
-        await using (var engine = new App.Engine.@this(_testDir))
+        await using (var engine = new App.@this(_testDir))
         {
             engine.Building.IsEnabled = true;
             await engine.System.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
         }
 
         // Second engine — System should still have the data (on-disk)
-        await using (var engine2 = new App.Engine.@this(_testDir))
+        await using (var engine2 = new App.@this(_testDir))
         {
             engine2.Building.IsEnabled = true;
             var result = await engine2.System.SettingsStore.Get("LlmCache", "testkey");
@@ -45,14 +45,14 @@ public class ActorSettingsStoreTests
     public async Task UserActor_DuringBuilding_DoesNotPersistAcrossEngineInstances()
     {
         // First engine — write to User settings store
-        await using (var engine = new App.Engine.@this(_testDir))
+        await using (var engine = new App.@this(_testDir))
         {
             engine.Building.IsEnabled = true;
             await engine.User.SettingsStore.Set("TestTable", "key1", Data.Ok("temporary"));
         }
 
         // Second engine — User data should be gone (in-memory)
-        await using (var engine2 = new App.Engine.@this(_testDir))
+        await using (var engine2 = new App.@this(_testDir))
         {
             engine2.Building.IsEnabled = true;
             var result = await engine2.User.SettingsStore.Get("TestTable", "key1");
@@ -63,13 +63,13 @@ public class ActorSettingsStoreTests
     [Test]
     public async Task SystemActor_DuringTesting_PersistsCacheAcrossEngineInstances()
     {
-        await using (var engine = new App.Engine.@this(_testDir))
+        await using (var engine = new App.@this(_testDir))
         {
             engine.Testing.IsEnabled = true;
             await engine.System.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
         }
 
-        await using (var engine2 = new App.Engine.@this(_testDir))
+        await using (var engine2 = new App.@this(_testDir))
         {
             engine2.Testing.IsEnabled = true;
             var result = await engine2.System.SettingsStore.Get("LlmCache", "testkey");
@@ -81,13 +81,13 @@ public class ActorSettingsStoreTests
     [Test]
     public async Task UserActor_DuringTesting_DoesNotPersistAcrossEngineInstances()
     {
-        await using (var engine = new App.Engine.@this(_testDir))
+        await using (var engine = new App.@this(_testDir))
         {
             engine.Testing.IsEnabled = true;
             await engine.User.SettingsStore.Set("TestTable", "key1", Data.Ok("temporary"));
         }
 
-        await using (var engine2 = new App.Engine.@this(_testDir))
+        await using (var engine2 = new App.@this(_testDir))
         {
             engine2.Testing.IsEnabled = true;
             var result = await engine2.User.SettingsStore.Get("TestTable", "key1");

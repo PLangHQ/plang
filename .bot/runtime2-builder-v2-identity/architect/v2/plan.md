@@ -312,14 +312,14 @@ internal static class KeyGenerator
 | `PLang/App/modules/identity/export.cs` | Export action handler |
 | `PLang/App/modules/identity/types.cs` | IdentityVariable class |
 | `PLang/App/modules/identity/KeyGenerator.cs` | Ed25519 key generation (internal) |
-| `PLang/App/Engine/Channels/Serializers/SensitivePropertyFilter.cs` | [Sensitive] filter |
+| `PLang/App/Channels/Serializers/SensitivePropertyFilter.cs` | [Sensitive] filter |
 
 ### Modified files
 | File | Change |
 |------|--------|
-| `PLang/App/Engine/View.cs` | Add `[Sensitive]` attribute |
-| `PLang/App/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs` | Add SensitivePropertyFilter to default options |
-| `PLang/App/Engine/this.cs` | Register `%MyIdentity%` lazy resolver on System Variables |
+| `PLang/App/View.cs` | Add `[Sensitive]` attribute |
+| `PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs` | Add SensitivePropertyFilter to default options |
+| `PLang/App/this.cs` | Register `%MyIdentity%` lazy resolver on System Variables |
 
 ### Test files to modify
 | File | Change |

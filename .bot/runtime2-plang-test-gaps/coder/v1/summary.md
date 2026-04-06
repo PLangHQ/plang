@@ -18,9 +18,9 @@ PLang App had 31 existing PLang integration tests but major gaps in engine-level
 
 ### Runtime Bugs Found & Fixed (3 files)
 
-1. **Test runner root directory** (`PLang/App/Engine/Test/this.cs`): Changed engine root from `rootDir` (Tests/App/) to `dir` (test's own directory) so helper goal .pr files resolve correctly via GetAsync.
+1. **Test runner root directory** (`PLang/App/Test/this.cs`): Changed engine root from `rootDir` (Tests/App/) to `dir` (test's own directory) so helper goal .pr files resolve correctly via GetAsync.
 
-2. **Test runner setup goals** (`PLang/App/Engine/Test/this.cs`): Added setup goal discovery and execution before each test, enabling tests that use Setup.goal.
+2. **Test runner setup goals** (`PLang/App/Test/this.cs`): Added setup goal discovery and execution before each test, enabling tests that use Setup.goal.
 
 3. **Condition handler type mismatch** (`PLang/App/modules/condition/if.cs`): Changed `Condition` property from `bool` to `string` because the builder sends expression strings like `"42 > 5"`. Added `EvaluateCondition()` method for numeric/string comparisons.
 
@@ -61,7 +61,7 @@ ErrorInHandler/
 ## Files modified
 
 ### Runtime code (3 files)
-- `PLang/App/Engine/Test/this.cs` — Test runner: root dir fix + setup goal execution
+- `PLang/App/Test/this.cs` — Test runner: root dir fix + setup goal execution
 - `PLang/App/modules/condition/if.cs` — Changed Condition to string + expression evaluation
 - `PLang/App/modules/goal/call.cs` — Added __stepResult fallback for return values
 

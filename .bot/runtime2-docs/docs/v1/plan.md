@@ -25,7 +25,7 @@ Plus `docs/modules/index.md` — module overview with categorized table linking 
 ## Source Material
 - All handler source code from `PLang/App/modules/` (83 handlers across 16 modules)
 - Existing test .goal files for authentic syntax examples
-- Engine architecture from `PLang/App/Engine/`
+- Engine architecture from `PLang/App/`
 - Existing docs in `Documentation/` for installation details
 
 ## Approach

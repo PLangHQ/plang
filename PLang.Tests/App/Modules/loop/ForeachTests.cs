@@ -1,6 +1,6 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Variables;
+using App.Context;
+using App;
+using App.Variables;
 using App.modules.loop;
 using LoopResult = App.modules.loop.types.loop;
 
@@ -8,12 +8,12 @@ namespace PLang.Tests.App.actions.loop;
 
 public class ForeachTests
 {
-    private App.Engine.@this _engine = null!;
+    private App.@this _engine = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new App.Engine.@this("/app");
+        _engine = new App.@this("/app");
     }
 
     private PLangContext CreateContext(Variables? memory = null)
@@ -43,7 +43,7 @@ public class ForeachTests
                     Text = "capture item",
                     Actions = new StepActions
                     {
-                        new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new App.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "variable",
                             ActionName = "set",

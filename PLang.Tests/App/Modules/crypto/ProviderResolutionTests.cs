@@ -1,9 +1,9 @@
-using App.Engine.Context;
-using App.Engine.Errors;
-using App.Engine.Variables;
+using App.Context;
+using App.Errors;
+using App.Variables;
 using App.modules.crypto;
 using App.modules.crypto.providers;
-using PLangEngine = App.Engine.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
 

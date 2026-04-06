@@ -37,7 +37,7 @@ public partial class Set : IContext
         }
 
         Context.Variables.Set(Name, Value,
-            Type != null ? App.Engine.Variables.Type.FromName(Type) : null);
+            Type != null ? App.Variables.Type.FromName(Type) : null);
         return Task.FromResult(Context.Variables.Get(Name) ?? Data.Ok());
     }
 }
@@ -58,7 +58,7 @@ public partial class Set : IContext
 
 **Solution:** Add an optional `ResolveVariables` property (bool, default false). When true, call `Context.Variables.Resolve(content)` on the string result before returning.
 
-`Variables.Resolve(string)` already exists at `PLang/App/Engine/Memory/Variables.cs:143` — it does regex replacement of `%var%` patterns.
+`Variables.Resolve(string)` already exists at `PLang/App/Memory/Variables.cs:143` — it does regex replacement of `%var%` patterns.
 
 ```csharp
 [Action("read")]
@@ -94,7 +94,7 @@ public partial class Read : IContext
 
 ## Gap 3: `TypeMapping.ConvertTo` — auto-wrap single value into `List<T>`
 
-**File:** `PLang/App/Engine/Utility/TypeMapping.cs`
+**File:** `PLang/App/Utility/TypeMapping.cs`
 
 **Problem:** In PLang, a single object is just a list of 1. When an action parameter expects `List<T>` (e.g., `goals.save` expects `List<Goal>`) but receives a single `T`, the runtime should auto-wrap it. Currently `ConvertTo` doesn't handle this case, so passing a single Goal to `goals.save` would fail.
 
@@ -142,11 +142,11 @@ if (targetType.IsGenericType)
 |---|------|--------|
 | 1 | `PLang/App/modules/variable/set.cs` | Add `AsDefault` property + conditional logic |
 | 2 | `PLang/App/modules/file/read.cs` | Add `ResolveVariables` property + resolve after read |
-| 3 | `PLang/App/Engine/Utility/TypeMapping.cs` | Add single→list auto-wrap in `ConvertTo` |
+| 3 | `PLang/App/Utility/TypeMapping.cs` | Add single→list auto-wrap in `ConvertTo` |
 
 ## Files for reference (read-only)
 
-- `PLang/App/Engine/Memory/Variables.cs` — has `Resolve(string)` method (line 143)
+- `PLang/App/Memory/Variables.cs` — has `Resolve(string)` method (line 143)
 - `PLang.Generators/LazyParamsGenerator.cs` — source generator, generates `__Resolve<T>` which uses `TypeMapping.ConvertTo`
 - `PLang/App/modules/builder/goalsSave.cs` — example of `List<Goal>` parameter that needs auto-wrap
 

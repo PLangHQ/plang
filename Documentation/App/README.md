@@ -32,7 +32,7 @@ Engine (@this, sealed, IAsyncDisposable)
                         └── Actor         (identity)
 ```
 
-**`@this` Convention**: Every folder's primary class is named `@this` in `this.cs`. Consumers use global using aliases (e.g., `global using Step = App.Engine.Goals.Goal.Steps.Step.@this;`). Within parent namespaces, use `ChildNamespace.@this` (e.g., `Engine.@this`, `Goal.@this`, `Channel.@this`).
+**`@this` Convention**: Every folder's primary class is named `@this` in `this.cs`. Consumers use global using aliases (e.g., `global using Step = App.Goals.Goal.Steps.Step.@this;`). Within parent namespaces, use `ChildNamespace.@this` (e.g., `Engine.@this`, `Goal.@this`, `Channel.@this`).
 
 ## Entity Hierarchy: Goal → Steps → Actions
 

@@ -34,10 +34,10 @@ No critical or high findings. The builder module follows the PLang threat model 
 ## Key files reviewed
 
 - `PLang/App/modules/builder/providers/DefaultBuilderProvider.cs` — all 8 provider methods
-- `PLang/App/Engine/Goals/Goal/this.cs` — Goal.Parse(), MergeFrom()
-- `PLang/App/Engine/Goals/Goal/Steps/Step/this.cs` — Step.Merge()
-- `PLang/App/Engine/Modules/this.cs` — Discover, Describe, GetDefaults
-- `PLang/App/Engine/Providers/this.cs` — provider registry, ResolveType
+- `PLang/App/Goals/Goal/this.cs` — Goal.Parse(), MergeFrom()
+- `PLang/App/Goals/Goal/Steps/Step/this.cs` — Step.Merge()
+- `PLang/App/Modules/this.cs` — Discover, Describe, GetDefaults
+- `PLang/App/Providers/this.cs` — provider registry, ResolveType
 - `PLang/App/modules/module/add.cs` — assembly loading
 - `PLang/App/modules/provider/load.cs` — provider DLL loading
 - All builder action records (actions.cs, goals.cs, validate.cs, merge.cs, app.cs, appSave.cs, goalsSave.cs, types.cs)

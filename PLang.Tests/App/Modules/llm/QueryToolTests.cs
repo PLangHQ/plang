@@ -1,10 +1,10 @@
 using System.Text.Json;
-using App.Engine.Context;
-using App.Engine.Goals.Goal;
-using App.Engine.Variables;
+using App.Context;
+using App.Goals.Goal;
+using App.Variables;
 using App.modules.llm;
 using App.modules.llm.providers;
-using PLangEngine = App.Engine.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.llm;
 
@@ -71,7 +71,7 @@ public class QueryToolTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "GetWeather", Description = "Gets weather", Parameters = new List<Data> { new Data("city", null, App.Engine.Variables.Type.String) } }
+                new GoalCall { Name = "GetWeather", Description = "Gets weather", Parameters = new List<Data> { new Data("city", null, App.Variables.Type.String) } }
             }
         };
         var result = await action.Run();
@@ -334,8 +334,8 @@ public class QueryToolTests
                     Description = "test",
                     Parameters = new List<Data>
                     {
-                        new Data("city", null, App.Engine.Variables.Type.String),     // required (no default)
-                        new Data("units", "metric", App.Engine.Variables.Type.String) // optional (has default)
+                        new Data("city", null, App.Variables.Type.String),     // required (no default)
+                        new Data("units", "metric", App.Variables.Type.String) // optional (has default)
                     }
                 }
             }
@@ -369,7 +369,7 @@ public class QueryToolTests
                     Description = "test",
                     Parameters = new List<Data>
                     {
-                        new Data("query", null, App.Engine.Variables.Type.String)
+                        new Data("query", null, App.Variables.Type.String)
                     }
                 }
             }
@@ -447,8 +447,8 @@ public class QueryToolTests
                     Description = "Gets weather for a city",
                     Parameters = new List<Data>
                     {
-                        new Data("city", null, App.Engine.Variables.Type.String),       // required
-                        new Data("units", "metric", App.Engine.Variables.Type.String)   // optional, default "metric"
+                        new Data("city", null, App.Variables.Type.String),       // required
+                        new Data("units", "metric", App.Variables.Type.String)   // optional, default "metric"
                     }
                 }
             }
@@ -489,11 +489,11 @@ public class QueryToolTests
                     Description = "tool with mixed types",
                     Parameters = new List<Data>
                     {
-                        new Data("name", null, App.Engine.Variables.Type.String),
-                        new Data("count", null, new App.Engine.Variables.Type("int")),
-                        new Data("enabled", null, new App.Engine.Variables.Type("bool")),
-                        new Data("items", null, new App.Engine.Variables.Type("list")),
-                        new Data("config", null, new App.Engine.Variables.Type("object"))
+                        new Data("name", null, App.Variables.Type.String),
+                        new Data("count", null, new App.Variables.Type("int")),
+                        new Data("enabled", null, new App.Variables.Type("bool")),
+                        new Data("items", null, new App.Variables.Type("list")),
+                        new Data("config", null, new App.Variables.Type("object"))
                     }
                 }
             }

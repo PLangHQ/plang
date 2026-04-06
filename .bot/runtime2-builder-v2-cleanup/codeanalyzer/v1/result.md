@@ -78,7 +78,7 @@ However, the old `__condition__` was also consumed by tests and potentially by u
 
 ### Finding 2: `Data.Name` Setter — Mutation Risk
 **Severity: Low-Medium**
-**File:** `PLang/App/Engine/Memory/Data.cs:76`
+**File:** `PLang/App/Memory/Data.cs:76`
 
 `Name` was changed from `{ get; }` (init-only via constructor) to `{ get; set; }`. This was needed for `IdentityData.Name = action.NewName` in the rename flow. However, Data objects live on Variables and are keyed by Name. If someone changes `data.Name` after it's been Put on the stack, the stack key and the object's Name diverge.
 
@@ -88,13 +88,13 @@ However, the old `__condition__` was also consumed by tests and potentially by u
 
 ### Finding 3: `Data.Clone()` Uses DeepCloner — Verify Library Available
 **Severity: Low**
-**File:** `PLang/App/Engine/Memory/Data.cs:216`
+**File:** `PLang/App/Memory/Data.cs:216`
 
 `Data.Clone()` uses `Force.DeepCloner` (`_value.DeepClone()`). This is a new NuGet dependency. Verify it's in the csproj. Also: `Clone()` is defined but has zero callers — it's dead code currently.
 
 ### Finding 4 (Critical): Engine.Channels Not Disposed
 **Severity: Medium**
-**File:** `PLang/App/Engine/this.cs:330-376`
+**File:** `PLang/App/this.cs:330-376`
 
 Engine creates `Channels = new EngineChannels(this)` at line 232 but never disposes it in `DisposeAsync`. Actors have their own Channels which ARE disposed. The engine-level `Channels` property holds a separate instance that could leak stream handles.
 
@@ -120,7 +120,7 @@ Engine creates `Channels = new EngineChannels(this)` at line 232 but never dispo
 Could delete these 15 lines and no test would fail. The method exists for future use but is currently dead code.
 
 ### Finding 6: `PlangSerializer` — Zero Test Coverage
-**File:** `PLang/App/Engine/Channels/Serializers/Serializer/PlangSerializer.cs` (94 lines)
+**File:** `PLang/App/Channels/Serializers/Serializer/PlangSerializer.cs` (94 lines)
 No tests in PLang.Tests reference PlangSerializer. Could delete the entire file and no test would fail. This is a new serializer for PLang-to-PLang transport — important functionality that should have tests.
 
 ### Finding 7: `DefaultAssertProvider` — Zero Direct Test Coverage

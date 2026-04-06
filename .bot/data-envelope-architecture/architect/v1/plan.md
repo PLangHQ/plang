@@ -19,7 +19,7 @@ PLang App needs Data to be self-describing at IO boundaries — wrapping, compre
 - Add/Remove for runtime extensibility
 
 **What moves:**
-- `PLang/App/Engine/Utility/TypeMapping.cs` static dictionaries → `Engine.Types` instance
+- `PLang/App/Utility/TypeMapping.cs` static dictionaries → `Engine.Types` instance
 - `PLang/Modules/FileModule/TypeMapping.cs` category + MIME data → `Engine.Types`
 - Pure logic (`ConvertTo`, `IsPrimitive`) is stateless — can stay as static helpers or move, coder's call
 
@@ -32,10 +32,10 @@ PLang App needs Data to be self-describing at IO boundaries — wrapping, compre
 - Fix `.key` extension conflict (both "presentation" and "certificate" in old code — keep "certificate")
 
 **Source files to read:**
-- `PLang/App/Engine/Utility/TypeMapping.cs` — current static type mapping (absorb into Types)
+- `PLang/App/Utility/TypeMapping.cs` — current static type mapping (absorb into Types)
 - `PLang/Modules/FileModule/TypeMapping.cs` — category + MIME tables (absorb data)
 - `PLang/Utils/MimeTypeHelper.cs` — MIME data (redundant, dies)
-- `PLang/App/Engine/this.cs` — Engine root, where Types property goes
+- `PLang/App/this.cs` — Engine root, where Types property goes
 
 ---
 
@@ -81,10 +81,10 @@ Three states:
 - **None** — no explicit Type, Value is null, Type is null
 
 **Source files to read:**
-- `PLang/App/Engine/Memory/Data.cs` — Data + Type + DynamicData (all three classes)
-- `PLang/App/Engine/Memory/TypeJsonConverter.cs` — Type serialization (unchanged)
-- `PLang/App/Engine/Context/` — PLangContext, where context is created
-- `PLang/App/Engine/Memory/Variables` — where Data is stored and context is available
+- `PLang/App/Memory/Data.cs` — Data + Type + DynamicData (all three classes)
+- `PLang/App/Memory/TypeJsonConverter.cs` — Type serialization (unchanged)
+- `PLang/App/Context/` — PLangContext, where context is created
+- `PLang/App/Memory/Variables` — where Data is stored and context is available
 
 ---
 
@@ -119,8 +119,8 @@ Properties tagged with `[Out]`:
 Inside the runtime (Store, LlmBuilder, Debug, Default views), these stay invisible.
 
 **Source files to read:**
-- `PLang/App/Engine/View.cs` — existing View enum + attributes
-- `PLang/App/Engine/Memory/Data.cs` — what goes where in the split
+- `PLang/App/View.cs` — existing View enum + attributes
+- `PLang/App/Memory/Data.cs` — what goes where in the split
 
 ---
 

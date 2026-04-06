@@ -24,7 +24,7 @@ PLang/App/modules/{modulename}/
 An action handler is a `partial class` with `[Action]`, `IContext`, and a `Run()` method. The source generator creates the other half — parameter resolution, validation, provider injection, error handling.
 
 ```csharp
-using App.Engine.Variables;
+using App.Variables;
 using App.modules.crypto.providers;
 
 namespace App.modules.crypto;
@@ -149,8 +149,8 @@ Providers make module behavior pluggable. A PLang user can replace the default i
 ### Interface
 
 ```csharp
-using App.Engine.Variables;
-using App.Engine.Providers;
+using App.Variables;
+using App.Providers;
 
 namespace App.modules.crypto.providers;
 

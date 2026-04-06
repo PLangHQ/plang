@@ -26,7 +26,7 @@ The change is a 3-line deletion that correctly follows the encapsulation improve
 
 ---
 
-## PLang/App/Engine/Goals/Goal/Methods.cs
+## PLang/App/Goals/Goal/Methods.cs
 
 ### OBP Violations
 None.
@@ -51,7 +51,7 @@ The return value fix is essential and all callers are compatible.
 
 ---
 
-## PLang/App/Engine/Goals/Goal/Steps/this.cs
+## PLang/App/Goals/Goal/Steps/this.cs
 
 ### OBP Violations
 None. This is a model example of OBP rule 5 — the collection owns its iteration loop.
@@ -71,7 +71,7 @@ Edge cases verified:
 
 ---
 
-## PLang/App/Engine/Goals/Setup/this.cs
+## PLang/App/Goals/Setup/this.cs
 
 ### OBP Violations
 None. Making `DiscoverAsync` private (was public) is an OBP improvement — callers should use `RunAsync`, not manage internal discovery.
@@ -112,7 +112,7 @@ Pre-existing pattern, not introduced by this branch. The comment explains the in
 
 ---
 
-## PLang/App/Engine/Goals/this.cs (EngineGoals)
+## PLang/App/Goals/this.cs (EngineGoals)
 
 ### OBP Violations
 None.
@@ -144,7 +144,7 @@ Lines 67-70 (name search): If deleted, `engine.Goals.Get("Start")` would fail fo
 
 ---
 
-## PLang/App/Engine/Test/this.cs
+## PLang/App/Test/this.cs
 
 ### OBP Violations
 None.

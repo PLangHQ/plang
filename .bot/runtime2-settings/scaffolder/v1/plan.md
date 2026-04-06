@@ -12,10 +12,10 @@ Following `@this` and OBP conventions:
 
 | Type | Path | Namespace |
 |------|------|-----------|
-| `ISettings` marker interface | `PLang/App/Engine/Settings/ISettings.cs` | `App.Engine.Settings` |
-| `SettingsScope` (scope stack) | `PLang/App/Engine/Settings/Scope.cs` | `App.Engine.Settings` |
-| `Settings` (@this, engine-level registry) | `PLang/App/Engine/Settings/this.cs` | `App.Engine.Settings` |
-| `ModuleView<T>` (context-bound view) | `PLang/App/Engine/Settings/ModuleView.cs` | `App.Engine.Settings` |
+| `ISettings` marker interface | `PLang/App/Settings/ISettings.cs` | `App.Settings` |
+| `SettingsScope` (scope stack) | `PLang/App/Settings/Scope.cs` | `App.Settings` |
+| `Settings` (@this, engine-level registry) | `PLang/App/Settings/this.cs` | `App.Settings` |
+| `ModuleView<T>` (context-bound view) | `PLang/App/Settings/ModuleView.cs` | `App.Settings` |
 | `ArchiveSettings` (first use case) | `PLang/App/actions/archive/Settings.cs` | `App.actions.archive` |
 | `settings` action handler | `PLang/App/actions/archive/settings.cs` | `App.actions.archive` |
 | `types` for archive | `PLang/App/actions/archive/types.cs` | `App.actions.archive` |
@@ -46,16 +46,16 @@ The source generator changes are **Phase 2** — I scaffold the interface (`ISet
 
 ### Skeletons (compilable, empty)
 
-1. **`PLang/App/Engine/Settings/ISettings.cs`** — marker interface
-2. **`PLang/App/Engine/Settings/this.cs`** — `@this` class: registry + resolution logic
-3. **`PLang/App/Engine/Settings/Scope.cs`** — scope level (key-value store for one goal level)
-4. **`PLang/App/Engine/Settings/ModuleView.cs`** — context-bound view `ModuleView<T>`
+1. **`PLang/App/Settings/ISettings.cs`** — marker interface
+2. **`PLang/App/Settings/this.cs`** — `@this` class: registry + resolution logic
+3. **`PLang/App/Settings/Scope.cs`** — scope level (key-value store for one goal level)
+4. **`PLang/App/Settings/ModuleView.cs`** — context-bound view `ModuleView<T>`
 
 ### Modifications to existing files
 
-5. **`PLang/App/Engine/this.cs`** — add `Settings` property to Engine
-6. **`PLang/App/Engine/Context/PLangContext.cs`** — add `SettingsValues` dictionary
-7. **`PLang/App/Engine/Goals/Goal/Methods.cs`** — push/pop settings scope in RunAsync
+5. **`PLang/App/this.cs`** — add `Settings` property to Engine
+6. **`PLang/App/Context/PLangContext.cs`** — add `SettingsValues` dictionary
+7. **`PLang/App/Goals/Goal/Methods.cs`** — push/pop settings scope in RunAsync
 8. **`PLang/App/GlobalUsings.cs`** — add alias for Settings @this
 
 ### First use case skeletons
@@ -66,8 +66,8 @@ The source generator changes are **Phase 2** — I scaffold the interface (`ISet
 
 ### Failing Tests
 
-12. **`PLang.Tests/App/Engine/Settings/SettingsTests.cs`** — C# tests for scope resolution, push/pop, defaults
-13. **`PLang.Tests/App/Engine/Settings/ModuleViewTests.cs`** — C# tests for context-bound view
+12. **`PLang.Tests/App/Settings/SettingsTests.cs`** — C# tests for scope resolution, push/pop, defaults
+13. **`PLang.Tests/App/Settings/ModuleViewTests.cs`** — C# tests for context-bound view
 14. **`Tests/App/Settings/SetMaxGzipSize/Start.test.goal`** — PLang test: set setting → verify it took effect
 
 ## Test Strategy

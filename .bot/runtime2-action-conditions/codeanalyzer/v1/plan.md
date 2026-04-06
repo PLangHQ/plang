@@ -8,7 +8,7 @@
 2. `PLang/App/modules/condition/providers/DefaultEvaluator.cs` — evaluator implementation
 3. `PLang/App/modules/condition/if.cs` — refactored if handler
 4. `PLang/App/modules/condition/compare.cs` — new compare action
-5. `PLang/App/Engine/Goals/Goal/Steps/this.cs` — sub-step logic
+5. `PLang/App/Goals/Goal/Steps/this.cs` — sub-step logic
 
 ### Analysis passes
 1. OBP compliance (5 rules)

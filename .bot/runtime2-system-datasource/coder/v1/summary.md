@@ -11,7 +11,7 @@ Fixed 6 PLang test failures that broke into two categories: 3 caused by a runtim
 **Fix**: Check if character after rootName is `.` before skipping.
 
 **Files modified**:
-- `PLang/App/Engine/Memory/Variables.cs:82` — conditional skip logic
+- `PLang/App/Memory/Variables.cs:82` — conditional skip logic
 - `PLang.Tests/App/Memory/VariablesTests.cs` — 4 new tests
 
 **Tests fixed**: FromJson, DeepNavigation, VariableIndexing

@@ -1,8 +1,8 @@
-using App.Engine.Context;
-using App.Engine.Variables;
+using App.Context;
+using App.Variables;
 using App.modules.builder;
-using Action = App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
-using PLangEngine = App.Engine.@this;
+using Action = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 
@@ -82,8 +82,8 @@ public class ValidateActionsTests
         });
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "dosomething.pr"), prJson);
 
-        var goalCallData = new Data("GoalName", new App.Engine.Goals.Goal.GoalCall { Name = "DoSomething" });
-        goalCallData.Type = new App.Engine.Variables.Type("goal.call");
+        var goalCallData = new Data("GoalName", new App.Goals.Goal.GoalCall { Name = "DoSomething" });
+        goalCallData.Type = new App.Variables.Type("goal.call");
 
         var actions = new StepActions
         {
@@ -100,7 +100,7 @@ public class ValidateActionsTests
 
         await Assert.That(result.Success).IsTrue();
         // Verify PrPath was actually resolved
-        var resolvedCall = actions[0].Parameters[0].Value as App.Engine.Goals.Goal.GoalCall;
+        var resolvedCall = actions[0].Parameters[0].Value as App.Goals.Goal.GoalCall;
         await Assert.That(resolvedCall).IsNotNull();
         await Assert.That(resolvedCall!.PrPath).IsEqualTo("/.build/dosomething.pr");
     }
@@ -108,8 +108,8 @@ public class ValidateActionsTests
     [Test]
     public async Task ValidateActions_DynamicNames_Skipped()
     {
-        var goalCallData = new Data("GoalName", new App.Engine.Goals.Goal.GoalCall { Name = "%dynamicGoal%" });
-        goalCallData.Type = new App.Engine.Variables.Type("goal.call");
+        var goalCallData = new Data("GoalName", new App.Goals.Goal.GoalCall { Name = "%dynamicGoal%" });
+        goalCallData.Type = new App.Variables.Type("goal.call");
 
         var actions = new StepActions
         {
@@ -168,8 +168,8 @@ public class ValidateActionsTests
                 Parameters = new List<Data>
                 {
                     new("Left", "%flag%"),
-                    new("Operator", "==") { Type = new App.Engine.Variables.Type("string") },
-                    new("Right", "false") { Type = new App.Engine.Variables.Type("bool") }
+                    new("Operator", "==") { Type = new App.Variables.Type("string") },
+                    new("Right", "false") { Type = new App.Variables.Type("bool") }
                 }
             }
         };
@@ -195,8 +195,8 @@ public class ValidateActionsTests
                 Parameters = new List<Data>
                 {
                     new("Left", "%count%"),
-                    new("Operator", ">") { Type = new App.Engine.Variables.Type("string") },
-                    new("Right", "5") { Type = new App.Engine.Variables.Type("int") }
+                    new("Operator", ">") { Type = new App.Variables.Type("string") },
+                    new("Right", "5") { Type = new App.Variables.Type("int") }
                 }
             }
         };
@@ -220,9 +220,9 @@ public class ValidateActionsTests
                 ActionName = "if",
                 Parameters = new List<Data>
                 {
-                    new("Left", "%flag%") { Type = new App.Engine.Variables.Type("bool") },
+                    new("Left", "%flag%") { Type = new App.Variables.Type("bool") },
                     new("Operator", "=="),
-                    new("Right", true) { Type = new App.Engine.Variables.Type("bool") }
+                    new("Right", true) { Type = new App.Variables.Type("bool") }
                 }
             }
         };

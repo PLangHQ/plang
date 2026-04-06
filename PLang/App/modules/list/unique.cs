@@ -1,4 +1,4 @@
-using App.Engine.Variables;
+using App.Variables;
 
 namespace App.modules.list;
 
@@ -13,9 +13,9 @@ public partial class Unique : IContext
         var existing = Context.Variables.Get(ListName)?.Value;
         if (existing is not List<object?> list)
             return Task.FromResult(Data.FromError(
-                new App.Engine.Errors.ValidationError($"Variable '{ListName}' is not a list")));
+                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
         var distinct = list.Distinct().Cast<object?>().ToList();
-        return Task.FromResult(Data.Ok(distinct, App.Engine.Variables.Type.FromName("list")));
+        return Task.FromResult(Data.Ok(distinct, App.Variables.Type.FromName("list")));
     }
 }

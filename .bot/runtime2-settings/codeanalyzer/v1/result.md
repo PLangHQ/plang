@@ -5,7 +5,7 @@ Three passes per file: OBP compliance, simplification, readability.
 
 ---
 
-## PLang/App/Engine/Settings/ISettings.cs
+## PLang/App/Settings/ISettings.cs
 
 ### OBP Violations
 None. Marker interface — no behavior to misplace.
@@ -20,7 +20,7 @@ Good XML doc explaining the source generator contract (read side, write side, ma
 
 ---
 
-## PLang/App/Engine/Settings/this.cs
+## PLang/App/Settings/this.cs
 
 ### OBP Violations
 
@@ -59,7 +59,7 @@ Well-structured. One defensive improvement opportunity (hard cast in Resolve).
 
 ---
 
-## PLang/App/Engine/Settings/Scope.cs
+## PLang/App/Settings/Scope.cs
 
 ### OBP Violations
 None. Simple key-value store, owns its own data.
@@ -74,7 +74,7 @@ Clean. ConcurrentDictionary with case-insensitive keys. Consistent with Variable
 
 ---
 
-## PLang/App/Engine/Settings/ModuleView.cs
+## PLang/App/Settings/ModuleView.cs
 
 ### OBP Violations
 None.
@@ -133,7 +133,7 @@ None.
 
 ---
 
-## PLang/App/Engine/this.cs (diff only)
+## PLang/App/this.cs (diff only)
 
 ### OBP Violations
 None.
@@ -148,7 +148,7 @@ Follows established Engine property pattern. Good XML doc with navigation exampl
 
 ---
 
-## PLang/App/Engine/Context/PLangContext.cs (diff only)
+## PLang/App/Context/PLangContext.cs (diff only)
 
 ### OBP Violations
 
@@ -167,7 +167,7 @@ Good XML doc explaining the resolution chain.
 
 ---
 
-## PLang/App/Engine/Goals/Goal/Methods.cs (diff only)
+## PLang/App/Goals/Goal/Methods.cs (diff only)
 
 ### OBP Violations
 None.
@@ -205,7 +205,7 @@ Two new aliases: `EngineSettings` and `SettingsScope`. Follow established naming
 
 ---
 
-## PLang.Tests/App/Engine/Settings/SettingsTests.cs
+## PLang.Tests/App/Settings/SettingsTests.cs
 
 ### Readability
 
@@ -219,7 +219,7 @@ Two new aliases: `EngineSettings` and `SettingsScope`. Follow established naming
 
 ---
 
-## PLang.Tests/App/Engine/Settings/ScopeTests.cs
+## PLang.Tests/App/Settings/ScopeTests.cs
 
 ### Readability
 Straightforward: set/get, null when not set, contains, case-insensitive. Clean.
@@ -228,7 +228,7 @@ Straightforward: set/get, null when not set, contains, case-insensitive. Clean.
 
 ---
 
-## PLang.Tests/App/Engine/Settings/ModuleViewTests.cs
+## PLang.Tests/App/Settings/ModuleViewTests.cs
 
 ### Readability
 
@@ -254,17 +254,17 @@ Three lines: set, get, assert. Good PLang-level integration test.
 ## Finding 1: Hard cast in Resolve<T> (Medium)
 `Settings.Resolve<T>` does `(T)value` which throws InvalidCastException on type mismatch. Should use `value is T typed ? typed : classDefault` for safety. A PLang developer writing `set max gzip size to "twenty"` would produce a confusing cast error instead of falling through to the default.
 
-**File:** `PLang/App/Engine/Settings/this.cs:34,40`
+**File:** `PLang/App/Settings/this.cs:34,40`
 
 ## Finding 2: Module prefix assumption (Info)
 `For<T>()` derives module name from namespace. Works because handler discovery uses the same convention. But if a settings class is placed in a non-standard namespace, the prefix will be wrong. A comment noting this assumption would help.
 
-**File:** `PLang/App/Engine/Settings/this.cs:52-54`
+**File:** `PLang/App/Settings/this.cs:52-54`
 
 ## Finding 3: No test for type mismatch in Resolve (Low)
 No test verifies what happens when a setting value has the wrong type. Related to Finding 1 — if the cast is changed to a safe pattern, a test should verify the fallback behavior.
 
-**File:** `PLang.Tests/App/Engine/Settings/SettingsTests.cs`
+**File:** `PLang.Tests/App/Settings/SettingsTests.cs`
 
 ---
 

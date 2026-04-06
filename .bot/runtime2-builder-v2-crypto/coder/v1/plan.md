@@ -20,11 +20,11 @@ The test-designer delivered:
 
 Git-restore all deleted/gutted files from parent branch:
 - `PLang/App/modules/identity/*.cs` (all source files)
-- `PLang/App/Engine/Channels/Serializers/SensitivePropertyFilter.cs`
-- `PLang/App/Engine/View.cs` (restore `[Sensitive]` attribute)
-- `PLang/App/Engine/Context/Actor.cs` (restore Identity references)
-- `PLang/App/Engine/Memory/Data.Envelope.cs` (restore SensitivePropertyFilter)
-- `PLang/App/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs` (restore filter)
+- `PLang/App/Channels/Serializers/SensitivePropertyFilter.cs`
+- `PLang/App/View.cs` (restore `[Sensitive]` attribute)
+- `PLang/App/Context/Actor.cs` (restore Identity references)
+- `PLang/App/Memory/Data.Envelope.cs` (restore SensitivePropertyFilter)
+- `PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs` (restore filter)
 - All identity test files (restore implementations)
 - Serialization test files (restore implementations)
 

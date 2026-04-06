@@ -1,10 +1,10 @@
 using System.Text.Json;
-using App.Engine.Context;
-using App.Engine.Variables;
-using App.Engine.Providers;
+using App.Context;
+using App.Variables;
+using App.Providers;
 using App.modules.llm;
 using App.modules.llm.providers;
-using PLangEngine = App.Engine.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.llm;
 

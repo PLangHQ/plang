@@ -1,8 +1,8 @@
-using App.Engine;
-using App.Engine.Context;
-using App.Engine.Variables;
-using App.Engine.Settings;
-using EngineType = App.Engine.@this;
+using App;
+using App.Context;
+using App.Variables;
+using App.Settings;
+using EngineType = App.@this;
 
 namespace PLang.Tests.Runtime2.Engine.Settings;
 

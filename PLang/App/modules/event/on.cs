@@ -1,7 +1,7 @@
-using App.Engine;
-using App.Engine.Variables;
-using App.Engine.Events;
-using EventBinding = App.Engine.Events.Lifecycle.Bindings.Binding.@this;
+using App;
+using App.Variables;
+using App.Events;
+using EventBinding = App.Events.Lifecycle.Bindings.Binding.@this;
 
 namespace App.modules.@event;
 
@@ -36,18 +36,18 @@ public partial class On : IContext
     public partial int Priority { get; init; }
 
     /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
-    public partial Engine.Context.Actor? Actor { get; init; }
+    public partial Context.Actor? Actor { get; init; }
 
     public Task<Data> Run()
     {
         if (!Enum.TryParse<EventType>(Type, ignoreCase: true, out var eventType))
             return Task.FromResult(Data.FromError(
-                new Engine.Errors.ValidationError($"Unknown event type: '{Type}'", "InvalidEventType", 400)));
+                new Errors.ValidationError($"Unknown event type: '{Type}'", "InvalidEventType", 400)));
 
         // Resolve target actor — default to current context's actor
         var targetActor = Actor ?? Context.Actor ?? Context.Engine!.User;
 
-        Func<Engine.Context.PLangContext, Task<Data>> handler = async ctx =>
+        Func<Context.PLangContext, Task<Data>> handler = async ctx =>
             await ctx.Engine!.RunGoalAsync(GoalToCall, targetActor.Context, ctx.CancellationToken);
 
         var binding = new EventBinding(

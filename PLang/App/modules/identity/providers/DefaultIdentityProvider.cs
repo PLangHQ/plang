@@ -1,9 +1,9 @@
-using App.Engine.Errors;
-using App.Engine.Variables;
+using App.Errors;
+using App.Variables;
 using App.modules;
 using App.modules.identity;
 
-using App.Engine.Providers;
+using App.Providers;
 using App.modules.signing.providers;
 
 namespace App.modules.identity.providers;

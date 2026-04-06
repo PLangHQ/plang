@@ -1,7 +1,7 @@
-using App.Engine.Variables;
-using App.Engine.Modules;
+using App.Variables;
+using App.Modules;
 
-namespace PLang.Tests.App.Engine.Modules;
+namespace PLang.Tests.App.Modules;
 
 public class DescribeTests
 {
@@ -45,9 +45,9 @@ public class FakeGetPath : App.modules.ICodeGenerated
 {
     public Task<FakePathResult> Run() => Task.FromResult(new FakePathResult());
 
-    public Task<Data> ExecuteAsync(App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        App.Engine.@this engine,
-        App.Engine.Context.PLangContext context) => Task.FromResult(Data.Ok());
+    public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action,
+        App.@this engine,
+        App.Context.PLangContext context) => Task.FromResult(Data.Ok());
 }
 
 // Fake action returning plain Data
@@ -56,9 +56,9 @@ public class FakeBasicAction : App.modules.ICodeGenerated
 {
     public Task<Data> Run() => Task.FromResult(Data.Ok("hello"));
 
-    public Task<Data> ExecuteAsync(App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        App.Engine.@this engine,
-        App.Engine.Context.PLangContext context) => Task.FromResult(Data.Ok());
+    public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action,
+        App.@this engine,
+        App.Context.PLangContext context) => Task.FromResult(Data.Ok());
 }
 
 // Fake return type simulating Path-like properties

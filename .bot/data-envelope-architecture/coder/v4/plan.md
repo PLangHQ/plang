@@ -68,7 +68,7 @@ This is NOT transport serialization (which goes through Channels/Serializers). T
 
 | File | Action |
 |------|--------|
-| `PLang/App/Engine/Memory/Data.Envelope.cs` | Add 6 pipeline methods + GZip helpers + static JSON options |
+| `PLang/App/Memory/Data.Envelope.cs` | Add 6 pipeline methods + GZip helpers + static JSON options |
 | `PLang.Tests/App/Memory/DataTests.cs` | Add pipeline tests (Wrap, Unwrap, Compress, Decompress, round-trip, Encrypt/Decrypt stubs) |
 
 ## Risk

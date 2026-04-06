@@ -15,9 +15,9 @@ Every folder's primary class is named `@this` in `this.cs`. Consumers use global
 
 ### Namespace Per Folder
 Each folder gets its **own namespace** matching its path exactly:
-- `Goals/Goal/this.cs` → namespace `App.Engine.Goals.Goal`
-- `Goals/Goal/Steps/Step/this.cs` → namespace `App.Engine.Goals.Goal.Steps.Step`
-- `Events/Lifecycle/Bindings/this.cs` → namespace `App.Engine.Events.Lifecycle.Bindings`
+- `Goals/Goal/this.cs` → namespace `App.Goals.Goal`
+- `Goals/Goal/Steps/Step/this.cs` → namespace `App.Goals.Goal.Steps.Step`
+- `Events/Lifecycle/Bindings/this.cs` → namespace `App.Events.Lifecycle.Bindings`
 
 This works because the class is `@this` — it never collides with its namespace segment.
 
@@ -238,7 +238,7 @@ This means:
 
 ## Engine.Providers — Pluggable Module Implementations
 
-`Engine.Providers` (`App.Engine.Providers.@this`) is a named provider registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, IProvider>>`. Each provider type can have multiple named implementations. First registered becomes default.
+`Engine.Providers` (`App.Providers.@this`) is a named provider registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, IProvider>>`. Each provider type can have multiple named implementations. First registered becomes default.
 
 Each module:
 1. Defines a provider interface (e.g., `ICryptoProvider`, `ISigningProvider`)
@@ -420,4 +420,4 @@ This separates the configure action's nullable properties (only non-null values 
 
 The class resolves raw path strings into absolute paths. Relative paths resolve against the goal's folder, not the engine root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.
 
-See `PLang/App/Engine/FileSystem/PathData.cs` for the class definition.
+See `PLang/App/FileSystem/PathData.cs` for the class definition.

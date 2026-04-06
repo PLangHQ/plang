@@ -1,6 +1,6 @@
-using App.Engine.Errors;
-using App.Engine.Variables;
-using App.Engine.Settings;
+using App.Errors;
+using App.Variables;
+using App.Settings;
 
 namespace App.modules.settings;
 

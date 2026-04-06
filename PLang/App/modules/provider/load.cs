@@ -1,7 +1,7 @@
 using System.Reflection;
-using App.Engine.Errors;
-using App.Engine.Variables;
-using App.Engine.Providers;
+using App.Errors;
+using App.Variables;
+using App.Providers;
 
 namespace App.modules.provider;
 

@@ -1,5 +1,5 @@
-using App.Engine.Channels.Serializers.Serializer;
-using SerializerRegistry = App.Engine.Channels.Serializers.@this;
+using App.Channels.Serializers.Serializer;
+using SerializerRegistry = App.Channels.Serializers.@this;
 
 namespace PLang.Tests.App.Serialization;
 

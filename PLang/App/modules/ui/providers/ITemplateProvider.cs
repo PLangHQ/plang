@@ -1,5 +1,5 @@
-using App.Engine.Variables;
-using App.Engine.Providers;
+using App.Variables;
+using App.Providers;
 
 namespace App.modules.ui.providers;
 

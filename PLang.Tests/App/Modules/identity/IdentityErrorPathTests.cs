@@ -1,10 +1,10 @@
 using System.Reflection;
-using App.Engine.Context;
-using App.Engine.Settings;
-using App.Engine.Errors;
-using App.Engine.Variables;
+using App.Context;
+using App.Settings;
+using App.Errors;
+using App.Variables;
 using App.modules.identity;
-using PLangEngine = App.Engine.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.identity;
 

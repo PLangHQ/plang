@@ -1,4 +1,4 @@
-using App.Engine.Variables;
+using App.Variables;
 
 namespace App.modules.list;
 
@@ -14,7 +14,7 @@ public partial class Range : IContext
     {
         if (Step == 0)
             return Task.FromResult(Data.FromError(
-                new App.Engine.Errors.ValidationError("Step cannot be zero", "InvalidStep")));
+                new App.Errors.ValidationError("Step cannot be zero", "InvalidStep")));
 
         var list = new List<object?>();
         if (Step > 0)
@@ -28,6 +28,6 @@ public partial class Range : IContext
                 list.Add(i);
         }
 
-        return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, App.Engine.Variables.Type.FromName("list")));
+        return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, App.Variables.Type.FromName("list")));
     }
 }

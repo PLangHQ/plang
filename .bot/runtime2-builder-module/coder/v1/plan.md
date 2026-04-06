@@ -9,13 +9,13 @@ Implement the `App.modules.builder` module: 8 actions + `GoalFile` class + `Step
 ### Phase 1: Entity Methods (Step.Merge, Goal.MergeFrom)
 These are prerequisites for the actions.
 
-**1. `Step.Merge(Step from)`** — Add to `PLang/App/Engine/Goals/Goal/Steps/Step/this.cs`
+**1. `Step.Merge(Step from)`** — Add to `PLang/App/Goals/Goal/Steps/Step/this.cs`
 - Copies LLM-derived fields: Actions, Cache, OnError
 - Preserves structural fields: Text, Index, Indent, LineNumber
 - Replaces Errors/Warnings only when source has entries
 - Reference: v1 `MergeStep` in Program.cs lines 382-414
 
-**2. `Goal.MergeFrom(Goal existing)`** — Add to `PLang/App/Engine/Goals/Goal/this.cs`
+**2. `Goal.MergeFrom(Goal existing)`** — Add to `PLang/App/Goals/Goal/this.cs`
 - Matches steps by `Step.Text` (case-sensitive)
 - Delegates to `Step.Merge(existingStep)` for each match
 - Unmatched steps keep empty Actions
@@ -105,8 +105,8 @@ I'll use `engine.FileSystem` directly for reads and `engine.RunAction<file.Save>
 ## Files Modified
 | File | Change |
 |------|--------|
-| `PLang/App/Engine/Goals/Goal/this.cs` | Add `MergeFrom(Goal existing)` |
-| `PLang/App/Engine/Goals/Goal/Steps/Step/this.cs` | Add `Merge(Step from)` |
+| `PLang/App/Goals/Goal/this.cs` | Add `MergeFrom(Goal existing)` |
+| `PLang/App/Goals/Goal/Steps/Step/this.cs` | Add `Merge(Step from)` |
 | `PLang.Tests/App/Modules/builder/*.cs` | Implement all test stubs |
 
 ## Key Decisions

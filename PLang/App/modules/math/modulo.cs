@@ -1,4 +1,4 @@
-using App.Engine.Variables;
+using App.Variables;
 
 namespace App.modules.math;
 
@@ -13,7 +13,7 @@ public partial class Modulo : IContext
         var divisor = MathHelper.ToDouble(B);
         if (divisor == 0)
             return Task.FromResult(Data.FromError(
-                new App.Engine.Errors.ValidationError("Modulo by zero", "DivisionByZero")));
+                new App.Errors.ValidationError("Modulo by zero", "DivisionByZero")));
 
         var result = MathHelper.ToDouble(A) % divisor;
         return Task.FromResult(Data.Ok(MathHelper.PreserveType(result, A, B)));

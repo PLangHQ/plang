@@ -43,15 +43,15 @@ This is one atomic commit. We do NOT split it into sub-phases because:
 | Old namespace | New namespace |
 |---|---|
 | `App.Core` | `App.Engine` |
-| `App.Context` | `App.Engine.Context` |
-| `App.Memory.Navigators` | `App.Engine.Variables.Navigators` |
-| `App.Memory` | `App.Engine.Variables` |
-| `App.IO` | `App.Engine.Channels` |
-| `App.Errors` | `App.Engine.Errors` |
-| `App.Serialization` | `App.Engine.Serializers` |
-| `App.Utility` | `App.Engine.Utility` |
-| `App.Parsing` | `App.Engine.Parsing` |
-| `App.Mapping` | `App.Engine.Mapping` |
+| `App.Context` | `App.Context` |
+| `App.Memory.Navigators` | `App.Variables.Navigators` |
+| `App.Memory` | `App.Variables` |
+| `App.IO` | `App.Channels` |
+| `App.Errors` | `App.Errors` |
+| `App.Serialization` | `App.Serializers` |
+| `App.Utility` | `App.Utility` |
+| `App.Parsing` | `App.Parsing` |
+| `App.Mapping` | `App.Mapping` |
 
 **Important ordering**: `Memory.Navigators` must be replaced BEFORE `Memory` (longer match first). Same for any nested namespaces.
 
@@ -61,16 +61,16 @@ The `modules/` folder has two kinds of files:
 
 **Infrastructure** (IClass, ICodeGenerated, Libraries, Library, ActionAttribute, DefaultAttribute, VariableNameAttribute, IContext):
 - Move to: `Engine/Libraries/`
-- New namespace: `App.Engine.Libraries`
+- New namespace: `App.Libraries`
 
 **Handlers** (variable/, file/, output/, etc.):
 - Move to: `Engine/modules/{module}/`
-- New namespace: `App.Engine.modules` (or `.modules.{subfolder}` if they already use sub-namespaces)
-- Update `Library.Discover("App.modules")` → `Library.Discover("App.Engine.modules")`
+- New namespace: `App.modules` (or `.modules.{subfolder}` if they already use sub-namespaces)
+- Update `Library.Discover("App.modules")` → `Library.Discover("App.modules")`
 
 ### File moves
 
-Create this folder structure under `PLang/App/Engine/`:
+Create this folder structure under `PLang/App/`:
 ```
 Engine/
 ├── Goals/
@@ -193,7 +193,7 @@ Move files per the tree map in `result.md`. Key moves:
 
 ### Watch out for
 - `Actions` is used both as the collection type AND in `using Actions = App.Core.Actions` in PlangModule. Update the alias.
-- `Events` is a common word — make sure we only rename `App.Engine.Events` class, not the `EventType` enum or event-related types.
+- `Events` is a common word — make sure we only rename `App.Events` class, not the `EventType` enum or event-related types.
 - LazyParamsGenerator references: none of the renamed classes appear in the generator (it references namespaces, not class names). But verify.
 
 ### Verification
@@ -277,7 +277,7 @@ Move files per the tree map in `result.md`. Key moves:
 The generator sees:
 ```csharp
 // In Engine/Goals/this.cs
-namespace App.Engine.Goals;
+namespace App.Goals;
 public sealed class EngineGoals { ... }
 ```
 

@@ -17,9 +17,9 @@ Review all code changes on this branch vs `runtime2`. The branch fixes the build
 - `system/builder/BuildGoal.goal` — builder prompt change
 - `system/builder/llm/BuildGoal.llm` — LLM prompt with onError rules
 - `system/builder/templates/goalFormatForLlm.template` — schema template
-- `PLang/App/Engine/Goals/Goal/Steps/Step/ErrorHandler.cs` — rename
-- `PLang/App/Engine/Goals/Goal/Steps/Step/Methods.cs` — rename
-- `PLang/App/Engine/Utility/GoalMapper.cs` — rename mapping
+- `PLang/App/Goals/Goal/Steps/Step/ErrorHandler.cs` — rename
+- `PLang/App/Goals/Goal/Steps/Step/Methods.cs` — rename
+- `PLang/App/Utility/GoalMapper.cs` — rename mapping
 - `PLang.Tests/App/Core/StepRetryTests.cs` — C# test update
 - `PLang.Tests/App/Utility/GoalDataTests.cs` — C# test update
 - `system/builder/.build/BuildGoal/07.*.pr` — stale .pr check

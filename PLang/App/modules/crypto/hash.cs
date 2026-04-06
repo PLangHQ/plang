@@ -1,4 +1,4 @@
-using App.Engine.Variables;
+using App.Variables;
 using App.modules.crypto.providers;
 
 namespace App.modules.crypto;

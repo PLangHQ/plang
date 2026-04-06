@@ -32,7 +32,7 @@ User asked: "why would there be goal without pr?" → decided to enforce strictl
 ## Files modified
 
 **Production code:**
-- `PLang/App/Engine/Goals/this.cs` — Enforce PrPath in Add(), fix Names, fix Get() variations, fix GetByPrPathAsync
+- `PLang/App/Goals/this.cs` — Enforce PrPath in Add(), fix Names, fix Get() variations, fix GetByPrPathAsync
 
 **Test code (Path enforcement):**
 - `PLang.Tests/App/Core/GoalsTests.cs` — All goal creations set Path, 7 new PrPath tests

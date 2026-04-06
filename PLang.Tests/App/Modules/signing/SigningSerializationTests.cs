@@ -1,6 +1,6 @@
 using System.Text.Json;
-using App.Engine.Variables;
-using App.Engine.Providers;
+using App.Variables;
+using App.Providers;
 using App.modules.signing.providers;
 using App.modules.signing;
 
@@ -139,7 +139,7 @@ public class SigningSerializationTests
         // Create a SignedData with invalid base64 in Hash
         // Verification should handle it gracefully (the hash comparison will fail)
         var sd = CreateTestSignedData();
-        sd.Hash = Data.Ok(new byte[] { 0xFF }, App.Engine.Variables.Type.FromName("sha256"));
+        sd.Hash = Data.Ok(new byte[] { 0xFF }, App.Variables.Type.FromName("sha256"));
         sd.Signature = Convert.ToBase64String(new byte[64]);
         sd.Contracts = new List<string> { "C0" };
 
@@ -148,7 +148,7 @@ public class SigningSerializationTests
         System.IO.Directory.CreateDirectory(tempDir);
         try
         {
-            var engine = new App.Engine.@this(tempDir);
+            var engine = new App.@this(tempDir);
             var signedData = Data.Ok("test");
             signedData.Signature = sd;
 
@@ -199,7 +199,7 @@ public class SigningSerializationTests
             Created = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero),
             Identity = "testPublicKey",
             Contracts = new List<string> { "C0" },
-            Hash = Data.Ok(new byte[32], App.Engine.Variables.Type.FromName("sha256")),
+            Hash = Data.Ok(new byte[32], App.Variables.Type.FromName("sha256")),
             Signature = null
         };
     }

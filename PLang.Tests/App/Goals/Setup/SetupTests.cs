@@ -1,15 +1,15 @@
-using App.Engine;
-using App.Engine.Context;
-using App.Engine.Errors;
-using App.Engine.Goals.Goal;
-using App.Engine.Variables;
+using App;
+using App.Context;
+using App.Errors;
+using App.Goals.Goal;
+using App.Variables;
 
 namespace PLang.Tests.App.Goals.Setup;
 
 public class SetupTests
 {
     private string _tempDir = null!;
-    private App.Engine.@this _engine = null!;
+    private App.@this _engine = null!;
 
     [Before(Test)]
     public void SetUp()
@@ -17,7 +17,7 @@ public class SetupTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-setup-test-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         var fs = new PLang.SafeFileSystem.PLangFileSystem(_tempDir, "");
-        _engine = new App.Engine.@this(fs);
+        _engine = new App.@this(fs);
     }
 
     [After(Test)]
@@ -97,7 +97,7 @@ public class SetupTests
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new App.Engine.Goals.Goal.Steps.@this(new[] { step1, step2 })
+            Steps = new App.Goals.Goal.Steps.@this(new[] { step1, step2 })
         };
         step1.Goal = goal;
         step2.Goal = goal;
@@ -132,7 +132,7 @@ public class SetupTests
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new App.Engine.Goals.Goal.Steps.@this(new[] { step })
+            Steps = new App.Goals.Goal.Steps.@this(new[] { step })
         };
         step.Goal = goal;
         _engine.Goals.Add(goal);
@@ -156,7 +156,7 @@ public class SetupTests
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new App.Engine.Goals.Goal.Steps.@this()
+            Steps = new App.Goals.Goal.Steps.@this()
         };
         _engine.Goals.Add(goal);
 
@@ -193,7 +193,7 @@ public class SetupTests
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new App.Engine.Goals.Goal.Steps.@this(new[] { step })
+            Steps = new App.Goals.Goal.Steps.@this(new[] { step })
         };
         step.Goal = goal;
         _engine.Goals.Add(goal);
@@ -216,7 +216,7 @@ public class SetupTests
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new App.Engine.Goals.Goal.Steps.@this(new[] { step1, step2 })
+            Steps = new App.Goals.Goal.Steps.@this(new[] { step1, step2 })
         };
         step1.Goal = goal;
         step2.Goal = goal;
@@ -374,19 +374,19 @@ public class SetupTests
     /// Creates a minimal no-op Actions collection that won't fail during step execution.
     /// Steps with empty actions succeed immediately.
     /// </summary>
-    private static App.Engine.Goals.Goal.Steps.Step.Actions.@this CreateNoOpActions()
+    private static App.Goals.Goal.Steps.Step.Actions.@this CreateNoOpActions()
     {
-        return new App.Engine.Goals.Goal.Steps.Step.Actions.@this();
+        return new App.Goals.Goal.Steps.Step.Actions.@this();
     }
 
     /// <summary>
     /// Creates an Actions collection with an unknown module that will fail at runtime.
     /// </summary>
-    private static App.Engine.Goals.Goal.Steps.Step.Actions.@this CreateFailingActions()
+    private static App.Goals.Goal.Steps.Step.Actions.@this CreateFailingActions()
     {
-        return new App.Engine.Goals.Goal.Steps.Step.Actions.@this
+        return new App.Goals.Goal.Steps.Step.Actions.@this
         {
-            new App.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+            new App.Goals.Goal.Steps.Step.Actions.Action.@this
             {
                 Module = "nonexistent",
                 ActionName = "doesnotexist",

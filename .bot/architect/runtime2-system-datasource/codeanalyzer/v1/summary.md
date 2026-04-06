@@ -27,13 +27,13 @@ Code analysis of the DataSource persistence layer and Settings variable bridge f
 The code is well-structured and OBP-compliant, but the core integration path that motivated the LazyParamsGenerator changes has no test coverage. The security-critical SanitizeTableName also lacks tests. These should be addressed before merging.
 
 ## Files analyzed
-- `PLang/App/Engine/DataSource/IDataSource.cs` — CLEAN
-- `PLang/App/Engine/DataSource/SqliteDataSource.cs` — NEEDS WORK
-- `PLang/App/Engine/DataSource/SettingsData.cs` — NEEDS WORK
-- `PLang/App/Engine/Errors/AskError.cs` — CLEAN
-- `PLang/App/Engine/Errors/DataSourceError.cs` — CLEAN
-- `PLang/App/Engine/Memory/Data.Navigation.cs` — CLEAN
-- `PLang/App/Engine/Context/Actor.cs` — CLEAN
+- `PLang/App/DataSource/IDataSource.cs` — CLEAN
+- `PLang/App/DataSource/SqliteDataSource.cs` — NEEDS WORK
+- `PLang/App/DataSource/SettingsData.cs` — NEEDS WORK
+- `PLang/App/Errors/AskError.cs` — CLEAN
+- `PLang/App/Errors/DataSourceError.cs` — CLEAN
+- `PLang/App/Memory/Data.Navigation.cs` — CLEAN
+- `PLang/App/Context/Actor.cs` — CLEAN
 - `PLang/App/actions/settings/get.cs` — CLEAN
 - `PLang/App/actions/settings/set.cs` — CLEAN
 - `PLang/App/actions/settings/remove.cs` — CLEAN

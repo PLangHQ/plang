@@ -6,18 +6,18 @@ Address all findings from the code analyzer's v1 review. Fix code quality issues
 ## Changes
 
 ### 1. Fix bare `catch` in `SqliteDataSource.DeserializeValue` (Medium)
-**File:** `PLang/App/Engine/DataSource/SqliteDataSource.cs`
+**File:** `PLang/App/DataSource/SqliteDataSource.cs`
 - Change `catch` → `catch (JsonException)` in `DeserializeValue()` (line 266)
 - Also change bare `catch` → `catch (SqliteException)` in `EnableWalMode()` (line 51) for consistency
 
 ### 2. Fix Variables.Clone() to preserve SettingsData type (Medium-High)
-**File:** `PLang/App/Engine/Memory/Variables.cs`
+**File:** `PLang/App/Memory/Variables.cs`
 - In `Clone()`, detect `SettingsData` (and `DynamicData`) instances and preserve them by reference instead of creating plain `Data`.
 - SettingsData is stateless (it loads from DB each time) so sharing by reference is safe.
 - DynamicData is already a factory-style type, so same treatment.
 
 ### 3. Fix Actor.DataSource thread safety (Low)
-**File:** `PLang/App/Engine/Context/Actor.cs`
+**File:** `PLang/App/Context/Actor.cs`
 - Replace `??=` with `Lazy<IDataSource>` for thread-safe lazy initialization.
 
 ### 4. Add SanitizeTableName tests (High)

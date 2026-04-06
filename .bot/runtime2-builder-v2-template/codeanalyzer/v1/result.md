@@ -88,7 +88,7 @@ Three findings: broad catch-all (×2, lines 104 and 217), nested try/catch in Pl
 
 ---
 
-## PLang/App/Engine/Memory/Data.cs (Clone changes)
+## PLang/App/Memory/Data.cs (Clone changes)
 
 ### OBP Violations
 None. `Clone()` is virtual on the owner — subclasses override with proper cloning. Correct OBP.
@@ -112,7 +112,7 @@ DataList.Clone() drops metadata. Data<T> has no Clone() override.
 
 ---
 
-## PLang/App/Engine/Memory/Properties.cs (Clone)
+## PLang/App/Memory/Properties.cs (Clone)
 
 ### OBP Violations
 None. Properties owns its own Clone().
@@ -124,7 +124,7 @@ Clean — shallow copy of the item list. Properties contains `Data` items; wheth
 
 ---
 
-## PLang/App/Engine/FileSystem/PathData.cs (Clone)
+## PLang/App/FileSystem/PathData.cs (Clone)
 
 ### OBP Violations
 None.
@@ -155,7 +155,7 @@ Same missing metadata as PathData and DataList.
 
 ---
 
-## PLang/App/Engine/Memory/Variables.cs (Clone narrowing)
+## PLang/App/Memory/Variables.cs (Clone narrowing)
 
 ### Pass 4: Behavioral Reasoning
 
@@ -172,7 +172,7 @@ The narrowing is correct in intent. The issue is that the Clone() overrides are 
 
 ---
 
-## PLang/App/Engine/Memory/Data.Envelope.cs
+## PLang/App/Memory/Data.Envelope.cs
 
 ### The catch addition
 Adding `InvalidOperationException` to the catch in `Decompress()` is straightforward. The existing catches already handle `JsonException` and `NotSupportedException`. InvalidOperationException can come from `Decompress()` operations on malformed data.
@@ -190,7 +190,7 @@ Adding `InvalidCastException` to both `Evaluate()` and `Compare()` catches is co
 
 ---
 
-## PLang/App/Engine/Providers/this.cs
+## PLang/App/Providers/this.cs
 
 ### The registration
 `Register<ITemplateProvider>(new FluidProvider())` follows the same pattern as all other providers. `ResolveType` adds `"template"` and `"itemplateprovider"` mappings. Consistent.

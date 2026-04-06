@@ -1,7 +1,7 @@
-using App.Engine.Variables;
-using App.Engine.Utility;
+using App.Variables;
+using App.Utility;
 
-namespace PLang.Tests.App.Engine.Utility;
+namespace PLang.Tests.App.Utility;
 
 public class TypeMappingDictConversionTests
 {

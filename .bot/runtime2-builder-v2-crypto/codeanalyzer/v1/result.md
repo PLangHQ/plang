@@ -102,7 +102,7 @@ Clean two-method interface.
 
 ---
 
-## PLang/App/Engine/Providers/this.cs
+## PLang/App/Providers/this.cs
 
 ### OBP Violations
 None. Lives on Engine, which owns it. OBP-compliant.
@@ -122,7 +122,7 @@ Well-designed registry. Unused methods are reasonable API surface.
 
 ---
 
-## PLang/App/Engine/Context/Actor.cs (identity changes)
+## PLang/App/Context/Actor.cs (identity changes)
 
 ### OBP Violations
 None. `Identity` property follows the same lazy pattern as `DataSource`.
@@ -140,7 +140,7 @@ None.
 
 ---
 
-## PLang/App/Engine/Channels/Serializers/SensitivePropertyFilter.cs
+## PLang/App/Channels/Serializers/SensitivePropertyFilter.cs
 
 ### OBP Violations
 None.

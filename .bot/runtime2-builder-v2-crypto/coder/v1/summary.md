@@ -7,7 +7,7 @@ A crypto module for PLang App providing hashing (Keccak256, SHA256) and hash ver
 ## What was done
 
 ### Files created
-- `PLang/App/Engine/Providers/this.cs` — `Engine.Providers`, type-keyed `ConcurrentDictionary<Type, object>` with `Register<T>`, `Get<T>`, `GetOrDefault<T>`. Solves Foundation Checklist item #4 (pluggable action implementations).
+- `PLang/App/Providers/this.cs` — `Engine.Providers`, type-keyed `ConcurrentDictionary<Type, object>` with `Register<T>`, `Get<T>`, `GetOrDefault<T>`. Solves Foundation Checklist item #4 (pluggable action implementations).
 - `PLang/App/modules/crypto/providers/ICryptoProvider.cs` — Provider interface (`Hash`, `Verify`)
 - `PLang/App/modules/crypto/providers/DefaultProvider.cs` — Built-in provider using Nethereum (Keccak256) and System.Security.Cryptography (SHA256)
 - `PLang/App/modules/crypto/types.cs` — `HashedData` type (Algorithm, Format, Hash)
@@ -15,7 +15,7 @@ A crypto module for PLang App providing hashing (Keccak256, SHA256) and hash ver
 - `PLang/App/modules/crypto/verify.cs` — Thin verify action handler: resolve provider, decode hex, delegate
 
 ### Files modified
-- `PLang/App/Engine/this.cs` — Added `Providers` property
+- `PLang/App/this.cs` — Added `Providers` property
 - `PLang/App/GlobalUsings.cs` — Added `EngineProviders` alias
 - `PLang.Tests/App/Modules/crypto/HashActionTests.cs` — 12 stubs → real tests
 - `PLang.Tests/App/Modules/crypto/ProviderResolutionTests.cs` — 3 stubs → real tests

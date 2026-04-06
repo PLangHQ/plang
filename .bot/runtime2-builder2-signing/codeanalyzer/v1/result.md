@@ -5,7 +5,7 @@ Post-coder-fix review (7 OBP violations already addressed).
 
 ---
 
-## PLang/App/Engine/Providers/IKeyProvider.cs
+## PLang/App/Providers/IKeyProvider.cs
 
 ### OBP Violations
 1. **Line 8: Behavior methods that throw instead of returning Data**
@@ -19,7 +19,7 @@ IKeyProvider breaks the "providers return Data, never throw" rule that applies t
 
 ---
 
-## PLang/App/Engine/Providers/Ed25519Provider.cs
+## PLang/App/Providers/Ed25519Provider.cs
 
 ### OBP Violations
 1. **Line 15: GenerateKeyPair throws instead of returning Data** — Consequence of the IKeyProvider interface issue. NSec's `Key.Create` and `Key.Export` can throw `CryptographicException`. Currently unhandled.
@@ -55,7 +55,7 @@ Must change when IKeyProvider changes.
 
 ---
 
-## PLang/App/Engine/Providers/this.cs (EngineProviders)
+## PLang/App/Providers/this.cs (EngineProviders)
 
 ### OBP Violations
 None.
@@ -80,7 +80,7 @@ Generic/non-generic duplication is the main simplification target.
 
 ---
 
-## PLang/App/Engine/Providers/DefaultIdentityProvider.cs
+## PLang/App/Providers/DefaultIdentityProvider.cs
 
 ### OBP Violations
 None — the coder's fixes are correct.
@@ -240,7 +240,7 @@ Uses non-generic Register to avoid reflection. Properly discovers all IProvider 
 
 ---
 
-## PLang/App/Engine/this.cs
+## PLang/App/this.cs
 
 ### Readability
 1. **Lines 226-230: Provider registration block** — 4 lines of manual registration. Clear and intentional. No issue.
@@ -249,35 +249,35 @@ Uses non-generic Register to avoid reflection. Properly discovers all IProvider 
 
 ---
 
-## PLang/App/Engine/Context/Actor.cs
+## PLang/App/Context/Actor.cs
 
 ### Verdict: CLEAN
 DynamicData for %MyIdentity% correctly points to System.Identity.Value. SettingsVariable shared across all actors. Lazy DataSource creation with test/build isolation.
 
 ---
 
-## PLang/App/Engine/Memory/Data.Envelope.cs
+## PLang/App/Memory/Data.Envelope.cs
 
 ### Verdict: CLEAN
 Signature property correctly [JsonIgnore] + [Out]. SensitivePropertyFilter wired into _envelopeJsonOptions.
 
 ---
 
-## PLang/App/Engine/Cache/this.cs + MemoryStepCache.cs
+## PLang/App/Cache/this.cs + MemoryStepCache.cs
 
 ### Verdict: CLEAN
 TryAddAsync correctly implements atomic add-if-absent for nonce replay prevention.
 
 ---
 
-## PLang/App/Engine/Channels/Serializers/SensitivePropertyFilter.cs
+## PLang/App/Channels/Serializers/SensitivePropertyFilter.cs
 
 ### Verdict: CLEAN
 Correct backward iteration for property removal. Attribute check is properly null-safe.
 
 ---
 
-## PLang/App/Engine/View.cs
+## PLang/App/View.cs
 
 ### Verdict: CLEAN
 [Sensitive] attribute well-documented. Two-mode serialization design is sound.
@@ -290,27 +290,27 @@ Correct backward iteration for property removal. Attribute check is properly nul
 
 ---
 
-## PLang/App/Engine/Providers/KeyPair.cs
+## PLang/App/Providers/KeyPair.cs
 
 ### Verdict: CLEAN
 Simple record.
 
 ---
 
-## PLang/App/Engine/Providers/IProvider.cs
+## PLang/App/Providers/IProvider.cs
 
 ### Verdict: CLEAN
 
 ---
 
-## PLang/App/Engine/Providers/ISigningProvider.cs
+## PLang/App/Providers/ISigningProvider.cs
 
 ### Verdict: CLEAN
 Returns Data from both Sign and Verify.
 
 ---
 
-## PLang/App/Engine/Providers/IIdentityProvider.cs
+## PLang/App/Providers/IIdentityProvider.cs
 
 ### Verdict: CLEAN
 All methods return Data. Consistent.

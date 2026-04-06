@@ -5,28 +5,28 @@ Implement the architect's plan for persistent key-value storage (DataSource) and
 
 ## Files to Create
 
-### 1. `PLang/App/Engine/DataSource/IDataSource.cs`
+### 1. `PLang/App/DataSource/IDataSource.cs`
 - Interface: `Get`, `GetAll`, `Set`, `Remove`, `Exists`, `Tables`
 - All return `Task<Data>`, never throw
 - Static `ResolveTableName(Type)` — last namespace segment, lowercased
 
-### 2. `PLang/App/Engine/DataSource/SqliteDataSource.cs`
+### 2. `PLang/App/DataSource/SqliteDataSource.cs`
 - SQLite implementation with WAL mode
 - Two-column schema: `key TEXT PK`, `data TEXT` (JSON-serialized Data value)
 - Auto-create tables on first write
 - Use `IPLangFileSystem` for directory creation, SQLite manages file access
 - Dispose pattern for connection cleanup
 
-### 3. `PLang/App/Engine/Errors/DataSourceError.cs`
+### 3. `PLang/App/Errors/DataSourceError.cs`
 - Extends `Error`, captures `TableName` and `KeyName`
 - `FromException` factory with SQLite-specific fix suggestions
 
-### 4. `PLang/App/Engine/Errors/AskError.cs`
+### 4. `PLang/App/Errors/AskError.cs`
 - Extends `Error`, carries `Table` and `Key`
 - Message = user-facing prompt for missing value
 - Runtime handling (prompt-store-retry) is out of scope
 
-### 5. `PLang/App/Engine/DataSource/SettingsData.cs`
+### 5. `PLang/App/DataSource/SettingsData.cs`
 - Extends `Data`, overrides `GetChild` for per-key lazy loading
 - On `%Settings.ApiKey%`: calls `DataSource.Get("settings", "ApiKey")`
 - Missing key → returns `Data.FromError(new AskError(...))`
@@ -34,10 +34,10 @@ Implement the architect's plan for persistent key-value storage (DataSource) and
 
 ## Files to Modify
 
-### 6. `PLang/App/Engine/Memory/Data.Navigation.cs`
+### 6. `PLang/App/Memory/Data.Navigation.cs`
 - Make `GetChild` virtual: `public virtual Data? GetChild(...)`
 
-### 7. `PLang/App/Engine/Context/Actor.cs`
+### 7. `PLang/App/Context/Actor.cs`
 - Add lazy `DataSource` property
 - Path: `.db/{actorname}.sqlite`
 - Register `SettingsData` on System actor's Variables

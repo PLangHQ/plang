@@ -6,19 +6,19 @@ Implements persistent key-value storage (DataSource) and a Settings variable bri
 ## What was done
 
 ### New Files Created
-- **`PLang/App/Engine/DataSource/IDataSource.cs`** — Interface for persistent key-value storage with Get, GetAll, Set, Remove, Exists, Tables operations. Static `ResolveTableName(Type)` convention.
-- **`PLang/App/Engine/DataSource/SqliteDataSource.cs`** — SQLite implementation with WAL mode, two-column schema (key TEXT PK, data TEXT as JSON), auto table creation, table name sanitization for SQL injection prevention.
-- **`PLang/App/Engine/DataSource/SettingsData.cs`** — Extends Data with virtual GetChild override. Intercepts dot-notation navigation so `%Settings.ApiKey%` calls `DataSource.Get("settings", "ApiKey")` per-key. Missing keys return AskError.
-- **`PLang/App/Engine/Errors/DataSourceError.cs`** — Error type with TableName/KeyName context. FromException factory classifies SQLite errors (locked, corrupt, permission denied).
-- **`PLang/App/Engine/Errors/AskError.cs`** — Error for missing required values, carrying Table and DataKey. Runtime handling (prompt-store-retry) deferred to separate branch.
+- **`PLang/App/DataSource/IDataSource.cs`** — Interface for persistent key-value storage with Get, GetAll, Set, Remove, Exists, Tables operations. Static `ResolveTableName(Type)` convention.
+- **`PLang/App/DataSource/SqliteDataSource.cs`** — SQLite implementation with WAL mode, two-column schema (key TEXT PK, data TEXT as JSON), auto table creation, table name sanitization for SQL injection prevention.
+- **`PLang/App/DataSource/SettingsData.cs`** — Extends Data with virtual GetChild override. Intercepts dot-notation navigation so `%Settings.ApiKey%` calls `DataSource.Get("settings", "ApiKey")` per-key. Missing keys return AskError.
+- **`PLang/App/Errors/DataSourceError.cs`** — Error type with TableName/KeyName context. FromException factory classifies SQLite errors (locked, corrupt, permission denied).
+- **`PLang/App/Errors/AskError.cs`** — Error for missing required values, carrying Table and DataKey. Runtime handling (prompt-store-retry) deferred to separate branch.
 - **`PLang/App/actions/settings/get.cs`** — Settings get handler.
 - **`PLang/App/actions/settings/set.cs`** — Settings set handler.
 - **`PLang/App/actions/settings/remove.cs`** — Settings remove handler.
 - **`PLang/App/actions/settings/types.cs`** — Settings result types.
 
 ### Files Modified
-- **`PLang/App/Engine/Memory/Data.Navigation.cs`** — Made `GetChild` virtual so SettingsData can override it.
-- **`PLang/App/Engine/Context/Actor.cs`** — Added lazy `DataSource` property, registered `SettingsData` on System actor's Variables, disposed DataSource in DisposeAsync.
+- **`PLang/App/Memory/Data.Navigation.cs`** — Made `GetChild` virtual so SettingsData can override it.
+- **`PLang/App/Context/Actor.cs`** — Added lazy `DataSource` property, registered `SettingsData` on System actor's Variables, disposed DataSource in DisposeAsync.
 - **`PLang.Generators/LazyParamsGenerator.cs`** — Added `__resolutionError` field. Modified `__Resolve<T>` to use `Variables.Get()` instead of `GetValue()` for full-match variables, checking for errors on resolved Data. Added error check before `Run()` in `CodeGeneratedExecuteAsync`.
 
 ### Tests

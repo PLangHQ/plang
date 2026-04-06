@@ -1,17 +1,17 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Variables;
+using App.Context;
+using App;
+using App.Variables;
 
 namespace PLang.Tests.App.Context;
 
 public class ContextVariableTests
 {
-    private App.Engine.@this _engine = null!;
+    private App.@this _engine = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new App.Engine.@this("/test");
+        _engine = new App.@this("/test");
     }
 
     [Test]

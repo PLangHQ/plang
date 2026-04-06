@@ -474,10 +474,10 @@ No goals, no operator — truthy check on the file.exists result. Sub-steps cont
 | File | Change |
 |------|--------|
 | `PLang/App/modules/condition/if.cs` | Replace `bool Condition` with `Left`/`Operator`/`Right`. Use IEvaluator. Two modes: goal call + sub-step. |
-| `PLang/App/Engine/Goals/Goal/Steps/this.cs` | Add sub-step skip logic to `RunAsync`. Add `HasIndentedChildren` helper. |
-| `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/this.cs` | No change needed — multi-action already works. |
+| `PLang/App/Goals/Goal/Steps/this.cs` | Add sub-step skip logic to `RunAsync`. Add `HasIndentedChildren` helper. |
+| `PLang/App/Goals/Goal/Steps/Step/Actions/this.cs` | No change needed — multi-action already works. |
 | `system/builder/llm/BuildGoal.llm` | Update condition examples to show Left/Operator/Right format. Add multi-action condition example. Add sub-step example. Add rule: never pack expressions into a single bool parameter. |
-| `PLang/App/Engine/Utility/GoalMapper.cs` | Map new condition parameters (if GoalMapper does condition-specific mapping). |
+| `PLang/App/Utility/GoalMapper.cs` | Map new condition parameters (if GoalMapper does condition-specific mapping). |
 
 ### Files That Don't Change
 

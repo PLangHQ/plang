@@ -21,15 +21,15 @@ Read all 10 changed production files, 3 test files, all 9 required architecture 
 4. **Signature/Verified not implemented (MEDIUM)** — Properties exist but no crypto verification logic. A future code path checking `Verified == true` would be a false positive.
 
 ### Files reviewed:
-- `PLang/App/Engine/Memory/Data.cs` (core + constructor)
-- `PLang/App/Engine/Memory/Data.Envelope.cs` (pipeline)
-- `PLang/App/Engine/Memory/Data.Navigation.cs` (path traversal)
-- `PLang/App/Engine/Memory/Data.Result.cs` (merge)
-- `PLang/App/Engine/Memory/Variables.cs` (variable storage)
-- `PLang/App/Engine/Types/this.cs` (type registry)
-- `PLang/App/Engine/Memory/Navigators/*.cs` (all 5 navigators)
-- `PLang/App/Engine/View.cs` (serialization views)
-- `PLang/App/Engine/Context/PLangContext.cs` (context + system vars)
+- `PLang/App/Memory/Data.cs` (core + constructor)
+- `PLang/App/Memory/Data.Envelope.cs` (pipeline)
+- `PLang/App/Memory/Data.Navigation.cs` (path traversal)
+- `PLang/App/Memory/Data.Result.cs` (merge)
+- `PLang/App/Memory/Variables.cs` (variable storage)
+- `PLang/App/Types/this.cs` (type registry)
+- `PLang/App/Memory/Navigators/*.cs` (all 5 navigators)
+- `PLang/App/View.cs` (serialization views)
+- `PLang/App/Context/PLangContext.cs` (context + system vars)
 - `PLang/App/actions/variable/set.cs` (variable set action)
 - `PLang/App/actions/convert/fromJson.cs` (JSON parsing)
 

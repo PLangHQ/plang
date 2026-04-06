@@ -1,7 +1,7 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Errors;
-using App.Engine.Variables;
+using App.Context;
+using App;
+using App.Errors;
+using App.Variables;
 using App.modules.mock;
 using App.modules.mock.types;
 
@@ -9,9 +9,9 @@ namespace PLang.Tests.App.Modules.mock;
 
 public class MockTests
 {
-    private (PLangContext context, Variables memory, App.Engine.@this engine) CreateContext()
+    private (PLangContext context, Variables memory, App.@this engine) CreateContext()
     {
-        var engine = new App.Engine.@this("/app");
+        var engine = new App.@this("/app");
         var memory = new Variables();
         var context = new PLangContext(engine, memory);
         return (context, memory, engine);

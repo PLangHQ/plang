@@ -10,18 +10,18 @@ Previously, Type's `ClrType` was derived eagerly via static `TypeMapping.GetType
 
 ### Files modified
 
-- **`PLang/App/Engine/Types/this.cs`** — Added constructor to build `_allKinds` (HashSet of all known kinds) and `_mimeToKind` (MIME → kind reverse map). Added `KindOf(string typeValue)` method that resolves PLang type values (kind names, MIME types) to their kind.
+- **`PLang/App/Types/this.cs`** — Added constructor to build `_allKinds` (HashSet of all known kinds) and `_mimeToKind` (MIME → kind reverse map). Added `KindOf(string typeValue)` method that resolves PLang type values (kind names, MIME types) to their kind.
 
-- **`PLang/App/Engine/Memory/Data.cs`** — Three changes:
+- **`PLang/App/Memory/Data.cs`** — Three changes:
   1. **Type class**: Added `Context` property (internal), `Kind` and `Compressible` navigation properties. `ClrType` now navigates through context with fallback to static TypeMapping.
   2. **Data class**: Added `Context` property (public, JsonIgnore) that propagates to Type. Constructor stores explicit type only (no eager derivation). Value setter invalidates type (`_type = null`). Type getter lazily derives through context or static TypeMapping fallback. GetChild stamps parent's context on child.
   3. **Data<T>** and **DynamicData**: Inherit context behavior from base Data unchanged.
 
-- **`PLang/App/Engine/Memory/Variables.cs`** — Added `Context` property (internal) with setter that stamps all existing Data. Put and Set stamp context on Data they add.
+- **`PLang/App/Memory/Variables.cs`** — Added `Context` property (internal) with setter that stamps all existing Data. Put and Set stamp context on Data they add.
 
-- **`PLang/App/Engine/Context/PLangContext.cs`** — Constructor sets `Variables.Context = this` before RegisterContextVariables, ensuring all Data gets context.
+- **`PLang/App/Context/PLangContext.cs`** — Constructor sets `Variables.Context = this` before RegisterContextVariables, ensuring all Data gets context.
 
-- **`PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`** — Stamps `result.Context = context` on handler result Data before return variable binding.
+- **`PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`** — Stamps `result.Context = context` on handler result Data before return variable binding.
 
 ### Files modified (tests)
 

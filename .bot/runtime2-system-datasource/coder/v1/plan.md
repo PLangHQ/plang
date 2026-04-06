@@ -5,7 +5,7 @@ Fix `Variables.Get()` line 82 — the `+1` skip assumes a dot separator after ro
 
 **Fix**: Check if the character after rootName is `.` before skipping it.
 
-**File**: `PLang/App/Engine/Memory/Variables.cs`
+**File**: `PLang/App/Memory/Variables.cs`
 
 **New C# tests**: 4 tests in `PLang.Tests/App/Memory/VariablesTests.cs`:
 - `Get_ArrayIndexWithProperty_NavigatesCorrectly` — `arr[0].id`

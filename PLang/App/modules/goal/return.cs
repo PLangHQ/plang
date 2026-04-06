@@ -1,4 +1,4 @@
-using App.Engine.Variables;
+using App.Variables;
 
 namespace App.modules.goal;
 
@@ -12,7 +12,7 @@ public partial class Return : IContext
 
     public Task<Data> Run()
     {
-        var result = Data ?? Engine.Variables.Data.Ok();
+        var result = Data ?? Variables.Data.Ok();
         // Signal RunSteps to stop iteration — even for successful returns
         result.Returned = true;
         return Task.FromResult(result);

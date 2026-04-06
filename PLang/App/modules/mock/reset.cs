@@ -1,5 +1,5 @@
-using App.Engine.Variables;
-using App.Engine.Events;
+using App.Variables;
+using App.Events;
 
 namespace App.modules.mock;
 

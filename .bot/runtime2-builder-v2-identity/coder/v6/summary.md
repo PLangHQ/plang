@@ -32,7 +32,7 @@ private IdentityVariable? ResolveDefault()
 
 - `PLang/App/modules/identity/IdentityData.cs`
 - `PLang/App/modules/identity/export.cs`
-- `PLang/App/Engine/Memory/Data.Envelope.cs`
+- `PLang/App/Memory/Data.Envelope.cs`
 - `PLang.Tests/App/Modules/identity/IdentityHandlerTests.cs`
 
 ## Verification

@@ -6,7 +6,7 @@ Data is PLang's universal type. When Data crosses the runtime boundary (io.read/
 
 ## What was done
 
-### Pipeline methods in `PLang/App/Engine/Memory/Data.Envelope.cs`
+### Pipeline methods in `PLang/App/Memory/Data.Envelope.cs`
 
 | Method | Status | What it does |
 |--------|--------|-------------|
@@ -58,5 +58,5 @@ var content = envelope.Decrypt().Decompress().Unwrap();
 
 ## Files modified
 
-- `PLang/App/Engine/Memory/Data.Envelope.cs` — 6 pipeline methods + GZip helpers + rehydration + static JSON options
+- `PLang/App/Memory/Data.Envelope.cs` — 6 pipeline methods + GZip helpers + rehydration + static JSON options
 - `PLang.Tests/App/Memory/DataTests.cs` — 17 new tests

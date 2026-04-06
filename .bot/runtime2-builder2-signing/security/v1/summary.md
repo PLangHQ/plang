@@ -17,12 +17,12 @@ Security audit of the signing, crypto, identity, and provider modules. Blue team
 ## Files reviewed
 - `PLang/App/modules/signing/SignedData.cs` — core signing/verification logic
 - `PLang/App/modules/signing/sign.cs`, `verify.cs` — action handlers
-- `PLang/App/Engine/Providers/Ed25519Provider.cs` — crypto implementation
-- `PLang/App/Engine/Providers/DefaultIdentityProvider.cs` — identity persistence
-- `PLang/App/Engine/Providers/this.cs` — provider registry
+- `PLang/App/Providers/Ed25519Provider.cs` — crypto implementation
+- `PLang/App/Providers/DefaultIdentityProvider.cs` — identity persistence
+- `PLang/App/Providers/this.cs` — provider registry
 - `PLang/App/modules/provider/load.cs` — DLL loading
-- `PLang/App/Engine/Memory/Data.Envelope.cs` — Signature property, transport
-- `PLang/App/Engine/Cache/MemoryStepCache.cs` — nonce cache
+- `PLang/App/Memory/Data.Envelope.cs` — Signature property, transport
+- `PLang/App/Cache/MemoryStepCache.cs` — nonce cache
 - `PLang/App/modules/crypto/providers/DefaultProvider.cs` — hashing
 - All identity handlers, crypto handlers, provider handlers
 

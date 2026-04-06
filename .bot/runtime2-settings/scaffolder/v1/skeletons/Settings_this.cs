@@ -1,6 +1,6 @@
-using App.Engine.Context;
+using App.Context;
 
-namespace App.Engine.Settings;
+namespace App.Settings;
 
 /// <summary>
 /// Engine-level settings registry. Owns:

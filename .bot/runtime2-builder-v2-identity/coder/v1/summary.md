@@ -6,7 +6,7 @@ Full implementation of the PLang identity module: Ed25519 key pair management wi
 ## What was done
 
 ### [Sensitive] Infrastructure (Phase 1)
-- Added `SensitiveAttribute` to `PLang/App/Engine/View.cs`
+- Added `SensitiveAttribute` to `PLang/App/View.cs`
 - Created `SensitivePropertyFilter.cs` — always-on filter that strips `[Sensitive]` properties from `JsonStreamSerializer` output
 - Wired into `JsonStreamSerializer.cs` default options and `ForView()` — both paths strip sensitive data
 

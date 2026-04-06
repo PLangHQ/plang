@@ -17,9 +17,9 @@ Cross-cutting review of the UI module (Liquid template rendering via Fluid) afte
 - `PLang/App/modules/ui/render.cs`
 - `PLang/App/modules/ui/providers/FluidProvider.cs`
 - `PLang/App/modules/ui/providers/ITemplateProvider.cs`
-- `PLang/App/Engine/Providers/this.cs`
-- `PLang/App/Engine/FileSystem/PathData.cs`
-- `PLang/App/Engine/Memory/Variables.cs`
+- `PLang/App/Providers/this.cs`
+- `PLang/App/FileSystem/PathData.cs`
+- `PLang/App/Memory/Variables.cs`
 - `PLang.Tests/App/Modules/ui/RenderTests.cs`
 
 ## Previous reviewer verdicts

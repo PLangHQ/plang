@@ -11,7 +11,7 @@ DataSource was renamed to Settings in this branch, but the error class wasn't up
 - Rename class `DataSourceError` → `SettingsError`
 - Update default key from `"DataSourceError"` to `"SettingsError"`
 - Update all references (5 files):
-  - `PLang/App/Engine/Settings/SqliteSettingsStore.cs` (8 refs)
+  - `PLang/App/Settings/SqliteSettingsStore.cs` (8 refs)
   - `PLang.Tests/App/Modules/settings/SettingsDataTests.cs` (1 ref)
   - `PLang.Tests/App/Modules/identity/IdentityErrorPathTests.cs` (6 refs)
   - `PLang.Tests/App/Modules/datasource/DataSourceTests.cs` (11 refs — also rename test methods)
@@ -47,7 +47,7 @@ Both have nearly identical name↔type dictionaries and methods. Strategy: **Typ
 
 ## Task 3: Delete App PrParser (Dead Code)
 
-`PLang/App/Engine/Utility/PrParser.cs` has zero references. The v1 PrParser at `PLang/Building/Parsers/PrParser.cs` already uses `IPLangFileSystem` correctly. The App version uses `System.IO` directly AND is unused. Delete it.
+`PLang/App/Utility/PrParser.cs` has zero references. The v1 PrParser at `PLang/Building/Parsers/PrParser.cs` already uses `IPLangFileSystem` correctly. The App version uses `System.IO` directly AND is unused. Delete it.
 
 ## Build verification
 

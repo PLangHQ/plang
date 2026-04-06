@@ -1,11 +1,11 @@
 using System.Net;
 using System.Text;
-using App.Engine.Context;
-using App.Engine.Variables;
-using App.Engine.Providers;
+using App.Context;
+using App.Variables;
+using App.Providers;
 using App.modules.http;
 using App.modules.http.providers;
-using PLangEngine = App.Engine.@this;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.http;
 

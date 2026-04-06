@@ -9,7 +9,7 @@ Security review of the action-based conditions implementation on branch `runtime
 2. `PLang/App/modules/condition/providers/DefaultEvaluator.cs` — operator handling, type normalization
 3. `PLang/App/modules/condition/if.cs` — condition handler, `__condition__` signal
 4. `PLang/App/modules/condition/compare.cs` — pure evaluation action
-5. `PLang/App/Engine/Goals/Goal/Steps/this.cs` — sub-step skip logic consuming `__condition__`
+5. `PLang/App/Goals/Goal/Steps/this.cs` — sub-step skip logic consuming `__condition__`
 
 ## Phase 1: Blue Team (Defensive Audit)
 

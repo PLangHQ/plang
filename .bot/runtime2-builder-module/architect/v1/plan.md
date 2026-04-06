@@ -297,8 +297,8 @@ PLang/App/modules/builder/
 
 | File | Change |
 |------|--------|
-| `PLang/App/Engine/Goals/Goal/this.cs` | Add `MergeFrom(Goal existing)` method |
-| `PLang/App/Engine/Goals/Goal/Steps/Step/this.cs` | Add `Merge(Step from)` method |
+| `PLang/App/Goals/Goal/this.cs` | Add `MergeFrom(Goal existing)` method |
+| `PLang/App/Goals/Goal/Steps/Step/this.cs` | Add `Merge(Step from)` method |
 | `system/builder/Build.goal` | Replace `[plang]` calls with `builder.*` |
 | `system/builder/BuildGoal.goal` | Replace `[plang]` calls with `builder.*` |
 | `system/builder/BuildStep.goal` | Replace `[plang]` calls with `builder.*` |

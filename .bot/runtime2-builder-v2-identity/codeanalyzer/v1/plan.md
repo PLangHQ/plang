@@ -18,10 +18,10 @@ All production code changed on `runtime2-builder-v2-identity` vs `runtime2`:
 - `PLang/App/modules/identity/KeyGenerator.cs`
 
 **Infrastructure changes:**
-- `PLang/App/Engine/View.cs` (SensitiveAttribute)
-- `PLang/App/Engine/Channels/Serializers/SensitivePropertyFilter.cs`
-- `PLang/App/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs`
-- `PLang/App/Engine/Context/Actor.cs`
+- `PLang/App/View.cs` (SensitiveAttribute)
+- `PLang/App/Channels/Serializers/SensitivePropertyFilter.cs`
+- `PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs`
+- `PLang/App/Context/Actor.cs`
 
 ## 5-Pass Analysis
 

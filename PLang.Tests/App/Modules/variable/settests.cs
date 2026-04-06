@@ -1,8 +1,8 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Variables;
+using App.Context;
+using App;
+using App.Variables;
 using App.modules.variable;
-using Type = App.Engine.Variables.Type;
+using Type = App.Variables.Type;
 
 namespace PLang.Tests.App.actions.variable;
 
@@ -11,7 +11,7 @@ public class SetTests
     private (PLangContext context, Variables memory) CreateContext(Variables? memoryStack = null)
     {
         var memory = memoryStack ?? new Variables();
-        var engine = new App.Engine.@this("/app");
+        var engine = new App.@this("/app");
         var context = new PLangContext(engine, memory);
         return (context, memory);
     }

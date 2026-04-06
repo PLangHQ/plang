@@ -24,10 +24,10 @@ Aligns the codebase to consistent terminology: **Module** (grouping/namespace) a
 ~140 files total. Key changes:
 - `PLang/App/modules/` — all files (namespace change)
 - `PLang/App/modules/IAction.cs` — renamed from IClass.cs
-- `PLang/App/Engine/Libraries/Library/this.cs` — internal variable cleanup
-- `PLang/App/Engine/Libraries/this.cs` — tuple + variable + error key
-- `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` — tuple destructuring
-- `PLang/App/Engine/Memory/Path.cs` — `actions.file.*` → `modules.file.*`
+- `PLang/App/Libraries/Library/this.cs` — internal variable cleanup
+- `PLang/App/Libraries/this.cs` — tuple + variable + error key
+- `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` — tuple destructuring
+- `PLang/App/Memory/Path.cs` — `actions.file.*` → `modules.file.*`
 - `PLang/Modules/PlangModule/Program.cs` — `App.actions.*` → `App.modules.*`
 - `PLang.Generators/LazyParamsGenerator.cs` — namespace strings
 - `PLang/App/GlobalUsings.cs` + `PLang.Tests/GlobalUsings.cs` — removed stale IAction alias

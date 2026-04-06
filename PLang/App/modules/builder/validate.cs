@@ -1,6 +1,6 @@
-using App.Engine.Variables;
+using App.Variables;
 using App.modules.builder.providers;
-using Actions = App.Engine.Goals.Goal.Steps.Step.Actions.@this;
+using Actions = App.Goals.Goal.Steps.Step.Actions.@this;
 
 namespace App.modules.builder;
 

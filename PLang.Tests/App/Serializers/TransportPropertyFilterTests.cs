@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using App.Engine;
-using App.Engine.Channels.Serializers;
-using App.Engine.Variables;
+using App;
+using App.Channels.Serializers;
+using App.Variables;
 using App.modules.signing;
 
 namespace PLang.Tests.App.Serializers;

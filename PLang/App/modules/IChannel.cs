@@ -1,4 +1,4 @@
-using App.Engine.Context;
+using App.Context;
 
 namespace App.modules;
 
@@ -9,5 +9,5 @@ namespace App.modules;
 /// </summary>
 public interface IChannel
 {
-    App.Engine.Channels.@this Channels { get; set; }
+    App.Channels.@this Channels { get; set; }
 }

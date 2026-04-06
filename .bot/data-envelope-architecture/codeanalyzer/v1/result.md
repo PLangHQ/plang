@@ -5,7 +5,7 @@ Three passes per file: OBP compliance, simplification, readability.
 
 ---
 
-## PLang/App/Engine/Memory/Data.cs
+## PLang/App/Memory/Data.cs
 
 ### OBP Violations
 
@@ -57,7 +57,7 @@ Core Data class is well-structured. The partial split is a good pattern. The onl
 
 ---
 
-## PLang/App/Engine/Memory/Data.Result.cs
+## PLang/App/Memory/Data.Result.cs
 
 ### OBP Violations
 None.
@@ -80,7 +80,7 @@ Small, focused file. The Merge edge case is worth noting but not blocking.
 
 ---
 
-## PLang/App/Engine/Memory/Data.Navigation.cs
+## PLang/App/Memory/Data.Navigation.cs
 
 ### OBP Violations
 None.
@@ -107,7 +107,7 @@ Solid navigation implementation. The path parsing is the most complex part but i
 
 ---
 
-## PLang/App/Engine/Memory/Data.Envelope.cs
+## PLang/App/Memory/Data.Envelope.cs
 
 ### OBP Violations
 
@@ -157,7 +157,7 @@ Well-structured envelope pipeline. The RehydrateNestedData heuristic is the only
 
 ---
 
-## PLang/App/Engine/Memory/Variables.cs
+## PLang/App/Memory/Variables.cs
 
 ### OBP Violations
 
@@ -209,7 +209,7 @@ Two issues: duplicated system variable check logic and duplicated `CleanName`. B
 
 ---
 
-## PLang/App/Engine/Types/this.cs
+## PLang/App/Types/this.cs
 
 ### OBP Violations
 None. This class owns all type knowledge — behavior is on the owner.
@@ -264,7 +264,7 @@ Two minor issues: inverse dictionary sync risk and inconsistent concurrency stra
 
 ---
 
-## PLang/App/Engine/View.cs
+## PLang/App/View.cs
 
 ### OBP Violations
 None.
@@ -279,7 +279,7 @@ Clean. Each attribute has clear purpose. `OutAttribute` has a good XML doc expla
 
 ---
 
-## PLang/App/Engine/this.cs (changes only)
+## PLang/App/this.cs (changes only)
 
 ### OBP Violations
 None in the changed portions.
@@ -296,7 +296,7 @@ The `Types` property addition follows the established Engine pattern. Good XML d
 
 ---
 
-## PLang/App/Engine/Context/PLangContext.cs (changes only)
+## PLang/App/Context/PLangContext.cs (changes only)
 
 ### OBP Violations
 None in the changed portions.
@@ -314,7 +314,7 @@ No issues in the changes.
 
 ---
 
-## PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs
+## PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs
 
 ### OBP Violations
 
@@ -369,7 +369,7 @@ None.
 ### Readability
 
 1. **Line 38: `EngineTypes` alias**
-   - `global using EngineTypes = App.Engine.Types.@this;` — follows the established pattern.
+   - `global using EngineTypes = App.Types.@this;` — follows the established pattern.
 
 ### Verdict: CLEAN
 

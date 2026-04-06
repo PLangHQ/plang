@@ -1,7 +1,7 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Errors;
-using App.Engine.Variables;
+using App.Context;
+using App;
+using App.Errors;
+using App.Variables;
 
 namespace PLang.Tests.App.Core;
 
@@ -9,7 +9,7 @@ public class EventsTests
 {
     private static PLangContext CreateContext()
     {
-        var engine = new App.Engine.@this("/app");
+        var engine = new App.@this("/app");
         return new PLangContext(engine);
     }
 

@@ -7,8 +7,8 @@
 - `PLang/App/modules/llm/ToolCall.cs` (18 lines)
 - `PLang/App/modules/llm/providers/ILlmProvider.cs` (14 lines)
 - `PLang/App/modules/llm/providers/OpenAiProvider.cs` (874 lines)
-- `PLang/App/Engine/Goals/Goal/GoalCall.cs` (28 lines, modified)
-- `PLang/App/Engine/Providers/this.cs` (2 lines added)
+- `PLang/App/Goals/Goal/GoalCall.cs` (28 lines, modified)
+- `PLang/App/Providers/this.cs` (2 lines added)
 
 ## Approach
 1. Pass 1: OBP compliance

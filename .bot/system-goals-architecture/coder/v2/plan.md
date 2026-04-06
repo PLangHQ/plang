@@ -6,7 +6,7 @@ Phase 1 only: Rename leaf types + build navigator registry. This is the lowest-r
 ## Phase 1 Tasks
 
 ### 1a. Rename PathData → Path : Data<Path>
-- `PLang/App/Engine/FileSystem/PathData.cs` → rename class to `Path`, keep in same file (or rename file)
+- `PLang/App/FileSystem/PathData.cs` → rename class to `Path`, keep in same file (or rename file)
 - Update `Data<T>` base: `PathData : Data` → `Path : Data<Path>`
 - Update all references across the codebase (GlobalUsings, imports, handlers)
 - Existing PathData properties (Exists, Size, Extension, etc.) stay as-is — they're own properties
@@ -16,11 +16,11 @@ Phase 1 only: Rename leaf types + build navigator registry. This is the lowest-r
 - Update all references
 
 ### 1c. Rename SettingsData → Settings : Data<Settings>
-- `PLang/App/Engine/Settings/SettingsData.cs` — rename class
+- `PLang/App/Settings/SettingsData.cs` — rename class
 - Update all references
 
 ### 1d. Build Navigator Registry
-- Create `PLang/App/Engine/Navigators/` directory
+- Create `PLang/App/Navigators/` directory
 - `INavigator` interface: `object? Navigate(Data data, string key)`
 - `NavigatorRegistry` on engine: `Dictionary<Type, INavigator>`, with `Get(Type)` and `Register<T>(INavigator)`
 - Built-in navigators:

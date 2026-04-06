@@ -12,7 +12,7 @@ Code analysis of the in-memory SQLite datasource feature and related bugfixes. T
 - The removal of `if (!result.Success) return result;` means AfterStep events now fire on failure, not just success
 - This was done so the test runner can track assertion failures via AfterStep
 - Correct design choice, but undocumented contract change — existing AfterStep handlers may assume success-only
-- Files: `PLang/App/Engine/Goals/Goal/Steps/Step/Methods.cs:74-75`
+- Files: `PLang/App/Goals/Goal/Steps/Step/Methods.cs:74-75`
 - Recommendation: Document in `good_to_know.md`
 
 **Finding #2 (Low): SqliteSettingsRepository.cs — TOCTOU in migration**
@@ -22,14 +22,14 @@ Code analysis of the in-memory SQLite datasource feature and related bugfixes. T
 - Recommendation: Wrap in try/catch or remove the rename since CREATE TABLE IF NOT EXISTS handles it
 
 ### Files analyzed
-- `PLang/App/Engine/DataSource/SqliteDataSource.cs` — CLEAN
-- `PLang/App/Engine/Build/this.cs` — CLEAN
-- `PLang/App/Engine/Context/Actor.cs` — CLEAN
-- `PLang/App/Engine/this.cs` — CLEAN
+- `PLang/App/DataSource/SqliteDataSource.cs` — CLEAN
+- `PLang/App/Build/this.cs` — CLEAN
+- `PLang/App/Context/Actor.cs` — CLEAN
+- `PLang/App/this.cs` — CLEAN
 - `PLang/App/GlobalUsings.cs` — CLEAN
-- `PLang/App/Engine/Memory/Variables.cs` — CLEAN
-- `PLang/App/Engine/Goals/Goal/Steps/Step/Methods.cs` — NEEDS WORK (undocumented behavior change)
-- `PLang/App/Engine/Test/this.cs` — CLEAN
+- `PLang/App/Memory/Variables.cs` — CLEAN
+- `PLang/App/Goals/Goal/Steps/Step/Methods.cs` — NEEDS WORK (undocumented behavior change)
+- `PLang/App/Test/this.cs` — CLEAN
 - `PLang/App/actions/list/unique.cs` — CLEAN
 - `PLang/Services/SettingsService/SqliteSettingsRepository.cs` — NEEDS WORK (minor TOCTOU)
 

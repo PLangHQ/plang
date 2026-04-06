@@ -1,5 +1,5 @@
-using App.Engine.Goals.Goal;
-using App.Engine.Variables;
+using App.Goals.Goal;
+using App.Variables;
 using App.modules.http.providers;
 using App.modules.signing;
 

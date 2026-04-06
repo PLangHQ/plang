@@ -1,5 +1,5 @@
-using App.Engine;
-using App.Engine.Variables;
+using App;
+using App.Variables;
 
 namespace App.modules.module;
 
@@ -17,7 +17,7 @@ public partial class Remove : IContext
         var engine = Context.Engine!;
         if (!engine.Modules.Contains(Name))
             return Task.FromResult(Data.FromError(
-                new App.Engine.Errors.ServiceError($"Module '{Name}' not found", "NotFound", 404)));
+                new App.Errors.ServiceError($"Module '{Name}' not found", "NotFound", 404)));
 
         engine.Modules.Remove(Name);
         return Task.FromResult(Data.Ok());

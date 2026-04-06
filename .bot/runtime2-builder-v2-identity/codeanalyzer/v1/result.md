@@ -167,14 +167,14 @@ Simple, focused, sealed (internal static). Correct use of NSec. Key export polic
 
 ---
 
-## PLang/App/Engine/Channels/Serializers/SensitivePropertyFilter.cs
+## PLang/App/Channels/Serializers/SensitivePropertyFilter.cs
 
 ### Verdict: CLEAN
 Static utility, single responsibility, correct reverse-iteration for removal. Well-tested (5 tests).
 
 ---
 
-## PLang/App/Engine/View.cs (SensitiveAttribute)
+## PLang/App/View.cs (SensitiveAttribute)
 
 ### Readability
 
@@ -184,7 +184,7 @@ Static utility, single responsibility, correct reverse-iteration for removal. We
 
 ---
 
-## PLang/App/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs
+## PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs
 
 ### Simplifications
 The `SensitivePropertyFilter.Filter` is wired into default options (line 30) and also explicitly in `ForView` (line 50). This is correct — view serializers inherit from base options via `new JsonSerializerOptions(_options)`, but `TypeInfoResolver` isn't inherited (it's replaced), so both places need it.
@@ -193,7 +193,7 @@ The `SensitivePropertyFilter.Filter` is wired into default options (line 30) and
 
 ---
 
-## PLang/App/Engine/Context/Actor.cs
+## PLang/App/Context/Actor.cs
 
 ### OBP Violations
 None. Identity is a lazy property on Actor. DynamicData registers `%MyIdentity%` via lambda navigating to `engine.System.Identity.Value`. Clean navigation.

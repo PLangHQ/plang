@@ -1,5 +1,5 @@
-using App.Engine;
-using App.Engine.Errors;
+using App;
+using App.Errors;
 
 namespace PLang.Tests.App.Core;
 

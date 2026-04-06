@@ -1,9 +1,9 @@
-using App.Engine;
-using App.Engine.Context;
-using App.Engine.Variables;
-using App.Engine.Settings;
+using App;
+using App.Context;
+using App.Variables;
+using App.Settings;
 using App.actions.archive;
-using EngineType = App.Engine.@this;
+using EngineType = App.@this;
 
 namespace PLang.Tests.Runtime2.Engine.Settings;
 

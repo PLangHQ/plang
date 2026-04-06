@@ -1,6 +1,6 @@
-using App.Engine;
-using App.Engine.Context;
-using App.Engine.Variables;
+using App;
+using App.Context;
+using App.Variables;
 
 namespace App.modules.goal;
 
@@ -20,7 +20,7 @@ public partial class Call : IContext
         var execContext = Actor?.Context ?? Context;
         var goal = await GoalName.GetGoalAsync(engine, execContext);
         if (goal == null)
-            return Data.FromError(new Engine.Errors.ServiceError(
+            return Data.FromError(new Errors.ServiceError(
                 $"Goal '{GoalName.Name}' not found", "NotFound", 404));
 
         return await engine.RunGoalAsync(goal, execContext);

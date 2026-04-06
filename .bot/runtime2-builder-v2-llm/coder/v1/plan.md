@@ -18,8 +18,8 @@ Implement the LLM module for App: types, provider interface, OpenAI provider, an
 
 | File | Change |
 |------|--------|
-| `PLang/App/Engine/Goals/Goal/GoalCall.cs` | Add `Description` and `Parallel` properties |
-| `PLang/App/Engine/Providers/this.cs` | Add `"llm"` to `ResolveType()`, register `OpenAiProvider` in `RegisterDefaults()` |
+| `PLang/App/Goals/Goal/GoalCall.cs` | Add `Description` and `Parallel` properties |
+| `PLang/App/Providers/this.cs` | Add `"llm"` to `ResolveType()`, register `OpenAiProvider` in `RegisterDefaults()` |
 
 ## Implementation Approach
 

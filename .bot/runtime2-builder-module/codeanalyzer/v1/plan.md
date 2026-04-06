@@ -11,13 +11,13 @@ Analyze all code changes on `runtime2-builder-module` vs `origin/runtime2-builde
 - `PLang/App/modules/builder/BuilderTypeInfo.cs` (3 lines)
 
 **Modified engine files:**
-- `PLang/App/Engine/Goals/Goal/this.cs` — `Parse()`, `MergeFrom()`, `ToText()` added
-- `PLang/App/Engine/Goals/Goal/Methods.cs` — `FormatForLlm()` added
-- `PLang/App/Engine/Goals/Goal/Steps/Step/this.cs` — `Merge()`, `Clone()` added
-- `PLang/App/Engine/Modules/this.cs` — `Describe()`, `GetDefaults()` added
-- `PLang/App/Engine/Utility/Json.cs` — new centralized JSON options
-- `PLang/App/Engine/Utility/TypeMapping.cs` — `ConvertTo<T>`, `GetBuilderTypeNames()`, `GetComplexTypeSchemas()` added
-- `PLang/App/Engine/Providers/this.cs` — builder provider registered
+- `PLang/App/Goals/Goal/this.cs` — `Parse()`, `MergeFrom()`, `ToText()` added
+- `PLang/App/Goals/Goal/Methods.cs` — `FormatForLlm()` added
+- `PLang/App/Goals/Goal/Steps/Step/this.cs` — `Merge()`, `Clone()` added
+- `PLang/App/Modules/this.cs` — `Describe()`, `GetDefaults()` added
+- `PLang/App/Utility/Json.cs` — new centralized JSON options
+- `PLang/App/Utility/TypeMapping.cs` — `ConvertTo<T>`, `GetBuilderTypeNames()`, `GetComplexTypeSchemas()` added
+- `PLang/App/Providers/this.cs` — builder provider registered
 
 **Test files:** 10 test classes, all read.
 

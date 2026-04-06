@@ -20,7 +20,7 @@ PLang App UI module that renders Liquid templates via the Fluid library. One `re
 - HTML encoding via `HtmlEncoder.Default` for XSS prevention
 - Error handling: TemplateError (400), NotFound (404), IOError (500), RenderError (500)
 
-**`PLang/App/Engine/Providers/this.cs`** — Registered `ITemplateProvider`/`FluidProvider` + `"template"` type mapping.
+**`PLang/App/Providers/this.cs`** — Registered `ITemplateProvider`/`FluidProvider` + `"template"` type mapping.
 
 **`PLang/PLang.csproj`** — Added `Fluid.Core` 2.31.0 (upgraded from initial 2.11.1 due to .NET 10 incompatibility with `include` tag parsing).
 

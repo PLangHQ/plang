@@ -11,11 +11,11 @@ Code quality analysis of 6 C# files changed on the runtime2-plang-test-gaps bran
 | File | Change | Verdict |
 |------|--------|---------|
 | `PLang/Executor.cs` | Removed explicit DiscoverAsync call | CLEAN |
-| `PLang/App/Engine/Goals/Goal/Methods.cs` | Return stepsResult instead of Data.Ok() | CLEAN |
-| `PLang/App/Engine/Goals/Goal/Steps/this.cs` | Track and return last step's result | CLEAN |
-| `PLang/App/Engine/Goals/Setup/this.cs` | Convention-based discovery, private, integrated into RunAsync | CLEAN |
-| `PLang/App/Engine/Goals/this.cs` | Key goals by PrPath, add name-based search fallback | CLEAN |
-| `PLang/App/Engine/Test/this.cs` | Per-test engine root, Data-based results, setup before tests | CLEAN |
+| `PLang/App/Goals/Goal/Methods.cs` | Return stepsResult instead of Data.Ok() | CLEAN |
+| `PLang/App/Goals/Goal/Steps/this.cs` | Track and return last step's result | CLEAN |
+| `PLang/App/Goals/Setup/this.cs` | Convention-based discovery, private, integrated into RunAsync | CLEAN |
+| `PLang/App/Goals/this.cs` | Key goals by PrPath, add name-based search fallback | CLEAN |
+| `PLang/App/Test/this.cs` | Per-test engine root, Data-based results, setup before tests | CLEAN |
 
 **Key findings:**
 - Return value bug fix (Methods.cs:72 + Steps/this.cs:69) is essential — without it, goal return values are silently discarded

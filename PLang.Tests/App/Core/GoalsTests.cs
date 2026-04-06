@@ -1,5 +1,5 @@
-using App.Engine;
-using App.Engine.Goals.Goal;
+using App;
+using App.Goals.Goal;
 using PLang.SafeFileSystem;
 
 namespace PLang.Tests.App.Core;
@@ -321,7 +321,7 @@ public class GoalsTests
         try
         {
             var fs = new PLangFileSystem(tempDir, "");
-            await using var engine = new App.Engine.@this(fs);
+            await using var engine = new App.@this(fs);
 
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
@@ -348,7 +348,7 @@ public class GoalsTests
         try
         {
             var fs = new PLangFileSystem(tempDir, "");
-            await using var engine = new App.Engine.@this(fs);
+            await using var engine = new App.@this(fs);
 
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
@@ -376,7 +376,7 @@ public class GoalsTests
         try
         {
             var fs = new PLangFileSystem(tempDir, "");
-            await using var engine = new App.Engine.@this(fs);
+            await using var engine = new App.@this(fs);
 
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);

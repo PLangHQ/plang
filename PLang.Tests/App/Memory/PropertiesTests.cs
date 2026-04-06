@@ -1,5 +1,5 @@
-using App.Engine.Variables;
-using Type = App.Engine.Variables.Type;
+using App.Variables;
+using Type = App.Variables.Type;
 
 namespace PLang.Tests.App.Memory;
 

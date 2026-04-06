@@ -15,17 +15,17 @@ Designed the in-memory datasource architecture through iterative discussion. Thr
 ## Key decisions
 
 - `SqliteDataSource.InMemory(name)` — static factory, sentinel connection opens at construction, closes at Dispose
-- `App.Engine.Build.@this` — new file, follows Debug/Test pattern, global alias `Building`
+- `App.Build.@this` — new file, follows Debug/Test pattern, global alias `Building`
 - `Actor.CreateDataSource()` checks `Engine.Testing.IsEnabled || Engine.Building.IsEnabled`
 - C# unit tests handle it themselves — either set `Testing.IsEnabled` or use `SqliteDataSource.InMemory()` directly
 
 ## Files to modify
 
-- `PLang/App/Engine/DataSource/SqliteDataSource.cs` — add InMemory factory + sentinel
-- `PLang/App/Engine/Build/this.cs` — new file
-- `PLang/App/Engine/this.cs` — add Building property
+- `PLang/App/DataSource/SqliteDataSource.cs` — add InMemory factory + sentinel
+- `PLang/App/Build/this.cs` — new file
+- `PLang/App/this.cs` — add Building property
 - `PLang/App/GlobalUsings.cs` — add Building alias
-- `PLang/App/Engine/Context/Actor.cs` — update CreateDataSource()
+- `PLang/App/Context/Actor.cs` — update CreateDataSource()
 - `PLang.Tests/App/Modules/datasource/DataSourceTests.cs` — add in-memory tests
 
 ## Code example

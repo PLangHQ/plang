@@ -117,8 +117,8 @@ run.pr → RunGoal (reads .pr file if %goal% not set) → foreach steps → RunS
 
 - **CLI parsing**: `PLang/Utils/CommandLineParser.cs`
 - **Executor (CLI → Engine)**: `PLang/Executor.cs`
-- **Engine root**: `PLang/App/Engine/this.cs`
-- **Build mode**: `PLang/App/Engine/Build/this.cs`
+- **Engine root**: `PLang/App/this.cs`
+- **Build mode**: `PLang/App/Build/this.cs`
 - **Runtime module**: `PLang/App/modules/runtime/run.cs`
 - **System run.pr**: `system/.build/run.pr` — bootstrap, routes to build/test/run
 - **System test.pr**: `system/.build/test.pr` — test discovery and execution

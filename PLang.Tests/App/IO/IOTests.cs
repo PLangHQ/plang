@@ -1,4 +1,4 @@
-using App.Engine;
+using App;
 
 namespace PLang.Tests.App.IO;
 
@@ -6,7 +6,7 @@ public class IOTests
 {
     private static EngineChannels CreateIO()
     {
-        var engine = new App.Engine.@this("/app");
+        var engine = new App.@this("/app");
         return new EngineChannels(engine);
     }
 

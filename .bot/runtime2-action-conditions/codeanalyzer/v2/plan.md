@@ -4,7 +4,7 @@ Re-verify all 5 v1 findings are fixed. Run abbreviated 5-pass analysis on change
 
 ## Files to review
 - `PLang/App/modules/condition/providers/DefaultEvaluator.cs` — fixes 1, 3, 5
-- `PLang/App/Engine/Goals/Goal/Steps/this.cs` — fixes 2, 4
+- `PLang/App/Goals/Goal/Steps/this.cs` — fixes 2, 4
 
 ## Verification checklist
 1. DefaultEvaluator is sealed

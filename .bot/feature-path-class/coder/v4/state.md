@@ -16,7 +16,7 @@
 - Tests: 1221/1221 passing (was 1219, +2 new tests)
 
 ## Files modified
-- `PLang/App/Engine/Memory/Path.cs`
+- `PLang/App/Memory/Path.cs`
 - `PLang/App/actions/file/save.cs`
 - `PLang/App/actions/file/delete.cs`
 - `PLang/App/actions/file/exists.cs`

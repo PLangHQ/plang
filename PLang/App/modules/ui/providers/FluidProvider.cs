@@ -5,11 +5,11 @@ using Fluid.Values;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
 using PLang.Interfaces;
-using App.Engine.Errors;
-using PLangContext = App.Engine.Context.PLangContext;
-using App.Engine.FileSystem;
-using App.Engine.Goals.Goal;
-using App.Engine.Variables;
+using App.Errors;
+using PLangContext = App.Context.PLangContext;
+using App.FileSystem;
+using App.Goals.Goal;
+using App.Variables;
 
 namespace App.modules.ui.providers;
 
@@ -153,7 +153,7 @@ public class FluidProvider : ITemplateProvider
         Fluid.Ast.Expression expression, TextWriter writer, System.Text.Encodings.Web.TextEncoder encoder,
         TemplateContext context)
     {
-        var engine = (Engine.@this)context.AmbientValues["engine"];
+        var engine = (App.@this)context.AmbientValues["engine"];
         var plangContext = (PLangContext)context.AmbientValues["context"];
 
         try

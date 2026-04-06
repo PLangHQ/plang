@@ -1,4 +1,4 @@
-using App.Engine.Variables;
+using App.Variables;
 
 namespace App.modules.list;
 
@@ -15,13 +15,13 @@ public partial class Join : IContext
         var existing = Context.Variables.Get(ListName)?.Value;
         if (existing is not System.Collections.IList list)
             return Task.FromResult(Data.FromError(
-                new App.Engine.Errors.ValidationError($"Variable '{ListName}' is not a list")));
+                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
         var strings = new List<string>();
         foreach (var item in list)
             strings.Add(item?.ToString() ?? "");
 
         var result = string.Join(Separator, strings);
-        return Task.FromResult(Data.Ok(result, App.Engine.Variables.Type.String));
+        return Task.FromResult(Data.Ok(result, App.Variables.Type.String));
     }
 }

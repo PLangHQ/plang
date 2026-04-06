@@ -4,15 +4,15 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using App.Engine.Channels.Serializers;
-using App.Engine.Context;
-using App.Engine.Errors;
-using App.Engine.Goals.Goal;
-using App.Engine.Variables;
-using PlangType = App.Engine.Variables.Type;
-using App.Engine.Config;
+using App.Channels.Serializers;
+using App.Context;
+using App.Errors;
+using App.Goals.Goal;
+using App.Variables;
+using PlangType = App.Variables.Type;
+using App.Config;
 using App.modules.signing;
-using EngineType = App.Engine.@this;
+using EngineType = App.@this;
 using SysHttpMethod = System.Net.Http.HttpMethod;
 
 namespace App.modules.http.providers;
@@ -41,7 +41,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// Transport JSON options: overrides [JsonIgnore] for [In] properties (e.g., Signature).
     /// Used when deserializing application/plang responses — Data arrives with Signature on the wire.
     /// </summary>
-    private static readonly JsonSerializerOptions _jsonOptions = App.Engine.Utility.Json.CaseInsensitiveRead;
+    private static readonly JsonSerializerOptions _jsonOptions = App.Utility.Json.CaseInsensitiveRead;
 
     private static readonly JsonSerializerOptions _transportInOptions = new()
     {
@@ -522,7 +522,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         if (contentType.Contains("xml", StringComparison.OrdinalIgnoreCase))
         {
             var xml = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            var result = Data.Ok(xml, Engine.Variables.Type.FromMime("application/xml"));
+            var result = Data.Ok(xml, Variables.Type.FromMime("application/xml"));
             BuildProperties(result, request, response);
             return result;
         }
@@ -626,7 +626,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             return;
 
         var signedData = JsonSerializer.Deserialize<SignedData>(sigElement.GetRawText(),
-            App.Engine.Utility.Json.CaseInsensitiveRead);
+            App.Utility.Json.CaseInsensitiveRead);
         if (signedData == null) return;
 
         var legacyData = new Data("");

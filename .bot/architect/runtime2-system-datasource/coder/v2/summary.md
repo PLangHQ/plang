@@ -7,14 +7,14 @@ Addresses all findings from the code analyzer's v1 review of the DataSource + Se
 
 ### Code Fixes (3 files)
 
-**`PLang/App/Engine/DataSource/SqliteDataSource.cs`**
+**`PLang/App/DataSource/SqliteDataSource.cs`**
 - `DeserializeValue`: bare `catch` → `catch (JsonException)` — no longer masks non-JSON errors
 - `EnableWalMode`: bare `catch` → `catch (SqliteException)` — consistency
 
-**`PLang/App/Engine/Memory/Variables.cs`**
+**`PLang/App/Memory/Variables.cs`**
 - `Clone()` now preserves specialized `Data` subclasses (SettingsData, DynamicData) by reference instead of creating plain `Data` objects. This fixes the type-loss bug where cloning the System actor's Variables would silently break Settings lazy-loading.
 
-**`PLang/App/Engine/Context/Actor.cs`**
+**`PLang/App/Context/Actor.cs`**
 - `DataSource` property now uses `Lazy<IDataSource>` instead of `??=` for thread-safe lazy initialization. `DisposeAsync` checks `IsValueCreated` to avoid triggering creation during cleanup.
 
 ### Tests Added (14 new tests)

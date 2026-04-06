@@ -14,16 +14,16 @@ Review the complete data-envelope-architecture branch (Phases 1-4) as the coder'
 ## Files to Review
 
 ### Production code
-- `PLang/App/Engine/Types/this.cs` — new Engine.Types class
-- `PLang/App/Engine/Memory/Data.cs` — core Data with context, lazy Type
-- `PLang/App/Engine/Memory/Data.Result.cs` — result/error concern
-- `PLang/App/Engine/Memory/Data.Navigation.cs` — navigation concern
-- `PLang/App/Engine/Memory/Data.Envelope.cs` — envelope pipeline
-- `PLang/App/Engine/Memory/Variables.cs` — context propagation
-- `PLang/App/Engine/Context/PLangContext.cs` — context stamp
-- `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` — result context stamp
-- `PLang/App/Engine/View.cs` — Out view enum
-- `PLang/App/Engine/this.cs` — Engine.Types property
+- `PLang/App/Types/this.cs` — new Engine.Types class
+- `PLang/App/Memory/Data.cs` — core Data with context, lazy Type
+- `PLang/App/Memory/Data.Result.cs` — result/error concern
+- `PLang/App/Memory/Data.Navigation.cs` — navigation concern
+- `PLang/App/Memory/Data.Envelope.cs` — envelope pipeline
+- `PLang/App/Memory/Variables.cs` — context propagation
+- `PLang/App/Context/PLangContext.cs` — context stamp
+- `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` — result context stamp
+- `PLang/App/View.cs` — Out view enum
+- `PLang/App/this.cs` — Engine.Types property
 
 ### Test code
 - `PLang.Tests/App/Types/EngineTypesTests.cs` — 62+ tests

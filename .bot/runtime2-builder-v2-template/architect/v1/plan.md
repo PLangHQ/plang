@@ -167,7 +167,7 @@ In `ResolveProviderType()`:
 
 | File | Change |
 |------|--------|
-| `PLang/App/Engine/Providers/this.cs` | Register `ITemplateProvider` + type mapping |
+| `PLang/App/Providers/this.cs` | Register `ITemplateProvider` + type mapping |
 | `PLang/App/GlobalUsings.cs` | Add UI module alias if needed |
 
 ## Definition of Done

@@ -17,8 +17,8 @@ HTTP client module for PLang App. 4 actions (request, download, upload, configur
 - `PLang/App/modules/http/configure.cs` — Settings management via scope chain
 
 ### Engine modifications (2 files)
-- `PLang/App/Engine/this.cs` — Register DefaultHttpProvider, add non-generic `RunAction<TAction>()` overload
-- `PLang/App/Engine/Providers/this.cs` — Add "http" to ResolveType()
+- `PLang/App/this.cs` — Register DefaultHttpProvider, add non-generic `RunAction<TAction>()` overload
+- `PLang/App/Providers/this.cs` — Add "http" to ResolveType()
 
 ### Source generator fix (1 file)
 - `PLang.Generators/LazyParamsGenerator.cs` — Fix enum default values: emit `(EnumType)intValue` cast instead of raw int

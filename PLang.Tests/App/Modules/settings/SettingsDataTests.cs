@@ -1,8 +1,8 @@
-using App.Engine.Context;
-using App.Engine.Settings;
-using App.Engine.Errors;
-using App.Engine.Variables;
-using PLangEngine = App.Engine.@this;
+using App.Context;
+using App.Settings;
+using App.Errors;
+using App.Variables;
+using PLangEngine = App.@this;
 
 namespace PLang.Tests.App.Modules.settings;
 

@@ -40,7 +40,7 @@ No new failures. No regressions.
 
 ### Finding 9 (Major): `Names` property includes Setup goals — inconsistent with Get()/All/Count
 
-**Location:** `PLang/App/Engine/Goals/this.cs:197`
+**Location:** `PLang/App/Goals/this.cs:197`
 
 ```csharp
 public IEnumerable<string> Names => _goals.Values.Select(g => g.Name);
@@ -60,7 +60,7 @@ But `Names` returns ALL names including setup goals. This is an inconsistency in
 
 ### Finding 10 (Medium): Empty Path bypasses enforcement
 
-**Location:** `PLang/App/Engine/Goals/this.cs:36` and `Goal/this.cs:45`
+**Location:** `PLang/App/Goals/this.cs:36` and `Goal/this.cs:45`
 
 When `Path = ""`, `PrPath` computes to `".build\\.pr"` (not null, not empty). The enforcement check `string.IsNullOrEmpty(goal.PrPath)` passes, silently adding a garbage key.
 

@@ -379,7 +379,7 @@ On signed error responses (same as runtime1):
 
 Follows the existing provider pattern (`IProvider` → `engine.Providers`). The HTTP module resolves its provider via `engine.Providers.Get<IHttpProvider>()`. Tests and developers can swap implementations.
 
-**`IHttpProvider`** (in `PLang/App/Engine/Providers/`):
+**`IHttpProvider`** (in `PLang/App/Providers/`):
 ```csharp
 public interface IHttpProvider : IProvider, IDisposable
 {
@@ -388,7 +388,7 @@ public interface IHttpProvider : IProvider, IDisposable
 }
 ```
 
-**`DefaultHttpProvider`** (in `PLang/App/Engine/Providers/`):
+**`DefaultHttpProvider`** (in `PLang/App/Providers/`):
 ```csharp
 public sealed class DefaultHttpProvider : IHttpProvider
 {

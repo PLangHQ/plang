@@ -10,22 +10,22 @@ Restructure PLang App so folder structure, namespaces, and class names align wit
 **Approach**: Longest-match-first sed replacement across all 668 .cs files, followed by `git mv` for folder moves.
 
 **Namespace replacements** (10 total, in order):
-1. `App.Memory.Navigators` -> `App.Engine.Variables.Navigators`
-2. `App.Serialization` -> `App.Engine.Serializers`
-3. `App.Context` -> `App.Engine.Context`
-4. `App.Memory` -> `App.Engine.Variables`
+1. `App.Memory.Navigators` -> `App.Variables.Navigators`
+2. `App.Serialization` -> `App.Serializers`
+3. `App.Context` -> `App.Context`
+4. `App.Memory` -> `App.Variables`
 5. `App.Core` -> `App.Engine`
-6. `App.IO` -> `App.Engine.Channels`
-7. `App.Errors` -> `App.Engine.Errors`
-8. `App.Utility` -> `App.Engine.Utility`
-9. `App.Parsing` -> `App.Engine.Parsing`
-10. `App.Mapping` -> `App.Engine.Mapping`
+6. `App.IO` -> `App.Channels`
+7. `App.Errors` -> `App.Errors`
+8. `App.Utility` -> `App.Utility`
+9. `App.Parsing` -> `App.Parsing`
+10. `App.Mapping` -> `App.Mapping`
 
 **Issues resolved**:
 - **Relative namespace references** in modules (`Core.Action` -> `Engine.Action`, etc.)
-- **Namespace-type conflict**: `Engine` is both a namespace and a class. Fixed with `using EngineType = App.Engine.Engine;` alias in `IClass.cs` and `ICodeGenerated.cs`
+- **Namespace-type conflict**: `Engine` is both a namespace and a class. Fixed with `using EngineType = App.Engine;` alias in `IClass.cs` and `ICodeGenerated.cs`
 - **`Memory.Type` conflict**: `Memory.Type.FromName()` confused with `System.Memory<T>`. Fixed with fully-qualified paths
-- **Double replacement**: Second sed pass created `App.Engine.App.Engine.Variables.Type`. Fixed by replacing the double pattern
+- **Double replacement**: Second sed pass created `App.App.Variables.Type`. Fixed by replacing the double pattern
 - **v1 relative references**: `Executor.cs` and `PlangModule/Program.cs` used `App.Core.X` (without `PLang.` prefix)
 - **Source generator**: Hardcoded namespace strings in `LazyParamsGenerator.cs` updated
 

@@ -10,8 +10,8 @@ Fixes a bug where `%Settings.ApiKey%` silently returned null in PLang code. Sett
 - **Added 2 new tests** — `SettingsData_SameObjectAcrossAllActors` (reference equality) and `SettingsData_SetViaSystem_ReadableFromUserContext`.
 
 ## Files modified
-- `PLang/App/Engine/this.cs` — added `SettingsVariable` property and constructor init
-- `PLang/App/Engine/Context/Actor.cs` — removed System-only check, always registers shared SettingsData
+- `PLang/App/this.cs` — added `SettingsVariable` property and constructor init
+- `PLang/App/Context/Actor.cs` — removed System-only check, always registers shared SettingsData
 - `PLang.Tests/App/Modules/settings/SettingsDataTests.cs` — all tests use User context, 2 new tests
 
 ## Code example

@@ -1,6 +1,6 @@
-using App.Engine.Context;
-using App.Engine;
-using App.Engine.Variables;
+using App.Context;
+using App;
+using App.Variables;
 using App.modules.list;
 using ListResult = App.modules.list.types.list;
 
@@ -10,7 +10,7 @@ public class ListTests
 {
     private (PLangContext context, Variables memory) CreateContext()
     {
-        var engine = new App.Engine.@this("/app");
+        var engine = new App.@this("/app");
         var memory = new Variables();
         var context = new PLangContext(engine, memory);
         return (context, memory);

@@ -13,7 +13,7 @@ The in-memory DB must stay alive across operations (so CREATE TABLE in step 1 is
 
 ### 1. `SqliteDataSource` — add in-memory construction path
 
-**File:** `PLang/App/Engine/DataSource/SqliteDataSource.cs`
+**File:** `PLang/App/DataSource/SqliteDataSource.cs`
 
 Add a static factory method and private constructor for in-memory mode:
 
@@ -39,12 +39,12 @@ Lifecycle: sentinel lives as long as DataSource → DataSource lives as long as 
 
 ### 2. `Engine.Building` — new object on Engine
 
-**New file:** `PLang/App/Engine/Build/this.cs`
+**New file:** `PLang/App/Build/this.cs`
 
-Follow the exact pattern of `PLang/App/Engine/Test/this.cs` and `PLang/App/Engine/Debug/this.cs`:
+Follow the exact pattern of `PLang/App/Test/this.cs` and `PLang/App/Debug/this.cs`:
 
 ```csharp
-namespace App.Engine.Build;
+namespace App.Build;
 
 public sealed class @this
 {
@@ -61,18 +61,18 @@ public sealed class @this
 
 Minimal for now — just `IsEnabled`. The runtime2 builder will add more properties later. The `_engine` back-reference follows the same pattern as Debug and Test.
 
-**Wire into Engine (`PLang/App/Engine/this.cs`):**
+**Wire into Engine (`PLang/App/this.cs`):**
 - Add property: `public Building Building { get; }`
 - In constructor: `Building = new Building(this);`
 
 **Add global alias (`PLang/App/GlobalUsings.cs`):**
 ```csharp
-global using Building = App.Engine.Build.@this;
+global using Building = App.Build.@this;
 ```
 
 ### 3. `Actor.CreateDataSource()` — navigate and decide
 
-**File:** `PLang/App/Engine/Context/Actor.cs`
+**File:** `PLang/App/Context/Actor.cs`
 
 Change `CreateDataSource()` to check Engine context:
 
@@ -121,11 +121,11 @@ Add test cases that verify:
 
 | File | Change |
 |---|---|
-| `PLang/App/Engine/DataSource/SqliteDataSource.cs` | Add `InMemory()` factory, sentinel field, in-memory constructor, update `Dispose()` |
-| `PLang/App/Engine/Build/this.cs` | **New file** — Building object with `IsEnabled` |
-| `PLang/App/Engine/this.cs` | Add `Building` property and constructor wiring |
+| `PLang/App/DataSource/SqliteDataSource.cs` | Add `InMemory()` factory, sentinel field, in-memory constructor, update `Dispose()` |
+| `PLang/App/Build/this.cs` | **New file** — Building object with `IsEnabled` |
+| `PLang/App/this.cs` | Add `Building` property and constructor wiring |
 | `PLang/App/GlobalUsings.cs` | Add `Building` global alias |
-| `PLang/App/Engine/Context/Actor.cs` | Update `CreateDataSource()` to check Testing/Building |
+| `PLang/App/Context/Actor.cs` | Update `CreateDataSource()` to check Testing/Building |
 | `PLang.Tests/App/Modules/datasource/DataSourceTests.cs` | Add in-memory tests, update existing if appropriate |
 
 ## OBP compliance

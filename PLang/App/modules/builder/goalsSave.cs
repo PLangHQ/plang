@@ -1,6 +1,6 @@
-using App.Engine.Variables;
+using App.Variables;
 using App.modules.builder.providers;
-using Goal = App.Engine.Goals.Goal.@this;
+using Goal = App.Goals.Goal.@this;
 
 namespace App.modules.builder;
 

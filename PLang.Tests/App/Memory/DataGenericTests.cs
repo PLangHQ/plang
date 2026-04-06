@@ -1,6 +1,6 @@
-using App.Engine.Errors;
-using App.Engine.Variables;
-using Type = App.Engine.Variables.Type;
+using App.Errors;
+using App.Variables;
+using Type = App.Variables.Type;
 
 namespace PLang.Tests.App.Memory;
 

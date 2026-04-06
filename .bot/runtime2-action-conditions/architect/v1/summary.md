@@ -29,7 +29,7 @@ Architectural design covering four interconnected concerns:
 - `PLang/App/modules/condition/compare.cs` — new
 - `PLang/App/modules/condition/providers/IEvaluator.cs` — new
 - `PLang/App/modules/condition/providers/DefaultEvaluator.cs` — new
-- `PLang/App/Engine/Goals/Goal/Steps/this.cs` — modify (sub-step skip logic)
+- `PLang/App/Goals/Goal/Steps/this.cs` — modify (sub-step skip logic)
 - `system/builder/llm/BuildGoal.llm` — modify (condition examples + rules)
 
 ## Next step

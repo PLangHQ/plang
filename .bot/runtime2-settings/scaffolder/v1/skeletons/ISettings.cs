@@ -1,4 +1,4 @@
-namespace App.Engine.Settings;
+namespace App.Settings;
 
 /// <summary>
 /// Marker interface for strongly typed module settings.

@@ -35,7 +35,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Core/GoalMethods.cs` → `Goal` partial | `Engine/Goals/Goal.Methods.cs` | `[E]` RunAsync, Load, FormatForLlm |
 | `Core/GoalCall.cs` → `GoalCall` | `Engine/Goals/GoalCall.cs` | Invocation descriptor. |
 
-**Namespace**: `App.Engine.Goals`
+**Namespace**: `App.Goals`
 
 ---
 
@@ -48,7 +48,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Core/StepMethods.cs` → `Step` partial | `Engine/Goals/Steps/Step.Methods.cs` | `[E]` RunAsync, Load, HandleError, Retry |
 | `Core/ErrorHandler.cs` → `ErrorHandler`, `ErrorOrder` | `Engine/Goals/Steps/ErrorHandler.cs` | Step's error config. Lives with Step. |
 
-**Namespace**: `App.Engine.Goals.Steps`
+**Namespace**: `App.Goals.Steps`
 
 ---
 
@@ -61,7 +61,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Core/ActionMethods.cs` → `Action` partial | `Engine/Goals/Steps/Actions/Action.Methods.cs` | `[E]` RunAsync |
 | `Core/IAction.cs` → `IAction` | `Engine/Goals/Steps/Actions/IAction.cs` | Interface. |
 
-**Namespace**: `App.Engine.Goals.Steps.Actions`
+**Namespace**: `App.Goals.Steps.Actions`
 
 ---
 
@@ -73,7 +73,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `IO/Channel.cs` → `Channel` | `Engine/Channels/Channel.cs` | `[E]` Single channel entity. |
 | `IO/ChannelData.cs` → `ChannelData` | `Engine/Channels/ChannelData.cs` | Channel metadata. |
 
-**Namespace**: `App.Engine.Channels`
+**Namespace**: `App.Channels`
 
 ---
 
@@ -83,7 +83,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 |---------|----------|-------|
 | `Core/Property.cs` → `Property` | `Engine/Property/this.cs` → **`EngineProperty`** | `[CW]` Key-value store + GoalCall resolution. Layer 2 dispatch fallback. |
 
-**Namespace**: `App.Engine.Property`
+**Namespace**: `App.Property`
 
 ---
 
@@ -97,7 +97,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Core/Lifecycle.cs` → `Lifecycle`, `Bindings` | `Engine/Events/Lifecycle.cs` | Before/After bindings container. |
 | `Context/EventScope.cs` → `EventScope` | `Engine/Events/EventScope.cs` | **Moves from Context → Events.** Semantically it's events. |
 
-**Namespace**: `App.Engine.Events`
+**Namespace**: `App.Events`
 
 ---
 
@@ -113,7 +113,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Serialization/ViewPropertyFilter.cs` | `Engine/Serializers/ViewPropertyFilter.cs` | |
 | `Serialization/SerializerRegistry.cs` → `SerializeOptions`, `DeserializeOptions` | Same file or separate | Options DTOs. |
 
-**Namespace**: `App.Engine.Serializers`
+**Namespace**: `App.Serializers`
 
 ---
 
@@ -128,7 +128,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Core/StepCache.cs` → `StepCache` | `Engine/Cache/StepCache.cs` | Behavioral wrapper per-step. |
 | `Core/StepCacheEntry.cs` → `StepCacheEntry`, `CachedVariable` | `Engine/Cache/StepCacheEntry.cs` | Cache data. |
 
-**Namespace**: `App.Engine.Cache`
+**Namespace**: `App.Cache`
 
 **Resolved**: Convention-wired as `EngineCache` (option A). Wraps `ICache`, delegates to pluggable implementation. Default is `MemoryStepCache`.
 
@@ -140,7 +140,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 |---------|----------|-------|
 | `Core/DebugMode.cs` → `DebugMode` (static) | `Engine/Debug/this.cs` → **`EngineDebug`** | `[CW]` Becomes instance class, convention-wired. |
 
-**Namespace**: `App.Engine.Debug`
+**Namespace**: `App.Debug`
 
 Currently static. To be convention-wired, needs to become an instance owned by Engine. The `Apply` method becomes `Enable(object debugValue)` or similar.
 
@@ -152,7 +152,7 @@ Currently static. To be convention-wired, needs to become an instance owned by E
 |---------|----------|-------|
 | `Core/TestMode.cs` → `TestMode` (static) | `Engine/Testing/this.cs` → **`EngineTesting`** | `[CW]` Test runner, convention-wired. |
 
-**Namespace**: `App.Engine.Testing`
+**Namespace**: `App.Testing`
 
 Same static → instance conversion as Debug.
 
@@ -170,7 +170,7 @@ Per-request state. Not convention-wired because Context is a parameter, not an e
 | `Core/CallStack.cs` → `CallStack` + serializable types | `Engine/Context/CallStack.cs` | Per-context tracking. |
 | `Core/CallFrame.cs` → `CallFrame`, `ExecutedStep`, `ExecutionPhase` | `Engine/Context/CallFrame.cs` | Call frame data. |
 
-**Namespace**: `App.Engine.Context`
+**Namespace**: `App.Context`
 
 ---
 
@@ -186,7 +186,7 @@ Per-request state. Not convention-wired because Context is a parameter, not an e
 | `Memory/TypeJsonConverter.cs` | `Engine/Memory/TypeJsonConverter.cs` | |
 | `Memory/Navigators/*.cs` | `Engine/Memory/Navigators/*.cs` | Same structure. |
 
-**Namespace**: `App.Engine.Variables`
+**Namespace**: `App.Variables`
 
 **Note**: `Data` and `Type` move OUT of Memory → Engine root. Everything else stays.
 
@@ -205,7 +205,7 @@ Per-request state. Not convention-wired because Context is a parameter, not an e
 | `modules/DefaultAttribute.cs` | `Engine/Libraries/DefaultAttribute.cs` | |
 | `modules/VariableNameAttribute.cs` | `Engine/Libraries/VariableNameAttribute.cs` | |
 
-**Namespace**: `App.Engine.Libraries`
+**Namespace**: `App.Libraries`
 
 ---
 
@@ -222,7 +222,7 @@ These are the action handlers — `variable/set.cs`, `file/read.cs`, etc. They'r
 | `modules/output/*.cs` | `Engine/modules/output/*.cs` | |
 | ... (all handler subfolders) | `Engine/modules/{module}/*.cs` | |
 
-**Namespace**: `App.Engine.modules.{module}`
+**Namespace**: `App.modules.{module}`
 
 ---
 
@@ -232,7 +232,7 @@ These are the action handlers — `variable/set.cs`, `file/read.cs`, etc. They'r
 |---------|----------|-------|
 | `Errors/*.cs` (all 10 files) | `Engine/Errors/*.cs` | Same structure. |
 
-**Namespace**: `App.Engine.Errors`
+**Namespace**: `App.Errors`
 
 ---
 
@@ -243,7 +243,7 @@ These are the action handlers — `variable/set.cs`, `file/read.cs`, etc. They'r
 | `Utility/TypeMapping.cs` | `Engine/Utility/TypeMapping.cs` | |
 | `Utility/AppData.cs` | `Engine/Utility/AppData.cs` | |
 
-**Namespace**: `App.Engine.Utility`
+**Namespace**: `App.Utility`
 
 ---
 
@@ -254,7 +254,7 @@ These are the action handlers — `variable/set.cs`, `file/read.cs`, etc. They'r
 | `Parsing/PrParser.cs` | `Engine/Parsing/PrParser.cs` | |
 | `Mapping/GoalMapper.cs` | `Engine/Mapping/GoalMapper.cs` | |
 
-**Namespaces**: `App.Engine.Parsing`, `App.Engine.Mapping`
+**Namespaces**: `App.Parsing`, `App.Mapping`
 
 ---
 
