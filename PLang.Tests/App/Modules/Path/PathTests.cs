@@ -36,13 +36,19 @@ public class PathTests : IDisposable
         return path;
     }
 
+    /// <summary>Creates a Path with Context set so FileSystem resolves.</summary>
+    private PLangPath MakePath(string path) => new PLangPath(path) { Context = _engine.Context };
+
+    /// <summary>Resolves a relative path through the engine context.</summary>
+    private PLangPath ResolvePath(string rawPath) => PLangPath.Resolve(rawPath, _engine.Context);
+
     // --- ToBoolean ---
 
     [Test]
     public async Task ToBoolean_FileExists_ReturnsTrue()
     {
         var path = TempFile("exists.txt");
-        var pd = new PLangPath(path, _fs);
+        var pd = MakePath(path);
 
         await Assert.That(pd.ToBoolean()).IsTrue();
     }
@@ -50,7 +56,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task ToBoolean_FileDoesNotExist_ReturnsFalse()
     {
-        var pd = new PLangPath(_fs.Path.Combine(_tempDir, "nope.txt"), _fs);
+        var pd = MakePath(_fs.Path.Combine(_tempDir,"nope.txt"));
 
         await Assert.That(pd.ToBoolean()).IsFalse();
     }
@@ -59,7 +65,7 @@ public class PathTests : IDisposable
     public async Task IsTruthy_PathDataExists_ReturnsTrue()
     {
         var path = TempFile("truthy.txt");
-        var pd = new PLangPath(path, _fs);
+        var pd = MakePath(path);
 
         await Assert.That(global::App.modules.condition.Operator.IsTruthy(pd)).IsTrue();
     }
@@ -67,7 +73,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task IsTruthy_PathDataNotExists_ReturnsFalse()
     {
-        var pd = new PLangPath(_fs.Path.Combine(_tempDir, "missing.txt"), _fs);
+        var pd = MakePath(_fs.Path.Combine(_tempDir,"missing.txt"));
 
         await Assert.That(global::App.modules.condition.Operator.IsTruthy(pd)).IsFalse();
     }
@@ -77,7 +83,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task Absolute_ResolvesRelativePath()
     {
-        var p = new PLangPath("config.json", _engine.Context);
+        var p = ResolvePath("config.json");
         var expected = _fs.Path.Combine(_tempDir, "config.json");
         await Assert.That(p.Absolute).IsEqualTo(expected);
     }
@@ -86,7 +92,7 @@ public class PathTests : IDisposable
     public async Task Absolute_PreservesAbsolutePath()
     {
         var abs = _fs.Path.Combine(_tempDir, "test.txt");
-        var p = new PLangPath(abs, _engine.Context);
+        var p = MakePath(abs);
         await Assert.That(p.Absolute).IsEqualTo(abs);
     }
 
@@ -95,7 +101,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task Raw_PreservesOriginalInput()
     {
-        var p = new PLangPath("relative/file.txt", _engine.Context);
+        var p = ResolvePath("relative/file.txt");
         await Assert.That(p.Raw).IsEqualTo("relative/file.txt");
     }
 
@@ -105,7 +111,7 @@ public class PathTests : IDisposable
     public async Task Relative_StripsRootDirectory()
     {
         var abs = _fs.Path.Combine(_tempDir, "sub", "file.txt");
-        var p = new PLangPath(abs, _engine.Context);
+        var p = MakePath(abs);
         var expected = "sub" + _fs.Path.DirectorySeparatorChar + "file.txt";
         await Assert.That(p.Relative).IsEqualTo(expected);
     }
@@ -115,14 +121,14 @@ public class PathTests : IDisposable
     [Test]
     public async Task Extension_ReturnsWithDot()
     {
-        var p = new PLangPath("config.json", _engine.Context);
+        var p = ResolvePath("config.json");
         await Assert.That(p.Extension).IsEqualTo(".json");
     }
 
     [Test]
     public async Task Extension_NoExtension_ReturnsEmpty()
     {
-        var p = new PLangPath("Makefile", _engine.Context);
+        var p = ResolvePath("Makefile");
         await Assert.That(p.Extension).IsEqualTo("");
     }
 
@@ -131,7 +137,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task FileName_ReturnsFileNameWithExtension()
     {
-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "sub", "config.json"), _engine.Context);
+        var p = MakePath(_fs.Path.Combine(_tempDir,"sub", "config.json"));
         await Assert.That(p.FileName).IsEqualTo("config.json");
     }
 
@@ -140,7 +146,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task FileNameWithoutExtension_ReturnsNameOnly()
     {
-        var p = new PLangPath("archive.tar.gz", _engine.Context);
+        var p = ResolvePath("archive.tar.gz");
         await Assert.That(p.FileNameWithoutExtension).IsEqualTo("archive.tar");
     }
 
@@ -149,7 +155,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task Directory_ReturnsParentPath()
     {
-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "sub", "file.txt"), _engine.Context);
+        var p = MakePath(_fs.Path.Combine(_tempDir,"sub", "file.txt"));
         var expected = _fs.Path.Combine(_tempDir, "sub");
         await Assert.That(p.Directory).IsEqualTo(expected);
     }
@@ -159,21 +165,21 @@ public class PathTests : IDisposable
     [Test]
     public async Task MimeType_Json()
     {
-        var p = new PLangPath("data.json", _engine.Context);
+        var p = ResolvePath("data.json");
         await Assert.That(p.MimeType).IsEqualTo("application/json");
     }
 
     [Test]
     public async Task MimeType_Markdown()
     {
-        var p = new PLangPath("README.md", _engine.Context);
+        var p = ResolvePath("README.md");
         await Assert.That(p.MimeType).IsEqualTo("text/markdown");
     }
 
     [Test]
     public async Task MimeType_Unknown_ReturnsOctetStream()
     {
-        var p = new PLangPath("data.xyz", _engine.Context);
+        var p = ResolvePath("data.xyz");
         await Assert.That(p.MimeType).IsEqualTo("application/octet-stream");
     }
 
@@ -182,14 +188,14 @@ public class PathTests : IDisposable
     [Test]
     public async Task IsFile_WithExtension_ReturnsTrue()
     {
-        var p = new PLangPath("config.json", _engine.Context);
+        var p = ResolvePath("config.json");
         await Assert.That(p.IsFile).IsTrue();
     }
 
     [Test]
     public async Task IsFile_NoExtension_ReturnsFalse()
     {
-        var p = new PLangPath("Makefile", _engine.Context);
+        var p = ResolvePath("Makefile");
         await Assert.That(p.IsFile).IsFalse();
     }
 
@@ -198,14 +204,14 @@ public class PathTests : IDisposable
     [Test]
     public async Task IsDirectory_NoExtension_ReturnsTrue()
     {
-        var p = new PLangPath("mydir", _engine.Context);
+        var p = ResolvePath("mydir");
         await Assert.That(p.IsDirectory).IsTrue();
     }
 
     [Test]
     public async Task IsDirectory_WithExtension_ReturnsFalse()
     {
-        var p = new PLangPath("file.txt", _engine.Context);
+        var p = ResolvePath("file.txt");
         await Assert.That(p.IsDirectory).IsFalse();
     }
 
@@ -215,21 +221,21 @@ public class PathTests : IDisposable
     public async Task Exists_ExistingFile_ReturnsTrue()
     {
         var filePath = TempFile("there.txt");
-        var p = new PLangPath(filePath, _engine.Context);
+        var p = MakePath(filePath);
         await Assert.That(p.Exists).IsTrue();
     }
 
     [Test]
     public async Task Exists_ExistingDir_ReturnsTrue()
     {
-        var p = new PLangPath(_tempDir, _engine.Context);
+        var p = MakePath(_tempDir);
         await Assert.That(p.Exists).IsTrue();
     }
 
     [Test]
     public async Task Exists_Nothing_ReturnsFalse()
     {
-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "phantom"), _engine.Context);
+        var p = MakePath(_fs.Path.Combine(_tempDir,"phantom"));
         await Assert.That(p.Exists).IsFalse();
     }
 
@@ -240,14 +246,14 @@ public class PathTests : IDisposable
     {
         var filePath = _fs.Path.Combine(_tempDir, "sized.txt");
         _fs.File.WriteAllText(filePath, "12345");
-        var p = new PLangPath(filePath, _engine.Context);
+        var p = MakePath(filePath);
         await Assert.That(p.Size).IsEqualTo(5);
     }
 
     [Test]
     public async Task Size_NonexistentFile_ReturnsZero()
     {
-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "nosize.txt"), _engine.Context);
+        var p = MakePath(_fs.Path.Combine(_tempDir,"nosize.txt"));
         await Assert.That(p.Size).IsEqualTo(0);
     }
 
@@ -257,7 +263,7 @@ public class PathTests : IDisposable
     public async Task ToString_ReturnsRelativePath()
     {
         var abs = _fs.Path.Combine(_tempDir, "test.txt");
-        var p = new PLangPath(abs, _engine.Context);
+        var p = MakePath(abs);
         await Assert.That(p.ToString()).IsEqualTo("test.txt");
     }
 
@@ -267,8 +273,8 @@ public class PathTests : IDisposable
     public async Task Equals_SamePath_ReturnsTrue()
     {
         var abs = _fs.Path.Combine(_tempDir, "same.txt");
-        var p1 = new PLangPath(abs, _engine.Context);
-        var p2 = new PLangPath(abs, _engine.Context);
+        var p1 = MakePath(abs);
+        var p2 = MakePath(abs);
         await Assert.That(p1.Equals(p2)).IsTrue();
     }
 
@@ -276,15 +282,15 @@ public class PathTests : IDisposable
     public async Task Equals_String_ReturnsTrue()
     {
         var abs = _fs.Path.Combine(_tempDir, "str.txt");
-        var p = new PLangPath(abs, _engine.Context);
+        var p = MakePath(abs);
         await Assert.That(p.Equals(abs)).IsTrue();
     }
 
     [Test]
     public async Task Equals_DifferentPath_ReturnsFalse()
     {
-        var p1 = new PLangPath(_fs.Path.Combine(_tempDir, "a.txt"), _engine.Context);
-        var p2 = new PLangPath(_fs.Path.Combine(_tempDir, "b.txt"), _engine.Context);
+        var p1 = MakePath(_fs.Path.Combine(_tempDir,"a.txt"));
+        var p2 = MakePath(_fs.Path.Combine(_tempDir,"b.txt"));
         await Assert.That(p1.Equals(p2)).IsFalse();
     }
 
@@ -304,7 +310,7 @@ public class PathTests : IDisposable
     public async Task Exists_BecomesTrue_AfterFileCreated()
     {
         var filePath = _fs.Path.Combine(_tempDir, "later.txt");
-        var p = new PLangPath(filePath, _engine.Context);
+        var p = MakePath(filePath);
 
         await Assert.That(p.Exists).IsFalse();
 
@@ -317,7 +323,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task CachedProperties_SameOnMultipleAccess()
     {
-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "stable.json"), _engine.Context);
+        var p = MakePath(_fs.Path.Combine(_tempDir,"stable.json"));
         var ext1 = p.Extension;
         var ext2 = p.Extension;
         var name1 = p.FileName;
@@ -333,7 +339,7 @@ public class PathTests : IDisposable
     public async Task Read_ExistingFile_ReturnsFileObject()
     {
         var filePath = TempFile("read_me.txt");
-        var p = new PLangPath(filePath, _engine.Context);
+        var p = MakePath(filePath);
         var result = _provider.Read(new Read { Context = _engine.Context, Path = p });
 
         await Assert.That(result.Success).IsTrue();
@@ -345,7 +351,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task Read_NonexistentFile_ReturnsError()
     {
-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "no_such.txt"), _engine.Context);
+        var p = MakePath(_fs.Path.Combine(_tempDir,"no_such.txt"));
         var result = _provider.Read(new Read { Context = _engine.Context, Path = p });
 
         await Assert.That(result.Success).IsFalse();
@@ -362,7 +368,7 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(dir, "a.txt"), "a");
         _fs.File.WriteAllText(_fs.Path.Combine(dir, "b.txt"), "b");
 
-        var p = new PLangPath(dir, _engine.Context);
+        var p = MakePath(dir);
         var result = _provider.List(new List { Context = _engine.Context, Path = p, Pattern = "*" });
 
         await Assert.That(result.Success).IsTrue();
@@ -381,7 +387,7 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(dir, "a.txt"), "a");
         _fs.File.WriteAllText(_fs.Path.Combine(dir, "b.md"), "b");
 
-        var p = new PLangPath(dir, _engine.Context);
+        var p = MakePath(dir);
         var result = _provider.List(new List { Context = _engine.Context, Path = p, Pattern = "*.txt" });
 
         await Assert.That(result.Success).IsTrue();
@@ -398,7 +404,7 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(dir, "top.txt"), "top");
         _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
 
-        var p = new PLangPath(dir, _engine.Context);
+        var p = MakePath(dir);
         var result = _provider.List(new List { Context = _engine.Context, Path = p, Pattern = "*", Recursive = true });
 
         await Assert.That(result.Success).IsTrue();
@@ -409,7 +415,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task List_NonexistentDirectory_ReturnsError()
     {
-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "no_dir"), _engine.Context);
+        var p = MakePath(_fs.Path.Combine(_tempDir,"no_dir"));
         var result = _provider.List(new List { Context = _engine.Context, Path = p, Pattern = "*" });
 
         await Assert.That(result.Success).IsFalse();
@@ -423,7 +429,7 @@ public class PathTests : IDisposable
     public async Task Save_String_WritesFile()
     {
         var filePath = _fs.Path.Combine(_tempDir, "saved.txt");
-        var p = new PLangPath(filePath, _engine.Context);
+        var p = MakePath(filePath);
 
         var result = await _provider.Save(new Save { Context = _engine.Context, Path = p, Value = Data.Ok("hello world") });
 
@@ -436,7 +442,7 @@ public class PathTests : IDisposable
     public async Task Save_Bytes_WritesFile()
     {
         var filePath = _fs.Path.Combine(_tempDir, "saved.bin");
-        var p = new PLangPath(filePath, _engine.Context);
+        var p = MakePath(filePath);
 
         var bytes = new byte[] { 1, 2, 3 };
         var result = await _provider.Save(new Save { Context = _engine.Context, Path = p, Value = Data.Ok(bytes) });
@@ -451,7 +457,7 @@ public class PathTests : IDisposable
     public async Task Save_CreatesDirectory_IfNotExists()
     {
         var filePath = _fs.Path.Combine(_tempDir, "newdir", "saved.txt");
-        var p = new PLangPath(filePath, _engine.Context);
+        var p = MakePath(filePath);
 
         var result = await _provider.Save(new Save { Context = _engine.Context, Path = p, Value = Data.Ok("nested") });
 
@@ -465,7 +471,7 @@ public class PathTests : IDisposable
     public async Task AsFile_ReturnsFileObject()
     {
         var filePath = TempFile("asfile.txt");
-        var p = new PLangPath(filePath, _engine.Context);
+        var p = MakePath(filePath);
         var result = _provider.Exists(new Exists { Context = _engine.Context, Path = p });
 
         await Assert.That(result.Success).IsTrue();
@@ -491,8 +497,8 @@ public class PathTests : IDisposable
         var srcPath = TempFile("copy_src.txt");
         var destPath = _fs.Path.Combine(_tempDir, "copy_dst.txt");
 
-        var src = new PLangPath(srcPath, _engine.Context);
-        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = new PLangPath(destPath, _engine.Context) });
+        var src = MakePath(srcPath);
+        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = MakePath(destPath) });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(destPath)).IsTrue();
@@ -508,8 +514,8 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "b.txt"), "bbb");
 
         var destDir = _fs.Path.Combine(_tempDir, "copy_dir_dst");
-        var src = new PLangPath(srcDir, _engine.Context);
-        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = new PLangPath(destDir, _engine.Context) });
+        var src = MakePath(srcDir);
+        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = MakePath(destDir) });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "a.txt"))).IsTrue();
@@ -526,8 +532,8 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
 
         var destDir = _fs.Path.Combine(_tempDir, "copy_sub_dst");
-        var src = new PLangPath(srcDir, _engine.Context);
-        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = new PLangPath(destDir, _engine.Context), IncludeSubfolders = true });
+        var src = MakePath(srcDir);
+        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = MakePath(destDir), IncludeSubfolders = true });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "top.txt"))).IsTrue();
@@ -544,8 +550,8 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
 
         var destDir = _fs.Path.Combine(_tempDir, "copy_nosub_dst");
-        var src = new PLangPath(srcDir, _engine.Context);
-        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = new PLangPath(destDir, _engine.Context), IncludeSubfolders = false });
+        var src = MakePath(srcDir);
+        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = MakePath(destDir), IncludeSubfolders = false });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "top.txt"))).IsTrue();
@@ -555,8 +561,8 @@ public class PathTests : IDisposable
     [Test]
     public async Task Copy_NotFound_ReturnsError()
     {
-        var src = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine.Context);
-        var dest = new PLangPath(_fs.Path.Combine(_tempDir, "dst.txt"), _engine.Context);
+        var src = MakePath(_fs.Path.Combine(_tempDir,"ghost.txt"));
+        var dest = MakePath(_fs.Path.Combine(_tempDir,"dst.txt"));
         var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = dest });
 
         await Assert.That(result.Success).IsFalse();
@@ -572,8 +578,8 @@ public class PathTests : IDisposable
         var srcPath = TempFile("move_src.txt");
         var destPath = _fs.Path.Combine(_tempDir, "move_dst.txt");
 
-        var src = new PLangPath(srcPath, _engine.Context);
-        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = new PLangPath(destPath, _engine.Context) });
+        var src = MakePath(srcPath);
+        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = MakePath(destPath) });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(destPath)).IsTrue();
@@ -587,8 +593,8 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "aaa");
 
         var destDir = _fs.Path.Combine(_tempDir, "move_dir_dst");
-        var src = new PLangPath(srcDir, _engine.Context);
-        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = new PLangPath(destDir, _engine.Context) });
+        var src = MakePath(srcDir);
+        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = MakePath(destDir) });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.Directory.Exists(destDir)).IsTrue();
@@ -599,8 +605,8 @@ public class PathTests : IDisposable
     [Test]
     public async Task Move_NotFound_ReturnsError()
     {
-        var src = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine.Context);
-        var dest = new PLangPath(_fs.Path.Combine(_tempDir, "dst.txt"), _engine.Context);
+        var src = MakePath(_fs.Path.Combine(_tempDir,"ghost.txt"));
+        var dest = MakePath(_fs.Path.Combine(_tempDir,"dst.txt"));
         var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = dest });
 
         await Assert.That(result.Success).IsFalse();
@@ -614,7 +620,7 @@ public class PathTests : IDisposable
     public async Task Delete_File_RemovesFile()
     {
         var filePath = TempFile("del_file.txt");
-        var p = new PLangPath(filePath, _engine.Context);
+        var p = MakePath(filePath);
         var result = _provider.Delete(new Delete { Context = _engine.Context, Path = p });
 
         await Assert.That(result.Success).IsTrue();
@@ -625,7 +631,7 @@ public class PathTests : IDisposable
     public async Task Delete_EmptyDirectory_RemovesIt()
     {
         var dirPath = TempDir("del_empty_dir");
-        var p = new PLangPath(dirPath, _engine.Context);
+        var p = MakePath(dirPath);
         var result = _provider.Delete(new Delete { Context = _engine.Context, Path = p });
 
         await Assert.That(result.Success).IsTrue();
@@ -638,7 +644,7 @@ public class PathTests : IDisposable
         var dirPath = TempDir("del_recursive_dir");
         _fs.File.WriteAllText(_fs.Path.Combine(dirPath, "child.txt"), "data");
 
-        var p = new PLangPath(dirPath, _engine.Context);
+        var p = MakePath(dirPath);
         var result = _provider.Delete(new Delete { Context = _engine.Context, Path = p, Recursive = true });
 
         await Assert.That(result.Success).IsTrue();
@@ -648,7 +654,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task Delete_NotFound_ReturnsError()
     {
-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine.Context);
+        var p = MakePath(_fs.Path.Combine(_tempDir,"ghost.txt"));
         var result = _provider.Delete(new Delete { Context = _engine.Context, Path = p });
 
         await Assert.That(result.Success).IsFalse();
@@ -659,7 +665,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task Delete_NotFound_IgnoreIfNotFound_ReturnsSuccess()
     {
-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine.Context);
+        var p = MakePath(_fs.Path.Combine(_tempDir,"ghost.txt"));
         var result = _provider.Delete(new Delete { Context = _engine.Context, Path = p, IgnoreIfNotFound = true });
 
         await Assert.That(result.Success).IsTrue();
@@ -673,7 +679,7 @@ public class PathTests : IDisposable
         // Root is _tempDir (e.g., /tmp/plang_path_test_abc).
         // A sibling path like _tempDir + "ation" should NOT be treated as relative.
         var siblingPath = _tempDir + "ation" + _fs.Path.DirectorySeparatorChar + "file.txt";
-        var p = new PLangPath(siblingPath, _engine.Context);
+        var p = MakePath(siblingPath);
 
         // Should return absolute path, not "ation/file.txt"
         await Assert.That(p.Relative).IsEqualTo(p.Absolute);
@@ -690,8 +696,8 @@ public class PathTests : IDisposable
         var destDir = TempDir("move_over_dst");
         _fs.File.WriteAllText(_fs.Path.Combine(destDir, "old.txt"), "old");
 
-        var src = new PLangPath(srcDir, _engine.Context);
-        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = new PLangPath(destDir, _engine.Context), Overwrite = true });
+        var src = MakePath(srcDir);
+        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = MakePath(destDir), Overwrite = true });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "new.txt"))).IsTrue();
@@ -704,13 +710,13 @@ public class PathTests : IDisposable
     [Test]
     public async Task Constructor_NullPath_ThrowsArgumentNull()
     {
-        await Assert.That(() => new PLangPath(null!, _engine.Context)).Throws<ArgumentNullException>();
+        await Assert.That(() => PLangPath.Resolve(null!, _engine.Context)).Throws<ArgumentNullException>();
     }
 
     [Test]
     public async Task Constructor_NullEngine_ThrowsArgumentNull()
     {
-        await Assert.That(() => new PLangPath("test.txt", null!)).Throws<ArgumentNullException>();
+        await Assert.That(() => PLangPath.Resolve("test.txt", null!)).Throws<ArgumentNullException>();
     }
 
     // --- #8: Copy file to existing directory ---
@@ -721,8 +727,8 @@ public class PathTests : IDisposable
         var srcPath = TempFile("copy_to_dir.txt");
         var destDir = TempDir("copy_target_dir");
 
-        var src = new PLangPath(srcPath, _engine.Context);
-        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = new PLangPath(destDir, _engine.Context) });
+        var src = MakePath(srcPath);
+        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = MakePath(destDir) });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "copy_to_dir.txt"))).IsTrue();
@@ -736,8 +742,8 @@ public class PathTests : IDisposable
         var srcPath = TempFile("move_to_dir.txt");
         var destDir = TempDir("move_target_dir");
 
-        var src = new PLangPath(srcPath, _engine.Context);
-        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = new PLangPath(destDir, _engine.Context) });
+        var src = MakePath(srcPath);
+        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = MakePath(destDir) });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "move_to_dir.txt"))).IsTrue();
@@ -749,7 +755,7 @@ public class PathTests : IDisposable
     [Test]
     public async Task Relative_RootPath_ReturnsDot()
     {
-        var p = new PLangPath(_tempDir, _engine.Context);
+        var p = MakePath(_tempDir);
         await Assert.That(p.Relative).IsEqualTo(".");
     }
 
@@ -761,8 +767,8 @@ public class PathTests : IDisposable
         var srcPath = TempFile("copy_ow_src.txt");
         var destPath = TempFile("copy_ow_dst.txt"); // dest already exists
 
-        var src = new PLangPath(srcPath, _engine.Context);
-        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = new PLangPath(destPath, _engine.Context), Overwrite = false });
+        var src = MakePath(srcPath);
+        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = MakePath(destPath), Overwrite = false });
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
@@ -776,8 +782,8 @@ public class PathTests : IDisposable
         var destPath = _fs.Path.Combine(_tempDir, "copy_owt_dst.txt");
         _fs.File.WriteAllText(destPath, "old content");
 
-        var src = new PLangPath(srcPath, _engine.Context);
-        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = new PLangPath(destPath, _engine.Context), Overwrite = true });
+        var src = MakePath(srcPath);
+        var result = _provider.Copy(new Copy { Context = _engine.Context, Source = src, Destination = MakePath(destPath), Overwrite = true });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.ReadAllText(destPath)).IsEqualTo("test content");
@@ -789,8 +795,8 @@ public class PathTests : IDisposable
         var srcPath = TempFile("move_ow_src.txt");
         var destPath = TempFile("move_ow_dst.txt"); // dest already exists
 
-        var src = new PLangPath(srcPath, _engine.Context);
-        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = new PLangPath(destPath, _engine.Context), Overwrite = false });
+        var src = MakePath(srcPath);
+        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = MakePath(destPath), Overwrite = false });
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
@@ -804,8 +810,8 @@ public class PathTests : IDisposable
         var destPath = _fs.Path.Combine(_tempDir, "move_owt_dst.txt");
         _fs.File.WriteAllText(destPath, "old content");
 
-        var src = new PLangPath(srcPath, _engine.Context);
-        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = new PLangPath(destPath, _engine.Context), Overwrite = true });
+        var src = MakePath(srcPath);
+        var result = _provider.Move(new Move { Context = _engine.Context, Source = src, Destination = MakePath(destPath), Overwrite = true });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.ReadAllText(destPath)).IsEqualTo("test content");
@@ -825,7 +831,7 @@ public class PathTests : IDisposable
 
         try
         {
-            var p = new PLangPath(filePath, _engine.Context);
+            var p = MakePath(filePath);
             var result = _provider.Delete(new Delete { Context = _engine.Context, Path = p });
 
             await Assert.That(result.Success).IsFalse();
@@ -848,7 +854,7 @@ public class PathTests : IDisposable
 
         try
         {
-            var p = new PLangPath(_fs.Path.Combine(dir, "blocked.txt"), _engine.Context);
+            var p = MakePath(_fs.Path.Combine(dir, "blocked.txt"));
             var result = await _provider.Save(new Save { Context = _engine.Context, Path = p, Value = Data.Ok("data") });
 
             await Assert.That(result.Success).IsFalse();
@@ -869,7 +875,7 @@ public class PathTests : IDisposable
 
         try
         {
-            var p = new PLangPath(filePath, _engine.Context);
+            var p = MakePath(filePath);
             var result = _provider.Read(new Read { Context = _engine.Context, Path = p });
 
             await Assert.That(result.Success).IsFalse();
@@ -891,7 +897,7 @@ public class PathTests : IDisposable
 
         try
         {
-            var p = new PLangPath(dir, _engine.Context);
+            var p = MakePath(dir);
             var result = _provider.List(new List { Context = _engine.Context, Path = p, Pattern = "*" });
 
             await Assert.That(result.Success).IsFalse();
@@ -910,7 +916,7 @@ public class PathTests : IDisposable
     public async Task Save_Object_SerializesToJson()
     {
         var filePath = _fs.Path.Combine(_tempDir, "saved_obj.json");
-        var p = new PLangPath(filePath, _engine.Context);
+        var p = MakePath(filePath);
         var data = new Dictionary<string, object> { ["name"] = "test", ["count"] = 42 };
 
         var result = await _provider.Save(new Save { Context = _engine.Context, Path = p, Value = Data.Ok(data) });
@@ -928,7 +934,7 @@ public class PathTests : IDisposable
     public async Task Save_NonSerializableObject_ReturnsSerializationError()
     {
         var filePath = _fs.Path.Combine(_tempDir, "bad_obj.json");
-        var p = new PLangPath(filePath, _engine.Context);
+        var p = MakePath(filePath);
 
         // Create a circular reference — JsonSerializer will throw JsonException
         var dict = new Dictionary<string, object>();
@@ -949,7 +955,7 @@ public class PathTests : IDisposable
         var dirPath = TempDir("del_nonempty_code");
         _fs.File.WriteAllText(_fs.Path.Combine(dirPath, "child.txt"), "data");
 
-        var p = new PLangPath(dirPath, _engine.Context);
+        var p = MakePath(dirPath);
         var result = _provider.Delete(new Delete { Context = _engine.Context, Path = p, Recursive = false });
 
         await Assert.That(result.Success).IsFalse();
