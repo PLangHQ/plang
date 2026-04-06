@@ -14,7 +14,7 @@
 | [1.4](1.4-list-dictionary-module.md) | List/Dictionary Module (`list/*`) | NOT STARTED |
 | [1.5](1.5-math-module.md) | Math Module (`math/*`) | NOT STARTED |
 | [1.6](1.6-convert-module-REMOVED.md) | ~~Convert Module~~ | REMOVED |
-| [1.7](1.7-testing-engine-COMPLETED.md) | Testing Engine | COMPLETED |
+| [1.7](1.7-testing-app-COMPLETED.md) | Testing App | COMPLETED |
 | [1.8](1.8-mock-module-COMPLETED.md) | Mock Module | COMPLETED |
 | [1.9](1.9-variable-resolution-v1.md) | Variable Resolution | NOT STARTED |
 

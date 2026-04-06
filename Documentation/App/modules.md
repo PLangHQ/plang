@@ -9,7 +9,7 @@ Action handlers provide the executable functionality for PLang steps. Each handl
 ```csharp
 public interface IClass
 {
-    Engine Engine { get; set; }
+    App App { get; set; }
     PLangContext Context { get; set; }
     System.Type ParameterType { get; }
 
@@ -20,12 +20,12 @@ public interface IClass
 
 ## ICodeGenerated Interface
 
-`App.actions.ICodeGenerated` — source-generated dispatch interface. Handlers don't implement this directly — the source generator adds it automatically. Engine requires it at runtime (no fallback path).
+`App.actions.ICodeGenerated` — source-generated dispatch interface. Handlers don't implement this directly — the source generator adds it automatically. App requires it at runtime (no fallback path).
 
 ```csharp
 public interface ICodeGenerated
 {
-    Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context);
+    Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, App app, PLangContext context);
 }
 ```
 
@@ -42,7 +42,7 @@ The PLang source generator (`PLang.Generators/LazyParamsGenerator.cs`) scans han
 public abstract class BaseClass : IClass
 {
     // From IClass
-    public Engine Engine { get; set; }
+    public App App { get; set; }
     public PLangContext Context { get; set; }
     public abstract System.Type ParameterType { get; }
 
@@ -260,17 +260,17 @@ public static class TypeMapping
 
 The builder module provides the PLang build pipeline's core operations — parsing `.goal` files, validating LLM-returned actions, merging build data, and saving `.pr` files. All actions delegate to `IBuilderProvider` (default: `DefaultBuilderProvider`). This is an internal module used by `system/builder/*.goal` — not for direct use in application `.goal` files.
 
-**BuildingGuard**: Every provider method checks `engine.Building.IsEnabled` first. If building is not enabled, the action returns `ActionError("BuildingDisabled", 400)`. This prevents accidental use of builder actions at runtime.
+**BuildingGuard**: Every provider method checks `app.Building.IsEnabled` first. If building is not enabled, the action returns `ActionError("BuildingDisabled", 400)`. This prevents accidental use of builder actions at runtime.
 
-**Provider pattern**: `IBuilderProvider : IProvider` — swappable via `engine.Providers`. The default implementation owns all logic; action records are thin one-line delegates.
+**Provider pattern**: `IBuilderProvider : IProvider` — swappable via `app.Providers`. The default implementation owns all logic; action records are thin one-line delegates.
 
-**File I/O**: All file operations go through `engine.RunAction` with file module actions (`file.Read`, `file.Save`, `file.List`, `file.Exists`). No direct `System.IO` usage.
+**File I/O**: All file operations go through `app.RunAction` with file module actions (`file.Read`, `file.Save`, `file.List`, `file.Exists`). No direct `System.IO` usage.
 
 **Actions:**
 
 | Action | Parameters | Behavior |
 |--------|-----------|----------|
-| `actions` | — | Returns `engine.Modules.Describe()` — all registered actions with parameter metadata for LLM prompt generation. |
+| `actions` | — | Returns `app.Modules.Describe()` — all registered actions with parameter metadata for LLM prompt generation. |
 | `types` | — | Returns `BuilderTypeInfo` with PLang type names (from `TypeMapping.GetBuilderTypeNames()`) and complex type JSON schemas. |
 | `goals` | `Path` (default ".") | Recursively finds `*.goal` files, parses each via `Goal.Parse()`, merges existing `.pr` data via `Goal.MergeFrom()`. File errors collected as warnings. |
 | `goals.save` | `Goals` (required) | Serializes `List<Goal>` to PrPath (derived from first goal's Path). CamelCase indented JSON. |
@@ -307,7 +307,7 @@ The identity module manages Ed25519 key pairs stored in the System actor's DataS
 
 **`IdentityData`** is stored directly in `Actor.Identity` as a pure data record — no lazy resolution wrapper. Handlers set it directly. Auto-creates a "default" identity if none exist.
 
-**`%MyIdentity%`**: Registered on every actor's Variables as `DynamicData` pointing to `engine.System.Identity.Value`. Re-evaluates on each access, so changes via `setDefault` or `rename` are reflected immediately.
+**`%MyIdentity%`**: Registered on every actor's Variables as `DynamicData` pointing to `app.System.Identity.Value`. Re-evaluates on each access, so changes via `setDefault` or `rename` are reflected immediately.
 
 **Actions:**
 
@@ -328,7 +328,7 @@ All mutating actions are `Cacheable = false`. All return `Data` — errors use `
 
 The crypto module provides hashing and verification with pluggable algorithm providers. Handlers are thin — they validate input, delegate to the provider, and format the result. Shared logic (`SerializeData`, `ResolveProvider`, `FormatHash`) lives as `internal static` methods on `Hash`, reused by `Verify`.
 
-**Provider resolution**: `Engine.Providers.GetOrDefault<ICryptoProvider>(new DefaultProvider())`. PLang developers can swap in a custom provider by loading a DLL that implements `ICryptoProvider` (see Engine.Providers in `good_to_know.md`).
+**Provider resolution**: `App.Providers.GetOrDefault<ICryptoProvider>(new DefaultProvider())`. PLang developers can swap in a custom provider by loading a DLL that implements `ICryptoProvider` (see App.Providers in `good_to_know.md`).
 
 **Data serialization**: Before hashing, input is normalized — `byte[]` passes through as "raw", everything else is JSON-serialized to UTF-8 bytes ("json" format). This ensures deterministic hashing of objects.
 
@@ -353,8 +353,8 @@ The signing module creates and verifies signed data envelopes using Ed25519 (or 
 
 **Signing pipeline** (`ISigningProvider` — e.g., `Ed25519Provider.SignAsync`):
 1. Resolve signing provider: action parameter → `SigningSettings.Provider` → registry default
-2. Get the signer's identity via `engine.RunAction<identity.Get>`
-3. Hash the data via `engine.RunAction<Hash>` (keccak256)
+2. Get the signer's identity via `app.RunAction<identity.Get>`
+3. Hash the data via `app.RunAction<Hash>` (keccak256)
 4. Build `SignedData` envelope with nonce (from `%GUID%`), timestamps, contracts, headers
 5. Sign the envelope bytes via provider
 6. Attach `SignedData` to the result `Data.Signature`
@@ -391,9 +391,9 @@ Both actions are `Cacheable = false`. All return `Data` — never throw.
 
 The LLM module sends queries to large language models via a pluggable provider. The action record (`llm.query`) delegates entirely to `ILlmProvider.Query()`. The default `OpenAiProvider` handles everything: config, HTTP (via the http module), tool loop, caching, streaming, validation, and conversation continuity.
 
-**Provider pattern**: `ILlmProvider` extends `IProvider`. `OpenAiProvider` is the default — works with any OpenAI-compatible API endpoint. Swappable via `engine.Providers` like any other provider.
+**Provider pattern**: `ILlmProvider` extends `IProvider`. `OpenAiProvider` is the default — works with any OpenAI-compatible API endpoint. Swappable via `app.Providers` like any other provider.
 
-**Tool execution**: Tools are `List<GoalCall>`. The provider translates `GoalCall.Description` and `GoalCall.Parameters` into API tool schemas. When the LLM responds with tool calls, the provider executes the matching goals via `engine.RunGoalAsync`, sends results back, and re-queries. `MaxToolCalls` is a hard budget — the provider slices tool calls to the remaining budget before execution.
+**Tool execution**: Tools are `List<GoalCall>`. The provider translates `GoalCall.Description` and `GoalCall.Parameters` into API tool schemas. When the LLM responds with tool calls, the provider executes the matching goals via `app.RunGoalAsync`, sends results back, and re-queries. `MaxToolCalls` is a hard budget — the provider slices tool calls to the remaining budget before execution.
 
 **Parallel tools**: When all tools in a batch have `GoalCall.Parallel = true`, they execute concurrently via `Task.WhenAll`. If any tool is not parallel, the entire batch runs sequentially.
 
@@ -424,9 +424,9 @@ The LLM module sends queries to large language models via a pluggable provider. 
 
 ### provider module — Details
 
-The provider module manages the `Engine.Providers` registry — a type-keyed `ConcurrentDictionary` that holds named, swappable implementations for module interfaces (`ISigningProvider`, `ICryptoProvider`, `IIdentityProvider`, `IKeyProvider`).
+The provider module manages the `App.Providers` registry — a type-keyed `ConcurrentDictionary` that holds named, swappable implementations for module interfaces (`ISigningProvider`, `ICryptoProvider`, `IIdentityProvider`, `IKeyProvider`).
 
-**How providers work**: Modules define a provider interface (e.g., `ISigningProvider`), ship a default implementation (e.g., `Ed25519Provider`), and resolve at runtime via `Engine.Providers.Get<T>()`. PLang developers can load external DLLs to swap implementations.
+**How providers work**: Modules define a provider interface (e.g., `ISigningProvider`), ship a default implementation (e.g., `Ed25519Provider`), and resolve at runtime via `App.Providers.Get<T>()`. PLang developers can load external DLLs to swap implementations.
 
 **Type name mapping** (`Providers.ResolveType`): Maps PLang type names to CLR interfaces:
 - `"signing"` / `"isigningprovider"` → `ISigningProvider`
@@ -452,9 +452,9 @@ All actions are `Cacheable = false`. All return `Data` — never throw.
 
 ### http module — Details
 
-The HTTP module sends requests, downloads/uploads files, and streams responses. All behavior lives in `DefaultHttpProvider` — action records delegate via `engine.Providers.Get<IHttpProvider>()`.
+The HTTP module sends requests, downloads/uploads files, and streams responses. All behavior lives in `DefaultHttpProvider` — action records delegate via `app.Providers.Get<IHttpProvider>()`.
 
-**Provider pattern**: `IHttpProvider` extends `IProvider` + `IDisposable`. `DefaultHttpProvider` owns `HttpClient` (lazy-created), config resolution, header merging, signing, response parsing, and streaming. Swappable via `engine.Providers` like any other provider.
+**Provider pattern**: `IHttpProvider` extends `IProvider` + `IDisposable`. `DefaultHttpProvider` owns `HttpClient` (lazy-created), config resolution, header merging, signing, response parsing, and streaming. Swappable via `app.Providers` like any other provider.
 
 **Config scope chain**: `Config : IConfig` provides defaults via scope-chain resolution. Per-step parameters override scope-chain values, which override class defaults. The `configure` action writes to the scope chain via `Settings.Apply`.
 
@@ -522,7 +522,7 @@ Resolution order: step parameter → scope chain (per-goal/per-app) → Config c
 
 ## Relationships
 
-- Registered in [Engine](engine.md) via `Libraries` property (`Libraries`)
+- Registered in [App](app.md) via `Libraries` property (`Libraries`)
 - Receive `PLangContext` via `IContext` and `CodeGeneratedExecuteAsync`
 - Access [Variables](memory-stack.md) for variable operations
 - Return [Data](goal-result.md) from execution

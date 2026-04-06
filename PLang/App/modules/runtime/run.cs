@@ -6,14 +6,14 @@ using App.Variables;
 namespace App.modules.runtime;
 
 /// <summary>
-/// Runs a goal through the full RunStep pipeline (engine.execute, error.check, events, caching).
+/// Runs a goal through the full RunStep pipeline (app.execute, error.check, events, caching).
 /// Accepts a Goal object or GoalCall. Sets %goal% on Variables, then calls RunGoal in run.pr.
 /// Always marks result as Handled — callers decide what to do with errors.
 ///
 /// ContextMode controls isolation:
 ///   - null/empty: runs on the current context (shared state)
 ///   - "child": saves/restores user actor state (events + variables) around execution
-///   - "new": creates a fresh engine (full isolation) — not yet implemented
+///   - "new": creates a fresh app (full isolation) — not yet implemented
 /// </summary>
 [Action("run")]
 public partial class run : IContext

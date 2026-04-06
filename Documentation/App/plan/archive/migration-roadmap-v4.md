@@ -8,7 +8,7 @@ when saving this file, increase the version number, e.g. migration-roadmap-v4.md
 
 PLang is migrating from Runtime1 (47+ modules, LightInject DI, BaseProgram pattern) to App (OBP, strongly-typed Data, source-generated handlers, entity hierarchy).
 
-App currently has 6 modules (variable, file, output, condition, goal, event) with solid core infrastructure (Engine, Memory, Events, Caching, CallStack, TypeMapping, Source Generator). The builder still runs on Runtime1 but produces App .pr artifacts via a bridge module. This roadmap covers the complete migration path.
+App currently has 6 modules (variable, file, output, condition, goal, event) with solid core infrastructure (App, Memory, Events, Caching, CallStack, TypeMapping, Source Generator). The builder still runs on Runtime1 but produces App .pr artifacts via a bridge module. This roadmap covers the complete migration path.
 
 ### How We Work Each Phase
 
@@ -63,7 +63,7 @@ We are designing the next evolution of programming languages. Do this well and p
   - `/system/error/500.html` for server errors
   - `/system/error/error.html` as fallback
   - Console errors just output directly
-- Error propagation: Action -> Step -> Goal -> Engine
+- Error propagation: Action -> Step -> Goal -> App
 - `IError` hierarchy: ActionError, StepError, GoalError, ValidationError
 - **Files:** `PLang/App/Core/ErrorHandler.cs` (new), `/system/error/` (PLang goals)
 
@@ -155,7 +155,7 @@ We are designing the next evolution of programming languages. Do this well and p
 - **Parameters:** url, body, headers (dict), contentType, timeout, bearerToken
 - **Returns:** Data with Value=response body, Properties={statusCode, headers, contentType}
 - **Data.Type set from response Content-Type** (e.g., "application/json")
-- **Design decision:** Use HttpClient (injected via Engine or singleton with pool)
+- **Design decision:** Use HttpClient (injected via App or singleton with pool)
 - **Complexity:** Large (many handlers + HTTP client management)
 
 ### 2.2 Terminal Module (`terminal/*`)
@@ -179,7 +179,7 @@ We are designing the next evolution of programming languages. Do this well and p
 - **Template vs UI problem:** Need to resolve the distinction:
   - `render 'email.html', write to %email%` - renders to a variable (template use)
   - `render 'page.html' to #someTarget` - renders to a UI target (UI use)
-  - **Proposed:** Same render engine, but the *target* determines behavior. Variable target = template module. UI target (#selector) = UI module. Builder distinguishes based on target syntax.
+  - **Proposed:** Same render app, but the *target* determines behavior. Variable target = template module. UI target (#selector) = UI module. Builder distinguishes based on target syntax.
 - **Important for builder:** Builder goals use `render template` heavily
 - **Complexity:** Medium
 
@@ -244,11 +244,11 @@ We are designing the next evolution of programming languages. Do this well and p
 - Take existing `system/builder/*.goal` files
 - Build them with `plang p build` to produce App .pr files
 - Verify each builder goal works on App
-- **This is the milestone:** builder runs on App engine
+- **This is the milestone:** builder runs on App app
 
 ### 4.3 Simplify V1 Bridge
 - Once builder self-hosts, the PlangModule bridge (Program.cs) can be simplified
-- Executor.Build2() can use App engine directly
+- Executor.Build2() can use App app directly
 - **Caution:** Keep V1 path available as fallback during transition
 
 ### Tests
@@ -315,7 +315,7 @@ We are designing the next evolution of programming languages. Do this well and p
 ### 6.3 UI Module (Critical)
 - DOM instructions, layouts, dialogs, notifications
 - **Ingi has ideas for this** - will bring specifics when the time comes
-- Interplays with Template module (same render engine, different targets)
+- Interplays with Template module (same render app, different targets)
 - **Complexity:** Very Large
 
 **Depends on:** Phase 5 (crypto for SSL)
@@ -326,10 +326,10 @@ We are designing the next evolution of programming languages. Do this well and p
 
 **Goal:** Remove Runtime1 code paths and finalize migration.
 
-### 7.1 Remove V1 Engine
+### 7.1 Remove V1 App
 - Remove `PLang/Runtime/` once all features work in App
 - Remove `PLang/Modules/` (old module implementations)
-- Remove LightInject DI container (App uses Engine object graph)
+- Remove LightInject DI container (App uses App object graph)
 
 ### 7.2 Remove Bridge Code
 - Simplify `PlangModule/Program.cs`

@@ -8,7 +8,7 @@ namespace App.modules.builder.providers;
 
 /// <summary>
 /// Builder provider interface. Owns all builder logic — actions are thin delegation.
-/// Swappable via engine.Providers.
+/// Swappable via app.Providers.
 /// </summary>
 public interface IBuilderProvider : IProvider
 {

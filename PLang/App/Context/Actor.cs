@@ -29,7 +29,7 @@ public sealed class Actor : IAsyncDisposable
     public EngineChannels Channels { get; }
 
     /// <summary>
-    /// Back-reference to the engine.
+    /// Back-reference to the app.
     /// </summary>
     public App.@this App { get; }
 
@@ -47,7 +47,7 @@ public sealed class Actor : IAsyncDisposable
     public Identity? Identity { get; set; }
 
     /// <summary>
-    /// Resolves an actor by name using the engine.
+    /// Resolves an actor by name using the app.
     /// Convention: types with this signature are auto-resolved by the source generator.
     /// </summary>
     public static Actor? Resolve(string name, Context.@this context) => context.App.GetActor(name).Actor;
@@ -96,7 +96,7 @@ public sealed class Actor : IAsyncDisposable
     private ISettingsStore CreateSettingsStore()
     {
         // System actor always uses on-disk — it holds the LLM cache and other
-        // persistent system data that must survive across engine instances.
+        // persistent system data that must survive across app instances.
         // User/Service actors use in-memory during building/testing for isolation.
         if ((App.Testing.IsEnabled || App.Building.IsEnabled)
             && !Name.Equals("System", StringComparison.OrdinalIgnoreCase))

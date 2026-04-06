@@ -286,7 +286,7 @@ For `{ "type": "method", "name": "ToUpper" }`:
 For `{ "type": "action", "module": "llm", "action": "ask", "parameters": [...] }`:
 1. Look up the handler from ActionRegistry
 2. Build the action parameters — inject the current pipe value as the primary input
-3. Execute via Engine (async)
+3. Execute via App (async)
 4. Use the Data.Value result as next pipe input
 5. If Data.Error → short-circuit the entire pipe
 

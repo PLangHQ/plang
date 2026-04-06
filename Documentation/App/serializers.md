@@ -118,7 +118,7 @@ registry.Register(new XmlSerializer());
 
 ## Relationships
 
-- Stored in [Engine](engine.md) as `Serializers` property
+- Stored in [App](app.md) as `Serializers` property
 - Also stored in [PLangAppContext](contexts.md) as `Serializers`
 - Used by [IO](io-channels.md) for channel read/write operations
 - Used by [PrParser](pr-file-format.md) for `.pr` file deserialization

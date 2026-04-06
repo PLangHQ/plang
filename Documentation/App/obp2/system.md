@@ -13,8 +13,8 @@ Data flows without the caller knowing what's inside. Only the object that owns t
 ```csharp
 // Navigate to what you need
 app.goal.save(data);
-engine.Channels.WriteTextAsync(StdOut, text);
-engine.FileSystem.File.ReadAllTextAsync(path);
+app.Channels.WriteTextAsync(StdOut, text);
+app.FileSystem.File.ReadAllTextAsync(path);
 ```
 
 2. **Behavior on the owner** — Methods live on the object that owns the data. No services, no managers.
@@ -90,6 +90,6 @@ await Events.Before.Run(context);
 
 ## Why it matters
 
-The object graph IS the architecture. An LLM (or human) can traverse `engine.Goals.Get("Start")` and know exactly where things live. No service layers to trace, no scattered logic to reconstruct. Less context needed, better results.
+The object graph IS the architecture. An LLM (or human) can traverse `app.Goals.Get("Start")` and know exactly where things live. No service layers to trace, no scattered logic to reconstruct. Less context needed, better results.
 
 OBP is friction-free software. Nothing loads until needed. Nothing knows more than it has to. Nothing exists that doesn't earn its place. Every line of code does exactly what it's supposed to do — nothing more.

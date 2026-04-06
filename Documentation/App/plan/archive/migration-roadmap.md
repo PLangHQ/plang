@@ -8,7 +8,7 @@ when saving this file, increase the version number, e.g. migration-roadmap-v1.md
 
 PLang is migrating from Runtime1 (47+ modules, LightInject DI, BaseProgram pattern) to App (OBP, strongly-typed Data, source-generated handlers, entity hierarchy). 
 
-App currently has 6 modules (variable, file, output, condition, goal, event) with solid core infrastructure (Engine, Memory, Events, Caching, CallStack, TypeMapping, Source Generator). The builder still runs on Runtime1 but produces App .pr artifacts via a bridge module. This roadmap covers the complete migration path.
+App currently has 6 modules (variable, file, output, condition, goal, event) with solid core infrastructure (App, Memory, Events, Caching, CallStack, TypeMapping, Source Generator). The builder still runs on Runtime1 but produces App .pr artifacts via a bridge module. This roadmap covers the complete migration path.
 
 ---
 
@@ -38,7 +38,7 @@ Ingi comments:
 - Current: Data.Fail(IError) + step-level OnErrorGoal
 - Missing: retry logic, error propagation rules, error event firing
 - Create `IError` hierarchy: ActionError, StepError, GoalError, ValidationError
-- Define how errors bubble up: Action -> Step -> Goal -> Engine
+- Define how errors bubble up: Action -> Step -> Goal -> App
 - **Files:** `PLang/App/Core/ErrorHandler.cs` (new), existing error types in `Errors/`
 
 Ingi comments:
@@ -154,7 +154,7 @@ Ingi comments:
 - Handlers: `get`, `post`, `put`, `delete`, `patch`, `head`, `options`
 - **Parameters:** url, body, headers (dict), contentType, timeout, bearerToken
 - **Returns:** Data with Value=response body, Properties={statusCode, headers, contentType}
-- **Design decision:** Use HttpClient (injected via Engine or singleton with pool)
+- **Design decision:** Use HttpClient (injected via App or singleton with pool)
 - **Complexity:** Large (many handlers + HTTP client management)
 
 ### 2.2 Terminal Module (`terminal/*`)
@@ -247,11 +247,11 @@ Ingi comments:
 - Take existing `system/builder/*.goal` files
 - Build them with `plang p build` to produce App .pr files
 - Verify each builder goal works on App
-- **This is the milestone:** builder runs on App engine
+- **This is the milestone:** builder runs on App app
 
 ### 4.3 Remove V1 Builder Bridge
 - Once builder self-hosts, the PlangModule bridge (Program.cs) can be simplified
-- Executor.Build2() can use App engine directly
+- Executor.Build2() can use App app directly
 - **Caution:** Keep V1 path available as fallback during transition
 
 ### Tests
@@ -332,10 +332,10 @@ What do you identity for auth?? Identity is built into plang, no need for auth. 
 
 **Goal:** Remove Runtime1 code paths and finalize migration.
 
-### 7.1 Remove V1 Engine
+### 7.1 Remove V1 App
 - Remove `PLang/Runtime/` once all features work in App
 - Remove `PLang/Modules/` (old module implementations)
-- Remove LightInject DI container (App uses Engine object graph)
+- Remove LightInject DI container (App uses App object graph)
 
 ### 7.2 Remove Bridge Code
 - Simplify `PlangModule/Program.cs`

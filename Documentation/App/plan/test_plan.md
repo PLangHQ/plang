@@ -1,4 +1,4 @@
-# Phase 1.7: PLang Testing Engine
+# Phase 1.7: PLang Testing App
 
 ## Context
 
@@ -55,9 +55,9 @@ Action handlers following the standard `[Action]` pattern:
 
 **How `!debug` works today (same pattern for `!test`):**
 1. `plang !test` → CommandLineParser parses `!test` → `parameters["test"] = true`
-2. `Executor.Run2()` checks `parameters.TryGetValue("test", ...)` → calls `TestMode.Apply(engine)`
+2. `Executor.Run2()` checks `parameters.TryGetValue("test", ...)` → calls `TestMode.Apply(app)`
 3. `TestMode.Apply` is a C# class that:
-   - Sets `engine.IsTestMode = true`
+   - Sets `app.IsTestMode = true`
    - Discovers all `*.test.goal` files (via `fileSystem.Directory.GetFiles(rootDir, "*.test.goal", SearchOption.AllDirectories)`)
    - Loads each as a Goal
    - Runs each goal, tracking pass/fail via events
@@ -72,7 +72,7 @@ Action handlers following the standard `[Action]` pattern:
 
 **The test runner is mostly C# (like DebugMode)** because it needs to:
 - Discover files before any PLang runs
-- Register events on the engine to intercept assert failures
+- Register events on the app to intercept assert failures
 - Print the summary with proper exit codes
 
 But it's minimal C# — the actual test logic is all PLang.
@@ -92,13 +92,13 @@ But it's minimal C# — the actual test logic is all PLang.
 
 **Files to create/modify:**
 - `PLang/App/Core/TestMode.cs` (new — like DebugMode.cs)
-- `PLang/App/Core/Engine.cs` (add `IsTestMode` property)
+- `PLang/App/Core/App.cs` (add `IsTestMode` property)
 - `PLang/App/Context/PLangAppContext.cs` (add `IsTestMode`)
 - `PLang/Executor.cs` (add `!test` handling in `Run2()`)
 
 ### 3. Goal.IsTest Property
 
-**Optional enhancement:** Add `Goal.IsTest` flag set during build validation if any step uses the `assert` module. This allows the engine to know a goal is a test goal even without the `*.test.goal` naming convention. But `*.test.goal` is the primary discovery mechanism.
+**Optional enhancement:** Add `Goal.IsTest` flag set during build validation if any step uses the `assert` module. This allows the app to know a goal is a test goal even without the `*.test.goal` naming convention. But `*.test.goal` is the primary discovery mechanism.
 
 **File:** `PLang/App/Core/Goal.cs` — add `public bool IsTest { get; set; }`
 
@@ -149,7 +149,7 @@ Keep existing `Start.goal` files for manual/demo usage. The `.test.goal` files a
 2. **Assert module handlers** — 9 handlers + types.cs
 3. **C# tests** for assert module
 4. **TestMode.cs** — discovery, execution, reporting
-5. **Wire `!test` in Executor.Run2** and Engine
+5. **Wire `!test` in Executor.Run2** and App
 6. **Write `.test.goal` files** — convert existing 5 test suites
 7. **Build and run** — `plang build` then `plang !test`
 8. **Goal.IsTest** — optional, add if time permits
@@ -182,7 +182,7 @@ Keep existing `Start.goal` files for manual/demo usage. The `.test.goal` files a
 - `Tests/App/*/*.test.goal` (5 test files)
 
 **Modified files:**
-- `PLang/App/Core/Engine.cs` — add IsTestMode
+- `PLang/App/Core/App.cs` — add IsTestMode
 - `PLang/App/Context/PLangAppContext.cs` — add IsTestMode
 - `PLang/App/Core/Goal.cs` — add IsTest
 - `PLang/Executor.cs` — add !test handling in Run2()

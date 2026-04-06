@@ -9,7 +9,7 @@ using System.Globalization;
 namespace App;
 
 /// <summary>
-/// Main runtime engine for PLang App.
+/// Main runtime for PLang App.
 /// Executes goals and manages the execution lifecycle.
 /// Self-contained: owns all app-level state (environment, culture, shutdown, key-value store).
 /// </summary>
@@ -84,12 +84,12 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     public CultureInfo Culture { get; set; } = CultureInfo.InvariantCulture;
 
     /// <summary>
-    /// When the engine was started.
+    /// When the app was started.
     /// </summary>
     public DateTime StartedAt { get; }
 
     /// <summary>
-    /// How long the engine has been running.
+    /// How long the app has been running.
     /// </summary>
     public TimeSpan Uptime => DateTime.UtcNow - StartedAt;
 
@@ -142,7 +142,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
 
     /// <summary>
     /// Strongly typed, goal-scoped module config.
-    /// Navigation: engine.Config.For&lt;archive.Config&gt;(context).Max
+    /// Navigation: app.Config.For&lt;archive.Config&gt;(context).Max
     /// </summary>
     public Config.@this Config { get; }
 
@@ -174,7 +174,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     public Types.@this Types { get; }
 
     /// <summary>
-    /// System actor for internal engine operations. Created lazily on first access.
+    /// System actor for internal app operations. Created lazily on first access.
     /// </summary>
     public Actor System => _system ??= new Actor("System", this);
 
@@ -190,7 +190,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
 
     /// <summary>
     /// The currently executing actor. Defaults to User. Changed to System during bootstrap (Start).
-    /// engine.execute switches temporarily for context-crossing dispatch.
+    /// app.execute switches temporarily for context-crossing dispatch.
     /// </summary>
     public Actor CurrentActor { get; set; } = null!; // initialized to User in constructor
 
@@ -231,7 +231,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     }
 
     /// <summary>
-    /// Promotes an object to engine-level lifetime. Disposed on Engine.DisposeAsync.
+    /// Promotes an object to app-level lifetime. Disposed on App.DisposeAsync.
     /// Use for objects that must outlive their creating goal (e.g., background listeners).
     /// </summary>
     public void KeepAlive(object instance) => _keepAlive.Add(instance);
@@ -254,7 +254,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     public @this(string absolutePath, EngineModules? modules = null,
         App.FileSystem.IPLangFileSystem? fileSystem = null,
         string? environment = null)
-        : base("!engine")
+        : base("!app")
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         AbsolutePath = absolutePath;
@@ -282,7 +282,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
 
     /// <summary>
     /// Loads app identity from .build/app.pr. Called at startup.
-    /// If no app.pr exists, the engine keeps its generated Id.
+    /// If no app.pr exists, the app keeps its generated Id.
     /// </summary>
     public async Task Load()
     {
@@ -328,8 +328,8 @@ public sealed class @this : Data<@this>, IAsyncDisposable
 
     /// <summary>
     /// Runs a module action through the same code-generated execution path as steps.
-    /// Set properties via init, then call RunAction — engine wires context, memory, validation, error handling.
-    /// Usage: var result = await engine.RunAction&lt;Hash, string&gt;(new Hash { Data = x, Algorithm = "keccak256" }, context);
+    /// Set properties via init, then call RunAction — app wires context, memory, validation, error handling.
+    /// Usage: var result = await app.RunAction&lt;Hash, string&gt;(new Hash { Data = x, Algorithm = "keccak256" }, context);
     /// </summary>
     public async Task<Data<TResult>> RunAction<TAction, TResult>(TAction action, Context.@this context)
         where TAction : ICodeGenerated
@@ -352,7 +352,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     }
 
     /// <summary>
-    /// Dispatches a single action. The engine doesn't know about goals or steps.
+    /// Dispatches a single action. The app dispatcher doesn.t know about goals or steps.
     /// It receives an action, finds the module handler, executes it, returns result.
     /// </summary>
     public async Task<Data> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Context.@this context)
@@ -398,7 +398,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
 
     /// <summary>
     /// Iterates steps and dispatches each action via Run().
-    /// Used by Start() for bootstrap and by engine.execute for user steps.
+    /// Used by Start() for bootstrap and by app.execute for user steps.
     /// </summary>
     public async Task<Data> RunSteps(GoalSteps steps, Context.@this context)
     {
@@ -537,7 +537,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
                 disposableProv.Dispose();
         }
 
-        // Dispose engine-level channels
+        // Dispose app-level channels
         await Channels.DisposeAsync();
 
         // Dispose KeepAlive objects

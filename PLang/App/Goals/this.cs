@@ -94,7 +94,7 @@ public sealed class @this
     /// <summary>
     /// Gets a goal by name. Loads the .pr file from disk if not already cached.
     /// When callingFolderPath is provided, resolves relative to that folder first.
-    /// Names starting with / are resolved from engine root.
+    /// Names starting with / are resolved from app root.
     /// </summary>
     public async Task<Goal.@this?> GetAsync(string name, string? callingFolderPath = null, CancellationToken cancellationToken = default)
     {
@@ -107,7 +107,7 @@ public sealed class @this
         if (cleanName.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
             cleanName = cleanName[..^5];
 
-        // Check if the name is absolute (starts with / meaning resolve from engine root)
+        // Check if the name is absolute (starts with / meaning resolve from app root)
         bool isAbsolute = cleanName.StartsWith("/") || cleanName.StartsWith("\\");
         if (isAbsolute)
             cleanName = cleanName.TrimStart('/', '\\');

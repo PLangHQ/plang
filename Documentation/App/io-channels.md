@@ -12,9 +12,9 @@ Stream-based IO with named channels for input/output operations. The `IO` class 
 public sealed class IO : IAsyncDisposable
 {
     // Constructor
-    public IO(Engine engine)
+    public IO(App app)
 
-    // File operations (convenience — uses Engine.Serializers)
+    // File operations (convenience — uses App.Serializers)
     Task<T?> ReadAsync<T>(string filePath, CancellationToken ct = default)
 
     // Channel management
@@ -38,7 +38,7 @@ public sealed class IO : IAsyncDisposable
 
 ### Behavior & Rules
 
-- `IO` takes `Engine` in its constructor (not just `SerializerRegistry`)
+- `IO` takes `App` in its constructor (not just `SerializerRegistry`)
 - `ReadAsync<T>` reads a file from disk and deserializes using the appropriate serializer
 - Channel operations return `Data` (not `GoalResult`)
 - `WriteAsync` returns `Data.Fail` if channel doesn't exist or is read-only
@@ -128,17 +128,17 @@ var body = await inputChannel.ReadAllTextAsync();
 
 ## Actor Ownership
 
-Each `Actor` has its own `IO` instance. The engine creates three actors with separate I/O:
+Each `Actor` has its own `IO` instance. The app creates three actors with separate I/O:
 
 ```
-Engine.System.IO   → System actor's channels
-Engine.Service.IO  → Service actor's channels
-Engine.User.IO     → User actor's channels
+App.System.IO   → System actor's channels
+App.Service.IO  → Service actor's channels
+App.User.IO     → User actor's channels
 ```
 
 ## Relationships
 
-- `IO` uses [SerializerRegistry](serializers.md) via Engine for content-type based serialization
+- `IO` uses [SerializerRegistry](serializers.md) via App for content-type based serialization
 - `IO.WriteAsync` and `IO.ReadChannelAsync` return [Data](goal-result.md)
 - `IO.ReadAsync<T>` is used by [Goals](goals-steps.md) for loading `.pr` files
 - `Channel` wraps standard .NET `Stream`

@@ -25,7 +25,7 @@ These are the three entity types that form the execution model. Each is a **seal
 | `IsEvent` | `bool` | Yes | This goal is an event handler |
 | `InputParameters` | `Dictionary<string, string>?` | Yes | Named input parameters |
 | `Parent` | `Goal?` | No | Parent goal (`[JsonIgnore]`) |
-| `Engine` | `Engine?` | No | Engine reference (`[JsonIgnore]`) |
+| `App` | `App?` | No | App reference (`[JsonIgnore]`) |
 | `Events` | `EntityEvents` | No | Before/After × Load/Run event lists |
 | `Errors` | `List<Info>` | Yes | Build errors |
 | `Warnings` | `List<Info>` | Yes | Build warnings |
@@ -49,7 +49,7 @@ The setter is empty — PrPath is always derived from Path.
 Task Load(PLangContext context)
 
 // Run phase — executes all steps sequentially
-Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
+Task<Data> RunAsync(App app, PLangContext context, CancellationToken ct = default)
 
 // Format for LLM consumption (Scriban template or fallback)
 string FormatForLlm()
@@ -72,7 +72,7 @@ static Goal NotFound(string name)
 2. Check cancellation
 3. `Before.Run` events
 4. `CallStack.Push(frame)`
-5. Iterate steps → `step.RunAsync(engine, context, ct)`
+5. Iterate steps → `step.RunAsync(app, context, ct)`
 6. `After.Run` events
 7. `CallStack.Pop()`
 8. Return `Data.Ok()`
@@ -112,7 +112,7 @@ static Goal NotFound(string name)
 
 ```csharp
 Task Load(PLangContext context)
-Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
+Task<Data> RunAsync(App app, PLangContext context, CancellationToken ct = default)
 Step Clone()
 ```
 
@@ -120,7 +120,7 @@ Step Clone()
 1. Set `context.Step`
 2. `CallStack.RecordStep()`
 3. `Before.Run` events
-4. `Actions.RunAsync(engine, context, ct)` — executes all actions
+4. `Actions.RunAsync(app, context, ct)` — executes all actions
 5. `After.Run` events
 6. Catches exceptions → wraps as `StepError`
 
@@ -149,12 +149,12 @@ Note: `Class` is serialized as `"action"` in JSON via `[JsonPropertyName("action
 
 ```csharp
 Task Load(PLangContext context)
-Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
+Task<Data> RunAsync(App app, PLangContext context, CancellationToken ct = default)
 ```
 
 **Run sequence:**
 1. `Libraries.GetCodeGenerated(Module, ActionName)` — find handler
-2. `ICodeGenerated.CodeGeneratedExecuteAsync(Parameters, engine, context)`
+2. `ICodeGenerated.CodeGeneratedExecuteAsync(Parameters, app, context)`
 3. Store `Return` variables in `Variables`
 
 ---
@@ -198,7 +198,7 @@ Task Load(PLangContext context)         // Load each step
 ```csharp
 List<Action> Value { get; }
 Task Load(PLangContext context)
-Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct)
+Task<Data> RunAsync(App app, PLangContext context, CancellationToken ct)
 Task<(string?, IError?)> Summary()     // Render action summary via Scriban template
 ```
 
@@ -207,24 +207,24 @@ Task<(string?, IError?)> Summary()     // Render action summary via Scriban temp
 ## Execution Flow
 
 ```
-Engine.RunGoalAsync(goalName, context)
+App.RunGoalAsync(goalName, context)
     │
     ├── Goals.GetAsync(goalName)
     │   └── returns null → Data.Fail(GoalError.NotFound)
     │
-    └── Goal.RunAsync(engine, context)
+    └── Goal.RunAsync(app, context)
         ├── context.Goal = goal
         ├── Before.Run events
         ├── CallStack.Push(frame)
         ├── foreach step in Steps
-        │   └── Step.RunAsync(engine, context)
+        │   └── Step.RunAsync(app, context)
         │       ├── context.Step = step
         │       ├── CallStack.RecordStep()
         │       ├── Before.Run events
-        │       ├── Actions.RunAsync(engine, context)
+        │       ├── Actions.RunAsync(app, context)
         │       │   └── foreach action in Actions
         │       │       ├── Libraries.GetCodeGenerated(action.Module, action.ActionName)
-        │       │       ├── ICodeGenerated.CodeGeneratedExecuteAsync(params, engine, context)
+        │       │       ├── ICodeGenerated.CodeGeneratedExecuteAsync(params, app, context)
         │       │       └── Store Return vars in Variables
         │       └── After.Run events
         ├── After.Run events
@@ -233,7 +233,7 @@ Engine.RunGoalAsync(goalName, context)
 
 ## Relationships
 
-- `Goals` is stored in [Engine](engine.md)
+- `Goals` is stored in [App](app.md)
 - `Goal` contains `Step` instances, each containing `Action` instances
 - `Action` references handlers from [Libraries](modules.md)
 - Action execution stores results in [Variables](memory-stack.md)

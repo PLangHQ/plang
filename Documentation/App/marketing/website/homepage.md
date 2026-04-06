@@ -144,7 +144,7 @@ SecureEndpoint - POST
 |------|------------------|-------|
 | Web server + 2 endpoints | Express: `npm init`, install deps, create server, define routes, error handling (~40 lines) | 3 lines |
 | Database CRUD | ORM setup, migration tool, connection config, model definitions (~50 lines) | Write directly: `insert into`, `select from` |
-| Send email on event | SMTP library, config, template engine, error handling (~30 lines) | `send email to %address%, subject: "...", body: "..."` |
+| Send email on event | SMTP library, config, template app, error handling (~30 lines) | `send email to %address%, subject: "...", body: "..."` |
 | User authentication | Passport.js + bcrypt + JWT + session middleware + user model (~100 lines) | Built in. `%Identity%` exists on every request |
 | Scheduled task | cron setup, daemon config, logging, error handling (~25 lines) | `every 1 hour, call !TaskName` |
 | **Total setup** | **Multiple packages, config files, boilerplate** | **Zero setup. Write and run.** |

@@ -77,7 +77,7 @@ public class FluidProvider : ITemplateProvider
 
         var fluidContext = new TemplateContext(options);
 
-        // Store engine + Context.@this for callGoal tag access
+        // Store app + Context.@this for callGoal tag access
         fluidContext.AmbientValues["engine"] = action.Context.App;
         fluidContext.AmbientValues["context"] = action.Context;
 
@@ -129,7 +129,7 @@ public class FluidProvider : ITemplateProvider
 
     /// <summary>
     /// Gets the base directory for template file resolution (includes).
-    /// Resolves from the calling goal's directory, or engine root as fallback.
+    /// Resolves from the calling goal's directory, or app root as fallback.
     /// </summary>
     private static string GetTemplateBaseDir(Render action)
     {

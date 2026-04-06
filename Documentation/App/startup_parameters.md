@@ -4,7 +4,7 @@
 
 PLang supports two kinds of startup parameters:
 
-- **System parameters** (`--key`): Prefixed with `--` on the CLI, stored as `%!key%` in PLang. Control engine behavior (debug, cache, test mode). Won't collide with user variables.
+- **System parameters** (`--key`): Prefixed with `--` on the CLI, stored as `%!key%` in PLang. Control app behavior (debug, cache, test mode). Won't collide with user variables.
 - **User parameters** (`key=value`): No prefix, stored as `%key%` in PLang. Passed to goals as regular variables.
 
 ## Syntax
@@ -138,5 +138,5 @@ Unquoted values that aren't valid JSON are treated as strings: `name=Alice` → 
 ## Design Notes
 
 - `--` prefix is shell-safe (unlike `!` which is bash history expansion)
-- `--` on CLI maps to `!` in PLang — consistent with existing system variables (`%!engine%`, `%!goal%`, `%!error%`)
+- `--` on CLI maps to `!` in PLang — consistent with existing system variables (`%!app%`, `%!goal%`, `%!error%`)
 - User parameters never get `!` prefix — complete separation between system and user namespaces

@@ -187,9 +187,9 @@ public sealed class SerializableCallFrame
 }
 ```
 
-## Integration with Engine
+## Integration with App
 
-The Engine automatically manages the CallStack during goal and step execution:
+The App automatically manages the CallStack during goal and step execution:
 
 ```
 Goal.RunAsync()

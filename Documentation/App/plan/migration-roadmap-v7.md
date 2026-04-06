@@ -4,7 +4,7 @@
 
 PLang is migrating from Runtime1 (47+ modules, LightInject DI, BaseProgram pattern) to App (OBP, strongly-typed Data, source-generated handlers, entity hierarchy).
 
-App currently has 6 modules (variable, file, output, condition, goal, event) with solid core infrastructure (Engine, Memory, Events, Caching, CallStack, TypeMapping, Source Generator). The builder still runs on Runtime1 but produces App .pr artifacts via a bridge module.
+App currently has 6 modules (variable, file, output, condition, goal, event) with solid core infrastructure (App, Memory, Events, Caching, CallStack, TypeMapping, Source Generator). The builder still runs on Runtime1 but produces App .pr artifacts via a bridge module.
 
 ### How We Work Each Phase
 
@@ -54,7 +54,7 @@ We are designing the next evolution of programming languages. Do this well and p
 │  └─────────────────┘                                            │
 │                                                                 │
 │  ┌──────────────┐                                               │
-│  │     IO       │   Engine-level router → delegates to actor IO │
+│  │     IO       │   App-level router → delegates to actor IO │
 │  └──────────────┘                                               │
 │                                                                 │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐                      │
@@ -138,4 +138,4 @@ Previous roadmap versions are in [archive/](archive/).
 
 ## Testing
 
-See [test_plan.md](test_plan.md) for the testing engine design (Phase 1.7).
+See [test_plan.md](test_plan.md) for the testing app design (Phase 1.7).

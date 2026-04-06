@@ -12,7 +12,7 @@ namespace App.modules.provider;
 [Action("load", Cacheable = false)]
 public partial class load : IContext
 {
-    /// <summary>Path to the DLL to load (relative to engine root or absolute).</summary>
+    /// <summary>Path to the DLL to load (relative to app root or absolute).</summary>
     public partial string? Path { get; init; }
 
     /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>

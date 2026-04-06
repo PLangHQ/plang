@@ -28,7 +28,7 @@
 // Data can be used directly in if statements
 public static implicit operator bool(Data d) => d.Success;
 
-var result = await engine.RunGoalAsync("Start");
+var result = await app.RunGoalAsync("Start");
 if (result)  // checks Success
 {
     // success path
@@ -151,7 +151,7 @@ var scores = new Data("scores", new List<int> { 85, 92, 78 });
 ### Checking Results
 
 ```csharp
-var result = await engine.RunGoalAsync("CreateUser");
+var result = await app.RunGoalAsync("CreateUser");
 
 if (result.Success)
 {
@@ -195,7 +195,7 @@ Exceptions are for truly exceptional cases (programming errors, resource exhaust
 
 ## Relationships
 
-- Returned by [Engine](engine.md) methods
+- Returned by [App](app.md) methods
 - Returned by [Action handlers](modules.md) via `CodeGeneratedExecuteAsync`
 - Returned by [IO](io-channels.md) read/write operations
 - Stored in [Variables](memory-stack.md) as variable entries

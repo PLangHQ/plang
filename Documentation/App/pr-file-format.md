@@ -224,21 +224,21 @@ public static class PrParser
 ## Loading .pr Files
 
 ```csharp
-// Via Engine
-await engine.LoadGoalFromFileAsync("path/to/.build/start.pr");
-await engine.LoadGoalsFromDirectoryAsync(".build");
+// Via App
+await app.LoadGoalFromFileAsync("path/to/.build/start.pr");
+await app.LoadGoalsFromDirectoryAsync(".build");
 
 // Via Goals collection
-await engine.Goals.LoadFromFileAsync(engine, prFilePath);
-await engine.Goals.LoadFromDirectoryAsync(engine, buildDir);
+await app.Goals.LoadFromFileAsync(app, prFilePath);
+await app.Goals.LoadFromDirectoryAsync(app, buildDir);
 
 // Direct parsing
-var goal = PrParser.ParsePrFile(prFilePath, engine.FileSystem);
+var goal = PrParser.ParsePrFile(prFilePath, app.FileSystem);
 ```
 
 ## Relationships
 
-- Loaded by [Engine](engine.md) via [Goals](goals-steps.md) collection
+- Loaded by [App](app.md) via [Goals](goals-steps.md) collection
 - Deserialized by [SerializerRegistry](serializers.md) (via IO.ReadAsync)
 - Maps to [Goal](goals-steps.md), [Step](goals-steps.md), and [Action](goals-steps.md) objects
 - Variables resolved from [Variables](memory-stack.md) at runtime

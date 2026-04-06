@@ -54,7 +54,7 @@ global using Testing = App.Test.@this;
 // Inside Engine.*: use Build.@this (child namespace resolves naturally)
 // Outside Engine.*: use App.Build.@this or per-file alias
 
-// Engine: can't be global alias — App.@this IS the engine
+// Engine: can't be global alias — App.@this IS the app root
 // Inside Engine.*: use App.@this (parent namespace resolves naturally)
 // Outside App.*: use App.@this or per-file alias
 

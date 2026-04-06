@@ -65,7 +65,7 @@ For each `[Action]` partial class, the generator creates:
 1. **`ICodeGenerated` implementation** — `CodeGeneratedExecuteAsync` wires Context, resolves parameters from .pr Data list, resolves `%variables%` from Variables
 2. **Partial property implementations** — lazy getters that resolve from parameters, with `%var%` interpolation
 3. **Validation** — non-nullable string/reference checks (`MissingParameter`), `[IsNotNull]`/`[IsInitiated]` checks
-4. **Provider resolution** — `[Provider]` properties resolved from `engine.Providers.Get<T>()`
+4. **Provider resolution** — `[Provider]` properties resolved from `app.Providers.Get<T>()`
 5. **Error wrapping** — exceptions in `Run()` caught and returned as `Data.FromError`
 
 ## Class Attributes
@@ -112,7 +112,7 @@ public partial Data OptionalValue { get; init; }
 ```
 
 ### `[Provider]`
-Auto-resolves from `engine.Providers.Get<T>()`. Lazy — works both via engine pipeline and direct test usage. Returns `ProviderNotFound` error if no provider registered.
+Auto-resolves from `app.Providers.Get<T>()`. Lazy — works both via app pipeline and direct test usage. Returns `ProviderNotFound` error if no provider registered.
 
 ```csharp
 [Provider]
@@ -210,11 +210,11 @@ PLang developers replace providers by loading a DLL that implements the provider
 - load provider myprovider.dll
 ```
 
-The DLL contains a class implementing `ICryptoProvider` (or whichever provider interface). The engine discovers it, registers it, and all actions using `[Provider]` automatically pick it up.
+The DLL contains a class implementing `ICryptoProvider` (or whichever provider interface). The app discovers it, registers it, and all actions using `[Provider]` automatically pick it up.
 
 #### Runtime developer registration
 
-Built-in default providers are registered in `Engine/Providers/this.cs`, `RegisterDefaults()`:
+Built-in default providers are registered in `App/Providers/this.cs`, `RegisterDefaults()`:
 
 ```csharp
 Register<ICryptoProvider>(new DefaultCryptoProvider());
@@ -246,7 +246,7 @@ await Assert.That(result.Value is byte[]).IsTrue();
 
 // Validation test — through generator
 var action = new Hash { Data = new Data(""), Algorithm = "keccak256" };
-var result = await action.CodeGeneratedExecuteAsync(new List<Data>(), engine, ctx);
+var result = await action.CodeGeneratedExecuteAsync(new List<Data>(), app, ctx);
 await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
 ```
 

@@ -6,7 +6,7 @@ namespace App.modules.llm.providers;
 /// <summary>
 /// LLM provider interface. The provider owns the full lifecycle:
 /// format messages, call API, handle tool loop, return result.
-/// Swappable via engine.Providers.
+/// Swappable via app.Providers.
 /// </summary>
 public interface ILlmProvider : IProvider
 {

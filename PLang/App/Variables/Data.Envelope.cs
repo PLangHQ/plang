@@ -90,14 +90,14 @@ public partial class Data
     }
 
     /// <summary>
-    /// Encrypts and wraps in an encrypted envelope. Requires a crypto service on Engine
+    /// Encrypts and wraps in an encrypted envelope. Requires a crypto service on App
     /// (not yet implemented). Returns self until crypto is available.
     /// Intended pattern: serialize to bytes, encrypt, wrap as
     /// Data { type = "encrypted", value = Data { type = algorithm, value = encryptedBytes, Properties = [...] } }
     /// </summary>
     public Data Encrypt()
     {
-        // Encryption requires a crypto service on Engine (not yet implemented).
+        // Encryption requires a crypto service on App (not yet implemented).
         // When available: navigate through _context.App to the crypto handler,
         // serialize this Data to bytes, encrypt, wrap in encrypted envelope.
         return this;
@@ -107,7 +107,7 @@ public partial class Data
 
     /// <summary>
     /// Decrypts an encrypted envelope. If type is not "encrypted", returns self (no-op).
-    /// Requires a crypto service on Engine (not yet implemented). Returns self until crypto is available.
+    /// Requires a crypto service on App (not yet implemented). Returns self until crypto is available.
     /// Intended pattern: read inner Data for algorithm + properties, decrypt bytes, deserialize result.
     /// </summary>
     public Data Decrypt()
@@ -115,7 +115,7 @@ public partial class Data
         if (!string.Equals(Type?.Value, "encrypted", StringComparison.OrdinalIgnoreCase))
             return this;
 
-        // Decryption requires a crypto service on Engine (not yet implemented).
+        // Decryption requires a crypto service on App (not yet implemented).
         // When available: navigate through _context.App to the crypto handler,
         // read inner Data (algorithm, keyId, nonce from Properties), decrypt, deserialize.
         return this;

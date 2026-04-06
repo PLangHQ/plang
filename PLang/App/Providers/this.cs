@@ -207,7 +207,7 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Registers built-in default providers. Called by Engine constructor.
+    /// Registers built-in default providers. Called by App constructor.
     /// Each module owns its default provider — this method is the single registration point.
     /// </summary>
     public void RegisterDefaults()

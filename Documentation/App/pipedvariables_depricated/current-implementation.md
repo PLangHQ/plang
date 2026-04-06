@@ -126,7 +126,7 @@ This is where `%user.name%` ultimately resolves — if `user` is a CLR object (D
 
 **File:** `PLang.Generators/LazyParamsGenerator.cs`
 
-When the engine runs an action, it passes the raw parameters from the .pr file to the handler. The source generator creates code that resolves `%var%` references lazily (at property access time).
+When the app runs an action, it passes the raw parameters from the .pr file to the handler. The source generator creates code that resolves `%var%` references lazily (at property access time).
 
 There are **two pipelines** in the source generator:
 

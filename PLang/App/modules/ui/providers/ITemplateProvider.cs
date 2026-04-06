@@ -4,7 +4,7 @@ using App.Providers;
 namespace App.modules.ui.providers;
 
 /// <summary>
-/// Template rendering provider. Swappable via engine.Providers.
+/// Template rendering provider. Swappable via app.Providers.
 /// Default implementation uses Fluid (Liquid syntax).
 /// </summary>
 public interface ITemplateProvider : IProvider

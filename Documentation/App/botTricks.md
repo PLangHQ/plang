@@ -103,21 +103,21 @@ plang Start name="John" count=5 enabled=true
 `--flag` → CommandLineParser → `!flag` on system Variables → run.pr checks `%!flag%`
 
 ### Build flow
-`--build` → `engine.Building.IsEnabled = true` → `engine.Building.Files` (optional filter) → run.pr → Build.goal → `builder.goals` (filters by `Building.Files`)
+`--build` → `app.Building.IsEnabled = true` → `app.Building.Files` (optional filter) → run.pr → Build.goal → `builder.goals` (filters by `Building.Files`)
 
 ### Test flow
-`--test` → run.pr → test.pr → foreach test files → `runtime.run` (each test goes through RunStep pipeline with engine.execute + error.check)
+`--test` → run.pr → test.pr → foreach test files → `runtime.run` (each test goes through RunStep pipeline with app.execute + error.check)
 
 ### Normal execution flow
-run.pr → RunGoal (reads .pr file if %goal% not set) → foreach steps → RunStep (events → cache → engine.execute → error.check)
+run.pr → RunGoal (reads .pr file if %goal% not set) → foreach steps → RunStep (events → cache → app.execute → error.check)
 
 ---
 
 ## Key Files
 
 - **CLI parsing**: `PLang/Utils/CommandLineParser.cs`
-- **Executor (CLI → Engine)**: `PLang/Executor.cs`
-- **Engine root**: `PLang/App/this.cs`
+- **Executor (CLI → App)**: `PLang/Executor.cs`
+- **App root**: `PLang/App/this.cs`
 - **Build mode**: `PLang/App/Build/this.cs`
 - **Runtime module**: `PLang/App/modules/runtime/run.cs`
 - **System run.pr**: `system/.build/run.pr` — bootstrap, routes to build/test/run

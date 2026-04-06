@@ -8,10 +8,10 @@ Collected architectural insights from building and debugging PLang App.
 
 ### `@this` Class Convention
 Every folder's primary class is named `@this` in `this.cs`. Consumers use global using aliases:
-- `Engine/this.cs` → `class @this` (no global alias — namespace shadows it)
-- `Engine/Goals/this.cs` → `class @this` (alias: `EngineGoals`)
-- `Engine/Goals/Goal/this.cs` → `class @this` (alias: `Goal` in tests, per-file in PLang)
-- `Engine/Goals/Goal/Steps/Step/Actions/Action/this.cs` → `class @this` (per-file alias only — `System.Action` conflict)
+- `App/this.cs` → `class @this` (no global alias — namespace shadows it)
+- `App/Goals/this.cs` → `class @this` (alias: `EngineGoals`)
+- `App/Goals/Goal/this.cs` → `class @this` (alias: `Goal` in tests, per-file in PLang)
+- `App/Goals/Goal/Steps/Step/Actions/Action/this.cs` → `class @this` (per-file alias only — `System.Action` conflict)
 
 ### Namespace Per Folder
 Each folder gets its **own namespace** matching its path exactly:
@@ -23,9 +23,9 @@ This works because the class is `@this` — it never collides with its namespace
 
 ### `ChildNamespace.@this` Pattern
 From within a parent namespace, reference a child's primary class as `ChildNamespace.@this`:
-- From `Engine.Goals`: `Goal.@this` (the Goal entity class)
-- From `Engine.Channels`: `Channel.@this`, `Serializers.@this`
-- From `Engine.*`: `Engine.@this` (the Engine root class)
+- From `App.Goals`: `Goal.@this` (the Goal entity class)
+- From `App.Channels`: `Channel.@this`, `Serializers.@this`
+- From `App.*`: `App.@this` (the App root class)
 
 This works because C# resolves child namespace segments before using aliases.
 
@@ -33,22 +33,22 @@ This works because C# resolves child namespace segments before using aliases.
 `PLang/App/GlobalUsings.cs` provides aliases for types without naming conflicts.
 
 **Can't be global** (shadowed or conflicting):
-- `Engine` — namespace `App.Engine` shadows it from all `App.*` files
+- `App` — namespace `App.App` shadows it from all `App.*` files
 - `CallStack` — v1 `PLang.Runtime.CallStack` conflict
 - `Goal`, `Visibility`, `ErrorHandler` — v1 `Building.Model` conflict
 - `Action` — `System.Action` conflict
 - `EventType`, `EventBinding` — v1 `PLang.Events` conflict
 
 ### PLang.Tests Has Extra Aliases
-`PLang.Tests/GlobalUsings.cs` includes additional aliases (Engine, Goal, ErrorHandler, CallStack, etc.)
+`PLang.Tests/GlobalUsings.cs` includes additional aliases (App, Goal, ErrorHandler, CallStack, etc.)
 because there are no Building.Model or v1 Runtime references in the test project.
 
 ---
 
 ## Goal Resolution & Relative Paths
 
-### Engine Root
-The engine's file system root is the top-level directory (e.g., `Tests/App/` or the app folder). The PLang engine is only aware of its own file system — `/` means engine root, not OS root.
+### App Root
+The app's file system root is the top-level directory (e.g., `Tests/App/` or the app folder). The PLang app is only aware of its own file system — `/` means app root, not OS root.
 
 ### Goal.FolderPath
 Every goal has a `FolderPath` derived from its `Path` property:
@@ -56,12 +56,12 @@ Every goal has a `FolderPath` derived from its `Path` property:
 - `\Variables\Variables.test.goal` → `/Variables/`
 - `\Start.goal` → `/`
 
-FolderPath always starts with `/` (relative to engine root) and ends with `/`.
+FolderPath always starts with `/` (relative to app root) and ends with `/`.
 
 ### Relative vs Absolute Goal Calls
 When a goal calls another goal by name:
 - **Relative** (`call ReadCached`) — resolves relative to the calling goal's `FolderPath`. A goal in `/Cache/` calling `ReadCached` looks for `/Cache/.build/readcached.pr` first, then falls back to root `/.build/readcached.pr`.
-- **Absolute** (`call /ReadCached`) — the leading `/` means resolve from engine root: `/.build/readcached.pr`.
+- **Absolute** (`call /ReadCached`) — the leading `/` means resolve from app root: `/.build/readcached.pr`.
 
 ### Lazy Loading
 Goals are loaded on demand. `Goals.GetAsync` only loads a `.pr` file when a goal is first requested and not already cached. Never preload all `.pr` files in a directory — load them when needed.
@@ -80,7 +80,7 @@ A `.goal` file can define multiple goals (Start + sub-goals). The builder create
 ## Test Architecture
 
 ### Test Isolation
-Each `*.test.goal` gets a fresh engine instance. This prevents events, variables, and goal caches from leaking between tests. The fresh engine shares the same root directory as the original engine.
+Each `*.test.goal` gets a fresh app instance. This prevents events, variables, and goal caches from leaking between tests. The fresh app shares the same root directory as the original app.
 
 ### Builder Caching
 The builder uses a content hash to skip rebuilding unchanged `.goal` files. If a `.pr` file has incorrect data but the `.goal` hash matches, the builder will approve the existing (broken) `.pr`. To force regeneration, delete the `.pr` file and rebuild.
@@ -120,7 +120,7 @@ Uses regex-based matching: standalone `*` becomes `.*`, regex-like patterns are 
 
 In OBP, **the name IS the contract**. Each property on the object graph should tell you what the object *is*, not what it *does*. You navigate the tree by name and the object takes care of itself.
 
-Good names describe the thing: `engine.Goals`, `engine.Libraries`, `engine.FileSystem`, `engine.Channels`, `engine.Channels.Serializers`. Each tells you what it manages — you navigate there and call methods.
+Good names describe the thing: `app.Goals`, `app.Libraries`, `app.FileSystem`, `app.Channels`, `app.Channels.Serializers`. Each tells you what it manages — you navigate there and call methods.
 
 Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun. It doesn't tell you what the object *is* (a channel manager), only what it vaguely *does* (input/output). Broad names cause confusion — "filesystem is I/O too, shouldn't it be here?" The fix: name it what it is (`Channels`), and the responsibilities become obvious.
 
@@ -137,9 +137,9 @@ Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun. 
 
 ## Libraries Replaces ActionRegistry
 
-`ActionRegistry` was replaced by `engine.Modules` (flat action registry). The key changes:
+`ActionRegistry` was replaced by `app.Modules` (flat action registry). The key changes:
 
-- **`engine.Modules`** — flat registry of all action handlers (module → action → type)
+- **`app.Modules`** — flat registry of all action handlers (module → action → type)
 - **Resolution**: `Modules.GetCodeGenerated(module, action, context)` — case-insensitive lookup
 - **External DLL loading**: `module.add` action lets PLang code load external DLLs at runtime (`add module mymodule.dll`). `module.remove` unregisters a module.
 - **Two registration modes**: `Register(instance)` for shared/stateful handlers, `RegisterType(type)` for per-call instantiation (thread-safe)
@@ -192,7 +192,7 @@ Indented steps (sub-steps) default to NOT executing. They must be "proven true" 
 
 ## [Sensitive] Attribute — Two-Mode Serialization
 
-The `[Sensitive]` attribute (defined in `Engine/View.cs`) marks properties that contain secret data (e.g., `IdentityData.PrivateKey`). It controls a two-mode serialization split:
+The `[Sensitive]` attribute (defined in `App/View.cs`) marks properties that contain secret data (e.g., `IdentityData.PrivateKey`). It controls a two-mode serialization split:
 
 - **Output serialization** (JsonStreamSerializer, Data.Envelope Compress): `SensitivePropertyFilter` strips `[Sensitive]` properties. Private keys never leak through channels, API responses, or compressed payloads.
 - **Storage serialization** (raw JsonSerializer via DataSource): Filter is NOT applied. Private keys persist in SQLite.
@@ -206,7 +206,7 @@ The filter is always-on — it's wired into both `JsonStreamSerializer`'s defaul
 
 `IdentityData` extends `Data` directly — a pure data record with typed properties (`PublicKey`, `PrivateKey`, `IsDefault`, `IsArchived`, `Created`). It lives on `Actor.Identity` as a property. No lazy resolution, no sync-over-async.
 
-Handlers update `Actor.Identity` directly after mutations (e.g., `setDefault`, `rename`). The `DefaultIdentityProvider.Get()` refreshes `engine.System.Identity` when resolving the default identity. `IdentityData.ToString()` returns the public key, so `%MyIdentity%` in a string context gives the public key.
+Handlers update `Actor.Identity` directly after mutations (e.g., `setDefault`, `rename`). The `DefaultIdentityProvider.Get()` refreshes `app.System.Identity` when resolving the default identity. `IdentityData.ToString()` returns the public key, so `%MyIdentity%` in a string context gives the public key.
 
 See `PLang/App/modules/identity/types.cs` for the class definition.
 
@@ -219,9 +219,9 @@ See `PLang/App/modules/identity/types.cs` for the class definition.
 ```csharp
 Context.Variables.Put(new DynamicData("MyIdentity", () =>
 {
-    var provider = engine.Providers.Get<IIdentityProvider>();
+    var provider = app.Providers.Get<IIdentityProvider>();
     if (!provider.Success) return null;
-    var identity = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = engine.Context }).GetAwaiter().GetResult();
+    var identity = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = app.Context }).GetAwaiter().GetResult();
     return identity.Success ? identity : null;
 }));
 ```
@@ -236,14 +236,14 @@ This means:
 
 ---
 
-## Engine.Providers — Pluggable Module Implementations
+## App.Providers — Pluggable Module Implementations
 
-`Engine.Providers` (`App.Providers.@this`) is a named provider registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, IProvider>>`. Each provider type can have multiple named implementations. First registered becomes default.
+`App.Providers` (`App.Providers.@this`) is a named provider registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, IProvider>>`. Each provider type can have multiple named implementations. First registered becomes default.
 
 Each module:
 1. Defines a provider interface (e.g., `ICryptoProvider`, `ISigningProvider`)
 2. Ships a default implementation (e.g., `DefaultProvider`, `Ed25519Provider`)
-3. Resolves at runtime via `Engine.Providers.Get<T>(name?)` or `GetOrDefault<T>(fallback)`
+3. Resolves at runtime via `App.Providers.Get<T>(name?)` or `GetOrDefault<T>(fallback)`
 
 PLang developers override by loading a DLL that implements the interface:
 ```
@@ -319,17 +319,17 @@ This means `SignedData.Verified` needs a lazy resolution pattern (similar to `Id
 
 ---
 
-## ILlmProvider — LLM Provider in Engine.Providers
+## ILlmProvider — LLM Provider in App.Providers
 
 `ILlmProvider` follows the same provider pattern as other module providers. Single method: `Task<Data> Query(query action)`. The provider owns the full lifecycle: config resolution, message formatting, HTTP calls (via the http module), tool execution loop, caching, streaming, validation, and conversation continuity.
 
-**Default provider:** `OpenAiProvider` — works with any OpenAI-compatible API (configurable endpoint). Registered on `Engine.Providers` during construction. Switchable via `provider.set`.
+**Default provider:** `OpenAiProvider` — works with any OpenAI-compatible API (configurable endpoint). Registered on `App.Providers` during construction. Switchable via `provider.set`.
 
 **PLang type name mapping:** `"llm"` / `"illmprovider"` → `ILlmProvider`.
 
 **Config resolution:** `llm.endpoint` / `llm.apiKey` / `llm.model` read from SettingsStore → environment variables (`OPENAI_API_KEY`, `OPENAI_API_ENDPOINT`) → hard defaults (`gpt-4.1-mini`).
 
-**Tool execution loop:** The provider calls `engine.RunGoalAsync(GoalCall)` for each tool the LLM requests. Tool errors are sent back to the LLM as tool result text ("Error: ..."), letting the LLM decide how to proceed. `MaxToolCalls` is a hard budget — tool calls are sliced to the remaining budget before execution.
+**Tool execution loop:** The provider calls `app.RunGoalAsync(GoalCall)` for each tool the LLM requests. Tool errors are sent back to the LLM as tool result text ("Error: ..."), letting the LLM decide how to proceed. `MaxToolCalls` is a hard budget — tool calls are sliced to the remaining budget before execution.
 
 **Conversation continuity:** Stores/restores message history in `PLangContext` (`__llm_conversation__`, `__llm_schema__`). Original messages (before format mutation) are stored so format instructions don't compound across turns.
 
@@ -339,9 +339,9 @@ This means `SignedData.Verified` needs a lazy resolution pattern (similar to `Id
 
 ---
 
-## IHttpProvider — HTTP Provider in Engine.Providers
+## IHttpProvider — HTTP Provider in App.Providers
 
-`IHttpProvider` follows the same provider pattern as `ISigningProvider`, `ICryptoProvider`, etc. Registered on `Engine.Providers` during engine construction. `DefaultHttpProvider` is the built-in implementation that owns `HttpClient`, config resolution, signing integration, streaming, and response parsing.
+`IHttpProvider` follows the same provider pattern as `ISigningProvider`, `ICryptoProvider`, etc. Registered on `App.Providers` during app construction. `DefaultHttpProvider` is the built-in implementation that owns `HttpClient`, config resolution, signing integration, streaming, and response parsing.
 
 Add `IHttpProvider` to the provider interfaces list:
 - `IProvider` — base: `Name`, `IsDefault`
@@ -358,11 +358,11 @@ PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"tem
 
 ---
 
-## IBuilderProvider — Builder Provider in Engine.Providers
+## IBuilderProvider — Builder Provider in App.Providers
 
 `IBuilderProvider` follows the same provider pattern as other module providers. Owns all build-time logic — action records are thin one-line delegates. The default `DefaultBuilderProvider` handles goal parsing, `.pr` file merging, action validation, and persistence.
 
-**BuildingGuard**: Static `BuildingGuard(IContext)` method on the provider. Checks `action.Context.Engine.Building.IsEnabled` — returns `ActionError("BuildingDisabled", 400)` if false. Called first in every provider method. This is the authorization gate that prevents builder actions from running at application runtime.
+**BuildingGuard**: Static `BuildingGuard(IContext)` method on the provider. Checks `action.Context.App.Building.IsEnabled` — returns `ActionError("BuildingDisabled", 400)` if false. Called first in every provider method. This is the authorization gate that prevents builder actions from running at application runtime.
 
 **Goal.Parse() + MergeFrom()**: The builder module adds two key methods to the Goal entity:
 - `Goal.Parse(text, path)` — line-by-line parser for `.goal` text format. Produces `List<Goal>` with structural data (Name, Steps with Text/Index/Indent, Visibility, Comments). Supports multi-goal files, `/` and `/* */` comments, `\` escape, continuation lines.
@@ -370,13 +370,13 @@ PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"tem
 
 **Step.Merge()**: Copies LLM-derived fields (Actions, Cache, OnError, Errors, Warnings) from source to target. Structural fields (Text, Index, Indent, LineNumber) are untouched. Only overwrites if source has data.
 
-**File I/O pattern**: All file operations go through `engine.RunAction` with file module actions — consistent with how the LLM module uses `http.request`. No direct `System.IO`.
+**File I/O pattern**: All file operations go through `app.RunAction` with file module actions — consistent with how the LLM module uses `http.request`. No direct `System.IO`.
 
 ---
 
 ## TransportPropertyFilter — [In] / [Out] Attributes
 
-`[In]` and `[Out]` are serialization view attributes (defined in `Engine/View.cs`) that control transport-layer property visibility. They work alongside `[JsonIgnore]` to create a three-mode serialization system:
+`[In]` and `[Out]` are serialization view attributes (defined in `App/View.cs`) that control transport-layer property visibility. They work alongside `[JsonIgnore]` to create a three-mode serialization system:
 
 - **Default JSON**: `[JsonIgnore]` properties are hidden (e.g., `Data.Signature`)
 - **Inbound transport** (`[In]`): `TransportPropertyFilter.ForInbound` re-includes `[In]` properties during deserialization. Used when parsing `application/plang` responses — `Data.Signature` arrives on the wire and must be deserialized.
@@ -392,12 +392,12 @@ PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"tem
 
 `ISettings` was renamed to `IConfig` across all modules. The rationale: "config" better describes what these classes are — configuration with defaults, not mutable settings. Files:
 
-- `Engine/Settings/ISettings.cs` → `Engine/Config/IConfig.cs`
-- `Engine/Settings/ModuleView.cs` → `Engine/Config/ModuleView.cs`
-- `Engine/Settings/this.cs` → `Engine/Config/this.cs`
+- `App/Settings/ISettings.cs` → `App/Config/IConfig.cs`
+- `App/Settings/ModuleView.cs` → `App/Config/ModuleView.cs`
+- `App/Settings/this.cs` → `App/Config/this.cs`
 - Module `Settings.cs` files → `Config.cs` (archive, signing, http)
 
-`engine.Settings` → `engine.Config`. `Settings.Apply` writes action properties to the scope chain via reflection.
+`app.Settings` → `app.Config`. `Settings.Apply` writes action properties to the scope chain via reflection.
 
 ---
 
@@ -414,10 +414,10 @@ This separates the configure action's nullable properties (only non-null values 
 
 ---
 
-## PathData — Data Subclass in Engine/FileSystem/
+## PathData — Data Subclass in App/FileSystem/
 
-`PathData` extends `Data` — a path IS a Data. It was moved from `Engine/Memory/` to `Engine/FileSystem/` because it's a file system concept, not a memory concept. `Value` holds file content when set by a file provider (e.g., after `file.read`). Path properties (`Extension`, `FileName`, `FileNameWithoutExtension`, `Directory`, `Relative`) are on `PathData` directly, not on `Value`.
+`PathData` extends `Data` — a path IS a Data. It was moved from `App/Memory/` to `App/FileSystem/` because it's a file system concept, not a memory concept. `Value` holds file content when set by a file provider (e.g., after `file.read`). Path properties (`Extension`, `FileName`, `FileNameWithoutExtension`, `Directory`, `Relative`) are on `PathData` directly, not on `Value`.
 
-The class resolves raw path strings into absolute paths. Relative paths resolve against the goal's folder, not the engine root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.
+The class resolves raw path strings into absolute paths. Relative paths resolve against the goal's folder, not the app root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.
 
 See `PLang/App/FileSystem/PathData.cs` for the class definition.

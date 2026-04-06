@@ -49,7 +49,7 @@ public sealed class GoalCallbackAttribute : Attribute
 
 /// <summary>
 /// Marks a property for automatic provider injection via the source generator.
-/// The generated code resolves the provider from Engine.Providers at execution time.
+/// The generated code resolves the provider from App.Providers at execution time.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public sealed class ProviderAttribute : Attribute { }

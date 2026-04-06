@@ -127,7 +127,7 @@ public sealed class @this
     public int Count => _modules.Values.Sum(a => a.Count);
 
     /// <summary>
-    /// All registered instances (for disposal on engine shutdown).
+    /// All registered instances (for disposal on app shutdown).
     /// Type-registered actions are per-call — no disposal tracking needed.
     /// </summary>
     public IEnumerable<IAction> All

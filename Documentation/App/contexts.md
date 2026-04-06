@@ -117,7 +117,7 @@ public enum TrustLevel
 {
     User = 1,     // User-initiated, lowest trust
     Service = 2,  // Service-level operations
-    System = 3    // Internal engine, highest trust
+    System = 3    // Internal app, highest trust
 }
 ```
 
@@ -129,14 +129,14 @@ public enum TrustLevel
 | `TrustLevel` | `TrustLevel` | Trust level |
 | `Context` | `PLangContext` | Owned context |
 | `IO` | `IO` | Owned I/O manager |
-| `Engine` | `Engine` | Parent engine |
+| `App` | `App` | Parent app |
 
-The engine lazily creates three actors:
-- `Engine.System` — `TrustLevel.System`
-- `Engine.Service` — `TrustLevel.Service`
-- `Engine.User` — `TrustLevel.User`
+The app lazily creates three actors:
+- `App.System` — `TrustLevel.System`
+- `App.Service` — `TrustLevel.Service`
+- `App.User` — `TrustLevel.User`
 
-`Engine.Context` is a shortcut for `Engine.User.Context`.
+`App.Context` is a shortcut for `App.User.Context`.
 
 ---
 
@@ -163,23 +163,23 @@ Each `PLangContext` has two scopes:
 
 ```
 Application starts
-    → new Engine(fileSystem)
-    → engine.LoadGoalsFromDirectoryAsync(buildDir)
-    → engine.RunGoalAsync("Start")        // uses Engine.User.Context
-    → engine.DisposeAsync()
+    → new App(fileSystem)
+    → app.LoadGoalsFromDirectoryAsync(buildDir)
+    → app.RunGoalAsync("Start")        // uses App.User.Context
+    → app.DisposeAsync()
 ```
 
 ### Web Request (conceptual)
 
 ```
 Application starts
-    → new Engine(fileSystem)
-    → engine.LoadGoalsFromDirectoryAsync(buildDir)
+    → new App(fileSystem)
+    → app.LoadGoalsFromDirectoryAsync(buildDir)
 
 Request arrives
-    → engine.CreateContext("request-123")
+    → app.CreateContext("request-123")
     → context.Variables.Set("request", httpRequest)
-    → engine.RunGoalAsync("HandleRequest", context)
+    → app.RunGoalAsync("HandleRequest", context)
     → context.Dispose()
 ```
 
@@ -187,6 +187,6 @@ Request arrives
 
 - `PLangAppContext` holds global [Events](events.md) system
 - `PLangContext` holds [Variables](memory-stack.md) and [CallStack](call-stack.md)
-- [Engine](engine.md) creates `PLangContext` via `CreateContext()`
+- [App](app.md) creates `PLangContext` via `CreateContext()`
 - [Actor](contexts.md) owns a `PLangContext` and `IO`
 - Action handlers receive `PLangContext` via `CodeGeneratedExecuteAsync`

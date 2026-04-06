@@ -172,14 +172,14 @@ PLang uses **TUnit** (not xUnit/NUnit). Key differences:
 Handlers need a `PLangContext` to work. Use this pattern:
 
 ```csharp
-private (PLangContext context, Variables memory, Engine engine) CreateContext()
+private (PLangContext context, Variables memory, App app) CreateContext()
 {
     var appContext = new PLangAppContext("/app");
     var memory = new Variables();
     var context = new PLangContext(appContext, memory);
-    var engine = new Engine(appContext);
-    context.RegisterContextVariables(engine);
-    return (context, memory, engine);
+    var app = new App(appContext);
+    context.RegisterContextVariables(app);
+    return (context, memory, app);
 }
 ```
 
@@ -252,8 +252,8 @@ When a PLang test fails at runtime:
 ## Test Runner Internals
 
 - `plang !test` runs `TestMode.RunAsync()` in `PLang/App/Core/TestMode.cs`
-- Discovers `*.test.goal` files recursively from engine root
-- Each test gets a **fresh Engine** — full isolation (no leaked events, variables, or goals)
+- Discovers `*.test.goal` files recursively from app root
+- Each test gets a **fresh App** — full isolation (no leaked events, variables, or goals)
 - Derives .pr path: `<dir>/.build/<name>.test.pr` (e.g., `Mock/.build/mock.test.pr`)
 - Runs goal named `Start` from the .pr file
 - Tracks `AssertionError` failures via an AfterStep event binding

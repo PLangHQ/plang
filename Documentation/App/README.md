@@ -1,13 +1,13 @@
 # PLang App — Architecture Overview
 
-App is PLang's second-generation execution engine. It replaces the v1 module system with an object-based action handler architecture, a universal `Data` result type, and source-generated lazy parameter resolution.
+App is PLang's second-generation execution app. It replaces the v1 module system with an object-based action handler architecture, a universal `Data` result type, and source-generated lazy parameter resolution.
 
 ## The Object Graph
 
-Engine is the root — everything hangs off it:
+App is the root — everything hangs off it:
 
 ```
-Engine (@this, sealed, IAsyncDisposable)
+App (@this, sealed, IAsyncDisposable)
 ├── Libraries    (goal alias: EngineLibraries — handler resolution)
 ├── Goals        (goal alias: EngineGoals — goal collection with lazy disk loading)
 ├── FileSystem   (IPLangFileSystem — abstracted filesystem)
@@ -20,7 +20,7 @@ Engine (@this, sealed, IAsyncDisposable)
 ├── Debug        (global alias: Debugging — debug mode controller)
 ├── Testing      (global alias: Testing — test runner)
 └── Actors (lazy)
-    ├── System       (internal engine operations)
+    ├── System       (internal app operations)
     ├── Service      (external service operations)
     └── User         (end user operations)
          ├── Identity → IdentityData (lazy, auto-creates default Ed25519 key pair)
@@ -32,7 +32,7 @@ Engine (@this, sealed, IAsyncDisposable)
                         └── Actor         (identity)
 ```
 
-**`@this` Convention**: Every folder's primary class is named `@this` in `this.cs`. Consumers use global using aliases (e.g., `global using Step = App.Goals.Goal.Steps.Step.@this;`). Within parent namespaces, use `ChildNamespace.@this` (e.g., `Engine.@this`, `Goal.@this`, `Channel.@this`).
+**`@this` Convention**: Every folder's primary class is named `@this` in `this.cs`. Consumers use global using aliases (e.g., `global using Step = App.Goals.Goal.Steps.Step.@this;`). Within parent namespaces, use `ChildNamespace.@this` (e.g., `App.@this`, `Goal.@this`, `Channel.@this`).
 
 ## Entity Hierarchy: Goal → Steps → Actions
 
@@ -49,8 +49,8 @@ Each level calls `.Load()` then `.RunAsync()`. Events fire before/after each pha
 
 ```
 plang Start.goal
-  → Engine loads .build/start.pr (JSON → Goal)
-  → Engine.RunGoalAsync(goal, context)
+  → App loads .build/start.pr (JSON → Goal)
+  → App.RunGoalAsync(goal, context)
     → goal.RunAsync() → for each Step:
       → step.RunAsync() → Actions.RunAsync() → for each Action:
         → EngineLibraries.GetCodeGenerated(module, action) finds handler
@@ -63,7 +63,7 @@ plang Start.goal
 
 **Object-Based Pattern (OBP)**:
 1. **Behavior on owner** — `GoalSteps.Load()` loads steps, not external code
-2. **Navigate, don't pass** — pass Engine/Context, let caller reach what it needs
+2. **Navigate, don't pass** — pass App/Context, let caller reach what it needs
 3. **Keep object references** — store `Step`, not `step.Text`; store `Goal`, not `goal.Name`
 4. **Per-request state is a parameter** — PLangContext never cached on shared objects (Goal, Step)
 5. **Smart collections** — GoalSteps, StepActions extend `List<T>` and own domain operations (Load, RunAsync)
@@ -76,7 +76,7 @@ plang Start.goal
 
 **Entity events**: Goal, Step, and Action each have a `Lifecycle` with `Before`/`After` `Bindings`, plus pattern-matched event bindings via `EngineEvents`.
 
-**Optional debugging**: CallStack is opt-in. When enabled, tracks frames with step history. Use `plang !debug` to enable. Debug mode is owned by `engine.Debug` (EngineDebug).
+**Optional debugging**: CallStack is opt-in. When enabled, tracks frames with step history. Use `plang !debug` to enable. Debug mode is owned by `app.Debug` (EngineDebug).
 
 ## Handler Pattern
 
@@ -118,11 +118,11 @@ The source generator creates a `CodeGeneratedExecuteAsync` partial that resolves
 
 ## Builder Pipeline (.goal → .pr)
 
-The builder transforms natural language PLang into JSON execution plans. It runs on the **old v1 engine** and produces App artifacts:
+The builder transforms natural language PLang into JSON execution plans. It runs on the **old v1 app** and produces App artifacts:
 
 ```
 Start.goal (natural language)
-  → Build.goal (orchestrator, runs on v1 engine)
+  → Build.goal (orchestrator, runs on v1 app)
     → GetGoalsV2() parses .goal text → App Goal objects
     → MergeV2PrData() loads existing .pr actions (incremental builds)
     → Renders goal+actions for LLM via Scriban template
@@ -131,7 +131,7 @@ Start.goal (natural language)
     → SaveGoal writes .build/start.pr (JSON)
 ```
 
-The bridge is `PLang/Modules/PlangModule/Program.cs` — exposes App operations to the v1 builder engine.
+The bridge is `PLang/Modules/PlangModule/Program.cs` — exposes App operations to the v1 builder app.
 
 ### Build commands
 - `plang build` — old v1 builder (used to build the builder goals in system/)
@@ -141,7 +141,7 @@ The bridge is `PLang/Modules/PlangModule/Program.cs` — exposes App operations 
 
 | Component | Description | Detail |
 |-----------|-------------|--------|
-| [Engine](engine.md) | Central orchestrator. Loads goals, manages handlers, executes via actors | Core |
+| [App](app.md) | Central orchestrator. Loads goals, manages handlers, executes via actors | Core |
 | [Contexts](contexts.md) | `PLangContext` (request), `Actor` (identity) | Lifetime |
 | [IO & Channels](io-channels.md) | Stream-based IO with named channels (EngineChannels) | `Channel` |
 | [Goals & Steps](goals-steps.md) | `Goal`, `Step`, `Action` entities and smart collections (EngineGoals, GoalSteps, StepActions) | Execution structure |
@@ -149,7 +149,7 @@ The bridge is `PLang/Modules/PlangModule/Program.cs` — exposes App operations 
 | [Variables](memory-stack.md) | Variable storage with dot-notation, system variables | Variables |
 | [CallStack](call-stack.md) | Execution tracking with frames, max depth 1000 | Debugging |
 | [Events](events.md) | Lifecycle (Before/After Bindings) + EngineEvents with pattern matching | Lifecycle hooks |
-| [Action Handlers](modules.md) | `[Action]` + `IContext` + `Run()`, source generator adds `ICodeGenerated`. `Library`, `EngineLibraries` (in Engine/) | Extensibility |
+| [Action Handlers](modules.md) | `[Action]` + `IContext` + `Run()`, source generator adds `ICodeGenerated`. `Library`, `EngineLibraries` (in App/) | Extensibility |
 | [Serializers](serializers.md) | `ISerializer` with EngineSerializers, content-type routing | Data formats |
 | [.pr File Format](pr-file-format.md) | JSON structure for compiled goals | File spec |
 | [Errors](exceptions.md) | `IError`/`Error` hierarchy + `AppException` | Error handling |
@@ -161,7 +161,7 @@ Folder paths map to the architecture graph. Each folder's primary class is `this
 
 ```
 PLang/App/
-├── Engine/
+├── App/
 │   ├── this.cs                Central orchestrator (root of object graph)
 │   ├── Info.cs                Version/build info
 │   ├── View.cs                [Store], [LlmBuilder], [Debug], [Default], [Sensitive] attributes
@@ -268,7 +268,7 @@ PLang/App/
     │   ├── if.cs         condition.if — evaluates + branches (goal or sub-step mode)
     │   ├── compare.cs    condition.compare — pure bool (for compound AND/OR)
     │   └── providers/
-    │       ├── IEvaluator.cs         Pluggable comparison engine interface
+    │       ├── IEvaluator.cs         Pluggable comparison app interface
     │       └── DefaultEvaluator.cs   Default: all operators, type normalization, IsTruthy
     ├── goal/   loop/   list/   math/   module/
     ├── identity/

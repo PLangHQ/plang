@@ -44,7 +44,7 @@ public sealed class @this
 
     /// <summary>
     /// Discovers and runs all *.test.goal files, prints summary, returns exit code.
-    /// Each test file gets a fresh engine for full isolation.
+    /// Each test file gets a fresh app for full isolation.
     /// </summary>
     public async Task<int> RunAsync(CancellationToken cancellationToken = default)
     {

@@ -12,9 +12,9 @@ Configure actions (e.g., `http.configure`) had a manual if-chain in every provid
 ```csharp
 // Before: 8 if-statements with hardcoded string keys per module
 if (action.TimeoutInSec.HasValue)
-    engine.Settings.Set("http.TimeoutInSec", action.TimeoutInSec.Value, action.Context, isDefault);
+    app.Settings.Set("http.TimeoutInSec", action.TimeoutInSec.Value, action.Context, isDefault);
 if (action.BaseUrl != null)
-    engine.Settings.Set("http.BaseUrl", action.BaseUrl, action.Context, isDefault);
+    app.Settings.Set("http.BaseUrl", action.BaseUrl, action.Context, isDefault);
 // ... repeat for every property
 ```
 
@@ -26,7 +26,7 @@ Every module with a configure action would need the same boilerplate. Adding a p
 
 ```csharp
 // After: one line, works for any module
-engine.Settings.Apply<Config>(action, action.Context, action.Default);
+app.Settings.Apply<Config>(action, action.Context, action.Default);
 ```
 
 This solves:

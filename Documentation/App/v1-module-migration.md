@@ -55,4 +55,4 @@ Browse: `git show v1-reference:PLang/Modules/<ModuleName>/Program.cs`
 | WindowAppModule | - | todo |
 | XmlModule | - | todo |
 
-v3-only modules (no v1 equivalent): `engine/`, `module/`, `provider/`, `runtime/`, `settings/`, `signing/`
+v3-only modules (no v1 equivalent): `app/`, `module/`, `provider/`, `runtime/`, `settings/`, `signing/`

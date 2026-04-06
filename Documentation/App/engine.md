@@ -1,6 +1,6 @@
-# Engine
+# App
 
-`App.Core.Engine` is the central orchestrator. It is a **sealed** class (not partial) implementing `IAsyncDisposable`.
+`App.Core.App` is the central orchestrator. It is a **sealed** class (not partial) implementing `IAsyncDisposable`.
 
 ## Properties
 
@@ -21,22 +21,22 @@
 | `Culture` | `CultureInfo` | Formatting for dates, numbers (default: InvariantCulture) |
 | `IsDebugMode` | `bool` | Debug flag |
 | `IsTestMode` | `bool` | Test mode flag |
-| `StartedAt` | `DateTime` | When the engine was started |
-| `Uptime` | `TimeSpan` | How long the engine has been running |
+| `StartedAt` | `DateTime` | When the app was started |
+| `Uptime` | `TimeSpan` | How long the app has been running |
 | `ShutdownToken` | `CancellationToken` | For graceful shutdown |
 
 ## Actors (Lazy)
 
-The engine creates three actors lazily, each with its own `PLangContext` and trust level:
+The app creates three actors lazily, each with its own `PLangContext` and trust level:
 
 | Actor | Trust Level | Purpose |
 |-------|-------------|---------|
-| `System` | `TrustLevel.System` (3) | Internal engine operations |
+| `System` | `TrustLevel.System` (3) | Internal app operations |
 | `Service` | `TrustLevel.Service` (2) | Service-level operations |
 | `User` | `TrustLevel.User` (1) | User-initiated operations |
 
 ```csharp
-// Convenience — Engine.Context is the User actor's context
+// Convenience — App.Context is the User actor's context
 public PLangContext Context => User.Context;
 public Variables Variables => Context.Variables;
 ```
@@ -45,10 +45,10 @@ public Variables Variables => Context.Variables;
 
 ```csharp
 // Minimal — filesystem only
-public Engine(IPLangFileSystem fileSystem)
+public App(IPLangFileSystem fileSystem)
 
 // Full — all dependencies injectable
-public Engine(
+public App(
     string absolutePath,
     Libraries? libraries = null,
     SerializerRegistry? serializers = null,
@@ -74,27 +74,27 @@ The `GoalCall` overload resolves `%var%` references in the goal name, injects Go
 Execution path:
 1. Resolve goal by name via `Goals.GetAsync()` (loads from disk if not cached)
 2. Returns `Data.Fail(GoalError.NotFound(name))` if goal doesn't exist
-3. Calls `goal.Load(context)` then `goal.RunAsync(engine, context, ct)`
+3. Calls `goal.Load(context)` then `goal.RunAsync(app, context, ct)`
 4. Returns `Data` — check `Data.Success` / `Data.Error`
 
 ## Property (Key-Value Store)
 
 ```csharp
-engine.Property["key"]              // sync — raw value (indexer)
-engine.Property["key"] = value      // sync — set
-await engine.Property.Get("key")    // async — resolves GoalCall if needed
-await engine.Property.Get<T>("key") // async — typed
-engine.Property.Set("key", value)   // explicit set
-engine.Property.ContainsKey("key")  // check existence
-engine.Property.Remove("key")       // remove
-engine.Property.Keys                // all keys
+app.Property["key"]              // sync — raw value (indexer)
+app.Property["key"] = value      // sync — set
+await app.Property.Get("key")    // async — resolves GoalCall if needed
+await app.Property.Get<T>("key") // async — typed
+app.Property.Set("key", value)   // explicit set
+app.Property.ContainsKey("key")  // check existence
+app.Property.Remove("key")       // remove
+app.Property.Keys                // all keys
 ```
 
-If the value is a `GoalCall`, `Get()` executes the goal and returns the result. This enables engine properties to be lazy goal evaluations:
+If the value is a `GoalCall`, `Get()` executes the goal and returns the result. This enables app properties to be lazy goal evaluations:
 
 ```csharp
-engine.Property["Summary"] = new GoalCall { Name = "GetSummary" };
-var summary = await engine.Property.Get<string>("Summary"); // runs the goal
+app.Property["Summary"] = new GoalCall { Name = "GetSummary" };
+var summary = await app.Property.Get<string>("Summary"); // runs the goal
 ```
 
 ## Goal Loading
@@ -115,14 +115,14 @@ These delegate to `Goals.LoadFromFileAsync` / `Goals.LoadFromDirectoryAsync`.
 PLangContext CreateContext(string? name = null)
 ```
 
-Creates a new `PLangContext` with the engine's `AppContext`, a fresh `Variables`, and an optional name.
+Creates a new `PLangContext` with the app's `AppContext`, a fresh `Variables`, and an optional name.
 
 ## Lifecycle
 
 ```csharp
-await using var engine = new Engine(absolutePath);
-await engine.LoadGoalsFromDirectoryAsync(buildDir);
-var result = await engine.RunGoalAsync("Start");
+await using var app = new App(absolutePath);
+await app.LoadGoalsFromDirectoryAsync(buildDir);
+var result = await app.RunGoalAsync("Start");
 if (!result.Success)
     Console.Error.WriteLine(result.Error?.Message);
 ```

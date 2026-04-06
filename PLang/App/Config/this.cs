@@ -3,17 +3,17 @@ using App.Context;
 namespace App.Config;
 
 /// <summary>
-/// Engine-level settings registry. Owns:
+/// App-level settings registry. Owns:
 /// - Module type registration (which IConfig types exist)
-/// - Engine-level default scope (persistent across goals)
-/// - Resolution logic: context scope → parent scope → engine defaults → class defaults
+/// - App-level default scope (persistent across goals)
+/// - Resolution logic: context scope → parent scope → app defaults → class defaults
 ///
-/// Navigation: engine.Config.For&lt;archive.Config&gt;(context).Max
+/// Navigation: app.Config.For&lt;archive.Config&gt;(context).Max
 /// </summary>
 public sealed class @this
 {
     /// <summary>
-    /// Engine-level default scope. Values here persist across goal executions.
+    /// App-level default scope. Values here persist across goal executions.
     /// Written when a settings action has Default=true.
     /// </summary>
     public Scope Defaults { get; } = new();
@@ -103,7 +103,7 @@ public sealed class @this
 
     /// <summary>
     /// Writes a setting value to the appropriate scope.
-    /// If isDefault is true, writes to engine Defaults. Otherwise writes to the context's goal scope.
+    /// If isDefault is true, writes to app Defaults. Otherwise writes to the context's goal scope.
     /// </summary>
     public void Set(string key, object value, Context.@this context, bool isDefault = false)
     {

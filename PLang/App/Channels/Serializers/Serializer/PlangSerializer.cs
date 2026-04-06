@@ -8,7 +8,7 @@ namespace App.Channels.Serializers.Serializer;
 /// Serializes the full Data envelope for PLang-to-PLang transport.
 /// Content type: application/plang. Includes name, value, type, properties, and signature.
 /// External formats (application/json, text/plain) serialize just the value —
-/// this serializer preserves the complete Data structure for inter-engine communication.
+/// this serializer preserves the complete Data structure for inter-app communication.
 /// </summary>
 public sealed class PlangSerializer : ISerializer
 {

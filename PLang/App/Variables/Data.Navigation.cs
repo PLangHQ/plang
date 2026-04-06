@@ -254,7 +254,7 @@ public partial class Data
             var navResult = navigator?.Navigate(this, key);
             if (navResult != null) return navResult;
 
-            // Fallback when no engine context (e.g., during deserialization)
+            // Fallback when no app context (e.g., during deserialization)
             var fallbackResult = Navigators.ValueNavigators.Navigate(val, key);
             if (fallbackResult != null) return fallbackResult;
         }

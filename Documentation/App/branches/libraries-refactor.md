@@ -13,18 +13,18 @@ ActionRegistry was replaced by a two-class design: `Library` (one assembly) and 
 ### Before
 
 ```
-Engine
+App
   .Actions  →  ActionRegistry (single ConcurrentDictionary, one assembly)
 ```
 
 - All handlers discovered from `Assembly.GetExecutingAssembly()`
 - No path for loading external DLLs at runtime
-- `RegisterBuiltInModules()` called in Engine constructor
+- `RegisterBuiltInModules()` called in App constructor
 
 ### After
 
 ```
-Engine
+App
   .Libraries  →  Libraries (list of Library instances)
                     [0] = built-in (PLang's own handlers)
                     [1] = external DLL loaded at runtime
@@ -58,23 +58,23 @@ Engine
 
 ## API Changes
 
-### Engine
+### App
 
 | Before | After |
 |--------|-------|
-| `engine.Actions` (`ActionRegistry`) | `engine.Libraries` (`Libraries`) |
-| `engine.Actions.GetCodeGenerated(module, action)` | `engine.Libraries.GetCodeGenerated(module, action, context)` |
-| `engine.Actions.Register(ns, cls, handler)` | `engine.Libraries.Register(module, action, handler)` |
+| `app.Actions` (`ActionRegistry`) | `app.Libraries` (`Libraries`) |
+| `app.Actions.GetCodeGenerated(module, action)` | `app.Libraries.GetCodeGenerated(module, action, context)` |
+| `app.Actions.Register(ns, cls, handler)` | `app.Libraries.Register(module, action, handler)` |
 | Constructor calls `RegisterBuiltInModules()` | `Libraries` constructor auto-discovers |
 
 ### Resolution
 
 ```csharp
 // Old
-ICodeGenerated? handler = engine.Actions.GetCodeGenerated("variable", "set");
+ICodeGenerated? handler = app.Actions.GetCodeGenerated("variable", "set");
 
 // New — returns tuple with error info
-var (handler, error) = engine.Libraries.GetCodeGenerated("variable", "set", context);
+var (handler, error) = app.Libraries.GetCodeGenerated("variable", "set", context);
 ```
 
 ### Loading External DLLs
@@ -83,24 +83,24 @@ var (handler, error) = engine.Libraries.GetCodeGenerated("variable", "set", cont
 // C# API
 var lib = new Library("mylib", Assembly.LoadFrom("mylib.dll"));
 lib.Discover("MyCompany.Modules");
-engine.Libraries.Add(lib);
+app.Libraries.Add(lib);
 
 // PLang syntax
 // - use library 'mylib.dll'
 ```
 
-### Engine.Property (key-value store, also added in this branch)
+### App.Property (key-value store, also added in this branch)
 
 ```csharp
-// Store a GoalCall in the engine's Property store
-engine.Property["Summary"] = new GoalCall { Name = "GetSummary" };
+// Store a GoalCall in the app's Property store
+app.Property["Summary"] = new GoalCall { Name = "GetSummary" };
 
 // Sync access returns the raw GoalCall
-var raw = engine.Property["Summary"]; // GoalCall object
+var raw = app.Property["Summary"]; // GoalCall object
 
 // Async Get detects GoalCall and executes the goal
-var result = await engine.Property.Get("Summary"); // runs GetSummary, returns result
-var typed = await engine.Property.Get<string>("Summary"); // typed variant
+var result = await app.Property.Get("Summary"); // runs GetSummary, returns result
+var typed = await app.Property.Get<string>("Summary"); // typed variant
 ```
 
 ---
@@ -125,12 +125,12 @@ All active App docs were updated to replace ActionRegistry references:
 
 | File | Key Changes |
 |------|-------------|
-| `engine.md` | Properties table, constructors, ResolveAsync docs |
+| `app.md` | Properties table, constructors, ResolveAsync docs |
 | `modules.md` | Full rewrite: ActionRegistry section → Library/Libraries |
 | `README.md` | Architecture diagram, execution flow, file structure |
 | `goals-steps.md` | Execution flow references |
 | `complete-example.md` | Handler example updated to `[Action]` + `IContext` pattern |
-| `plang_object_based_pattern.md` | Engine graph, navigation examples |
+| `plang_object_based_pattern.md` | App graph, navigation examples |
 | `object_pattern_formal.md` | Example names |
 | `good_to_know.md` | Added Libraries refactor architectural note |
 | `todos.md` | Marked "Libraries Replaces ActionRegistry" as done |
@@ -150,14 +150,14 @@ All active App docs were updated to replace ActionRegistry references:
 
 ### library.load handler tests (LibraryLoadTests.cs)
 - Nonexistent path → error with "Library not found"
-- Valid assembly → adds to `engine.Libraries`
+- Valid assembly → adds to `app.Libraries`
 - Discovered actions accessible on added library
 - Custom namespace filter → only matching types found
 - Null namespace → defaults to built-in namespace
 - Return value contains library info
 - Added library resolvable via `GetCodeGenerated`
 
-### Engine.ResolveAsync tests (EngineTests.cs)
+### App.ResolveAsync tests (EngineTests.cs)
 - Normal value returns as-is
 - Null key returns null
 - GoalCall value → executes goal, returns result

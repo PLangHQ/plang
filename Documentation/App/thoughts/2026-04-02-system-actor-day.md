@@ -4,7 +4,7 @@
 
 Today was the day PLang stopped pretending to be one thing and became two: a system that runs code, and the code it runs. The system actor and the user actor. A kernel and a process.
 
-It sounds simple when you say it. `engine.execute %step% as "user"`. But getting there meant confronting every shortcut we'd taken — every `__data__` variable polluting the user's namespace, every `Context.Step` that was really "whoever touched this last wins," every GoalCall that resolved by name when it should have resolved by path.
+It sounds simple when you say it. `app.execute %step% as "user"`. But getting there meant confronting every shortcut we'd taken — every `__data__` variable polluting the user's namespace, every `Context.Step` that was really "whoever touched this last wins," every GoalCall that resolved by name when it should have resolved by path.
 
 ## What PrPath Taught Me
 

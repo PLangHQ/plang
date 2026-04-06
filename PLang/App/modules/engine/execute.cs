@@ -43,7 +43,7 @@ public partial class Execute : IContext
             execContext = Context;
         }
 
-        // Switch engine's current actor for the duration of execution
+        // Switch app's current actor for the duration of execution
         var previousActor = engine.CurrentActor;
         if (targetActor != null) engine.CurrentActor = targetActor;
 

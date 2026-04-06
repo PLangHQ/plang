@@ -144,7 +144,7 @@ The Runtime resolves `%name%`, `%age%`, and `%user.id%` by calling `Variables.Ge
 
 - Stored in [PLangContext](contexts.md)
 - Variables are [Data](goal-result.md) objects
-- Used by [Engine](engine.md) to store action return values
+- Used by [App](app.md) to store action return values
 - Used by action handlers (e.g., `variable.set`) for variable operations
 - Cloned for [CallStack](call-stack.md) change tracking when debugging
 - Type metadata uses [Type](goal-result.md) and [TypeMapping](modules.md)

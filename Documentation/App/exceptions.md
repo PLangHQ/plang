@@ -228,7 +228,7 @@ The Runtime catches exceptions from action execution and wraps them in `Data.Fai
 ```csharp
 try
 {
-    return await handler.CodeGeneratedExecuteAsync(params, engine, context);
+    return await handler.CodeGeneratedExecuteAsync(params, app, context);
 }
 catch (Exception ex)
 {
@@ -239,7 +239,7 @@ catch (Exception ex)
 ## Handling Errors
 
 ```csharp
-var result = await engine.RunGoalAsync("ProcessOrder");
+var result = await app.RunGoalAsync("ProcessOrder");
 
 if (!result.Success)
 {

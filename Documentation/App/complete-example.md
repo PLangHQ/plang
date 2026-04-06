@@ -107,34 +107,34 @@ GenerateMessage
 }
 ```
 
-## 3. Bootstrap the Engine
+## 3. Bootstrap the App
 
 ```csharp
 using App.Core;
 using App.Memory;
 
-// Create engine with filesystem
-await using var engine = new Engine(fileSystem);
+// Create app with filesystem
+await using var app = new App(fileSystem);
 
 // Load goals from .pr files
-await engine.LoadGoalsFromDirectoryAsync(".build");
+await app.LoadGoalsFromDirectoryAsync(".build");
 
-Console.WriteLine($"Engine ID: {engine.Id}");
-Console.WriteLine($"Loaded goals: {string.Join(", ", engine.Goals.Names)}");
+Console.WriteLine($"App ID: {app.Id}");
+Console.WriteLine($"Loaded goals: {string.Join(", ", app.Goals.Names)}");
 ```
 
 ## 4. Execute
 
 ```csharp
-// Run the Start goal (uses Engine.User.Context by default)
-var result = await engine.RunGoalAsync("Start");
+// Run the Start goal (uses App.User.Context by default)
+var result = await app.RunGoalAsync("Start");
 
 if (result.Success)
 {
     Console.WriteLine("Goal completed successfully");
 
     // Access variables from the memory stack
-    var message = engine.Variables.Get<string>("message");
+    var message = app.Variables.Get<string>("message");
     Console.WriteLine($"Message: {message}");
 }
 else
@@ -146,12 +146,12 @@ else
 ## 5. Execution Flow
 
 ```
-engine.RunGoalAsync("Start")
+app.RunGoalAsync("Start")
 │
 ├── Goals.GetAsync("Start")
 │   └── Deserialize Start.pr.json → Goal
 │
-└── Goal.RunAsync(engine, context)
+└── Goal.RunAsync(app, context)
     │
     ├── CallStack.Push("Start", "Start.goal")
     │
@@ -159,7 +159,7 @@ engine.RunGoalAsync("Start")
     │   └── Actions.RunAsync()
     │       └── Action: variable.set(name="greeting", value="Hello")
     │           ├── Libraries.GetCodeGenerated("variable", "set")
-    │           ├── SetHandler.CodeGeneratedExecuteAsync(params, engine, context)
+    │           ├── SetHandler.CodeGeneratedExecuteAsync(params, app, context)
     │           └── Variables: greeting = "Hello"
     │
     ├── Step 1: "set %name% to World"
@@ -193,22 +193,22 @@ Result: Data.Ok()
 
 ```csharp
 // Run a non-existent goal
-var result = await engine.RunGoalAsync("NonExistent");
+var result = await app.RunGoalAsync("NonExistent");
 // result.Success == false
 // result.Error is GoalError with Key="GoalNotFound", StatusCode=404
 
 // Run with cancellation
 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-result = await engine.RunGoalAsync("LongRunningGoal", cts.Token);
+result = await app.RunGoalAsync("LongRunningGoal", cts.Token);
 // If cancelled: result.Error is GoalError with Key="Cancelled"
 
 // Check call stack after error
-if (!result.Success && engine.Context.CallStack != null)
+if (!result.Success && app.Context.CallStack != null)
 {
-    var trace = engine.Context.CallStack.GetStackTrace();
+    var trace = app.Context.CallStack.GetStackTrace();
     Console.WriteLine($"Stack trace:\n{trace}");
 
-    var errors = engine.Context.CallStack.GetErrors();
+    var errors = app.Context.CallStack.GetErrors();
     foreach (var error in errors)
         Console.WriteLine($"  [{error.Key}] {error.Message}");
 }
@@ -245,7 +245,7 @@ The source generator creates partial implementations that:
 
 This example demonstrates:
 
-1. **Engine setup** — creating `Engine`, auto-discovers built-in handlers via `Libraries`
+1. **App setup** — creating `App`, auto-discovers built-in handlers via `Libraries`
 2. **Goal loading** — loading `.pr` files via `LoadGoalsFromDirectoryAsync`
 3. **Execution** — `RunGoalAsync` with `Data` result type
 4. **Action handlers** — `variable.set` and `output.write` via `Libraries` (source generator adds `ICodeGenerated`)

@@ -7,7 +7,7 @@ namespace App.Types;
 /// Owns all type knowledge in PLang App.
 /// Delegates PLang name ↔ CLR type resolution to TypeMapping (static, shared with source generator and v1 code).
 /// Owns file extension → Kind, extension → MIME, Kind → compressibility (unique to Types).
-/// Lives as Engine.Types — callers navigate through the engine object graph.
+/// Lives as App.Types — callers navigate through the app object graph.
 /// </summary>
 public sealed class @this
 {
@@ -353,7 +353,7 @@ public sealed class @this
 
     /// <summary>
     /// Registers domain types needed for settings store rehydration.
-    /// Called by Engine constructor. Each module's types are registered here.
+    /// Called by App constructor. Each module's types are registered here.
     /// </summary>
     public void RegisterDomainTypes()
     {

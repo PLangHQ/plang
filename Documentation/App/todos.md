@@ -12,12 +12,12 @@
 
 ## PLang Linter / Static Analyzer
 **Date:** 2026-02-13
-**Context:** During Engine refactoring (folding AppContext into Engine, renaming IO→Channels). Thinking about how to make dependencies discoverable at the goal/action level.
+**Context:** During App refactoring (folding AppContext into App, renaming IO→Channels). Thinking about how to make dependencies discoverable at the goal/action level.
 
 **Idea:** Before build, scan all .cs handler files and analyze methods:
-- If a method body references `engine` or `context`, auto-add `[Engine]`, `[Context]` attributes to the method
-- This enables runtime queries like `engine.Goals["Engine"]` — get all goals that use the engine
-- More dependency tags likely exist beyond Engine/Context (FileSystem? Channels? Variables?)
+- If a method body references `app` or `context`, auto-add `[App]`, `[Context]` attributes to the method
+- This enables runtime queries like `app.Goals["App"]` — get all goals that use the app
+- More dependency tags likely exist beyond App/Context (FileSystem? Channels? Variables?)
 
 **Open questions:**
 - What granularity? Per-goal, per-step, per-action?
@@ -26,59 +26,59 @@
 
 ---
 
-## External Library Integration (engine.astro) — Partially Done (2026-02-14)
+## External Library Integration (app.astro) — Partially Done (2026-02-14)
 **Date:** 2026-02-13
 **Context:** During OBP naming work on Lifecycle/Bindings.
 **Status:** `library.load` handler implemented — PLang can load external DLLs at runtime. Remaining: builder auto-detection of unknown actions, calling external library actions from PLang steps.
 
-**Idea:** `engine.Libraries` — register and call external .dll libraries from PLang.
-- ~~`engine.Libraries.Add('my.dll')` — user registers their dll~~ ✅ Done via `library.load` handler
+**Idea:** `app.Libraries` — register and call external .dll libraries from PLang.
+- ~~`app.Libraries.Add('my.dll')` — user registers their dll~~ ✅ Done via `library.load` handler
 - PLang syntax: `astrolib.dll, getCalculation(x, y), write to %result%`
 - Two paths: user writes it in PLang, OR the builder compiles C# code and auto-adds `Add('01. change_name.dll')` to the build output
 - Libraries contain actions — once registered, their methods become callable from PLang steps
 
 ---
 
-## PLang as Embeddable Engine / Platform
+## PLang as Embeddable App / Platform
 **Date:** 2026-02-13
-**Context:** Thinking about the big picture — PLang's Engine as a platform.
+**Context:** Thinking about the big picture — PLang's App as a platform.
 
-**Core idea:** The engine is a self-contained root object. Everything hangs off it. You don't configure it, you use it. PLang isn't a programming language — it's an engine. The language is just how you talk to it.
+**Core idea:** The app is a self-contained root object. Everything hangs off it. You don't configure it, you use it. PLang isn't a programming language — it's an app. The language is just how you talk to it.
 
 ### Design ideas
 
-**Domain data on the engine:** `engine.Products = %products%` — the key-value store is already there. Domain objects live alongside cache, IO, events, file system. The engine is both infrastructure AND data host.
+**Domain data on the app:** `app.Products = %products%` — the key-value store is already there. Domain objects live alongside cache, IO, events, file system. The app is both infrastructure AND data host.
 
-**Semantic querying for free:** `%engine.Products% that fits with %query%` — not a new feature. The builder sends natural language steps to the LLM. Products are in memory, query is a variable, LLM resolves it. Cache already exists for results.
+**Semantic querying for free:** `%app.Products% that fits with %query%` — not a new feature. The builder sends natural language steps to the LLM. Products are in memory, query is a variable, LLM resolves it. Cache already exists for results.
 
-**Engine-level properties as conventions:** `engine.Summary = call goal GetSummary %product%` — attaching behavior to the engine, not just data. Goals become callable properties. The engine becomes a domain-specific runtime.
+**App-level properties as conventions:** `app.Summary = call goal GetSummary %product%` — attaching behavior to the app, not just data. Goals become callable properties. The app becomes a domain-specific runtime.
 
-**Self-hosting:** PLang code can manipulate its own engine — add events, load goals, run goals. PLang embedding PLang. One engine orchestrating others.
+**Self-hosting:** PLang code can manipulate its own app — add events, load goals, run goals. PLang embedding PLang. One app orchestrating others.
 
 ---
 
 ## ~~Libraries Replaces ActionRegistry~~ ✅ DONE (2026-02-14)
 **Date:** 2026-02-13
-**Context:** Discussing engine as platform — making external DLLs first-class.
+**Context:** Discussing app as platform — making external DLLs first-class.
 **Completed:** ActionRegistry fully replaced by Library + Libraries. External DLL loading implemented via `library.load` handler. Documentation updated.
 
 - Built-in handlers (variable, file, output, etc.) are Library[0] — everything uniform
-- `engine.Libraries.Add(library)` — adds external library
-- Handler resolution walks the list: `engine.Libraries.GetCodeGenerated("variable", "set", context)`
+- `app.Libraries.Add(library)` — adds external library
+- Handler resolution walks the list: `app.Libraries.GetCodeGenerated("variable", "set", context)`
 - From PLang: `use library 'mylib.dll'` → `library.load` handler
 - Library is simple: Name + Assembly + discovered actions
 - ActionRegistry functionality absorbed into Libraries
 
 ---
 
-## Engine Goal Properties (GoalCall as Value)
+## App Goal Properties (GoalCall as Value)
 **Date:** 2026-02-13
-**Context:** Engine key-value store already exists. Values can be any type.
+**Context:** App key-value store already exists. Values can be any type.
 
-**Idea:** The key-value store value can be `GoalCall`. When you set `engine["Summary"] = GoalCall(...)`, accessing it runs the goal. This turns engine properties into callable behavior — navigation evaluates it lazily.
+**Idea:** The key-value store value can be `GoalCall`. When you set `app["Summary"] = GoalCall(...)`, accessing it runs the goal. This turns app properties into callable behavior — navigation evaluates it lazily.
 
 ```
-engine.Summary = call goal GetSummary %product%
+app.Summary = call goal GetSummary %product%
 ```
 
 No new mechanism needed — the key-value store already accepts `object?`, and `GoalCall` is already a type. The resolution layer just needs to recognize GoalCall values and execute them on access.
@@ -106,7 +106,7 @@ Once the .goal file reads right, build the module to match it.
 Lead with examples, not explanations:
 - "A website in 10 lines" — Start, routes, render. No framework, no config.
 - "You didn't set anything up" — `cache.set`, `cache.get` — it just works. No DI, no wiring.
-- "Search in plain English" — `%engine.Products% that fits with %query%` — not SQL, not an API, just a question.
+- "Search in plain English" — `%app.Products% that fits with %query%` — not SQL, not an API, just a question.
 - "A CMS in 20 lines" — webserver + database + cache + templates.
 
 Target audiences:
@@ -118,7 +118,7 @@ Target audiences:
 
 ## OBP Fixes to Libraries API (Changes 2-4)
 **Date:** 2026-02-15
-**Context:** During OBP refactoring — Change 1 (extract `engine.Property`) is done. Three remaining violations in Libraries.
+**Context:** During OBP refactoring — Change 1 (extract `app.Property`) is done. Three remaining violations in Libraries.
 
 **Changes:**
 1. **Remove ICodeGenerated requirement from `Library.Discover`** — external DLLs won't have the source generator. Add `ReflectionAdapter` (private nested class in Library) that wraps any `[Action]` type with `Run()` method, mapping parameters via reflection + `TypeMapping.ConvertTo`.
@@ -131,23 +131,23 @@ Target audiences:
 
 ## Foundation Checklist — Before Mass Action Production
 **Date:** 2026-02-22
-**Context:** Engine graph audit. These must be resolved before we can start cranking out actions assembly-line style.
+**Context:** App graph audit. These must be resolved before we can start cranking out actions assembly-line style.
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
 | 1 | **system.sqlite** | ✅ DONE | `SqliteDataSource.cs` + `IDataSource.cs`. Per-actor `.db/{name}.sqlite`, in-memory for testing/building. |
 | 2 | **Setup.goal** | ✅ DONE | `Setup/this.cs` — discovers by convention, runs once per step, persists in system DataSource. Integrated into `Executor.cs` startup. |
 | 3 | **Settings** | ✅ DONE | Merged 2026-02-22. Scope chain, `ISettings`, source-generated props, `SettingsData` bridge, settings module handlers. |
-| 4 | **Pluggable action implementations** | ✅ DONE | `Engine.Providers` — type-keyed service registry. Modules define provider interfaces (e.g., `ICryptoProvider`), register defaults, PLang developers override via DLL. Implemented with crypto module (2026-03-19). |
+| 4 | **Pluggable action implementations** | ✅ DONE | `App.Providers` — type-keyed service registry. Modules define provider interfaces (e.g., `ICryptoProvider`), register defaults, PLang developers override via DLL. Implemented with crypto module (2026-03-19). |
 | 5 | **Retry testing** | ✅ DONE | `Tests/App/ErrorRetryOnly/` (bare + timed retry) and `Tests/App/ErrorGoalFirst/` (GoalFirst order). |
 
 ---
 
-## engine.Action<T> — First-Class Module Objects on Engine
+## app.Action<T> — First-Class Module Objects on App
 **Date:** 2026-02-21
-**Context:** During ISettings scaffolding. Settings currently lives at `engine.Settings.For<archive.Settings>(context)`. Works, but the long-term navigation should be `engine.Action<archive.@this>().Settings.Max` — each action module as a first-class object on the engine with capabilities hanging off it (settings, and later potentially config, health, metrics, etc.).
+**Context:** During ISettings scaffolding. Settings currently lives at `app.Settings.For<archive.Settings>(context)`. Works, but the long-term navigation should be `app.Action<archive.@this>().Settings.Max` — each action module as a first-class object on the app with capabilities hanging off it (settings, and later potentially config, health, metrics, etc.).
 
-**Idea:** Introduce `engine.Action<T>()` where T is the module's `@this` class (e.g., `actions.archive.@this`). Returns a module-level aggregate object that carries per-module capabilities. Settings slots under it as the first capability.
+**Idea:** Introduce `app.Action<T>()` where T is the module's `@this` class (e.g., `actions.archive.@this`). Returns a module-level aggregate object that carries per-module capabilities. Settings slots under it as the first capability.
 
 **Why parked:** Right now settings is the only capability that would hang off it. One capability doesn't justify a new abstraction. Introduce `Action<T>` when a second capability needs a home — then settings moves under it, internals unchanged, just the navigation path changes.
 
@@ -205,7 +205,7 @@ Target audiences:
 
 ## Verify Defaults scope is ConcurrentDictionary
 **Date:** 2026-02-21
-**Context:** Code analyzer v2 review. `engine.Settings.Defaults` is shared across all contexts. Thread safety is assumed via ConcurrentDictionary. Rather than testing concurrent behavior, verify the type choice is correct — assert it IS a ConcurrentDictionary so a future refactor to Dictionary would break a test.
+**Context:** Code analyzer v2 review. `app.Settings.Defaults` is shared across all contexts. Thread safety is assumed via ConcurrentDictionary. Rather than testing concurrent behavior, verify the type choice is correct — assert it IS a ConcurrentDictionary so a future refactor to Dictionary would break a test.
 
 ---
 
@@ -298,7 +298,7 @@ Target audiences:
 **Context:** The builder currently runs on v1 runtime (`PlangModule/Program.cs`). Module-specific build-time validation (e.g., file.read checks static paths exist) requires App features (action-based conditions, `Left/Operator/Right` format). Can't write validate `.goal` files that run on v1.
 
 **What to do:**
-- Migrate builder pipeline (`Build.goal`, `BuildGoal.goal`, `ApplyStep.goal`) to run on App engine
+- Migrate builder pipeline (`Build.goal`, `BuildGoal.goal`, `ApplyStep.goal`) to run on App app
 - Replace `[plang] ValidateActions` with App action(s)
 - Enable module-specific validate `.goal` files (e.g., `system/modules/file/validate/validateRead.goal`)
 - Rebuild system `.pr` files with App builder
@@ -352,9 +352,9 @@ Target audiences:
 
 ## MemoryStepCache is Per-Instance — Nonce Replay Broken
 **Date:** 2026-03-20
-**Context:** Signing module architect plan review. `MemoryStepCache` creates a new `MemoryCache` per instance (`Guid.NewGuid()`). If Engine is pooled (one per request), each request gets its own cache, so nonce replay detection won't work across requests.
+**Context:** Signing module architect plan review. `MemoryStepCache` creates a new `MemoryCache` per instance (`Guid.NewGuid()`). If App is pooled (one per request), each request gets its own cache, so nonce replay detection won't work across requests.
 
-**Fix:** `ICache` for nonce replay (and likely other cross-request concerns) needs a shared/static backing store, or the cache instance needs to be shared across engine instances within the same app. Check whether `Engine.Cache` is the right level — might need an app-level cache separate from per-engine step caching.
+**Fix:** `ICache` for nonce replay (and likely other cross-request concerns) needs a shared/static backing store, or the cache instance needs to be shared across app instances within the same app. Check whether `App.Cache` is the right level — might need an app-level cache separate from per-app step caching.
 
 ---
 
@@ -368,14 +368,14 @@ Target audiences:
 
 ---
 
-## Sub-Engine Provider Scope Chain
+## Sub-App Provider Scope Chain
 **Date:** 2026-03-20
-**Context:** Signing module implementation. Sub-engines don't exist yet — providers are resolved from a single flat registry on Engine.Providers. When sub-engines are added, each needs a local overlay that falls back to the parent's providers.
+**Context:** Signing module implementation. Sub-engines don't exist yet — providers are resolved from a single flat registry on App.Providers. When sub-engines are added, each needs a local overlay that falls back to the parent's providers.
 
 **What to do:**
 - Add parent ref to Providers registry (`_parent: Providers?`)
 - Get<T>(name) checks local first, then walks parent chain
-- Local overlay cleared when engine returned to pool
+- Local overlay cleared when app returned to pool
 - Register on local overlay doesn't affect parent
 
 **4 skipped tests waiting for this:**
@@ -390,7 +390,7 @@ In `PLang.Tests/App/Core/NamedProviderRegistryTests.cs`.
 
 ## Investigate ModuleView<T> — Settings Should Expose Properties Directly
 **Date:** 2026-03-20
-**Context:** During signing module review. `engine.Settings.For<SigningSettings>(context)` returns `ModuleView<SigningSettings>`, which only exposes `Resolve<TValue>("PropertyName", default)`. You can't do `signingSettings.Provider` — you have to do `signingSettings.Resolve("Provider", "ed25519")`. This feels magic-y and the defaults on `SigningSettings` are effectively dead code (never instantiated).
+**Context:** During signing module review. `app.Settings.For<SigningSettings>(context)` returns `ModuleView<SigningSettings>`, which only exposes `Resolve<TValue>("PropertyName", default)`. You can't do `signingSettings.Provider` — you have to do `signingSettings.Resolve("Provider", "ed25519")`. This feels magic-y and the defaults on `SigningSettings` are effectively dead code (never instantiated).
 
 **Problem:** `ModuleView<T>` knows `T` has properties with defaults, but ignores them. The caller must repeat the default value in every `Resolve()` call. If `SigningSettings.Provider` has a default of `"ed25519"`, why does the caller also pass `"ed25519"` to `Resolve`?
 
@@ -402,26 +402,26 @@ In `PLang.Tests/App/Core/NamedProviderRegistryTests.cs`.
 
 ---
 
-## Variables Belongs on Engine, Not Actor
+## Variables Belongs on App, Not Actor
 **Date:** 2026-03-22
 **Context:** HTTP module design — discussing where `%!Service.Identity%` should be set. Realized: PLang code always runs in User actor context. Variables are always set on User's memory stack. System and Service actors never run PLang steps, so they never need their own Variables.
 
-**Current state:** Each Actor creates a `PLangContext` which creates a `Variables`. System and Service get memory stacks that are never used by PLang code. The only things registered on them (`SettingsData`, `MyIdentity`) are never read from those actors' stacks. `Engine.Variables` already aliases `User.Context.Variables`.
+**Current state:** Each Actor creates a `PLangContext` which creates a `Variables`. System and Service get memory stacks that are never used by PLang code. The only things registered on them (`SettingsData`, `MyIdentity`) are never read from those actors' stacks. `App.Variables` already aliases `User.Context.Variables`.
 
-**Question:** Should Variables live on Engine directly (since there's only one that matters — User's)? Or does PLangContext still own it, but System/Service actors skip creating one? Also: can one actor's code path ever accidentally write to another actor's stack? Current isolation says no, but worth verifying as module composition grows.
+**Question:** Should Variables live on App directly (since there's only one that matters — User's)? Or does PLangContext still own it, but System/Service actors skip creating one? Also: can one actor's code path ever accidentally write to another actor's stack? Current isolation says no, but worth verifying as module composition grows.
 
 ---
 
-## Rename engine.Settings to engine.Config
+## Rename app.Settings to app.Config
 **Date:** 2026-03-22
-**Context:** During HTTP module design. Discovered naming confusion: `engine.Settings` is the in-memory scope chain (runtime config), while `modules/settings` is persistent db storage. They do different things but share a name.
+**Context:** During HTTP module design. Discovered naming confusion: `app.Settings` is the in-memory scope chain (runtime config), while `modules/settings` is persistent db storage. They do different things but share a name.
 
 **What to rename:**
-- `engine.Settings` → `engine.Config`
+- `app.Settings` → `app.Config`
 - `SettingsScope` → `ConfigScope`
-- `engine.Settings.For<T>(context)` → `engine.Config.For<T>(context)`
-- `engine.Settings.Set(key, value, context)` → `engine.Config.Set(key, value, context)`
-- `engine.Settings.Defaults` → `engine.Config.Defaults`
+- `app.Settings.For<T>(context)` → `app.Config.For<T>(context)`
+- `app.Settings.Set(key, value, context)` → `app.Config.Set(key, value, context)`
+- `app.Settings.Defaults` → `app.Config.Defaults`
 - `ModuleView<T>` stays (it's generic enough)
 - `ISettings` interface → `IConfig`? Or keep `ISettings` since modules implement it?
 
@@ -451,7 +451,7 @@ In `PLang.Tests/App/Core/NamedProviderRegistryTests.cs`.
 **Date:** 2026-03-24
 **Context:** Events folder cleanup. `Binding.Targets` is `List<object>` — only used by `mock.action` to tag bindings with `MockHandle`, and `mock.reset` to find/remove them.
 
-**Problem:** Weak typing (`List<object>`) on a core Engine class, only to support one module. The mock module already stores `EventBindingId` on the handle — it could track its own binding IDs internally instead of tagging the core Binding.
+**Problem:** Weak typing (`List<object>`) on a core App class, only to support one module. The mock module already stores `EventBindingId` on the handle — it could track its own binding IDs internally instead of tagging the core Binding.
 
 **Fix:** Add a `List<string> _mockBindingIds` to the mock module (or a shared mock state object). `mock.action` adds the ID, `mock.reset` iterates its own list. Then delete `Targets` from `Binding/@this`.
 
@@ -526,7 +526,7 @@ In `PLang.Tests/App/Core/NamedProviderRegistryTests.cs`.
 - Two validation layers: C# interface (`IBuildValidate`) + optional PLang .goal files (`system/modules/{module}/validate/`)
 - C# runs before and after PLang validation (pre-validate, post-validate?)
 - Validation returns warnings (non-blocking) or errors (triggers LLM retry)
-- `BuildContext` provides build-time resources (file system, settings store) without full engine
+- `BuildContext` provides build-time resources (file system, settings store) without full app
 - Actions opt in — most actions don't need build-time validation
 
 **Examples:**
@@ -575,12 +575,12 @@ Query
 - External developers create modules by writing .goal files
 - The LLM module is the first candidate (pure orchestration: HTTP + goal calls)
 - C# modules (crypto, file, etc.) keep current pattern — they need compiled providers
-- Both patterns coexist: engine discovers C# modules from assemblies AND PLang modules from `system/modules/`
+- Both patterns coexist: app discovers C# modules from assemblies AND PLang modules from `system/modules/`
 
 **Dependencies:**
 - `define` as a new action/step type the builder understands
 - Builder discovery of PLang-defined modules
-- Engine registration of PLang-defined actions alongside C# actions
+- App registration of PLang-defined actions alongside C# actions
 - Parameter resolution at runtime without source generator (the goal receives raw action data)
 
 **The LLM module is the first module to use this pattern.** Ship LLM with thin C# wrapper if this isn't ready, then migrate when `define` lands.
@@ -615,7 +615,7 @@ The guidance text from BuildGoal's LLM would flow into BuildStep's prompt as add
 
 ## Everything in PLang should be Data<T>
 **Date:** 2026-04-02
-**Context:** Engine, Goal, Step, Action — all should be `Data<T>`. This allows them to be used directly in PLang variable expressions. Engine becomes `Data<Engine>`, accessible as `%!engine.Name%` etc. No special wrapping needed — the type IS the Data.
+**Context:** App, Goal, Step, Action — all should be `Data<T>`. This allows them to be used directly in PLang variable expressions. App becomes `Data<App>`, accessible as `%!app.Name%` etc. No special wrapping needed — the type IS the Data.
 
 ## Rich debug output format
 **Date:** 2026-04-02

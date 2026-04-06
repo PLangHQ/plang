@@ -78,10 +78,10 @@ Friction goes to almost zero. Four references in memory, maybe 10 nanoseconds. C
 
 ## The Root: One Entry Point
 
-OBP requires a root object. In PLang App, it's `Engine`. Everything hangs off it:
+OBP requires a root object. In PLang App, it's `App`. Everything hangs off it:
 
 ```
-Engine
+App
   .Goals         — loaded goals, lookup by name
   .Libraries     — discovers and resolves handlers
   .Serializers   — serialize/deserialize
@@ -91,15 +91,15 @@ Engine
   .Cache         — pluggable step cache
 ```
 
-Any code that has `Engine` can reach anything. No dependency injection frameworks. No parameter lists that grow every time you need one more thing. Navigate to what you need:
+Any code that has `App` can reach anything. No dependency injection frameworks. No parameter lists that grow every time you need one more thing. Navigate to what you need:
 
 ```csharp
-Engine.Channels.WriteTextAsync(StdOut, text);
-Engine.FileSystem.File.ReadAllTextAsync(path);
-Engine.Goals.Get("Start");
+App.Channels.WriteTextAsync(StdOut, text);
+App.FileSystem.File.ReadAllTextAsync(path);
+App.Goals.Get("Start");
 ```
 
-Read it like English: "the engine's channels — write text to stdout." "The engine's file system's file — read all text." The code tells you exactly what it's doing and where it lives.
+Read it like English: "the app's channels — write text to stdout." "The app's file system's file — read all text." The code tells you exactly what it's doing and where it lives.
 
 ## The Rules
 
@@ -137,13 +137,13 @@ Reach dependencies through the object graph. Never decompose an object into sepa
 
 ```csharp
 // Wrong: passing each thing separately
-async Task RunStep(Engine engine, IO io, Goals goals) { }
+async Task RunStep(App app, IO io, Goals goals) { }
 
-// Correct: reach them through engine
-async Task RunStep(Engine engine)
+// Correct: reach them through app
+async Task RunStep(App app)
 {
-    engine.Channels ...
-    engine.Goals ...
+    app.Channels ...
+    app.Goals ...
 }
 ```
 
@@ -156,16 +156,16 @@ This applies to the caller too. If a handler calls `Path.Delete(recursive, ignor
 Property names are nouns. They tell you what the thing is, not what it does. When you look at the object graph, the name alone tells you where to navigate.
 
 ```
-engine.Goals        — "Goals" manages goals
-engine.Channels     — "Channels" manages I/O channels
-engine.FileSystem   — "FileSystem" manages file access
+app.Goals        — "Goals" manages goals
+app.Channels     — "Channels" manages I/O channels
+app.FileSystem   — "FileSystem" manages file access
 ```
 
 Not:
 ```
-engine.IO           — IO of what? Files? Channels?
-engine.Run          — is this a method or an object?
-engine.Data         — what data?
+app.IO           — IO of what? Files? Channels?
+app.Run          — is this a method or an object?
+app.Data         — what data?
 ```
 
 **Test**: If the name could describe two different things, it's too broad.
@@ -202,12 +202,12 @@ public sealed class Steps : List<Step>
 
 public sealed class Actions : List<Action>
 {
-    public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
+    public async Task<Data> RunAsync(App app, PLangContext context, CancellationToken ct = default)
     {
         Data merged = Data.Ok();
         foreach (var action in this)
         {
-            var result = await action.RunAsync(engine, context, ct);
+            var result = await action.RunAsync(app, context, ct);
             if (!result.Success) return result;
             merged = merged.Merge(result);
         }
@@ -266,7 +266,7 @@ var result = await Events.Before.Run(context);
 
 ## Why This Matters for LLMs
 
-An LLM reading OBP code can traverse the object graph like a map. `Engine.Goals.Get("Start")` — it knows exactly where goals live. `step.Actions.RunAsync(engine, context)` — it knows actions own their execution.
+An LLM reading OBP code can traverse the object graph like a map. `App.Goals.Get("Start")` — it knows exactly where goals live. `step.Actions.RunAsync(app, context)` — it knows actions own their execution.
 
 Traditional architecture scatters behavior across services, managers, and utilities. An LLM (or a human) must hold the entire service graph in context to understand what happens when you save a goal. More context, worse results.
 
@@ -324,7 +324,7 @@ Execution flow:
 goal.Events.Before → run each binding
   step.Events.Before → run each binding
     action.Events.Before → run each binding
-    action → handler.ExecuteAsync(action, engine, context)
+    action → handler.ExecuteAsync(action, app, context)
     action.Events.After → run each binding
   step.Events.After → run each binding
 goal.Events.After → run each binding
@@ -332,29 +332,29 @@ goal.Events.After → run each binding
 
 ## Handlers
 
-Handlers implement `ICodeGenerated` via source generation. They receive the action record, engine, and context:
+Handlers implement `ICodeGenerated` via source generation. They receive the action record, app, and context:
 
 ```csharp
 public interface ICodeGenerated
 {
-    Task<Data> ExecuteAsync(Action action, Engine engine, PLangContext context);
+    Task<Data> ExecuteAsync(Action action, App app, PLangContext context);
 }
 ```
 
-They navigate to capabilities through engine:
+They navigate to capabilities through app:
 
 ```csharp
 // Writing to a channel
-engine.Channels.WriteTextAsync(StdOut, text);
+app.Channels.WriteTextAsync(StdOut, text);
 
 // Reading a file
-engine.FileSystem.File.ReadAllTextAsync(path);
+app.FileSystem.File.ReadAllTextAsync(path);
 
 // Calling another goal
-engine.RunGoalAsync(goalCall, context, ct);
+app.RunGoalAsync(goalCall, context, ct);
 
 // Resolving a handler
-engine.Modules.GetCodeGenerated("variable", "set", context);
+app.Modules.GetCodeGenerated("variable", "set", context);
 ```
 
 ### Handler naming conventions
@@ -366,12 +366,12 @@ engine.Modules.GetCodeGenerated("variable", "set", context);
 | **Namespace** | `App.modules.{module}` | `modules.condition` |
 | **Registry key** | `{module}.{record}` | `condition.if` |
 
-## Context and Engine: What You Can Access
+## Context and App: What You Can Access
 
-### Engine (system-level)
+### App (system-level)
 
 ```
-Engine
+App
   .Goals              EngineGoals — loaded goals
   .Modules            EngineModules — handler resolution
   .FileSystem         IPLangFileSystem — sandboxed I/O
@@ -392,7 +392,7 @@ Engine
 ```
 Context
   .Id                 string — unique execution id
-  .Engine             Engine — back-reference
+  .App             App — back-reference
   .Variables        Variables — all %variables%
   .CallStack          CallStack? — frames, errors
   .Goal               Goal? — currently executing
@@ -407,11 +407,11 @@ Context
 | Need | Navigation |
 |------|-----------|
 | Read/write a variable | `context.Variables.Get("name")` / `.Set("name", value)` |
-| Write to stdout | `engine.Channels.WriteTextAsync(StdOut, text)` |
-| Read/write files | `engine.FileSystem.File.ReadAllTextAsync(path)` |
-| Call another goal | `engine.RunGoalAsync(goalCall, context, ct)` |
-| Resolve a handler | `engine.Modules.GetCodeGenerated("module", "action", context)` |
-| Check environment | `engine.Environment` |
+| Write to stdout | `app.Channels.WriteTextAsync(StdOut, text)` |
+| Read/write files | `app.FileSystem.File.ReadAllTextAsync(path)` |
+| Call another goal | `app.RunGoalAsync(goalCall, context, ct)` |
+| Resolve a handler | `app.Modules.GetCodeGenerated("module", "action", context)` |
+| Check environment | `app.Environment` |
 
 ## Common OBP Violations
 

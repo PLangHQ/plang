@@ -8,10 +8,10 @@ How C# boots the PLang runtime, runs `run.pr`, manages contexts, and dispatches 
 
 PLang has **one C# loop**. Everything else is PLang code.
 
-### Engine.Start()
+### App.Start()
 
 ```
-Engine.Start()
+App.Start()
   ├─ CurrentActor = System          // switch to system actor
   ├─ GoalCall { PrPath = "system/.build/run.pr" }
   ├─ goal = GoalCall.GetGoalAsync() // load + deserialize the .pr file
@@ -23,10 +23,10 @@ Engine.Start()
 ```csharp
 for each step:
     for each action in step:
-        result = engine.Run(action, context)   // dispatch one action
+        result = app.Run(action, context)   // dispatch one action
 ```
 
-`engine.Run()` finds the handler via `Modules.GetCodeGenerated(module, action)`, calls `ExecuteAsync`, and maps return variables onto `context.Variables`.
+`app.Run()` finds the handler via `Modules.GetCodeGenerated(module, action)`, calls `ExecuteAsync`, and maps return variables onto `context.Variables`.
 
 **After Start(), C# never iterates steps again.** The PLang code in `run.pr` takes over — it reads goals, iterates steps, fires events, checks errors.
 
@@ -59,7 +59,7 @@ RunStep
 
 ### Key insight: RunStep is PLang, not C#
 
-Events, caching, and error checking all happen in PLang code. The C# `engine.execute` action only handles the raw step dispatch. This means:
+Events, caching, and error checking all happen in PLang code. The C# `app.execute` action only handles the raw step dispatch. This means:
 - **Events run in PLang** — they're `foreach` loops calling `goal.call`
 - **Error checking runs in PLang** — the `error.check` module action
 - **Caching runs in PLang** — `cache.check` and `cache.store` actions
@@ -71,7 +71,7 @@ Events, caching, and error checking all happen in PLang code. The C# `engine.exe
 ### Three actors, three contexts
 
 ```
-Engine
+App
   ├─ System actor  (escalation=2)  → System.Context  → System.Variables
   ├─ Service actor (escalation=1)  → Service.Context  → Service.Variables
   └─ User actor    (escalation=1)  → User.Context     → User.Variables
@@ -82,14 +82,14 @@ Each `Actor` owns:
 - A `Variables` — variable storage (`%varName%` resolution)
 - An `EventScope` with `User.Events` and `System.Events` — event binding registries
 
-Actors are created lazily and live for the engine's lifetime.
+Actors are created lazily and live for the app's lifetime.
 
 ### What lives on each Variables
 
 Both system and user Variabless get context variables registered automatically:
 
 ```
-%!engine%       → Engine instance
+%!app%       → App instance
 %!context%      → the PLangContext itself
 %!memoryStack%  → the Variables itself
 %!goal%         → DynamicData → context.Goal (changes as goals execute)
@@ -115,22 +115,22 @@ This is the critical part. Here's what happens at `execute %step% as "user"`:
 ```
 run.pr's RunStep is executing on System.Context
   System.Variables has: %step%, %data%, %goal%, %event%, etc.
-  engine.CurrentActor = System
+  app.CurrentActor = System
 ```
 
-### engine.execute (C#) does the switch
+### app.execute (C#) does the switch
 
 ```csharp
-// engine/execute.cs — Run()
+// app/execute.cs — Run()
 var targetActor = Actor;                    // resolved from "user" string
 var execContext = targetActor.Context;       // User.Context
-var previousActor = engine.CurrentActor;
-engine.CurrentActor = targetActor;          // switch
+var previousActor = app.CurrentActor;
+app.CurrentActor = targetActor;          // switch
 
 try {
-    return await ExecuteActions(engine, execContext);  // runs on User.Context
+    return await ExecuteActions(app, execContext);  // runs on User.Context
 } finally {
-    engine.CurrentActor = previousActor;    // restore to System
+    app.CurrentActor = previousActor;    // restore to System
 }
 ```
 
@@ -138,7 +138,7 @@ try {
 
 ```
 ExecuteActions iterates step.Actions
-  Each action runs via engine.Run(action, User.Context)
+  Each action runs via app.Run(action, User.Context)
   Handler resolves %variables% from User.Variables
   Return variables are Put() onto User.Variables
 ```
@@ -146,7 +146,7 @@ ExecuteActions iterates step.Actions
 ### After the switch (back to System context)
 
 ```
-engine.execute returns Data result to run.pr
+app.execute returns Data result to run.pr
   run.pr stores it as %data% on System.Variables
   run.pr continues: error.check, after events, etc.
 ```
@@ -182,7 +182,7 @@ When user code says `on before step, call TrackStep`:
 1. `event.on` action runs (typically on User context)
 2. Creates an `EventBinding` with type=BeforeStep, handler=GoalCall
 3. Registers on `targetActor.Context.User.Events` (by default, User actor)
-4. Binding includes a `Handler` lambda: `ctx => engine.RunGoalAsync(goalToCall, targetActor.Context)`
+4. Binding includes a `Handler` lambda: `ctx => app.RunGoalAsync(goalToCall, targetActor.Context)`
 
 ### Where events live
 
@@ -217,19 +217,19 @@ The `%step.events.before%` and `%step.events.after%` are resolved via Data navig
 
 Step-level events (BeforeStep/AfterStep) are fired by `run.pr`'s RunStep — they're PLang loops.
 
-**Action-level events (BeforeAction/AfterAction) don't fire from PLang.** They would need to fire from inside `engine.execute`'s `ExecuteActions` method, which is a C# loop over `step.Actions`. Currently, `ExecuteActions` does:
+**Action-level events (BeforeAction/AfterAction) don't fire from PLang.** They would need to fire from inside `app.execute`'s `ExecuteActions` method, which is a C# loop over `step.Actions`. Currently, `ExecuteActions` does:
 
 ```csharp
 foreach (var action in Step.Actions)
 {
-    result = await engine.Run(action, execContext);
+    result = await app.Run(action, execContext);
     if (!result.Success) break;
 }
 ```
 
 There's no event firing here. To add action events, the C# `ExecuteActions` would need to:
 1. Query `execContext.LifecycleFor(action)` for before/after bindings
-2. Fire each binding before/after `engine.Run(action, ...)`
+2. Fire each binding before/after `app.Run(action, ...)`
 
 This is the one place where "everything in PLang" is hard — the action dispatch loop is per-action within a step, and it's C#.
 
@@ -239,7 +239,7 @@ This is the one place where "everything in PLang" is hard — the action dispatc
 
 ### error.check (PLang)
 
-After `engine.execute` returns `%data%`, run.pr calls:
+After `app.execute` returns `%data%`, run.pr calls:
 ```
 check %data% %step%
 ```
@@ -249,14 +249,14 @@ This is the `error.check` module action. It examines `data.Success` and `step.On
 ### Error propagation
 
 ```
-engine.execute returns Data { Success=false, Error=... }
+app.execute returns Data { Success=false, Error=... }
   → run.pr stores as %data%
   → error.check examines %data%
     → if step has onError handler → call error goal
     → if no handler → Data propagates up through foreach → RunGoal → caller
 ```
 
-### engine.execute marks Handled
+### app.execute marks Handled
 
 `ExecuteActions` sets `result.Handled = true` before returning. This prevents the calling foreach from short-circuiting — the error is "acknowledged" and run.pr's error.check gets a chance to handle it.
 
@@ -280,7 +280,7 @@ When a handler property is `%user.name%`:
 
 - `%step.text%` → navigates the step's **value/domain** properties → `step.Text`
 - `%step!error%` → navigates the step's **Data infrastructure** → `step.Error`
-- `%!engine%` → the `!` prefix on the root name means "context variable" → `Variables["!engine"]`
+- `%!app%` → the `!` prefix on the root name means "context variable" → `Variables["!app"]`
 
 ---
 
@@ -289,7 +289,7 @@ When a handler property is `%user.name%`:
 ```
 plang --test
   ├─ Executor sets %!test% on System.Variables
-  ├─ Engine.Start() → runs run.pr
+  ├─ App.Start() → runs run.pr
   ├─ run.pr: if %!test% → call Test
   │
   Test (system/test.goal)
@@ -303,7 +303,7 @@ plang --test
   runtime.run (C#)
      ├─ Save user events + Variables snapshot
      ├─ Load goal from file
-     ├─ engine.RunGoalAsync(goal, User.Context)  ← runs test goal on User context
+     ├─ app.RunGoalAsync(goal, User.Context)  ← runs test goal on User context
      ├─ Collect assertion results → %!test.results%
      └─ Restore user events + Variables from snapshot
 ```
@@ -316,11 +316,11 @@ plang --test
 
 ### Problem 1: Action-level events don't fire
 
-Action events (BeforeAction/AfterAction) are registered but never executed. The action dispatch loop is in C# (`engine.execute.ExecuteActions`), not in PLang. Step/goal events fire from `run.pr`, but there's no equivalent PLang loop for actions.
+Action events (BeforeAction/AfterAction) are registered but never executed. The action dispatch loop is in C# (`app.execute.ExecuteActions`), not in PLang. Step/goal events fire from `run.pr`, but there's no equivalent PLang loop for actions.
 
 **Options:**
 - Fire action events from C# in `ExecuteActions` (breaks "everything in PLang" principle)
-- Restructure so actions are dispatched one-at-a-time from PLang (would require run.pr to loop over step.Actions and call engine.run per-action)
+- Restructure so actions are dispatched one-at-a-time from PLang (would require run.pr to loop over step.Actions and call app.run per-action)
 
 ### Problem 2: Type conversion in comparisons
 
@@ -328,7 +328,7 @@ When a test asserts `%stepCount% > 0`, the assert module hits "Object must be of
 
 ### Problem 3: Sub-goal PrPath resolution across directories
 
-Test goals with sub-goals (e.g., TrackStep with PrPath `/.build/trackstep.pr`) work when running from the test folder but fail when running from project root. The `.pr` PrPath is relative to the goal file's location, but `GetGoalAsync` resolves relative to engine root. This affects any test that references sub-goals via PrPath.
+Test goals with sub-goals (e.g., TrackStep with PrPath `/.build/trackstep.pr`) work when running from the test folder but fail when running from project root. The `.pr` PrPath is relative to the goal file's location, but `GetGoalAsync` resolves relative to app root. This affects any test that references sub-goals via PrPath.
 
 ### Problem 4: Event handler runs on correct context but can't find goal
 

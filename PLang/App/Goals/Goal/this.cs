@@ -115,7 +115,7 @@ public sealed partial class @this : Variables.Data<@this>
 
     /// <summary>
     /// Folder path of this goal, derived from Path.
-    /// Starts with / (relative to engine root, not OS root).
+    /// Starts with / (relative to app root, not OS root).
     /// E.g., \Cache\Start.goal → /Cache/, \Start.goal → /
     /// </summary>
     [JsonIgnore]

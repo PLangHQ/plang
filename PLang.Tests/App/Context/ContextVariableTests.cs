@@ -18,7 +18,7 @@ public class ContextVariableTests
     public async Task ContextVar_Engine_ReturnsEngineInstance()
     {
         var vars = _engine.Variables;
-        var value = vars.GetValue("!engine");
+        var value = vars.GetValue("!app");
 
         await Assert.That(value).IsNotNull();
         await Assert.That(value).IsEqualTo(_engine);
@@ -136,7 +136,7 @@ public class ContextVariableTests
         var names = vars.GetNames().ToList();
 
         await Assert.That(names).Contains("regularVar");
-        await Assert.That(names).DoesNotContain("!engine");
+        await Assert.That(names).DoesNotContain("!app");
         await Assert.That(names).DoesNotContain("!context");
         await Assert.That(names).DoesNotContain("!goal");
     }
@@ -151,7 +151,7 @@ public class ContextVariableTests
         var names = all.Select(d => d.Name).ToList();
 
         await Assert.That(names).Contains("regularVar");
-        await Assert.That(names).DoesNotContain("!engine");
+        await Assert.That(names).DoesNotContain("!app");
         await Assert.That(names).DoesNotContain("!goal");
     }
 
@@ -167,7 +167,7 @@ public class ContextVariableTests
         await Assert.That(vars.GetValue("regularVar")).IsNull();
 
         // Context vars survive
-        await Assert.That(vars.GetValue("!engine")).IsNotNull();
+        await Assert.That(vars.GetValue("!app")).IsNotNull();
         await Assert.That(vars.GetValue("!context")).IsNotNull();
     }
 
@@ -183,7 +183,7 @@ public class ContextVariableTests
         await Assert.That(clone.GetValue("regularVar")).IsEqualTo("hello");
 
         // Context vars are NOT cloned (they'd break as plain Data objects)
-        await Assert.That(clone.Contains("!engine")).IsFalse();
+        await Assert.That(clone.Contains("!app")).IsFalse();
     }
 
     [Test]

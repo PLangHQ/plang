@@ -8,7 +8,7 @@ when saving this file, increase the version number, e.g. migration-roadmap-v5.md
 
 PLang is migrating from Runtime1 (47+ modules, LightInject DI, BaseProgram pattern) to App (OBP, strongly-typed Data, source-generated handlers, entity hierarchy).
 
-App currently has 6 modules (variable, file, output, condition, goal, event) with solid core infrastructure (Engine, Memory, Events, Caching, CallStack, TypeMapping, Source Generator). The builder still runs on Runtime1 but produces App .pr artifacts via a bridge module. This roadmap covers the complete migration path.
+App currently has 6 modules (variable, file, output, condition, goal, event) with solid core infrastructure (App, Memory, Events, Caching, CallStack, TypeMapping, Source Generator). The builder still runs on Runtime1 but produces App .pr artifacts via a bridge module. This roadmap covers the complete migration path.
 
 ### How We Work Each Phase
 
@@ -135,13 +135,13 @@ Enable `%!Goal%`, `%!Step%`, `%!StepIndex%`, `%!Error%`, `%!Variables%`, `%!Iden
 **Design:**
 - The `!` prefix pattern from Runtime1 is useful for separating system state from user variables
 - These need runtime context (current goal, step, etc.) which Variables doesn't have
-- **Option A:** Register DynamicData for each, where the factory function reaches into Engine/Context
+- **Option A:** Register DynamicData for each, where the factory function reaches into App/Context
 - **Option B:** Variables.Get() intercepts `!` prefix and delegates to a context provider
 - **Recommendation:** Option B — cleaner separation, Variables stays focused on user data
 
 **Scope:**
 - New interface: `ISystemVariableProvider` with `object? Resolve(string name)`
-- Register provider in Variables (or inject via Engine)
+- Register provider in Variables (or inject via App)
 - Provider looks up: Goal, Step, StepIndex, Error, Identity, CallStack from the current PLangContext
 
 #### 0.6.5 — Extensible Variable Properties (NEW — Beyond Runtime1)
@@ -169,7 +169,7 @@ Enable `%!Goal%`, `%!Step%`, `%!StepIndex%`, `%!Error%`, `%!Variables%`, `%!Iden
 - **Caching:** Results can be cached per value+property to avoid repeated goal calls
 
 **Key questions:**
-1. **Where does the registry live?** On Engine? On Variables? Recommendation: Engine-level, since it's a cross-cutting concern
+1. **Where does the registry live?** On App? On Variables? Recommendation: App-level, since it's a cross-cutting concern
 2. **Async implications:** `Data.GetChild()` is currently sync. Variable property extension makes it async. This ripples up through `Variables.Get()` and `TString.Resolve()` — all need async variants.
 3. **Naming collision:** What if a CLR property has the same name as a user-registered property? User registration should win (explicit override).
 4. **Scope:** Registration is per-app (not per-goal). Registered in Start.goal or a setup goal.
@@ -180,7 +180,7 @@ Enable `%!Goal%`, `%!Step%`, `%!StepIndex%`, `%!Error%`, `%!Variables%`, `%!Iden
 - Modify: `Data.GetChild()` → add async variant `GetChildAsync()` that checks registry
 - Modify: `Variables.Get()` → async variant for when extensible properties are involved
 - Modify: `TString.Resolve()` → async variant
-- Modify: `Engine` — hold the VariablePropertyRegistry
+- Modify: `App` — hold the VariablePropertyRegistry
 
 **This is a Phase 2+ implementation** — requires goal.call module and async infrastructure. The design should be locked in Phase 0.6 so the foundation supports it.
 
@@ -263,9 +263,9 @@ The sub-phases have dependencies:
 - **Not needed.** PLang runtime handles type conversion automatically. When a method needs `int` and receives a string, the runtime auto-converts via TypeMapping. If it can't convert, it returns an error.
 - Type-aware format conversion (yaml->json, etc.) is handled by the serializer/Data.Type system in Phase 0.
 
-### 1.7 Testing Engine (COMPLETED)
+### 1.7 Testing App (COMPLETED)
 - **Assert module** (`assert/*`): 9 handlers (equals, notEquals, isTrue, isFalse, isNull, isNotNull, contains, greaterThan, lessThan)
-- **Test runner** (`plang p !test`): discovers `*.test.goal` files, runs each in isolated engine, reports pass/fail summary
+- **Test runner** (`plang p !test`): discovers `*.test.goal` files, runs each in isolated app, reports pass/fail summary
 - 12 test suites passing across all modules
 
 ### 1.8 Mock Module (COMPLETED)
@@ -294,7 +294,7 @@ The sub-phases have dependencies:
 - **Parameters:** url, body, headers (dict), contentType, timeout, bearerToken
 - **Returns:** Data with Value=response body, Properties={statusCode, headers, contentType}
 - **Data.Type set from response Content-Type** (e.g., "application/json")
-- **Design decision:** Use HttpClient (injected via Engine or singleton with pool)
+- **Design decision:** Use HttpClient (injected via App or singleton with pool)
 - **Complexity:** Large (many handlers + HTTP client management)
 
 ### 2.2 Terminal Module (`terminal/*`)
@@ -318,7 +318,7 @@ The sub-phases have dependencies:
 - **Template vs UI problem:** Need to resolve the distinction:
   - `render 'email.html', write to %email%` - renders to a variable (template use)
   - `render 'page.html' to #someTarget` - renders to a UI target (UI use)
-  - **Proposed:** Same render engine, but the *target* determines behavior. Variable target = template module. UI target (#selector) = UI module. Builder distinguishes based on target syntax.
+  - **Proposed:** Same render app, but the *target* determines behavior. Variable target = template module. UI target (#selector) = UI module. Builder distinguishes based on target syntax.
 - **Important for builder:** Builder goals use `render template` heavily
 - **Complexity:** Medium
 
@@ -383,11 +383,11 @@ The sub-phases have dependencies:
 - Take existing `system/builder/*.goal` files
 - Build them with `plang p build` to produce App .pr files
 - Verify each builder goal works on App
-- **This is the milestone:** builder runs on App engine
+- **This is the milestone:** builder runs on App app
 
 ### 4.3 Simplify V1 Bridge
 - Once builder self-hosts, the PlangModule bridge (Program.cs) can be simplified
-- Executor.Build2() can use App engine directly
+- Executor.Build2() can use App app directly
 - **Caution:** Keep V1 path available as fallback during transition
 
 ### Tests
@@ -455,7 +455,7 @@ The sub-phases have dependencies:
 ### 6.3 UI Module (Critical)
 - DOM instructions, layouts, dialogs, notifications
 - **Ingi has ideas for this** - will bring specifics when the time comes
-- Interplays with Template module (same render engine, different targets)
+- Interplays with Template module (same render app, different targets)
 - **Complexity:** Very Large
 
 **Depends on:** Phase 5 (crypto for SSL)
@@ -466,10 +466,10 @@ The sub-phases have dependencies:
 
 **Goal:** Remove Runtime1 code paths and finalize migration.
 
-### 7.1 Remove V1 Engine
+### 7.1 Remove V1 App
 - Remove `PLang/Runtime/` once all features work in App
 - Remove `PLang/Modules/` (old module implementations)
-- Remove LightInject DI container (App uses Engine object graph)
+- Remove LightInject DI container (App uses App object graph)
 
 ### 7.2 Remove Bridge Code
 - Simplify `PlangModule/Program.cs`

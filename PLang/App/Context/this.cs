@@ -23,7 +23,7 @@ public sealed class @this : IDisposable
     public string Id { get; }
 
     /// <summary>
-    /// Reference to the engine.
+    /// Reference to the app.
     /// </summary>
     public App.@this App { get; }
 
@@ -56,7 +56,7 @@ public sealed class @this : IDisposable
     private readonly Stack<CancellationTokenSource> _cancellationStack = new();
 
     /// <summary>
-    /// Pushes a timeout CTS so all sub-calls use it. Called by engine.execute for step.Timeout.
+    /// Pushes a timeout CTS so all sub-calls use it. Called by app.execute for step.Timeout.
     /// </summary>
     public void PushCancellation(CancellationTokenSource cts) => _cancellationStack.Push(cts);
 
@@ -156,8 +156,8 @@ public sealed class @this : IDisposable
     {
         var vars = Variables;
 
-        // All context variables are lazy — context has engine, fetch at request time
-        vars.Put(new DynamicData("!engine", () => App));
+        // All context variables are lazy — context has app, fetch at request time
+        vars.Put(new DynamicData("!app", () => App));
         vars.Put(new DynamicData("!context", () => this));
         vars.Put(new DynamicData("!variables", () => Variables));
         vars.Put(new DynamicData("!fileSystem", () => App.FileSystem));

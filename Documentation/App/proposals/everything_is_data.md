@@ -7,7 +7,7 @@
 ## Design Principles
 
 1. **If it flows through the value system, it IS Data.** No wrapping, no two-tier system.
-2. **Navigation is a registered capability, not an inheritance artifact.** Each type has a navigator registered on the engine.
+2. **Navigation is a registered capability, not an inheritance artifact.** Each type has a navigator registered on the app.
 3. **`.` = domain, `!` = infrastructure.** Two rules, deterministic, no priority chain.
 4. **Errors are self-describing.** The Error object carries its own context. The container doesn't distinguish error sources.
 5. **Program structure stays separate.** Goal, Step, Action are the program — they don't participate in the value system.
@@ -29,7 +29,7 @@ Data (base)
 ```
 
 **Problems:**
-- Engine, Path, Identity get wrapped in Data when stored on Variables — artificial
+- App, Path, Identity get wrapped in Data when stored on Variables — artificial
 - GetChildValue has a fragile 5-step priority chain (check Value-as-Data, check subclass props, check Properties, check ValueNavigators, check whitelisted base props)
 - DataList, DataDict, DataJson — special classes that don't end
 - Handlers must wrap domain objects in Data before returning — but handlers are one line (`return await provider.Run(data)`)
@@ -60,7 +60,7 @@ public class User : Data<User>
     public string Email { get; set; }
 }
 
-public sealed class @this : Data<@this>, IAsyncDisposable  // Engine
+public sealed class @this : Data<@this>, IAsyncDisposable  // App
 {
     public EngineGoals Goals => _goals;
     public IPLangFileSystem FileSystem { get; set; }
@@ -104,13 +104,13 @@ The `!` convention telegraphs "I'm reaching into plumbing." Most developers neve
 
 ### Registered Navigators
 
-Navigation is NOT baked into GetChildValue via if/else chains. Each type has a navigator registered on the engine:
+Navigation is NOT baked into GetChildValue via if/else chains. Each type has a navigator registered on the app:
 
 ```csharp
 // In GetChildValue (which delegates to the navigator)
 protected override object? GetChildValue(string key)
 {
-    var navigator = Engine.Navigators.Get(typeof(T));
+    var navigator = App.Navigators.Get(typeof(T));
     return navigator?.Navigate(this, key);
 }
 ```
@@ -119,17 +119,17 @@ The runtime ships with navigators for common types:
 
 | Type | Navigator behavior |
 |------|-------------------|
-| Domain types (User, Engine, Path) | DeclaredOnly reflection — finds typed properties |
+| Domain types (User, App, Path) | DeclaredOnly reflection — finds typed properties |
 | `List<T>` | Index access, `.first`, `.last`, `.count` |
 | `Dictionary<string, object?>` | Key lookup (case-insensitive) |
 | `Json` | JSON key/path navigation |
 | CLR object (fallback) | Reflection on public properties |
 
-Module authors register navigators for their types. Third parties can register their own. The navigator registry is on the engine — `engine.Navigators.Register<T>(navigator)`.
+Module authors register navigators for their types. Third parties can register their own. The navigator registry is on the app — `app.Navigators.Register<T>(navigator)`.
 
 This separates two concerns:
 - **What the object is** → `Data<T>`, the type
-- **How to traverse it** → navigator, registered on the engine
+- **How to traverse it** → navigator, registered on the app
 
 You can change how navigation works for a type without touching the type. New types get navigation by registering a navigator, not by overriding a virtual method.
 
@@ -161,13 +161,13 @@ Everything is Data. No exceptions.
 | Path (was PathData) | `Data<Path>` | Path (file path vs navigation path) |
 | Identity (was IdentityData) | `Data<Identity>` | — |
 | Settings (was SettingsData) | `Data<Settings>` | — |
-| Engine | `Data<Engine>` | Name |
+| App | `Data<App>` | Name |
 | Goal | `Data<Goal>` | Name, Path |
 | Step | `Data<Step>` | — |
 | Action | `Data<Action>` | — |
 | Future domain types | `Data<T>` | Name, Type, Path as needed |
 
-All `!` system variables (`%!goal%`, `%!step%`, `%!engine%`, etc.) are DynamicData on Variables — factories that compute the current value at time of access. Since all runtime types are now `Data<T>`, the factory returns typed Data directly. `%!goal.Name%` navigates via DeclaredOnly to Goal.Name = "Start". `%!goal!Name%` reaches Data.Name = "!goal".
+All `!` system variables (`%!goal%`, `%!step%`, `%!app%`, etc.) are DynamicData on Variables — factories that compute the current value at time of access. Since all runtime types are now `Data<T>`, the factory returns typed Data directly. `%!goal.Name%` navigates via DeclaredOnly to Goal.Name = "Start". `%!goal!Name%` reaches Data.Name = "!goal".
 
 ### Handler Ergonomics — One Line
 
@@ -177,16 +177,16 @@ The one-line handler constraint is a forcing function for this design. Handlers 
 public async Task<Data> Run() => await provider.Run(this);
 ```
 
-If Engine IS Data, the provider returns the engine directly. No wrapping. The type system handles it — `Data<Engine>` is assignable to `Data`. The provider creates a domain object and returns it. Done.
+If App IS Data, the provider returns the app directly. No wrapping. The type system handles it — `Data<App>` is assignable to `Data`. The provider creates a domain object and returns it. Done.
 
 ### Variables Storage
 
 ```csharp
 // Before — wrapping
-ms.Put(new Data("!engine", engine));
+ms.Put(new Data("!app", app));
 
 // After — direct
-ms.Put(engine);  // Engine IS Data, Key set by caller via Data.Name
+ms.Put(app);  // App IS Data, Key set by caller via Data.Name
 ```
 
 ### Source Generator — `Data()` Accessor and `GetValue<T>()` Conversion
@@ -282,7 +282,7 @@ public class Identity : Data<Identity>
 - Rename `PathData` → `Path : Data<Path>` (already extends Data)
 - Rename `IdentityData` → `Identity : Data<Identity>` (already extends Data)
 - Rename `SettingsData` → `Settings : Data<Settings>` (already extends Data)
-- Build the navigator registry on the engine
+- Build the navigator registry on the app
 - Register navigators for List, Dictionary, Json, CLR reflection
 - Update GlobalUsings, all references
 
@@ -294,8 +294,8 @@ public class Identity : Data<Identity>
 - Remove the GetChildValue priority chain
 - Remove ValueNavigators static class (replaced by registry)
 
-### Phase 3: Engine + Entities (high impact)
-- `Engine : Data<Engine>` — the root becomes Data, `ms.Put(this)` instead of wrapping
+### Phase 3: App + Entities (high impact)
+- `App : Data<App>` — the root becomes Data, `ms.Put(this)` instead of wrapping
 - `Goal : Data<Goal>` — `new` on Name and Path, system variable `%!goal%` stored directly
 - `Step : Data<Step>` — system variable `%!step%` stored directly
 - `Action : Data<Action>` — accessible via `%!step.Actions%`
@@ -317,20 +317,20 @@ public class Identity : Data<Identity>
 The `new` keyword creates two storage slots — `((Data)user).Name` and `((User)user).Name` are different values. This is intentional: Data.Name is the variable binding ("user"), User.Name is the domain value ("John Johnson"). Variables and serialization always work with the Data base. Navigation uses DeclaredOnly on the concrete type. The two slots serve two purposes and never cross.
 
 ### Serialization
-Data has `[JsonPropertyName("name")]` and `[JsonPropertyName("value")]`. When Engine extends Data, serialization includes these. `[JsonIgnore]` and `TransportPropertyFilter` must correctly handle the deeper inheritance. The `new` keyword properties need explicit `[JsonPropertyName]` if they participate in serialization.
+Data has `[JsonPropertyName("name")]` and `[JsonPropertyName("value")]`. When App extends Data, serialization includes these. `[JsonIgnore]` and `TransportPropertyFilter` must correctly handle the deeper inheritance. The `new` keyword properties need explicit `[JsonPropertyName]` if they participate in serialization.
 
 ### Constructor Chains
-Every domain class constructor must call `base(name)`. The `name` parameter is the default variable binding. For Engine: `base("!engine")`. For Path: `base(rawPath)`. For handler-created types, the runtime sets Data.Name from the `write to %varName%` instruction after construction.
+Every domain class constructor must call `base(name)`. The `name` parameter is the default variable binding. For App: `base("!app")`. For Path: `base(rawPath)`. For handler-created types, the runtime sets Data.Name from the `write to %varName%` instruction after construction.
 
 ### Clone/Copy Family
 Data has `virtual Clone()`. Every new subclass must override it correctly. This is a known bug pattern — the audit must cover all copy methods (constructor, Clone, CreateChild, factory methods, deserialization).
 
 ### Performance
-Data carries Properties, Type, Context, Error, Warnings. For Engine (one instance) this is nothing. For Path (many instances during file operations), measure. The overhead should be negligible since these fields are initialized lazily or null by default.
+Data carries Properties, Type, Context, Error, Warnings. For App (one instance) this is nothing. For Path (many instances during file operations), measure. The overhead should be negligible since these fields are initialized lazily or null by default.
 
 ### Navigator Registration Timing
-Navigators are registered on the engine. Types created before the engine exists (during bootstrap) need a fallback — likely the CLR reflection navigator as a default. The registry must handle this gracefully.
+Navigators are registered on the app. Types created before the app exists (during bootstrap) need a fallback — likely the CLR reflection navigator as a default. The registry must handle this gracefully.
 
 ## Summary
 
-`Data<T>` is the universal base for PLang values. No CRTP constraint — T describes the content shape. `.` navigates domain properties via DeclaredOnly reflection, `!` reaches Data infrastructure. Navigation is pluggable per-type via registered navigators on the engine. No special DataList/DataDict classes — just `Data<List<T>>`, `Data<Dictionary<...>>`. Domain types use `new` for the rare property name collision. Goal, Step, Action stay as program structure. Everything that flows through the value system IS Data.
+`Data<T>` is the universal base for PLang values. No CRTP constraint — T describes the content shape. `.` navigates domain properties via DeclaredOnly reflection, `!` reaches Data infrastructure. Navigation is pluggable per-type via registered navigators on the app. No special DataList/DataDict classes — just `Data<List<T>>`, `Data<Dictionary<...>>`. Domain types use `new` for the rare property name collision. Goal, Step, Action stay as program structure. Everything that flows through the value system IS Data.

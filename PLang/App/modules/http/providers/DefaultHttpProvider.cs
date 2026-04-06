@@ -19,7 +19,7 @@ namespace App.modules.http.providers;
 
 /// <summary>
 /// Default HTTP provider. Owns all HTTP behavior — actions delegate to this via `this`.
-/// Lazily creates HttpClient on first request. Swappable via engine.Providers.
+/// Lazily creates HttpClient on first request. Swappable via app.Providers.
 /// </summary>
 public sealed class DefaultHttpProvider : IHttpProvider
 {
@@ -357,7 +357,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     // --- Signing ---
 
     /// <summary>
-    /// Signs a request via engine.RunAction&lt;sign&gt;().
+    /// Signs a request via app.RunAction&lt;sign&gt;().
     /// Returns null if unsigned, the sign result Data on success (navigate .Signature for SignedData).
     /// </summary>
     private static async Task<Data?> SignRequestAsync(

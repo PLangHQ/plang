@@ -10,7 +10,7 @@ namespace App.modules.identity.providers;
 
 /// <summary>
 /// Default identity provider backed by System DataSource (SQLite).
-/// All methods take the action and navigate to engine/context/datasource.
+/// All methods take the action and navigate to app/context/datasource.
 /// </summary>
 public sealed class DefaultIdentityProvider : IIdentityProvider
 {

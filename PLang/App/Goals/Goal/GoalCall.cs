@@ -38,7 +38,7 @@ public sealed class GoalCall : modules.IEvent
 
     /// <summary>
     /// Resolves the Goal. PrPath is authoritative when set — file.read only.
-    /// Otherwise: action chain → engine.Goals → file.read fallback.
+    /// Otherwise: action chain → app.Goals → file.read fallback.
     /// </summary>
     public async Task<@this?> GetGoalAsync(App.@this engine, Context.@this context)
     {
@@ -60,7 +60,7 @@ public sealed class GoalCall : modules.IEvent
             currentGoal = currentGoal.Parent;
         }
 
-        // 2. Check engine's loaded goals
+        // 2. Check app's loaded goals
         var loaded = engine.Goals.Get(Name);
         if (loaded != null) return loaded;
 

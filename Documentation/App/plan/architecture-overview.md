@@ -4,20 +4,20 @@
 
 ---
 
-## Engine (Root Object)
+## App (Root Object)
 
-Engine is the single root of the entire object graph. Everything hangs off it.
+App is the single root of the entire object graph. Everything hangs off it.
 
 ```
-Engine                              [App.Core.Engine]
-├── Id: string                      unique engine instance id
+App                              [App.Core.App]
+├── Id: string                      unique app instance id
 ├── Name: string                    "App"
 ├── Path: string                    always "/" (relative root)
 ├── AbsolutePath: string            OS absolute path (e.g. C:\myapp)
 │
 ├── Environment: string             "production" | "development"
 ├── Culture: CultureInfo            formatting locale (default: Invariant)
-├── StartedAt: DateTime             when engine was created
+├── StartedAt: DateTime             when app was created
 ├── Uptime: TimeSpan                derived: UtcNow - StartedAt
 ├── IsDebugMode: bool
 ├── IsTestMode: bool
@@ -51,20 +51,20 @@ Engine                              [App.Core.Engine]
 │   ├── LoadFromDirectoryAsync(dir)
 │   └── Run(name, context)
 │
-├── IO: IO                          ── engine-level I/O router ──
+├── IO: IO                          ── app-level I/O router ──
 │   ├── WriteAsync(actorName, channel, data)   routes to actor IO
 │   ├── ReadAsync<T>(filePath)                 file deserialization
 │   ├── Channels: default (stdout)
 │   └── CreateMemoryChannel / CreateFileChannel
 │
-├── System: Actor                   ── lazy, for internal engine ops ──
+├── System: Actor                   ── lazy, for internal app ops ──
 ├── Service: Actor                  ── lazy, for external services ──
 └── User: Actor                     ── lazy, default execution actor ──
-    ├── Context → PLangContext      convenience: Engine.Context = User.Context
-    └── Variables → ...           convenience: Engine.Variables = User.Context.Variables
+    ├── Context → PLangContext      convenience: App.Context = User.Context
+    └── Variables → ...           convenience: App.Variables = User.Context.Variables
 
-Concurrency model (future): EnginePool manages a pool of Engine instances.
-Each Engine is self-contained — no shared AppContext needed.
+Concurrency model (future): EnginePool manages a pool of App instances.
+Each App is self-contained — no shared AppContext needed.
 ```
 
 ---
@@ -76,7 +76,7 @@ Three named actors, lazily created. Each owns its own context and IO channels.
 ```
 Actor                               [App.Context.Actor]
 ├── Name: string                    "System" | "Service" | "User"
-├── Engine: Engine                  back-reference to root
+├── App: App                  back-reference to root
 ├── Context: PLangContext           per-actor execution context
 └── IO: IO                          per-actor I/O channels
 ```
@@ -84,9 +84,9 @@ Actor                               [App.Context.Actor]
 **Why three actors?**
 - **User** — runs PLang app goals on behalf of the end user (default)
 - **Service** — runs goals on behalf of external service calls (e.g., incoming HTTP)
-- **System** — runs internal engine goals (e.g., `/system/error/` rendering)
+- **System** — runs internal app goals (e.g., `/system/error/` rendering)
 
-Actors are resolved by name: `Engine.GetActor("user")`.
+Actors are resolved by name: `App.GetActor("user")`.
 The builder knows valid values: `Actor.ValidValues = ["user", "service", "system"]`.
 
 ---
@@ -96,12 +96,12 @@ The builder knows valid values: `Actor.ValidValues = ["user", "service", "system
 ```
 PLangContext                         [App.Context.PLangContext]
 ├── Id: string                       unique context instance
-├── Engine: Engine                   non-nullable, set in constructor
+├── App: App                   non-nullable, set in constructor
 ├── Actor: Actor?                    owning actor
 │
 ├── Variables: Variables         ── variable storage ──
 │   ├── User variables               %name%, %items%, etc.
-│   ├── System variables (!prefix)   !engine, !context, !memoryStack, !fileSystem,
+│   ├── System variables (!prefix)   !app, !context, !memoryStack, !fileSystem,
 │   │                                !callStack, !io, !serializers
 │   ├── Dynamic system variables     !goal (current), !step (current)
 │   └── Built-in dynamic vars        Now, NowUtc, GUID
@@ -151,11 +151,11 @@ Goal                                 [App.Core.Goal]
 ├── InputParameters: Dict?
 ├── IsSetup / IsEvent / IsTest: bool
 ├── Parent: Goal?                    parent goal (sub-goals)
-├── Engine: Engine?                  set on load
+├── App: App?                  set on load
 ├── Errors / Warnings: List<Info>
 │
 ├── Load(context) → Data            fires load events
-├── RunAsync(engine, context) → Data runs all steps
+├── RunAsync(app, context) → Data runs all steps
 └── ToText() → string               reconstructs .goal source
 
 Steps : List<Step>                   [App.Core.Steps]
@@ -179,11 +179,11 @@ Step                                 [App.Core.Step]
 ├── Errors / Warnings: List<Info>
 │
 ├── Load(context) → Data
-└── RunAsync(engine, context) → Data
+└── RunAsync(app, context) → Data
 
 Actions : List<Action>               [App.Core.Actions]
 ├── Load(context) → Data
-├── RunAsync(engine, context) → Data  runs sequentially, merging results
+├── RunAsync(app, context) → Data  runs sequentially, merging results
 └── Summary() → template rendering
 
 Action                               [App.Core.Action]
@@ -194,11 +194,11 @@ Action                               [App.Core.Action]
 ├── Errors / Warnings: List<Info>
 ├── Cacheable: bool
 │
-└── RunAsync(engine, context) → Data
+└── RunAsync(app, context) → Data
     1. Resolve events: context.EventsFor(action)
     2. Fire BeforeAction events
-    3. Get handler: engine.Actions.GetCodeGenerated(module, action)
-    4. Initialize handler: handler.Initialize(engine, context)
+    3. Get handler: app.Actions.GetCodeGenerated(module, action)
+    4. Initialize handler: handler.Initialize(app, context)
     5. Resolve parameters via source-generated __Generated record
     6. handler.ExecuteAsync(resolvedParams) → Data
     7. Store return values in Variables
@@ -212,7 +212,7 @@ Action                               [App.Core.Action]
 An **action** is a `partial class` with `[Action("name")]`.
 Properties are `partial` — the source generator provides their backing fields and
 lazy `%var%` resolution. The action's business logic lives in `Run()`.
-Optionally implements `IContext` when it needs access to Engine, Variables, etc.
+Optionally implements `IContext` when it needs access to App, Variables, etc.
 
 ```
 Example: variable/set.cs
@@ -237,7 +237,7 @@ What the source generator adds (Set.Action.g.cs):
   - `ICodeGenerated` implementation
   - `Context` property (from IContext)
   - Backing fields + lazy getters that resolve %var% from Variables
-  - `CodeGeneratedExecuteAsync(params, engine, context)` → calls `Run()`
+  - `CodeGeneratedExecuteAsync(params, app, context)` → calls `Run()`
   - Parameter validation (non-nullable checks)
   - Exception wrapping → Data.FromError()
 
@@ -247,12 +247,12 @@ What the source generator adds (Set.Action.g.cs):
 ```
 IContext (optional)                    [App.modules.IContext]
 └── Context: PLangContext             generated property, set before Run()
-                                      only needed when action accesses Engine,
+                                      only needed when action accesses App,
                                       Variables, FileSystem, etc.
 
 ICodeGenerated                       [App.modules.ICodeGenerated]
-└── CodeGeneratedExecuteAsync(       generated entry point called by Engine
-        params, engine, context)
+└── CodeGeneratedExecuteAsync(       generated entry point called by App
+        params, app, context)
         → Task<Data>
 
 [Action("name")]                     [App.modules.ActionAttribute]
@@ -272,7 +272,7 @@ Action class anatomy:
   partial properties                              → parameters from .pr
   Run() → Task<Data>                              → business logic
   IContext (optional)                              → gets Context injected
-                                                     only if action needs engine/memory/etc.
+                                                     only if action needs app/memory/etc.
 
 Types namespace:
   App.modules.<module>.types/          → return value records
@@ -289,7 +289,7 @@ BaseClass<TParams> : BaseClass : IClass
   - Uses separate record for parameters
   - Source generator creates record__Generated with lazy resolution
   - Handler's ExecuteAsync(TParams) receives the generated record
-  - Initialize(engine, context) called before execution
+  - Initialize(app, context) called before execution
 ```
 
 ### Source Generator Flow (Current [Action] Pattern)
@@ -297,7 +297,7 @@ BaseClass<TParams> : BaseClass : IClass
 1. Action class declares `partial` properties (Name, Value, Path, etc.)
 2. Source generator emits backing fields + getters that resolve `%var%` from Variables
 3. Generator emits `CodeGeneratedExecuteAsync` that sets Context, validates params, calls `Run()`
-4. At runtime: Engine calls `CodeGeneratedExecuteAsync` → properties resolve lazily → `Run()` executes
+4. At runtime: App calls `CodeGeneratedExecuteAsync` → properties resolve lazily → `Run()` executes
 
 ### Current Modules (13)
 
@@ -323,7 +323,7 @@ BaseClass<TParams> : BaseClass : IClass
 
 ```
 IO                                   [App.IO.IO]
-├── Engine-level IO                  router — delegates to actor IO
+├── App-level IO                  router — delegates to actor IO
 │   ├── WriteAsync(actorName, channel, data)
 │   └── ReadAsync<T>(filePath)       file + deserialize
 │
@@ -348,7 +348,7 @@ IO                                   [App.IO.IO]
 
 Write flow:
   output.write("hello")
-  → handler gets Engine.IO
+  → handler gets App.IO
   → IO.WriteAsync("default", "hello")
   → resolves Channel("default", stdout)
   → serializer.SerializeAsync(channel.Stream, data, contentType)
@@ -362,7 +362,7 @@ Write flow:
 Events fire at every level of execution. Two scopes per context.
 
 ```
-Context.System.Events                system-level (engine internals)
+Context.System.Events                system-level (app internals)
 Context.User.Events                  user-level (PLang code)
 
 EventType enum:
@@ -410,7 +410,7 @@ Variables                          [App.Memory.Variables]
 │   └── GUID → Guid.NewGuid()
 │
 ├── Context vars (! prefix, set by RegisterContextVariables):
-│   ├── !engine, !context, !memoryStack
+│   ├── !app, !context, !memoryStack
 │   ├── !fileSystem, !callStack, !io, !serializers
 │   └── !goal (dynamic), !step (dynamic)
 │
@@ -454,28 +454,28 @@ TString                              [App.Memory.TString]
 ## Execution Flow
 
 ```
-1. Engine.RunGoalAsync("Start")
+1. App.RunGoalAsync("Start")
    └── context = User.Context (default)
 
 2. Goals.Run("Start", context)
    ├── Goals.GetAsync("Start")       loads .pr file if needed
-   └── goal.RunAsync(engine, context)
+   └── goal.RunAsync(app, context)
 
-3. Goal.RunAsync(engine, context)
+3. Goal.RunAsync(app, context)
    ├── CallStack.Push("Start")
    ├── Fire BeforeGoal events
-   ├── Steps.RunAsync(engine, context)
+   ├── Steps.RunAsync(app, context)
    │   └── for each step:
-   │       Step.RunAsync(engine, context)
+   │       Step.RunAsync(app, context)
    │       ├── Fire BeforeStep events
    │       ├── Check StepCache → if hit, skip execution
-   │       ├── Actions.RunAsync(engine, context)
+   │       ├── Actions.RunAsync(app, context)
    │       │   └── for each action:
-   │       │       Action.RunAsync(engine, context)
+   │       │       Action.RunAsync(app, context)
    │       │       ├── Fire BeforeAction events
    │       │       │   └── if EventOverride set → return override (mock path)
    │       │       ├── ActionRegistry.GetCodeGenerated(module, action)
-   │       │       ├── action.CodeGeneratedExecuteAsync(params, engine, context)
+   │       │       ├── action.CodeGeneratedExecuteAsync(params, app, context)
    │       │       │   ├── Set Context (IContext)
    │       │       │   ├── Properties resolve %var% lazily from Variables
    │       │       │   ├── Validate required params
@@ -540,7 +540,7 @@ Data carries errors:
 
 ```
 PLang/App/
-├── Core/                    Engine, Goal, Step, Action, Steps, Actions, Goals
+├── Core/                    App, Goal, Step, Action, Steps, Actions, Goals
 │   ├── CallStack.cs         execution tracking
 │   ├── EventCollection.cs   Events class + EventBinding + EventType
 │   ├── EventList.cs         GoalStepEvents, ActionEvents, BeforeAfterEvents

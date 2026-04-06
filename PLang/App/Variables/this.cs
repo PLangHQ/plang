@@ -455,7 +455,7 @@ public class @this
         var dotIndex = path.IndexOf('.');
         var bracketIndex = path.IndexOf('[');
         var bangIndex = path.IndexOf('!');
-        // ! at position 0 is part of the variable name (!engine), not a separator
+        // ! at position 0 is part of the variable name (!app), not a separator
         if (bangIndex == 0) bangIndex = path.IndexOf('!', 1);
 
         // Find the earliest separator
