@@ -245,42 +245,8 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (guard != null) return guard;
 
         var engine = action.Context.Engine;
-        var context = action.Context;
-        var fs = engine.FileSystem;
-
-        var basePath = string.IsNullOrWhiteSpace(action.Path) || action.Path == "." ? "" : action.Path;
-        var appPrPath = string.IsNullOrEmpty(basePath)
-            ? ".build/app.pr"
-            : basePath.TrimEnd('/', '\\') + "/.build/app.pr";
-
-        // Read as raw text — app.pr is AppData JSON, not a PLang goal.
-        // Using file.Read would interpret .pr as application/plang-goal and deserialize as Goal.
-        var absolutePath = fs.ValidatePath(appPrPath);
-        if (fs.File.Exists(absolutePath))
-        {
-            var json = await fs.File.ReadAllTextAsync(absolutePath);
-            if (!string.IsNullOrWhiteSpace(json))
-            {
-                try
-                {
-                    var existing = JsonSerializer.Deserialize<AppData>(json, Json.CaseInsensitiveRead);
-                    if (existing != null)
-                        return Data.Ok(existing);
-                }
-                catch (JsonException ex)
-                {
-                    return Data.FromError(new Errors.ActionError(
-                        $"Failed to parse app.pr: {ex.Message}", "CorruptAppFile", 400));
-                }
-            }
-        }
-
-        return Data.Ok(new AppData
-        {
-            Id = Guid.NewGuid().ToString(),
-            Created = DateTime.UtcNow,
-            Updated = DateTime.UtcNow
-        });
+        // Engine loads its identity from app.pr at Start() — just return it
+        return Data.Ok(engine);
     }
 
     public async Task<Data> AppSave(appSave action)
@@ -288,20 +254,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        var engine = action.Context.Engine;
-        var context = action.Context;
-
-        var savePath = string.IsNullOrWhiteSpace(action.Path) ? ".build/app.pr" : action.Path;
-        var json = JsonSerializer.Serialize(action.App, Json.CamelCaseIndented);
-
-        var saveAction = new file.Save
-        {
-            Context = context,
-            Path = new PLangPath(savePath, context),
-            Value = new Data("", json)
-        };
-        var saveResult = await engine.RunAction(saveAction, context);
-        return saveResult.Success ? Data.Ok(action.App) : saveResult;
+        return await action.Context.Engine.Save();
     }
 
     /// <summary>

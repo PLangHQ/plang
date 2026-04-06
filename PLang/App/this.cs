@@ -26,14 +26,34 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     private Actor? _user;
 
     /// <summary>
-    /// Unique identifier for this engine instance.
+    /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
     /// </summary>
-    public string Id { get; }
+    [global::System.Text.Json.Serialization.JsonPropertyName("id")]
+    public string Id { get; set; }
 
     /// <summary>
-    /// Name of this engine.
+    /// Name of this app.
     /// </summary>
+    [global::System.Text.Json.Serialization.JsonPropertyName("name")]
     public string Name { get; set; }
+
+    /// <summary>
+    /// When the app was first created.
+    /// </summary>
+    [global::System.Text.Json.Serialization.JsonPropertyName("created")]
+    public DateTime Created { get; set; }
+
+    /// <summary>
+    /// When the app was last updated.
+    /// </summary>
+    [global::System.Text.Json.Serialization.JsonPropertyName("updated")]
+    public DateTime Updated { get; set; }
+
+    /// <summary>
+    /// Version of the builder used.
+    /// </summary>
+    [global::System.Text.Json.Serialization.JsonPropertyName("version")]
+    public string? Version { get; set; }
 
     /// <summary>
     /// Relative root path, always "/".
@@ -261,6 +281,47 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     }
 
     /// <summary>
+    /// Loads app identity from .build/app.pr. Called at startup.
+    /// If no app.pr exists, the engine keeps its generated Id.
+    /// </summary>
+    public async Task Load()
+    {
+        var path = FileSystem.ValidatePath(".build/app.pr");
+        if (!FileSystem.File.Exists(path)) return;
+        var json = await FileSystem.File.ReadAllTextAsync(path);
+        if (string.IsNullOrWhiteSpace(json)) return;
+        try
+        {
+            using var doc = global::System.Text.Json.JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("id", out var idProp)) Id = idProp.GetString() ?? Id;
+            if (root.TryGetProperty("name", out var nameProp)) Name = nameProp.GetString() ?? Name;
+            if (root.TryGetProperty("created", out var createdProp) && createdProp.TryGetDateTime(out var created)) Created = created;
+            if (root.TryGetProperty("updated", out var updatedProp) && updatedProp.TryGetDateTime(out var updated)) Updated = updated;
+            if (root.TryGetProperty("version", out var versionProp)) Version = versionProp.GetString();
+        }
+        catch (global::System.Text.Json.JsonException) { /* corrupt app.pr — keep generated identity */ }
+    }
+
+    /// <summary>
+    /// Saves app identity to .build/app.pr.
+    /// </summary>
+    public async Task<Data> Save()
+    {
+        Updated = DateTime.UtcNow;
+        if (Created == default) Created = Updated;
+        var json = global::System.Text.Json.JsonSerializer.Serialize(
+            new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
+            Utility.Json.CamelCaseIndented);
+        var path = FileSystem.ValidatePath(".build/app.pr");
+        var dir = global::System.IO.Path.GetDirectoryName(path);
+        if (dir != null && !FileSystem.Directory.Exists(dir))
+            FileSystem.Directory.CreateDirectory(dir);
+        await FileSystem.File.WriteAllTextAsync(path, json);
+        return Data.Ok(this);
+    }
+
+    /// <summary>
     /// Loads the PLang runtime via file.read on first use.
     /// file.read handles .pr → List&lt;Goal&gt; deserialization via MIME type mapping.
     // --- [Method] primitives — the kernel ---
@@ -321,6 +382,8 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// </summary>
     public async Task<Data> Start(Context.@this? context = null)
     {
+        await Load();
+
         context ??= System.Context;
         CurrentActor = System;
 
