@@ -11,7 +11,7 @@ public partial class Add : IContext
     [Default(-1)]
     public partial int AtIndex { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var data = Context.Variables.Get(ListName);
         var existing = data?.Value;
@@ -41,6 +41,6 @@ public partial class Add : IContext
         else
             list.Add(Value);
 
-        return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, App.Variables.Type.FromName("list")));
+        return Task.FromResult(Data.@this.Ok(new types.list { count = list.Count, value = list }, App.Data.Type.FromName("list")));
     }
 }

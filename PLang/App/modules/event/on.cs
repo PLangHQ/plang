@@ -38,16 +38,16 @@ public partial class On : IContext
     /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
     public partial Context.Actor? Actor { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         if (!Enum.TryParse<EventType>(Type, ignoreCase: true, out var eventType))
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(Data.@this.FromError(
                 new Errors.ValidationError($"Unknown event type: '{Type}'", "InvalidEventType", 400)));
 
         // Resolve target actor — default to current context's actor
         var targetActor = Actor ?? Context.Actor ?? Context.App!.User;
 
-        Func<Context.@this, Task<Data>> handler = async ctx =>
+        Func<Context.@this, Task<Data.@this>> handler = async ctx =>
             await ctx.App!.RunGoalAsync(GoalToCall, targetActor.Context, ctx.CancellationToken);
 
         var binding = new EventBinding(
@@ -63,6 +63,6 @@ public partial class On : IContext
         // Register on the target actor's event scope
         targetActor.Context.Events.Register(binding);
 
-        return Task.FromResult(Data.Ok(binding.Id));
+        return Task.FromResult(Data.@this.Ok(binding.Id));
     }
 }

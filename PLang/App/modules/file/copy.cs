@@ -20,5 +20,5 @@ public partial class Copy : IContext
     [Provider]
     public partial IFileProvider Files { get; }
 
-    public Task<Data> Run() => Task.FromResult(Files.Copy(this));
+    public Task<Data.@this> Run() => Task.FromResult(Files.Copy(this));
 }

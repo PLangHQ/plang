@@ -35,10 +35,10 @@ public sealed class @this : IAsyncDisposable
     /// Routes a write to the correct actor's channels by actor name.
     /// Engine.Channels is the router — actor Channels own the actual channels.
     /// </summary>
-    public async Task<Data> WriteAsync(string actorName, string channelName, object? data, CancellationToken ct = default)
+    public async Task<Data.@this> WriteAsync(string actorName, string channelName, object? data, CancellationToken ct = default)
     {
         var (actor, error) = _engine.GetActor(actorName);
-        if (error != null) return Data.FromError(error);
+        if (error != null) return Data.@this.FromError(error);
         return await actor!.Channels.WriteAsync(channelName, data, cancellationToken: ct);
     }
 
@@ -72,17 +72,17 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// Gets a channel and validates existence and permissions.
     /// </summary>
-    private (Channel.@this? Channel, Data? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
+    private (Channel.@this? Channel, Data.@this? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
     {
         var channel = Get(name);
         if (channel == null)
-            return (null, Data.FromError(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404)));
+            return (null, Data.@this.FromError(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404)));
 
         if (requireRead == true && !channel.CanRead)
-            return (null, Data.FromError(new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400)));
+            return (null, Data.@this.FromError(new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400)));
 
         if (requireWrite == true && !channel.CanWrite)
-            return (null, Data.FromError(new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400)));
+            return (null, Data.@this.FromError(new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400)));
 
         return (channel, null);
     }
@@ -119,7 +119,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// Writes data to a channel. Navigates the IChannel action for channel name and content.
     /// </summary>
-    public async Task<Data> WriteAsync(modules.output.Write action)
+    public async Task<Data.@this> WriteAsync(modules.output.Write action)
     {
         var channel = action.Data?.Properties?.Get<string>("channel") ?? "default";
         var content = action.Data?.Value;
@@ -134,7 +134,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// Writes data to a channel.
     /// </summary>
-    public async Task<Data> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken cancellationToken = default)
+    public async Task<Data.@this> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireWrite: true);
         if (error != null) return error;
@@ -144,22 +144,22 @@ public sealed class @this : IAsyncDisposable
             await Serializers.SerializeAsync(new SerializeOptions
             {
                 Stream = channel!.Stream,
-                Data = data,
+                Data.@this = data,
                 ContentType = contentType ?? channel.ContentType ?? "application/json",
                 CancellationToken = cancellationToken
             });
-            return Data.Ok();
+            return Data.@this.Ok();
         }
         catch (Exception ex)
         {
-            return Data.FromError(new ServiceError($"Failed to write to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
+            return Data.@this.FromError(new ServiceError($"Failed to write to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
         }
     }
 
     /// <summary>
     /// Reads data from a channel.
     /// </summary>
-    public async Task<Data> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default)
+    public async Task<Data.@this> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireRead: true);
         if (error != null) return error;
@@ -172,18 +172,18 @@ public sealed class @this : IAsyncDisposable
                 ContentType = channel.ContentType ?? "application/json",
                 CancellationToken = cancellationToken
             });
-            return Data.Ok(result);
+            return Data.@this.Ok(result);
         }
         catch (Exception ex)
         {
-            return Data.FromError(new ServiceError($"Failed to read from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
+            return Data.@this.FromError(new ServiceError($"Failed to read from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
         }
     }
 
     /// <summary>
     /// Writes text to a channel.
     /// </summary>
-    public async Task<Data> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
+    public async Task<Data.@this> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireWrite: true);
         if (error != null) return error;
@@ -191,18 +191,18 @@ public sealed class @this : IAsyncDisposable
         try
         {
             await channel!.WriteTextAsync(text, cancellationToken);
-            return Data.Ok();
+            return Data.@this.Ok();
         }
         catch (Exception ex)
         {
-            return Data.FromError(new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
+            return Data.@this.FromError(new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
         }
     }
 
     /// <summary>
     /// Reads text from a channel.
     /// </summary>
-    public async Task<Data> ReadTextAsync(string channelName, CancellationToken cancellationToken = default)
+    public async Task<Data.@this> ReadTextAsync(string channelName, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireRead: true);
         if (error != null) return error;
@@ -210,11 +210,11 @@ public sealed class @this : IAsyncDisposable
         try
         {
             var text = await channel!.ReadAllTextAsync(cancellationToken);
-            return Data.Ok(text);
+            return Data.@this.Ok(text);
         }
         catch (Exception ex)
         {
-            return Data.FromError(new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
+            return Data.@this.FromError(new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
         }
     }
 

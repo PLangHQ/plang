@@ -17,7 +17,7 @@ public enum Visibility
 /// <summary>
 /// Represents a goal (a .goal file or sub-goal) for App.
 /// </summary>
-public sealed partial class @this : Variables.Data<@this>
+public sealed partial class @this : Data.@this<@this>
 {
     private modules.Events? _events;
     [JsonIgnore]

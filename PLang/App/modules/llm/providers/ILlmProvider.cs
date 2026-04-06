@@ -10,5 +10,5 @@ namespace App.modules.llm.providers;
 /// </summary>
 public interface ILlmProvider : IProvider
 {
-    Task<Data> Query(query action);
+    Task<Data.@this> Query(query action);
 }

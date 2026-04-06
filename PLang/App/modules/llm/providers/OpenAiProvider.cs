@@ -28,7 +28,7 @@ public sealed class OpenAiProvider : ILlmProvider
     private const string SchemaKey = "__llm_schema__";
     private const string CacheTable = "LlmCache";
 
-    public async Task<Data> Query(query action)
+    public async Task<Data.@this> Query(query action)
     {
         var engine = action.Context.App;
         var context = action.Context;
@@ -44,7 +44,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
         // --- Validate ---
         if (action.Messages.Count == 0)
-            return Data.FromError(new ActionError("Messages list is empty", "ValidationError", 400));
+            return Data.@this.FromError(new ActionError("Messages list is empty", "ValidationError", 400));
 
         // --- Build messages ---
         var messages = CloneMessages(action.Messages);
@@ -151,7 +151,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 StreamAs = action.OnStream != null ? StreamFormat.SSE : default
             };
 
-            Data httpResult = await engine.RunAction(httpAction, context);
+            Data.@this httpResult = await engine.RunAction(httpAction, context);
             if (action.OnStream != null)
             {
                 // TODO: streaming tool call accumulation needs work
@@ -167,8 +167,8 @@ public sealed class OpenAiProvider : ILlmProvider
             if (responseJson == null)
             {
                 if (parseEx != null)
-                    return Data.FromError(ActionError.FromException(parseEx, "ParseError", 500));
-                return Data.FromError(new ActionError("Failed to parse LLM API response", "ParseError", 500));
+                    return Data.@this.FromError(ActionError.FromException(parseEx, "ParseError", 500));
+                return Data.@this.FromError(new ActionError("Failed to parse LLM API response", "ParseError", 500));
             }
 
             // Extract usage
@@ -181,7 +181,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
             // Get first choice
             if (!responseJson.Value.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0)
-                return Data.FromError(new ActionError("No choices in LLM response", "EmptyResponse", 500));
+                return Data.@this.FromError(new ActionError("No choices in LLM response", "EmptyResponse", 500));
 
             var choice = choices[0];
             var message = choice.GetProperty("message");
@@ -264,7 +264,7 @@ public sealed class OpenAiProvider : ILlmProvider
                         parsed = TryParseJson(fromBlock);
 
                     if (parsed == null)
-                        return Data.FromError(new ActionError(
+                        return Data.@this.FromError(new ActionError(
                             "Response is not valid JSON", "JsonParseError", 400));
 
                     extracted = fromBlock!;
@@ -275,7 +275,7 @@ public sealed class OpenAiProvider : ILlmProvider
             if (action.OnValidateResponse != null)
             {
                 if (validationRetries >= action.MaxValidationRetries)
-                    return Data.FromError(new ActionError(
+                    return Data.@this.FromError(new ActionError(
                         $"Validation failed after {action.MaxValidationRetries} retries",
                         "ValidationFailed", 400));
 
@@ -283,7 +283,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 {
                     Name = action.OnValidateResponse.Name,
                     PrPath = action.OnValidateResponse.PrPath,
-                    Parameters = new List<Data> { new Data("response", extracted) }
+                    Parameters = new List<Data.@this> { new Data("response", extracted) }
                 };
                 var validationResult = await engine.RunGoalAsync(validationCall, context);
 
@@ -308,7 +308,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
             // --- Build result ---
             object? resultValue = effectiveFormat == "json" ? TryParseJson(extracted) : (object?)extracted;
-            var result = Data.Ok(resultValue);
+            var result = Data.@this.Ok(resultValue);
 
             // --- Cache store ---
             // Properties are [JsonIgnore] on Data, so store metadata as the value itself
@@ -351,7 +351,7 @@ public sealed class OpenAiProvider : ILlmProvider
         }
 
         // Loop exited via break (MaxToolCalls or streaming)
-        var exitResult = Data.Ok(lastContent);
+        var exitResult = Data.@this.Ok(lastContent);
         SetProp(exitResult, "Model", model);
         SetProp(exitResult, "ToolCallCount", toolCallCount);
         SetProp(exitResult, "PromptTokens", totalPromptTokens);
@@ -375,7 +375,7 @@ public sealed class OpenAiProvider : ILlmProvider
             {
                 Name = action.OnToolCall.Name,
                 PrPath = action.OnToolCall.PrPath,
-                Parameters = new List<Data>
+                Parameters = new List<Data.@this>
                 {
                     new Data("name", toolCall.Name),
                     new Data("arguments", toolCall.Arguments),
@@ -424,7 +424,7 @@ public sealed class OpenAiProvider : ILlmProvider
             {
                 Name = action.OnToolCall.Name,
                 PrPath = action.OnToolCall.PrPath,
-                Parameters = new List<Data>
+                Parameters = new List<Data.@this>
                 {
                     new Data("name", toolCall.Name),
                     new Data("arguments", toolCall.Arguments),
@@ -441,9 +441,9 @@ public sealed class OpenAiProvider : ILlmProvider
     /// <summary>
     /// Parses the LLM's JSON arguments string into List&lt;Data&gt; matching the GoalCall's parameter definitions.
     /// </summary>
-    private static List<Data> ParseToolArguments(string argumentsJson, List<Data>? parameterDefs)
+    private static List<Data.@this> ParseToolArguments(string argumentsJson, List<Data.@this>? parameterDefs)
     {
-        var result = new List<Data>();
+        var result = new List<Data.@this>();
 
         if (string.IsNullOrEmpty(argumentsJson))
             return result;
@@ -469,9 +469,9 @@ public sealed class OpenAiProvider : ILlmProvider
         catch (JsonException ex)
         {
             // Return error Data so the caller sees the parse failure with full exception
-            return new List<Data>
+            return new List<Data.@this>
             {
-                Data.FromError(ActionError.FromException(ex, "JsonParseError", 400))
+                Data.@this.FromError(ActionError.FromException(ex, "JsonParseError", 400))
             };
         }
 
@@ -670,7 +670,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
     // --- Parameter schema ---
 
-    private static Dictionary<string, object> BuildParamSchema(List<Data>? parameters)
+    private static Dictionary<string, object> BuildParamSchema(List<Data.@this>? parameters)
     {
         if (parameters == null || parameters.Count == 0)
             return new Dictionary<string, object>
@@ -747,7 +747,7 @@ public sealed class OpenAiProvider : ILlmProvider
         var result = await settings.Get("LlmConfig", settingKey);
         if (result.Success && result.Value != null)
         {
-            var val = result.Value is Data d ? d.Value?.ToString() : result.Value.ToString();
+            var val = result.Value is Data.@this d ? d.Value?.ToString() : result.Value.ToString();
             if (!string.IsNullOrEmpty(val)) return val;
         }
 
@@ -803,7 +803,7 @@ public sealed class OpenAiProvider : ILlmProvider
     /// Restores a cached result from the SettingsStore.
     /// The cache stores metadata as a dictionary since Data.Properties is [JsonIgnore].
     /// </summary>
-    private static Data RestoreFromCache(Data cached)
+    private static Data.@this RestoreFromCache(Data.@this cached)
     {
         // The cached value is a dictionary with Value + metadata
         object? resultValue = null;
@@ -842,14 +842,14 @@ public sealed class OpenAiProvider : ILlmProvider
             resultValue = cached.Value;
         }
 
-        var result = Data.Ok(resultValue);
+        var result = Data.@this.Ok(resultValue);
         SetProp(result, "Cached", true);
         foreach (var kvp in props)
             SetProp(result, kvp.Key, kvp.Value);
         return result;
     }
 
-    private static void SetProp(Data data, string name, object? value)
+    private static void SetProp(Data.@this data, string name, object? value)
     {
         data.Properties[name] = new Data(name, value);
     }

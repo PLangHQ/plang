@@ -11,5 +11,5 @@ namespace App.modules;
 /// </summary>
 public interface ICodeGenerated
 {
-    Task<Data> ExecuteAsync(ActionType action, EngineType engine, Context.@this context);
+    Task<Data.@this> ExecuteAsync(ActionType action, EngineType engine, Context.@this context);
 }

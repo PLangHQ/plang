@@ -1,3 +1,4 @@
+
 // Goals subsystem
 global using EngineGoals = App.Goals.@this;
 global using GoalCall = App.Goals.Goal.GoalCall;

@@ -7,14 +7,14 @@ public partial class Sqrt : IContext
 {
     public partial object Value { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var input = MathHelper.ToDouble(Value);
         if (input < 0)
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(Data.@this.FromError(
                 new App.Errors.ValidationError("Cannot take square root of negative number", "InvalidInput")));
 
         var result = Math.Sqrt(input);
-        return Task.FromResult(Data.Ok(result));
+        return Task.FromResult(Data.@this.Ok(result));
     }
 }

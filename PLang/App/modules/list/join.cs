@@ -10,11 +10,11 @@ public partial class Join : IContext
     [Default(",")]
     public partial string Separator { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var existing = Context.Variables.Get(ListName)?.Value;
         if (existing is not System.Collections.IList list)
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(Data.@this.FromError(
                 new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
         var strings = new List<string>();
@@ -22,6 +22,6 @@ public partial class Join : IContext
             strings.Add(item?.ToString() ?? "");
 
         var result = string.Join(Separator, strings);
-        return Task.FromResult(Data.Ok(result, App.Variables.Type.String));
+        return Task.FromResult(Data.@this.Ok(result, App.Data.Type.String));
     }
 }

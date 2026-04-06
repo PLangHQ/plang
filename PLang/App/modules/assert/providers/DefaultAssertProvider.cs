@@ -9,85 +9,85 @@ public class DefaultAssertProvider : IAssertProvider
     public string Name => "default";
     public bool IsDefault { get; set; }
 
-    public Data Equals(Equals action)
+    public Data.@this Equals(Equals action)
     {
         if (AreEqual(action.Expected?.Value, action.Actual?.Value))
-            return Data.Ok(true);
+            return Data.@this.Ok(true);
 
-        return Data.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value, action.Message));
+        return Data.@this.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value, action.Message));
     }
 
-    public Data NotEquals(NotEquals action)
+    public Data.@this NotEquals(NotEquals action)
     {
         if (!AreEqual(action.Expected?.Value, action.Actual?.Value))
-            return Data.Ok(true);
+            return Data.@this.Ok(true);
 
-        return Data.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value,
+        return Data.@this.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value,
             action.Message ?? "Values should not be equal"));
     }
 
-    public Data IsTrue(IsTrue action)
+    public Data.@this IsTrue(IsTrue action)
     {
         if (IsTruthy(action.Value?.Value))
-            return Data.Ok(true);
+            return Data.@this.Ok(true);
 
-        return Data.FromError(new AssertionError(true, action.Value?.Value,
+        return Data.@this.FromError(new AssertionError(true, action.Value?.Value,
             action.Message ?? "Expected truthy value"));
     }
 
-    public Data IsFalse(IsFalse action)
+    public Data.@this IsFalse(IsFalse action)
     {
         if (!IsTruthy(action.Value?.Value))
-            return Data.Ok(true);
+            return Data.@this.Ok(true);
 
-        return Data.FromError(new AssertionError(false, action.Value?.Value,
+        return Data.@this.FromError(new AssertionError(false, action.Value?.Value,
             action.Message ?? "Expected falsy value"));
     }
 
-    public Data IsNull(IsNull action)
+    public Data.@this IsNull(IsNull action)
     {
         if (action.Value?.Value == null)
-            return Data.Ok(true);
+            return Data.@this.Ok(true);
 
-        return Data.FromError(new AssertionError(null, action.Value?.Value,
+        return Data.@this.FromError(new AssertionError(null, action.Value?.Value,
             action.Message ?? "Expected null"));
     }
 
-    public Data IsNotNull(IsNotNull action)
+    public Data.@this IsNotNull(IsNotNull action)
     {
         if (action.Value?.Value != null)
-            return Data.Ok(true);
+            return Data.@this.Ok(true);
 
-        return Data.FromError(new AssertionError("(not null)", null,
+        return Data.@this.FromError(new AssertionError("(not null)", null,
             action.Message ?? "Expected non-null value"));
     }
 
-    public Data Contains(Contains action)
+    public Data.@this Contains(Contains action)
     {
         if (ContainsValue(action.Value?.Value, action.Container?.Value))
-            return Data.Ok(true);
+            return Data.@this.Ok(true);
 
-        return Data.FromError(new AssertionError(
+        return Data.@this.FromError(new AssertionError(
             FormatValue(action.Container?.Value), action.Value?.Value,
             action.Message ?? "Container does not contain value"));
     }
 
-    public Data GreaterThan(GreaterThan action)
+    public Data.@this GreaterThan(GreaterThan action)
     {
         if (Compare(action.A?.Value, action.B?.Value) > 0)
-            return Data.Ok(true);
+            return Data.@this.Ok(true);
 
-        return Data.FromError(new AssertionError(
+        return Data.@this.FromError(new AssertionError(
             $"> {FormatValue(action.B?.Value)}", action.A?.Value,
             action.Message ?? $"Expected {FormatValue(action.A?.Value)} > {FormatValue(action.B?.Value)}"));
     }
 
-    public Data LessThan(LessThan action)
+    public Data.@this LessThan(LessThan action)
     {
         if (Compare(action.A?.Value, action.B?.Value) < 0)
-            return Data.Ok(true);
+            return Data.@this.Ok(true);
 
-        return Data.FromError(new AssertionError(
+        return Data.@this.FromError(new AssertionError(
             $"< {FormatValue(action.B?.Value)}", action.A?.Value,
             action.Message ?? $"Expected {FormatValue(action.A?.Value)} < {FormatValue(action.B?.Value)}"));
     }

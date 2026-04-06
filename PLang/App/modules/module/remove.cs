@@ -12,14 +12,14 @@ public partial class Remove : IContext
     /// <summary>Module name to unregister (e.g., "mymodule").</summary>
     public partial string Name { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var engine = Context.App!;
         if (!engine.Modules.Contains(Name))
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(Data.@this.FromError(
                 new App.Errors.ServiceError($"Module '{Name}' not found", "NotFound", 404)));
 
         engine.Modules.Remove(Name);
-        return Task.FromResult(Data.Ok());
+        return Task.FromResult(Data.@this.Ok());
     }
 }

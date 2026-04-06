@@ -11,7 +11,7 @@ public partial class Remove : IContext
 {
     public partial string Key { get; init; }
 
-    public async Task<Data> Run()
+    public async Task<Data.@this> Run()
     {
         var store = Context.App.System.SettingsStore;
         var result = await store.Remove("settings", Key);
@@ -19,6 +19,6 @@ public partial class Remove : IContext
         if (!result.Success)
             return result;
 
-        return Data.Ok(new types.setting { key = Key });
+        return Data.@this.Ok(new types.setting { key = Key });
     }
 }

@@ -43,5 +43,5 @@ public partial class download : IContext
     [Provider]
     public partial IHttpProvider Http { get; }
 
-    public async Task<Data> Run() => await Http.DownloadAsync(this);
+    public async Task<Data.@this> Run() => await Http.DownloadAsync(this);
 }

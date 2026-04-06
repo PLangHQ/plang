@@ -12,14 +12,14 @@ public partial class list : IContext
     /// <summary>Optional provider type filter (e.g., "signing", "crypto", "identity", "key"). Omit to list all.</summary>
     public partial string? Type { get; init; }
 
-    public async Task<Data> Run()
+    public async Task<Data.@this> Run()
     {
         if (string.IsNullOrEmpty(Type))
-            return Data.Ok(Context.App.Providers.List());
+            return Data.@this.Ok(Context.App.Providers.List());
 
         var providerType = Context.App.Providers.ResolveType(Type);
         if (providerType == null)
-            return Data.FromError(new Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
+            return Data.@this.FromError(new Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
 
         return Context.App.Providers.List(providerType);
     }

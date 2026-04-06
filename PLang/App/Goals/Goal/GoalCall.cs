@@ -27,7 +27,7 @@ public sealed class GoalCall : modules.IEvent
 
     /// <summary>Parameters to pass to the goal, each as a named Data value.</summary>
     [Store, LlmBuilder]
-    public List<Data>? Parameters { get; init; }
+    public List<Data.@this>? Parameters { get; init; }
     /// <summary>Pre-resolved .pr file path. Null when the goal name contains %variables%.</summary>
     [Store]
     public string? PrPath { get; set; }

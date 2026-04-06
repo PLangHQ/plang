@@ -50,5 +50,5 @@ public partial class upload : IContext
     [Provider]
     public partial IHttpProvider Http { get; }
 
-    public async Task<Data> Run() => await Http.UploadAsync(this);
+    public async Task<Data.@this> Run() => await Http.UploadAsync(this);
 }

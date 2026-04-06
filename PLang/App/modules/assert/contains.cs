@@ -8,12 +8,12 @@ namespace App.modules.assert;
 [Action("contains")]
 public partial class Contains : IContext
 {
-    public partial Data? Value { get; init; }
-    public partial Data? Container { get; init; }
+    public partial Data.@this? Value { get; init; }
+    public partial Data.@this? Container { get; init; }
     public partial string? Message { get; init; }
 
     [Provider]
     public partial IAssertProvider Assert { get; }
 
-    public Task<Data> Run() => Task.FromResult(Assert.Contains(this));
+    public Task<Data.@this> Run() => Task.FromResult(Assert.Contains(this));
 }

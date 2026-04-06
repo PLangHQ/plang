@@ -70,5 +70,5 @@ public partial class query : IContext
     [Provider]
     public partial ILlmProvider Llm { get; }
 
-    public async Task<Data> Run() => await Llm.Query(this);
+    public async Task<Data.@this> Run() => await Llm.Query(this);
 }

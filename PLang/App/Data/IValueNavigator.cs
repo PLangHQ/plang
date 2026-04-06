@@ -1,4 +1,4 @@
-namespace App.Variables;
+namespace App.Data;
 
 /// <summary>
 /// Navigates into a value by key/index.

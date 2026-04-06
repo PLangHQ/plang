@@ -36,12 +36,12 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         var engine = action.Context.App;
 
         if (string.IsNullOrWhiteSpace(action.Name))
-            return Data.FromError<Identity>(new ActionError("Identity name cannot be empty", "ValidationError", 400));
+            return Data.@this.FromError<Identity>(new ActionError("Identity name cannot be empty", "ValidationError", 400));
 
         var all = await LoadAllAsync(action);
         if (!all.Success) return all.ToError<Identity>();
         if (all.Exists(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase) && !i.IsArchived))
-            return Data.FromError<Identity>(new ActionError($"Identity '{action.Name}' already exists", "DuplicateName", 409));
+            return Data.@this.FromError<Identity>(new ActionError($"Identity '{action.Name}' already exists", "DuplicateName", 409));
 
         var identity = GenerateIdentity(action, action.Name, action.SetAsDefault, action.Provider);
         if (!identity.Success) return identity;
@@ -108,7 +108,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
         var target = all.Find(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase));
         if (target == null)
-            return Data.FromError<Identity>(new ActionError($"Identity '{action.Name}' not found", "NotFound", 404));
+            return Data.@this.FromError<Identity>(new ActionError($"Identity '{action.Name}' not found", "NotFound", 404));
 
         if (target.IsArchived)
         {
@@ -139,7 +139,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         var engine = action.Context.App;
 
         if (string.IsNullOrWhiteSpace(action.NewName))
-            return Data.FromError<Identity>(new ActionError("New name cannot be empty", "ValidationError", 400));
+            return Data.@this.FromError<Identity>(new ActionError("New name cannot be empty", "ValidationError", 400));
 
         var identity = await LoadAsync(action, action.Name);
         if (!identity.Success) return identity;
@@ -169,11 +169,11 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         return identity;
     }
 
-    public async Task<DataList<Identity>> ListAsync(list action)
+    public async Task<Data.DataList<Identity>> ListAsync(list action)
     {
         var all = await LoadAllAsync(action);
         if (!all.Success) return all;
-        var active = new DataList<Identity>();
+        var active = new Data.DataList<Identity>();
         foreach (var identity in all)
             if (!identity.IsArchived) active.Add(identity);
         return active;
@@ -211,11 +211,11 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         if (!result.Success)
             return result.ToError<Identity>();
 
-        return Data.FromError<Identity>(new ActionError($"Identity '{name}' not found", "NotFound", 404));
+        return Data.@this.FromError<Identity>(new ActionError($"Identity '{name}' not found", "NotFound", 404));
     }
 
     /// <summary>Loads all identities (including archived) from the settings store.</summary>
-    internal async Task<DataList<Identity>> LoadAllAsync(IContext action)
+    internal async Task<Data.DataList<Identity>> LoadAllAsync(IContext action)
     {
         var store = action.Context.App.System.SettingsStore;
         return await store.GetAll<Identity>(Table);

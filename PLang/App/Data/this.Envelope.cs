@@ -6,14 +6,14 @@ using App;
 using App.Channels.Serializers;
 using App.Errors;
 
-namespace App.Variables;
+namespace App.Data;
 
 /// <summary>
 /// Data — envelope/transport concern.
 /// Signature and Verified properties for wire integrity.
 /// Pipeline methods: Wrap, Compress, Encrypt (outbound) and Decrypt, Decompress, Unwrap (inbound).
 /// </summary>
-public partial class Data
+public partial class @this
 {
     /// <summary>
     /// Maximum decompressed payload size (100 MB). Prevents zip bomb attacks at the transport boundary.
@@ -47,7 +47,7 @@ public partial class Data
     /// inner = this Data. Requires context for Kind resolution via Engine.Types.
     /// Returns self if no context, no type, or Kind is unknown.
     /// </summary>
-    public Data Wrap()
+    public @this Wrap()
     {
         if (_context == null || Type == null)
             return this;
@@ -56,7 +56,7 @@ public partial class Data
         if (kind == null)
             return this;
 
-        var envelope = new Data("", this, Type.FromName(kind));
+        var envelope = new @this("", this, Type.FromName(kind));
         envelope.Context = _context;
         return envelope;
     }
@@ -70,7 +70,7 @@ public partial class Data
     /// and will be empty after Decompress(). This is by design: Properties are for the [Out]
     /// transport view, not intermediate compression.
     /// </summary>
-    public Data Compress()
+    public @this Compress()
     {
         if (_context == null || Type == null)
             return this;
@@ -78,13 +78,13 @@ public partial class Data
         if (!Type.Compressible)
             return this;
 
-        var json = JsonSerializer.SerializeToUtf8Bytes(this, typeof(Data), _envelopeJsonOptions);
+        var json = JsonSerializer.SerializeToUtf8Bytes(this, typeof(@this), _envelopeJsonOptions);
         var compressed = GZipCompress(json);
 
-        var inner = new Data("", compressed, Type.FromName("gzip"));
+        var inner = new @this("", compressed, Type.FromName("gzip"));
         inner.Context = _context;
 
-        var envelope = new Data("", inner, Type.FromName("archived"));
+        var envelope = new @this("", inner, Type.FromName("archived"));
         envelope.Context = _context;
         return envelope;
     }
@@ -95,7 +95,7 @@ public partial class Data
     /// Intended pattern: serialize to bytes, encrypt, wrap as
     /// Data { type = "encrypted", value = Data { type = algorithm, value = encryptedBytes, Properties = [...] } }
     /// </summary>
-    public Data Encrypt()
+    public @this Encrypt()
     {
         // Encryption requires a crypto service on App (not yet implemented).
         // When available: navigate through _context.App to the crypto handler,
@@ -110,7 +110,7 @@ public partial class Data
     /// Requires a crypto service on App (not yet implemented). Returns self until crypto is available.
     /// Intended pattern: read inner Data for algorithm + properties, decrypt bytes, deserialize result.
     /// </summary>
-    public Data Decrypt()
+    public @this Decrypt()
     {
         if (!string.Equals(Type?.Value, "encrypted", StringComparison.OrdinalIgnoreCase))
             return this;
@@ -125,12 +125,12 @@ public partial class Data
     /// Decompresses an archived envelope. If type is not "archived", returns self (no-op).
     /// Reads inner Data for compressed bytes, decompresses with GZip, deserializes back to Data.
     /// </summary>
-    public Data Decompress()
+    public @this Decompress()
     {
         if (!string.Equals(Type?.Value, "archived", StringComparison.OrdinalIgnoreCase))
             return this;
 
-        if (Value is not Data inner)
+        if (Value is not @this inner)
             return FromError(new ServiceError("Archived Data has no inner Data", "DecompressError", 500));
 
         var compressed = inner.GetValue<byte[]>();
@@ -141,7 +141,7 @@ public partial class Data
         {
             var decompressed = GZipDecompress(compressed);
 
-            var result = JsonSerializer.Deserialize<Data>(decompressed, _envelopeJsonOptions);
+            var result = JsonSerializer.Deserialize<@this>(decompressed, _envelopeJsonOptions);
             if (result == null)
                 return FromError(new ServiceError("Failed to deserialize decompressed Data", "DecompressError", 500));
 
@@ -167,9 +167,9 @@ public partial class Data
     /// Strips the category envelope, returning the inner Data.
     /// If Value is a Data, returns it. Otherwise returns self (already flat).
     /// </summary>
-    public Data Unwrap()
+    public @this Unwrap()
     {
-        if (Value is Data inner)
+        if (Value is @this inner)
         {
             inner.Context = _context;
             return inner;
@@ -182,11 +182,11 @@ public partial class Data
     /// <summary>
     /// After JSON deserialization, Value of type object? becomes Dictionary&lt;string, object?&gt;
     /// when the original value was a nested Data. This method detects dictionaries that look
-    /// like serialized Data (have "name" and "value" keys) and reconstructs them as Data objects.
+    /// like serialized Data (have "name" and "value" keys) and reconstructs them as @this objects.
     /// </summary>
     private const int MaxRehydrationDepth = 128;
 
-    private static void RehydrateNestedData(Data data, int depth = 0)
+    private static void RehydrateNestedData(@this data, int depth = 0)
     {
         if (depth > MaxRehydrationDepth)
             throw new InvalidDataException($"Nested Data exceeds maximum rehydration depth ({MaxRehydrationDepth})");
@@ -199,7 +199,7 @@ public partial class Data
             if (dict.TryGetValue("type", out var t) && t is string typeStr)
                 type = new Type(typeStr);
 
-            var inner = new Data(name, value, type);
+            var inner = new @this(name, value, type);
             RehydrateNestedData(inner, depth + 1);
 
             // Use SetValueDirect to avoid Value setter clearing _type

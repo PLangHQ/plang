@@ -16,5 +16,5 @@ public partial class Unarchive : IContext
     [Provider]
     public partial IIdentityProvider Identity { get; }
 
-    public async Task<Data> Run() => await Identity.UnarchiveAsync(this);
+    public async Task<Data.@this> Run() => await Identity.UnarchiveAsync(this);
 }

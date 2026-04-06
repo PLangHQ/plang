@@ -7,9 +7,9 @@ public partial class Floor : IContext
 {
     public partial object Value { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var result = Math.Floor(MathHelper.ToDouble(Value));
-        return Task.FromResult(Data.Ok(MathHelper.PreserveType(result, Value)));
+        return Task.FromResult(Data.@this.Ok(MathHelper.PreserveType(result, Value)));
     }
 }

@@ -8,12 +8,12 @@ public sealed class DefaultEvaluator : IEvaluator
     public string Name => "default";
     public bool IsDefault { get; set; }
 
-    public Data Evaluate(If action)
+    public Data.@this Evaluate(If action)
     {
         try
         {
             bool result = action.Operator.Evaluate(action.Left, action.Right);
-            return Data.Ok(result);
+            return Data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
@@ -21,12 +21,12 @@ public sealed class DefaultEvaluator : IEvaluator
         }
     }
 
-    public Data Evaluate(Compare action)
+    public Data.@this Evaluate(Compare action)
     {
         try
         {
             bool result = action.Operator.Evaluate(action.Left, action.Right);
-            return Data.Ok(result);
+            return Data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
@@ -34,12 +34,12 @@ public sealed class DefaultEvaluator : IEvaluator
         }
     }
 
-    private static Data EvaluationError(Data? left, Operator op, Data? right, Exception ex)
+    private static Data.@this EvaluationError(Data.@this? left, Operator op, Data.@this? right, Exception ex)
     {
         var leftType = left?.Value?.GetType().Name ?? "null";
         var rightType = right?.Value?.GetType().Name ?? "null";
 
-        return Data.FromError(new ValidationError(
+        return Data.@this.FromError(new ValidationError(
             $"Condition evaluation failed: '{left?.Value}' ({leftType}) {op.Value} '{right?.Value}' ({rightType}) — {ex.Message}",
             "EvaluationError")
         {

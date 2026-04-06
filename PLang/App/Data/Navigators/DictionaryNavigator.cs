@@ -1,13 +1,13 @@
 using App.Variables;
 
-namespace App.Navigators;
+namespace App.Data.Navigators;
 
 /// <summary>
 /// Navigates dictionaries by case-insensitive key lookup.
 /// </summary>
 public sealed class DictionaryNavigator : INavigator
 {
-    public object? Navigate(Data data, string key)
+    public object? Navigate(@this data, string key)
     {
         var value = data.Value;
 

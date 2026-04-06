@@ -5,6 +5,6 @@ namespace App.modules.crypto.providers;
 
 public interface ICryptoProvider : IProvider
 {
-    Data Hash(Hash action);
-    Data Verify(Verify action);
+    Data.@this Hash(Hash action);
+    Data.@this Verify(Verify action);
 }

@@ -9,9 +9,9 @@ public partial class Remove : IContext
     [IsNotNull]
     public partial string EventId { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var removed = Context.Events.Unregister(EventId);
-        return Task.FromResult(Data.Ok(removed));
+        return Task.FromResult(Data.@this.Ok(removed));
     }
 }

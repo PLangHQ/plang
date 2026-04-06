@@ -9,5 +9,5 @@ public partial class GetActions : IContext
     [Provider]
     public partial IBuilderProvider Builder { get; }
 
-    public async Task<Data> Run() => await Builder.Actions(this);
+    public async Task<Data.@this> Run() => await Builder.Actions(this);
 }

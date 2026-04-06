@@ -23,7 +23,7 @@ public partial class run : IContext
     [Default("")]
     public partial string ContextMode { get; init; }
 
-    public async Task<Data> Run()
+    public async Task<Data.@this> Run()
     {
         var engine = Context.App!;
 
@@ -34,7 +34,7 @@ public partial class run : IContext
             goal = await GoalName.GetGoalAsync(engine, Context);
             if (goal == null)
             {
-                var result = Data.FromError(new Errors.ServiceError(
+                var result = Data.@this.FromError(new Errors.ServiceError(
                     $"Goal '{GoalName.Name ?? GoalName.PrPath}' not found", "NotFound", 404));
                 result.Handled = true;
                 return result;

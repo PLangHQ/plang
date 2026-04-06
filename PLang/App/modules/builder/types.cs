@@ -9,5 +9,5 @@ public partial class types : IContext
     [Provider]
     public partial IBuilderProvider Builder { get; }
 
-    public Task<Data> Run() => Task.FromResult(Builder.Types(this));
+    public Task<Data.@this> Run() => Task.FromResult(Builder.Types(this));
 }

@@ -19,7 +19,7 @@ public partial class Dispatch : IContext
     /// </summary>
     public partial Actor? Actor { get; init; }
 
-    public async Task<Data> Run()
+    public async Task<Data.@this> Run()
     {
         var engine = Context.App!;
         var callingActor = Context.Actor;
@@ -29,7 +29,7 @@ public partial class Dispatch : IContext
         if (targetActor != null && targetActor != callingActor)
         {
             if (callingActor != null && callingActor.EscalationLevel < targetActor.EscalationLevel)
-                return Data.FromError(new Errors.ActionError(
+                return Data.@this.FromError(new Errors.ActionError(
                     $"Actor '{callingActor.Name}' cannot escalate to '{targetActor.Name}'",
                     "EscalationDenied", 403));
 

@@ -9,5 +9,5 @@ public partial class appSave : IContext
     [Provider]
     public partial IBuilderProvider Builder { get; }
 
-    public async Task<Data> Run() => await Builder.AppSave(this);
+    public async Task<Data.@this> Run() => await Builder.AppSave(this);
 }

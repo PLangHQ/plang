@@ -8,9 +8,9 @@ public partial class Multiply : IContext
     public partial object A { get; init; }
     public partial object B { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var result = MathHelper.ToDouble(A) * MathHelper.ToDouble(B);
-        return Task.FromResult(Data.Ok(MathHelper.PreserveType(result, A, B)));
+        return Task.FromResult(Data.@this.Ok(MathHelper.PreserveType(result, A, B)));
     }
 }

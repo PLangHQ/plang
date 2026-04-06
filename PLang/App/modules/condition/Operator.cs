@@ -12,7 +12,7 @@ namespace App.modules.condition;
 /// </summary>
 public sealed class Operator : IObject
 {
-    private static readonly Dictionary<string, Func<Data?, Data?, bool>> Registry =
+    private static readonly Dictionary<string, Func<Data.@this?, Data.@this?, bool>> Registry =
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["=="] = Equal,
@@ -33,7 +33,7 @@ public sealed class Operator : IObject
     public static string[] ValidValues => [.. Registry.Keys];
 
     public string Value { get; }
-    public Func<Data?, Data?, bool> Evaluate { get; }
+    public Func<Data.@this?, Data.@this?, bool> Evaluate { get; }
 
     public Operator(string value)
     {
@@ -51,13 +51,13 @@ public sealed class Operator : IObject
     // --- Helpers ---
 
     /// <summary>Unwrap Data to raw value.</summary>
-    private static object? Val(Data? data) => data?.Value;
+    private static object? Val(Data.@this? data) => data?.Value;
 
     /// <summary>
     /// Truthy check on Data. If the value is bool, check the bool.
     /// If the value is not bool, check IsInitialized — "does this variable exist?"
     /// </summary>
-    public static bool IsTruthy(Data? data)
+    public static bool IsTruthy(Data.@this? data)
     {
         if (data == null) return false;
         if (data.Value is bool b) return b;
@@ -66,7 +66,7 @@ public sealed class Operator : IObject
 
     // --- Equality ---
 
-    private static bool Equal(Data? left, Data? right)
+    private static bool Equal(Data.@this? left, Data.@this? right)
     {
         // == true with non-bool left: delegates to Data.ToBoolean()
         if (right?.Value is bool rb && left?.Value is not bool)

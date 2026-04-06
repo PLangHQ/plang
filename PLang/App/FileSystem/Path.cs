@@ -9,7 +9,7 @@ namespace App.FileSystem;
 /// Exists and Size are live (lazy filesystem checks).
 /// Value holds file content when set by the provider (e.g., Read).
 /// </summary>
-public class Path : Data
+public class Path : Data.@this
 {
     private readonly string _absolutePath;
 
@@ -30,7 +30,7 @@ public class Path : Data
     /// Creates a Path from an absolute path with optional content.
     /// </summary>
     public Path(string absolutePath, object? content = null, string? source = null)
-        : base("", content, content != null ? Variables.Type.FromMime(TypeMapping.GetMimeType(
+        : base("", content, content != null ? Data.Type.FromMime(TypeMapping.GetMimeType(
             global::System.IO.Path.GetExtension(absolutePath))) : null)
     {
         _absolutePath = absolutePath;
@@ -148,7 +148,7 @@ public class Path : Data
 
     public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(_absolutePath);
 
-    public override Data Clone()
+    public override Data.@this Clone()
     {
         var clone = new Path(_absolutePath, Value, Source)
         {

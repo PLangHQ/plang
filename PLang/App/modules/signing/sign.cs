@@ -11,7 +11,7 @@ public partial class sign : IContext
 {
     /// <summary>The data to sign.</summary>
     [IsInitiated]
-    public partial Data? Data { get; init; }
+    public partial Data.@this? Data { get; init; }
 
     /// <summary>Contracts for this signature. Default: ["C0"].</summary>
     public partial List<string>? Contracts { get; init; }
@@ -25,5 +25,5 @@ public partial class sign : IContext
     [Provider]
     public partial ISigningProvider Signer { get; }
 
-    public async Task<Data> Run() => await Signer.SignAsync(this);
+    public async Task<Data.@this> Run() => await Signer.SignAsync(this);
 }

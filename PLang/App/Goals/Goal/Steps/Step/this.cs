@@ -9,7 +9,7 @@ namespace App.Goals.Goal.Steps.Step;
 /// <summary>
 /// Represents a step within a goal for App.
 /// </summary>
-public sealed partial class @this : Variables.Data<@this>
+public sealed partial class @this : Data.@this<@this>
 {
     [JsonIgnore]
     public new Context.@this? Context { get; set; }
@@ -121,9 +121,9 @@ public sealed partial class @this : Variables.Data<@this>
             {
                 Module = a.Module,
                 ActionName = a.ActionName,
-                Parameters = new List<Data>(a.Parameters),
-                Return = a.Return != null ? new List<Data>(a.Return) : null,
-                Defaults = a.Defaults != null ? new List<Data>(a.Defaults) : null,
+                Parameters = new List<Data.@this>(a.Parameters),
+                Return = a.Return != null ? new List<Data.@this>(a.Return) : null,
+                Defaults = a.Defaults != null ? new List<Data.@this>(a.Defaults) : null,
                 Errors = new List<Info>(a.Errors),
                 Warnings = new List<Info>(a.Warnings)
             })),

@@ -13,7 +13,7 @@ namespace App;
 /// Executes goals and manages the execution lifecycle.
 /// Self-contained: owns all app-level state (environment, culture, shutdown, key-value store).
 /// </summary>
-public sealed class @this : Data<@this>, IAsyncDisposable
+public sealed class @this : Data.@this<@this>, IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly EngineModules _modules;
@@ -118,7 +118,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// <summary>
     /// Per-type navigator registry for Data navigation.
     /// </summary>
-    public Navigators.@this Navigators { get; } = new();
+    public Data.Navigators.@this Navigators { get; } = new();
 
     /// <summary>
     /// The loaded goals.
@@ -274,7 +274,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
 
         Providers.RegisterDefaults();
         Types.RegisterDomainTypes();
-        Navigators.RegisterDefaults();
+        Data.Navigators.RegisterDefaults();
 
         // Default actor is User — Start() switches to System for bootstrap
         CurrentActor = User;
@@ -306,7 +306,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// <summary>
     /// Saves app identity to .build/app.pr.
     /// </summary>
-    public async Task<Data> Save()
+    public async Task<Data.@this> Save()
     {
         Updated = DateTime.UtcNow;
         if (Created == default) Created = Updated;
@@ -318,7 +318,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
         if (dir != null && !FileSystem.Directory.Exists(dir))
             FileSystem.Directory.CreateDirectory(dir);
         await FileSystem.File.WriteAllTextAsync(path, json);
-        return Data.Ok(this);
+        return Data.@this.Ok(this);
     }
 
     /// <summary>
@@ -331,20 +331,20 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// Set properties via init, then call RunAction — app wires context, memory, validation, error handling.
     /// Usage: var result = await app.RunAction&lt;Hash, string&gt;(new Hash { Data = x, Algorithm = "keccak256" }, context);
     /// </summary>
-    public async Task<Data<TResult>> RunAction<TAction, TResult>(TAction action, Context.@this context)
+    public async Task<Data.@this<TResult>> RunAction<TAction, TResult>(TAction action, Context.@this context)
         where TAction : ICodeGenerated
     {
         var emptyAction = new Goals.Goal.Steps.Step.Actions.Action.@this();
         var result = await action.ExecuteAsync(emptyAction, this, context);
-        if (!result.Success) return Data<TResult>.FromError(result.Error!);
-        return Data<TResult>.Ok((TResult)result.Value!);
+        if (!result.Success) return Data.@this<TResult>.FromError(result.Error!);
+        return Data.@this<TResult>.Ok((TResult)result.Value!);
     }
 
     /// <summary>
     /// Runs a module action and returns the raw Data result (preserves Signature, Properties, etc.).
     /// Use when the result convention puts data on properties other than Value (e.g., sign puts SignedData on Signature).
     /// </summary>
-    public async Task<Data> RunAction<TAction>(TAction action, Context.@this context)
+    public async Task<Data.@this> RunAction<TAction>(TAction action, Context.@this context)
         where TAction : ICodeGenerated
     {
         var emptyAction = new Goals.Goal.Steps.Step.Actions.Action.@this();
@@ -355,11 +355,11 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// Dispatches a single action. The app dispatcher doesn.t know about goals or steps.
     /// It receives an action, finds the module handler, executes it, returns result.
     /// </summary>
-    public async Task<Data> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Context.@this context)
+    public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Context.@this context)
     {
         var (executor, error) = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
         if (error != null)
-            return Data.FromError(error);
+            return Data.@this.FromError(error);
 
         var result = await executor!.ExecuteAsync(action, this, context);
 
@@ -380,7 +380,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// Bootstrap: reads system/.build/run.pr, pushes its actions to Run().
     /// This is the ONLY loop in C#. After this, PLang code drives everything.
     /// </summary>
-    public async Task<Data> Start(Context.@this? context = null)
+    public async Task<Data.@this> Start(Context.@this? context = null)
     {
         await Load();
 
@@ -390,7 +390,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
         var goalCall = new GoalCall { PrPath = "system/.build/run.pr" };
         var goal = await goalCall.GetGoalAsync(this, context);
         if (goal == null)
-            return Data.FromError(new Errors.ServiceError(
+            return Data.@this.FromError(new Errors.ServiceError(
                 "system/.build/run.pr not found", "RuntimeNotFound", 500));
 
         return await RunSteps(goal.Steps, context);
@@ -400,9 +400,9 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// Iterates steps and dispatches each action via Run().
     /// Used by Start() for bootstrap and by app.execute for user steps.
     /// </summary>
-    public async Task<Data> RunSteps(GoalSteps steps, Context.@this context)
+    public async Task<Data.@this> RunSteps(GoalSteps steps, Context.@this context)
     {
-        Data result = Data.Ok();
+        Data.@this result = Data.@this.Ok();
         int? skipBelowIndent = null;
 
         for (int i = 0; i < steps.Count; i++)
@@ -441,12 +441,12 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// <summary>
     /// Runs a goal via GoalCall. Used by goal.call and backward compat.
     /// </summary>
-    public async Task<Data> RunGoalAsync(GoalCall goalCall, Context.@this? context = null, CancellationToken ct = default)
+    public async Task<Data.@this> RunGoalAsync(GoalCall goalCall, Context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
         var goal = await goalCall.GetGoalAsync(this, context);
         if (goal == null)
-            return Data.FromError(Errors.GoalError.NotFound(goalCall.Name ?? goalCall.PrPath ?? "unknown"));
+            return Data.@this.FromError(Errors.GoalError.NotFound(goalCall.Name ?? goalCall.PrPath ?? "unknown"));
 
         return await RunGoalAsync(goal, context, ct);
     }
@@ -454,12 +454,12 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// <summary>
     /// Kernel-executes a goal already in memory.
     /// </summary>
-    public async Task<Data> RunGoalAsync(Goal goal, Context.@this? context = null, CancellationToken ct = default)
+    public async Task<Data.@this> RunGoalAsync(Goal goal, Context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
 
         if (ct.IsCancellationRequested)
-            return Data.FromError(new Errors.Error("Operation was cancelled", "Cancelled", 499));
+            return Data.@this.FromError(new Errors.Error("Operation was cancelled", "Cancelled", 499));
 
         var previousGoal = context.Goal;
         context.Goal = goal;

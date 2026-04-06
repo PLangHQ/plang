@@ -8,9 +8,9 @@ public partial class Remove : IContext
     [VariableName]
     public partial string Name { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         Context.Variables.Remove(Name);
-        return Task.FromResult(Data.Ok());
+        return Task.FromResult(Data.@this.Ok());
     }
 }

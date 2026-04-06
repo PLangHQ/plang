@@ -7,7 +7,7 @@ namespace App.modules.output;
 [Action("write", Cacheable = false)]
 public partial class Write : IContext, IChannel
 {
-    public partial Data Data { get; init; }
+    public partial Data.@this Data { get; init; }
 
-    public async Task<Data> Run() => await Channels.WriteAsync(this);
+    public async Task<Data.@this> Run() => await Channels.WriteAsync(this);
 }

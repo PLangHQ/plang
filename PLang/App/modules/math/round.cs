@@ -9,11 +9,11 @@ public partial class Round : IContext
     [Default(0)]
     public partial int Decimals { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var result = Math.Round(MathHelper.ToDouble(Value), Decimals, MidpointRounding.AwayFromZero);
         if (Decimals == 0)
-            return Task.FromResult(Data.Ok(MathHelper.PreserveType(result, Value)));
-        return Task.FromResult(Data.Ok(result));
+            return Task.FromResult(Data.@this.Ok(MathHelper.PreserveType(result, Value)));
+        return Task.FromResult(Data.@this.Ok(result));
     }
 }

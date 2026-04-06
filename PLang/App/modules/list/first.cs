@@ -8,12 +8,12 @@ public partial class First : IContext
     [VariableName]
     public partial string ListName { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var existing = Context.Variables.Get(ListName)?.Value;
         if (existing is System.Collections.IList list && list.Count > 0)
-            return Task.FromResult(Data.Ok(list[0]));
+            return Task.FromResult(Data.@this.Ok(list[0]));
 
-        return Task.FromResult(Data.Ok());
+        return Task.FromResult(Data.@this.Ok());
     }
 }

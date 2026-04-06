@@ -44,8 +44,8 @@ public static class TypeMapping
         ["json[]"] = typeof(JsonArray),
         ["actor"] = typeof(App.Context.Actor),
         ["goal.call"] = typeof(App.Goals.Goal.GoalCall),
-        ["tstring"] = typeof(App.Variables.TString),
-        ["translatable"] = typeof(App.Variables.TString),
+        ["tstring"] = typeof(App.Data.TString),
+        ["translatable"] = typeof(App.Data.TString),
         ["path"] = typeof(App.FileSystem.Path),
 
         // Nullable types
@@ -73,7 +73,7 @@ public static class TypeMapping
         [typeof(byte[])] = "bytes",
         [typeof(object)] = "object",
         [typeof(App.Goals.Goal.GoalCall)] = "goal.call",
-        [typeof(App.Variables.TString)] = "tstring",
+        [typeof(App.Data.TString)] = "tstring",
         [typeof(App.FileSystem.Path)] = "path",
     };
 
@@ -463,12 +463,12 @@ public static class TypeMapping
             {
                 var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
                 var prPath = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
-                List<Variables.Data>? parameters = null;
+                List<Data.@this>? parameters = null;
                 if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)
                 {
                     parameters = pList
                         .OfType<IDictionary<string, object?>>()
-                        .Select(d => new Variables.Data(
+                        .Select(d => new Data.@this(
                             d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "",
                             d.TryGetValue("value", out var dv) ? dv : null))
                         .ToList();

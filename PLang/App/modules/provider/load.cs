@@ -18,10 +18,10 @@ public partial class load : IContext
     /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>
     public partial string? Name { get; init; }
 
-    public async Task<Data> Run()
+    public async Task<Data.@this> Run()
     {
         if (string.IsNullOrEmpty(Path))
-            return Data.FromError(new ActionError("Provider path is required", "ValidationError", 400));
+            return Data.@this.FromError(new ActionError("Provider path is required", "ValidationError", 400));
 
         Assembly assembly;
         try
@@ -31,7 +31,7 @@ public partial class load : IContext
         }
         catch (Exception ex)
         {
-            return Data.FromError(ActionError.FromException(ex, "LoadError", 500));
+            return Data.@this.FromError(ActionError.FromException(ex, "LoadError", 500));
         }
 
         var providerTypes = assembly.GetExportedTypes()
@@ -39,14 +39,14 @@ public partial class load : IContext
             .ToList();
 
         if (providerTypes.Count == 0)
-            return Data.FromError(new ActionError("No IProvider implementations found in assembly", "NoProviders", 400));
+            return Data.@this.FromError(new ActionError("No IProvider implementations found in assembly", "NoProviders", 400));
 
         var registered = new List<IProvider>();
         foreach (var type in providerTypes)
         {
             var ctor = type.GetConstructor(System.Type.EmptyTypes);
             if (ctor == null)
-                return Data.FromError(new ActionError($"Provider '{type.Name}' has no parameterless constructor", "ProviderConstructor", 400));
+                return Data.@this.FromError(new ActionError($"Provider '{type.Name}' has no parameterless constructor", "ProviderConstructor", 400));
 
             var instance = (IProvider)ctor.Invoke(null);
 
@@ -64,6 +64,6 @@ public partial class load : IContext
             registered.Add(instance);
         }
 
-        return Data.Ok(registered);
+        return Data.@this.Ok(registered);
     }
 }

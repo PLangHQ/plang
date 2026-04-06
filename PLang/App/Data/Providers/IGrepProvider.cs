@@ -1,6 +1,6 @@
 using App.Providers;
 
-namespace App.Variables.Providers;
+namespace App.Data.Providers;
 
 /// <summary>
 /// Provider interface for grep operations on Data.
@@ -11,16 +11,16 @@ public interface IGrepProvider : IProvider
 {
 
     /// <summary>
-    /// Search data for a pattern. Returns matching content as Data.
+    /// Search data for a pattern. Returns matching content as @this.
     /// </summary>
     /// <param name="data">The data to search</param>
     /// <param name="pattern">Search pattern (regex or text)</param>
     /// <param name="contextLines">Number of lines before/after each match (0 = no context)</param>
-    /// <returns>Matching content as Data</returns>
-    Data Grep(Data data, string pattern, int contextLines = 0);
+    /// <returns>Matching content as @this</returns>
+    @this Grep(@this data, string pattern, int contextLines = 0);
 
     /// <summary>
     /// Count matches in data.
     /// </summary>
-    Data GrepCount(Data data, string pattern);
+    @this GrepCount(@this data, string pattern);
 }

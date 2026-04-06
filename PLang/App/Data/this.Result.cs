@@ -1,13 +1,13 @@
 using System.Text.Json.Serialization;
 using App.Errors;
 
-namespace App.Variables;
+namespace App.Data;
 
 /// <summary>
 /// Data — result/error concern.
 /// Handled, Error, Warnings, Success, Ok/FromError factories, Merge.
 /// </summary>
-public partial class Data
+public partial class @this
 {
     /// <summary>
     /// When true, a before-event has handled this action/step/goal.
@@ -31,30 +31,30 @@ public partial class Data
     [JsonIgnore]
     public bool Success => Error == null;
 
-    public static implicit operator bool(Data d) => d.Success;
+    public static implicit operator bool(@this d) => d.Success;
 
     // --- Static helpers (replace Return helpers) ---
 
-    public static Data Ok() => new("");
-    public static Data Ok(object? value, Type? type = null) => new("", value, type);
-    public static Data FromError(IError error) => new("") { Error = error };
-    public static T FromError<T>(IError error) where T : Data, new() => new() { Error = error };
+    public static @this Ok() => new("");
+    public static @this Ok(object? value, Type? type = null) => new("", value, type);
+    public static @this FromError(IError error) => new("") { Error = error };
+    public static T FromError<T>(IError error) where T : @this, new() => new() { Error = error };
 
     /// <summary>
     /// Produces a typed error Data from this instance's error. The error object creates the conversion.
     /// </summary>
-    public T ToError<T>() where T : Data, new() => new() { Error = Error };
+    public T ToError<T>() where T : @this, new() => new() { Error = Error };
 
     /// <summary>
-    /// Merge: combines two Data results (logic from Return.Merge).
+    /// Merge: combines two @this results (logic from Return.Merge).
     /// Treats Value as List&lt;Data&gt;, merge by Name (replace-or-append).
     /// </summary>
-    public Data Merge(Data other)
+    public @this Merge(@this other)
     {
         if (other.Value == null) return this;
 
-        var myData = Value as List<Data> ?? new();
-        var otherData = other.Value as List<Data> ?? new();
+        var myData = Value as List<@this> ?? new();
+        var otherData = other.Value as List<@this> ?? new();
 
         foreach (var data in otherData)
         {
@@ -65,6 +65,6 @@ public partial class Data
                 myData.Add(data);
         }
 
-        return new Data("") { Value = myData };
+        return new @this("") { Value = myData };
     }
 }

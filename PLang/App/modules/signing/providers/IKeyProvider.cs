@@ -10,5 +10,5 @@ namespace App.modules.signing.providers;
 /// </summary>
 public interface IKeyProvider : IProvider
 {
-    Data<KeyPair> GenerateKeyPair();
+    Data.@this<KeyPair> GenerateKeyPair();
 }

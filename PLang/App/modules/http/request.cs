@@ -55,5 +55,5 @@ public partial class request : IContext
     [Provider]
     public partial IHttpProvider Http { get; }
 
-    public async Task<Data> Run() => await Http.SendAsync(this);
+    public async Task<Data.@this> Run() => await Http.SendAsync(this);
 }

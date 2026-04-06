@@ -17,5 +17,5 @@ public partial class Move : IContext
     [Provider]
     public partial IFileProvider Files { get; }
 
-    public Task<Data> Run() => Task.FromResult(Files.Move(this));
+    public Task<Data.@this> Run() => Task.FromResult(Files.Move(this));
 }

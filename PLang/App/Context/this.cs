@@ -95,7 +95,7 @@ public sealed class @this : IDisposable
     /// Set by event.skipAction to override the current action's result.
     /// Cleared by EventBinding.Run after reading.
     /// </summary>
-    public Data? EventOverride { get; set; }
+    public Data.@this? EventOverride { get; set; }
 
     /// <summary>
     /// The current error being handled. Set by error.check before calling the error goal.
@@ -108,7 +108,7 @@ public sealed class @this : IDisposable
     /// Set when --test flag is active. Accessible via %!test%.
     /// Properties are extensible — results, summary can be GoalCalls.
     /// </summary>
-    public Data? Test { get; set; }
+    public Data.@this? Test { get; set; }
 
     /// <summary>
     /// The current event context. Set by the source generator when a parameter implements IEvent.
@@ -157,19 +157,19 @@ public sealed class @this : IDisposable
         var vars = Variables;
 
         // All context variables are lazy — context has app, fetch at request time
-        vars.Put(new DynamicData("!app", () => App));
-        vars.Put(new DynamicData("!context", () => this));
-        vars.Put(new DynamicData("!variables", () => Variables));
-        vars.Put(new DynamicData("!fileSystem", () => App.FileSystem));
-        vars.Put(new DynamicData("!callStack", () => CallStack));
-        vars.Put(new DynamicData("!channels", () => App.Channels));
-        vars.Put(new DynamicData("!serializers", () => App.Channels.Serializers));
-        vars.Put(new DynamicData("!goal", () => Goal));
-        vars.Put(new DynamicData("!step", () => Step));
-        vars.Put(new DynamicData("!error", () => CurrentError ?? CallStack?.Current?.Error));
-        vars.Put(new DynamicData("!data", () => App.System.Context.Variables.GetValue("data")));
-        vars.Put(new DynamicData("!event", () => Event ?? App.System?.Context?.Event));
-        vars.Put(new DynamicData("!test", () => Test));
+        vars.Put(new Data.DynamicData("!app", () => App));
+        vars.Put(new Data.DynamicData("!context", () => this));
+        vars.Put(new Data.DynamicData("!variables", () => Variables));
+        vars.Put(new Data.DynamicData("!fileSystem", () => App.FileSystem));
+        vars.Put(new Data.DynamicData("!callStack", () => CallStack));
+        vars.Put(new Data.DynamicData("!channels", () => App.Channels));
+        vars.Put(new Data.DynamicData("!serializers", () => App.Channels.Serializers));
+        vars.Put(new Data.DynamicData("!goal", () => Goal));
+        vars.Put(new Data.DynamicData("!step", () => Step));
+        vars.Put(new Data.DynamicData("!error", () => CurrentError ?? CallStack?.Current?.Error));
+        vars.Put(new Data.DynamicData("!data", () => App.System.Context.Variables.GetValue("data")));
+        vars.Put(new Data.DynamicData("!event", () => Event ?? App.System?.Context?.Event));
+        vars.Put(new Data.DynamicData("!test", () => Test));
     }
 
     /// <summary>

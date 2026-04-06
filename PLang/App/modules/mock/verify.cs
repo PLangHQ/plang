@@ -10,15 +10,15 @@ public partial class Verify : IContext
     public partial int ExpectedCount { get; init; }
     public partial string? Message { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         if (Mock.CallCount != ExpectedCount)
         {
-            return Task.FromResult(Data.FromError(new AssertionError(
+            return Task.FromResult(Data.@this.FromError(new AssertionError(
                 ExpectedCount, Mock.CallCount,
                 Message ?? $"Expected {Mock.ActionPattern} to be called {ExpectedCount} time(s), but was called {Mock.CallCount} time(s)")));
         }
 
-        return Task.FromResult(Data.Ok(true));
+        return Task.FromResult(Data.@this.Ok(true));
     }
 }

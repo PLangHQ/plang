@@ -14,7 +14,7 @@ namespace PLang
 			this.fileSystem = fileSystem;
 		}
 
-		public async Task<App.Variables.Data> Run(string[] args, CancellationToken cancellationToken = default)
+		public async Task<App.Data.@this> Run(string[] args, CancellationToken cancellationToken = default)
 		{
 			// Normalize: "build" or "--build" both become the --build flag
 			if (args.Length > 0 && args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
@@ -74,19 +74,19 @@ namespace PLang
 				systemVars.Set("testResults", new List<object?>());
 
 				// !test Data with summary that reads from testResults
-				var testData = new App.Variables.Data("!test", true);
-				testData.Properties["summary"] = new App.Variables.DynamicData("summary", () =>
+				var testData = new App.Data.@this("!test", true);
+				testData.Properties["summary"] = new App.Data.DynamicData("summary", () =>
 				{
 					var results = systemVars.GetValue("testResults") as List<object?>;
 					if (results == null) return "No test results";
-					var passed = results.Count(r => r is not App.Variables.Data d || d.Success);
+					var passed = results.Count(r => r is not App.Data.@this d || d.Success);
 					var failed = results.Count - passed;
 
 					var sb = new System.Text.StringBuilder();
 					sb.AppendLine();
 					sb.AppendLine($"{passed} passed, {failed} failed out of {results.Count} tests");
 
-					foreach (var r in results.OfType<App.Variables.Data>().Where(r => r.Success == false))
+					foreach (var r in results.OfType<App.Data.@this>().Where(r => r.Success == false))
 					{
 						var error = r.Error;
 						var step = error?.Step;

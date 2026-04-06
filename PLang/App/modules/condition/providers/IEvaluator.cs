@@ -5,6 +5,6 @@ namespace App.modules.condition.providers;
 
 public interface IEvaluator : IProvider
 {
-    Data Evaluate(If action);
-    Data Evaluate(Compare action);
+    Data.@this Evaluate(If action);
+    Data.@this Evaluate(Compare action);
 }

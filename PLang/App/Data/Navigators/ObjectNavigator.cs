@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace App.Variables.Navigators;
+namespace App.Data.Navigators;
 
 /// <summary>
 /// Navigates CLR objects via reflection. Lowest priority fallback.

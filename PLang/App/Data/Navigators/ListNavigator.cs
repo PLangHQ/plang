@@ -1,13 +1,13 @@
 using App.Variables;
 
-namespace App.Navigators;
+namespace App.Data.Navigators;
 
 /// <summary>
 /// Navigates lists by index and special accessors (.first, .last, .count, .length).
 /// </summary>
 public sealed class ListNavigator : INavigator
 {
-    public object? Navigate(Data data, string key)
+    public object? Navigate(@this data, string key)
     {
         var value = data.Value;
         if (value is not System.Collections.IList list) return null;

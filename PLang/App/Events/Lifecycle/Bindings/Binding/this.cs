@@ -15,7 +15,7 @@ public sealed class @this
     public string? GoalNamePattern { get; }
     public string? StepPattern { get; }
     public string? ActionPattern { get; }
-    public Func<Context.@this, Task<Data>> Handler { get; }
+    public Func<Context.@this, Task<Data.@this>> Handler { get; }
     public Goals.Goal.GoalCall? GoalToCall { get; }
     public int Priority { get; }
     public bool StopOnError { get; }
@@ -26,10 +26,10 @@ public sealed class @this
     /// <summary>
     /// Runs this binding's handler, skipping if already executing (re-entry guard).
     /// </summary>
-    public async Task<Data> Run(Context.@this context)
+    public async Task<Data.@this> Run(Context.@this context)
     {
         if (!context.TryEnterEvent(Id))
-            return Data.Ok();
+            return Data.@this.Ok();
 
         var result = await Handler(context);
         context.ExitEvent(Id);
@@ -49,14 +49,14 @@ public sealed class @this
         }
 
         if (!result.Success && !StopOnError)
-            return Data.Ok();
+            return Data.@this.Ok();
 
         return result;
     }
 
     public @this(
         EventType type,
-        Func<Context.@this, Task<Data>> handler,
+        Func<Context.@this, Task<Data.@this>> handler,
         string? goalNamePattern = null,
         string? stepPattern = null,
         string? actionPattern = null,

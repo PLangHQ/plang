@@ -17,7 +17,7 @@ public partial class Read : IContext
     [Provider]
     public partial IFileProvider Files { get; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var result = Files.Read(this);
         if (ResolveVariables && result.Success && result.Value is string content)

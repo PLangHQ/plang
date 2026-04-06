@@ -13,24 +13,24 @@ public partial class Check : IContext
     [IsNotNull]
     public partial Step Step { get; init; }
 
-    public async Task<Data> Run()
+    public async Task<Data.@this> Run()
     {
         // No cache settings on the step — skip (miss)
-        if (Step.Cache == null) return Data.Ok(false);
+        if (Step.Cache == null) return Data.@this.Ok(false);
 
         // Any non-cacheable action — skip (miss)
         var modules = Context.App!.Modules;
         foreach (var action in Step.Actions)
         {
             if (!modules.IsCacheable(action.Module, action.ActionName))
-                return Data.Ok(false);
+                return Data.@this.Ok(false);
         }
 
         var key = BuildCacheKey();
         var cached = await Context.App!.Cache.GetAsync(key);
 
         // Miss — return false
-        if (cached == null) return Data.Ok(false);
+        if (cached == null) return Data.@this.Ok(false);
 
         // Hit — restore return variables and return true
         foreach (var data in cached.Properties)
@@ -38,7 +38,7 @@ public partial class Check : IContext
             Context.Variables.Set(data.Name, data.Value, data.Type);
         }
 
-        return Data.Ok(true);
+        return Data.@this.Ok(true);
     }
 
     private string BuildCacheKey()

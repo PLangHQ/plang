@@ -16,5 +16,5 @@ public partial class Export : IContext
     [Provider]
     public partial IIdentityProvider Identity { get; }
 
-    public async Task<Data> Run() => await Identity.ExportAsync(this);
+    public async Task<Data.@this> Run() => await Identity.ExportAsync(this);
 }

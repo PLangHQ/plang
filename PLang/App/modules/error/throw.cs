@@ -14,9 +14,9 @@ public partial class Throw : IContext
     public partial int StatusCode { get; init; }
     public partial string? Key { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
-        return Task.FromResult(Data.FromError(
+        return Task.FromResult(Data.@this.FromError(
             new ServiceError(Message, Key ?? "UserError", StatusCode)));
     }
 }

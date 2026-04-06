@@ -9,7 +9,7 @@ namespace App.modules.crypto;
 public partial class Verify : IContext
 {
     [IsNotNull]
-    public partial Data Data { get; init; }
+    public partial Data.@this Data { get; init; }
 
     [IsNotNull]
     public partial string Hash { get; init; }
@@ -20,5 +20,5 @@ public partial class Verify : IContext
     [Provider]
     public partial ICryptoProvider Crypto { get; }
 
-    public async Task<Data> Run() => Crypto.Verify(this);
+    public async Task<Data.@this> Run() => Crypto.Verify(this);
 }

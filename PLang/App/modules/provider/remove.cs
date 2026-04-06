@@ -15,11 +15,11 @@ public partial class remove : IContext
     /// <summary>Provider type name (e.g., "signing", "crypto", "identity", "key").</summary>
     public partial string? Type { get; init; }
 
-    public async Task<Data> Run()
+    public async Task<Data.@this> Run()
     {
         var providerType = Context.App.Providers.ResolveType(Type);
         if (providerType == null)
-            return Data.FromError(new Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
+            return Data.@this.FromError(new Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
 
         return Context.App.Providers.Remove(providerType, Name);
     }

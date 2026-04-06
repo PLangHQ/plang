@@ -21,5 +21,5 @@ public partial class Archive : IContext
     [Provider]
     public partial IIdentityProvider Identity { get; }
 
-    public async Task<Data> Run() => await Identity.ArchiveAsync(this);
+    public async Task<Data.@this> Run() => await Identity.ArchiveAsync(this);
 }

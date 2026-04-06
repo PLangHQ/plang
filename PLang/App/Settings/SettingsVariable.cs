@@ -12,7 +12,7 @@ namespace App.Settings;
 ///   intercepts %Settings.ApiKey% via GetChild and loads from the settings store.
 /// - Storage (JsonConstructor): value already loaded, used for store round-trips.
 /// </summary>
-public class SettingsVariable : Data
+public class SettingsVariable : Data.@this
 {
     private const string SettingsTable = "settings";
     private readonly App.@this? _engine;
@@ -26,7 +26,7 @@ public class SettingsVariable : Data
 
     /// <summary>Storage constructor — value already set, no lazy resolution needed.</summary>
     [JsonConstructor]
-    public SettingsVariable(string name, object? value = null, Variables.Type? type = null)
+    public SettingsVariable(string name, object? value = null, Data.Type? type = null)
         : base(name, value, type)
     {
     }
@@ -37,7 +37,7 @@ public class SettingsVariable : Data
     /// We load the value from the settings store instead of navigating an in-memory Value.
     /// Only active for the runtime proxy (context constructor). Storage instances navigate normally.
     /// </summary>
-    public override Data? GetChild(string path, int depth = 0)
+    public override Data.@this? GetChild(string path, int depth = 0)
     {
         if (_engine == null)
             return base.GetChild(path, depth);

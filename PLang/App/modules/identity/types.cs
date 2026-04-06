@@ -8,7 +8,7 @@ namespace App.modules.identity;
 /// Data subclass — lives on Variables, navigable via %MyIdentity.PublicKey%.
 /// Persistence is owned by IIdentityProvider.
 /// </summary>
-public sealed class Identity : Data
+public sealed class Identity : Data.@this
 {
     public Identity() : base("Identity") { }
     public Identity(string name) : base(name) { }
@@ -34,7 +34,7 @@ public sealed class Identity : Data
     /// </summary>
     public override string ToString() => PublicKey;
 
-    public override Data Clone()
+    public override Data.@this Clone()
     {
         var clone = new Identity(Name)
         {

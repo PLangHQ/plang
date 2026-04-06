@@ -11,7 +11,7 @@ namespace App.Variables;
 /// </summary>
 public class @this
 {
-    private readonly ConcurrentDictionary<string, Data> _variables = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, Data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
     private Context.@this? _context;
 
     [JsonIgnore]
@@ -29,15 +29,15 @@ public class @this
     public @this()
     {
         // Register system variables
-        Put(new DynamicData("Now", () => DateTimeOffset.Now, Type.DateTime));
-        Put(new DynamicData("NowUtc", () => DateTimeOffset.UtcNow, Type.DateTime));
-        Put(new DynamicData("GUID", () => Guid.NewGuid(), Type.FromName("guid")));
+        Put(new Data.DynamicData("Now", () => DateTimeOffset.Now, Data.Type.DateTime));
+        Put(new Data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, Data.Type.DateTime));
+        Put(new Data.DynamicData("GUID", () => Guid.NewGuid(), Data.Type.FromName("guid")));
     }
 
     /// <summary>
     /// Stores or updates a variable.
     /// </summary>
-    public void Put(Data value)
+    public void Put(Data.@this value)
     {
         value.Context = _context;
         _variables[value.Name] = value;
@@ -90,7 +90,7 @@ public class @this
 
         // Split remaining into parent path + final property name
         var lastDot = remaining.LastIndexOf('.');
-        Data? parent;
+        Data.@this? parent;
         string propertyName;
 
         if (lastDot >= 0)
@@ -164,7 +164,7 @@ public class @this
     /// <summary>
     /// Gets a variable by name (supports dot notation path).
     /// </summary>
-    public Data? Get(string name)
+    public Data.@this? Get(string name)
     {
         if (string.IsNullOrEmpty(name))
             return null;
@@ -323,7 +323,7 @@ public class @this
     /// <summary>
     /// Gets all variables ordered by last update.
     /// </summary>
-    public IEnumerable<Data> GetAll()
+    public IEnumerable<Data.@this> GetAll()
     {
         return _variables.Values
             .Where(v => !v.Name.StartsWith("!"))
@@ -355,8 +355,8 @@ public class @this
         var clone = new @this();
         foreach (var kvp in _variables)
         {
-            // DynamicData (Now, GUID, etc.) — already in clone from constructor
-            if (kvp.Value is DynamicData) continue;
+            // Data.DynamicData (Now, GUID, etc.) — already in clone from constructor
+            if (kvp.Value is Data.DynamicData) continue;
 
             // System context vars (! prefix) — skip, they're per-execution
             if (kvp.Key.StartsWith("!")) continue;

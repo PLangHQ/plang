@@ -34,7 +34,7 @@ public sealed class @this
     /// 2. Setup/.build/setup.pr (a dedicated Setup/ folder)
     /// Does NOT scan all .pr files — there could be thousands.
     /// </summary>
-    private async Task<Data> DiscoverAsync(App.@this engine, CancellationToken ct = default)
+    private async Task<Data.@this> DiscoverAsync(App.@this engine, CancellationToken ct = default)
     {
         var fs = engine.FileSystem;
         var root = engine.AbsolutePath;
@@ -65,7 +65,7 @@ public sealed class @this
             }
         }
 
-        return Data.Ok();
+        return Data.@this.Ok();
     }
 
     /// <summary>
@@ -73,12 +73,12 @@ public sealed class @this
     /// can check run-once semantics. Any goal called from within setup execution
     /// inherits the setup context (context.Setup propagates through goal.call).
     /// </summary>
-    public async Task<Data> RunAsync(App.@this engine, Context.@this context, CancellationToken ct = default)
+    public async Task<Data.@this> RunAsync(App.@this engine, Context.@this context, CancellationToken ct = default)
     {
         var discoverResult = await DiscoverAsync(engine, ct);
         if (!discoverResult.Success) return discoverResult;
 
-        if (!Goals.Any()) return Data.Ok();
+        if (!Goals.Any()) return Data.@this.Ok();
 
         context.Setup = this;
         try
@@ -88,7 +88,7 @@ public sealed class @this
                 var result = await engine.RunGoalAsync(goal, context, ct);
                 if (!result.Success) return result;
             }
-            return Data.Ok();
+            return Data.@this.Ok();
         }
         finally
         {
@@ -112,7 +112,7 @@ public sealed class @this
     /// Matches runtime1 behavior: "already exists" (table/index) and "duplicate column name"
     /// are expected in idempotent setup re-runs and should not abort.
     /// </summary>
-    public bool IsTolerableError(Data result)
+    public bool IsTolerableError(Data.@this result)
     {
         if (result.Success) return false;
         var message = result.Error?.Message;
@@ -125,9 +125,9 @@ public sealed class @this
     /// Records a step execution in the system DataSource.
     /// Returns Data so the caller can detect recording failures.
     /// </summary>
-    public async Task<Data> Record(Step step, App.@this engine, IError? error = null)
+    public async Task<Data.@this> Record(Step step, App.@this engine, IError? error = null)
     {
-        if (string.IsNullOrEmpty(step.Hash)) return Data.Ok();
+        if (string.IsNullOrEmpty(step.Hash)) return Data.@this.Ok();
 
         var metadata = new Dictionary<string, object?>
         {

@@ -41,7 +41,7 @@ public sealed class Actor : IAsyncDisposable
 
     /// <summary>
     /// Identity for this actor.
-    /// For System actor: resolved via DynamicData %MyIdentity% on first access.
+    /// For System actor: resolved via Data.DynamicData %MyIdentity% on first access.
     /// For User/Service: set externally by HTTP/signing layer.
     /// </summary>
     public Identity? Identity { get; set; }
@@ -83,8 +83,8 @@ public sealed class Actor : IAsyncDisposable
         Context.Variables.Put(engine.SettingsVariable);
 
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.
-        // DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
-        Context.Variables.Put(new DynamicData("MyIdentity", () =>
+        // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
+        Context.Variables.Put(new Data.DynamicData("MyIdentity", () =>
         {
             var provider = engine.Providers.Get<IIdentityProvider>();
             if (!provider.Success) return null;

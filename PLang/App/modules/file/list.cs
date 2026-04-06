@@ -19,5 +19,5 @@ public partial class List : IContext
     [Provider]
     public partial IFileProvider Files { get; }
 
-    public Task<Data> Run() => Task.FromResult(Files.List(this));
+    public Task<Data.@this> Run() => Task.FromResult(Files.List(this));
 }

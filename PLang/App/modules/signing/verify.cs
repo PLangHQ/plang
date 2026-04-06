@@ -10,7 +10,7 @@ namespace App.modules.signing;
 public partial class verify : IContext
 {
     /// <summary>The signed data to verify.</summary>
-    public partial Data? Data { get; init; }
+    public partial Data.@this? Data { get; init; }
 
     /// <summary>Required contracts for verification.</summary>
     public partial List<string>? Contracts { get; init; }
@@ -24,5 +24,5 @@ public partial class verify : IContext
     [Provider]
     public partial ISigningProvider Signer { get; }
 
-    public async Task<Data> Run() => await Signer.VerifyAsync(this);
+    public async Task<Data.@this> Run() => await Signer.VerifyAsync(this);
 }

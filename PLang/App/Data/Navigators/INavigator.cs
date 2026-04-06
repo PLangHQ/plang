@@ -1,6 +1,6 @@
 using App.Variables;
 
-namespace App.Navigators;
+namespace App.Data.Navigators;
 
 /// <summary>
 /// Navigates a Data object's content by key.
@@ -11,5 +11,5 @@ public interface INavigator
     /// <summary>
     /// Navigate into the data's content by key. Returns null if the key doesn't exist.
     /// </summary>
-    object? Navigate(Data data, string key);
+    object? Navigate(@this data, string key);
 }

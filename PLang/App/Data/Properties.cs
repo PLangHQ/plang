@@ -1,22 +1,22 @@
 using System.Collections;
 
-namespace App.Variables;
+namespace App.Data;
 
 /// <summary>
 /// A collection of Data properties.
 /// Provides indexed and named access to child properties.
 /// </summary>
-public class Properties : IList<Data>
+public class Properties : IList<@this>
 {
-    private readonly List<Data> _items = new();
+    private readonly List<@this> _items = new();
 
-    public Data this[int index]
+    public @this this[int index]
     {
         get => _items[index];
         set => _items[index] = value;
     }
 
-    public Data? this[string name]
+    public @this? this[string name]
     {
         get => _items.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         set
@@ -41,15 +41,15 @@ public class Properties : IList<Data>
     public int Count => _items.Count;
     public bool IsReadOnly => false;
 
-    public void Add(Data item) => _items.Add(item);
+    public void Add(@this item) => _items.Add(item);
     public void Clear() => _items.Clear();
-    public bool Contains(Data item) => _items.Contains(item);
+    public bool Contains(@this item) => _items.Contains(item);
     public bool Contains(string name) => _items.Any(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-    public void CopyTo(Data[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
-    public IEnumerator<Data> GetEnumerator() => _items.GetEnumerator();
-    public int IndexOf(Data item) => _items.IndexOf(item);
-    public void Insert(int index, Data item) => _items.Insert(index, item);
-    public bool Remove(Data item) => _items.Remove(item);
+    public void CopyTo(@this[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
+    public IEnumerator<@this> GetEnumerator() => _items.GetEnumerator();
+    public int IndexOf(@this item) => _items.IndexOf(item);
+    public void Insert(int index, @this item) => _items.Insert(index, item);
+    public bool Remove(@this item) => _items.Remove(item);
     public void RemoveAt(int index) => _items.RemoveAt(index);
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -76,7 +76,7 @@ public class Properties : IList<Data>
         }
         else
         {
-            Add(new Data(name, value, type));
+            Add(new @this(name, value, type));
         }
     }
 

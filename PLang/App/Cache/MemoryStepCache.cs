@@ -11,10 +11,10 @@ public sealed class MemoryStepCache : ICache
 {
     private readonly MemoryCache _cache = new MemoryCache("StepCache_" + Guid.NewGuid().ToString("N")[..8]);
 
-    public Task<Data?> GetAsync(string key, CancellationToken ct = default)
-        => Task.FromResult(_cache.Get(key) as Data);
+    public Task<Data.@this?> GetAsync(string key, CancellationToken ct = default)
+        => Task.FromResult(_cache.Get(key) as Data.@this);
 
-    public Task SetAsync(string key, Data value, CacheSettings settings, CancellationToken ct = default)
+    public Task SetAsync(string key, Data.@this value, CacheSettings settings, CancellationToken ct = default)
     {
         var policy = new CacheItemPolicy();
         if (settings.Sliding)
@@ -32,7 +32,7 @@ public sealed class MemoryStepCache : ICache
         return Task.CompletedTask;
     }
 
-    public Task<bool> TryAddAsync(string key, Data value, CacheSettings settings, CancellationToken ct = default)
+    public Task<bool> TryAddAsync(string key, Data.@this value, CacheSettings settings, CancellationToken ct = default)
     {
         var policy = new CacheItemPolicy();
         if (settings.Sliding)

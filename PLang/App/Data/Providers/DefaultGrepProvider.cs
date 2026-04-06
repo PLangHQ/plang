@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace App.Variables.Providers;
+namespace App.Data.Providers;
 
 /// <summary>
 /// Default grep provider for text/string data.
@@ -12,17 +12,17 @@ public class DefaultGrepProvider : IGrepProvider
     public string Name => "default";
     public bool IsDefault { get; set; } = true;
 
-    public Data Grep(Data data, string pattern, int contextLines = 0)
+    public @this Grep(@this data, string pattern, int contextLines = 0)
     {
         var text = data.Value?.ToString();
         if (text == null || string.IsNullOrEmpty(pattern))
-            return new Data(data.Name, "");
+            return new @this(data.Name, "");
 
         var lines = text.Split('\n');
         var matchIndices = FindMatchingLines(lines, pattern);
 
         if (matchIndices.Count == 0)
-            return new Data(data.Name, "");
+            return new @this(data.Name, "");
 
         if (contextLines <= 0)
         {
@@ -32,22 +32,22 @@ public class DefaultGrepProvider : IGrepProvider
             {
                 sb.AppendLine($"{i + 1}: {lines[i]}");
             }
-            return new Data(data.Name, sb.ToString().TrimEnd());
+            return new @this(data.Name, sb.ToString().TrimEnd());
         }
 
         // With context lines
         return FormatWithContext(lines, matchIndices, contextLines, data.Name);
     }
 
-    public Data GrepCount(Data data, string pattern)
+    public @this GrepCount(@this data, string pattern)
     {
         var text = data.Value?.ToString();
         if (text == null || string.IsNullOrEmpty(pattern))
-            return new Data(data.Name, 0);
+            return new @this(data.Name, 0);
 
         var lines = text.Split('\n');
         var count = FindMatchingLines(lines, pattern).Count;
-        return new Data(data.Name, count);
+        return new @this(data.Name, count);
     }
 
     private static List<int> FindMatchingLines(string[] lines, string pattern)
@@ -70,7 +70,7 @@ public class DefaultGrepProvider : IGrepProvider
         return matches;
     }
 
-    private static Data FormatWithContext(string[] lines, List<int> matchIndices, int contextLines, string name)
+    private static @this FormatWithContext(string[] lines, List<int> matchIndices, int contextLines, string name)
     {
         var sb = new StringBuilder();
         var printed = new HashSet<int>();
@@ -97,6 +97,6 @@ public class DefaultGrepProvider : IGrepProvider
             needsSeparator = true;
         }
 
-        return new Data(name, sb.ToString().TrimEnd());
+        return new @this(name, sb.ToString().TrimEnd());
     }
 }

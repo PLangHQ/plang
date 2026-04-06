@@ -221,11 +221,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
 
         // Resolution state
-        sb.AppendLine("    private List<App.Variables.Data>? __parameters;");
-        sb.AppendLine("    private List<App.Variables.Data>? __defaults;");
+        sb.AppendLine("    private List<App.Data.@this>? __parameters;");
+        sb.AppendLine("    private List<App.Data.@this>? __defaults;");
         sb.AppendLine("    private App.Variables.@this? __variables;");
         sb.AppendLine("    private App.@this? __engine;");
-        sb.AppendLine("    private App.Variables.Data? __resolutionError;");
+        sb.AppendLine("    private App.Data.@this? __resolutionError;");
         sb.AppendLine();
 
         // Partial property implementations
@@ -317,15 +317,15 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
         // ParamData() accessor — gives handler access to the underlying Data for any parameter
         // Usage: ParamData(nameof(Size))?.Error, ParamData(nameof(FilePath))?.Success
-        sb.AppendLine("    private System.Collections.Generic.Dictionary<string, App.Variables.Data?>? __paramData;");
-        sb.AppendLine("    protected App.Variables.Data? ParamData(string paramName)");
+        sb.AppendLine("    private System.Collections.Generic.Dictionary<string, App.Data.@this?>? __paramData;");
+        sb.AppendLine("    protected App.Data.@this? ParamData(string paramName)");
         sb.AppendLine("        => __paramData != null && __paramData.TryGetValue(paramName, out var d) ? d : null;");
         sb.AppendLine();
 
         // ExecuteAsync
         sb.AppendLine("    private App.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
         sb.AppendLine();
-        sb.AppendLine("    public async System.Threading.Tasks.Task<App.Variables.Data> ExecuteAsync(");
+        sb.AppendLine("    public async System.Threading.Tasks.Task<App.Data.@this> ExecuteAsync(");
         sb.AppendLine("        App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, App.Context.@this context)");
         sb.AppendLine("    {");
         sb.AppendLine("        __action = action;");
@@ -407,7 +407,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 {
                     sb.AppendLine($"        if ({prop.Name} == null)");
                 }
-                sb.AppendLine($"            return App.Variables.Data.FromError(new App.Errors.ServiceError(");
+                sb.AppendLine($"            return App.Data.@this.FromError(new App.Errors.ServiceError(");
                 sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' is required\", __step, __callFrames, \"MissingParameter\", 400));");
             }
         }
@@ -423,21 +423,21 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     {
                         // IsNotNull implies IsInitiated — check both
                         sb.AppendLine($"        if (!{prop.Name}.IsInitialized || {prop.Name}.Value == null)");
-                        sb.AppendLine($"            return App.Variables.Data.FromError(new App.Errors.ServiceError(");
+                        sb.AppendLine($"            return App.Data.@this.FromError(new App.Errors.ServiceError(");
                         sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
                     }
                     else
                     {
                         // IsInitiated only
                         sb.AppendLine($"        if (!{prop.Name}.IsInitialized)");
-                        sb.AppendLine($"            return App.Variables.Data.FromError(new App.Errors.ServiceError(");
+                        sb.AppendLine($"            return App.Data.@this.FromError(new App.Errors.ServiceError(");
                         sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must be provided\", __step, __callFrames, \"ParameterRequired\", 400));");
                     }
                 }
                 else if (prop.IsNotNull && !prop.IsValueType)
                 {
                     sb.AppendLine($"        if ({prop.Name} == null)");
-                    sb.AppendLine($"            return App.Variables.Data.FromError(new App.Errors.ServiceError(");
+                    sb.AppendLine($"            return App.Data.@this.FromError(new App.Errors.ServiceError(");
                     sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
                 }
             }
@@ -451,7 +451,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine("        catch (System.Exception ex)");
         sb.AppendLine("        {");
-        sb.AppendLine("            return App.Variables.Data.FromError(new App.Errors.ServiceError(");
+        sb.AppendLine("            return App.Data.@this.FromError(new App.Errors.ServiceError(");
         sb.AppendLine("                ex.Message, __step, __callFrames, \"ServiceError\", 400) { Exception = ex });");
         sb.AppendLine("        }");
         sb.AppendLine("        finally");
@@ -511,7 +511,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        var (__result, __error) = App.Utils.TypeMapping.TryConvertTo(value, typeof(T));");
         sb.AppendLine("        if (__error != null)");
         sb.AppendLine("        {");
-        sb.AppendLine("            __resolutionError = App.Variables.Data.FromError(");
+        sb.AppendLine("            __resolutionError = App.Data.@this.FromError(");
         sb.AppendLine("                new App.Errors.ActionError(");
         sb.AppendLine("                    $\"Parameter '{paramName}': {__error.Message}\",");
         sb.AppendLine("                    \"ConversionError\", __error.StatusCode)");
@@ -550,7 +550,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        return data?.Value?.ToString();");
         sb.AppendLine("    }");
         sb.AppendLine();
-        sb.AppendLine("    private App.Variables.Data? __ResolveData(string name)");
+        sb.AppendLine("    private App.Data.@this? __ResolveData(string name)");
         sb.AppendLine("    {");
         sb.AppendLine("        var data = __parameters?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
@@ -571,7 +571,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
         sb.AppendLine("                return __FormatValue(__r?.Value);");
         sb.AppendLine("            });");
-        sb.AppendLine("            return new App.Variables.Data(data.Name, interpolated);");
+        sb.AppendLine("            return new App.Data.@this(data.Name, interpolated);");
         sb.AppendLine("        }");
         sb.AppendLine("        return data;");
         sb.AppendLine("    }");

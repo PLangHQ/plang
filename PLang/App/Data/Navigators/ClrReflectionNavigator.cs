@@ -1,14 +1,14 @@
 using System.Reflection;
 using App.Variables;
 
-namespace App.Navigators;
+namespace App.Data.Navigators;
 
 /// <summary>
 /// Fallback navigator — uses CLR reflection to navigate public properties on any object.
 /// </summary>
 public sealed class ClrReflectionNavigator : INavigator
 {
-    public object? Navigate(Data data, string key)
+    public object? Navigate(@this data, string key)
     {
         var value = data.Value;
         if (value == null) return null;

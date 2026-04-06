@@ -14,13 +14,13 @@ public partial class Call : IContext
     /// </summary>
     public partial Actor? Actor { get; init; }
 
-    public async Task<Data> Run()
+    public async Task<Data.@this> Run()
     {
         var engine = Context.App!;
         var execContext = Actor?.Context ?? Context;
         var goal = await GoalName.GetGoalAsync(engine, execContext);
         if (goal == null)
-            return Data.FromError(new Errors.ServiceError(
+            return Data.@this.FromError(new Errors.ServiceError(
                 $"Goal '{GoalName.Name}' not found", "NotFound", 404));
 
         return await engine.RunGoalAsync(goal, execContext);

@@ -9,7 +9,7 @@ using App.Context;
 using App.Errors;
 using App.Goals.Goal;
 using App.Variables;
-using PlangType = App.Variables.Type;
+using PlangType = App.Data.Type;
 using App.Config;
 using App.modules.signing;
 using EngineType = App.@this;
@@ -56,7 +56,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     // --- IHttpProvider: action-level methods ---
 
-    public Task<Data> SendAsync(request action) => ExecuteHttpAsync(async () =>
+    public Task<Data.@this> SendAsync(request action) => ExecuteHttpAsync(async () =>
     {
         var engine = action.Context.App;
         var config = engine.Config.For<Config>(action.Context);
@@ -129,7 +129,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         }
     });
 
-    public Task<Data> DownloadAsync(download action) => ExecuteHttpAsync(async () =>
+    public Task<Data.@this> DownloadAsync(download action) => ExecuteHttpAsync(async () =>
     {
         var engine = action.Context.App;
         var config = engine.Config.For<Config>(action.Context);
@@ -149,10 +149,10 @@ public sealed class DefaultHttpProvider : IHttpProvider
             switch (action.IfExists)
             {
                 case FileExists.Error:
-                    return Data.FromError(new ServiceError(
+                    return Data.@this.FromError(new ServiceError(
                         $"File already exists: {action.SaveTo}", "FileExists", 409));
                 case FileExists.Skip:
-                    return Data.Ok(action.SaveTo);
+                    return Data.@this.Ok(action.SaveTo);
                 case FileExists.Overwrite:
                     break;
             }
@@ -191,10 +191,10 @@ public sealed class DefaultHttpProvider : IHttpProvider
         await StreamWithProgressAsync(
             responseStream, fileStream, totalBytes, action.OnProgress, engine, action.Context, cts.Token);
 
-        return Data.Ok(action.SaveTo);
+        return Data.@this.Ok(action.SaveTo);
     });
 
-    public Task<Data> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
+    public Task<Data.@this> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
     {
         var engine = action.Context.App;
         var config = engine.Config.For<Config>(action.Context);
@@ -236,21 +236,21 @@ public sealed class DefaultHttpProvider : IHttpProvider
         return await ParseResponseAsync(response, requestMessage, unsigned, engine, action.Context, maxResponseSize);
     });
 
-    public Data Configure(configure action)
+    public Data.@this Configure(configure action)
     {
         // Redirect config can't change after first request (SocketsHttpHandler is immutable)
         if (_client != null && (action.FollowRedirects.HasValue || action.MaxRedirects.HasValue))
-            return Data.FromError(new ServiceError(
+            return Data.@this.FromError(new ServiceError(
                 "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
                 "ConfigLocked", 409));
 
         action.Context.App.Config.Apply<Config>(action, action.Context, action.Default);
-        return Data.Ok();
+        return Data.@this.Ok();
     }
 
     // --- Unified error handling ---
 
-    private async Task<Data> ExecuteHttpAsync(Func<Task<Data>> operation)
+    private async Task<Data.@this> ExecuteHttpAsync(Func<Task<Data.@this>> operation)
     {
         try
         {
@@ -269,7 +269,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 FormatException => ("InvalidContent", 400),
                 _ => ("HttpError", 500)
             };
-            return Data.FromError(new ServiceError(ex.Message, key, statusCode));
+            return Data.@this.FromError(new ServiceError(ex.Message, key, statusCode));
         }
     }
 
@@ -360,7 +360,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// Signs a request via app.RunAction&lt;sign&gt;().
     /// Returns null if unsigned, the sign result Data on success (navigate .Signature for SignedData).
     /// </summary>
-    private static async Task<Data?> SignRequestAsync(
+    private static async Task<Data.@this?> SignRequestAsync(
         Context.@this context,
         bool unsigned,
         signing.sign? signOptions,
@@ -373,7 +373,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var httpSign = new signing.sign
         {
             Context = context,
-            Data = new Data("", bodyContent ?? ""),
+            Data.@this = new Data("", bodyContent ?? ""),
             Headers = new Dictionary<string, object>
             {
                 ["url"] = url,
@@ -386,7 +386,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         return await context.App.RunAction<signing.sign>(httpSign, context);
     }
 
-    private static void ApplySignature(HttpRequestMessage request, Data signResult)
+    private static void ApplySignature(HttpRequestMessage request, Data.@this signResult)
     {
         var signatureJson = JsonSerializer.Serialize(signResult.Signature, _jsonOptions);
         request.Headers.TryAddWithoutValidation("X-Signature", signatureJson);
@@ -438,30 +438,30 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     // --- URL resolution ---
 
-    private static Data<string> ResolveUrl(string url, ModuleView<Config> config)
+    private static Data.@this<string> ResolveUrl(string url, ModuleView<Config> config)
     {
         var baseUrl = config.Resolve<string?>("BaseUrl", null);
 
         if (url.StartsWith('/'))
         {
             if (string.IsNullOrEmpty(baseUrl))
-                return Data<string>.FromError(new ServiceError(
+                return Data.@this<string>.FromError(new ServiceError(
                     "Relative URL requires a BaseUrl configuration. Use 'configure http, base url https://...'",
                     "NoBaseUrl", 400));
 
             baseUrl = baseUrl.TrimEnd('/');
-            return Data<string>.Ok(baseUrl + url);
+            return Data.@this<string>.Ok(baseUrl + url);
         }
 
         if (!url.Contains("://"))
             url = "https://" + url;
 
-        return Data<string>.Ok(url);
+        return Data.@this<string>.Ok(url);
     }
 
     // --- Response parsing ---
 
-    private static async Task<Data> ParseResponseAsync(
+    private static async Task<Data.@this> ParseResponseAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
         bool unsigned,
@@ -490,7 +490,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         {
             if (unsigned)
             {
-                var err = Data.FromError(new ServiceError(
+                var err = Data.@this.FromError(new ServiceError(
                     "Unsigned request received application/plang response — this is not allowed",
                     "UnsignedPlang", 403));
                 BuildProperties(err, request, response);
@@ -513,7 +513,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             {
                 parsed = json;
             }
-            var result = Data.Ok(parsed);
+            var result = Data.@this.Ok(parsed);
             BuildProperties(result, request, response);
             return result;
         }
@@ -522,7 +522,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         if (contentType.Contains("xml", StringComparison.OrdinalIgnoreCase))
         {
             var xml = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            var result = Data.Ok(xml, Variables.Type.FromMime("application/xml"));
+            var result = Data.@this.Ok(xml, Data.Type.FromMime("application/xml"));
             BuildProperties(result, request, response);
             return result;
         }
@@ -531,14 +531,14 @@ public sealed class DefaultHttpProvider : IHttpProvider
         if (contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
         {
             var text = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            var result = Data.Ok(text);
+            var result = Data.@this.Ok(text);
             BuildProperties(result, request, response);
             return result;
         }
 
         // Binary response
         var bytes = await ReadLimitedBytesAsync(response.Content, maxResponseSize);
-        var binaryResult = Data.Ok(bytes);
+        var binaryResult = Data.@this.Ok(bytes);
         BuildProperties(binaryResult, request, response);
         return binaryResult;
     }
@@ -547,7 +547,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// Parses application/plang response: deserialize as Data (with Signature via [In]),
     /// verify signature, set %!ServiceIdentity%.
     /// </summary>
-    private static async Task<Data> ParsePlangResponseAsync(
+    private static async Task<Data.@this> ParsePlangResponseAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
         EngineType engine,
@@ -556,14 +556,14 @@ public sealed class DefaultHttpProvider : IHttpProvider
     {
         var body = await ReadLimitedStringAsync(response.Content, maxResponseSize);
 
-        Data? data;
+        Data.@this? data;
         try
         {
-            data = JsonSerializer.Deserialize<Data>(body, _transportInOptions);
+            data = JsonSerializer.Deserialize<Data.@this>(body, _transportInOptions);
         }
         catch (JsonException ex)
         {
-            var err = Data.FromError(new ServiceError(
+            var err = Data.@this.FromError(new ServiceError(
                 $"Failed to deserialize application/plang response: {ex.Message}",
                 "PlangDeserializeError", 400));
             BuildProperties(err, request, response);
@@ -572,7 +572,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         if (data == null)
         {
-            var err = Data.FromError(new ServiceError(
+            var err = Data.@this.FromError(new ServiceError(
                 "application/plang response deserialized to null",
                 "PlangDeserializeError", 400));
             BuildProperties(err, request, response);
@@ -583,7 +583,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var verifyAction = new signing.verify
         {
             Context = context,
-            Data = data
+            Data.@this = data
         };
 
         var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
@@ -607,13 +607,13 @@ public sealed class DefaultHttpProvider : IHttpProvider
         string errorBody, EngineType engine, Context.@this context)
     {
         // Try deserializing as Data with transport options (may have Signature via [In])
-        Data? data = null;
-        try { data = JsonSerializer.Deserialize<Data>(errorBody, _transportInOptions); }
-        catch (JsonException) { /* not valid Data JSON — try legacy format below */ }
+        Data.@this? data = null;
+        try { data = JsonSerializer.Deserialize<Data.@this>(errorBody, _transportInOptions); }
+        catch (JsonException) { /* not valid Data.@this JSON — try legacy format below */ }
 
         if (data?.Signature != null)
         {
-            var verifyAction = new signing.verify { Context = context, Data = data };
+            var verifyAction = new signing.verify { Context = context, Data.@this = data };
             var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
             if (verifyResult.Success)
                 context.Variables.Set("!ServiceIdentity", data.Signature.Identity);
@@ -632,7 +632,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var legacyData = new Data("");
         legacyData.Signature = signedData;
 
-        var legacyVerify = new signing.verify { Context = context, Data = legacyData };
+        var legacyVerify = new signing.verify { Context = context, Data.@this = legacyData };
         var legacyResult = await engine.RunAction<signing.verify>(legacyVerify, context);
         if (legacyResult.Success)
             context.Variables.Set("!ServiceIdentity", signedData.Identity);
@@ -642,13 +642,13 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// Reads an error HTTP response and builds a Data error with properties.
     /// Returns the error Data and the raw error body (for signed error extraction).
     /// </summary>
-    private static async Task<(Data Error, string Body)> ReadErrorResponseAsync(
+    private static async Task<(Data.@this Error, string Body)> ReadErrorResponseAsync(
         HttpResponseMessage response, HttpRequestMessage request, CancellationToken ct = default)
     {
         var errorBody = "";
         try { errorBody = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, ct); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — body too large or read failed, proceed with empty */ }
-        var err = Data.FromError(new ServiceError(
+        var err = Data.@this.FromError(new ServiceError(
             $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
             "HttpError", (int)response.StatusCode));
         BuildProperties(err, request, response);
@@ -657,7 +657,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     // --- Response metadata ---
 
-    private static void BuildProperties(Data data, HttpRequestMessage request, HttpResponseMessage response)
+    private static void BuildProperties(Data.@this data, HttpRequestMessage request, HttpResponseMessage response)
     {
         var props = data.Properties;
 
@@ -695,7 +695,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     // --- Streaming ---
 
-    private static async Task<Data> HandleStreamingAsync(
+    private static async Task<Data.@this> HandleStreamingAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
         GoalCall onStream,
@@ -723,7 +723,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         {
             using (response)
             {
-                var err = Data.FromError(new ServiceError(
+                var err = Data.@this.FromError(new ServiceError(
                     "Unsigned request received application/plang streaming response — this is not allowed",
                     "UnsignedPlang", 403));
                 BuildProperties(err, request, response);
@@ -753,7 +753,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                     break;
             }
 
-            var result = Data.Ok();
+            var result = Data.@this.Ok();
             BuildProperties(result, request, response);
             return result;
         }
@@ -772,7 +772,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         {
             Name = template.Name,
             PrPath = template.PrPath,
-            Parameters = new List<Data> { new Data(paramName, value, type) }
+            Parameters = new List<Data.@this> { new Data(paramName, value, type) }
         };
         var result = await engine.RunGoalAsync(call, context, ct);
         if (!result.Success)
@@ -826,7 +826,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 if (dataBuffer.Length + data.Length + 1 > maxBufferSize)
                 {
                     await engine.Channels.WriteAsync(EngineChannels.StdErr,
-                        Data.FromError(new ServiceError(
+                        Data.@this.FromError(new ServiceError(
                             $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
                             "SSEBufferOverflow", 413)));
                     dataBuffer.Clear();
@@ -872,15 +872,15 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (string.IsNullOrEmpty(line)) continue;
 
             // Each NDJSON line is a Data object with Signature populated via [In]
-            Data? data;
+            Data.@this? data;
             try
             {
-                data = JsonSerializer.Deserialize<Data>(line, _transportInOptions);
+                data = JsonSerializer.Deserialize<Data.@this>(line, _transportInOptions);
             }
             catch (JsonException)
             {
                 await engine.Channels.WriteAsync(EngineChannels.StdErr,
-                    Data.FromError(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
+                    Data.@this.FromError(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
                 continue;
             }
             if (data == null) continue;
@@ -889,7 +889,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             var verifyAction = new signing.verify
             {
                 Context = context,
-                Data = data
+                Data.@this = data
             };
 
             var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);

@@ -20,7 +20,7 @@ public partial class Execute : IContext
     /// </summary>
     public partial Actor? Actor { get; init; }
 
-    public async Task<Data> Run()
+    public async Task<Data.@this> Run()
     {
         var engine = Context.App!;
         var callingActor = Context.Actor;
@@ -32,7 +32,7 @@ public partial class Execute : IContext
         {
             // Escalation check: caller must have >= level of target
             if (callingActor != null && callingActor.EscalationLevel < targetActor.EscalationLevel)
-                return Data.FromError(new ActionError(
+                return Data.@this.FromError(new ActionError(
                     $"Actor '{callingActor.Name}' cannot escalate to '{targetActor.Name}'",
                     "EscalationDenied", 403));
 
@@ -60,7 +60,7 @@ public partial class Execute : IContext
                 }
                 catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !execContext.CancellationToken.IsCancellationRequested)
                 {
-                    var result = Data.FromError(new ServiceError(
+                    var result = Data.@this.FromError(new ServiceError(
                         $"Step timed out after {Step.Timeout}ms: {Step.Text}",
                         "Timeout", 408));
                     result.Handled = true;
@@ -80,9 +80,9 @@ public partial class Execute : IContext
         }
     }
 
-    private async Task<Data> ExecuteActions(App.@this engine, Context.@this execContext)
+    private async Task<Data.@this> ExecuteActions(App.@this engine, Context.@this execContext)
     {
-        Data result = Data.Ok();
+        Data.@this result = Data.@this.Ok();
         foreach (var action in Step.Actions)
         {
             execContext.CancellationToken.ThrowIfCancellationRequested();

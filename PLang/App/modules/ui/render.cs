@@ -15,7 +15,7 @@ public partial class Render : IContext
     public partial string Template { get; init; }
 
     /// <summary>Explicit parameters that override Variables in the template.</summary>
-    public partial List<Data>? Parameters { get; init; }
+    public partial List<Data.@this>? Parameters { get; init; }
 
     /// <summary>
     /// Force file/inline interpretation.
@@ -28,5 +28,5 @@ public partial class Render : IContext
     [Provider]
     public partial ITemplateProvider Provider { get; }
 
-    public async Task<Data> Run() => await Provider.Render(this);
+    public async Task<Data.@this> Run() => await Provider.Render(this);
 }

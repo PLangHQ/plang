@@ -9,8 +9,8 @@ namespace App.modules.http.providers;
 /// </summary>
 public interface IHttpProvider : IProvider, IDisposable
 {
-    Task<Data> SendAsync(request action);
-    Task<Data> DownloadAsync(download action);
-    Task<Data> UploadAsync(upload action);
-    Data Configure(configure action);
+    Task<Data.@this> SendAsync(request action);
+    Task<Data.@this> DownloadAsync(download action);
+    Task<Data.@this> UploadAsync(upload action);
+    Data.@this Configure(configure action);
 }

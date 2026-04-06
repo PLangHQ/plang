@@ -8,8 +8,8 @@ public partial class Exists : IContext
     [VariableName]
     public partial string Name { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
-        return Task.FromResult(Data.Ok(Context.Variables.Contains(Name)));
+        return Task.FromResult(Data.@this.Ok(Context.Variables.Contains(Name)));
     }
 }

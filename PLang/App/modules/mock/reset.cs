@@ -8,7 +8,7 @@ public partial class Reset : IContext
 {
     public partial types.MockHandle? Mock { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         if (Mock != null)
         {
@@ -27,6 +27,6 @@ public partial class Reset : IContext
                 }
             }
         }
-        return Task.FromResult(Data.Ok());
+        return Task.FromResult(Data.@this.Ok());
     }
 }

@@ -15,5 +15,5 @@ public partial class SetDefault : IContext
     [Provider]
     public partial IIdentityProvider Identity { get; }
 
-    public async Task<Data> Run() => await Identity.SetDefaultAsync(this);
+    public async Task<Data.@this> Run() => await Identity.SetDefaultAsync(this);
 }

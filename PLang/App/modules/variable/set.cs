@@ -12,7 +12,7 @@ public partial class Set : IContext
     [Default(false)]
     public partial bool AsDefault { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         if (AsDefault)
         {
@@ -22,7 +22,7 @@ public partial class Set : IContext
         }
 
         Context.Variables.Set(Name, Value,
-            Type != null ? App.Variables.Type.FromName(Type) : null);
-        return Task.FromResult(Context.Variables.Get(Name) ?? Data.Ok());
+            Type != null ? App.Data.Type.FromName(Type) : null);
+        return Task.FromResult(Context.Variables.Get(Name) ?? Data.@this.Ok());
     }
 }

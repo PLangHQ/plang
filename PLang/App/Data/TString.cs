@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace App.Variables;
+namespace App.Data;
 
 /// <summary>
 /// Translatable string with PLang variable resolution.

@@ -12,26 +12,26 @@ public class DefaultBuilderProvider : IBuilderProvider
     public string Name => "default";
     public bool IsDefault { get; set; }
 
-    private static Data? BuildingGuard(IContext action)
+    private static Data.@this? BuildingGuard(IContext action)
     {
         if (!action.Context.App.Building.IsEnabled)
-            return Data.FromError(new Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
+            return Data.@this.FromError(new Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
         return null;
     }
 
     // --- Actions ---
 
-    public Task<Data> Actions(GetActions action)
+    public Task<Data.@this> Actions(GetActions action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return Task.FromResult(guard);
 
-        return Task.FromResult(Data.Ok(action.Context.App.Modules.Describe()));
+        return Task.FromResult(Data.@this.Ok(action.Context.App.Modules.Describe()));
     }
 
     // --- Types ---
 
-    public Data Types(types action)
+    public Data.@this Types(types action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
@@ -40,14 +40,14 @@ public class DefaultBuilderProvider : IBuilderProvider
         var schemas = TypeMapping.GetComplexTypeSchemas();
         var schemaLines = schemas.Select(kvp => $"  {kvp.Key}: {kvp.Value}");
 
-        return Data.Ok(new BuilderTypeInfo(
+        return Data.@this.Ok(new BuilderTypeInfo(
             string.Join(", ", names),
             string.Join("\n", schemaLines)));
     }
 
     // --- Goals ---
 
-    public async Task<Data> Goals(goals action)
+    public async Task<Data.@this> Goals(goals action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
@@ -69,7 +69,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var files = listResult.Value as FileSystem.Path[];
         if (files == null || files.Length == 0)
-            return Data.Ok(new List<Goal>());
+            return Data.@this.Ok(new List<Goal>());
 
         // Filter by app.Building.Files if set (--build={"files":"test.goal"})
         var buildFiles = engine.Building.Files;
@@ -80,7 +80,7 @@ public class DefaultBuilderProvider : IBuilderProvider
                     || f.Relative.EndsWith(bf.Relative, StringComparison.OrdinalIgnoreCase)))
                 .ToArray();
             if (files.Length == 0)
-                return Data.Ok(new List<Goal>());
+                return Data.@this.Ok(new List<Goal>());
         }
 
         var allGoals = new List<Goal>();
@@ -119,13 +119,13 @@ public class DefaultBuilderProvider : IBuilderProvider
             allGoals.AddRange(parsedGoals);
         }
 
-        var result = Data.Ok(allGoals);
+        var result = Data.@this.Ok(allGoals);
         if (allErrors.Count > 0)
             result.Warnings = allErrors;
         return result;
     }
 
-    public async Task<Data> GoalsSave(goalsSave action)
+    public async Task<Data.@this> GoalsSave(goalsSave action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
@@ -134,7 +134,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var context = action.Context;
 
         if (action.Goals.Count == 0)
-            return Data.FromError(new Errors.ActionError("No goals to save", "NoGoals", 400));
+            return Data.@this.FromError(new Errors.ActionError("No goals to save", "NoGoals", 400));
 
         // Apply LLM-generated description if available in Variables
         var stepResults = context.Variables.Get("stepResults");
@@ -148,7 +148,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var prPath = action.Goals[0].PrPath;
         if (string.IsNullOrEmpty(prPath))
-            return Data.FromError(new Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));
+            return Data.@this.FromError(new Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));
 
         // Load existing goals from .pr file — merge by name (replace or append)
         var existingGoals = new List<Goal>();
@@ -184,12 +184,12 @@ public class DefaultBuilderProvider : IBuilderProvider
             Value = new Data("", json)
         };
         var saveResult = await engine.RunAction(saveAction, context);
-        return saveResult.Success ? Data.Ok(true) : saveResult;
+        return saveResult.Success ? Data.@this.Ok(true) : saveResult;
     }
 
     // --- Validate ---
 
-    public async Task<Data> Validate(validate action)
+    public async Task<Data.@this> Validate(validate action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
@@ -199,7 +199,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var modules = engine.Modules;
 
         if (action.Actions == null || action.Actions.Count == 0)
-            return Data.Ok(true);
+            return Data.@this.Ok(true);
 
         var notFound = new List<string>();
         foreach (var a in action.Actions)
@@ -209,7 +209,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         }
 
         if (notFound.Count > 0)
-            return Data.FromError(new Errors.ActionError(
+            return Data.@this.FromError(new Errors.ActionError(
                 $"Actions not found: {string.Join(", ", notFound)}", "ActionNotFound", 400));
 
         await ResolveGoalCallPaths(action.Actions, engine, context);
@@ -223,33 +223,33 @@ public class DefaultBuilderProvider : IBuilderProvider
             a.Defaults = modules.GetDefaults(a.Module, a.ActionName, paramNames);
         }
 
-        return Data.Ok(true);
+        return Data.@this.Ok(true);
     }
 
     // --- Merge ---
 
-    public Data Merge(merge action)
+    public Data.@this Merge(merge action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
         action.Step.Merge(action.StepFromLlm);
-        return Data.Ok(action.Step);
+        return Data.@this.Ok(action.Step);
     }
 
     // --- App ---
 
-    public async Task<Data> App(app action)
+    public async Task<Data.@this> App(app action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
         var engine = action.Context.App;
         // App loads its identity from app.pr at Start() — just return it
-        return Data.Ok(engine);
+        return Data.@this.Ok(engine);
     }
 
-    public async Task<Data> AppSave(appSave action)
+    public async Task<Data.@this> AppSave(appSave action)
     {
         var guard = BuildingGuard(action);
         if (guard != null) return guard;

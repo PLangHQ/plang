@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using App.Variables;
 
-namespace App.Navigators;
+namespace App.Data.Navigators;
 
 /// <summary>
 /// Registry of navigators by type. Each type can have a registered navigator

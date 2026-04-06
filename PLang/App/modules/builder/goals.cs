@@ -11,5 +11,5 @@ public partial class goals : IContext
     [Provider]
     public partial IBuilderProvider Builder { get; }
 
-    public async Task<Data> Run() => await Builder.Goals(this);
+    public async Task<Data.@this> Run() => await Builder.Goals(this);
 }

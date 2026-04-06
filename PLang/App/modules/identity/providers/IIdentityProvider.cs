@@ -32,7 +32,7 @@ public interface IIdentityProvider : IProvider
     Task<Identity> RenameAsync(Rename action);
 
     /// <summary>Lists all non-archived identities.</summary>
-    Task<DataList<Identity>> ListAsync(list action);
+    Task<Data.DataList<Identity>> ListAsync(list action);
 
     /// <summary>Exports the full identity including sensitive fields.</summary>
     Task<Identity> ExportAsync(Export action);

@@ -9,10 +9,10 @@ namespace App.modules.file;
 public partial class Save : IContext
 {
     public partial FileSystem.Path Path { get; init; }
-    public partial Data? Value { get; init; }
+    public partial Data.@this? Value { get; init; }
 
     [Provider]
     public partial IFileProvider Files { get; }
 
-    public Task<Data> Run() => Files.Save(this);
+    public Task<Data.@this> Run() => Files.Save(this);
 }

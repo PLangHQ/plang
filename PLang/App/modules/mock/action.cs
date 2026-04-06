@@ -14,7 +14,7 @@ public partial class MockAction : IContext
     public partial GoalCall? GoalToCall { get; init; }
     public partial Dictionary<string, object?>? Parameters { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var handle = new types.MockHandle
         {
@@ -27,7 +27,7 @@ public partial class MockAction : IContext
         var goalToCall = GoalToCall;
         var paramMatchers = Parameters;
 
-        Func<Context.@this, Task<Data>> handler = async ctx =>
+        Func<Context.@this, Task<Data.@this>> handler = async ctx =>
         {
             // Find the current action being executed from the step
             var currentAction = FindCurrentAction(ctx);
@@ -36,7 +36,7 @@ public partial class MockAction : IContext
             if (paramMatchers != null && currentAction != null)
             {
                 if (!ParametersMatch(currentAction, ctx.Variables, paramMatchers))
-                    return Data.Ok(); // no match, let real action run
+                    return Data.@this.Ok(); // no match, let real action run
             }
 
             // Record the call
@@ -50,12 +50,12 @@ public partial class MockAction : IContext
             // Return value mock — skip action and return the value
             if (returnValue != null)
             {
-                ctx.EventOverride = Data.Ok(returnValue);
-                return Data.Ok(returnValue);
+                ctx.EventOverride = Data.@this.Ok(returnValue);
+                return Data.@this.Ok(returnValue);
             }
 
             // Spy mode — just tracked the call, let real action run
-            return Data.Ok();
+            return Data.@this.Ok();
         };
 
         var binding = new EventBinding(
@@ -70,7 +70,7 @@ public partial class MockAction : IContext
 
         Context.Events.Register(binding);
 
-        return Task.FromResult(Data.Ok(handle));
+        return Task.FromResult(Data.@this.Ok(handle));
     }
 
     private static Goals.Goal.Steps.Step.Actions.Action.@this? FindCurrentAction(Context.@this ctx)
@@ -117,7 +117,7 @@ public partial class MockAction : IContext
         return true;
     }
 
-    private static object? ResolveParamValue(Data param, Variables.@this variables)
+    private static object? ResolveParamValue(Data.@this param, Variables.@this variables)
     {
         if (param.Value is string s && s.Contains('%'))
             return variables.Resolve(s);

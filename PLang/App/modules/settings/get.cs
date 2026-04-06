@@ -13,7 +13,7 @@ public partial class Get : IContext
 {
     public partial string Key { get; init; }
 
-    public async Task<Data> Run()
+    public async Task<Data.@this> Run()
     {
         var store = Context.App.System.SettingsStore;
         var result = await store.Get<SettingsVariable>("settings", Key);
@@ -22,7 +22,7 @@ public partial class Get : IContext
             return result;
 
         if (result.Value == null)
-            return Data.FromError(new AskError(
+            return Data.@this.FromError(new AskError(
                 $"Settings value '{Key}' is not set. Please provide a value.",
                 "settings", Key));
 

@@ -11,9 +11,9 @@ namespace App.modules.condition;
 [Action("if")]
 public partial class If : IContext, IStep
 {
-    public partial Data? Left { get; init; }
+    public partial Data.@this? Left { get; init; }
     public partial Operator Operator { get; init; }
-    public partial Data? Right { get; init; }
+    public partial Data.@this? Right { get; init; }
     public partial GoalCall? GoalIfTrue { get; init; }
     public partial GoalCall? GoalIfFalse { get; init; }
     [Default(false)]
@@ -22,14 +22,14 @@ public partial class If : IContext, IStep
     [Provider]
     public partial IEvaluator Evaluator { get; }
 
-    public async Task<Data> Run()
+    public async Task<Data.@this> Run()
     {
         var evalResult = Evaluator.Evaluate(this);
         if (!evalResult.Success) return evalResult;
 
         var conditionResult = evalResult.Value is true;
         if (Negate) conditionResult = !conditionResult;
-        evalResult = Data.Ok(conditionResult);
+        evalResult = Data.@this.Ok(conditionResult);
 
         // Mark indented sub-steps: disabled when false, clean when true
         // Step comes from IStep capability (action.Step = the user step being executed)

@@ -12,5 +12,5 @@ public partial class validate : IContext
     [Provider]
     public partial IBuilderProvider Builder { get; }
 
-    public async Task<Data> Run() => await Builder.Validate(this);
+    public async Task<Data.@this> Run() => await Builder.Validate(this);
 }

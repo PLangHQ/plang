@@ -81,7 +81,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
         }
     }
 
-    public Task<Data> Get(string table, string key)
+    public Task<Data.@this> Get(string table, string key)
     {
         try
         {
@@ -94,19 +94,19 @@ public sealed class SqliteSettingsStore : ISettingsStore
 
             var result = cmd.ExecuteScalar();
             if (result == null || result == DBNull.Value)
-                return Task.FromResult(Data.Ok(null));
+                return Task.FromResult(Data.@this.Ok(null));
 
-            var data = _serializer.Deserialize<Data>(result.ToString()!);
-            return Task.FromResult(data ?? Data.Ok(null));
+            var data = _serializer.Deserialize<Data.@this>(result.ToString()!);
+            return Task.FromResult(data ?? Data.@this.Ok(null));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(Data.@this.FromError(
                 SettingsError.FromException(ex, table, key)));
         }
     }
 
-    public Task<Data> Get<T>(string table, string key) where T : Data
+    public Task<Data.@this> Get<T>(string table, string key) where T : Data.@this
     {
         try
         {
@@ -119,20 +119,20 @@ public sealed class SqliteSettingsStore : ISettingsStore
 
             var result = cmd.ExecuteScalar();
             if (result == null || result == DBNull.Value)
-                return Task.FromResult(Data.Ok(null));
+                return Task.FromResult(Data.@this.Ok(null));
 
             var data = _serializer.Deserialize<T>(result.ToString()!);
             if (data != null) RehydrateValue(data);
-            return Task.FromResult((Data?)data ?? Data.Ok(null));
+            return Task.FromResult((Data.@this?)data ?? Data.@this.Ok(null));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(Data.@this.FromError(
                 SettingsError.FromException(ex, table, key)));
         }
     }
 
-    public Task<Data> GetAll(string table)
+    public Task<Data.@this> GetAll(string table)
     {
         try
         {
@@ -142,27 +142,27 @@ public sealed class SqliteSettingsStore : ISettingsStore
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $"SELECT key, data FROM [{SanitizeTableName(table)}];";
 
-            var items = new List<Data>();
+            var items = new List<Data.@this>();
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
                 var raw = reader.IsDBNull(1) ? null : reader.GetString(1);
                 if (raw != null)
                 {
-                    var data = _serializer.Deserialize<Data>(raw);
+                    var data = _serializer.Deserialize<Data.@this>(raw);
                     if (data != null) items.Add(data);
                 }
             }
-            return Task.FromResult(Data.Ok((object)items));
+            return Task.FromResult(Data.@this.Ok((object)items));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(Data.@this.FromError(
                 SettingsError.FromException(ex, table)));
         }
     }
 
-    public Task<DataList<T>> GetAll<T>(string table) where T : Data
+    public Task<Data.DataList<T>> GetAll<T>(string table) where T : Data.@this
     {
         try
         {
@@ -172,7 +172,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $"SELECT key, data FROM [{SanitizeTableName(table)}];";
 
-            var list = new DataList<T>(table);
+            var list = new Data.DataList<T>(table);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -191,12 +191,12 @@ public sealed class SqliteSettingsStore : ISettingsStore
         }
         catch (Exception ex)
         {
-            return Task.FromResult(DataList<T>.FromError(
+            return Task.FromResult(Data.DataList<T>.FromError(
                 SettingsError.FromException(ex, table)));
         }
     }
 
-    public Task<Data> Set(string table, string key, Data data)
+    public Task<Data.@this> Set(string table, string key, Data.@this data)
     {
         try
         {
@@ -211,16 +211,16 @@ public sealed class SqliteSettingsStore : ISettingsStore
             cmd.Parameters.AddWithValue("@data", _serializer.Serialize(data));
             cmd.ExecuteNonQuery();
 
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(Data.@this.Ok());
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(Data.@this.FromError(
                 SettingsError.FromException(ex, table, key)));
         }
     }
 
-    public Task<Data> Remove(string table, string key)
+    public Task<Data.@this> Remove(string table, string key)
     {
         try
         {
@@ -232,16 +232,16 @@ public sealed class SqliteSettingsStore : ISettingsStore
             cmd.Parameters.AddWithValue("@key", key);
             cmd.ExecuteNonQuery();
 
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(Data.@this.Ok());
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(Data.@this.FromError(
                 SettingsError.FromException(ex, table, key)));
         }
     }
 
-    public Task<Data> Exists(string table, string key)
+    public Task<Data.@this> Exists(string table, string key)
     {
         try
         {
@@ -253,16 +253,16 @@ public sealed class SqliteSettingsStore : ISettingsStore
             cmd.Parameters.AddWithValue("@key", key);
 
             var count = Convert.ToInt64(cmd.ExecuteScalar());
-            return Task.FromResult(Data.Ok((object)(count > 0)));
+            return Task.FromResult(Data.@this.Ok((object)(count > 0)));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(Data.@this.FromError(
                 SettingsError.FromException(ex, table, key)));
         }
     }
 
-    public Task<Data> Tables()
+    public Task<Data.@this> Tables()
     {
         try
         {
@@ -276,11 +276,11 @@ public sealed class SqliteSettingsStore : ISettingsStore
             while (reader.Read())
                 tables.Add(reader.GetString(0));
 
-            return Task.FromResult(Data.Ok((object)tables));
+            return Task.FromResult(Data.@this.Ok((object)tables));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(Data.@this.FromError(
                 SettingsError.FromException(ex)));
         }
     }
@@ -290,7 +290,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
     /// After JSON deserialization, complex objects come back as dictionaries — this converts
     /// them to the registered CLR type so callers get typed values.
     /// </summary>
-    private static void RehydrateValue(Data data)
+    private static void RehydrateValue(Data.@this data)
     {
         if (data.Value == null || data.Type == null) return;
 

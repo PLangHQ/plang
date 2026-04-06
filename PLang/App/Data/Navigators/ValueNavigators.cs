@@ -1,4 +1,4 @@
-namespace App.Variables.Navigators;
+namespace App.Data.Navigators;
 
 /// <summary>
 /// Static registry of navigators in priority order.

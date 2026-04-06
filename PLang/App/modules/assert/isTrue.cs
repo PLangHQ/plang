@@ -8,11 +8,11 @@ namespace App.modules.assert;
 [Action("isTrue")]
 public partial class IsTrue : IContext
 {
-    public partial Data? Value { get; init; }
+    public partial Data.@this? Value { get; init; }
     public partial string? Message { get; init; }
 
     [Provider]
     public partial IAssertProvider Assert { get; }
 
-    public Task<Data> Run() => Task.FromResult(Assert.IsTrue(this));
+    public Task<Data.@this> Run() => Task.FromResult(Assert.IsTrue(this));
 }

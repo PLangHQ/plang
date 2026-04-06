@@ -8,7 +8,7 @@ using App.Errors;
 using App.Context;
 using App.Utils;
 
-namespace App.Variables;
+namespace App.Data;
 
 /// <summary>
 /// PLang type descriptor. Value is a type string: "string", "long", "text/markdown", "image/jpeg", etc.
@@ -66,7 +66,7 @@ public sealed class Type
 /// Also serves as the universal result type (replaces Return).
 /// Partial class — split by concern: Data.cs (core), Data.Result.cs, Data.Navigation.cs, Data.Envelope.cs.
 /// </summary>
-public partial class Data
+public partial class @this
 {
     private object? _value;
     private Type? _type;
@@ -91,7 +91,7 @@ public partial class Data
 
     [JsonIgnore]
     [LlmIgnore]
-    public Data? Parent { get; }
+    public @this? Parent { get; }
 
     [JsonIgnore]
     public bool IsInitialized { get; private set; }
@@ -107,7 +107,7 @@ public partial class Data
     public Properties Properties { get; set; }
 
     [JsonConstructor]
-    public Data(string name, object? value = null, Type? type = null, Data? parent = null)
+    public @this(string name, object? value = null, Type? type = null, @this? parent = null)
     {
         Name = CleanName(name);
         _value = UnwrapJsonElement(value);
@@ -201,7 +201,7 @@ public partial class Data
     public bool IsEmpty => !IsInitialized || _value == null ||
         (_value is string s && string.IsNullOrEmpty(s));
 
-    public static Data Null(string name = "") => new(name, null);
+    public static @this Null(string name = "") => new(name, null);
 
     /// <summary>
     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.
@@ -214,10 +214,10 @@ public partial class Data
     /// Virtual so subclasses (DataList) can override with proper cloning.
     /// SettingsVariable and DynamicData should not be cloned — they are stateless/factory-based.
     /// </summary>
-    public virtual Data Clone()
+    public virtual @this Clone()
     {
         var clonedValue = _value.DeepClone();
-        var clone = new Data(Name, clonedValue, _type)
+        var clone = new @this(Name, clonedValue, _type)
         {
             Error = Error,
             Handled = Handled,
@@ -323,7 +323,7 @@ public partial class Data
         return name.Trim().TrimStart('%').TrimEnd('%');
     }
 
-    private static string BuildPath(Data? parent, string name)
+    private static string BuildPath(@this? parent, string name)
     {
         if (parent == null)
             return name;
@@ -339,7 +339,7 @@ public partial class Data
 /// Generic Data that carries a strongly-typed value.
 /// Inherits from Data, so it satisfies Task&lt;Data&gt; in the interface chain.
 /// </summary>
-public class Data<T> : Data
+public class @this<T> : @this
 {
     public new T? Value
     {
@@ -347,17 +347,17 @@ public class Data<T> : Data
         set => base.Value = value;
     }
 
-    public Data(string name = "", T? value = default, Type? type = null, Data? parent = null)
+    public @this(string name = "", T? value = default, Type? type = null, @this? parent = null)
         : base(name, value, type, parent) { }
 
-    public static Data<T> Ok(T value, Type? type = null) => new("", value, type);
-    public new static Data<T> FromError(IError error) => new() { Error = error };
+    public static @this<T> Ok(T value, Type? type = null) => new("", value, type);
+    public new static @this<T> FromError(IError error) => new() { Error = error };
 }
 
 /// <summary>
 /// Dynamic Data that computes its value on access.
 /// </summary>
-public class DynamicData : Data
+public class DynamicData : @this
 {
     private readonly Func<object?> _valueFactory;
 
@@ -374,7 +374,7 @@ public class DynamicData : Data
 /// Typed list that carries error state. Extends Data so it can be returned from handlers.
 /// On success, use as a list directly. On error, check Success/Error.
 /// </summary>
-public class DataList<T> : Data, IList<T>
+public class DataList<T> : @this, IList<T>
 {
     private readonly List<T> _items = new();
 
@@ -405,9 +405,9 @@ public class DataList<T> : Data, IList<T>
     /// <summary>
     /// Creates an independent copy with its own item list.
     /// </summary>
-    public override Data Clone()
+    public override @this Clone()
     {
-        var clone = new DataList<T>(Name);
+        var clone = new @this.DataList<T>(Name);
         foreach (var item in _items)
             clone._items.Add(item);
         clone.Error = Error;

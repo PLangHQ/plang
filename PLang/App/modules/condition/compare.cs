@@ -8,12 +8,12 @@ namespace App.modules.condition;
 [Action("compare")]
 public partial class Compare : IContext
 {
-    public partial Data? Left { get; init; }
+    public partial Data.@this? Left { get; init; }
     public partial Operator Operator { get; init; }
-    public partial Data? Right { get; init; }
+    public partial Data.@this? Right { get; init; }
 
     [Provider]
     public partial IEvaluator Evaluator { get; }
 
-    public Task<Data> Run() => Task.FromResult(Evaluator.Evaluate(this));
+    public Task<Data.@this> Run() => Task.FromResult(Evaluator.Evaluate(this));
 }

@@ -6,11 +6,11 @@ namespace App.modules.file.providers;
 
 public interface IFileProvider : IProvider
 {
-    Data Read(Read action);
-    Task<Data> Save(Save action);
-    Data Delete(Delete action);
-    Data Copy(Copy action);
-    Data Move(Move action);
-    Data List(List action);
+    Data.@this Read(Read action);
+    Task<Data.@this> Save(Save action);
+    Data.@this Delete(Delete action);
+    Data.@this Copy(Copy action);
+    Data.@this Move(Move action);
+    Data.@this List(List action);
     FileSystem.Path Exists(Exists action);
 }

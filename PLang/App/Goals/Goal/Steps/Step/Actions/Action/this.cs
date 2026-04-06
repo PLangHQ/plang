@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 using App.Variables;
 namespace App.Goals.Goal.Steps.Step.Actions.Action;
 
-public sealed partial class @this : Variables.Data<@this>
+public sealed partial class @this : Data.@this<@this>
 {
     [JsonIgnore]
     public System.Type? ParameterSchema { get; init; }
@@ -17,13 +17,13 @@ public sealed partial class @this : Variables.Data<@this>
     public string ActionName { get; init; } = "";
 
     [Store, LlmBuilder, Debug, Default]
-    public List<Data> Parameters { get; init; } = new();
+    public List<Data.@this> Parameters { get; init; } = new();
 
     [Store, LlmBuilder, Debug, Default]
-    public List<Data>? Return { get; init; }
+    public List<Data.@this>? Return { get; init; }
 
     [Store, Debug, Default]
-    public List<Data>? Defaults { get; set; }
+    public List<Data.@this>? Defaults { get; set; }
 
     [Debug]
     public List<Info> Errors { get; init; } = new();
@@ -44,11 +44,11 @@ public sealed partial class @this : Variables.Data<@this>
         get => _events ??= new modules.Events(this);
     }
 
-    public List<Data> Examples { get; init; } = new();
+    public List<Data.@this> Examples { get; init; } = new();
 
     /// <summary>
     /// Return type properties for the builder summary. Null when Run() returns plain Data.
     /// Derived from the concrete return type of Run() via reflection in Describe().
     /// </summary>
-    public List<Data>? ReturnType { get; init; }
+    public List<Data.@this>? ReturnType { get; init; }
 }

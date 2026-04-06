@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Globalization;
 
-namespace App.Variables;
+namespace App.Data;
 
 /// <summary>
 /// Standard TypeConverter for <see cref="Type"/>.

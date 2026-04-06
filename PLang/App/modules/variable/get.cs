@@ -8,8 +8,8 @@ public partial class Get : IContext
     [VariableName]
     public partial string Name { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
-        return Task.FromResult(Context.Variables.Get(Name) ?? Data.Ok(null));
+        return Task.FromResult(Context.Variables.Get(Name) ?? Data.@this.Ok(null));
     }
 }

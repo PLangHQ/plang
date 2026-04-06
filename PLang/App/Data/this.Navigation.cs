@@ -1,22 +1,22 @@
 using System.Text.RegularExpressions;
 using App.Errors;
-using App.Variables.Navigators;
+using App.Data.Navigators;
 
-namespace App.Variables;
+namespace App.Data;
 
 /// <summary>
 /// Data — navigation concern.
 /// GetChild traverses dot notation, bracket indexing, and method calls into nested values.
 /// Method calls: %data.grep("pattern").maxLength(100)% — chainable, return Data.
 /// </summary>
-public partial class Data
+public partial class @this
 {
     private const int MaxNavigationDepth = 100;
 
     /// <summary>
     /// Gets a child value by path (dot notation, index, or method call).
     /// </summary>
-    public virtual Data? GetChild(string path, int depth = 0)
+    public virtual @this? GetChild(string path, int depth = 0)
     {
         if (string.IsNullOrEmpty(path))
             return this;
@@ -64,7 +64,7 @@ public partial class Data
         if (childValue == null)
             return null;
 
-        var child = new Data(segment, childValue, parent: this);
+        var child = new @this(segment, childValue, parent: this);
         child.Context = _context;
 
         // Inject context on IContext values during traversal
@@ -129,7 +129,7 @@ public partial class Data
     /// Invokes a method-like navigation on Data. Chainable — returns Data.
     /// Override in subclasses to add domain-specific methods.
     /// </summary>
-    protected virtual Data? InvokeMethod(string method, string args)
+    protected virtual @this? InvokeMethod(string method, string args)
     {
         var str = Value?.ToString();
 
@@ -138,22 +138,22 @@ public partial class Data
             "grep" => InvokeGrep(args),
             "grepcount" => InvokeGrepCount(args),
             "maxlength" => MaxLength(str, ParseIntArg(args)),
-            "trim" => new Data(Name, str?.Trim()),
-            "tolower" => new Data(Name, str?.ToLowerInvariant()),
-            "toupper" => new Data(Name, str?.ToUpperInvariant()),
+            "trim" => new @this(Name, str?.Trim()),
+            "tolower" => new @this(Name, str?.ToLowerInvariant()),
+            "toupper" => new @this(Name, str?.ToUpperInvariant()),
             "replace" => Replace(str, args),
             _ => null
         };
     }
 
-    private Data InvokeGrep(string args)
+    private @this InvokeGrep(string args)
     {
         var provider = ResolveGrepProvider();
         var (pattern, contextLines) = ParseGrepArgs(args);
         return provider.Grep(this, pattern ?? "", contextLines);
     }
 
-    private Data InvokeGrepCount(string args)
+    private @this InvokeGrepCount(string args)
     {
         var provider = ResolveGrepProvider();
         return provider.GrepCount(this, ParseStringArg(args) ?? "");
@@ -187,25 +187,25 @@ public partial class Data
         return (pattern, contextLines);
     }
 
-    private Data MaxLength(string? text, int max)
+    private @this MaxLength(string? text, int max)
     {
-        if (text == null) return new Data(Name, "");
-        if (max <= 0) return new Data(Name, text); // 0 = no limit
-        return new Data(Name, text.Length > max ? text[..max] + "..." : text);
+        if (text == null) return new @this(Name, "");
+        if (max <= 0) return new @this(Name, text); // 0 = no limit
+        return new @this(Name, text.Length > max ? text[..max] + "..." : text);
     }
 
-    private Data Replace(string? text, string args)
+    private @this Replace(string? text, string args)
     {
-        if (text == null) return new Data(Name, "");
+        if (text == null) return new @this(Name, "");
         // Parse two string args: replace("old", "new")
         var parts = Regex.Matches(args, @"""([^""]*)""|'([^']*)'");
         if (parts.Count >= 2)
         {
             var oldStr = parts[0].Groups[1].Success ? parts[0].Groups[1].Value : parts[0].Groups[2].Value;
             var newStr = parts[1].Groups[1].Success ? parts[1].Groups[1].Value : parts[1].Groups[2].Value;
-            return new Data(Name, text.Replace(oldStr, newStr));
+            return new @this(Name, text.Replace(oldStr, newStr));
         }
-        return new Data(Name, text);
+        return new @this(Name, text);
     }
 
     private static string? ParseStringArg(string args)
@@ -228,7 +228,7 @@ public partial class Data
 
         // If Value is a Data object (e.g., DynamicData wrapping Identity),
         // navigate into the VALUE first — it's the real object
-        if (val is Data dataVal)
+        if (val is @this dataVal)
         {
             var dataProp = dataVal.Properties[key];
             if (dataProp != null) return dataProp.Value;
@@ -240,7 +240,7 @@ public partial class Data
         // These are declared on the subclass, not on Data itself.
         var ownProp = GetType().GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (ownProp != null && ownProp.DeclaringType != typeof(Data))
+        if (ownProp != null && ownProp.DeclaringType != typeof(@this))
             return ownProp.GetValue(this);
 
         // Check Data.Properties (extensible key-value pairs on the Data)
@@ -280,7 +280,7 @@ public partial class Data
     /// </summary>
     private object? GetInfrastructureValue(string key)
     {
-        var prop = typeof(Data).GetProperty(key,
+        var prop = typeof(@this).GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
         if (prop != null)
             return prop.GetValue(this);

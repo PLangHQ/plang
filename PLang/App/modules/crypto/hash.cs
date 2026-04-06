@@ -9,7 +9,7 @@ namespace App.modules.crypto;
 public partial class Hash : IContext
 {
     [IsNotNull]
-    public partial Data Data { get; init; }
+    public partial Data.@this Data { get; init; }
 
     [Default("keccak256")]
     public partial string Algorithm { get; init; }
@@ -17,5 +17,5 @@ public partial class Hash : IContext
     [Provider]
     public partial ICryptoProvider Crypto { get; }
 
-    public async Task<Data> Run() => Crypto.Hash(this);
+    public async Task<Data.@this> Run() => Crypto.Hash(this);
 }

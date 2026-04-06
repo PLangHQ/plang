@@ -42,5 +42,5 @@ public partial class configure : IContext, IConfigure<Config>
     [Provider]
     public partial IHttpProvider Http { get; }
 
-    public async Task<Data> Run() => Http.Configure(this);
+    public async Task<Data.@this> Run() => Http.Configure(this);
 }

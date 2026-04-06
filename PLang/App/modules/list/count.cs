@@ -8,14 +8,14 @@ public partial class Count : IContext
     [VariableName]
     public partial string ListName { get; init; }
 
-    public Task<Data> Run()
+    public Task<Data.@this> Run()
     {
         var existing = Context.Variables.Get(ListName)?.Value;
         if (existing is System.Collections.IList list)
-            return Task.FromResult(Data.Ok(list.Count));
+            return Task.FromResult(Data.@this.Ok(list.Count));
         if (existing is System.Collections.IDictionary dict)
-            return Task.FromResult(Data.Ok(dict.Count));
+            return Task.FromResult(Data.@this.Ok(dict.Count));
 
-        return Task.FromResult(Data.Ok(0));
+        return Task.FromResult(Data.@this.Ok(0));
     }
 }

@@ -159,7 +159,7 @@ public sealed class @this
                 var parameterType = GetActionType(ns, actionName);
                 if (parameterType == null) continue;
 
-                var parameters = new List<Variables.Data>();
+                var parameters = new List<Data.@this>();
 
                 foreach (var prop in parameterType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 {
@@ -185,7 +185,7 @@ public sealed class @this
                     if (defaultAttr != null)
                         desc += $" = {FormatDefault(defaultAttr.Value)}";
 
-                    parameters.Add(new Variables.Data(prop.Name, desc));
+                    parameters.Add(new Data.@this(prop.Name, desc));
                 }
 
                 bool cacheable = true;
@@ -194,7 +194,7 @@ public sealed class @this
                     cacheable = actionAttr.Cacheable;
 
                 var examples = parameterType.GetCustomAttributes<modules.ExampleAttribute>()
-                    .Select(e => new Variables.Data(e.Plang, e.Mapping))
+                    .Select(e => new Data.@this(e.Plang, e.Mapping))
                     .ToList();
 
                 var returnType = DescribeReturnType(parameterType);
@@ -219,7 +219,7 @@ public sealed class @this
     /// Reads the Run() method's return type. If it returns a concrete Data subtype,
     /// reflects its public properties for the builder summary. Returns null for plain Data.
     /// </summary>
-    private static List<Variables.Data>? DescribeReturnType(System.Type actionType)
+    private static List<Data.@this>? DescribeReturnType(System.Type actionType)
     {
         var runMethod = actionType.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
         if (runMethod == null) return null;
@@ -231,22 +231,22 @@ public sealed class @this
             returnType = returnType.GetGenericArguments()[0];
 
         // Plain Data — no extra properties to describe
-        if (returnType == typeof(Variables.Data)) return null;
+        if (returnType == typeof(Data.@this)) return null;
 
         // Must be a Data subclass
-        if (!typeof(Variables.Data).IsAssignableFrom(returnType)) return null;
+        if (!typeof(Data.@this).IsAssignableFrom(returnType)) return null;
 
         // Collect public properties that are NOT on the base Data class
-        var baseProps = typeof(Variables.Data).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        var baseProps = typeof(Data.@this).GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Select(p => p.Name)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var properties = new List<Variables.Data>();
+        var properties = new List<Data.@this>();
         foreach (var prop in returnType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (baseProps.Contains(prop.Name)) continue;
             var typeName = Utils.TypeMapping.GetTypeName(prop.PropertyType);
-            properties.Add(new Variables.Data(prop.Name, typeName));
+            properties.Add(new Data.@this(prop.Name, typeName));
         }
 
         return properties.Count > 0 ? properties : null;
@@ -256,7 +256,7 @@ public sealed class @this
     /// Returns default values for an action's parameters that aren't already provided.
     /// Checks IConfigure&lt;TConfig&gt; first, falls back to [Default] attributes.
     /// </summary>
-    public List<Variables.Data>? GetDefaults(string module, string actionName, HashSet<string> excludeParams)
+    public List<Data.@this>? GetDefaults(string module, string actionName, HashSet<string> excludeParams)
     {
         var actionType = GetActionType(module, actionName);
         if (actionType == null) return null;
@@ -272,26 +272,26 @@ public sealed class @this
                 catch { break; } // No parameterless constructor — fall through to [Default] attributes
                 if (instance == null) break;
 
-                var defaults = new List<Variables.Data>();
+                var defaults = new List<Data.@this>();
                 foreach (var prop in configType.GetProperties())
                 {
                     if (excludeParams.Contains(prop.Name)) continue;
                     var value = prop.GetValue(instance);
                     if (value == null) continue;
-                    defaults.Add(new Variables.Data(prop.Name.ToLowerInvariant(), value));
+                    defaults.Add(new Data.@this(prop.Name.ToLowerInvariant(), value));
                 }
                 return defaults;
             }
         }
 
         // [Default] attributes
-        var attrDefaults = new List<Variables.Data>();
+        var attrDefaults = new List<Data.@this>();
         foreach (var prop in actionType.GetProperties())
         {
             if (excludeParams.Contains(prop.Name)) continue;
             var attrs = prop.GetCustomAttributes(typeof(modules.DefaultAttribute), false);
             if (attrs.Length == 0) continue;
-            attrDefaults.Add(new Variables.Data(prop.Name.ToLowerInvariant(),
+            attrDefaults.Add(new Data.@this(prop.Name.ToLowerInvariant(),
                 ((modules.DefaultAttribute)attrs[0]).Value));
         }
         return attrDefaults.Count > 0 ? attrDefaults : null;
