@@ -5,7 +5,7 @@ namespace PLang.Runtime2.Engine.Goals.Goal;
 
 public sealed partial class @this
 {
-	public async Task<string> FormatForLlm(PLang.Interfaces.PLangContext? context = null)
+	public async Task<string> FormatForLlm(Context.PLangContext? context = null)
 	{
 		var fs = context?.Engine?.FileSystem;
 		if (fs == null)

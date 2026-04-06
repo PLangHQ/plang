@@ -1,5 +1,3 @@
-using LightInject;
-using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.Reflection;
@@ -10,29 +8,9 @@ namespace PLang
 	{
 		private readonly IPLangFileSystem fileSystem;
 
-		public Executor(IServiceContainer container)
+		public Executor(IPLangFileSystem fileSystem)
 		{
-			this.fileSystem = container.GetInstance<IPLangFileSystem>();
-		}
-
-		public enum ExecuteType
-		{
-			Runtime = 0,
-			Builder = 1
-		}
-
-		public async Task<(object? Variables, IError? Error)> Execute(string[] args, ExecuteType executeType, CancellationToken cancellationToken = default)
-		{
-			if (args.FirstOrDefault(p => p == "--version") != null)
-			{
-				Console.WriteLine("plang version: " + Assembly.GetAssembly(this.GetType())!.GetName().Version);
-				return (null, null);
-			}
-
-			var result = await Run(args, cancellationToken);
-			if (!result.Success && result.Error != null)
-				return (result.Value, new Error(result.Error.Format()));
-			return (result.Value, null);
+			this.fileSystem = fileSystem;
 		}
 
 		public async Task<Runtime2.Engine.Memory.Data> Run(string[] args, CancellationToken cancellationToken = default)

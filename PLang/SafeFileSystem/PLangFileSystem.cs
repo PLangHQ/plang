@@ -1,10 +1,4 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-using NBitcoin.Secp256k1;
-using Newtonsoft.Json;
-using PLang.Errors;
-using PLang.Exceptions;
-using PLang.Interfaces;
-using PLang.Runtime;
+﻿using PLang.Interfaces;
 using PLang.Utils;
 using System.IO.Abstractions;
 using System.Runtime.InteropServices;
@@ -232,7 +226,7 @@ namespace PLang.SafeFileSystem
 					if (hasAccess != null) return path;
 				}
 
-				throw new FileAccessException(appName, path, $@"{appName} 
+				throw new UnauthorizedAccessException($@"{appName}
 
 	is trying to access 
 

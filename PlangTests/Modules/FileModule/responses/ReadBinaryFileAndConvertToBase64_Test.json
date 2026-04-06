@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "read %mp4File% to %mp4ContentBase64%",
-    "response": "{\"FunctionName\": \"ReadBinaryFileAndConvertToBase64\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"path\",\n\"Value\": \"%mp4File%\"}],\n\"ReturnValue\": [{\"Type\": \"String\",\n\"VariableName\": \"mp4ContentBase64\"}]}",
-    "created": "2024-02-07T13:02:25.1373377+00:00"
-  }
-]

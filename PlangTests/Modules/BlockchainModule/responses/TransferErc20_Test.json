@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "transfer usdc %amount% from 0x2333 to 0x123, write to %txHash%",
-    "response": "{\n  \"FunctionName\": \"TransferFromSmartContract\",\n  \"Parameters\": [\n    {\n      \"Type\": \"string\",\n      \"Name\": \"contractAddressOrSymbol\",\n      \"Value\": \"USDC\"\n    },\n    {\n      \"Type\": \"string\",\n      \"Name\": \"from\",\n      \"Value\": \"0x2333\"\n    },\n    {\n      \"Type\": \"string\",\n      \"Name\": \"to\",\n      \"Value\": \"0x123\"\n    },\n    {\n      \"Type\": \"BigInteger\",\n      \"Name\": \"value\",\n      \"Value\": \"%amount%\"\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"waitForReceipt\",\n      \"Value\": true\n    }\n  ],\n  \"ReturnValue\": [\n    {\n      \"Type\": \"object\",\n      \"VariableName\": \"%txHash%\"\n    }\n  ]\n}",
-    "created": "2024-02-07T12:13:57.9522571+00:00"
-  }
-]

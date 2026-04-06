@@ -1,5 +1,4 @@
-﻿using PLang.Errors;
-using PLang.SafeFileSystem;
+﻿using PLang.SafeFileSystem;
 using System.IO.Abstractions;
 
 namespace PLang.Interfaces

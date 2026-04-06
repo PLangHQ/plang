@@ -339,6 +339,7 @@ public sealed class PLangContext : IDisposable
         var events = Events;
         var (beforeType, afterType) = owner switch
         {
+            Action action => (EventType.BeforeAction, EventType.AfterAction),
             Step step => (EventType.BeforeStep, EventType.AfterStep),
             Goal goal => (EventType.BeforeGoal, EventType.AfterGoal),
             _ => (EventType.BeforeStep, EventType.AfterStep) // fallback
@@ -348,13 +349,16 @@ public sealed class PLangContext : IDisposable
 
         string? goalName = owner switch
         {
+            Action action => action.Step?.Goal?.Name,
             Step step => step.Goal?.Name,
             Goal goal => goal.Name,
             _ => null
         };
         string? stepText = owner is Step s ? s.Text : null;
+        string? module = owner is Action a ? a.Module : null;
+        string? actionName = owner is Action a2 ? a2.ActionName : null;
 
-        var bindings = events.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText);
+        var bindings = events.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText, module: module, actionName: actionName);
         return bindings
             .Where(b => b.GoalToCall != null)
             .Select(b => b.GoalToCall!)

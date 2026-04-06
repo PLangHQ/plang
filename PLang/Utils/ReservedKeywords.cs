@@ -61,7 +61,11 @@
 			get
 			{
 				if (keywords.Count > 0) return keywords;
-				keywords = TypeHelper.GetStaticFields(typeof(ReservedKeywords));
+				keywords = typeof(ReservedKeywords)
+					.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+					.Where(f => f.FieldType == typeof(string))
+					.Select(f => (string)f.GetValue(null)!)
+					.ToList();
 				return keywords;
 			}
 		}

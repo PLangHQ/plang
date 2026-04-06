@@ -1,6 +1,4 @@
-﻿using Castle.Core.Logging;
-using PLang.Exceptions;
-using System;
+﻿using System;
 using System.Diagnostics;
 
 namespace PLang.Utils
@@ -75,7 +73,7 @@ namespace PLang.Utils
 
 				if (serviceName != "plang" && serviceName != "openai")
 				{
-					throw new RuntimeException("Parameter --llmservice can only be 'plang' or 'openai'. For example --llmservice=openai");
+					throw new ArgumentException("Parameter --llmservice can only be 'plang' or 'openai'. For example --llmservice=openai");
 				}
 				AppContext.SetData("llmservice", serviceName);
 			}

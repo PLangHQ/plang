@@ -26,11 +26,11 @@ public class Events : IContext
     {
         if (Context == null) return [];
 
-        // Check user context — events are registered there by user code via event.on
-        var userContext = Context.Engine?.User?.Context;
-        if (userContext != null)
+        // Events are registered on the current actor's context
+        var actorContext = Context.Engine?.Context;
+        if (actorContext != null)
         {
-            var bindings = userContext.GetEventBindings(_owner, phase);
+            var bindings = actorContext.GetEventBindings(_owner, phase);
             if (bindings.Count > 0) return bindings;
         }
 

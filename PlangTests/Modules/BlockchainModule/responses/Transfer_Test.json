@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "transfer %amount% to 0x123, write to %txHash%",
-    "response": "{\n  \"FunctionName\": \"Transfer\",\n  \"Parameters\": [\n    {\n      \"Type\": \"string\",\n      \"Name\": \"to\",\n      \"Value\": \"0x123\"\n    },\n    {\n      \"Type\": \"decimal\",\n      \"Name\": \"etherAmount\",\n      \"Value\": \"%amount%\"\n    }\n  ],\n  \"ReturnValue\": [\n    {\n      \"Type\": \"string\",\n      \"VariableName\": \"%txHash%\"\n    }\n  ]\n}",
-    "created": "2024-02-07T12:14:30.7999807+00:00"
-  }
-]

@@ -44,26 +44,46 @@
     {
       "name": "RunStep",
       "steps": [
-        {"index": 0, "indent": 0, "text": "foreach before events",
+        {"index": 0, "indent": 0, "text": "foreach before step events",
           "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%step.events.before%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"}, {"name": "ItemName", "value": "event", "type": "string"}]}], "waitForExecution": true},
         {"index": 1, "indent": 0, "text": "cache check %step%, write to %data%",
           "actions": [{"module": "cache", "action": "check", "parameters": [{"name": "Step", "value": "%step%", "type": "object"}], "return": [{"name": "data"}]}], "waitForExecution": true},
         {"index": 2, "indent": 0, "text": "if %data% == false",
           "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "%data%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": false, "type": "bool"}]}], "waitForExecution": true},
-        {"index": 3, "indent": 1, "text": "execute %step% as \"user\", write to %data%",
-          "actions": [{"module": "engine", "action": "execute", "parameters": [{"name": "Step", "value": "%step%", "type": "object"}, {"name": "Actor", "value": "user", "type": "string"}], "return": [{"name": "data"}]}], "waitForExecution": true},
+        {"index": 3, "indent": 1, "text": "foreach %step.Actions%, call RunAction, item=%action%",
+          "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%step.Actions%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunAction"}, "type": "goal.call"}, {"name": "ItemName", "value": "action", "type": "string"}]}], "waitForExecution": true},
         {"index": 4, "indent": 1, "text": "cache store %step% %data%",
           "actions": [{"module": "cache", "action": "store", "parameters": [{"name": "Step", "value": "%step%", "type": "object"}, {"name": "Data", "value": "%data%", "type": "object"}]}], "waitForExecution": true},
         {"index": 5, "indent": 0, "text": "check %data% %step%",
           "actions": [{"module": "error", "action": "check", "parameters": [{"name": "Data", "value": "%data%", "type": "object"}, {"name": "Step", "value": "%step%", "type": "object"}]}], "waitForExecution": true},
-        {"index": 6, "indent": 0, "text": "foreach after events",
+        {"index": 6, "indent": 0, "text": "foreach after step events",
           "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%step.events.after%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"}, {"name": "ItemName", "value": "event", "type": "string"}]}], "waitForExecution": true}
       ],
       "goals": [
-        {"name": "RunEvent", "steps": [
-          {"index": 0, "indent": 0, "text": "call goal %event%",
-            "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": "%event%", "type": "goal.call"}]}], "waitForExecution": true}
-        ], "goals": [], "visibility": 0, "path": "/system/run.goal", "prPath": "/system/.build/run.pr", "isSystem": true}
+        {
+          "name": "RunAction",
+          "steps": [
+            {"index": 0, "indent": 0, "text": "foreach before action events",
+              "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%action.events.before%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"}, {"name": "ItemName", "value": "event", "type": "string"}]}], "waitForExecution": true},
+            {"index": 1, "indent": 0, "text": "dispatch %action% as \"user\", write to %data%",
+              "actions": [{"module": "engine", "action": "dispatch", "parameters": [{"name": "Action", "value": "%action%", "type": "object"}, {"name": "Actor", "value": "user", "type": "string"}], "return": [{"name": "data"}]}], "waitForExecution": true},
+            {"index": 2, "indent": 0, "text": "check %data% %step%",
+              "actions": [{"module": "error", "action": "check", "parameters": [{"name": "Data", "value": "%data%", "type": "object"}, {"name": "Step", "value": "%step%", "type": "object"}]}], "waitForExecution": true},
+            {"index": 3, "indent": 0, "text": "foreach after action events",
+              "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%action.events.after%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"}, {"name": "ItemName", "value": "event", "type": "string"}]}], "waitForExecution": true}
+          ],
+          "goals": [], "visibility": 0, "path": "/system/run.goal", "prPath": "/system/.build/run.pr", "isSystem": true
+        },
+        {
+          "name": "RunEvent",
+          "steps": [
+            {"index": 0, "indent": 0, "text": "call goal %event% as \"user\", write to %eventData%",
+              "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": "%event%", "type": "goal.call"}, {"name": "Actor", "value": "user", "type": "string"}], "return": [{"name": "eventData"}]}], "waitForExecution": true},
+            {"index": 1, "indent": 0, "text": "check %eventData% %step%",
+              "actions": [{"module": "error", "action": "check", "parameters": [{"name": "Data", "value": "%eventData%", "type": "object"}, {"name": "Step", "value": "%step%", "type": "object"}]}], "waitForExecution": true}
+          ],
+          "goals": [], "visibility": 0, "path": "/system/run.goal", "prPath": "/system/.build/run.pr", "isSystem": true
+        }
       ], "visibility": 0, "path": "/system/run.goal", "prPath": "/system/.build/run.pr", "isSystem": true
     }
   ],

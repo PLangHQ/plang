@@ -10,5 +10,23 @@ RunGoal
 - foreach %goal.Steps%, call RunStep, item=%step%
 
 RunStep
-/ Dispatches a single step via the kernel
-- execute %step%, write to %result%
+/ Dispatches a single step — events, cache, actions, error check
+- foreach %step.events.before%, call RunEvent, item=%event%
+- cache check %step%, write to %data%
+- if %data% == false
+    - foreach %step.Actions%, call RunAction, item=%action%
+    - cache store %step% %data%
+- check %data% %step%
+- foreach %step.events.after%, call RunEvent, item=%event%
+
+RunAction
+/ Dispatches a single action with before/after action events
+- foreach %action.events.before%, call RunEvent, item=%event%
+- dispatch %action% as "user", write to %data%
+- check %data% %step%
+- foreach %action.events.after%, call RunEvent, item=%event%
+
+RunEvent
+/ Executes an event goal on the user context
+- call goal %event% as "user", write to %eventData%
+- check %eventData% %step%

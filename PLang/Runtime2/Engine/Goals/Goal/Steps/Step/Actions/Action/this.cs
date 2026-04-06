@@ -37,6 +37,13 @@ public sealed partial class @this : Memory.Data<@this>
     [JsonIgnore]
     public Steps.Step.@this? Step { get; set; }
 
+    private modules.Events? _events;
+    [JsonIgnore]
+    public modules.Events Events
+    {
+        get => _events ??= new modules.Events(this);
+    }
+
     public List<Data> Examples { get; init; } = new();
 
     /// <summary>

@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "get current wallet, write to %wallet%",
-    "response": "{\"FunctionName\": \"GetOrCreateWallet\", \"Parameters\": [], \"ReturnValue\": [{\"Type\": \"Wallet\", \"VariableName\": \"wallet\"}]}",
-    "created": "2024-02-07T12:15:05.1174511+00:00"
-  }
-]

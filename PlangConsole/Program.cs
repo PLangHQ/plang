@@ -1,13 +1,11 @@
-
-using LightInject;
 using PLang;
-using PLang.Container;
-using PLang.Interfaces;
+using PLang.SafeFileSystem;
 using PLang.Utils;
+using Path = System.IO.Path;
 
 using var cts = new CancellationTokenSource();
 
-(var builder, var runtime) = RegisterStartupParameters.Register(args);
+RegisterStartupParameters.Register(args);
 
 Console.CancelKeyPress += (_, e) =>
 {
@@ -16,28 +14,16 @@ Console.CancelKeyPress += (_, e) =>
 	Environment.Exit(0);
 };
 
-// Both builder and runtime go through the same v3 engine path
 (string currentDirectory, args) = GetCurrentDirectory(args);
 
-var container = new ServiceContainer();
-if (builder)
-{
-	AppContext.SetSwitch("Builder", true);
-	container.RegisterForPLangBuilderConsole(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString());
-}
-else
-{
-	container.RegisterForPLangConsole(currentDirectory, Path.DirectorySeparatorChar.ToString());
-}
+var fileSystem = new PLangFileSystem(currentDirectory, Path.DirectorySeparatorChar.ToString());
 
-var pLanguage = new Executor(container);
-var result = pLanguage.Run(args, cts.Token).GetAwaiter().GetResult();
+var executor = new Executor(fileSystem);
+var result = executor.Run(args, cts.Token).GetAwaiter().GetResult();
 if (!result.Success && result.Error != null)
 {
 	Console.Error.WriteLine(result.Error.Format());
 }
-container.Dispose();
-
 
 (string, string[]) GetCurrentDirectory(string[] args)
 {
@@ -62,5 +48,4 @@ container.Dispose();
 	}
 
 	return (Environment.CurrentDirectory, args);
-
 }
