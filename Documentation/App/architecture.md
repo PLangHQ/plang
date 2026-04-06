@@ -1,0 +1,477 @@
+# PLang App Architecture
+
+## Overview
+
+PLang App is built on the **Object-Based Pattern (OBP)** — objects own their data and behavior, the object graph IS the architecture, and everything flows as `Data`.
+
+The runtime has one root: `App`. Everything hangs off it. Navigate to what you need. No service layers, no dependency injection, no parameter threading.
+
+```
+App
+  .System / .Service / .User    — Actors (execution identities)
+  .Goals                        — loaded goals
+  .Modules                      — action registry (dispatcher)
+  .Channels                     — named I/O streams
+  .Providers                    — pluggable implementations
+  .FileSystem                   — sandboxed file access
+  .Events                       — app-level lifecycle hooks
+  .Config                       — goal-scoped settings
+  .Cache                        — step result cache
+  .Types                        — PLang names <-> CLR types
+  .Navigators                   — per-type Data navigation
+```
+
+---
+
+## Everything is Data
+
+`Data` is the universal type. Every value in the runtime — variables, file contents, HTTP responses, errors — circulates as `Data`. Created at the boundary where the value originates, it flows through every layer unchanged.
+
+```csharp
+public class Data
+{
+    string Name            // variable name
+    object? Value          // the actual value
+    Type? Type             // PLang type descriptor ("string", "image/jpeg", etc.)
+    Properties Properties  // child properties (extensible metadata)
+    IError? Error          // if this Data represents a failure
+    bool Success           // Error == null
+}
+```
+
+**Factory methods**: `Data.Ok()`, `Data.Ok(value)`, `Data.FromError(error)`
+
+**Key subtypes**:
+- `Data<T>` — generic typed wrapper, `Value` returns `T`
+- `DynamicData` — computed on each access via `Func<object?>` (lazy variables like `%!goal%`)
+- `DataList<T>` — typed list that extends Data, carries error state
+
+**Relay, don't repackage**: Intermediate layers pass Data as-is. Never extract `.Value` and rewrap it — that loses Type, Properties, and metadata. Use `Merge()` to combine results.
+
+**Navigation**: Data supports dot-path traversal — `data.GetChild("user.address[0].city")` navigates nested structures uniformly across dictionaries, CLR objects, JSON, and lists.
+
+---
+
+## Actors
+
+Three actors represent execution identities with isolated resources:
+
+```
+App._shutdownCts (infrastructure root)
+  |
+  System (linked to App shutdown)
+    |--- User (linked to System)
+    |--- Service (linked to System)
+```
+
+| Actor | Level | Purpose |
+|-------|-------|---------|
+| **System** | 2 | Root of cancellation hierarchy. Runs bootstrap (`system/.build/run.pr`). Persistent settings store. |
+| **User** | 1 | End-user operations. Default actor. |
+| **Service** | 1 | External service operations. |
+
+Each actor owns:
+- **Context** — request-level execution state
+- **Channels** — isolated I/O streams
+- **SettingsStore** — persistent key-value storage (SQLite, per-actor)
+- **CancellationToken** — linked to parent for cascading cancellation
+- **Identity** — cryptographic identity
+
+### Cancellation hierarchy
+
+Cancel **User** -> only user context stops, System and Service keep running.
+Cancel **System** -> cascades to User and Service (everything stops).
+`app.RequestShutdown()` -> cancels the root, cascades through everything.
+
+Step-level timeouts layer on top via a push/pop stack on Context — they create a linked CancellationTokenSource for the step's duration without affecting the actor token.
+
+---
+
+## Context
+
+Request-level state for a single execution. Created per actor, carries everything an execution needs.
+
+```
+Context
+  .Id                   unique execution identifier
+  .App                  back-reference to App
+  .Actor                owning actor
+  .Variables            %variable% storage (thread-safe)
+  .CallStack            optional frame tracking
+  .Goal                 currently executing goal
+  .Step                 currently executing step
+  .Events               context-specific event bindings
+  .CancellationToken    from actor (with timeout stack on top)
+  .Parent               for nested execution (child contexts)
+  .ConfigScope          goal-scoped settings
+  .CurrentError         error being handled (for %!error%)
+  .Setup                during setup execution (run-once semantics)
+  .Test                 test context when --test flag active
+  .Event                current event context (in event handlers)
+```
+
+### Context variables (lazy)
+
+All prefixed with `!`, resolved on access via `DynamicData`:
+
+```
+%!app%  %!context%  %!goal%  %!step%  %!error%
+%!variables%  %!callStack%  %!channels%  %!event%  %!test%
+```
+
+### Child contexts
+
+`CreateChild()` — new context with cloned variables, parent reference maintained.
+`Clone()` — sibling context, copies data dictionary.
+
+---
+
+## Execution Flow
+
+### Bootstrap
+
+```
+app.Start()
+  -> CurrentActor = System
+  -> reads system/.build/run.pr via GoalCall
+  -> RunSteps(goal.Steps, context)
+```
+
+After bootstrap, PLang code drives everything. The C# runtime is just the dispatcher.
+
+### The execution loop
+
+```
+RunSteps(steps, context)
+  for each step:
+    for each action in step.Actions:
+      Run(action, context)
+        -> Modules.GetCodeGenerated(module, actionName)
+        -> executor.ExecuteAsync(action, app, context)
+        -> if action.Return: context.Variables.Put(result)
+    
+    sub-step control:
+      if condition returned false && next step is indented
+        -> skip indented children
+```
+
+### Dispatch kernel
+
+```csharp
+Run(action, context)
+  var executor = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
+  var result = await executor.ExecuteAsync(action, this, context);
+  
+  if (action.Return != null)
+      foreach (var returnVar in action.Return)
+          context.Variables.Put(result with Name = returnVar.Name);
+  
+  return result;
+```
+
+### Goal resolution (GoalCall)
+
+1. If `PrPath` is set -> file.read directly
+2. Walk up the step's goal chain (sub-goals)
+3. Check `app.Goals` (in-memory cache)
+4. Derive PrPath: `.build/{name}.pr`
+5. Try relative to calling goal's folder
+6. Try root-relative
+
+---
+
+## Goal / Step / Action Hierarchy
+
+```
+Goal
+  .Name, .Description
+  .Steps          Steps collection (owns the loop)
+  .Goals          sub-goals (nested)
+  .Path / .PrPath file locations
+  .Visibility     Public or Private
+  .Parent         back-reference
+
+Step
+  .Text           the PLang instruction
+  .Actions        Actions collection
+  .Index          position in goal
+  .Indent         sub-step nesting level
+  .Timeout        milliseconds (pushes CTS on context)
+  .OnError        error handling (retry, goal call)
+  .Cache          step result caching
+  .Goal           back-reference
+
+Action
+  .Module         "file", "variable", "http", etc.
+  .ActionName     "read", "set", "request", etc.
+  .Parameters     List<Data> (named inputs)
+  .Return         List<Data>? (return variable names)
+  .Step           back-reference
+```
+
+Navigation reads naturally: `goal.Steps[0].Actions[0].Module` — "goal's first step's first action's module."
+
+Collections own their loops (OBP rule 5). Steps iterates its own steps, Actions runs its own actions. Parents delegate, never iterate children directly.
+
+---
+
+## Modules (Action Registry)
+
+Flat `module.action` registry. No hierarchy, no inheritance.
+
+### Discovery
+
+Scans assemblies for types with `[Action]` attribute implementing `ICodeGenerated`. Extracts module from namespace: `App.modules.{module}.{actionName}`.
+
+### Handler pattern
+
+```
+Record (parameters):  lowercase action name     -> set, save, read
+Handler (execution):  PascalCase + Handler      -> SetHandler, SaveHandler
+Namespace:            App.modules.{module}      -> modules.variable
+Registry key:         {module}.{record}         -> variable.set
+```
+
+The source generator creates the `ExecuteAsync` bridge — resolves `%var%` references in parameters at access time (lazy params), wires capability interfaces (`IContext`, `IChannel`, `IStep`).
+
+### Key interface
+
+```csharp
+public interface ICodeGenerated
+{
+    Task<Data> ExecuteAsync(Action action, App app, Context context);
+}
+```
+
+All handlers implement this. No fallback path.
+
+---
+
+## Events
+
+Lifecycle hooks at every level: Goal, Step, Action.
+
+### Event types
+
+```
+BeforeGoal / AfterGoal
+BeforeStep / AfterStep
+BeforeAction / AfterAction
+OnError
+OnBeforeGoalLoad / OnAfterGoalLoad
+OnBeforeStepLoad / OnAfterStepLoad
+OnCacheHit / OnCacheMiss
+```
+
+### Execution flow
+
+```
+goal lifecycle.Before -> run bindings
+  step lifecycle.Before -> run bindings
+    action lifecycle.Before -> run bindings
+    action -> handler.ExecuteAsync(action, app, context)
+    action lifecycle.After -> run bindings
+  step lifecycle.After -> run bindings
+goal lifecycle.After -> run bindings
+```
+
+Events don't call methods — they call goals via `GoalCall`. Event handlers are PLang code, integrated into the execution flow.
+
+Context caches lifecycle resolution per goal/step/action. `InvalidateEventCache()` clears it when events are registered during execution.
+
+Re-entrancy protection: `TryEnterEvent` / `ExitEvent` prevents recursive event handler execution.
+
+---
+
+## Channels
+
+Named I/O streams for reading and writing data.
+
+```
+App.Channels        app-level channel registry
+Actor.Channels      per-actor channel collection
+```
+
+Standard channels: `default`, `stdin`, `stdout`, `stderr`.
+
+Each channel has a Stream, Direction (Input/Output/Bidirectional), and ContentType.
+
+### Serializers
+
+Routes content-type to serializer:
+- `JsonStreamSerializer` — JSON
+- `PlangSerializer` — .pr files (PLang binary format)
+- `TextStreamSerializer` — plain text
+
+`Channels.ReadAsync<T>(path)` reads a file, determines content type from extension, deserializes via the matching serializer.
+
+---
+
+## Variables
+
+Thread-safe storage for `%variableName%` resolution.
+
+```csharp
+Variables.Put(data)              // store Data by Name
+Variables.Get("name")            // retrieve Data
+Variables.Set("name", value)     // simple value setter
+```
+
+### Dot-path resolution
+
+```csharp
+Variables.Set("obj.property[0].nested", value)
+```
+
+Extracts root name, navigates via `GetChild()`, sets the value at the leaf. Works across dictionaries, CLR objects, and lists.
+
+### System variables (auto-registered)
+
+`%Now%`, `%NowUtc%`, `%GUID%` — lazy, computed on access.
+
+---
+
+## Config
+
+Goal-scoped module configuration with scope chain resolution.
+
+```
+context.ConfigScope -> parent.ConfigScope -> ... -> app.Config.Defaults -> class default
+```
+
+Modules define `IConfig` types. The source generator wires `app.Config.For<T>(context)` to create a `ModuleView<T>` — a context-bound view that resolves each property through the scope chain.
+
+---
+
+## CallStack
+
+Optional frame tracking for debugging and error reporting.
+
+```csharp
+CallStack.Push(action)      // create CallFrame, check MaxDepth (1000)
+CallStack.PopAsync()        // remove frame
+CallStack.RecordStep(step)  // track step in current frame
+```
+
+Each `CallFrame` captures: Action, Parent frame, Variables snapshot, Errors, Phase (BeforeGoal/ExecutingStep/etc.), timing.
+
+Can be disabled for performance (`IsEnabled = false`).
+
+---
+
+## Error Handling
+
+Errors implement `IError` and carry rich context:
+
+```
+Error
+  .Message, .Key, .StatusCode
+  .Step, .Goal              execution location
+  .CallFrames               full stack trace
+  .Variables                snapshot at time of error
+  .Category                 Application (<500) or Runtime (>=500)
+  .FixSuggestion, .HelpfulLinks
+```
+
+Error hierarchy: `Error` -> `ActionError`, `StepError`, `GoalError`, `ServiceError`, `ValidationError`, etc.
+
+**Convention**: Match error mechanism to return type.
+- `Data` / `Data?` return -> `Data.FromError()`
+- Constructor / void -> throw
+- `string` / `Type?` -> null
+
+Steps can configure error handling via `ErrorHandler`: retry count, retry interval, error goal to call, ignore flag.
+
+---
+
+## Directory Structure
+
+```
+App/
+  this.cs                     App runtime root
+  GlobalUsings.cs             type aliases
+  
+  Actor/
+    this.cs                   Actor (System/Service/User)
+    Context/
+      this.cs                 request-level context
+  
+  Data/
+    this.cs                   universal Data type
+    this.Result.cs            error/success concern
+    this.Navigation.cs        dot-path traversal
+    this.Envelope.cs          compress/wrap/encrypt
+    Navigators/               per-type navigation
+  
+  Goals/
+    this.cs                   goal collection
+    Goal/
+      this.cs                 goal entity
+      GoalCall.cs             goal resolution
+      Steps/
+        this.cs               steps collection
+        Step/
+          this.cs             step entity
+          Actions/
+            this.cs           actions collection
+            Action/
+              this.cs         action entity
+    Setup/
+      this.cs                 run-once setup system
+  
+  Events/
+    this.cs                   event registry
+    Lifecycle/
+      this.cs                 before/after bindings
+      Bindings/
+        this.cs               binding collection
+        Binding/
+          this.cs             single event binding
+  
+  Channels/
+    this.cs                   channel registry
+    Channel/                  named I/O stream
+    Serializers/              content-type routing
+  
+  Modules/
+    this.cs                   action registry & dispatcher
+  
+  modules/
+    ICodeGenerated.cs         handler interface
+    IContext.cs               context injection
+    IChannel.cs               channel injection
+    app/run.cs                unified run action
+    goal/call.cs              goal call action
+    variable/                 variable operations
+    file/                     file operations
+    condition/                condition operations
+    http/                     HTTP operations
+    ...                       20+ more modules
+  
+  Variables/                  %variable% storage
+  Config/                     goal-scoped settings
+  CallStack/                  frame tracking
+  Providers/                  pluggable implementations
+  Types/                      type knowledge system
+  Errors/                     error hierarchy
+  Settings/                   persistent key-value storage
+  FileSystem/                 sandboxed I/O
+  Cache/                      step result cache
+```
+
+---
+
+## OBP Design Principles (Summary)
+
+1. **Behavior belongs to the owner** — whose data does this method touch? That's the owner.
+2. **Navigate, don't pass** — reach dependencies through the object graph, never decompose into parameters.
+3. **Names describe what the object IS** — nouns for properties, verbs for methods.
+4. **Keep object references, not extracted fields** — store `Step`, not `step.Text`.
+5. **Collections own their loops** — parents delegate, never iterate children directly.
+6. **Request state is a parameter, never stored** — if per-request, pass it. If per-object, store it.
+7. **Data flows — relay, don't repackage** — never extract `.Value` and rewrap. Relay the Data.
+8. **No redundant wrappers** — if the data already exists on an object, pass that object.
+
+**The fix progression**: Create the type -> move behavior to owner -> store root, navigate internally -> pass the caller as a whole. Each step feels done but may still violate OBP at the next level.
+
+See [object_pattern_formal.md](object_pattern_formal.md) for the full OBP specification with examples.
