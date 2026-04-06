@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using App;
 
-namespace App.Utility;
+namespace App.Utils;
 
 /// <summary>
 /// Maps between PLang type names and .NET types.

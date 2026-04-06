@@ -41,7 +41,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// Transport JSON options: overrides [JsonIgnore] for [In] properties (e.g., Signature).
     /// Used when deserializing application/plang responses — Data arrives with Signature on the wire.
     /// </summary>
-    private static readonly JsonSerializerOptions _jsonOptions = App.Utility.Json.CaseInsensitiveRead;
+    private static readonly JsonSerializerOptions _jsonOptions = App.Utils.Json.CaseInsensitiveRead;
 
     private static readonly JsonSerializerOptions _transportInOptions = new()
     {
@@ -626,7 +626,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             return;
 
         var signedData = JsonSerializer.Deserialize<SignedData>(sigElement.GetRawText(),
-            App.Utility.Json.CaseInsensitiveRead);
+            App.Utils.Json.CaseInsensitiveRead);
         if (signedData == null) return;
 
         var legacyData = new Data("");

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 using App;
 using App.Variables;
 
-namespace PLang.Tests.App.Utility;
+namespace PLang.Tests.App.Utils;
 
 public class GoalSerializationTests
 {

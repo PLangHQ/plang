@@ -3,7 +3,7 @@ using App.SafeFileSystem;
 using App.Channels.Serializers.Serializer;
 using App.Errors;
 using App.Variables;
-using App.Utility;
+using App.Utils;
 
 namespace App.Settings;
 

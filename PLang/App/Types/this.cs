@@ -339,17 +339,17 @@ public sealed class @this
     /// <summary>
     /// PLang type name → CLR type. Delegates to TypeMapping.GetType().
     /// </summary>
-    public System.Type? Clr(string plangName) => Utility.TypeMapping.GetType(plangName);
+    public System.Type? Clr(string plangName) => Utils.TypeMapping.GetType(plangName);
 
     /// <summary>
     /// CLR type → PLang type name. Delegates to TypeMapping.GetTypeName().
     /// </summary>
-    public string Name(System.Type clrType) => Utility.TypeMapping.GetTypeName(clrType);
+    public string Name(System.Type clrType) => Utils.TypeMapping.GetTypeName(clrType);
 
     /// <summary>
     /// Registers a domain type. Delegates to TypeMapping.Register().
     /// </summary>
-    public void Register(string plangName, System.Type clrType) => Utility.TypeMapping.Register(plangName, clrType);
+    public void Register(string plangName, System.Type clrType) => Utils.TypeMapping.Register(plangName, clrType);
 
     /// <summary>
     /// Registers domain types needed for settings store rehydration.
@@ -363,17 +363,17 @@ public sealed class @this
     /// <summary>
     /// Returns canonical builder type names. Delegates to TypeMapping.GetBuilderTypeNames().
     /// </summary>
-    public List<string> BuilderNames() => Utility.TypeMapping.GetBuilderTypeNames();
+    public List<string> BuilderNames() => Utils.TypeMapping.GetBuilderTypeNames();
 
     /// <summary>
     /// Returns schemas for complex types. Delegates to TypeMapping.GetComplexTypeSchemas().
     /// </summary>
-    public Dictionary<string, string> ComplexSchemas() => Utility.TypeMapping.GetComplexTypeSchemas();
+    public Dictionary<string, string> ComplexSchemas() => Utils.TypeMapping.GetComplexTypeSchemas();
 
     /// <summary>
     /// Gets valid values for a constrained type. Delegates to TypeMapping.GetValidValues().
     /// </summary>
-    public static string[]? ValidValues(System.Type type) => Utility.TypeMapping.GetValidValues(type);
+    public static string[]? ValidValues(System.Type type) => Utils.TypeMapping.GetValidValues(type);
 
     // --- Extension → Kind/MIME/Compressibility (unique to Types) ---
 

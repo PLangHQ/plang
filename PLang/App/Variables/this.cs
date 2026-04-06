@@ -135,7 +135,7 @@ public class @this
         {
             if (value != null && !prop.PropertyType.IsAssignableFrom(value.GetType()))
             {
-                var (typedValue, _) = Utility.TypeMapping.TryConvertTo(value, prop.PropertyType);
+                var (typedValue, _) = Utils.TypeMapping.TryConvertTo(value, prop.PropertyType);
                 if (typedValue != null) value = typedValue;
             }
             prop.SetValue(target, value);

@@ -1,4 +1,4 @@
-using App.Utility;
+using App.Utils;
 
 namespace PLang.Tests.App.Memory;
 

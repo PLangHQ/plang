@@ -1,7 +1,7 @@
 using App;
 using App.Errors;
 using App.Variables;
-using App.Utility;
+using App.Utils;
 using R2 = App.Variables;
 
 namespace PLang.Tests.App;

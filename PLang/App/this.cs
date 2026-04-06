@@ -312,7 +312,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
         if (Created == default) Created = Updated;
         var json = global::System.Text.Json.JsonSerializer.Serialize(
             new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
-            Utility.Json.CamelCaseIndented);
+            Utils.Json.CamelCaseIndented);
         var path = FileSystem.ValidatePath(".build/app.pr");
         var dir = global::System.IO.Path.GetDirectoryName(path);
         if (dir != null && !FileSystem.Directory.Exists(dir))

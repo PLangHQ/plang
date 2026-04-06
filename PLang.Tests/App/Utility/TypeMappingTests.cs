@@ -1,6 +1,6 @@
-using App.Utility;
+using App.Utils;
 
-namespace PLang.Tests.App.Utility;
+namespace PLang.Tests.App.Utils;
 
 public class TypeMappingTests
 {

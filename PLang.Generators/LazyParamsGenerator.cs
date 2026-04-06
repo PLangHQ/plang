@@ -508,7 +508,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine("    private T? __TryConvert<T>(object? value, string paramName)");
         sb.AppendLine("    {");
-        sb.AppendLine("        var (__result, __error) = App.Utility.TypeMapping.TryConvertTo(value, typeof(T));");
+        sb.AppendLine("        var (__result, __error) = App.Utils.TypeMapping.TryConvertTo(value, typeof(T));");
         sb.AppendLine("        if (__error != null)");
         sb.AppendLine("        {");
         sb.AppendLine("            __resolutionError = App.Variables.Data.FromError(");

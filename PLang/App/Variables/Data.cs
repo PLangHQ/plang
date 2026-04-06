@@ -6,7 +6,7 @@ using App;
 using App.Channels.Serializers;
 using App.Errors;
 using App.Context;
-using App.Utility;
+using App.Utils;
 
 namespace App.Variables;
 

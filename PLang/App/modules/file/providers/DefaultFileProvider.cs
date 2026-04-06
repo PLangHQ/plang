@@ -3,7 +3,7 @@ using App.Channels.Serializers;
 using App.Errors;
 using App.FileSystem;
 using App.Variables;
-using App.Utility;
+using App.Utils;
 
 namespace App.modules.file.providers;
 

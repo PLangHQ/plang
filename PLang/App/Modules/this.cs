@@ -166,7 +166,7 @@ public sealed class @this
                     if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
                     if (prop.GetCustomAttribute<modules.ProviderAttribute>() != null) continue;
 
-                    var typeName = Utility.TypeMapping.GetTypeName(prop.PropertyType);
+                    var typeName = Utils.TypeMapping.GetTypeName(prop.PropertyType);
 
                     bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
                     if (!isNullable && !prop.PropertyType.IsValueType)
@@ -174,7 +174,7 @@ public sealed class @this
                     if (isNullable && !typeName.EndsWith("?"))
                         typeName += "?";
 
-                    var validValues = Utility.TypeMapping.GetValidValues(prop.PropertyType);
+                    var validValues = Utils.TypeMapping.GetValidValues(prop.PropertyType);
                     if (validValues != null)
                         typeName += $"({string.Join("|", validValues)})";
 
@@ -245,7 +245,7 @@ public sealed class @this
         foreach (var prop in returnType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (baseProps.Contains(prop.Name)) continue;
-            var typeName = Utility.TypeMapping.GetTypeName(prop.PropertyType);
+            var typeName = Utils.TypeMapping.GetTypeName(prop.PropertyType);
             properties.Add(new Variables.Data(prop.Name, typeName));
         }
 
