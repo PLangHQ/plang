@@ -21,15 +21,15 @@ public class Ed25519Provider : ISigningProvider
 
     public virtual async Task<Data.@this> SignAsync(sign action)
     {
-        var engine = action.Context.App;
+        var app = action.Context.App;
 
         // Get identity
-        var identityResult = await engine.RunAction<identity.Get>(new identity.Get(), action.Context);
+        var identityResult = await app.RunAction<identity.Get>(new identity.Get(), action.Context);
         if (!identityResult.Success) return identityResult;
         var identity = (Identity)identityResult;
 
         // Hash the data
-        var hash = await engine.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = "keccak256" }, action.Context);
+        var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = "keccak256" }, action.Context);
         if (!hash.Success) return hash;
 
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
@@ -63,9 +63,9 @@ public class Ed25519Provider : ISigningProvider
             return App.Data.@this.FromError(new ActionError("Data has no signature", "NoSignature", 400));
 
         var signedData = action.Data.Signature;
-        var engine = action.Context.App;
+        var app = action.Context.App;
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
-        var signingSettings = engine.Config.For<Config>(action.Context);
+        var signingSettings = app.Config.For<Config>(action.Context);
         var effectiveTimeout = action.TimeoutMs ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
 
         // 1. Type check
@@ -84,7 +84,7 @@ public class Ed25519Provider : ISigningProvider
         // 4. Nonce replay check
         var nonceCacheKey = $"nonce:{signedData.Nonce}";
         var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
-        var nonceAdded = await engine.Cache.TryAddAsync(nonceCacheKey, App.Data.@this.Ok(true), cacheSettings);
+        var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, App.Data.@this.Ok(true), cacheSettings);
         if (!nonceAdded)
             return App.Data.@this.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
@@ -112,7 +112,7 @@ public class Ed25519Provider : ISigningProvider
 
         if (action.Data?.Value != null)
         {
-            var rehash = await engine.RunAction<Hash>(
+            var rehash = await app.RunAction<Hash>(
                 new Hash { Data = action.Data, Algorithm = signedData.Hash!.Type?.Value ?? "keccak256" }, action.Context);
             if (!rehash.Success) return rehash;
             if (rehash.Value is not byte[] rehashBytes || !rehashBytes.AsSpan().SequenceEqual(storedHash))

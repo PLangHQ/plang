@@ -21,7 +21,7 @@ public partial class Dispatch : IContext
 
     public async Task<Data.@this> Run()
     {
-        var engine = Context.App!;
+        var app = Context.App!;
         var callingActor = Context.Actor;
         var targetActor = Actor;
 
@@ -40,18 +40,18 @@ public partial class Dispatch : IContext
             execContext = Context;
         }
 
-        var previousActor = engine.CurrentActor;
-        if (targetActor != null) engine.CurrentActor = targetActor;
+        var previousActor = app.CurrentActor;
+        if (targetActor != null) app.CurrentActor = targetActor;
 
         try
         {
-            var result = await engine.Run(Action, execContext);
+            var result = await app.Run(Action, execContext);
             result.Handled = true;
             return result;
         }
         finally
         {
-            engine.CurrentActor = previousActor;
+            app.CurrentActor = previousActor;
         }
     }
 }

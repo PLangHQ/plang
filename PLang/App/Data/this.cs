@@ -25,7 +25,7 @@ public sealed class Type
     public Type(string value) { Value = value; }
 
     /// <summary>
-    /// Derive CLR type: navigate through context to Engine.Types, fall back to static TypeMapping.
+    /// Derive CLR type: navigate through context to App.Types, fall back to static TypeMapping.
     /// </summary>
     public System.Type? ClrType => Context?.App.Types.Clr(Value) ?? TypeMapping.GetType(Value);
 

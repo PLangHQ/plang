@@ -145,7 +145,7 @@ public sealed class @this
 
     /// <summary>
     /// Describes all registered actions with parameter metadata for the LLM builder prompt.
-    /// EngineModules owns this because it knows its own types.
+    /// AppModules owns this because it knows its own types.
     /// </summary>
     public Goals.Goal.Steps.Step.Actions.@this Describe()
     {

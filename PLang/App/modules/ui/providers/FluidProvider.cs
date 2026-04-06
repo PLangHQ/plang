@@ -78,7 +78,7 @@ public class FluidProvider : ITemplateProvider
         var fluidContext = new TemplateContext(options);
 
         // Store app + Context.@this for callGoal tag access
-        fluidContext.AmbientValues["engine"] = action.Context.App;
+        fluidContext.AmbientValues["app"] = action.Context.App;
         fluidContext.AmbientValues["context"] = action.Context;
 
         // Load Variables (GetAll already excludes !-prefixed)
@@ -133,16 +133,16 @@ public class FluidProvider : ITemplateProvider
     /// </summary>
     private static string GetTemplateBaseDir(Render action)
     {
-        var engine = action.Context.App;
+        var app = action.Context.App;
         var goalPath = action.Context.Goal?.Path;
         if (!string.IsNullOrEmpty(goalPath))
         {
-            var fs = engine.FileSystem;
+            var fs = app.FileSystem;
             var goalDir = fs.Path.GetDirectoryName(goalPath);
             if (!string.IsNullOrEmpty(goalDir))
                 return fs.ValidatePath(goalDir);
         }
-        return engine.AbsolutePath;
+        return app.AbsolutePath;
     }
 
     /// <summary>
@@ -153,7 +153,7 @@ public class FluidProvider : ITemplateProvider
         Fluid.Ast.Expression expression, TextWriter writer, System.Text.Encodings.Web.TextEncoder encoder,
         TemplateContext context)
     {
-        var engine = (App.@this)context.AmbientValues["engine"];
+        var app = (App.@this)context.AmbientValues["app"];
         var plangContext = (Context.@this)context.AmbientValues["context"];
 
         try
@@ -167,7 +167,7 @@ public class FluidProvider : ITemplateProvider
             }
 
             var goalCall = new GoalCall { Name = goalName };
-            var result = await engine.RunGoalAsync(goalCall, plangContext);
+            var result = await app.RunGoalAsync(goalCall, plangContext);
 
             if (result.Success)
             {

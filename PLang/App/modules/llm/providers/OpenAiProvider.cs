@@ -30,12 +30,12 @@ public sealed class OpenAiProvider : ILlmProvider
 
     public async Task<Data.@this> Query(query action)
     {
-        var engine = action.Context.App;
+        var app = action.Context.App;
         var context = action.Context;
-        var config = engine.Config.For<http.Config>(context);
+        var config = app.Config.For<http.Config>(context);
 
         // --- Config ---
-        var settings = engine.System.SettingsStore;
+        var settings = app.System.SettingsStore;
         var endpoint = await ResolveConfigAsync(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
             "https://api.openai.com/v1/chat/completions");
         var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);
@@ -121,7 +121,7 @@ public sealed class OpenAiProvider : ILlmProvider
             var body = new Dictionary<string, object?>
             {
                 ["model"] = model,
-                ["messages"] = ToApiMessages(messages, engine.FileSystem),
+                ["messages"] = ToApiMessages(messages, app.FileSystem),
                 ["temperature"] = action.Temperature,
                 ["max_completion_tokens"] = action.MaxTokens
             };
@@ -151,7 +151,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 StreamAs = action.OnStream != null ? StreamFormat.SSE : default
             };
 
-            Data.@this httpResult = await engine.RunAction(httpAction, context);
+            Data.@this httpResult = await app.RunAction(httpAction, context);
             if (action.OnStream != null)
             {
                 // TODO: streaming tool call accumulation needs work
@@ -285,7 +285,7 @@ public sealed class OpenAiProvider : ILlmProvider
                     PrPath = action.OnValidateResponse.PrPath,
                     Parameters = new List<Data.@this> { new Data.@this("response", extracted) }
                 };
-                var validationResult = await engine.RunGoalAsync(validationCall, context);
+                var validationResult = await app.RunGoalAsync(validationCall, context);
 
                 if (!validationResult.Success)
                 {
@@ -365,7 +365,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
     private static async Task<string> ExecuteToolAsync(query action, ToolCall toolCall)
     {
-        var engine = action.Context.App;
+        var app = action.Context.App;
         var context = action.Context;
 
         // OnToolCall — starting
@@ -382,7 +382,7 @@ public sealed class OpenAiProvider : ILlmProvider
                     new Data.@this("status", "starting")
                 }
             };
-            await engine.RunGoalAsync(startCall, context);
+            await app.RunGoalAsync(startCall, context);
         }
 
         string result;
@@ -408,7 +408,7 @@ public sealed class OpenAiProvider : ILlmProvider
                     PrPath = goalCall.PrPath,
                     Parameters = parameters
                 };
-                var goalResult = await engine.RunGoalAsync(execCall, context);
+                var goalResult = await app.RunGoalAsync(execCall, context);
 
                 if (goalResult.Success)
                     result = goalResult.Value != null ? JsonSerializer.Serialize(goalResult.Value) : "";
@@ -432,7 +432,7 @@ public sealed class OpenAiProvider : ILlmProvider
                     new Data.@this("status", "completed")
                 }
             };
-            await engine.RunGoalAsync(endCall, context);
+            await app.RunGoalAsync(endCall, context);
         }
 
         return result;

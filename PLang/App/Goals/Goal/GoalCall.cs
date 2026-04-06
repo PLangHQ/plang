@@ -40,11 +40,11 @@ public sealed class GoalCall : modules.IEvent
     /// Resolves the Goal. PrPath is authoritative when set — file.read only.
     /// Otherwise: action chain → app.Goals → file.read fallback.
     /// </summary>
-    public async Task<@this?> GetGoalAsync(App.@this engine, Context.@this context)
+    public async Task<@this?> GetGoalAsync(App.@this app, Context.@this context)
     {
         // PrPath is authoritative — load from file, no name-based search
         if (!string.IsNullOrEmpty(PrPath))
-            return await LoadFromFile(PrPath, engine, context);
+            return await LoadFromFile(PrPath, app, context);
 
         // 1. Check via the action's step's goal chain (action → step → goal → walk up)
         var currentGoal = Action?.Step?.Goal;
@@ -61,7 +61,7 @@ public sealed class GoalCall : modules.IEvent
         }
 
         // 2. Check app's loaded goals
-        var loaded = engine.Goals.Get(Name);
+        var loaded = app.Goals.Get(Name);
         if (loaded != null) return loaded;
 
         // 3. Derive PrPath from Name and file.read
@@ -76,19 +76,19 @@ public sealed class GoalCall : modules.IEvent
             if (lastSlash >= 0)
                 goalDir = goalDir[..lastSlash];
             var goalRelative = $"{goalDir}/{prFile}";
-            var goalResult = await LoadFromFile(goalRelative, engine, context);
+            var goalResult = await LoadFromFile(goalRelative, app, context);
             if (goalResult != null) return goalResult;
         }
 
         // Try root-relative (for user goals calling other goals in same project)
-        var rootResult = await LoadFromFile("/" + prFile, engine, context);
+        var rootResult = await LoadFromFile("/" + prFile, app, context);
         if (rootResult != null) return rootResult;
 
         // Try context-relative
-        return await LoadFromFile(prFile, engine, context);
+        return await LoadFromFile(prFile, app, context);
     }
 
-    private async Task<@this?> LoadFromFile(string prPath, App.@this engine, Context.@this context)
+    private async Task<@this?> LoadFromFile(string prPath, App.@this app, Context.@this context)
     {
         // Inject parameters
         if (Parameters != null)
@@ -100,7 +100,7 @@ public sealed class GoalCall : modules.IEvent
             Context = context,
             Path = FileSystem.Path.Resolve(prPath, context)
         };
-        var result = await engine.RunAction(readAction, context);
+        var result = await app.RunAction(readAction, context);
         if (!result.Success) return null;
 
         if (result.Value is not @this goal) return null;

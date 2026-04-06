@@ -303,12 +303,12 @@ public sealed class @this
     /// <summary>
     /// Loads a goal from a .pr file, deserializes and adds to this collection.
     /// </summary>
-    public async Task<Data.@this> LoadFromFileAsync(App.@this engine, string prFilePath, Context.@this? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data.@this> LoadFromFileAsync(App.@this app, string prFilePath, Context.@this? context = null, CancellationToken cancellationToken = default)
     {
         try
         {
             // .pr files can be an array of goals (multiple goals per .goal file) or a single goal object
-            var fs = engine.FileSystem;
+            var fs = app.FileSystem;
             var content = await fs.File.ReadAllTextAsync(prFilePath, cancellationToken);
             var ext = fs.Path.GetExtension(prFilePath);
 
@@ -316,12 +316,12 @@ public sealed class @this
             var trimmed = content.TrimStart();
             if (trimmed.StartsWith('['))
             {
-                goals = engine.Channels.Serializers.Deserialize<List<Goal.@this>>(
+                goals = app.Channels.Serializers.Deserialize<List<Goal.@this>>(
                     new Channels.Serializers.DeserializeOptions { Value = content, Extension = ext });
             }
             else
             {
-                var single = engine.Channels.Serializers.Deserialize<Goal.@this>(
+                var single = app.Channels.Serializers.Deserialize<Goal.@this>(
                     new Channels.Serializers.DeserializeOptions { Value = content, Extension = ext });
                 if (single != null)
                     goals = new List<Goal.@this> { single };
@@ -351,18 +351,18 @@ public sealed class @this
     /// <summary>
     /// Loads all goals from a directory.
     /// </summary>
-    public async Task<Data.@this> LoadFromDirectoryAsync(App.@this engine, string directory, string pattern = "*.pr", Context.@this? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data.@this> LoadFromDirectoryAsync(App.@this app, string directory, string pattern = "*.pr", Context.@this? context = null, CancellationToken cancellationToken = default)
     {
         try
         {
             // Direct filesystem access for bootstrapping — the file.list action handler
             // exists for use in PLang steps, but goal loading happens before step execution.
-            var files = engine.FileSystem.Directory.GetFiles(directory, pattern, SearchOption.AllDirectories);
+            var files = app.FileSystem.Directory.GetFiles(directory, pattern, SearchOption.AllDirectories);
             var loadedCount = 0;
 
             foreach (var file in files)
             {
-                var result = await LoadFromFileAsync(engine, file, context, cancellationToken);
+                var result = await LoadFromFileAsync(app, file, context, cancellationToken);
                 if (result)
                     loadedCount++;
             }

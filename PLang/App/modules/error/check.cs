@@ -40,15 +40,15 @@ public partial class Check : IContext, IAction
         if (onError.IgnoreError)
             return App.Data.@this.Ok();
 
-        var engine = Context.App!;
+        var app = Context.App!;
         var order = onError.Order ?? ErrorOrder.RetryFirst;
 
         if (order == ErrorOrder.GoalFirst)
         {
             // Goal first (e.g. fix preconditions), then retry
-            await CallErrorGoal(engine, Step!, onError);
+            await CallErrorGoal(app, Step!, onError);
 
-            var retryResult = await Retry(engine, Step!);
+            var retryResult = await Retry(app, Step!);
             if (retryResult != null) return retryResult;
 
             // Goal ran but no retry or retry failed — goal alone counts as handled
@@ -57,12 +57,12 @@ public partial class Check : IContext, IAction
         else
         {
             // Retry first (default), then error goal as fallback
-            var retryResult = await Retry(engine, Step!);
+            var retryResult = await Retry(app, Step!);
             if (retryResult != null) return retryResult;
 
             if (onError.Goal != null)
             {
-                await CallErrorGoal(engine, Step!, onError);
+                await CallErrorGoal(app, Step!, onError);
                 return App.Data.@this.Ok();
             }
         }
@@ -76,7 +76,7 @@ public partial class Check : IContext, IAction
     /// Retry the step up to RetryCount times, with delay spread over RetryOverMs.
     /// Returns App.Data.@this.Ok() on success, null if retries exhausted or not configured.
     /// </summary>
-    private async Task<Data.@this?> Retry(App.@this engine, App.Goals.Goal.Steps.Step.@this Step)
+    private async Task<Data.@this?> Retry(App.@this app, App.Goals.Goal.Steps.Step.@this Step)
     {
         var onError = Step.OnError!;
         if (onError.RetryCount == null || onError.RetryCount <= 0) return null;
@@ -91,11 +91,11 @@ public partial class Check : IContext, IAction
                 await Task.Delay(delayMs);
 
             // Re-execute the user step's actions on the user actor's context
-            var userContext = engine.User.Context;
+            var userContext = app.User.Context;
             App.Data.@this result = App.Data.@this.Ok();
             foreach (var action in Step.Actions)
             {
-                result = await engine.Run(action, userContext);
+                result = await app.Run(action, userContext);
                 if (!result.Success) break;
             }
 
@@ -108,7 +108,7 @@ public partial class Check : IContext, IAction
     /// <summary>
     /// Call the error goal if configured. Stamps Action for sub-goal navigation.
     /// </summary>
-    private async Task CallErrorGoal(App.@this engine,
+    private async Task CallErrorGoal(App.@this app,
         App.Goals.Goal.Steps.Step.@this Step, ErrorHandler onError)
     {
         if (onError.Goal == null) return;
@@ -125,7 +125,7 @@ public partial class Check : IContext, IAction
         {
             // Stamp Action so GoalCall can navigate to sub-goals
             onError.Goal.Action ??= Step.Actions.FirstOrDefault();
-            await engine.RunGoalAsync(onError.Goal, Context);
+            await app.RunGoalAsync(onError.Goal, Context);
         }
         finally
         {

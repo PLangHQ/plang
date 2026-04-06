@@ -128,7 +128,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     a.AttributeClass?.Name == "IsNotNullAttribute");
 
                 // Check if type has static Resolve(string, Context.@this) method
-                var isEngineResolvable = prop.Type is INamedTypeSymbol namedType
+                var isAppResolvable = prop.Type is INamedTypeSymbol namedType
                     && namedType.GetMembers("Resolve")
                         .OfType<IMethodSymbol>()
                         .Any(m => m.IsStatic
@@ -156,7 +156,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     prop.Type.IsValueType,
                     defaultValue,
                     isVariableName,
-                    isEngineResolvable,
+                    isAppResolvable,
                     isProvider,
                     isDataType,
                     isInitiated,
@@ -224,7 +224,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("    private List<App.Data.@this>? __parameters;");
         sb.AppendLine("    private List<App.Data.@this>? __defaults;");
         sb.AppendLine("    private App.Variables.@this? __variables;");
-        sb.AppendLine("    private App.@this? __engine;");
+        sb.AppendLine("    private App.@this? __app;");
         sb.AppendLine("    private App.Data.@this? __resolutionError;");
         sb.AppendLine();
 
@@ -234,11 +234,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
             var backingField = $"__{prop.Name}_backing";
             var setFlag = $"__{prop.Name}_set";
 
-            // [Provider] properties — resolved lazily from engine.Providers
-            // Works both via ExecuteAsync (__engine) and direct test usage (Context.App)
+            // [Provider] properties — resolved lazily from app.Providers
+            // Works both via ExecuteAsync (__app) and direct test usage (Context.App)
             if (prop.IsProvider)
             {
-                var engineExpr = info.ImplementsIContext ? "__engine ?? Context?.App" : "__engine";
+                var engineExpr = info.ImplementsIContext ? "__app ?? Context?.App" : "__app";
                 sb.AppendLine($"    private {prop.TypeName}? {backingField};");
                 sb.AppendLine($"    public partial {prop.TypeName} {prop.Name}");
                 sb.AppendLine("    {");
@@ -271,7 +271,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 // Data-typed properties: pass the Data object through, don't unwrap .Value
                 resolveExpr = $"__ResolveData(\"{paramName}\")";
             }
-            else if (prop.IsEngineResolvable)
+            else if (prop.IsAppResolvable)
             {
                 // Context-resolvable types: resolve raw string then call Type.Resolve(string, Context)
                 var rawStr = $"__Resolve<string>(\"{paramName}\")";
@@ -342,13 +342,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("    private App.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
         sb.AppendLine();
         sb.AppendLine("    public async System.Threading.Tasks.Task<App.Data.@this> ExecuteAsync(");
-        sb.AppendLine("        App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, App.Context.@this context)");
+        sb.AppendLine("        App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this app, App.Context.@this context)");
         sb.AppendLine("    {");
         sb.AppendLine("        __action = action;");
         sb.AppendLine("        __parameters = action.Parameters;");
         sb.AppendLine("        __defaults = action.Defaults;");
         sb.AppendLine("        __variables = context.Variables;");
-        sb.AppendLine("        __engine = engine;");
+        sb.AppendLine("        __app = app;");
         sb.AppendLine("        __resolutionError = null;");
         sb.AppendLine("        __paramData = new(StringComparer.OrdinalIgnoreCase);");
         sb.AppendLine("        var __step = action.Step;");
@@ -360,7 +360,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
         if (info.ImplementsIChannel)
         {
-            sb.AppendLine("        Channels = (context.Actor ?? engine.User).Channels;");
+            sb.AppendLine("        Channels = (context.Actor ?? app.User).Channels;");
         }
         if (info.ImplementsIAction)
         {
@@ -383,12 +383,12 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        context.Goal = action.Step?.Goal;");
         sb.AppendLine();
 
-        // Resolve [Provider] properties from engine.Providers
+        // Resolve [Provider] properties from app.Providers
         foreach (var prop in info.Properties)
         {
             if (!prop.IsProvider) continue;
             var backingField = $"__{prop.Name}_backing";
-            sb.AppendLine($"        var __{prop.Name}_result = engine.Providers.Get<{prop.TypeName}>();");
+            sb.AppendLine($"        var __{prop.Name}_result = app.Providers.Get<{prop.TypeName}>();");
             sb.AppendLine($"        if (!__{prop.Name}_result.Success) return __{prop.Name}_result;");
             sb.AppendLine($"        {backingField} = __{prop.Name}_result.Value!;");
             sb.AppendLine();
@@ -410,7 +410,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // Validate non-nullable, non-defaulted properties
         foreach (var prop in info.Properties)
         {
-            if (prop.IsNullable || prop.DefaultValue != null || prop.IsEngineResolvable || prop.IsProvider)
+            if (prop.IsNullable || prop.DefaultValue != null || prop.IsAppResolvable || prop.IsProvider)
                 continue;
 
             if (!prop.IsValueType)
@@ -631,7 +631,7 @@ internal class ActionPropertyInfo
     public bool IsValueType { get; }
     public string? DefaultValue { get; }
     public bool IsVariableName { get; }
-    public bool IsEngineResolvable { get; }
+    public bool IsAppResolvable { get; }
     public bool IsProvider { get; }
     public bool IsDataType { get; }
     public bool IsInitiated { get; }
@@ -640,7 +640,7 @@ internal class ActionPropertyInfo
 
     public ActionPropertyInfo(string name, string typeName, bool isNullable,
         bool isValueType, string? defaultValue, bool isVariableName = false,
-        bool isEngineResolvable = false, bool isProvider = false, bool isDataType = false,
+        bool isAppResolvable = false, bool isProvider = false, bool isDataType = false,
         bool isInitiated = false, bool isNotNull = false, bool implementsIEvent = false)
     {
         Name = name;
@@ -649,7 +649,7 @@ internal class ActionPropertyInfo
         IsValueType = isValueType;
         DefaultValue = defaultValue;
         IsVariableName = isVariableName;
-        IsEngineResolvable = isEngineResolvable;
+        IsAppResolvable = isAppResolvable;
         IsProvider = isProvider;
         IsDataType = isDataType;
         IsInitiated = isInitiated;

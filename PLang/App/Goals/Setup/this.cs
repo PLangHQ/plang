@@ -12,10 +12,10 @@ namespace App.Goals.Setup;
 /// </summary>
 public sealed class @this
 {
-    private readonly EngineGoals _goals;
+    private readonly AppGoals _goals;
     private const string Table = "setup";
 
-    public @this(EngineGoals goals)
+    public @this(AppGoals goals)
     {
         _goals = goals;
     }
@@ -34,10 +34,10 @@ public sealed class @this
     /// 2. Setup/.build/setup.pr (a dedicated Setup/ folder)
     /// Does NOT scan all .pr files — there could be thousands.
     /// </summary>
-    private async Task<Data.@this> DiscoverAsync(App.@this engine, CancellationToken ct = default)
+    private async Task<Data.@this> DiscoverAsync(App.@this app, CancellationToken ct = default)
     {
-        var fs = engine.FileSystem;
-        var root = engine.AbsolutePath;
+        var fs = app.FileSystem;
+        var root = app.AbsolutePath;
 
         var candidates = new[]
         {
@@ -51,7 +51,7 @@ public sealed class @this
 
             try
             {
-                var goal = await engine.Channels.ReadAsync<Goal.@this>(file, ct);
+                var goal = await app.Channels.ReadAsync<Goal.@this>(file, ct);
                 if (goal == null || !goal.IsSetup) continue;
 
                 foreach (var step in goal.Steps)
@@ -73,9 +73,9 @@ public sealed class @this
     /// can check run-once semantics. Any goal called from within setup execution
     /// inherits the setup context (context.Setup propagates through goal.call).
     /// </summary>
-    public async Task<Data.@this> RunAsync(App.@this engine, Context.@this context, CancellationToken ct = default)
+    public async Task<Data.@this> RunAsync(App.@this app, Context.@this context, CancellationToken ct = default)
     {
-        var discoverResult = await DiscoverAsync(engine, ct);
+        var discoverResult = await DiscoverAsync(app, ct);
         if (!discoverResult.Success) return discoverResult;
 
         if (!Goals.Any()) return Data.@this.Ok();
@@ -85,7 +85,7 @@ public sealed class @this
         {
             foreach (var goal in Goals)
             {
-                var result = await engine.RunGoalAsync(goal, context, ct);
+                var result = await app.RunGoalAsync(goal, context, ct);
                 if (!result.Success) return result;
             }
             return Data.@this.Ok();
@@ -99,11 +99,11 @@ public sealed class @this
     /// <summary>
     /// Checks if a step has already been executed (by hash lookup in system DataSource).
     /// </summary>
-    public async Task<bool> IsExecuted(Step step, App.@this engine)
+    public async Task<bool> IsExecuted(Step step, App.@this app)
     {
         if (string.IsNullOrEmpty(step.Hash)) return false;
 
-        var result = await engine.System.SettingsStore.Exists(Table, step.Hash);
+        var result = await app.System.SettingsStore.Exists(Table, step.Hash);
         return result.Success && result.Value is true;
     }
 
@@ -125,7 +125,7 @@ public sealed class @this
     /// Records a step execution in the system DataSource.
     /// Returns Data so the caller can detect recording failures.
     /// </summary>
-    public async Task<Data.@this> Record(Step step, App.@this engine, IError? error = null)
+    public async Task<Data.@this> Record(Step step, App.@this app, IError? error = null)
     {
         if (string.IsNullOrEmpty(step.Hash)) return Data.@this.Ok();
 
@@ -138,6 +138,6 @@ public sealed class @this
             ["error"] = error?.Message
         };
 
-        return await engine.System.SettingsStore.Set(Table, step.Hash, new Data.@this(step.Hash, metadata));
+        return await app.System.SettingsStore.Set(Table, step.Hash, new Data.@this(step.Hash, metadata));
     }
 }

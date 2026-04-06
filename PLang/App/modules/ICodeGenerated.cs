@@ -1,7 +1,6 @@
 using App.Context;
 using App.Variables;
 using ActionType = App.Goals.Goal.Steps.Step.Actions.Action.@this;
-using EngineType = App.@this;
 
 namespace App.modules;
 
@@ -11,5 +10,5 @@ namespace App.modules;
 /// </summary>
 public interface ICodeGenerated
 {
-    Task<Data.@this> ExecuteAsync(ActionType action, EngineType engine, Context.@this context);
+    Task<Data.@this> ExecuteAsync(ActionType action, App.@this app, Context.@this context);
 }

@@ -18,7 +18,7 @@ public partial class Foreach : IContext
         if (Collection == null)
             return Data(new types.loop { itemCount = 0, completed = true });
 
-        var engine = Context.App!;
+        var app = Context.App!;
         var variableName = ItemName ?? "item";
         int count = 0;
 
@@ -33,7 +33,7 @@ public partial class Foreach : IContext
             if (KeyName != null)
                 Context.Variables.Set(KeyName, key);
 
-            var result = await engine.RunGoalAsync(GoalName, Context, Context.CancellationToken);
+            var result = await app.RunGoalAsync(GoalName, Context, Context.CancellationToken);
             if (!result.Success && !result.Handled) return result;
             count++;
         }

@@ -6,7 +6,7 @@ namespace App.Config;
 /// Context-bound view of a module's settings. Returned by app.Config.For&lt;T&gt;(context).
 /// Each call to For&lt;T&gt; returns a new lightweight instance stamped with the current context,
 /// so concurrent goals get isolated views. Properties resolve through the scope chain
-/// via Engine.Config.Resolve.
+/// via App.Config.Resolve.
 ///
 /// Usage:
 ///   var view = app.Config.For&lt;archive.Config&gt;(context);

@@ -14,12 +14,12 @@ public partial class Remove : IContext
 
     public Task<Data.@this> Run()
     {
-        var engine = Context.App!;
-        if (!engine.Modules.Contains(Name))
+        var app = Context.App!;
+        if (!app.Modules.Contains(Name))
             return Task.FromResult(Error(
                 new App.Errors.ServiceError($"Module '{Name}' not found", "NotFound", 404)));
 
-        engine.Modules.Remove(Name);
+        app.Modules.Remove(Name);
         return Task.FromResult(Data());
     }
 }

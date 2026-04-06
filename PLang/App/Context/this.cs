@@ -79,7 +79,7 @@ public sealed class @this : IDisposable
     /// Event bindings registered on this context.
     /// Each actor's context has its own event collection.
     /// </summary>
-    public EngineEvents Events { get; } = new();
+    public AppEvents Events { get; } = new();
 
     /// <summary>
     /// The goal currently being executed.
@@ -131,14 +131,14 @@ public sealed class @this : IDisposable
     /// </summary>
     public Config.Scope? ConfigScope { get; set; }
 
-    public @this(App.@this engine, Variables.@this? variables = null, @this? parent = null)
+    public @this(App.@this app, Variables.@this? variables = null, @this? parent = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
-        App = engine;
+        App = app;
         Variables = variables ?? new Variables.@this();
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(engine.ShutdownToken);
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(app.ShutdownToken);
         // Wire event registration to invalidate the resolved-events cache
         Events.OnChanged = InvalidateEventCache;
 

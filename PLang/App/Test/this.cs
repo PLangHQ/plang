@@ -13,16 +13,16 @@ namespace App.Test;
 /// </summary>
 public sealed class @this
 {
-    private readonly App.@this _engine;
+    private readonly App.@this _app;
 
     /// <summary>
     /// Whether test mode is enabled.
     /// </summary>
     public bool IsEnabled { get; set; }
 
-    public @this(App.@this engine)
+    public @this(App.@this app)
     {
-        _engine = engine;
+        _app = app;
     }
 
     private sealed class TestResult
@@ -50,7 +50,7 @@ public sealed class @this
     {
         IsEnabled = true;
 
-        var fileSystem = _engine.FileSystem;
+        var fileSystem = _app.FileSystem;
         var rootDir = fileSystem.RootDirectory;
 
         // Discover all *.test.goal files
@@ -76,7 +76,7 @@ public sealed class @this
 
             try
             {
-                result.Result = await RunSingleTest(fileSystem, rootDir, testFile, result, _engine.Debug.IsEnabled, cancellationToken);
+                result.Result = await RunSingleTest(fileSystem, rootDir, testFile, result, _app.Debug.IsEnabled, cancellationToken);
                 Console.WriteLine(result.Passed ? " PASS" : " FAIL");
             }
             catch (Exception ex)

@@ -10,7 +10,7 @@ namespace App.Channels;
 public sealed class @this : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, Channel.@this> _channels = new(StringComparer.OrdinalIgnoreCase);
-    private readonly App.@this _engine;
+    private readonly App.@this _app;
 
     /// <summary>
     /// The serializer registry — content-type routing for I/O.
@@ -23,9 +23,9 @@ public sealed class @this : IAsyncDisposable
     public const string StdOut = "stdout";
     public const string StdErr = "stderr";
 
-    public @this(App.@this engine, Serializers.@this? serializers = null)
+    public @this(App.@this app, Serializers.@this? serializers = null)
     {
-        _engine = engine;
+        _app = app;
         Serializers = serializers ?? new Serializers.@this();
         Register(new Channel.@this(Default, Console.OpenStandardOutput(), ChannelDirection.Output, ownsStream: false)
             { ContentType = "text/plain" });
@@ -33,11 +33,11 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>
     /// Routes a write to the correct actor's channels by actor name.
-    /// Engine.Channels is the router — actor Channels own the actual channels.
+    /// App.Channels is the router — actor Channels own the actual channels.
     /// </summary>
     public async Task<Data.@this> WriteAsync(string actorName, string channelName, object? data, CancellationToken ct = default)
     {
-        var (actor, error) = _engine.GetActor(actorName);
+        var (actor, error) = _app.GetActor(actorName);
         if (error != null) return App.Data.@this.FromError(error);
         return await actor!.Channels.WriteAsync(channelName, data, cancellationToken: ct);
     }
@@ -47,7 +47,7 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public async Task<T?> ReadAsync<T>(string filePath, CancellationToken cancellationToken = default)
     {
-        var fs = _engine.FileSystem;
+        var fs = _app.FileSystem;
         var content = await fs.File.ReadAllTextAsync(filePath, cancellationToken);
         var ext = fs.Path.GetExtension(filePath);
         return Serializers.Deserialize<T>(new DeserializeOptions { Value = content, Extension = ext });

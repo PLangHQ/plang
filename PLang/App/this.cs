@@ -16,8 +16,8 @@ namespace App;
 public sealed class @this : Data.@this<@this>, IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
-    private readonly EngineModules _modules;
-    private readonly EngineGoals _goals;
+    private readonly AppModules _modules;
+    private readonly AppGoals _goals;
     private readonly List<object> _keepAlive = new();
     private bool _disposed;
 
@@ -101,19 +101,19 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// <summary>
     /// Global event collection for the application.
     /// </summary>
-    public EngineEvents Events { get; }
+    public AppEvents Events { get; }
 
     /// <summary>
     /// Flat action registry. Discovers, registers, and resolves actions by module.action.
     /// Built-in actions from PLang assembly, external DLLs add via Discover().
     /// </summary>
-    public EngineModules Modules => _modules;
+    public AppModules Modules => _modules;
 
     /// <summary>
     /// Type-keyed provider registry for pluggable module implementations.
     /// Modules define provider interfaces, register defaults, PLang developers override via DLL.
     /// </summary>
-    public EngineProviders Providers { get; } = new();
+    public AppProviders Providers { get; } = new();
 
     /// <summary>
     /// Per-type navigator registry for Data navigation.
@@ -123,7 +123,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// <summary>
     /// The loaded goals.
     /// </summary>
-    public EngineGoals Goals => _goals;
+    public AppGoals Goals => _goals;
 
     /// <summary>
     /// The file system abstraction.
@@ -133,7 +133,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// <summary>
     /// I/O operations (file reading, channels).
     /// </summary>
-    public EngineChannels Channels { get; }
+    public AppChannels Channels { get; }
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -251,7 +251,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     {
     }
 
-    public @this(string absolutePath, EngineModules? modules = null,
+    public @this(string absolutePath, AppModules? modules = null,
         App.FileSystem.IPLangFileSystem? fileSystem = null,
         string? environment = null)
         : base("!app")
@@ -260,17 +260,17 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         AbsolutePath = absolutePath;
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
-        Events = new EngineEvents();
+        Events = new AppEvents();
         Debug = new Debugging(this);
         Testing = new Testing(this);
         Building = new Build.@this(this);
         Types = new Types.@this();
         Config = new Config.@this();
         SettingsVariable = new SettingsVariable(this);
-        _modules = modules ?? new EngineModules();
-        _goals = new EngineGoals { App = this };
+        _modules = modules ?? new AppModules();
+        _goals = new AppGoals { App = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
-        Channels = new EngineChannels(this);
+        Channels = new AppChannels(this);
 
         Providers.RegisterDefaults();
         Types.RegisterDomainTypes();

@@ -7,7 +7,7 @@ namespace App.Build;
 /// </summary>
 public sealed class @this
 {
-    private readonly App.@this _engine;
+    private readonly App.@this _app;
 
     /// <summary>
     /// Whether build mode is enabled.
@@ -20,8 +20,8 @@ public sealed class @this
     /// </summary>
     public List<FileSystem.Path> Files { get; set; } = new();
 
-    public @this(App.@this engine)
+    public @this(App.@this app)
     {
-        _engine = engine;
+        _app = app;
     }
 }

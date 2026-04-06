@@ -52,7 +52,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        var engine = action.Context.App;
+        var app = action.Context.App;
         var context = action.Context;
         var searchPath = string.IsNullOrWhiteSpace(action.Path) ? "." : action.Path;
 
@@ -63,7 +63,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             Pattern = "*.goal",
             Recursive = true
         };
-        var listResult = await engine.RunAction(listAction, context);
+        var listResult = await app.RunAction(listAction, context);
         if (!listResult.Success)
             return listResult;
 
@@ -72,7 +72,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             return global::App.Data.@this.Ok(new List<Goal>());
 
         // Filter by app.Building.Files if set (--build={"files":"test.goal"})
-        var buildFiles = engine.Building.Files;
+        var buildFiles = app.Building.Files;
         if (buildFiles.Count > 0)
         {
             files = files.Where(f =>
@@ -89,7 +89,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         foreach (var file in files)
         {
             var readAction = new file.Read { Context = context, Path = file };
-            var readResult = await engine.RunAction(readAction, context);
+            var readResult = await app.RunAction(readAction, context);
             if (!readResult.Success)
             {
                 allErrors.Add(new Info
@@ -112,7 +112,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             // Merge existing .pr data, collect errors
             foreach (var goal in parsedGoals)
             {
-                var mergeErrors = await MergePrData(goal, engine, context);
+                var mergeErrors = await MergePrData(goal, app, context);
                 allErrors.AddRange(mergeErrors);
             }
 
@@ -130,7 +130,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        var engine = action.Context.App;
+        var app = action.Context.App;
         var context = action.Context;
 
         if (action.Goals.Count == 0)
@@ -153,7 +153,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         // Load existing goals from .pr file — merge by name (replace or append)
         var existingGoals = new List<Goal>();
         var readAction = new file.Read { Context = context, Path = FileSystem.Path.Resolve(prPath, context) };
-        var readResult = await engine.RunAction(readAction, context);
+        var readResult = await app.RunAction(readAction, context);
         if (readResult.Success && readResult.Value?.ToString() is string existingJson && !string.IsNullOrWhiteSpace(existingJson))
         {
             try
@@ -183,7 +183,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             Path = FileSystem.Path.Resolve(prPath, context),
             Value = new Data.@this("", json)
         };
-        var saveResult = await engine.RunAction(saveAction, context);
+        var saveResult = await app.RunAction(saveAction, context);
         return saveResult.Success ? global::App.Data.@this.Ok(true) : saveResult;
     }
 
@@ -194,9 +194,9 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        var engine = action.Context.App;
+        var app = action.Context.App;
         var context = action.Context;
-        var modules = engine.Modules;
+        var modules = app.Modules;
 
         if (action.Actions == null || action.Actions.Count == 0)
             return global::App.Data.@this.Ok(true);
@@ -212,7 +212,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             return global::App.Data.@this.FromError(new Errors.ActionError(
                 $"Actions not found: {string.Join(", ", notFound)}", "ActionNotFound", 400));
 
-        await ResolveGoalCallPaths(action.Actions, engine, context);
+        await ResolveGoalCallPaths(action.Actions, app, context);
         NormalizeParameterTypes(action.Actions);
 
         foreach (var a in action.Actions)
@@ -244,9 +244,9 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        var engine = action.Context.App;
+        var app = action.Context.App;
         // App loads its identity from app.pr at Start() — just return it
-        return global::App.Data.@this.Ok(engine);
+        return global::App.Data.@this.Ok(app);
     }
 
     public async Task<Data.@this> AppSave(appSave action)
@@ -288,7 +288,7 @@ public class DefaultBuilderProvider : IBuilderProvider
     /// <summary>
     /// Merges existing .pr data into a goal. Returns any errors encountered (corrupt .pr files).
     /// </summary>
-    private static async Task<List<Info>> MergePrData(Goal goal, App.@this engine,
+    private static async Task<List<Info>> MergePrData(Goal goal, App.@this app,
         Context.@this context)
     {
         var errors = new List<Info>();
@@ -300,7 +300,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             Context = context,
             Path = FileSystem.Path.Resolve(prPath, context)
         };
-        var readResult = await engine.RunAction(readAction, context);
+        var readResult = await app.RunAction(readAction, context);
         if (!readResult.Success) return errors;
 
         var prJson = readResult.Value?.ToString();
@@ -329,7 +329,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         return errors;
     }
 
-    private static async Task ResolveGoalCallPaths(Actions actions, App.@this engine,
+    private static async Task ResolveGoalCallPaths(Actions actions, App.@this app,
         Context.@this context)
     {
         foreach (var action in actions)
@@ -368,7 +368,7 @@ public class DefaultBuilderProvider : IBuilderProvider
                         Context = context,
                         Path = FileSystem.Path.Resolve(expectedPrPath, context)
                     };
-                    var existsResult = await engine.RunAction(existsAction, context);
+                    var existsResult = await app.RunAction(existsAction, context);
                     if (existsResult.Success && existsResult is FileSystem.Path pathData && pathData.Exists)
                     {
                         goalCall.PrPath = expectedPrPath;

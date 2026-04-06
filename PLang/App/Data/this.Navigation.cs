@@ -161,10 +161,10 @@ public partial class @this
 
     private Providers.IGrepProvider ResolveGrepProvider()
     {
-        var engine = _context?.App;
-        if (engine != null)
+        var app = _context?.App;
+        if (app != null)
         {
-            var result = engine.Providers.Get<Providers.IGrepProvider>();
+            var result = app.Providers.Get<Providers.IGrepProvider>();
             if (result?.Value is Providers.IGrepProvider provider) return provider;
         }
         return new Providers.DefaultGrepProvider();

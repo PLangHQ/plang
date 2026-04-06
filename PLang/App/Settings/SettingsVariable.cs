@@ -15,13 +15,13 @@ namespace App.Settings;
 public class SettingsVariable : Data.@this
 {
     private const string SettingsTable = "settings";
-    private readonly App.@this? _engine;
+    private readonly App.@this? _app;
 
     /// <summary>Runtime constructor — intercepts navigation and loads from settings store.</summary>
-    public SettingsVariable(App.@this engine)
+    public SettingsVariable(App.@this app)
         : base("Settings", null)
     {
-        _engine = engine;
+        _app = app;
     }
 
     /// <summary>Storage constructor — value already set, no lazy resolution needed.</summary>
@@ -39,7 +39,7 @@ public class SettingsVariable : Data.@this
     /// </summary>
     public override Data.@this? GetChild(string path, int depth = 0)
     {
-        if (_engine == null)
+        if (_app == null)
             return base.GetChild(path, depth);
 
         if (string.IsNullOrEmpty(path))
@@ -63,7 +63,7 @@ public class SettingsVariable : Data.@this
 
         // .GetAwaiter().GetResult() is safe here because Microsoft.Data.Sqlite
         // is synchronous under the hood — SQLite has no async I/O.
-        var store = _engine.System.SettingsStore;
+        var store = _app.System.SettingsStore;
         var result = store.Get<SettingsVariable>(SettingsTable, key).GetAwaiter().GetResult();
 
         if (!result.Success)

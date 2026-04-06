@@ -12,7 +12,7 @@ using App.Variables;
 using PlangType = App.Data.Type;
 using App.Config;
 using App.modules.signing;
-using EngineType = App.@this;
+using AppType = App.@this;
 using SysHttpMethod = System.Net.Http.HttpMethod;
 
 namespace App.modules.http.providers;
@@ -58,8 +58,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     public Task<Data.@this> SendAsync(request action) => ExecuteHttpAsync(async () =>
     {
-        var engine = action.Context.App;
-        var config = engine.Config.For<Config>(action.Context);
+        var app = action.Context.App;
+        var config = app.Config.For<Config>(action.Context);
 
         var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
         var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
@@ -118,22 +118,22 @@ public sealed class DefaultHttpProvider : IHttpProvider
             var maxSSEBuffer = config.Resolve("MaxSSEBufferSize", 10L * 1024 * 1024);
             return await HandleStreamingAsync(
                 response, requestMessage, action.OnStream, action.StreamAs,
-                unsigned, engine, action.Context, maxSSEBuffer, cts.Token);
+                unsigned, app, action.Context, maxSSEBuffer, cts.Token);
         }
 
         var maxResponseSize = config.Resolve("MaxResponseSize", DefaultMaxResponseSize);
 
         using (response)
         {
-            return await ParseResponseAsync(response, requestMessage, unsigned, engine, action.Context, maxResponseSize);
+            return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize);
         }
     });
 
     public Task<Data.@this> DownloadAsync(download action) => ExecuteHttpAsync(async () =>
     {
-        var engine = action.Context.App;
-        var config = engine.Config.For<Config>(action.Context);
-        var fs = engine.FileSystem;
+        var app = action.Context.App;
+        var config = app.Config.For<Config>(action.Context);
+        var fs = app.FileSystem;
 
         var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
         var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
@@ -169,7 +169,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             ApplySignature(requestMessage, signResult);
         }
 
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(engine.ShutdownToken);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(app.ShutdownToken);
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
         using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, config, cts.Token);
@@ -189,16 +189,16 @@ public sealed class DefaultHttpProvider : IHttpProvider
         using var fileStream = fs.File.Create(savePath);
 
         await StreamWithProgressAsync(
-            responseStream, fileStream, totalBytes, action.OnProgress, engine, action.Context, cts.Token);
+            responseStream, fileStream, totalBytes, action.OnProgress, app, action.Context, cts.Token);
 
         return App.Data.@this.Ok(action.SaveTo);
     });
 
     public Task<Data.@this> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
     {
-        var engine = action.Context.App;
-        var config = engine.Config.For<Config>(action.Context);
-        var fs = engine.FileSystem;
+        var app = action.Context.App;
+        var config = app.Config.For<Config>(action.Context);
+        var fs = app.FileSystem;
 
         var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
         var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
@@ -227,13 +227,13 @@ public sealed class DefaultHttpProvider : IHttpProvider
             ApplySignature(requestMessage, signResult);
         }
 
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(engine.ShutdownToken);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(app.ShutdownToken);
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
         using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, config, cts.Token);
 
         var maxResponseSize = config.Resolve("MaxResponseSize", DefaultMaxResponseSize);
-        return await ParseResponseAsync(response, requestMessage, unsigned, engine, action.Context, maxResponseSize);
+        return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize);
     });
 
     public Data.@this Configure(configure action)
@@ -465,7 +465,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         HttpResponseMessage response,
         HttpRequestMessage request,
         bool unsigned,
-        EngineType engine,
+        AppType app,
         Context.@this context,
         long maxResponseSize = DefaultMaxResponseSize)
     {
@@ -478,7 +478,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
             if (!unsigned && !string.IsNullOrEmpty(errorBody))
             {
-                try { await TryExtractSignedErrorIdentity(errorBody, engine, context); }
+                try { await TryExtractSignedErrorIdentity(errorBody, app, context); }
                 catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — don't mask the original error */ }
             }
 
@@ -497,7 +497,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 return err;
             }
 
-            return await ParsePlangResponseAsync(response, request, engine, context, maxResponseSize);
+            return await ParsePlangResponseAsync(response, request, app, context, maxResponseSize);
         }
 
         // JSON response
@@ -550,7 +550,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     private static async Task<Data.@this> ParsePlangResponseAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
-        EngineType engine,
+        AppType app,
         Context.@this context,
         long maxResponseSize = DefaultMaxResponseSize)
     {
@@ -586,7 +586,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             Data = data
         };
 
-        var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
+        var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
         if (!verifyResult.Success)
         {
             BuildProperties(verifyResult, request, response);
@@ -604,7 +604,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// The error body may be a Data with Signature, or have a "signature" field.
     /// </summary>
     private static async Task TryExtractSignedErrorIdentity(
-        string errorBody, EngineType engine, Context.@this context)
+        string errorBody, AppType app, Context.@this context)
     {
         // Try deserializing as Data.@this with transport options (may have Signature via [In])
         Data.@this? data = null;
@@ -614,7 +614,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         if (data?.Signature != null)
         {
             var verifyAction = new signing.verify { Context = context, Data = data };
-            var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
+            var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
             if (verifyResult.Success)
                 context.Variables.Set("!ServiceIdentity", data.Signature.Identity);
             return;
@@ -633,7 +633,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         legacyData.Signature = signedData;
 
         var legacyVerify = new signing.verify { Context = context, Data = legacyData };
-        var legacyResult = await engine.RunAction<signing.verify>(legacyVerify, context);
+        var legacyResult = await app.RunAction<signing.verify>(legacyVerify, context);
         if (legacyResult.Success)
             context.Variables.Set("!ServiceIdentity", signedData.Identity);
     }
@@ -701,7 +701,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         GoalCall onStream,
         StreamFormat? streamAs,
         bool unsigned,
-        EngineType engine,
+        AppType app,
         Context.@this context,
         long maxSSEBufferSize,
         CancellationToken ct)
@@ -738,18 +738,18 @@ public sealed class DefaultHttpProvider : IHttpProvider
             switch (format)
             {
                 case StreamFormat.Bytes:
-                    await StreamBytesAsync(stream, onStream, engine, context, ct);
+                    await StreamBytesAsync(stream, onStream, app, context, ct);
                     break;
 
                 case StreamFormat.SSE:
-                    await StreamSSEAsync(stream, onStream, engine, context, maxSSEBufferSize, ct);
+                    await StreamSSEAsync(stream, onStream, app, context, maxSSEBufferSize, ct);
                     break;
 
                 default:
                     if (isPlang)
-                        await StreamPlangAsync(stream, onStream, engine, context, ct);
+                        await StreamPlangAsync(stream, onStream, app, context, ct);
                     else
-                        await StreamLinesAsync(stream, onStream, engine, context, ct);
+                        await StreamLinesAsync(stream, onStream, app, context, ct);
                     break;
             }
 
@@ -765,7 +765,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// </summary>
     private static async Task RunCallbackAsync(
         GoalCall template, object? value, PlangType? type, string defaultName,
-        EngineType engine, Context.@this context, CancellationToken ct)
+        AppType app, Context.@this context, CancellationToken ct)
     {
         var paramName = template.Parameters?.Count > 0 ? template.Parameters[0].Name : defaultName;
         var call = new GoalCall
@@ -774,9 +774,9 @@ public sealed class DefaultHttpProvider : IHttpProvider
             PrPath = template.PrPath,
             Parameters = new List<Data.@this> { new Data.@this(paramName, value, type) }
         };
-        var result = await engine.RunGoalAsync(call, context, ct);
+        var result = await app.RunGoalAsync(call, context, ct);
         if (!result.Success)
-            await engine.Channels.WriteAsync(EngineChannels.StdErr, result);
+            await app.Channels.WriteAsync(AppChannels.StdErr, result);
     }
 
     private static StreamFormat DetectStreamFormat(string contentType)
@@ -788,7 +788,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     private static async Task StreamLinesAsync(
         Stream stream, GoalCall onStream,
-        EngineType engine, Context.@this context, CancellationToken ct)
+        AppType app, Context.@this context, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
         while (!ct.IsCancellationRequested)
@@ -797,13 +797,13 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (line == null) break;
             if (string.IsNullOrEmpty(line)) continue;
 
-            await RunCallbackAsync(onStream, line, PlangType.String, "chunk", engine, context, ct);
+            await RunCallbackAsync(onStream, line, PlangType.String, "chunk", app, context, ct);
         }
     }
 
     private static async Task StreamSSEAsync(
         Stream stream, GoalCall onStream,
-        EngineType engine, Context.@this context, long maxBufferSize, CancellationToken ct)
+        AppType app, Context.@this context, long maxBufferSize, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
         var dataBuffer = new StringBuilder();
@@ -814,7 +814,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (line == null)
             {
                 if (dataBuffer.Length > 0)
-                    await RunCallbackAsync(onStream, dataBuffer.ToString(), PlangType.String, "chunk", engine, context, ct);
+                    await RunCallbackAsync(onStream, dataBuffer.ToString(), PlangType.String, "chunk", app, context, ct);
                 break;
             }
 
@@ -825,7 +825,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 // Guard against unbounded SSE messages (no blank-line boundary)
                 if (dataBuffer.Length + data.Length + 1 > maxBufferSize)
                 {
-                    await engine.Channels.WriteAsync(EngineChannels.StdErr,
+                    await app.Channels.WriteAsync(AppChannels.StdErr,
                         App.Data.@this.FromError(new ServiceError(
                             $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
                             "SSEBufferOverflow", 413)));
@@ -838,7 +838,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             }
             else if (line.Length == 0 && dataBuffer.Length > 0)
             {
-                await RunCallbackAsync(onStream, dataBuffer.ToString(), PlangType.String, "chunk", engine, context, ct);
+                await RunCallbackAsync(onStream, dataBuffer.ToString(), PlangType.String, "chunk", app, context, ct);
                 dataBuffer.Clear();
             }
         }
@@ -846,7 +846,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     private static async Task StreamBytesAsync(
         Stream stream, GoalCall onStream,
-        EngineType engine, Context.@this context, CancellationToken ct)
+        AppType app, Context.@this context, CancellationToken ct)
     {
         var buffer = new byte[8192];
         int bytesRead;
@@ -855,13 +855,13 @@ public sealed class DefaultHttpProvider : IHttpProvider
             var chunk = new byte[bytesRead];
             System.Buffer.BlockCopy(buffer, 0, chunk, 0, bytesRead);
 
-            await RunCallbackAsync(onStream, chunk, null, "chunk", engine, context, ct);
+            await RunCallbackAsync(onStream, chunk, null, "chunk", app, context, ct);
         }
     }
 
     private static async Task StreamPlangAsync(
         Stream stream, GoalCall onStream,
-        EngineType engine, Context.@this context, CancellationToken ct)
+        AppType app, Context.@this context, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
 
@@ -879,7 +879,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             }
             catch (JsonException)
             {
-                await engine.Channels.WriteAsync(EngineChannels.StdErr,
+                await app.Channels.WriteAsync(AppChannels.StdErr,
                     App.Data.@this.FromError(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
                 continue;
             }
@@ -892,15 +892,15 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 Data = data
             };
 
-            var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
+            var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
             if (!verifyResult.Success)
             {
-                await RunCallbackAsync(onStream, verifyResult, null, "chunk", engine, context, ct);
+                await RunCallbackAsync(onStream, verifyResult, null, "chunk", app, context, ct);
                 continue;
             }
 
             context.Variables.Set("!ServiceIdentity", data.Signature?.Identity);
-            await RunCallbackAsync(onStream, data, null, "chunk", engine, context, ct);
+            await RunCallbackAsync(onStream, data, null, "chunk", app, context, ct);
         }
     }
 
@@ -911,7 +911,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         Stream destination,
         long? totalBytes,
         GoalCall? onProgress,
-        EngineType engine,
+        AppType app,
         Context.@this context,
         CancellationToken ct)
     {
@@ -937,7 +937,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                         TotalBytes = totalBytes,
                         Percentage = totalBytes > 0 ? (double)bytesTransferred / totalBytes.Value * 100 : null
                     };
-                    await RunCallbackAsync(onProgress, progress, null, "progress", engine, context, ct);
+                    await RunCallbackAsync(onProgress, progress, null, "progress", app, context, ct);
                 }
             }
         }

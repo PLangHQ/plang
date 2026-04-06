@@ -22,7 +22,7 @@ public partial class Execute : IContext
 
     public async Task<Data.@this> Run()
     {
-        var engine = Context.App!;
+        var app = Context.App!;
         var callingActor = Context.Actor;
         var targetActor = Actor;
 
@@ -44,8 +44,8 @@ public partial class Execute : IContext
         }
 
         // Switch app's current actor for the duration of execution
-        var previousActor = engine.CurrentActor;
-        if (targetActor != null) engine.CurrentActor = targetActor;
+        var previousActor = app.CurrentActor;
+        if (targetActor != null) app.CurrentActor = targetActor;
 
         try
         {
@@ -56,7 +56,7 @@ public partial class Execute : IContext
                 execContext.PushCancellation(timeoutCts);
                 try
                 {
-                    return await ExecuteActions(engine, execContext);
+                    return await ExecuteActions(app, execContext);
                 }
                 catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !execContext.CancellationToken.IsCancellationRequested)
                 {
@@ -72,21 +72,21 @@ public partial class Execute : IContext
                 }
             }
 
-            return await ExecuteActions(engine, execContext);
+            return await ExecuteActions(app, execContext);
         }
         finally
         {
-            engine.CurrentActor = previousActor;
+            app.CurrentActor = previousActor;
         }
     }
 
-    private async Task<Data.@this> ExecuteActions(App.@this engine, Context.@this execContext)
+    private async Task<Data.@this> ExecuteActions(App.@this app, Context.@this execContext)
     {
         App.Data.@this result = Data();
         foreach (var action in Step.Actions)
         {
             execContext.CancellationToken.ThrowIfCancellationRequested();
-            result = await engine.Run(action, execContext);
+            result = await app.Run(action, execContext);
             if (!result.Success) break;
         }
 

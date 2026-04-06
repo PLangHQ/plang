@@ -33,7 +33,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
     public async Task<Identity> CreateAsync(Create action)
     {
-        var engine = action.Context.App;
+        var app = action.Context.App;
 
         if (string.IsNullOrWhiteSpace(action.Name))
             return App.Data.@this.FromError<Identity>(new ActionError("Identity name cannot be empty", "ValidationError", 400));
@@ -60,7 +60,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         if (!result.Success) return result;
 
         if (action.SetAsDefault)
-            engine.System.Identity = identity;
+            app.System.Identity = identity;
 
         return identity;
     }
@@ -102,7 +102,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
     public async Task<Identity> SetDefaultAsync(SetDefault action)
     {
-        var engine = action.Context.App;
+        var app = action.Context.App;
         var all = await LoadAllAsync(action);
         if (!all.Success) return all.ToError<Identity>();
 
@@ -130,13 +130,13 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         var saveResult = await SaveAsync(action, target);
         if (!saveResult.Success) return saveResult;
 
-        engine.System.Identity = target;
+        app.System.Identity = target;
         return target;
     }
 
     public async Task<Identity> RenameAsync(Rename action)
     {
-        var engine = action.Context.App;
+        var app = action.Context.App;
 
         if (string.IsNullOrWhiteSpace(action.NewName))
             return App.Data.@this.FromError<Identity>(new ActionError("New name cannot be empty", "ValidationError", 400));
@@ -164,7 +164,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         if (!removeResult.Success) return removeResult;
 
         if (identity.IsDefault)
-            engine.System.Identity = identity;
+            app.System.Identity = identity;
 
         return identity;
     }
@@ -270,8 +270,8 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// </summary>
     private Identity GenerateIdentity(IContext action, string name, bool isDefault, string? providerName = null)
     {
-        var engine = action.Context.App;
-        var keyResult = engine.Providers.Get<IKeyProvider>(providerName);
+        var app = action.Context.App;
+        var keyResult = app.Providers.Get<IKeyProvider>(providerName);
         if (!keyResult.Success)
             return keyResult.ToError<Identity>();
 

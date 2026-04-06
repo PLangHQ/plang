@@ -44,7 +44,7 @@ public partial class @this
 
     /// <summary>
     /// Wraps content in a category envelope. Outer type = Kind (e.g. "image", "text"),
-    /// inner = this Data. Requires context for Kind resolution via Engine.Types.
+    /// inner = this Data. Requires context for Kind resolution via App.Types.
     /// Returns self if no context, no type, or Kind is unknown.
     /// </summary>
     public @this Wrap()
@@ -63,7 +63,7 @@ public partial class @this
 
     /// <summary>
     /// Compresses if the current type is compressible. After Wrap(), the type is the category
-    /// (e.g. "spreadsheet"). Checks compressibility through context → Engine.Types.
+    /// (e.g. "spreadsheet"). Checks compressibility through context → App.Types.
     /// Serializes current Data to JSON, compresses with GZip, wraps in archived envelope.
     /// Returns self if not compressible or no context.
     /// Note: Properties are not preserved through the compression cycle — they are [JsonIgnore]

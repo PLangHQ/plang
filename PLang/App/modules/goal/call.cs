@@ -16,13 +16,13 @@ public partial class Call : IContext
 
     public async Task<Data.@this> Run()
     {
-        var engine = Context.App!;
+        var app = Context.App!;
         var execContext = Actor?.Context ?? Context;
-        var goal = await GoalName.GetGoalAsync(engine, execContext);
+        var goal = await GoalName.GetGoalAsync(app, execContext);
         if (goal == null)
             return Error(new Errors.ServiceError(
                 $"Goal '{GoalName.Name}' not found", "NotFound", 404));
 
-        return await engine.RunGoalAsync(goal, execContext);
+        return await app.RunGoalAsync(goal, execContext);
     }
 }

@@ -26,7 +26,7 @@ public sealed class Actor : IAsyncDisposable
     /// <summary>
     /// Named channels owned by this actor.
     /// </summary>
-    public EngineChannels Channels { get; }
+    public AppChannels Channels { get; }
 
     /// <summary>
     /// Back-reference to the app.
@@ -66,29 +66,29 @@ public sealed class Actor : IAsyncDisposable
         "system" => 2, "service" => 1, "user" => 1, _ => 0
     };
 
-    public Actor(string name, App.@this engine)
+    public Actor(string name, App.@this app)
     {
         Name = name;
-        App = engine;
+        App = app;
         _dataSource = new Lazy<ISettingsStore>(CreateSettingsStore);
-        Context = new Context.@this(engine)
+        Context = new Context.@this(app)
         {
             CallStack = new CallStack.@this()
         };
         Context.Actor = this;
-        Channels = new EngineChannels(engine);
+        Channels = new AppChannels(app);
 
         // Register shared SettingsVariable — same object for all actors.
         // %Settings.ApiKey% resolves identically in User, Service, and System contexts.
-        Context.Variables.Put(engine.SettingsVariable);
+        Context.Variables.Put(app.SettingsVariable);
 
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.
         // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
         Context.Variables.Put(new Data.DynamicData("MyIdentity", () =>
         {
-            var provider = engine.Providers.Get<IIdentityProvider>();
+            var provider = app.Providers.Get<IIdentityProvider>();
             if (!provider.Success) return null;
-            var identity = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = engine.Context }).GetAwaiter().GetResult();
+            var identity = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = app.Context }).GetAwaiter().GetResult();
             return identity.Success ? identity : null;
         }));
     }
