@@ -22,7 +22,7 @@ RunStep
 RunAction
 / Dispatches a single action with before/after action events
 - foreach %action.events.before%, call RunEvent, item=%event%
-- dispatch %action% as "user", write to %data%
+- run %action% as "user", write to %data%
 - check %data% %step%
 - foreach %action.events.after%, call RunEvent, item=%event%
 
