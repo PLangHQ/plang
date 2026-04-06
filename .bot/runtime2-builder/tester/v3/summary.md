@@ -16,13 +16,13 @@ Three issues were identified and fixed:
 
 3. **Build-time pre-evaluation** — The LLM evaluated `%x% equals 10` at build time and wrote `"value": true` instead of keeping `"%x%"` as a runtime reference. Fixed by adding a rule: "NEVER pre-evaluate %variable% references at build time."
 
-### Condition test simplification (`Tests/Runtime2/Condition/Condition.test.goal`)
+### Condition test simplification (`Tests/App/Condition/Condition.test.goal`)
 
 Changed from comparison expressions (`if %x% equals 10`) to truthy/falsy checks (`if %flag%`). The runtime's `condition.if` takes a `bool` — it can convert variable values to bool (non-zero = true, false = false) but has no expression evaluator for comparison operators. The simplified test correctly validates both the if-true and else branches.
 
 ### Build directory fix
 
-The previous build ran from `Tests/Runtime2/Condition/` (after a `cd`), making `fileSystem.RootDirectory` the subdirectory. This caused `RelativeGoalPath` to be `/Condition.test.goal` instead of `/Condition/Condition.test.goal`, breaking goal resolution. Rebuilt from `Tests/Runtime2/` to get correct paths.
+The previous build ran from `Tests/App/Condition/` (after a `cd`), making `fileSystem.RootDirectory` the subdirectory. This caused `RelativeGoalPath` to be `/Condition.test.goal` instead of `/Condition/Condition.test.goal`, breaking goal resolution. Rebuilt from `Tests/App/` to get correct paths.
 
 ## Test results
 

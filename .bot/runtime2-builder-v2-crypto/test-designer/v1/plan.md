@@ -16,7 +16,7 @@ Source plan: `.bot/runtime2-builder-v2/architect/v2/plan.md` — Piece 2 section
 
 Direct provider tests. No action handler, no context — just bytes in, bytes/bool out.
 
-**File:** `PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs`
+**File:** `PLang.Tests/App/Modules/crypto/DefaultProviderTests.cs`
 
 | # | Test | What it verifies |
 |---|------|-----------------|
@@ -32,7 +32,7 @@ Direct provider tests. No action handler, no context — just bytes in, bytes/bo
 
 Verify round-trips and failure cases.
 
-**File:** `PLang.Tests/Runtime2/Modules/crypto/DefaultProviderVerifyTests.cs`
+**File:** `PLang.Tests/App/Modules/crypto/DefaultProviderVerifyTests.cs`
 
 | # | Test | What it verifies |
 |---|------|-----------------|
@@ -47,7 +47,7 @@ Verify round-trips and failure cases.
 
 Action-level tests with context. Verifies the handlers wire up correctly: serialization to bytes, `HashedData` return type, error propagation.
 
-**File:** `PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs`
+**File:** `PLang.Tests/App/Modules/crypto/HashActionTests.cs`
 
 | # | Test | What it verifies |
 |---|------|-----------------|

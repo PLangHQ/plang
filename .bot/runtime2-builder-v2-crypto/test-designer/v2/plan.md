@@ -16,16 +16,16 @@ All test stubs and PLang test goals are already committed:
 
 | File | Tests | Status |
 |------|-------|--------|
-| `PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs` | 15 | **Has real assertions** — will compile once `DefaultProvider` exists |
-| `PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs` | 3 | Stubs (`Assert.Fail`) — fill in after handlers + settings wiring exist |
-| `PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs` | 12 | Stubs (`Assert.Fail`) — fill in after handlers exist |
-| `Tests/Runtime2/Crypto/` (6 subdirs) | 6 | PLang goals — ready to build+test once module is registered |
+| `PLang.Tests/App/Modules/crypto/DefaultProviderTests.cs` | 15 | **Has real assertions** — will compile once `DefaultProvider` exists |
+| `PLang.Tests/App/Modules/crypto/ProviderResolutionTests.cs` | 3 | Stubs (`Assert.Fail`) — fill in after handlers + settings wiring exist |
+| `PLang.Tests/App/Modules/crypto/HashActionTests.cs` | 12 | Stubs (`Assert.Fail`) — fill in after handlers exist |
+| `Tests/App/Crypto/` (6 subdirs) | 6 | PLang goals — ready to build+test once module is registered |
 
 ### Patterns to follow (from identity module)
 
 The identity module (piece 1) is fully implemented and merged. Follow its patterns exactly:
 
-**Handler structure** — see `PLang/Runtime2/modules/identity/create.cs`:
+**Handler structure** — see `PLang/App/modules/identity/create.cs`:
 ```csharp
 [Action("hash", Cacheable = false)]
 public partial class Hash : IContext
@@ -58,9 +58,9 @@ catch (NotSupportedException ex)
 }
 ```
 
-**Test setup** — see `PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs`:
+**Test setup** — see `PLang.Tests/App/Modules/identity/IdentityHandlerTests.cs`:
 ```csharp
-using PLangEngine = PLang.Runtime2.Engine.@this;
+using PLangEngine = App.Engine.@this;
 
 [Before(Test)] public void Setup()
 {
@@ -84,7 +84,7 @@ var result = await handler.Run();
 
 Per architect plan:
 ```
-PLang/Runtime2/modules/crypto/
+PLang/App/modules/crypto/
 ├── hash.cs                        — [Action("hash")] handler
 ├── verify.cs                      — [Action("verify")] handler
 ├── types.cs                       — HashedData class
@@ -99,7 +99,7 @@ The architect specifies: `actor-scoped setting → engine default → built-in d
 
 **Note:** The crypto hash action has NO per-call `Provider` parameter (unlike signing's `sign` action). The resolution chain's "per-call param" level does not apply to crypto. Algorithm selection is a normal action parameter, not provider dispatch.
 
-Provider swap via settings: `crypto.provider = "provider-name"`. See how the condition module uses `IEvaluator` in `PLang/Runtime2/modules/condition/providers/` for the provider pattern — but crypto needs settings-based resolution on top of that.
+Provider swap via settings: `crypto.provider = "provider-name"`. See how the condition module uses `IEvaluator` in `PLang/App/modules/condition/providers/` for the provider pattern — but crypto needs settings-based resolution on top of that.
 
 ### HashedData type
 
@@ -123,7 +123,7 @@ Shared with signing module (piece 3) — keep it in `crypto/types.cs`.
 
 Direct provider tests. No engine, no context — just `new DefaultProvider()`, bytes in, bytes/bool out.
 
-**File:** `PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs`
+**File:** `PLang.Tests/App/Modules/crypto/DefaultProviderTests.cs`
 
 **These tests have REAL assertions** — they will compile and run the moment `DefaultProvider` exists. Known reference hashes are embedded.
 
@@ -158,7 +158,7 @@ Direct provider tests. No engine, no context — just `new DefaultProvider()`, b
 
 Integration tests proving the settings-based provider swap works.
 
-**File:** `PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs`
+**File:** `PLang.Tests/App/Modules/crypto/ProviderResolutionTests.cs`
 
 | # | Test | What it verifies |
 |---|------|-----------------|
@@ -174,7 +174,7 @@ Integration tests proving the settings-based provider swap works.
 
 Action-level tests with `PLangContext`. Each stub has arrange/act/assert comments — replace `Assert.Fail` with real assertions.
 
-**File:** `PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs`
+**File:** `PLang.Tests/App/Modules/crypto/HashActionTests.cs`
 
 #### Hash action
 
@@ -204,7 +204,7 @@ Action-level tests with `PLangContext`. Each stub has arrange/act/assert comment
 
 ### Batch 4: PLang Pipeline (6 tests)
 
-**Location:** `Tests/Runtime2/Crypto/`
+**Location:** `Tests/App/Crypto/`
 
 | # | Directory | File | What it tests |
 |---|-----------|------|--------------|

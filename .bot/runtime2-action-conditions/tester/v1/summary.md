@@ -19,11 +19,11 @@ Added 6 tests to `DefaultEvaluatorTests.cs`:
 - Mixed-numeric `contains` (int needle in long list, long needle in int list)
 - Mixed-numeric `in` (both directions)
 
-**2. `__condition__` MemoryStack signal not directly tested**
-`If.Run()` stores its result as `__condition__` in MemoryStack (line 26 of if.cs). No IfHandlerTest verified this. Deletion test: removing line 26 would break StepsSubStepTests but no IfHandlerTest. That's a unit test gap.
+**2. `__condition__` Variables signal not directly tested**
+`If.Run()` stores its result as `__condition__` in Variables (line 26 of if.cs). No IfHandlerTest verified this. Deletion test: removing line 26 would break StepsSubStepTests but no IfHandlerTest. That's a unit test gap.
 
 Added 2 tests to `IfHandlerTests.cs`:
-- `Run_SetsConditionSignalInMemoryStack` — true condition
+- `Run_SetsConditionSignalInVariables` — true condition
 - `Run_FalseCondition_SetsConditionSignalFalse` — false condition
 
 ### Minor findings (not fixed, not blocking)
@@ -43,5 +43,5 @@ public async Task Evaluate_Contains_CollectionMixedNumeric_IntInLongList_Returns
 ```
 
 ## Files modified
-- `PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs` — added 6 tests
-- `PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs` — added 2 tests
+- `PLang.Tests/App/Modules/condition/DefaultEvaluatorTests.cs` — added 6 tests
+- `PLang.Tests/App/Modules/condition/IfHandlerTests.cs` — added 2 tests

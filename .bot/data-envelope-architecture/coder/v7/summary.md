@@ -8,7 +8,7 @@ Addresses tester v8 findings — the blocking cycle detection test gap and the m
 
 ### 1. Cycle detection test (Finding #1, MAJOR — was blocking)
 
-Added `MemoryStackCycleDetectionTests` class with 2 tests:
+Added `VariablesCycleDetectionTests` class with 2 tests:
 
 - **`Get_CircularVariableReference_LeavesUnresolved`**: Uses reflection to pre-seed the thread-static `_resolvingVars` HashSet (simulating an active circular reference), then calls `Get("data.items[idx]")`. With "idx" already in the visited set, the cycle guard fires — `[idx]` is left unresolved → navigation fails → returns null. Contrasted with normal resolution which returns "one".
 
@@ -31,8 +31,8 @@ Added 2 boundary tests to `EngineTypesTests`:
 
 | File | Change |
 |------|--------|
-| `PLang.Tests/Runtime2/Memory/MemoryStackTests.cs` | Added `MemoryStackCycleDetectionTests` class (2 tests) |
-| `PLang.Tests/Runtime2/Types/EngineTypesTests.cs` | Added 2 Clr() boundary tests |
+| `PLang.Tests/App/Memory/VariablesTests.cs` | Added `VariablesCycleDetectionTests` class (2 tests) |
+| `PLang.Tests/App/Types/EngineTypesTests.cs` | Added 2 Clr() boundary tests |
 
 ## Test results
 
@@ -44,7 +44,7 @@ Added 2 boundary tests to `EngineTypesTests`:
 [Test]
 public async Task Get_CircularVariableReference_LeavesUnresolved()
 {
-    var stack = new MemoryStack();
+    var stack = new Variables();
     stack.Set("idx", 1);
     var data = new Dictionary<string, object?>
     {
@@ -57,7 +57,7 @@ public async Task Get_CircularVariableReference_LeavesUnresolved()
     await Assert.That(normalResult!.Value).IsEqualTo("one");
 
     // Pre-seed visited set via reflection → simulate cycle
-    var field = typeof(MemoryStack).GetField("_resolvingVars",
+    var field = typeof(Variables).GetField("_resolvingVars",
         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
     field!.SetValue(null, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "idx" });
 

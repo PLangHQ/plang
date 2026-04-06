@@ -2,7 +2,7 @@
 
 ## Scope
 
-The builder module (`PLang.Runtime2.modules.builder`) and supporting infrastructure changes:
+The builder module (`App.modules.builder`) and supporting infrastructure changes:
 - `DefaultBuilderProvider.cs` — core builder logic (8 actions)
 - `Goal.Parse()` — .goal file text parser (new)
 - `Step.Merge()` / `Goal.MergeFrom()` — merge logic

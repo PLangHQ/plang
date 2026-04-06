@@ -1,6 +1,6 @@
-# Data Deep Dive — The Universal Type in PLang Runtime2
+# Data Deep Dive — The Universal Type in PLang App
 
-This document traces `Data` through every touchpoint in Runtime2: how it's created, stored, navigated, passed as parameters, returned as results, serialized, cached, and used in error handling. `Data` is the single most important type in Runtime2 — it replaced both the old variable system and the old `Return` type.
+This document traces `Data` through every touchpoint in App: how it's created, stored, navigated, passed as parameters, returned as results, serialized, cached, and used in error handling. `Data` is the single most important type in App — it replaced both the old variable system and the old `Return` type.
 
 ---
 
@@ -8,7 +8,7 @@ This document traces `Data` through every touchpoint in Runtime2: how it's creat
 
 Data serves three roles simultaneously:
 
-1. **Variable wrapper** — every variable in MemoryStack is a `Data` instance (`%name%` → `Data { Name="name", Value="Ingi" }`)
+1. **Variable wrapper** — every variable in Variables is a `Data` instance (`%name%` → `Data { Name="name", Value="Ingi" }`)
 2. **Result type** — every method in the execution chain returns `Task<Data>` with Success/Error semantics
 3. **Parameter carrier** — action parameters arrive as `List<Data>` with name-value pairs
 
@@ -169,18 +169,18 @@ Two converters ensure `Type` serializes cleanly:
 
 ---
 
-## 4. Data in MemoryStack
+## 4. Data in Variables
 
 ### Storage
 
 ```
-MemoryStack._variables: ConcurrentDictionary<string, Data>
+Variables._variables: ConcurrentDictionary<string, Data>
                         (case-insensitive keys)
 ```
 
-Every variable in PLang is a `Data` entry in this dictionary. The MemoryStack never stores raw values — always `Data` wrappers.
+Every variable in PLang is a `Data` entry in this dictionary. The Variables never stores raw values — always `Data` wrappers.
 
-### Writing Data into MemoryStack
+### Writing Data into Variables
 
 **`Put(Data)`** — stores the Data instance directly (used for system/context variables):
 ```csharp
@@ -200,7 +200,7 @@ if (existing found) {
 
 Key detail: `Set` **reuses existing Data instances**. The same Data object stays in the dictionary, only its Value changes. This matters because anything holding a reference to that Data sees the update.
 
-### Reading Data from MemoryStack
+### Reading Data from Variables
 
 **`Get(name)`** → `Data?`:
 1. Clean name (strip %, trim)
@@ -242,7 +242,7 @@ The `!` prefix is a convention — these are excluded from `GetNames()` and `Get
 ### Clone behavior
 
 ```csharp
-MemoryStack.Clone() {
+Variables.Clone() {
     // Deep-clones all non-system, non-! variables
     // Uses Force.DeepCloner for value deep copy
     // System vars (Now, NowUtc, GUID) recreated fresh
@@ -258,7 +258,7 @@ Used when creating child contexts (`PLangContext.CreateChild()`).
 
 When you access `%user.address.city%`, the system:
 
-1. MemoryStack.Get("user.address.city")
+1. Variables.Get("user.address.city")
 2. Root = "user", Remaining = "address.city"
 3. Look up `user` Data in dictionary
 4. Call `userData.GetChild("address.city")`
@@ -338,7 +338,7 @@ The Path is built as: `parent.Path + "." + name` (or `parent.Path + "[" + name +
 
 3. **Source-generated CodeGeneratedExecuteAsync**: The generated code resolves each parameter:
    - Finds matching Data by name from the `List<Data>` 
-   - If value is a string containing `%var%`, resolves variables from MemoryStack
+   - If value is a string containing `%var%`, resolves variables from Variables
    - Converts to the target CLR type via `TypeMapping.ConvertTo`
    - Sets the partial property on the action handler
 
@@ -350,10 +350,10 @@ The Path is built as: `parent.Path + "." + name` (or `parent.Path + "[" + name +
    // Generated code receives the raw List<Data>
    result = await handler.CodeGeneratedExecuteAsync(Parameters, engine, context);
    
-   // Return variables written to MemoryStack
+   // Return variables written to Variables
    if (result.Value != null && this.Return != null) {
        foreach (var returnVar in this.Return)
-           context.MemoryStack.Set(returnVar.Name, result.Value, result.Type);
+           context.Variables.Set(returnVar.Name, result.Value, result.Type);
    }
    ```
 
@@ -367,10 +367,10 @@ public async Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine 
     
     // Find parameter by name, resolve %var% in string values
     var nameParam = parameters.Find(p => p.Name == "name");
-    Name = ResolveAndConvert<string>(nameParam, context.MemoryStack);
+    Name = ResolveAndConvert<string>(nameParam, context.Variables);
     
     var valueParam = parameters.Find(p => p.Name == "value");
-    Value = ResolveAndConvert<object>(valueParam, context.MemoryStack);
+    Value = ResolveAndConvert<object>(valueParam, context.Variables);
     
     return await Run();
 }
@@ -390,7 +390,7 @@ Every method returns `Task<Data>`. The chain:
 
 ```
 Action.RunAsync returns Data
-  → if Return vars defined: result.Value written to MemoryStack
+  → if Return vars defined: result.Value written to Variables
   → Data propagates up
 
 StepActions.RunAsync:
@@ -433,7 +433,7 @@ This allows multiple actions in a single step to contribute return variables wit
 // In Action.RunAsync:
 if (result.Value != null && this.Return != null) {
     foreach (var returnVar in this.Return)
-        context.MemoryStack.Set(returnVar.Name, result.Value, result.Type);
+        context.Variables.Set(returnVar.Name, result.Value, result.Type);
 }
 ```
 
@@ -480,7 +480,7 @@ if (Type == BeforeAction || Type == AfterAction) {
 }
 ```
 
-The override Data flows back through the Action.RunAsync pipeline, hitting the Return variable binding. So `skipAction` can inject values into the MemoryStack.
+The override Data flows back through the Action.RunAsync pipeline, hitting the Return variable binding. So `skipAction` can inject values into the Variables.
 
 ---
 
@@ -510,7 +510,7 @@ foreach (name, cached) in entry.Variables:
     memoryStack.Set(name, cached.Value, type)
 ```
 
-This creates or updates Data instances in MemoryStack with the cached values. The `Set` call goes through normal Data construction (unwrapping, type inference).
+This creates or updates Data instances in Variables with the cached values. The `Set` call goes through normal Data construction (unwrapping, type inference).
 
 ### Cache key building
 
@@ -555,12 +555,12 @@ if (!result) {           // Data.Success == false → bool = false → !false = 
 When a step's OnError calls an error goal:
 
 ```csharp
-context.MemoryStack.Set("__error__", failedResult.Error?.Message);
-context.MemoryStack.Set("__errorKey__", failedResult.Error?.Key);
-context.MemoryStack.Set("__errorStatusCode__", failedResult.Error?.StatusCode);
+context.Variables.Set("__error__", failedResult.Error?.Message);
+context.Variables.Set("__errorKey__", failedResult.Error?.Key);
+context.Variables.Set("__errorStatusCode__", failedResult.Error?.StatusCode);
 ```
 
-These are plain string/int Data entries in MemoryStack, accessible as `%__error__%` in the error goal. Cleaned up in `finally` block.
+These are plain string/int Data entries in Variables, accessible as `%__error__%` in the error goal. Cleaned up in `finally` block.
 
 ---
 
@@ -633,7 +633,7 @@ Assert actions return Data with AssertionError:
 Data.FromError(new AssertionError("Expected 5 but got 3", context))
 ```
 
-The test runner checks `__stepResult` in MemoryStack for assertion failures.
+The test runner checks `__stepResult` in Variables for assertion failures.
 
 ### Mock return values
 
@@ -667,8 +667,8 @@ foreach (var param in action.Parameters) {
 | Where | How | Purpose |
 |-------|-----|---------|
 | .pr file deserialization | `new Data(name, value)` via JSON constructor | Action parameters and return definitions |
-| MemoryStack.Set | `new Data(name, value, type)` | Variable storage |
-| MemoryStack constructor | `new DynamicData(name, factory)` | System variables (Now, GUID) |
+| Variables.Set | `new Data(name, value, type)` | Variable storage |
+| Variables constructor | `new DynamicData(name, factory)` | System variables (Now, GUID) |
 | PLangContext constructor | `new Data("!engine", engine)` | Context variables |
 | Action.RunAsync | `Data.Ok(typedResult)` | Action return values |
 | Step/Goal.RunAsync | `Data.Ok()` or `Data.FromError(error)` | Execution results |
@@ -681,8 +681,8 @@ foreach (var param in action.Parameters) {
 
 | Where | What changes |
 |-------|-------------|
-| MemoryStack.Set (existing) | `existing.Value = value` (triggers unwrap + type re-derive + Updated timestamp) |
-| Action.RunAsync (return binding) | `context.MemoryStack.Set(returnVar.Name, result.Value, result.Type)` |
+| Variables.Set (existing) | `existing.Value = value` (triggers unwrap + type re-derive + Updated timestamp) |
+| Action.RunAsync (return binding) | `context.Variables.Set(returnVar.Name, result.Value, result.Type)` |
 | EventBinding.Run | `@override.Handled = true` |
 | Data.Merge | Creates new Data with merged List<Data> value |
 
@@ -696,6 +696,6 @@ foreach (var param in action.Parameters) {
 ### Thread safety
 
 - Data instances are **not individually thread-safe** — Value setter is not atomic
-- Thread safety comes from **MemoryStack** (ConcurrentDictionary) and the execution model (one step at a time per context)
+- Thread safety comes from **Variables** (ConcurrentDictionary) and the execution model (one step at a time per context)
 - DynamicData is safe if the factory function is safe (DateTime.Now, Guid.NewGuid are safe)
 - Navigation (GetChild) creates new instances, no shared state concerns

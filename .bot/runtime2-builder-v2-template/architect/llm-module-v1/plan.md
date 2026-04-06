@@ -113,7 +113,7 @@ Now `llm.query` calls `/system/modules/llm/providers/Anthropic.goal` instead.
 ### File Structure
 
 ```
-PLang/Runtime2/modules/llm/
+PLang/App/modules/llm/
 ├── query.cs                            — C# type definition, routes to provider goal
 ├── LlmMessage.cs                       — message type (Role, Text, Image)
 
@@ -196,8 +196,8 @@ The LLM module's PLang goals need pre-built .pr files (same as the builder itsel
 
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/llm/query.cs` | C# type definition, routes to provider goal |
-| `PLang/Runtime2/modules/llm/LlmMessage.cs` | Message type |
+| `PLang/App/modules/llm/query.cs` | C# type definition, routes to provider goal |
+| `PLang/App/modules/llm/LlmMessage.cs` | Message type |
 | `system/modules/llm/providers/OpenAi.goal` | OpenAI-compatible provider |
 | `system/modules/llm/HandleToolCalls.goal` | Tool execution loop |
 
@@ -205,8 +205,8 @@ The LLM module's PLang goals need pre-built .pr files (same as the builder itsel
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs` | Add `Description` property |
-| `PLang/Runtime2/Engine/Modules/this.cs` | Register llm module |
+| `PLang/App/Engine/Goals/Goal/GoalCall.cs` | Add `Description` property |
+| `PLang/App/Engine/Modules/this.cs` | Register llm module |
 
 ## Definition of Done
 

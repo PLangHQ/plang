@@ -2,24 +2,24 @@
 
 ## Overview
 
-Implement the LLM module for Runtime2: types, provider interface, OpenAI provider, and make 62 C# test stubs pass. Following TDD — tests are already written, I implement to make them green.
+Implement the LLM module for App: types, provider interface, OpenAI provider, and make 62 C# test stubs pass. Following TDD — tests are already written, I implement to make them green.
 
 ## Files to Create
 
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/llm/query.cs` | Action record — delegates to `ILlmProvider` via `[Provider]` |
-| `PLang/Runtime2/modules/llm/LlmMessage.cs` | Message type (Role, Text, Images, ToolCallId, ToolCalls) |
-| `PLang/Runtime2/modules/llm/ToolCall.cs` | Tool call carrier (Id, Name, Arguments) |
-| `PLang/Runtime2/modules/llm/providers/ILlmProvider.cs` | Provider interface extending `IProvider` |
-| `PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs` | Full OpenAI-compatible provider implementation |
+| `PLang/App/modules/llm/query.cs` | Action record — delegates to `ILlmProvider` via `[Provider]` |
+| `PLang/App/modules/llm/LlmMessage.cs` | Message type (Role, Text, Images, ToolCallId, ToolCalls) |
+| `PLang/App/modules/llm/ToolCall.cs` | Tool call carrier (Id, Name, Arguments) |
+| `PLang/App/modules/llm/providers/ILlmProvider.cs` | Provider interface extending `IProvider` |
+| `PLang/App/modules/llm/providers/OpenAiProvider.cs` | Full OpenAI-compatible provider implementation |
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs` | Add `Description` and `Parallel` properties |
-| `PLang/Runtime2/Engine/Providers/this.cs` | Add `"llm"` to `ResolveType()`, register `OpenAiProvider` in `RegisterDefaults()` |
+| `PLang/App/Engine/Goals/Goal/GoalCall.cs` | Add `Description` and `Parallel` properties |
+| `PLang/App/Engine/Providers/this.cs` | Add `"llm"` to `ResolveType()`, register `OpenAiProvider` in `RegisterDefaults()` |
 
 ## Implementation Approach
 
@@ -75,7 +75,7 @@ The architect flagged this needs design review: "When streaming is enabled and t
 Test says "missing API key returns Data.FromError." Should I validate this in the provider's Query method (before making the HTTP call) or let the HTTP call fail with a 401? I'll validate early — return Data.FromError immediately if no API key found.
 
 ### Q5: GoalCall callback execution for tools
-The tool loop needs to call `engine.RunGoalAsync(goalCall, context)`. For OnToolCall/OnValidateResponse/OnStream callbacks, I'll create new GoalCalls with injected parameters (same pattern as `RunCallbackAsync` in the HTTP provider). The parameters will be injected as Data objects on the context's MemoryStack.
+The tool loop needs to call `engine.RunGoalAsync(goalCall, context)`. For OnToolCall/OnValidateResponse/OnStream callbacks, I'll create new GoalCalls with injected parameters (same pattern as `RunCallbackAsync` in the HTTP provider). The parameters will be injected as Data objects on the context's Variables.
 
 ## Execution Order
 

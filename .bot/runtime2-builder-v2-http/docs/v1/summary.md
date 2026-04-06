@@ -46,10 +46,10 @@ public partial Dictionary<string, object>? Headers { get; init; }
 ```
 
 ## Files modified
-- `Documentation/Runtime2/modules.md` — HTTP section added
-- `Documentation/Runtime2/good_to_know.md` — 5 pattern entries added
-- `PLang/Runtime2/modules/http/request.cs` — XML docs
-- `PLang/Runtime2/modules/http/download.cs` — XML docs
-- `PLang/Runtime2/modules/http/upload.cs` — XML docs
-- `PLang/Runtime2/modules/http/configure.cs` — XML docs
-- `PLang/Runtime2/modules/http/Config.cs` — XML docs
+- `Documentation/App/modules.md` — HTTP section added
+- `Documentation/App/good_to_know.md` — 5 pattern entries added
+- `PLang/App/modules/http/request.cs` — XML docs
+- `PLang/App/modules/http/download.cs` — XML docs
+- `PLang/App/modules/http/upload.cs` — XML docs
+- `PLang/App/modules/http/configure.cs` — XML docs
+- `PLang/App/modules/http/Config.cs` — XML docs

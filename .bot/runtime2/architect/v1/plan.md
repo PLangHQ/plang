@@ -87,7 +87,7 @@ Executions must create its own table on first access — before any setup step r
 
 ## Step.Hash
 
-**Already exists** on the Step model (`PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs:34`).
+**Already exists** on the Step model (`PLang/App/Engine/Goals/Goal/Steps/Step/this.cs:34`).
 
 The hash composition must be: `hash(goalPath + compiledAction)` — where compiledAction is the module + method + parameters from the built .pr. This is a **builder-side** change. The coder should verify what the current hash contains and adjust if needed. The hash must NOT include step index (reordering should not trigger re-runs).
 
@@ -113,17 +113,17 @@ If the builder already computes the hash correctly, no change needed. If not, th
 
 ## Existing Code to Change
 
-### `PLang/Runtime2/Engine/Goals/this.cs` (EngineGoals)
+### `PLang/App/Engine/Goals/this.cs` (EngineGoals)
 - **Line 186**: `Setup` property currently returns `IEnumerable<Goal>`. Change to return a `Setup` object.
 - Regular goal lookup (`Get`, `GetAsync`, `Run`) should **exclude** setup goals — setup goals are only reachable through `Setup.RunAsync()`.
 
-### `PLang/Runtime2/Engine/Goals/Goal/Methods.cs` (Goal.RunAsync)
+### `PLang/App/Engine/Goals/Goal/Methods.cs` (Goal.RunAsync)
 - **Lines 57-70**: Goal currently iterates steps directly. This violates OBP rule 5 ("Collections are smart wrappers... Parents delegate — they never iterate directly"). Steps should own a `RunAsync` method. Goal.RunAsync should delegate to `Steps.RunAsync(engine, context, ct)`. The setup check goes inside Steps.RunAsync.
 
-### `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` (Steps)
+### `PLang/App/Engine/Goals/Goal/Steps/this.cs` (Steps)
 - Currently only has `Load`. Needs `RunAsync(engine, context, ct)` that owns the step iteration loop (moved from Goal.RunAsync). The setup run-once check goes here.
 
-### `PLang/Runtime2/Engine/Context/PLangContext.cs`
+### `PLang/App/Engine/Context/PLangContext.cs`
 - Add `Setup` property (nullable). Must be included in `Clone()` and `CreateChild()` methods — this is how goal.call propagation works.
 - **Clone/Copy family audit**: `Clone()` (line 193) and `CreateChild()` (line 184) both need the new property.
 
@@ -133,13 +133,13 @@ If the builder already computes the hash correctly, no change needed. If not, th
 
 ## New Code to Create
 
-### `PLang/Runtime2/Engine/Goals/Setup/this.cs`
+### `PLang/App/Engine/Goals/Setup/this.cs`
 The Setup class. Owns:
 - `Goals` — filtered + ordered setup goals (lazy)
 - `Executions` — the smart collection (lazy)
 - `RunAsync(context)` — stamps context.Setup, iterates goals, clears context.Setup
 
-### `PLang/Runtime2/Engine/Goals/Setup/Executions.cs`
+### `PLang/App/Engine/Goals/Setup/Executions.cs`
 The Executions smart collection. Owns:
 - Self-bootstrapping (CREATE TABLE IF NOT EXISTS on first access)
 - `Contains(step)` — sqlite query by hash

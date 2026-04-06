@@ -5,7 +5,7 @@ Responding to tester v1 findings (3 PLang test failures). SKIP APPROVAL — impl
 ## Issue 3 — ConditionCompound (trivial)
 Revert `.build/` to runtime2 baseline. These were unintentionally modified by a rebuild side effect.
 ```
-git checkout runtime2 -- Tests/Runtime2/ConditionCompound/.build/
+git checkout runtime2 -- Tests/App/ConditionCompound/.build/
 ```
 
 ## Issue 1 — ErrorRetryOnly: TimedRetryGoal builder non-determinism

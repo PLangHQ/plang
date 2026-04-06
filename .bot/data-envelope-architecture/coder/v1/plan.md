@@ -6,7 +6,7 @@ Replace three scattered type-knowledge sources with `Engine.Types` — a single 
 
 ## Current State (what exists)
 
-1. **`PLang/Runtime2/Engine/Utility/TypeMapping.cs`** — static class with:
+1. **`PLang/App/Engine/Utility/TypeMapping.cs`** — static class with:
    - `NameToType` dictionary (PLang name → CLR type, 50+ entries)
    - `TypeToName` dictionary (CLR type → PLang name, 15 entries)
    - `GetType(string)`, `GetTypeName(Type)`, `ConvertTo()`, `IsPrimitive()`, `GetMimeType()`, `GetBuilderTypeNames()`, `GetComplexTypeSchemas()`, `GetValidValues()`
@@ -38,12 +38,12 @@ Replace three scattered type-knowledge sources with `Engine.Types` — a single 
 
 ## What I'll Build
 
-### 1. New file: `PLang/Runtime2/Engine/Types/this.cs`
+### 1. New file: `PLang/App/Engine/Types/this.cs`
 
 The `@this` class (following OBP `@this` convention) that owns all type knowledge:
 
 ```csharp
-namespace PLang.Runtime2.Engine.Types;
+namespace App.Engine.Types;
 
 public sealed class @this
 {
@@ -76,7 +76,7 @@ public sealed class @this
 - Instance on Engine, not static
 - No `Get` prefix
 
-### 2. Modify: `PLang/Runtime2/Engine/this.cs`
+### 2. Modify: `PLang/App/Engine/this.cs`
 
 Add `Types` property to Engine:
 
@@ -85,10 +85,10 @@ public Types.@this Types { get; }
 // Initialize in constructor: Types = new Types.@this();
 ```
 
-### 3. Add global using: `PLang/Runtime2/GlobalUsings.cs`
+### 3. Add global using: `PLang/App/GlobalUsings.cs`
 
 ```csharp
-global using EngineTypes = PLang.Runtime2.Engine.Types.@this;
+global using EngineTypes = App.Engine.Types.@this;
 ```
 
 ### 4. Keep: Static helpers on old TypeMapping
@@ -115,15 +115,15 @@ FileModule has `.key` mapped to both "presentation" (line 87) and "certificate" 
 
 | File | Action | What |
 |------|--------|------|
-| `PLang/Runtime2/Engine/Types/this.cs` | **Create** | New Types class with all type knowledge |
-| `PLang/Runtime2/Engine/this.cs` | **Modify** | Add `Types` property, initialize in constructor |
-| `PLang/Runtime2/GlobalUsings.cs` | **Modify** | Add `EngineTypes` global alias |
+| `PLang/App/Engine/Types/this.cs` | **Create** | New Types class with all type knowledge |
+| `PLang/App/Engine/this.cs` | **Modify** | Add `Types` property, initialize in constructor |
+| `PLang/App/GlobalUsings.cs` | **Modify** | Add `EngineTypes` global alias |
 
 ## Testing Plan
 
 ### C# Tests
 
-- `PLang.Tests/Runtime2/Engine/Types/TypesTests.cs` — test all public methods:
+- `PLang.Tests/App/Engine/Types/TypesTests.cs` — test all public methods:
   - `Clr("string")` → `typeof(string)`, generics, nullable
   - `Name(typeof(string))` → `"string"`, arrays, generics
   - `Kind(".jpg")` → `"image"`, unknown extension → null

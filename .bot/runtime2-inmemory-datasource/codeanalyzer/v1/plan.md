@@ -8,15 +8,15 @@ Analyze all C# code changes on `runtime2-inmemory-datasource` branch vs its pare
 
 | File | Change type |
 |---|---|
-| `PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs` | In-memory factory + sentinel |
-| `PLang/Runtime2/Engine/Build/this.cs` | New — Building object |
-| `PLang/Runtime2/Engine/Context/Actor.cs` | In-memory DataSource routing |
-| `PLang/Runtime2/Engine/this.cs` | Building property on Engine |
-| `PLang/Runtime2/GlobalUsings.cs` | Building alias docs |
-| `PLang/Runtime2/Engine/Memory/MemoryStack.cs` | Array index navigation fix |
-| `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs` | AfterStep fires on failure |
-| `PLang/Runtime2/Engine/Test/this.cs` | AssertionError bubble-up handling |
-| `PLang/Runtime2/actions/list/unique.cs` | Return type fix |
+| `PLang/App/Engine/DataSource/SqliteDataSource.cs` | In-memory factory + sentinel |
+| `PLang/App/Engine/Build/this.cs` | New — Building object |
+| `PLang/App/Engine/Context/Actor.cs` | In-memory DataSource routing |
+| `PLang/App/Engine/this.cs` | Building property on Engine |
+| `PLang/App/GlobalUsings.cs` | Building alias docs |
+| `PLang/App/Engine/Memory/Variables.cs` | Array index navigation fix |
+| `PLang/App/Engine/Goals/Goal/Steps/Step/Methods.cs` | AfterStep fires on failure |
+| `PLang/App/Engine/Test/this.cs` | AssertionError bubble-up handling |
+| `PLang/App/actions/list/unique.cs` | Return type fix |
 | `PLang/Services/SettingsService/SqliteSettingsRepository.cs` | Settings → SettingsV1 rename |
 
 ## Analysis plan
@@ -31,4 +31,4 @@ Analyze all C# code changes on `runtime2-inmemory-datasource` branch vs its pare
 Focus areas:
 - Step/Methods.cs behavior change (AfterStep now fires on failure) — this is the most significant behavioral shift
 - In-memory DB name collision risk across concurrent engines
-- MemoryStack path fix correctness
+- Variables path fix correctness

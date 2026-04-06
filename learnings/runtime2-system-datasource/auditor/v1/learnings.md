@@ -12,5 +12,5 @@ The LazyParamsGenerator uses a `__resolutionError` instance field shared across 
 ## 4. DeserializeValue exception filter pattern
 When a method calls another that can throw multiple exception types, the catch filter must cover ALL of them. `JsonDocument.Parse` throws `JsonException`, but `Data.UnwrapJsonElement` throws `InvalidOperationException` on depth > 128. The catch only covers `JsonException`. **Audit method**: list every method call inside a try block, check what each can throw, verify the filter covers all types. **Source**: SqliteDataSource.cs:256-270.
 
-## 5. MemoryStack.Clone must preserve subclass identity
-Deep-cloning a `SettingsData` (which overrides `GetChild`) would create a plain `Data` copy that loses the virtual override. The clone method correctly detects non-Data subtypes (`kvp.Value.GetType() != typeof(Data)`) and preserves them by reference. **Rule**: when cloning a collection of polymorphic objects, check if the subclass has behavioral overrides before deep-cloning. **Source**: MemoryStack.cs:194-196 review.
+## 5. Variables.Clone must preserve subclass identity
+Deep-cloning a `SettingsData` (which overrides `GetChild`) would create a plain `Data` copy that loses the virtual override. The clone method correctly detects non-Data subtypes (`kvp.Value.GetType() != typeof(Data)`) and preserves them by reference. **Rule**: when cloning a collection of polymorphic objects, check if the subclass has behavioral overrides before deep-cloning. **Source**: Variables.cs:194-196 review.

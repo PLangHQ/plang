@@ -9,8 +9,8 @@ Review of coder v5+v6 changes (security hardening + code analyzer cross-concern 
 
 ## Resolution of v7 findings
 
-### Finding #2 (Major: GetChild depth through MemoryStack) — RESOLVED
-`Get_DeeplyNestedPath_ReturnsErrorData` builds a 101-level dictionary, queries via MemoryStack.Get, asserts `Success == false` and `Error.Key == "NavigationDepthExceeded"`. Exactly what I suggested. Honest test — would fail if the depth check were removed.
+### Finding #2 (Major: GetChild depth through Variables) — RESOLVED
+`Get_DeeplyNestedPath_ReturnsErrorData` builds a 101-level dictionary, queries via Variables.Get, asserts `Success == false` and `Error.Key == "NavigationDepthExceeded"`. Exactly what I suggested. Honest test — would fail if the depth check were removed.
 
 ### Finding #3 (Minor: fromJson deep nesting) — RESOLVED
 `FromJson_DeeplyNested_Fails` tests 200-level nested JSON through the action handler. Note: this actually hits STJ's own MaxDepth (64) before our limit (128), so it returns `"JsonParseError"` not `"JsonDepthExceeded"`. The distinct `catch (InvalidOperationException)` for `"JsonDepthExceeded"` is effectively unreachable today (STJ always throws first). Not a bug — defensive code that would activate if STJ's limit were raised.
@@ -18,7 +18,7 @@ Review of coder v5+v6 changes (security hardening + code analyzer cross-concern 
 `FromJson_DecimalNumber_PreservesPrecision` tests the decimal fix end-to-end through the action handler. Good.
 
 ### Finding #1 (Major: cycle detection) — STILL OPEN
-**Zero tests for `_resolvingVars` cycle detection in `MemoryStack.ResolveVariablesInPath`.** Grep confirms no test references `_resolvingVars`, `circular`, or `cycle` in the MemoryStack test file. This security feature has been open since v7.
+**Zero tests for `_resolvingVars` cycle detection in `Variables.ResolveVariablesInPath`.** Grep confirms no test references `_resolvingVars`, `circular`, or `cycle` in the Variables test file. This security feature has been open since v7.
 
 ### Finding #4 (Minor: Clr boundary) — STILL OPEN
 No boundary tests at depth 20/21.
@@ -29,7 +29,7 @@ All 4 fixes are clean and tested:
 
 1. **Decimal precision**: `UnwrapJsonNumber` tries `TryGetInt64` → `TryGetDecimal` → `GetDouble`. Two tests verify `19.99` stays `decimal` and `42` stays `long`. Honest tests — would fail if order were wrong.
 
-2. **MemoryStack.Clone() context**: `clone.Context = Context` added at line 185. Test renamed from `Clone_DataHasNoContext` to `Clone_PreservesDataContext` — assertion flipped from `IsNull` to `IsEqualTo(context)`. Second test `Clone_PreservesContext` also added. Both honest.
+2. **Variables.Clone() context**: `clone.Context = Context` added at line 185. Test renamed from `Clone_DataHasNoContext` to `Clone_PreservesDataContext` — assertion flipped from `IsNull` to `IsEqualTo(context)`. Second test `Clone_PreservesContext` also added. Both honest.
 
 3. **fromJson depth error key**: Separate `catch (InvalidOperationException)` returns `"JsonDepthExceeded"` instead of generic `"JsonParseError"`. Though unreachable today (STJ limit < ours), it's correct defensive code.
 

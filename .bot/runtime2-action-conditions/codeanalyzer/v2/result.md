@@ -14,7 +14,7 @@ All 5 fixes confirmed.
 
 ---
 
-## PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs
+## PLang/App/modules/condition/providers/DefaultEvaluator.cs
 
 ### OBP Violations
 None.
@@ -40,7 +40,7 @@ All v1 fixes applied correctly. One unproven code path in ContainsElement (mixed
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
+## PLang/App/Engine/Goals/Goal/Steps/this.cs
 
 ### OBP Violations
 None.
@@ -61,13 +61,13 @@ No new gaps.
 
 ---
 
-## PLang/Runtime2/modules/condition/if.cs
+## PLang/App/modules/condition/if.cs
 
 No changes from v1. Verdict remains: **CLEAN**.
 
 ---
 
-## PLang/Runtime2/modules/condition/compare.cs
+## PLang/App/modules/condition/compare.cs
 
 No changes from v1. Verdict remains: **CLEAN**.
 

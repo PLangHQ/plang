@@ -2,7 +2,7 @@
 
 ## F1: GetAsync/GetByPrPathAsync must filter IsSetup
 
-**Files**: `PLang/Runtime2/Engine/Goals/this.cs`
+**Files**: `PLang/App/Engine/Goals/this.cs`
 
 Add `IsSetup` filter at all disk-load return paths in `GetAsync` (two paths: relative resolution and root-relative fallback) and `GetByPrPathAsync` (cache check + disk load). Pattern: `if (loaded is { IsSetup: true }) return null;`
 

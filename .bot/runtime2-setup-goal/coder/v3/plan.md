@@ -1,7 +1,7 @@
 # v3 Plan — Share SettingsData across all actors
 
 ## Problem
-SettingsData registered only on System actor's MemoryStack. PLang code runs on User context. `%Settings.ApiKey%` silently returns null.
+SettingsData registered only on System actor's Variables. PLang code runs on User context. `%Settings.ApiKey%` silently returns null.
 
 ## Design decision (from Ingi)
 Settings are runtime-wide (e.g., API keys). All actors should get the same SettingsData object — same reference, same backing DataSource.
@@ -14,13 +14,13 @@ Settings are runtime-wide (e.g., API keys). All actors should get the same Setti
 
 ### 2. Actor always registers the shared instance
 - Remove System-only `if` block in Actor constructor
-- Always: `Context.MemoryStack.Put(engine.SettingsVariable);`
+- Always: `Context.Variables.Put(engine.SettingsVariable);`
 
 ### 3. Fix tests to use User context
-- Change all `_engine.System.Context.MemoryStack` references to `_engine.Context.MemoryStack` (User's stack)
+- Change all `_engine.System.Context.Variables` references to `_engine.Context.Variables` (User's stack)
 - Add test: all actors share the same SettingsData object (reference equality)
 
 ## Files
-- `PLang/Runtime2/Engine/this.cs` — add SettingsVariable
-- `PLang/Runtime2/Engine/Context/Actor.cs` — remove System-only check
-- `PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs` — fix all tests + add shared object test
+- `PLang/App/Engine/this.cs` — add SettingsVariable
+- `PLang/App/Engine/Context/Actor.cs` — remove System-only check
+- `PLang.Tests/App/Modules/settings/SettingsDataTests.cs` — fix all tests + add shared object test

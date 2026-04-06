@@ -23,7 +23,7 @@ Audited all security-relevant changed files across 9 attack surface areas. Evalu
 - **Signing**: Thread-safe ToSigningBytes (fixed race condition from previous branch), 9-step verification pipeline, Ed25519 via NSec
 - **HTTP**: Size-limited reads on ALL paths (100MB response, 10MB SSE, 4KB errors), HTTPS-by-default, signing integration correct
 - **Engine**: All recursive methods depth-guarded (128/128/100), decompression size-limited (100MB), CallStack depth-limited (1000)
-- **__condition__ removed**: Step result flows through Data naturally, no MemoryStack side-channel
+- **__condition__ removed**: Step result flows through Data naturally, no Variables side-channel
 - **Sensitive filtering**: [Sensitive] attribute strips private keys from output serialization
 - **Variable resolution**: Circular reference detection via thread-static HashSet
 

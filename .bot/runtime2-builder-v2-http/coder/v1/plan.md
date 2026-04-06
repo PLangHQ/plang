@@ -2,11 +2,11 @@
 
 ## Overview
 
-Implement the HTTP module for PLang Runtime2 based on the architect plan. 4 actions (request, download, upload, configure), an ISettings Config class, an IHttpProvider interface with DefaultHttpProvider, and supporting types. All code follows OBP, returns Data on all paths, never throws from behavior methods.
+Implement the HTTP module for PLang App based on the architect plan. 4 actions (request, download, upload, configure), an ISettings Config class, an IHttpProvider interface with DefaultHttpProvider, and supporting types. All code follows OBP, returns Data on all paths, never throws from behavior methods.
 
 ## Files to Create
 
-### 1. Types — `PLang/Runtime2/modules/http/types.cs`
+### 1. Types — `PLang/App/modules/http/types.cs`
 Enums and records used across actions:
 - `HttpMethod` enum: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, QUERY
 - `StreamFormat` enum: Line, SSE, Bytes
@@ -14,22 +14,22 @@ Enums and records used across actions:
 - `FileExists` enum: Error, Overwrite, Skip
 - `TransferProgress` record: BytesTransferred, TotalBytes?, Percentage?
 
-### 2. Config — `PLang/Runtime2/modules/http/Config.cs`
+### 2. Config — `PLang/App/modules/http/Config.cs`
 `ISettings` implementation with defaults:
 - TimeoutInSec (30), BaseUrl (null), DefaultHeaders (null), ContentType ("application/json"), Encoding ("utf-8"), Unsigned (false), FollowRedirects (true), MaxRedirects (10)
 
-### 3. Provider Interface — `PLang/Runtime2/modules/http/providers/IHttpProvider.cs`
+### 3. Provider Interface — `PLang/App/modules/http/providers/IHttpProvider.cs`
 - `IHttpProvider : IProvider, IDisposable`
 - `SendAsync(HttpRequestMessage, HttpCompletionOption, CancellationToken) → Task<HttpResponseMessage>`
 - `Configure(ISettings) → Data`
 
-### 4. Default Provider — `PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs`
+### 4. Default Provider — `PLang/App/modules/http/providers/DefaultHttpProvider.cs`
 - Lazy HttpClient creation on first SendAsync
 - SocketsHttpHandler with configurable FollowRedirects/MaxRedirects
 - Configure locks handler-level settings after first request
 - IDisposable for HttpClient cleanup
 
-### 5. Request Action — `PLang/Runtime2/modules/http/request.cs`
+### 5. Request Action — `PLang/App/modules/http/request.cs`
 Core HTTP action. Full flow:
 1. Resolve config via `engine.Settings.For<Config>(Context)`
 2. Resolve URL (https:// prefix, BaseUrl combination)
@@ -40,7 +40,7 @@ Core HTTP action. Full flow:
 7. Handle streaming (OnStream) or parse response (JSON, XML, binary, text, application/plang)
 8. Return Data with Properties (request + response metadata)
 
-### 6. Download Action — `PLang/Runtime2/modules/http/download.cs`
+### 6. Download Action — `PLang/App/modules/http/download.cs`
 File download with FileExists handling:
 1. Resolve URL
 2. Check file existence against IfExists enum
@@ -49,7 +49,7 @@ File download with FileExists handling:
 5. OnProgress callback every 500ms
 6. Return Data.Ok(filePath)
 
-### 7. Upload Action — `PLang/Runtime2/modules/http/upload.cs`
+### 7. Upload Action — `PLang/App/modules/http/upload.cs`
 Content upload with auto-detection:
 1. Resolve config, URL, headers
 2. Resolve content (As enum or auto-detect: dict→multipart, file path→stream, string→text)
@@ -58,7 +58,7 @@ Content upload with auto-detection:
 5. Parse response same as request
 6. Return Data with response
 
-### 8. Configure Action — `PLang/Runtime2/modules/http/configure.cs`
+### 8. Configure Action — `PLang/App/modules/http/configure.cs`
 Settings management:
 1. Write non-null values to scope chain via `engine.Settings.Set(key, value, context, isDefault)`
 2. Call `provider.Configure(config)` for handler-level settings (FollowRedirects, MaxRedirects)
@@ -102,7 +102,7 @@ These are static helpers that take parameters — they don't hold state. The act
 
 ## PLang Tests
 
-Write all 10 .goal files in `Tests/Runtime2/Http/*/`. They won't build without an LLM service but the goals will be ready for when one is available.
+Write all 10 .goal files in `Tests/App/Http/*/`. They won't build without an LLM service but the goals will be ready for when one is available.
 
 ## Notes
 

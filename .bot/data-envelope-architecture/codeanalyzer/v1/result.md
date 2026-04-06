@@ -5,15 +5,15 @@ Three passes per file: OBP compliance, simplification, readability.
 
 ---
 
-## PLang/Runtime2/Engine/Memory/Data.cs
+## PLang/App/Engine/Memory/Data.cs
 
 ### OBP Violations
 
 1. **Line 21: Per-request state stored as property — Rule 4**
    - Current: `internal PLangContext? Context { get; set; }` on `Type` (line 21), plus `_context` on `Data` (line 71)
    - `Type` is a small value-like object that gets stamped with `PLangContext` so it can navigate to `Engine.Types`. `Data` holds `_context` and propagates it to `Type`.
-   - This *looks* like caching per-request state on a shared object (Rule 4). However, `Data` IS the per-request variable container — it lives in `MemoryStack`, which is per-context. `Type` lives on `Data`. So context-on-Data is correct. Context-on-Type is propagation, not caching.
-   - **Verdict: Not a violation.** The ownership chain is `MemoryStack → Data → Type`, all per-request.
+   - This *looks* like caching per-request state on a shared object (Rule 4). However, `Data` IS the per-request variable container — it lives in `Variables`, which is per-context. `Type` lives on `Data`. So context-on-Data is correct. Context-on-Type is propagation, not caching.
+   - **Verdict: Not a violation.** The ownership chain is `Variables → Data → Type`, all per-request.
 
 2. **Line 156-158: Type getter navigates context to derive type name — potential double-navigation**
    - Current:
@@ -57,7 +57,7 @@ Core Data class is well-structured. The partial split is a good pattern. The onl
 
 ---
 
-## PLang/Runtime2/Engine/Memory/Data.Result.cs
+## PLang/App/Engine/Memory/Data.Result.cs
 
 ### OBP Violations
 None.
@@ -80,7 +80,7 @@ Small, focused file. The Merge edge case is worth noting but not blocking.
 
 ---
 
-## PLang/Runtime2/Engine/Memory/Data.Navigation.cs
+## PLang/App/Engine/Memory/Data.Navigation.cs
 
 ### OBP Violations
 None.
@@ -107,7 +107,7 @@ Solid navigation implementation. The path parsing is the most complex part but i
 
 ---
 
-## PLang/Runtime2/Engine/Memory/Data.Envelope.cs
+## PLang/App/Engine/Memory/Data.Envelope.cs
 
 ### OBP Violations
 
@@ -157,14 +157,14 @@ Well-structured envelope pipeline. The RehydrateNestedData heuristic is the only
 
 ---
 
-## PLang/Runtime2/Engine/Memory/MemoryStack.cs
+## PLang/App/Engine/Memory/Variables.cs
 
 ### OBP Violations
 
 1. **Lines 15-27: `PLangContext? _context` stored as internal property — Rule 4?**
-   - MemoryStack stores `_context` so it can propagate it to all Data objects. When context is set, it loops through all existing variables and stamps them.
-   - MemoryStack is per-request (lives on PLangContext). So this is per-object state on a per-request object — not a violation.
-   - **Verdict: Not a violation.** MemoryStack IS per-request.
+   - Variables stores `_context` so it can propagate it to all Data objects. When context is set, it loops through all existing variables and stamps them.
+   - Variables is per-request (lives on PLangContext). So this is per-object state on a per-request object — not a violation.
+   - **Verdict: Not a violation.** Variables IS per-request.
 
 ### Simplifications
 
@@ -201,15 +201,15 @@ Well-structured envelope pipeline. The RehydrateNestedData heuristic is the only
 ### Readability
 
 1. **Lines 239-260: `CleanName` and `GetRootName` — duplicated `CleanName` with Data.cs**
-   - Both `MemoryStack.CleanName` (line 239) and `Data.CleanName` (Data.cs line 285) do the same thing: trim and strip `%`. Identical code in two places.
-   - **Recommendation:** Extract to a shared static helper (e.g., `VariableNames.Clean(string name)`) or have one call the other. Data's version could be `internal static` and MemoryStack could call it.
+   - Both `Variables.CleanName` (line 239) and `Data.CleanName` (Data.cs line 285) do the same thing: trim and strip `%`. Identical code in two places.
+   - **Recommendation:** Extract to a shared static helper (e.g., `VariableNames.Clean(string name)`) or have one call the other. Data's version could be `internal static` and Variables could call it.
 
 ### Verdict: NEEDS WORK
 Two issues: duplicated system variable check logic and duplicated `CleanName`. Both are minor but worth cleaning up.
 
 ---
 
-## PLang/Runtime2/Engine/Types/this.cs
+## PLang/App/Engine/Types/this.cs
 
 ### OBP Violations
 None. This class owns all type knowledge — behavior is on the owner.
@@ -249,7 +249,7 @@ None. This class owns all type knowledge — behavior is on the owner.
 ### Readability
 
 1. **Line 12: Class name `@this`**
-   - Standard Runtime2 convention. Consumers use the `EngineTypes` global alias.
+   - Standard App convention. Consumers use the `EngineTypes` global alias.
 
 2. **Lines 409-463: `Clr(string, int depth)` — generic parsing**
    - The generic syntax parsing (`list<string>`, `dict<string,int>`) is hand-written string manipulation. Works, but fragile for edge cases (e.g., `dict<string,list<int>>` — the comma split won't work with nested generics).
@@ -264,7 +264,7 @@ Two minor issues: inverse dictionary sync risk and inconsistent concurrency stra
 
 ---
 
-## PLang/Runtime2/Engine/View.cs
+## PLang/App/Engine/View.cs
 
 ### OBP Violations
 None.
@@ -279,7 +279,7 @@ Clean. Each attribute has clear purpose. `OutAttribute` has a good XML doc expla
 
 ---
 
-## PLang/Runtime2/Engine/this.cs (changes only)
+## PLang/App/Engine/this.cs (changes only)
 
 ### OBP Violations
 None in the changed portions.
@@ -296,15 +296,15 @@ The `Types` property addition follows the established Engine pattern. Good XML d
 
 ---
 
-## PLang/Runtime2/Engine/Context/PLangContext.cs (changes only)
+## PLang/App/Engine/Context/PLangContext.cs (changes only)
 
 ### OBP Violations
 None in the changed portions.
 
 ### Simplifications
 
-1. **Lines 101-106: MemoryStack.Context = this**
-   - The PLangContext constructor stamps itself onto the MemoryStack (line 106), which then propagates to all existing Data objects. This is the context-stamping pipeline.
+1. **Lines 101-106: Variables.Context = this**
+   - The PLangContext constructor stamps itself onto the Variables (line 106), which then propagates to all existing Data objects. This is the context-stamping pipeline.
    - Clean pattern. Well-documented.
 
 ### Readability
@@ -314,7 +314,7 @@ No issues in the changes.
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs
+## PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs
 
 ### OBP Violations
 
@@ -324,7 +324,7 @@ No issues in the changes.
      if (result.Value != null && this.Return != null)
      {
          foreach (var returnVar in this.Return)
-             context.MemoryStack.Set(returnVar.Name, result.Value, result.Type);
+             context.Variables.Set(returnVar.Name, result.Value, result.Type);
      }
      ```
    - Action iterates `this.Return` (which is `List<Data>?`) to store return values. By OBP Rule 5 (smart collections), should `Return` own this loop?
@@ -341,7 +341,7 @@ Clean, linear flow: before-events → execute → store returns → after-events
 
 ---
 
-## PLang/Runtime2/actions/convert/fromJson.cs
+## PLang/App/actions/convert/fromJson.cs
 
 ### OBP Violations
 None.
@@ -358,7 +358,7 @@ Short, focused handler. Good error handling with `ValidationError`.
 
 ---
 
-## PLang/Runtime2/GlobalUsings.cs
+## PLang/App/GlobalUsings.cs
 
 ### OBP Violations
 N/A.
@@ -369,7 +369,7 @@ None.
 ### Readability
 
 1. **Line 38: `EngineTypes` alias**
-   - `global using EngineTypes = PLang.Runtime2.Engine.Types.@this;` — follows the established pattern.
+   - `global using EngineTypes = App.Engine.Types.@this;` — follows the established pattern.
 
 ### Verdict: CLEAN
 
@@ -380,13 +380,13 @@ None.
 ### Readability
 
 1. **Line 43: `EngineTypes` alias mirrors production**
-   - Consistent with PLang/Runtime2/GlobalUsings.cs.
+   - Consistent with PLang/App/GlobalUsings.cs.
 
 ### Verdict: CLEAN
 
 ---
 
-## PLang.Tests/Runtime2/Memory/DataTests.cs
+## PLang.Tests/App/Memory/DataTests.cs
 
 ### Readability
 
@@ -405,7 +405,7 @@ Thorough test coverage with clear organization.
 
 ---
 
-## PLang.Tests/Runtime2/Memory/MemoryStackTests.cs
+## PLang.Tests/App/Memory/VariablesTests.cs
 
 ### Readability
 
@@ -421,7 +421,7 @@ One test doesn't test what its name claims.
 
 ---
 
-## PLang.Tests/Runtime2/Types/EngineTypesTests.cs
+## PLang.Tests/App/Types/EngineTypesTests.cs
 
 ### Readability
 
@@ -439,10 +439,10 @@ One test doesn't test what its name claims.
 # Cross-Cutting Findings
 
 ## Finding 1: Duplicated `CleanName` (Medium)
-`Data.CleanName` and `MemoryStack.CleanName` are identical. Extract to a shared utility.
+`Data.CleanName` and `Variables.CleanName` are identical. Extract to a shared utility.
 
 ## Finding 2: Duplicated system variable identification (Low)
-`MemoryStack.Clear()` and `MemoryStack.Clone()` both hardcode the same system variable check. Extract `IsSystemVariable()`.
+`Variables.Clear()` and `Variables.Clone()` both hardcode the same system variable check. Extract `IsSystemVariable()`.
 
 ## Finding 3: Inverse dictionary sync risk in Engine.Types (Low)
 `_nameToClr` and `_clrToName` must be kept in sync manually. Consider deriving one from the other.
@@ -469,7 +469,7 @@ Checking `dict.ContainsKey("value")` could false-positive on user data. Consider
 | Data.Result.cs | CLEAN |
 | Data.Navigation.cs | CLEAN |
 | Data.Envelope.cs | CLEAN |
-| MemoryStack.cs | NEEDS WORK (minor) |
+| Variables.cs | NEEDS WORK (minor) |
 | Engine/Types/this.cs | NEEDS WORK (minor) |
 | Engine/View.cs | CLEAN |
 | Engine/this.cs | CLEAN |
@@ -479,7 +479,7 @@ Checking `dict.ContainsKey("value")` could false-positive on user data. Consider
 | GlobalUsings.cs | CLEAN |
 | Tests/GlobalUsings.cs | CLEAN |
 | DataTests.cs | CLEAN |
-| MemoryStackTests.cs | NEEDS WORK (minor) |
+| VariablesTests.cs | NEEDS WORK (minor) |
 | EngineTypesTests.cs | CLEAN |
 
 **Overall: The code is well-structured and OBP-compliant.** The envelope architecture follows OBP correctly — Data owns its own wrapping/compression/encryption. Engine.Types consolidates type knowledge as a single owned object on Engine. The partial class split is clean.

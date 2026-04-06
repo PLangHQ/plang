@@ -26,7 +26,7 @@ The change is a 3-line deletion that correctly follows the encapsulation improve
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/Methods.cs
+## PLang/App/Engine/Goals/Goal/Methods.cs
 
 ### OBP Violations
 None.
@@ -44,14 +44,14 @@ The core execution flow (lines 25-81) reads top-to-bottom: save context → befo
 - `loop/foreach.cs`: checks `.Success` only (unaffected)
 - `Engine.RunGoalAsync`: returns result to caller (correct)
 
-No caller depended on always-success semantics. Data flows through MemoryStack; the return value carries success/failure + the last step's Data.
+No caller depended on always-success semantics. Data flows through Variables; the return value carries success/failure + the last step's Data.
 
 ### Verdict: CLEAN
 The return value fix is essential and all callers are compatible.
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
+## PLang/App/Engine/Goals/Goal/Steps/this.cs
 
 ### OBP Violations
 None. This is a model example of OBP rule 5 — the collection owns its iteration loop.
@@ -71,7 +71,7 @@ Edge cases verified:
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Setup/this.cs
+## PLang/App/Engine/Goals/Setup/this.cs
 
 ### OBP Violations
 None. Making `DiscoverAsync` private (was public) is an OBP improvement — callers should use `RunAsync`, not manage internal discovery.
@@ -112,7 +112,7 @@ Pre-existing pattern, not introduced by this branch. The comment explains the in
 
 ---
 
-## PLang/Runtime2/Engine/Goals/this.cs (EngineGoals)
+## PLang/App/Engine/Goals/this.cs (EngineGoals)
 
 ### OBP Violations
 None.
@@ -144,7 +144,7 @@ Lines 67-70 (name search): If deleted, `engine.Goals.Get("Start")` would fail fo
 
 ---
 
-## PLang/Runtime2/Engine/Test/this.cs
+## PLang/App/Engine/Test/this.cs
 
 ### OBP Violations
 None.
@@ -161,8 +161,8 @@ None.
 ```csharp
 var testFs = new SafeFileSystem.PLangFileSystem(dir, "");
 ```
-Changed from `rootDir` (Tests/Runtime2/) to `dir` (the individual test's folder). This is essential for:
-1. **Setup discovery**: Each test folder is its own PLang app. `Setup.RunAsync` discovers `Setup.goal` relative to the test root. Without this, setup goals would need to be at `Tests/Runtime2/Setup/`, shared across all tests.
+Changed from `rootDir` (Tests/App/) to `dir` (the individual test's folder). This is essential for:
+1. **Setup discovery**: Each test folder is its own PLang app. `Setup.RunAsync` discovers `Setup.goal` relative to the test root. Without this, setup goals would need to be at `Tests/App/Setup/`, shared across all tests.
 2. **Goal resolution**: `GetAsync` resolves goals relative to engine root. With per-test root, helper goals (`ComputeAnswer.goal`, `InnerGoal.goal`) are found in the test's own folder.
 3. **Test isolation**: No shared state between test suites. Each gets its own engine, own memory, own goals.
 
@@ -195,7 +195,7 @@ Goal.RunAsync() → returns stepsResult (what Steps returned)
 Engine.RunGoalAsync() → returns to caller
 ```
 
-Before this branch: both Steps and Goal returned `Data.Ok()`, discarding the actual value. Goal return values (`call ComputeAnswer, write to %result%`) relied on a workaround in `goal/call.cs` that fell back to `__stepResult` from MemoryStack. The fix makes return values flow naturally through the chain.
+Before this branch: both Steps and Goal returned `Data.Ok()`, discarding the actual value. Goal return values (`call ComputeAnswer, write to %result%`) relied on a workaround in `goal/call.cs` that fell back to `__stepResult` from Variables. The fix makes return values flow naturally through the chain.
 
 ### Pass 5: Deletion Test
 

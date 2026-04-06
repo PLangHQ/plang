@@ -13,11 +13,11 @@
 - All 1219 tests passing
 
 ## Files modified
-- `PLang/Runtime2/Engine/Memory/Path.cs` — property semantics + Read/List/Save methods
-- `PLang/Runtime2/actions/file/read.cs` — thin delegator
-- `PLang/Runtime2/actions/file/list.cs` — thin delegator
-- `PLang/Runtime2/actions/file/save.cs` — thin delegator
-- `PLang.Tests/Runtime2/Modules/Path/PathTests.cs` — updated + new tests
+- `PLang/App/Engine/Memory/Path.cs` — property semantics + Read/List/Save methods
+- `PLang/App/actions/file/read.cs` — thin delegator
+- `PLang/App/actions/file/list.cs` — thin delegator
+- `PLang/App/actions/file/save.cs` — thin delegator
+- `PLang.Tests/App/Modules/Path/PathTests.cs` — updated + new tests
 
 ## No changes needed
 - `copy.cs`, `move.cs`, `delete.cs`, `exists.cs` — already thin

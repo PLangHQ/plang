@@ -2,7 +2,7 @@
 
 ## What this is
 
-Test contract stubs for the PLang Runtime2 identity module — Ed25519 key pair management with CRUD operations (create, get, getAll, archive, unarchive, rename, setDefault, export), stored via System.DataSource. Also covers `[Sensitive]` attribute infrastructure and `%MyIdentity%` lazy resolver on MemoryStack.
+Test contract stubs for the PLang App identity module — Ed25519 key pair management with CRUD operations (create, get, getAll, archive, unarchive, rename, setDefault, export), stored via System.DataSource. Also covers `[Sensitive]` attribute infrastructure and `%MyIdentity%` lazy resolver on Variables.
 
 ## What was done
 

@@ -7,16 +7,16 @@ Documentation pass for the new crypto module (`hash`, `verify`) and `Engine.Prov
 ## What was done
 
 Added XML doc comments to all public members across 5 crypto module files:
-- `PLang/Runtime2/modules/crypto/hash.cs` — class, properties, Run()
-- `PLang/Runtime2/modules/crypto/verify.cs` — class, properties, Run()
-- `PLang/Runtime2/modules/crypto/types.cs` — HashedData and all properties
-- `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs` — interface and method contracts
-- `PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs` — class summary
+- `PLang/App/modules/crypto/hash.cs` — class, properties, Run()
+- `PLang/App/modules/crypto/verify.cs` — class, properties, Run()
+- `PLang/App/modules/crypto/types.cs` — HashedData and all properties
+- `PLang/App/modules/crypto/providers/ICryptoProvider.cs` — interface and method contracts
+- `PLang/App/modules/crypto/providers/DefaultProvider.cs` — class summary
 
 Updated 3 architecture docs:
-- `Documentation/Runtime2/modules.md` — crypto in handler table + full details section
-- `Documentation/Runtime2/good_to_know.md` — Engine.Providers pattern (design, API, usage)
-- `Documentation/Runtime2/README.md` — Providers added to object graph
+- `Documentation/App/modules.md` — crypto in handler table + full details section
+- `Documentation/App/good_to_know.md` — Engine.Providers pattern (design, API, usage)
+- `Documentation/App/README.md` — Providers added to object graph
 
 ## Code example
 

@@ -1,24 +1,24 @@
 # v1 Summary — HTTP Module Implementation
 
 ## What this is
-HTTP client module for PLang Runtime2. 4 actions (request, download, upload, configure), IHttpProvider interface with DefaultHttpProvider, shared HttpHelper utilities, and full C# test coverage. Integrates with the signing module for request signing and application/plang response verification.
+HTTP client module for PLang App. 4 actions (request, download, upload, configure), IHttpProvider interface with DefaultHttpProvider, shared HttpHelper utilities, and full C# test coverage. Integrates with the signing module for request signing and application/plang response verification.
 
 ## What was done
 
 ### Module files created (9 files)
-- `PLang/Runtime2/modules/http/types.cs` — HttpMethod, StreamFormat, ContentAs, FileExists enums + TransferProgress record
-- `PLang/Runtime2/modules/http/Config.cs` — ISettings with defaults (timeout, baseUrl, headers, etc.)
-- `PLang/Runtime2/modules/http/providers/IHttpProvider.cs` — Provider interface (SendAsync + Configure)
-- `PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs` — Lazy HttpClient + SocketsHttpHandler
-- `PLang/Runtime2/modules/http/HttpHelper.cs` — Shared static helpers (URL resolution, header merging, signing, response parsing, streaming)
-- `PLang/Runtime2/modules/http/request.cs` — Core HTTP action (all methods, signing, streaming, response parsing)
-- `PLang/Runtime2/modules/http/download.cs` — File download with FileExists enum
-- `PLang/Runtime2/modules/http/upload.cs` — Content upload with auto-detection
-- `PLang/Runtime2/modules/http/configure.cs` — Settings management via scope chain
+- `PLang/App/modules/http/types.cs` — HttpMethod, StreamFormat, ContentAs, FileExists enums + TransferProgress record
+- `PLang/App/modules/http/Config.cs` — ISettings with defaults (timeout, baseUrl, headers, etc.)
+- `PLang/App/modules/http/providers/IHttpProvider.cs` — Provider interface (SendAsync + Configure)
+- `PLang/App/modules/http/providers/DefaultHttpProvider.cs` — Lazy HttpClient + SocketsHttpHandler
+- `PLang/App/modules/http/HttpHelper.cs` — Shared static helpers (URL resolution, header merging, signing, response parsing, streaming)
+- `PLang/App/modules/http/request.cs` — Core HTTP action (all methods, signing, streaming, response parsing)
+- `PLang/App/modules/http/download.cs` — File download with FileExists enum
+- `PLang/App/modules/http/upload.cs` — Content upload with auto-detection
+- `PLang/App/modules/http/configure.cs` — Settings management via scope chain
 
 ### Engine modifications (2 files)
-- `PLang/Runtime2/Engine/this.cs` — Register DefaultHttpProvider, add non-generic `RunAction<TAction>()` overload
-- `PLang/Runtime2/Engine/Providers/this.cs` — Add "http" to ResolveType()
+- `PLang/App/Engine/this.cs` — Register DefaultHttpProvider, add non-generic `RunAction<TAction>()` overload
+- `PLang/App/Engine/Providers/this.cs` — Add "http" to ResolveType()
 
 ### Source generator fix (1 file)
 - `PLang.Generators/LazyParamsGenerator.cs` — Fix enum default values: emit `(EnumType)intValue` cast instead of raw int
@@ -29,7 +29,7 @@ HTTP client module for PLang Runtime2. 4 actions (request, download, upload, con
 - `UploadActionTests.cs` — 7 tests
 - `ConfigureActionTests.cs` — 7 tests
 - `DefaultHttpProviderTests.cs` — 4 tests
-- `Tests/Runtime2/Http/*/` — 10 PLang test goals + 1 supporting goal
+- `Tests/App/Http/*/` — 10 PLang test goals + 1 supporting goal
 
 **All 1889 tests pass (0 failures, 8 skipped).**
 

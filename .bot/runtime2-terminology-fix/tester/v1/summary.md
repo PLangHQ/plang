@@ -15,12 +15,12 @@ All 6 rename surfaces independently checked via grep:
 
 | Surface | Stale refs found |
 |---------|-----------------|
-| `PLang.Runtime2.actions` namespace | 0 |
+| `App.actions` namespace | 0 |
 | `IClass` interface name | 0 |
 | `_handlers` field name | 0 |
 | `HandlerError` error key | 0 |
 | Source generator namespace strings | All 3 correct |
-| Library `Discover()` base namespace | Correct (`PLang.Runtime2.modules`) |
+| Library `Discover()` base namespace | Correct (`App.modules`) |
 
 ### Test assertion quality
 - `LibrariesTests:268` — asserts `error.Key == "ActionError"` for non-ICodeGenerated action. Matches production code at `Libraries/this.cs:53`.

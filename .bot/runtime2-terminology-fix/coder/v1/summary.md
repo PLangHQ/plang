@@ -8,7 +8,7 @@ Aligns the codebase to consistent terminology: **Module** (grouping/namespace) a
 
 1. **Deleted stale `IAction.cs`** entity interface (dead code) + removed global using aliases
 2. **`git mv actions/ → modules/`** — folder rename (~98 files)
-3. **Namespace replace**: `PLang.Runtime2.actions` → `PLang.Runtime2.modules` across all .cs files (134 files, 174 occurrences)
+3. **Namespace replace**: `App.actions` → `App.modules` across all .cs files (134 files, 174 occurrences)
 4. **Renamed `IClass` → `IAction`**: interface + file + all 10 referencing files
 5. **Library internals cleanup**:
    - `_handlers` → `_actions` (field name)
@@ -16,21 +16,21 @@ Aligns the codebase to consistent terminology: **Module** (grouping/namespace) a
    - Tuple `(ICodeGenerated? Handler, IError? Error)` → `(ICodeGenerated? Action, IError? Error)`
    - Error key `"HandlerError"` → `"ActionError"`
 6. **Source generator**: namespace strings already updated by bulk replace
-7. **Fixed stragglers**: `Path.cs` (used `actions.file.*`), `PlangModule/Program.cs` (used `Runtime2.actions.*`)
+7. **Fixed stragglers**: `Path.cs` (used `actions.file.*`), `PlangModule/Program.cs` (used `App.actions.*`)
 8. **Test assertions**: `"HandlerError"` → `"ActionError"` in EngineTests and LibrariesTests
 
 ## Files modified
 
 ~140 files total. Key changes:
-- `PLang/Runtime2/modules/` — all files (namespace change)
-- `PLang/Runtime2/modules/IAction.cs` — renamed from IClass.cs
-- `PLang/Runtime2/Engine/Libraries/Library/this.cs` — internal variable cleanup
-- `PLang/Runtime2/Engine/Libraries/this.cs` — tuple + variable + error key
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` — tuple destructuring
-- `PLang/Runtime2/Engine/Memory/Path.cs` — `actions.file.*` → `modules.file.*`
-- `PLang/Modules/PlangModule/Program.cs` — `Runtime2.actions.*` → `Runtime2.modules.*`
+- `PLang/App/modules/` — all files (namespace change)
+- `PLang/App/modules/IAction.cs` — renamed from IClass.cs
+- `PLang/App/Engine/Libraries/Library/this.cs` — internal variable cleanup
+- `PLang/App/Engine/Libraries/this.cs` — tuple + variable + error key
+- `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` — tuple destructuring
+- `PLang/App/Engine/Memory/Path.cs` — `actions.file.*` → `modules.file.*`
+- `PLang/Modules/PlangModule/Program.cs` — `App.actions.*` → `App.modules.*`
 - `PLang.Generators/LazyParamsGenerator.cs` — namespace strings
-- `PLang/Runtime2/GlobalUsings.cs` + `PLang.Tests/GlobalUsings.cs` — removed stale IAction alias
+- `PLang/App/GlobalUsings.cs` + `PLang.Tests/GlobalUsings.cs` — removed stale IAction alias
 - All test files referencing old namespace or IClass
 
 ## Test results

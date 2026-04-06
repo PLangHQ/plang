@@ -2,7 +2,7 @@
 
 ## What this is
 
-Runtime2 needs in-memory SQLite datasources for three consumers: PLang tests, the builder (which executes SQL to validate schema), and C# unit tests. The in-memory DB must be real SQLite (not a dictionary) because the builder runs actual CREATE TABLE / SELECT statements. A sentinel connection pattern keeps the in-memory DB alive across connection-per-operation calls.
+App needs in-memory SQLite datasources for three consumers: PLang tests, the builder (which executes SQL to validate schema), and C# unit tests. The in-memory DB must be real SQLite (not a dictionary) because the builder runs actual CREATE TABLE / SELECT statements. A sentinel connection pattern keeps the in-memory DB alive across connection-per-operation calls.
 
 ## What was done
 
@@ -15,18 +15,18 @@ Designed the in-memory datasource architecture through iterative discussion. Thr
 ## Key decisions
 
 - `SqliteDataSource.InMemory(name)` — static factory, sentinel connection opens at construction, closes at Dispose
-- `PLang.Runtime2.Engine.Build.@this` — new file, follows Debug/Test pattern, global alias `Building`
+- `App.Engine.Build.@this` — new file, follows Debug/Test pattern, global alias `Building`
 - `Actor.CreateDataSource()` checks `Engine.Testing.IsEnabled || Engine.Building.IsEnabled`
 - C# unit tests handle it themselves — either set `Testing.IsEnabled` or use `SqliteDataSource.InMemory()` directly
 
 ## Files to modify
 
-- `PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs` — add InMemory factory + sentinel
-- `PLang/Runtime2/Engine/Build/this.cs` — new file
-- `PLang/Runtime2/Engine/this.cs` — add Building property
-- `PLang/Runtime2/GlobalUsings.cs` — add Building alias
-- `PLang/Runtime2/Engine/Context/Actor.cs` — update CreateDataSource()
-- `PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs` — add in-memory tests
+- `PLang/App/Engine/DataSource/SqliteDataSource.cs` — add InMemory factory + sentinel
+- `PLang/App/Engine/Build/this.cs` — new file
+- `PLang/App/Engine/this.cs` — add Building property
+- `PLang/App/GlobalUsings.cs` — add Building alias
+- `PLang/App/Engine/Context/Actor.cs` — update CreateDataSource()
+- `PLang.Tests/App/Modules/datasource/DataSourceTests.cs` — add in-memory tests
 
 ## Code example
 

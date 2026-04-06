@@ -35,7 +35,7 @@ Key decisions:
 - Caches result after first resolution (lazy, load when needed, cache after)
 - Sync `Value` returns cached value — safe for serialization/logging after resolution
 
-#### 2. `MemoryStack.GetAsync()`
+#### 2. `Variables.GetAsync()`
 New async method that resolves `AsyncDynamicData` before returning:
 ```csharp
 public async Task<Data?> GetAsync(string name)
@@ -92,26 +92,26 @@ Remove the sync `Value` override — `IdentityData` no longer does lazy resoluti
 #### 5. Actor.cs:79
 Change from:
 ```csharp
-Context.MemoryStack.Put(new DynamicData("MyIdentity", () => engine.System.Identity.Value));
+Context.Variables.Put(new DynamicData("MyIdentity", () => engine.System.Identity.Value));
 ```
 To:
 ```csharp
-Context.MemoryStack.Put(new AsyncDynamicData("MyIdentity", async () => await engine.System.Identity.GetAsync()));
+Context.Variables.Put(new AsyncDynamicData("MyIdentity", async () => await engine.System.Identity.GetAsync()));
 ```
 
 #### 6. Tests
 - Update `IdentityData_ResolveDefault_SaveFails` test to check error via `GetAsync()`
 - Add test: `AsyncDynamicData_ResolveAsync_CachesResult`
 - Add test: `AsyncDynamicData_ResolveAsync_Error_SurfacesError`
-- Add test: `MemoryStack_GetAsync_ResolvesAsyncDynamicData`
+- Add test: `Variables_GetAsync_ResolvesAsyncDynamicData`
 
 ## Open question
 The source generator approach (Option A — pre-resolve in generated `Run()`) means we need to identify which vars are `AsyncDynamicData` and await them. The simplest: in the generated `Run()` wrapper, before calling the action's `Run()`, call a helper that scans parameters for `%var%` references, looks them up, and if any are `AsyncDynamicData`, awaits them. After that, the sync `__Resolve<T>` works because `.Value` returns the cached result.
 
 ## Files
-- `PLang/Runtime2/Engine/Memory/Data.cs` — add `AsyncDynamicData`
-- `PLang/Runtime2/Engine/Memory/MemoryStack.cs` — add `GetAsync`, `GetValueAsync`
-- `PLang/Runtime2/modules/identity/IdentityData.cs` — `GetAsync()`, remove sync hack
-- `PLang/Runtime2/Engine/Context/Actor.cs` — use `AsyncDynamicData`
+- `PLang/App/Engine/Memory/Data.cs` — add `AsyncDynamicData`
+- `PLang/App/Engine/Memory/Variables.cs` — add `GetAsync`, `GetValueAsync`
+- `PLang/App/modules/identity/IdentityData.cs` — `GetAsync()`, remove sync hack
+- `PLang/App/Engine/Context/Actor.cs` — use `AsyncDynamicData`
 - `PLang.Generators/LazyParamsGenerator.cs` — pre-resolve async vars in generated Run()
 - Tests

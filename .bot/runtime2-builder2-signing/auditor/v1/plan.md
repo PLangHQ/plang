@@ -24,7 +24,7 @@
 - Look for gaps between reviewers
 
 ### 4. Foundation Ripple
-- Changes to Data.Envelope, MemoryStack, Engine, Cache — blast radius
+- Changes to Data.Envelope, Variables, Engine, Cache — blast radius
 - ICache.TryAddAsync — new interface method, all implementors must support it
 
 ## Methodology

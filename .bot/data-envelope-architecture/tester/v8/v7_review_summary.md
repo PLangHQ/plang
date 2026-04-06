@@ -5,10 +5,10 @@ Tester v7 found 2 major + 2 minor new findings, plus 3 carry-forwards. Code anal
 | Finding | Source | Status |
 |---------|--------|--------|
 | #1 Cycle detection untested | Tester v7 (major) | **Still open** — zero tests for _resolvingVars |
-| #2 GetChild depth through MemoryStack | Tester v7 (major) | Fixed — `Get_DeeplyNestedPath_ReturnsErrorData` test added |
+| #2 GetChild depth through Variables | Tester v7 (major) | Fixed — `Get_DeeplyNestedPath_ReturnsErrorData` test added |
 | #3 fromJson deep nesting | Tester v7 (minor) | Fixed — distinct `JsonDepthExceeded` catch + test |
 | #4 Clr() boundary | Tester v7 (minor) | Still open |
 | Decimal precision | Analyzer v2 | Fixed — `UnwrapJsonNumber` with `TryGetDecimal` |
 | Clone context | Analyzer v2 | Fixed — `clone.Context = Context` |
 | fromJson depth error key | Analyzer v2 | Fixed — separate `InvalidOperationException` catch |
-| GetChild MemoryStack integration | Analyzer v2 | Fixed — same as tester #2 |
+| GetChild Variables integration | Analyzer v2 | Fixed — same as tester #2 |

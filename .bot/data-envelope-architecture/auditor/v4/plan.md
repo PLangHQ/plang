@@ -14,21 +14,21 @@ Review the complete data-envelope-architecture branch (Phases 1-4) as the coder'
 ## Files to Review
 
 ### Production code
-- `PLang/Runtime2/Engine/Types/this.cs` — new Engine.Types class
-- `PLang/Runtime2/Engine/Memory/Data.cs` — core Data with context, lazy Type
-- `PLang/Runtime2/Engine/Memory/Data.Result.cs` — result/error concern
-- `PLang/Runtime2/Engine/Memory/Data.Navigation.cs` — navigation concern
-- `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` — envelope pipeline
-- `PLang/Runtime2/Engine/Memory/MemoryStack.cs` — context propagation
-- `PLang/Runtime2/Engine/Context/PLangContext.cs` — context stamp
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` — result context stamp
-- `PLang/Runtime2/Engine/View.cs` — Out view enum
-- `PLang/Runtime2/Engine/this.cs` — Engine.Types property
+- `PLang/App/Engine/Types/this.cs` — new Engine.Types class
+- `PLang/App/Engine/Memory/Data.cs` — core Data with context, lazy Type
+- `PLang/App/Engine/Memory/Data.Result.cs` — result/error concern
+- `PLang/App/Engine/Memory/Data.Navigation.cs` — navigation concern
+- `PLang/App/Engine/Memory/Data.Envelope.cs` — envelope pipeline
+- `PLang/App/Engine/Memory/Variables.cs` — context propagation
+- `PLang/App/Engine/Context/PLangContext.cs` — context stamp
+- `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` — result context stamp
+- `PLang/App/Engine/View.cs` — Out view enum
+- `PLang/App/Engine/this.cs` — Engine.Types property
 
 ### Test code
-- `PLang.Tests/Runtime2/Types/EngineTypesTests.cs` — 62+ tests
-- `PLang.Tests/Runtime2/Memory/DataTests.cs` — 63+ tests
-- `PLang.Tests/Runtime2/Memory/MemoryStackTests.cs` — context tests
+- `PLang.Tests/App/Types/EngineTypesTests.cs` — 62+ tests
+- `PLang.Tests/App/Memory/DataTests.cs` — 63+ tests
+- `PLang.Tests/App/Memory/VariablesTests.cs` — context tests
 
 ## Review Checklist
 

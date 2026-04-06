@@ -6,7 +6,7 @@ Full implementation of the PLang identity module: Ed25519 key pair management wi
 ## What was done
 
 ### [Sensitive] Infrastructure (Phase 1)
-- Added `SensitiveAttribute` to `PLang/Runtime2/Engine/View.cs`
+- Added `SensitiveAttribute` to `PLang/App/Engine/View.cs`
 - Created `SensitivePropertyFilter.cs` — always-on filter that strips `[Sensitive]` properties from `JsonStreamSerializer` output
 - Wired into `JsonStreamSerializer.cs` default options and `ForView()` — both paths strip sensitive data
 
@@ -16,10 +16,10 @@ Full implementation of the PLang identity module: Ed25519 key pair management wi
 
 ### Actor Integration (Phase 3)
 - `IdentityData.cs` — Data subclass with lazy resolution + auto-create of default identity
-- `Actor.cs` — added lazy `Identity` property + registered `%MyIdentity%` as `DynamicData` on MemoryStack
+- `Actor.cs` — added lazy `Identity` property + registered `%MyIdentity%` as `DynamicData` on Variables
 
 ### 8 Handlers (Phase 4)
-All in `PLang/Runtime2/modules/identity/`: create, get, getAll, archive, unarchive, rename, setDefault, export
+All in `PLang/App/modules/identity/`: create, get, getAll, archive, unarchive, rename, setDefault, export
 
 ### Tests (Phase 5)
 - Implemented all 51 C# test bodies across 4 test files

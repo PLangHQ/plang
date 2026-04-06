@@ -10,12 +10,12 @@ Analyzed 7 runtime C# source files and 8 C# test files through all 5 passes: OBP
 
 **Key files reviewed:**
 - `PLang/Executor.cs` — setup integration
-- `PLang/Runtime2/Engine/Goals/Goal/Methods.cs` — return value propagation
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` — lastResult tracking
-- `PLang/Runtime2/Engine/Goals/Goal/this.cs` — PrPath computed property
-- `PLang/Runtime2/Engine/Goals/Setup/this.cs` — convention-based discovery
-- `PLang/Runtime2/Engine/Goals/this.cs` — PrPath keying, Names filter, Get() chain
-- `PLang/Runtime2/Engine/Test/this.cs` — per-test root, setup before test
+- `PLang/App/Engine/Goals/Goal/Methods.cs` — return value propagation
+- `PLang/App/Engine/Goals/Goal/Steps/this.cs` — lastResult tracking
+- `PLang/App/Engine/Goals/Goal/this.cs` — PrPath computed property
+- `PLang/App/Engine/Goals/Setup/this.cs` — convention-based discovery
+- `PLang/App/Engine/Goals/this.cs` — PrPath keying, Names filter, Get() chain
+- `PLang/App/Engine/Test/this.cs` — per-test root, setup before test
 
 **Verdict: PASS** — 0 OBP violations, 2 minor findings:
 1. Pre-existing bare `catch` in Setup discovery (swallows all exceptions)

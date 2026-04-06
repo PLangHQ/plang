@@ -43,6 +43,6 @@ The two new actions follow the same pattern as existing ones:
 1. Validate NewName, load by Name (error if not found)
 2. Check NewName uniqueness across ALL identities (error if taken)
 3. Remove old key, update Name, store under new key
-4. If default: update %MyIdentity% on MemoryStack
+4. If default: update %MyIdentity% on Variables
 5. Return Data.Ok(identityVariable)
 ```

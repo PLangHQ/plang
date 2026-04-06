@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace PLang.Runtime2.Engine.Settings;
+namespace App.Engine.Settings;
 
 /// <summary>
 /// One level of the settings scope chain — a key-value store for settings

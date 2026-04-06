@@ -36,4 +36,4 @@ After fixing the test runner, run all tests and see which 3 Identity tests fail.
 Check if rebuilding produces correct .pr files now. If not, investigate builder prompt.
 
 ## Files to modify
-- `PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs` — PrPath authority fix (LoadFromFile)
+- `PLang/App/Engine/Goals/Goal/GoalCall.cs` — PrPath authority fix (LoadFromFile)

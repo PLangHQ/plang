@@ -23,7 +23,7 @@ Reviewed all production code changes (excluding tests and .bot output) for:
 
 3. **DiscoverAsync made private** — Reduces public API surface.
 
-4. **Test isolation improved** — Each test gets its own engine root instead of sharing `Tests/Runtime2/`.
+4. **Test isolation improved** — Each test gets its own engine root instead of sharing `Tests/App/`.
 
 ### 3 low-severity findings (all accepted-risk)
 

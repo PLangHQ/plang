@@ -8,11 +8,11 @@ Independent analysis of PLang test coverage for onError builder patterns. v1 rub
 
 Mapped all 6 onError modifier patterns from BuildGoal.llm against existing PLang test suite. Found 3 untested patterns and created test suites for each:
 
-1. **ErrorRetryOnly** (`Tests/Runtime2/ErrorRetryOnly/`, 5 files) — bare `on error retry X times` and timed `on error retry X times over Y` (ms). Both exhaust retries, error propagates to outer handler. Tests builder generates correct `retryCount` and `retryOverMs` properties.
+1. **ErrorRetryOnly** (`Tests/App/ErrorRetryOnly/`, 5 files) — bare `on error retry X times` and timed `on error retry X times over Y` (ms). Both exhaust retries, error propagates to outer handler. Tests builder generates correct `retryCount` and `retryOverMs` properties.
 
-2. **ErrorGoalFirst** (`Tests/Runtime2/ErrorGoalFirst/`, 3 files) — `on error call GoalName, then retry X times` (GoalFirst order). Only RetryFirst order was previously tested. Tests builder generates `order: "GoalFirst"`.
+2. **ErrorGoalFirst** (`Tests/App/ErrorGoalFirst/`, 3 files) — `on error call GoalName, then retry X times` (GoalFirst order). Only RetryFirst order was previously tested. Tests builder generates `order: "GoalFirst"`.
 
-3. **ErrorMixed** (`Tests/Runtime2/ErrorMixed/`, 3 files) — ignore + call + retry+ignore in one goal file. Stresses builder generating different onError objects per step in same build.
+3. **ErrorMixed** (`Tests/App/ErrorMixed/`, 3 files) — ignore + call + retry+ignore in one goal file. Stresses builder generating different onError objects per step in same build.
 
 ## Design finding: ms vs seconds
 

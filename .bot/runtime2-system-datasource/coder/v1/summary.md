@@ -1,23 +1,23 @@
 # v1 Summary: Fix 6 Failing PLang Tests
 
 ## What this is
-Fixed 6 PLang test failures that broke into two categories: 3 caused by a runtime bug in `MemoryStack.Get()` array/index navigation, and 3 caused by incorrect `.pr` files from the builder. An additional runtime bug in `list.unique` was discovered and fixed during testing.
+Fixed 6 PLang test failures that broke into two categories: 3 caused by a runtime bug in `Variables.Get()` array/index navigation, and 3 caused by incorrect `.pr` files from the builder. An additional runtime bug in `list.unique` was discovered and fixed during testing.
 
 ## What was done
 
-### Part 1: MemoryStack.Get() fix
-**Root cause**: Line 82 in `MemoryStack.cs` always skipped +1 character after the root name, assuming a dot separator. When root was followed by `[` (array index), it skipped the bracket.
+### Part 1: Variables.Get() fix
+**Root cause**: Line 82 in `Variables.cs` always skipped +1 character after the root name, assuming a dot separator. When root was followed by `[` (array index), it skipped the bracket.
 
 **Fix**: Check if character after rootName is `.` before skipping.
 
 **Files modified**:
-- `PLang/Runtime2/Engine/Memory/MemoryStack.cs:82` — conditional skip logic
-- `PLang.Tests/Runtime2/Memory/MemoryStackTests.cs` — 4 new tests
+- `PLang/App/Engine/Memory/Variables.cs:82` — conditional skip logic
+- `PLang.Tests/App/Memory/VariablesTests.cs` — 4 new tests
 
 **Tests fixed**: FromJson, DeepNavigation, VariableIndexing
 
 ### Part 2: .pr file rebuilds
-- **Retry**: Deleted stale `.pr` and rebuilt from `Tests/Runtime2/` root. Builder now generates `onError` fields on throw steps.
+- **Retry**: Deleted stale `.pr` and rebuilt from `Tests/App/` root. Builder now generates `onError` fields on throw steps.
 - **ListOps**: Deleted stale `.pr` and rebuilt. Fixed off-by-one action alignment (actions were shifted by one position starting at step 15).
 - **SetMaxGzipSize**: Rewrote `.goal` to use `settings` syntax (`set settings 'archive.max'` / `get settings 'archive.max'`) instead of unmapped `set max gzip size` syntax, then rebuilt.
 
@@ -27,12 +27,12 @@ Fixed 6 PLang test failures that broke into two categories: 3 caused by a runtim
 **Fix**: Changed `unique.cs` to return raw list like `split.cs`.
 
 **Files modified**:
-- `PLang/Runtime2/actions/list/unique.cs` — return raw list instead of `types.list` wrapper
-- `PLang.Tests/Runtime2/Modules/list/ListTests.cs` — updated Unique test
+- `PLang/App/actions/list/unique.cs` — return raw list instead of `types.list` wrapper
+- `PLang.Tests/App/Modules/list/ListTests.cs` — updated Unique test
 
 ## Code example
 
-MemoryStack.cs fix (the core change):
+Variables.cs fix (the core change):
 ```csharp
 // Before (broken):
 var remaining = name.Length > rootName.Length ? name[(rootName.Length + 1)..] : null;

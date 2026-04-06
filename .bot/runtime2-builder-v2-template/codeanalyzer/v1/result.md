@@ -1,6 +1,6 @@
 # Code Analysis v1 — UI Module + Clone Fixes
 
-## PLang/Runtime2/modules/ui/render.cs
+## PLang/App/modules/ui/render.cs
 
 ### OBP Violations
 None. Action handler follows the correct pattern: `[Action]`, `IContext`, `partial` properties, single-line `Run()` that delegates to provider via `[Provider]`. Exactly what the module structure guide specifies.
@@ -16,7 +16,7 @@ Textbook handler — thin delegation to provider.
 
 ---
 
-## PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs
+## PLang/App/modules/ui/providers/ITemplateProvider.cs
 
 ### OBP Violations
 None. Provider interface takes `Render action` — callee navigates the action record. Correct OBP pattern.
@@ -25,10 +25,10 @@ None. Provider interface takes `Render action` — callee navigates the action r
 
 ---
 
-## PLang/Runtime2/modules/ui/providers/FluidProvider.cs
+## PLang/App/modules/ui/providers/FluidProvider.cs
 
 ### OBP Violations
-None. The provider navigates `action.Context.Engine.FileSystem`, `action.Context.MemoryStack`, `action.Context.Goal?.Path` — all through the action's object graph.
+None. The provider navigates `action.Context.Engine.FileSystem`, `action.Context.Variables`, `action.Context.Goal?.Path` — all through the action's object graph.
 
 ### Simplifications
 
@@ -71,7 +71,7 @@ None. The provider navigates `action.Context.Engine.FileSystem`, `action.Context
 
    This is worth noting but not necessarily wrong — template rendering libraries typically work this way. If Ingi wants callGoal errors to fail the whole render, the design would need to change.
 
-2. **Line 80-85: MemoryStack.GetAll() + SetValue loop.** Each `Data` from `GetAll()` has its `.Value` extracted and registered with Fluid. This means Fluid sees the *unwrapped* value (the CLR object), not the `Data` wrapper. This is correct — templates should see `"Alice"`, not `Data{Name="name", Value="Alice"}`. The test `Render_DataObject_ExposesValueNotWrapper` confirms this.
+2. **Line 80-85: Variables.GetAll() + SetValue loop.** Each `Data` from `GetAll()` has its `.Value` extracted and registered with Fluid. This means Fluid sees the *unwrapped* value (the CLR object), not the `Data` wrapper. This is correct — templates should see `"Alice"`, not `Data{Name="name", Value="Alice"}`. The test `Render_DataObject_ExposesValueNotWrapper` confirms this.
 
 3. **Line 101: HtmlEncoder.Default is always-on.** All template output is HTML-encoded. This is correct for XSS prevention in web contexts, but if someone uses `ui.render` for non-HTML output (email subject lines, markdown, plain text), they'll get unexpected encoding (`&amp;` instead of `&`). This is a design limitation worth noting for future consideration, not a bug.
 
@@ -88,7 +88,7 @@ Three findings: broad catch-all (×2, lines 104 and 217), nested try/catch in Pl
 
 ---
 
-## PLang/Runtime2/Engine/Memory/Data.cs (Clone changes)
+## PLang/App/Engine/Memory/Data.cs (Clone changes)
 
 ### OBP Violations
 None. `Clone()` is virtual on the owner — subclasses override with proper cloning. Correct OBP.
@@ -112,7 +112,7 @@ DataList.Clone() drops metadata. Data<T> has no Clone() override.
 
 ---
 
-## PLang/Runtime2/Engine/Memory/Properties.cs (Clone)
+## PLang/App/Engine/Memory/Properties.cs (Clone)
 
 ### OBP Violations
 None. Properties owns its own Clone().
@@ -124,7 +124,7 @@ Clean — shallow copy of the item list. Properties contains `Data` items; wheth
 
 ---
 
-## PLang/Runtime2/Engine/FileSystem/PathData.cs (Clone)
+## PLang/App/Engine/FileSystem/PathData.cs (Clone)
 
 ### OBP Violations
 None.
@@ -143,7 +143,7 @@ PathData.Clone() doesn't copy Error, Handled, Warnings, Signature, Context. Same
 
 ---
 
-## PLang/Runtime2/modules/identity/types.cs (IdentityData.Clone)
+## PLang/App/modules/identity/types.cs (IdentityData.Clone)
 
 ### Pass 4: Behavioral Reasoning
 Same pattern issue: IdentityData.Clone() copies identity-specific fields (PublicKey, PrivateKey, IsDefault, IsArchived, Created) and Properties, but misses: **Error, Handled, Warnings, Signature, Context, _type.**
@@ -155,7 +155,7 @@ Same missing metadata as PathData and DataList.
 
 ---
 
-## PLang/Runtime2/Engine/Memory/MemoryStack.cs (Clone narrowing)
+## PLang/App/Engine/Memory/Variables.cs (Clone narrowing)
 
 ### Pass 4: Behavioral Reasoning
 
@@ -164,7 +164,7 @@ The change narrows the "share by reference" check from `kvp.Value.GetType() != t
 - **PathData**: now deep-cloned via `Clone()`. Previously shared by reference. This is correct — PathData can carry mutable Value (file content).
 - **IdentityData**: now deep-cloned via `Clone()`. Previously shared by reference. This is correct — identity data should be isolated per-context.
 - **DataList**: now deep-cloned via `Clone()`. Previously shared by reference. Correct.
-- **Data<T>**: now deep-cloned via base `Data.Clone()`. Returns a `Data`, not `Data<T>`. If something later expects `Data<T>`, it'll fail. But Data<T> is rarely on MemoryStack — mostly used for one-shot returns.
+- **Data<T>**: now deep-cloned via base `Data.Clone()`. Returns a `Data`, not `Data<T>`. If something later expects `Data<T>`, it'll fail. But Data<T> is rarely on Variables — mostly used for one-shot returns.
 
 The narrowing is correct in intent. The issue is that the Clone() overrides are incomplete (see above).
 
@@ -172,7 +172,7 @@ The narrowing is correct in intent. The issue is that the Clone() overrides are 
 
 ---
 
-## PLang/Runtime2/Engine/Memory/Data.Envelope.cs
+## PLang/App/Engine/Memory/Data.Envelope.cs
 
 ### The catch addition
 Adding `InvalidOperationException` to the catch in `Decompress()` is straightforward. The existing catches already handle `JsonException` and `NotSupportedException`. InvalidOperationException can come from `Decompress()` operations on malformed data.
@@ -181,7 +181,7 @@ Adding `InvalidOperationException` to the catch in `Decompress()` is straightfor
 
 ---
 
-## PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs
+## PLang/App/modules/condition/providers/DefaultEvaluator.cs
 
 ### The catch addition
 Adding `InvalidCastException` to both `Evaluate()` and `Compare()` catches is correct. The JSON boxing problem (int vs long) can produce InvalidCastException during type normalization. This was a known gap.
@@ -190,7 +190,7 @@ Adding `InvalidCastException` to both `Evaluate()` and `Compare()` catches is co
 
 ---
 
-## PLang/Runtime2/Engine/Providers/this.cs
+## PLang/App/Engine/Providers/this.cs
 
 ### The registration
 `Register<ITemplateProvider>(new FluidProvider())` follows the same pattern as all other providers. `ResolveType` adds `"template"` and `"itemplateprovider"` mappings. Consistent.

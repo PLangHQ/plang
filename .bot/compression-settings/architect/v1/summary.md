@@ -2,7 +2,7 @@
 
 ## What this is
 
-A general-purpose settings mechanism for PLang Runtime2. The trigger was a hardcoded 100MB gzip bomb limit in `Data.Envelope.cs`, but the design is universal — any module can declare strongly typed, goal-scoped settings that PLang developers configure with natural language steps like `- set max gzip size to 20mb`.
+A general-purpose settings mechanism for PLang App. The trigger was a hardcoded 100MB gzip bomb limit in `Data.Envelope.cs`, but the design is universal — any module can declare strongly typed, goal-scoped settings that PLang developers configure with natural language steps like `- set max gzip size to 20mb`.
 
 ## What was done
 

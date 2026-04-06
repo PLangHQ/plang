@@ -73,9 +73,9 @@ Currently `_followRedirects` and `_maxRedirects` duplicate what's in the config 
 `SendAsync` doesn't dispose `HttpResponseMessage`. Add `using` to prevent resource leaks.
 
 ## Files touched
-- `PLang/Runtime2/modules/http/DefaultHttpProvider.cs` — major refactor (absorb HttpHelper)
-- `PLang/Runtime2/modules/http/HttpHelper.cs` — delete or reduce to 2 static utilities
-- `PLang.Tests/Runtime2/Modules/http/` — update tests if method signatures change
+- `PLang/App/modules/http/DefaultHttpProvider.cs` — major refactor (absorb HttpHelper)
+- `PLang/App/modules/http/HttpHelper.cs` — delete or reduce to 2 static utilities
+- `PLang.Tests/App/Modules/http/` — update tests if method signatures change
 
 ## Not in scope
 - Finding #3 (signing record construction) — deferred for discussion

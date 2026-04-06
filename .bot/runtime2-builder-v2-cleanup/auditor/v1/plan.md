@@ -16,7 +16,7 @@ Large cleanup branch (~30K lines, 244+ files) consolidating pieces 1-4 (identity
 5. **Write verdict** — pass/fail based on findings
 
 ## Focused Areas
-- MemoryStack.Clone() + Data.Clone() — clone family completeness with new Data subclasses
+- Variables.Clone() + Data.Clone() — clone family completeness with new Data subclasses
 - DefaultEvaluator catch filter — security finding #2
 - Data.Envelope.Decompress catch blocks — security finding #1
 - Rename completeness (Settings→Config, Library→Module)

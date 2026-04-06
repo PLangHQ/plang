@@ -13,7 +13,7 @@ Addresses security audit findings (unbounded recursion DoS vectors), auditor fin
 | `Data.cs:UnwrapJsonElement` | `int depth` param, throws `InvalidOperationException` | 128 |
 | `Data.Envelope.cs:RehydrateNestedData` | `int depth` param, throws `InvalidDataException` | 128 |
 | `Data.Navigation.cs:GetChild` | `int depth` param, returns null | 100 |
-| `MemoryStack.cs:ResolveVariablesInPath` | `HashSet<string>` cycle detection (thread-static) | N/A (cycle, not depth) |
+| `Variables.cs:ResolveVariablesInPath` | `HashSet<string>` cycle detection (thread-static) | N/A (cycle, not depth) |
 | `Types/this.cs:Clr()` | `int depth` param, returns null | 20 |
 
 ### 2. fromJson.cs deduplication
@@ -42,15 +42,15 @@ Removed the `?? typeof(object)` fallback in generic type parsing. Now `list<unkn
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Memory/Data.cs` | Depth limit on UnwrapJsonElement/Object/Array, made `internal static` |
-| `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` | Depth limit on RehydrateNestedData, Verified → private set + SetVerified() |
-| `PLang/Runtime2/Engine/Memory/Data.Navigation.cs` | Depth limit on GetChild |
-| `PLang/Runtime2/Engine/Memory/MemoryStack.cs` | Cycle detection on ResolveVariablesInPath |
-| `PLang/Runtime2/Engine/Types/this.cs` | Depth limit on Clr(), removed ?? typeof(object) fallback |
-| `PLang/Runtime2/actions/convert/fromJson.cs` | Deleted duplicate UnwrapJsonElement, calls Data's version |
+| `PLang/App/Engine/Memory/Data.cs` | Depth limit on UnwrapJsonElement/Object/Array, made `internal static` |
+| `PLang/App/Engine/Memory/Data.Envelope.cs` | Depth limit on RehydrateNestedData, Verified → private set + SetVerified() |
+| `PLang/App/Engine/Memory/Data.Navigation.cs` | Depth limit on GetChild |
+| `PLang/App/Engine/Memory/Variables.cs` | Cycle detection on ResolveVariablesInPath |
+| `PLang/App/Engine/Types/this.cs` | Depth limit on Clr(), removed ?? typeof(object) fallback |
+| `PLang/App/actions/convert/fromJson.cs` | Deleted duplicate UnwrapJsonElement, calls Data's version |
 | `PLang/PLang.csproj` | Added InternalsVisibleTo for PLang.Tests |
-| `PLang.Tests/Runtime2/Memory/DataTests.cs` | 12 new tests + 2 updated |
-| `PLang.Tests/Runtime2/Types/EngineTypesTests.cs` | 1 new test |
+| `PLang.Tests/App/Memory/DataTests.cs` | 12 new tests + 2 updated |
+| `PLang.Tests/App/Types/EngineTypesTests.cs` | 1 new test |
 
 ### 6. PLang integration tests (3 new suites, 17 total)
 
@@ -63,15 +63,15 @@ All 17 PLang integration tests pass (14 existing + 3 new).
 
 | File | Type |
 |------|------|
-| `Tests/Runtime2/DeepNavigation/Start.goal` | PLang goal |
-| `Tests/Runtime2/DeepNavigation/DeepNavigation.test.goal` | PLang test |
-| `Tests/Runtime2/DeepNavigation/.build/deepnavigation.test.pr` | Compiled .pr |
-| `Tests/Runtime2/VariableIndexing/Start.goal` | PLang goal |
-| `Tests/Runtime2/VariableIndexing/VariableIndexing.test.goal` | PLang test |
-| `Tests/Runtime2/VariableIndexing/.build/variableindexing.test.pr` | Compiled .pr |
-| `Tests/Runtime2/FromJson/Start.goal` | PLang goal |
-| `Tests/Runtime2/FromJson/FromJson.test.goal` | PLang test |
-| `Tests/Runtime2/FromJson/.build/fromjson.test.pr` | Compiled .pr |
+| `Tests/App/DeepNavigation/Start.goal` | PLang goal |
+| `Tests/App/DeepNavigation/DeepNavigation.test.goal` | PLang test |
+| `Tests/App/DeepNavigation/.build/deepnavigation.test.pr` | Compiled .pr |
+| `Tests/App/VariableIndexing/Start.goal` | PLang goal |
+| `Tests/App/VariableIndexing/VariableIndexing.test.goal` | PLang test |
+| `Tests/App/VariableIndexing/.build/variableindexing.test.pr` | Compiled .pr |
+| `Tests/App/FromJson/Start.goal` | PLang goal |
+| `Tests/App/FromJson/FromJson.test.goal` | PLang test |
+| `Tests/App/FromJson/.build/fromjson.test.pr` | Compiled .pr |
 
 ## Code example
 
@@ -92,7 +92,7 @@ internal static object? UnwrapJsonElement(object? value, int depth = 0)
 The cycle detection pattern (different — graph, not tree):
 
 ```csharp
-// MemoryStack.cs — ResolveVariablesInPath
+// Variables.cs — ResolveVariablesInPath
 [ThreadStatic]
 private static HashSet<string>? _resolvingVars;
 

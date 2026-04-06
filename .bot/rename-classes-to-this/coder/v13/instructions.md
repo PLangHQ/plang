@@ -8,31 +8,31 @@
 All code you write or propose MUST follow these rules:
 
 1. **Behavior belongs to the owner** â€” Put methods on the object that owns the data. `Steps.Run()` does the iteration, not the caller. Never loop over another object's collection from the outside.
-2. **Navigate, don't pass** â€” Reach dependencies through the object graph (`Engine.IO`, `Engine.FileSystem`, `context.MemoryStack`). Never decompose an object into separate parameters; pass the root and let the caller navigate.
+2. **Navigate, don't pass** â€” Reach dependencies through the object graph (`Engine.IO`, `Engine.FileSystem`, `context.Variables`). Never decompose an object into separate parameters; pass the root and let the caller navigate.
 3. **Keep object references, not extracted fields** â€” Store `Step`, not `step.Text`. Store `Goal`, not `goal.Name`. Wrapper DTOs are only allowed at serialization boundaries.
 4. **Per-request state is a parameter, per-object state is a property** â€” Never cache `PLangContext` on shared objects like `Goal` or `Step`. Pass context through method parameters; store only structural data as properties.
 5. **Collections are smart wrappers** â€” Collection types (`Steps`, `Actions`) inherit `List<T>` and own domain operations (`Load`, `RunAsync`, `Merge`). Parents delegate â€” they never iterate directly.
 
-**Before writing or proposing any code**, read `Documentation/Runtime2/plang_object_based_pattern.md` for full OBP details with code examples. Every code change must follow this pattern â€” no exceptions.
+**Before writing or proposing any code**, read `Documentation/App/plang_object_based_pattern.md` for full OBP details with code examples. Every code change must follow this pattern â€” no exceptions.
 
 ## Critical Constraints
 - **NEVER use System.IO** â€” Always use `fileSystem.File`, `fileSystem.Directory`, `fileSystem.Path` (IPLangFileSystem abstraction)
 - **NEVER change strongly-typed parameters to `object`** â€” PLang is strongly typed. Diagnose the real problem instead.
 - **NEVER manually edit or delete .pr files** â€” Only the plang builder generates these. Explain the problem and rebuild.
-- **Use System.Text.Json**, not Newtonsoft â€” suggest migration when you see Newtonsoft in Runtime2 code
+- **Use System.Text.Json**, not Newtonsoft â€” suggest migration when you see Newtonsoft in App code
 - **Strong typing is a design goal** â€” The stronger typed PLang and C# communicate, the more stable everything becomes
 
-## Runtime2 Object Graph
+## App Object Graph
 - **Engine is the root** â€” all capabilities: `Engine.IO`, `Engine.Goals`, `Engine.Actions`, `Engine.FileSystem`, `Engine.Serializers`
 - **Entity hierarchy**: Goal â†’ Steps â†’ Actions. Each has `.Events` (EntityEvents with Before/After Ã— Load/Runtime phases)
-- **Handlers extend `BaseClass<TParams>`** â€” get Engine/Context via Initialize(), use `MemoryStack` for variables
+- **Handlers extend `BaseClass<TParams>`** â€” get Engine/Context via Initialize(), use `Variables` for variables
 - **`Data` is the universal result type** â€” has `Value`, `Properties`, `Error`, `Success`, `Ok()`, `Fail()`, `Merge()`
 - **`ICodeGenerated` is REQUIRED** on all handlers â€” Engine has no fallback path
 
 ## Testing Requirements
 - PLang .goal tests are REQUIRED alongside C# tests â€” they validate the FULL pipeline: LLM builder â†’ .pr generation â†’ GoalMapper â†’ runtime
-- Read `Documentation/Runtime2/writing_tests.md` before writing tests
-- Read `Documentation/Runtime2/good_to_know.md` before making architectural assumptions
+- Read `Documentation/App/writing_tests.md` before writing tests
+- Read `Documentation/App/good_to_know.md` before making architectural assumptions
 
 ---
 
@@ -182,7 +182,7 @@ The codebase folder structure IS the architecture graph. Every folder maps to a 
 
 Example:
 ```
-Runtime2/
+App/
 â”œâ”€â”€ Engine.cs          â†’ Engine (root)
 â”œâ”€â”€ Goals/             â†’ Engine.Goals
 â”‚   â”œâ”€â”€ Steps/         â†’ Engine.Goals.Steps

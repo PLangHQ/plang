@@ -8,7 +8,7 @@ Implement the architect's action-based conditions design and make all 69 C# test
 
 ### 1. Create `providers/IEvaluator.cs`
 - Interface: `bool Evaluate(object? left, string op, object? right)`, `bool IsTruthy(object? value)`
-- Namespace: `PLang.Runtime2.modules.condition.providers`
+- Namespace: `App.modules.condition.providers`
 
 ### 2. Create `providers/DefaultEvaluator.cs`
 - Port from runtime1's `ConditionEvaluator` adapted for runtime2
@@ -25,7 +25,7 @@ Implement the architect's action-based conditions design and make all 69 C# test
 - GoalIfTrue/GoalIfFalse unchanged -- branch on evaluation result
 - No goals set -> return `Data.Ok(bool)` (sub-step mode)
 - Evaluator resolution: `new DefaultEvaluator()` for now (GetProvider<T> is a future feature)
-- Sets `__condition__` in MemoryStack so Steps.RunAsync can detect condition results
+- Sets `__condition__` in Variables so Steps.RunAsync can detect condition results
 
 ### 4. Create `condition/compare.cs`
 - `[Action("compare")]` with `Left`, `Operator` (required), `Right`
@@ -49,25 +49,25 @@ Implement the architect's action-based conditions design and make all 69 C# test
 ## Key Design Decisions
 
 - **No GetProvider<T> yet**: Libraries doesn't have this method. Use `new DefaultEvaluator()` directly.
-- **Sub-step model**: Indented steps default to "don't execute" -- they must be proven true by a parent condition. The If handler sets `__condition__` in MemoryStack. Steps reads it for sub-step control. Non-condition steps (no `__condition__` signal) don't trigger skipping.
-- **Data.Merge loses bool values**: Actions.RunAsync merges results via Data.Merge, which converts Values to List<Data>. The bool from If.Run() is lost in merge. Solution: If stores condition result in MemoryStack (`__condition__`), Steps reads it from there.
+- **Sub-step model**: Indented steps default to "don't execute" -- they must be proven true by a parent condition. The If handler sets `__condition__` in Variables. Steps reads it for sub-step control. Non-condition steps (no `__condition__` signal) don't trigger skipping.
+- **Data.Merge loses bool values**: Actions.RunAsync merges results via Data.Merge, which converts Values to List<Data>. The bool from If.Run() is lost in merge. Solution: If stores condition result in Variables (`__condition__`), Steps reads it from there.
 - **Source generator**: The If record properties change from `bool Condition` to `object? Left` etc.
 
 ## Files
 
 | File | Action |
 |------|--------|
-| `PLang/Runtime2/modules/condition/providers/IEvaluator.cs` | Create |
-| `PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs` | Create |
-| `PLang/Runtime2/modules/condition/if.cs` | Modify |
-| `PLang/Runtime2/modules/condition/compare.cs` | Create |
-| `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` | Modify |
-| `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` | Modify (sub-step logic) |
-| `PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs` | Implement stubs |
-| `PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs` | Implement stubs |
-| `PLang.Tests/Runtime2/Modules/condition/CompareHandlerTests.cs` | Implement stubs |
-| `PLang.Tests/Runtime2/Modules/condition/StepsSubStepTests.cs` | Implement stubs |
-| `PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs` | Update (Condition -> Left) |
+| `PLang/App/modules/condition/providers/IEvaluator.cs` | Create |
+| `PLang/App/modules/condition/providers/DefaultEvaluator.cs` | Create |
+| `PLang/App/modules/condition/if.cs` | Modify |
+| `PLang/App/modules/condition/compare.cs` | Create |
+| `PLang/App/Engine/Goals/Goal/Steps/this.cs` | Modify |
+| `PLang/App/Engine/Goals/Goal/Steps/this.cs` | Modify (sub-step logic) |
+| `PLang.Tests/App/Modules/condition/DefaultEvaluatorTests.cs` | Implement stubs |
+| `PLang.Tests/App/Modules/condition/IfHandlerTests.cs` | Implement stubs |
+| `PLang.Tests/App/Modules/condition/CompareHandlerTests.cs` | Implement stubs |
+| `PLang.Tests/App/Modules/condition/StepsSubStepTests.cs` | Implement stubs |
+| `PLang.Tests/App/Modules/condition/ConditionHandlerTests.cs` | Update (Condition -> Left) |
 
 ## Not In Scope
 - Builder prompt changes (`BuildGoal.llm`) -- separate task

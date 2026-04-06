@@ -8,11 +8,11 @@
 
 ## 2. Clone methods are a family — audit them together
 
-`MemoryStack.Clone()` doesn't propagate `_context`. Same lesson as `PLangContext.Clone()` not copying `SettingsScope` on the other branch. When reviewing a property addition to any object, check ALL methods that create copies of that object: constructors, Clone, CreateChild, factory methods, deserialization paths.
+`Variables.Clone()` doesn't propagate `_context`. Same lesson as `PLangContext.Clone()` not copying `SettingsScope` on the other branch. When reviewing a property addition to any object, check ALL methods that create copies of that object: constructors, Clone, CreateChild, factory methods, deserialization paths.
 
 ## 3. Return type contract changes need integration tests
 
-`GetChild` changed from returning `null` to returning `Data.FromError(...)` on depth exceeded. This changes the contract for ALL callers — `MemoryStack.Get` being the primary one. The unit test proves GetChild works correctly in isolation. No test proves callers handle the new return type correctly. Same lesson as the simulation vs integration test on runtime2-settings.
+`GetChild` changed from returning `null` to returning `Data.FromError(...)` on depth exceeded. This changes the contract for ALL callers — `Variables.Get` being the primary one. The unit test proves GetChild works correctly in isolation. No test proves callers handle the new return type correctly. Same lesson as the simulation vs integration test on runtime2-settings.
 
 ## 4. Generic exception catches mask specific error types
 

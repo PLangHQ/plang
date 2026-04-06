@@ -12,7 +12,7 @@
 
 1. Create `docs/modules/llm.md` with: actions, parameters, schema/format, tools, validation, streaming, conversation continuity, images, caching, response properties, provider config, examples
 2. Update `docs/modules/index.md` — add LLM to I/O section
-3. Update `Documentation/Runtime2/modules.md` — add llm row + Details section
-4. Update `Documentation/Runtime2/good_to_know.md` — add ILlmProvider section + update provider interfaces list + update type name mapping
+3. Update `Documentation/App/modules.md` — add llm row + Details section
+4. Update `Documentation/App/good_to_know.md` — add ILlmProvider section + update provider interfaces list + update type name mapping
 5. Verify XML docs on public types (already present)
 6. Write verdict.json

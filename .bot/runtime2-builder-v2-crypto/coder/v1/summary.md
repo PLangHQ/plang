@@ -2,25 +2,25 @@
 
 ## What this is
 
-A crypto module for PLang Runtime2 providing hashing (Keccak256, SHA256) and hash verification, plus `Engine.Providers` — a generic type-keyed registry for pluggable module implementations. This is piece 2 of the builder-v2 migration. The signing module (piece 3) depends on this for data hashing. Bcrypt support is deferred.
+A crypto module for PLang App providing hashing (Keccak256, SHA256) and hash verification, plus `Engine.Providers` — a generic type-keyed registry for pluggable module implementations. This is piece 2 of the builder-v2 migration. The signing module (piece 3) depends on this for data hashing. Bcrypt support is deferred.
 
 ## What was done
 
 ### Files created
-- `PLang/Runtime2/Engine/Providers/this.cs` — `Engine.Providers`, type-keyed `ConcurrentDictionary<Type, object>` with `Register<T>`, `Get<T>`, `GetOrDefault<T>`. Solves Foundation Checklist item #4 (pluggable action implementations).
-- `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs` — Provider interface (`Hash`, `Verify`)
-- `PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs` — Built-in provider using Nethereum (Keccak256) and System.Security.Cryptography (SHA256)
-- `PLang/Runtime2/modules/crypto/types.cs` — `HashedData` type (Algorithm, Format, Hash)
-- `PLang/Runtime2/modules/crypto/hash.cs` — Thin hash action handler: resolve provider, serialize, delegate
-- `PLang/Runtime2/modules/crypto/verify.cs` — Thin verify action handler: resolve provider, decode hex, delegate
+- `PLang/App/Engine/Providers/this.cs` — `Engine.Providers`, type-keyed `ConcurrentDictionary<Type, object>` with `Register<T>`, `Get<T>`, `GetOrDefault<T>`. Solves Foundation Checklist item #4 (pluggable action implementations).
+- `PLang/App/modules/crypto/providers/ICryptoProvider.cs` — Provider interface (`Hash`, `Verify`)
+- `PLang/App/modules/crypto/providers/DefaultProvider.cs` — Built-in provider using Nethereum (Keccak256) and System.Security.Cryptography (SHA256)
+- `PLang/App/modules/crypto/types.cs` — `HashedData` type (Algorithm, Format, Hash)
+- `PLang/App/modules/crypto/hash.cs` — Thin hash action handler: resolve provider, serialize, delegate
+- `PLang/App/modules/crypto/verify.cs` — Thin verify action handler: resolve provider, decode hex, delegate
 
 ### Files modified
-- `PLang/Runtime2/Engine/this.cs` — Added `Providers` property
-- `PLang/Runtime2/GlobalUsings.cs` — Added `EngineProviders` alias
-- `PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs` — 12 stubs → real tests
-- `PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs` — 3 stubs → real tests
-- `PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs` — 4 bcrypt tests skipped
-- `Documentation/Runtime2/todos.md` — Updated item #4, added Libraries retirement todo
+- `PLang/App/Engine/this.cs` — Added `Providers` property
+- `PLang/App/GlobalUsings.cs` — Added `EngineProviders` alias
+- `PLang.Tests/App/Modules/crypto/HashActionTests.cs` — 12 stubs → real tests
+- `PLang.Tests/App/Modules/crypto/ProviderResolutionTests.cs` — 3 stubs → real tests
+- `PLang.Tests/App/Modules/crypto/DefaultProviderTests.cs` — 4 bcrypt tests skipped
+- `Documentation/App/todos.md` — Updated item #4, added Libraries retirement todo
 
 ### Key decisions
 

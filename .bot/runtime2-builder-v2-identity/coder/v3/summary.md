@@ -26,8 +26,8 @@ return def;
 
 ## Files modified
 
-- `PLang/Runtime2/modules/identity/types.cs` — throw on save failure
-- `PLang/Runtime2/modules/identity/get.cs` — catch and return Data error
+- `PLang/App/modules/identity/types.cs` — throw on save failure
+- `PLang/App/modules/identity/get.cs` — catch and return Data error
 
 ## Verification
 

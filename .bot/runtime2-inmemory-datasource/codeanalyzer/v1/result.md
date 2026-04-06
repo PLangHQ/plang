@@ -87,10 +87,10 @@ Clean. Building property follows the same pattern as Debug, Testing.
 
 ---
 
-## MemoryStack.cs
+## Variables.cs
 
 ### OBP Violations
-None. MemoryStack owns variable navigation.
+None. Variables owns variable navigation.
 
 ### Simplifications
 None.
@@ -99,7 +99,7 @@ None.
 The fix at lines 82-92 is more verbose than the old one-liner but correctly handles the case where the separator after the root name is `[` (array index) vs `.` (dot navigation). The old code `name[(rootName.Length + 1)..]` always skipped one character after the root, which was wrong for `items[0]` — it would skip the `[` and produce `0]` instead of `[0]`.
 
 ### Behavioral Reasoning
-**This is the fix that makes `%items[0]%` work.** Before, `MemoryStack.Get("items[0]")` produced `remaining = "0]"` (skipping the `[`), which failed to navigate. After, it correctly produces `remaining = "[0]"`.
+**This is the fix that makes `%items[0]%` work.** Before, `Variables.Get("items[0]")` produced `remaining = "0]"` (skipping the `[`), which failed to navigate. After, it correctly produces `remaining = "[0]"`.
 
 ### Deletion Test
 - Lines 82-92: Revert to old one-liner → `Get_DirectArrayIndex_NavigatesCorrectly`, `Get_ArrayIndexWithProperty_NavigatesCorrectly`, `Get_MixedNotation_NavigatesComplexPath` tests fail. **Covered.**
@@ -122,10 +122,10 @@ None.
 if (!result.Success) return result;  // line 74 — early return, AfterStep never runs
 ```
 
-The new code removes the early return and stores the step result in MemoryStack:
+The new code removes the early return and stores the step result in Variables:
 
 ```csharp
-context.MemoryStack.Put(new Data("__stepResult", result.Value, result.Type) { Error = result.Error });
+context.Variables.Put(new Data("__stepResult", result.Value, result.Type) { Error = result.Error });
 // AfterStep events now run regardless of success/failure
 ```
 
@@ -153,7 +153,7 @@ context.MemoryStack.Put(new Data("__stepResult", result.Value, result.Type) { Er
 ## Test/this.cs
 
 ### OBP Violations
-None. The test runner navigates `context.Step` and reads `__stepResult` from MemoryStack — valid navigations.
+None. The test runner navigates `context.Step` and reads `__stepResult` from Variables — valid navigations.
 
 ### Simplifications
 None.
@@ -189,7 +189,7 @@ Good simplification — returns plain `List<object?>` instead of wrapping in `ty
 ## SqliteSettingsRepository.cs
 
 ### OBP Violations
-N/A — v1 code, not Runtime2.
+N/A — v1 code, not App.
 
 ### Behavioral Reasoning — **FINDING #2: TOCTOU in migration**
 

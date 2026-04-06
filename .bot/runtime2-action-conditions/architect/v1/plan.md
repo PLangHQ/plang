@@ -16,7 +16,7 @@ Runtime1 solved this with `ConditionEvaluator` — a structured `Condition` reco
 
 ## The Insight
 
-Runtime2 already supports **multiple actions per step**. Actions within a step execute in order, and a later action can reference the return variable of an earlier action. This is the composition mechanism.
+App already supports **multiple actions per step**. Actions within a step execute in order, and a later action can reference the return variable of an earlier action. This is the composition mechanism.
 
 Instead of building a Swiss Army knife condition module, we decompose conditions into what they really are:
 
@@ -212,7 +212,7 @@ modules/
 ### IEvaluator Interface
 
 ```csharp
-namespace PLang.Runtime2.modules.condition.providers;
+namespace App.modules.condition.providers;
 
 public interface IEvaluator
 {
@@ -226,7 +226,7 @@ public interface IEvaluator
 Ported from runtime1's `ConditionEvaluator`, adapted for runtime2:
 
 ```csharp
-namespace PLang.Runtime2.modules.condition.providers;
+namespace App.modules.condition.providers;
 
 public class DefaultEvaluator : IEvaluator
 {
@@ -465,19 +465,19 @@ No goals, no operator — truthy check on the file.exists result. Sub-steps cont
 
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/condition/compare.cs` | Pure evaluation action (returns bool, no branching) |
-| `PLang/Runtime2/modules/condition/providers/IEvaluator.cs` | Interface for pluggable comparison engine |
-| `PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs` | Default comparison engine (ported from runtime1) |
+| `PLang/App/modules/condition/compare.cs` | Pure evaluation action (returns bool, no branching) |
+| `PLang/App/modules/condition/providers/IEvaluator.cs` | Interface for pluggable comparison engine |
+| `PLang/App/modules/condition/providers/DefaultEvaluator.cs` | Default comparison engine (ported from runtime1) |
 
 ### Files to Modify
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/modules/condition/if.cs` | Replace `bool Condition` with `Left`/`Operator`/`Right`. Use IEvaluator. Two modes: goal call + sub-step. |
-| `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` | Add sub-step skip logic to `RunAsync`. Add `HasIndentedChildren` helper. |
-| `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/this.cs` | No change needed — multi-action already works. |
+| `PLang/App/modules/condition/if.cs` | Replace `bool Condition` with `Left`/`Operator`/`Right`. Use IEvaluator. Two modes: goal call + sub-step. |
+| `PLang/App/Engine/Goals/Goal/Steps/this.cs` | Add sub-step skip logic to `RunAsync`. Add `HasIndentedChildren` helper. |
+| `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/this.cs` | No change needed — multi-action already works. |
 | `system/builder/llm/BuildGoal.llm` | Update condition examples to show Left/Operator/Right format. Add multi-action condition example. Add sub-step example. Add rule: never pack expressions into a single bool parameter. |
-| `PLang/Runtime2/Engine/Utility/GoalMapper.cs` | Map new condition parameters (if GoalMapper does condition-specific mapping). |
+| `PLang/App/Engine/Utility/GoalMapper.cs` | Map new condition parameters (if GoalMapper does condition-specific mapping). |
 
 ### Files That Don't Change
 

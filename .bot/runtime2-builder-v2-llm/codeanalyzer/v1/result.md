@@ -1,6 +1,6 @@
 # Code Analysis v1 — LLM Module Results
 
-## PLang/Runtime2/modules/llm/query.cs
+## PLang/App/modules/llm/query.cs
 
 ### OBP Violations
 None. Textbook handler → provider delegation: `Run() => await Llm.Query(this)`. The `[Provider]` attribute resolves `ILlmProvider` and the provider navigates the action record. This IS the target pattern.
@@ -16,7 +16,7 @@ Action record follows the established handler → provider delegation pattern ex
 
 ---
 
-## PLang/Runtime2/modules/llm/LlmMessage.cs
+## PLang/App/modules/llm/LlmMessage.cs
 
 ### OBP Violations
 None.
@@ -31,7 +31,7 @@ None.
 
 ---
 
-## PLang/Runtime2/modules/llm/ToolCall.cs
+## PLang/App/modules/llm/ToolCall.cs
 
 ### OBP Violations
 None.
@@ -46,7 +46,7 @@ Clean. 18 lines, three properties, all named clearly.
 
 ---
 
-## PLang/Runtime2/modules/llm/providers/ILlmProvider.cs
+## PLang/App/modules/llm/providers/ILlmProvider.cs
 
 ### OBP Violations
 None. `Task<Data> Query(query action)` — takes the full action record, lets the provider navigate.
@@ -61,7 +61,7 @@ Clean.
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs
+## PLang/App/Engine/Goals/Goal/GoalCall.cs
 
 ### OBP Violations
 None.
@@ -76,7 +76,7 @@ Clean. `Description` and `Parallel` are well-placed — GoalCall now serves dual
 
 ---
 
-## PLang/Runtime2/Engine/Providers/this.cs
+## PLang/App/Engine/Providers/this.cs
 
 ### OBP Violations
 None.
@@ -91,7 +91,7 @@ Clean. Two lines added: `ResolveType` mapping and `RegisterDefaults` call. Follo
 
 ---
 
-## PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs
+## PLang/App/modules/llm/providers/OpenAiProvider.cs
 
 This is the 874-line provider that owns the full LLM lifecycle. Most findings are here.
 

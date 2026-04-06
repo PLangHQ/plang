@@ -31,8 +31,8 @@ if (candidate != null)
 
 ## Files modified
 
-- `PLang/Runtime2/modules/identity/types.cs`
-- `PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs`
+- `PLang/App/modules/identity/types.cs`
+- `PLang.Tests/App/Modules/identity/IdentityHandlerTests.cs`
 
 ## Verification
 

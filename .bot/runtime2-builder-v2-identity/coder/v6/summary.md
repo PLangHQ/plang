@@ -30,10 +30,10 @@ private IdentityVariable? ResolveDefault()
 
 ## Files modified
 
-- `PLang/Runtime2/modules/identity/IdentityData.cs`
-- `PLang/Runtime2/modules/identity/export.cs`
-- `PLang/Runtime2/Engine/Memory/Data.Envelope.cs`
-- `PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs`
+- `PLang/App/modules/identity/IdentityData.cs`
+- `PLang/App/modules/identity/export.cs`
+- `PLang/App/Engine/Memory/Data.Envelope.cs`
+- `PLang.Tests/App/Modules/identity/IdentityHandlerTests.cs`
 
 ## Verification
 

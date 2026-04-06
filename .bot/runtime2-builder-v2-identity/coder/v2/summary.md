@@ -34,8 +34,8 @@
 - `Export_NullName_ReturnsDefaultPrivateKey` — exercises default fallback path
 
 ## Files modified
-- `PLang/Runtime2/modules/identity/get.cs` — remove Update on by-name, use GetOrCreateDefaultAsync
-- `PLang/Runtime2/modules/identity/types.cs` — sealed, fix Created, add GetOrCreateDefaultAsync, remove dead code
-- `PLang/Runtime2/modules/identity/IdentityData.cs` — delegate to GetOrCreateDefaultAsync
-- `PLang/Runtime2/modules/identity/rename.cs` — save-first-then-remove
-- `PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs` — 2 new tests
+- `PLang/App/modules/identity/get.cs` — remove Update on by-name, use GetOrCreateDefaultAsync
+- `PLang/App/modules/identity/types.cs` — sealed, fix Created, add GetOrCreateDefaultAsync, remove dead code
+- `PLang/App/modules/identity/IdentityData.cs` — delegate to GetOrCreateDefaultAsync
+- `PLang/App/modules/identity/rename.cs` — save-first-then-remove
+- `PLang.Tests/App/Modules/identity/IdentityHandlerTests.cs` — 2 new tests

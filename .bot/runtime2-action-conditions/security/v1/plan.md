@@ -5,18 +5,18 @@
 Security review of the action-based conditions implementation on branch `runtime2-action-conditions`. Five production files, focused on the evaluator, condition handler, and sub-step signaling mechanism.
 
 ### Target Files
-1. `PLang/Runtime2/modules/condition/providers/IEvaluator.cs` — evaluator interface
-2. `PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs` — operator handling, type normalization
-3. `PLang/Runtime2/modules/condition/if.cs` — condition handler, `__condition__` signal
-4. `PLang/Runtime2/modules/condition/compare.cs` — pure evaluation action
-5. `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` — sub-step skip logic consuming `__condition__`
+1. `PLang/App/modules/condition/providers/IEvaluator.cs` — evaluator interface
+2. `PLang/App/modules/condition/providers/DefaultEvaluator.cs` — operator handling, type normalization
+3. `PLang/App/modules/condition/if.cs` — condition handler, `__condition__` signal
+4. `PLang/App/modules/condition/compare.cs` — pure evaluation action
+5. `PLang/App/Engine/Goals/Goal/Steps/this.cs` — sub-step skip logic consuming `__condition__`
 
 ## Phase 1: Blue Team (Defensive Audit)
 
 Map attack surface for each file:
 
 - **DefaultEvaluator**: operator string from .pr file, `object?` left/right from deserialized JSON, `NormalizeTypes` recursion, `Compare` with incompatible types, `ContainsElement` iteration cost
-- **if.cs**: `__condition__` MemoryStack signal — write-protected? spoofable? exception handling for evaluator failures
+- **if.cs**: `__condition__` Variables signal — write-protected? spoofable? exception handling for evaluator failures
 - **compare.cs**: same evaluator concerns, no `__condition__` signal (good)
 - **Steps/this.cs**: `__condition__` consumption — type check (`Value is not true`), cleanup semantics, race conditions
 

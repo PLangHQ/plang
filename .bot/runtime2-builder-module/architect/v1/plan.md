@@ -1,12 +1,12 @@
 # Piece 8: Builder Module
 
-> **Note for coder**: This module lives in `PLang.Runtime2.modules.builder` and follows the standard action pattern (`partial class`, `[Action]`, `IContext`, source-generated lazy params). Zero Runtime1 dependencies. Read existing modules (`file`, `llm`, `output`) as reference for patterns.
+> **Note for coder**: This module lives in `App.modules.builder` and follows the standard action pattern (`partial class`, `[Action]`, `IContext`, source-generated lazy params). Zero Runtime1 dependencies. Read existing modules (`file`, `llm`, `output`) as reference for patterns.
 
 ## Decision Log
 
-- **No Runtime1 dependencies.** No `IGoalParser`, no `PrParser`, no `GoalMapper`, no `Building.Model`. The builder module parses `.goal` files directly into Runtime2 Goal/Step types and reads `.pr` files as Runtime2 JSON.
-- **Native `.goal` parser.** A `GoalFile` instance in the builder module parses `.goal` text into Runtime2 `Goal` and `Step` objects. Line-by-line parser — no Sprache dependency, no v1 model intermediary.
-- **`.pr` files are multi-goal Runtime2 JSON.** One `.goal` file → one `.pr` file containing `List<Goal>`. Reading is `Deserialize<List<Goal>>(json)`. All goals from one `.goal` file share the same `Path` → same derived `PrPath` → one `.pr` file.
+- **No Runtime1 dependencies.** No `IGoalParser`, no `PrParser`, no `GoalMapper`, no `Building.Model`. The builder module parses `.goal` files directly into App Goal/Step types and reads `.pr` files as App JSON.
+- **Native `.goal` parser.** A `GoalFile` instance in the builder module parses `.goal` text into App `Goal` and `Step` objects. Line-by-line parser — no Sprache dependency, no v1 model intermediary.
+- **`.pr` files are multi-goal App JSON.** One `.goal` file → one `.pr` file containing `List<Goal>`. Reading is `Deserialize<List<Goal>>(json)`. All goals from one `.goal` file share the same `Path` → same derived `PrPath` → one `.pr` file.
 - **No provider pattern.** The builder module has no swappable behavior.
 - **File I/O goes through `engine.RunAction`.** Same pattern as the LLM module using `http.request`.
 - **Navigate `engine.Modules`, don't construct.** The engine already owns the module registry. Actions navigate `Context.Engine.Modules` — never `new EngineModules()`.
@@ -18,9 +18,9 @@
 
 ## GoalFile
 
-New class: `PLang/Runtime2/modules/builder/GoalFile.cs` — **instance, not static**.
+New class: `PLang/App/modules/builder/GoalFile.cs` — **instance, not static**.
 
-A GoalFile IS the `.goal` file format. It parses `.goal` text into Runtime2 `Goal` and `Step` objects directly.
+A GoalFile IS the `.goal` file format. It parses `.goal` text into App `Goal` and `Step` objects directly.
 
 ### .goal file format
 
@@ -281,7 +281,7 @@ After this module lands, `[plang]` tags become regular `builder.*` calls.
 ## File Structure
 
 ```
-PLang/Runtime2/modules/builder/
+PLang/App/modules/builder/
 ├── GoalFile.cs            — .goal file format (instance, not static)
 ├── getActions.cs          — action registry metadata for LLM
 ├── getTypeInfo.cs         — type names + schemas for LLM
@@ -297,8 +297,8 @@ PLang/Runtime2/modules/builder/
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Goals/Goal/this.cs` | Add `MergeFrom(Goal existing)` method |
-| `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs` | Add `Merge(Step from)` method |
+| `PLang/App/Engine/Goals/Goal/this.cs` | Add `MergeFrom(Goal existing)` method |
+| `PLang/App/Engine/Goals/Goal/Steps/Step/this.cs` | Add `Merge(Step from)` method |
 | `system/builder/Build.goal` | Replace `[plang]` calls with `builder.*` |
 | `system/builder/BuildGoal.goal` | Replace `[plang]` calls with `builder.*` |
 | `system/builder/BuildStep.goal` | Replace `[plang]` calls with `builder.*` |
@@ -370,7 +370,7 @@ PLang/Runtime2/modules/builder/
 
 ## Definition of Done
 
-- All 8 builder actions work as standard Runtime2 module actions
+- All 8 builder actions work as standard App module actions
 - **Zero Runtime1 dependencies**
 - Actions navigate `engine.Modules` — never construct fresh registries
 - `GoalFile` is an instance, not static — it IS the file format, not a "parser"

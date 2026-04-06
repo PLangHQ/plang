@@ -6,10 +6,10 @@ Code review of the PLangPath class implementation — a rich path wrapper that r
 
 ## What was reviewed
 
-- `PLang/Runtime2/Engine/Memory/Path.cs` — the core Path class (219 lines)
+- `PLang/App/Engine/Memory/Path.cs` — the core Path class (219 lines)
 - All 7 file handlers: `read.cs`, `save.cs`, `copy.cs`, `move.cs`, `delete.cs`, `exists.cs`, `list.cs`
-- `PLang.Tests/Runtime2/Modules/Path/PathTests.cs` — 40 Path unit tests
-- `PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs` — handler integration tests
+- `PLang.Tests/App/Modules/Path/PathTests.cs` — 40 Path unit tests
+- `PLang.Tests/App/Modules/file/FileHandlerTests.cs` — handler integration tests
 - Cross-referenced: source generator detection, @file type, ServiceError, Data, PLangFileSystem.RootDirectory
 
 ## OBP Assessment

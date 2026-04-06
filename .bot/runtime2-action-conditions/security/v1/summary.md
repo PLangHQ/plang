@@ -11,7 +11,7 @@ Security review (blue team + red team) of the action-based conditions implementa
 Five areas analyzed:
 1. **Evaluator operator dispatch** — operator string from .pr, switched via `ToLowerInvariant()`. Unknown operators throw `NotSupportedException`, caught by Step.Methods.cs outer catch. Clean.
 2. **Type normalization & comparison** — `NormalizeTypes` recursion bounded at depth 2 (safe). `Compare()` silently returns 0 for non-IComparable (logic error, not crash).
-3. **`__condition__` signal mechanism** — unprotected MemoryStack key used for inter-step communication. Primary finding.
+3. **`__condition__` signal mechanism** — unprotected Variables key used for inter-step communication. Primary finding.
 4. **Sub-step skip logic** — local variables, thread-safe. Indent values from .pr not validated but fail-open.
 5. **Collection iteration** — O(n) with normalization per element, no size limit. Standard risk.
 
@@ -31,7 +31,7 @@ No critical or high findings. The medium finding (#1) requires specific precondi
 
 ## Key finding detail — `__condition__` signal spoofing (#1)
 
-The attack path: A step that is NOT a condition handler but writes to `__condition__` in MemoryStack (via `variable/set` or a custom handler). If that step has no indented children, `HasIndentedChildren` is false, so the signal is NOT consumed. The next step that DOES have indented children reads the stale signal and acts on it.
+The attack path: A step that is NOT a condition handler but writes to `__condition__` in Variables (via `variable/set` or a custom handler). If that step has no indented children, `HasIndentedChildren` is false, so the signal is NOT consumed. The next step that DOES have indented children reads the stale signal and acts on it.
 
 ```
 Step 0 (indent 0): variable/set __condition__ = true   ← no children, signal not consumed

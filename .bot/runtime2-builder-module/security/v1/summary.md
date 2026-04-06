@@ -2,7 +2,7 @@
 
 ## What this is
 
-Security audit of the builder module (`PLang.Runtime2.modules.builder`) — the new PLang module that replaces `[plang]` built-in calls with standard action-based builder operations. Covers Goal.Parse(), 8 builder actions, EngineModules registry, provider registry, and assembly loading.
+Security audit of the builder module (`App.modules.builder`) — the new PLang module that replaces `[plang]` built-in calls with standard action-based builder operations. Covers Goal.Parse(), 8 builder actions, EngineModules registry, provider registry, and assembly loading.
 
 ## What was done
 
@@ -33,13 +33,13 @@ No critical or high findings. The builder module follows the PLang threat model 
 
 ## Key files reviewed
 
-- `PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs` — all 8 provider methods
-- `PLang/Runtime2/Engine/Goals/Goal/this.cs` — Goal.Parse(), MergeFrom()
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs` — Step.Merge()
-- `PLang/Runtime2/Engine/Modules/this.cs` — Discover, Describe, GetDefaults
-- `PLang/Runtime2/Engine/Providers/this.cs` — provider registry, ResolveType
-- `PLang/Runtime2/modules/module/add.cs` — assembly loading
-- `PLang/Runtime2/modules/provider/load.cs` — provider DLL loading
+- `PLang/App/modules/builder/providers/DefaultBuilderProvider.cs` — all 8 provider methods
+- `PLang/App/Engine/Goals/Goal/this.cs` — Goal.Parse(), MergeFrom()
+- `PLang/App/Engine/Goals/Goal/Steps/Step/this.cs` — Step.Merge()
+- `PLang/App/Engine/Modules/this.cs` — Discover, Describe, GetDefaults
+- `PLang/App/Engine/Providers/this.cs` — provider registry, ResolveType
+- `PLang/App/modules/module/add.cs` — assembly loading
+- `PLang/App/modules/provider/load.cs` — provider DLL loading
 - All builder action records (actions.cs, goals.cs, validate.cs, merge.cs, app.cs, appSave.cs, goalsSave.cs, types.cs)
 
 ## Recommendation

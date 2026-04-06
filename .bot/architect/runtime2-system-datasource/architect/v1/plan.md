@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Persistent key-value storage for Runtime2 actors, replacing v1's `system.sqlite`. Each actor (System/Service/User) owns its own SQLite database under `.db/`. Modules own their own tables (encryption stores in "encryption", nostr in "nostr", etc.). The system actor's "settings" table is bridged to PLang variable syntax so `%Settings.ApiKey%` resolves lazily from DataSource.
+Persistent key-value storage for App actors, replacing v1's `system.sqlite`. Each actor (System/Service/User) owns its own SQLite database under `.db/`. Modules own their own tables (encryption stores in "encryption", nostr in "nostr", etc.). The system actor's "settings" table is bridged to PLang variable syntax so `%Settings.ApiKey%` resolves lazily from DataSource.
 
 ## Files to Create
 
@@ -25,7 +25,7 @@ Extends `Data`. Overrides `GetChild` to do per-key lazy loading from `engine.Sys
 - If value is null, returns `Data.FromError(new AskError(...))`
 - `.GetAwaiter().GetResult()` is safe because Microsoft.Data.Sqlite is synchronous under the hood (SQLite has no async I/O)
 
-Registered on `engine.System.Context.MemoryStack` as `"Settings"` during actor initialization.
+Registered on `engine.System.Context.Variables` as `"Settings"` during actor initialization.
 
 ## Files to Modify
 
@@ -33,7 +33,7 @@ Registered on `engine.System.Context.MemoryStack` as `"Settings"` during actor i
 One-word change: `public Data? GetChild(...)` → `public virtual Data? GetChild(...)`. This lets SettingsData (and future specialized Data subclasses) own their navigation behavior.
 
 ### 7. `Engine/Context/Actor.cs`
-Add lazy `DataSource` property: `_dataSource ??= CreateDataSource()`. `CreateDataSource` resolves path via `IPLangFileSystem` to `.db/{actorname}.sqlite`. Dispose updated to dispose `_dataSource` if created. Register `SettingsData` on `Context.MemoryStack` during initialization.
+Add lazy `DataSource` property: `_dataSource ??= CreateDataSource()`. `CreateDataSource` resolves path via `IPLangFileSystem` to `.db/{actorname}.sqlite`. Dispose updated to dispose `_dataSource` if created. Register `SettingsData` on `Context.Variables` during initialization.
 
 ### 8. `PLang.Generators/LazyParamsGenerator.cs` — Error Propagation Fix
 The generated `__Resolve<T>` currently calls `__memoryStack.GetValue(variableName)` which extracts `.Value` from the resolved Data — losing any error (including AskError). The full-match resolution path needs to change:

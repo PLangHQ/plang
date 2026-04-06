@@ -18,24 +18,24 @@ Translated the architect's plan into comprehensive test stubs across 8 C# test f
 ### Files created
 
 **C# test stubs (43 tests):**
-- `PLang.Tests/Runtime2/Modules/builder/GoalFileTests.cs` — 12 tests
-- `PLang.Tests/Runtime2/Modules/builder/MergeTests.cs` — 7 tests
-- `PLang.Tests/Runtime2/Modules/builder/GetActionsTests.cs` — 5 tests
-- `PLang.Tests/Runtime2/Modules/builder/GetTypeInfoTests.cs` — 2 tests
-- `PLang.Tests/Runtime2/Modules/builder/GetGoalsTests.cs` — 4 tests
-- `PLang.Tests/Runtime2/Modules/builder/ValidateActionsTests.cs` — 5 tests
-- `PLang.Tests/Runtime2/Modules/builder/AppTests.cs` — 3 tests
-- `PLang.Tests/Runtime2/Modules/builder/SaveGoalsTests.cs` — 3 tests
-- `PLang.Tests/Runtime2/Modules/builder/MergeStepTests.cs` — 1 test
-- `PLang.Tests/Runtime2/Modules/builder/BuildingGuardTests.cs` — 1 test
+- `PLang.Tests/App/Modules/builder/GoalFileTests.cs` — 12 tests
+- `PLang.Tests/App/Modules/builder/MergeTests.cs` — 7 tests
+- `PLang.Tests/App/Modules/builder/GetActionsTests.cs` — 5 tests
+- `PLang.Tests/App/Modules/builder/GetTypeInfoTests.cs` — 2 tests
+- `PLang.Tests/App/Modules/builder/GetGoalsTests.cs` — 4 tests
+- `PLang.Tests/App/Modules/builder/ValidateActionsTests.cs` — 5 tests
+- `PLang.Tests/App/Modules/builder/AppTests.cs` — 3 tests
+- `PLang.Tests/App/Modules/builder/SaveGoalsTests.cs` — 3 tests
+- `PLang.Tests/App/Modules/builder/MergeStepTests.cs` — 1 test
+- `PLang.Tests/App/Modules/builder/BuildingGuardTests.cs` — 1 test
 
 **PLang test stubs (6 tests):**
-- `Tests/Runtime2/Builder/GetActions/BuilderGetActions.test.goal`
-- `Tests/Runtime2/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal`
-- `Tests/Runtime2/Builder/ParseGoal/BuilderParseGoal.test.goal`
-- `Tests/Runtime2/Builder/MergeStep/BuilderMergeStep.test.goal`
-- `Tests/Runtime2/Builder/ValidateValid/BuilderValidateValid.test.goal`
-- `Tests/Runtime2/Builder/ValidateInvalid/BuilderValidateInvalid.test.goal`
+- `Tests/App/Builder/GetActions/BuilderGetActions.test.goal`
+- `Tests/App/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal`
+- `Tests/App/Builder/ParseGoal/BuilderParseGoal.test.goal`
+- `Tests/App/Builder/MergeStep/BuilderMergeStep.test.goal`
+- `Tests/App/Builder/ValidateValid/BuilderValidateValid.test.goal`
+- `Tests/App/Builder/ValidateInvalid/BuilderValidateInvalid.test.goal`
 
 ## Code example
 

@@ -23,9 +23,9 @@
 ### Architecture Documentation Updated
 | File | Change |
 |------|--------|
-| `Documentation/Runtime2/modules.md` | Added crypto to built-in handlers table + full crypto module details section |
-| `Documentation/Runtime2/good_to_know.md` | Added Engine.Providers pattern entry (design decisions, API, usage) |
-| `Documentation/Runtime2/README.md` | Added Providers to the object graph tree |
+| `Documentation/App/modules.md` | Added crypto to built-in handlers table + full crypto module details section |
+| `Documentation/App/good_to_know.md` | Added Engine.Providers pattern entry (design decisions, API, usage) |
+| `Documentation/App/README.md` | Added Providers to the object graph tree |
 
 ## Findings
 

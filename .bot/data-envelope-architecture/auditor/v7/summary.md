@@ -2,14 +2,14 @@
 
 ## What this is
 
-Re-review after coder v5 (security hardening) and v7 (test gaps). Covers depth limits on all 5 recursive methods, cycle detection in MemoryStack, zip bomb test, Verified→private set, fromJson deduplication, and boundary tests.
+Re-review after coder v5 (security hardening) and v7 (test gaps). Covers depth limits on all 5 recursive methods, cycle detection in Variables, zip bomb test, Verified→private set, fromJson deduplication, and boundary tests.
 
 ## What was reviewed
 
 - `Data.cs` — UnwrapJsonElement depth limit (128), internal static for deduplication
 - `Data.Envelope.cs` — RehydrateNestedData depth limit (128), zip bomb limit (100MB), Verified→private set
 - `Data.Navigation.cs` — GetChild depth limit (100), returns Data.FromError
-- `MemoryStack.cs` — ThreadStatic cycle detection in ResolveVariablesInPath
+- `Variables.cs` — ThreadStatic cycle detection in ResolveVariablesInPath
 - `Types/this.cs` — Clr() depth limit (20), null propagation for generics
 - `fromJson.cs` — Deduplicated, now calls Data.UnwrapJsonElement
 - `JsonStringNavigator.cs` — 10MB size limit in CanNavigate

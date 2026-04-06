@@ -22,7 +22,7 @@
 		public static readonly string CallingInstruction = "!CallingInstruction";
 		public static readonly string Event = "!Event";
 		public static readonly string IsEvent = "!IsEvent";
-		public static readonly string MemoryStack = "!MemoryStack";
+		public static readonly string Variables = "!Variables";
 		public static readonly string HttpContext = "!HttpContext";
 		public static readonly string IsHttpRequest = "!IsHttpRequest";
 		public static readonly string GUID = "!GUID";

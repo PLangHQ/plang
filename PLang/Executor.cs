@@ -13,7 +13,7 @@ namespace PLang
 			this.fileSystem = fileSystem;
 		}
 
-		public async Task<Runtime2.Engine.Memory.Data> Run(string[] args, CancellationToken cancellationToken = default)
+		public async Task<App.Engine.Variables.Data> Run(string[] args, CancellationToken cancellationToken = default)
 		{
 			// Normalize: "build" or "--build" both become the --build flag
 			if (args.Length > 0 && args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
@@ -21,13 +21,13 @@ namespace PLang
 
 			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
-			var engine = new Runtime2.Engine.@this(fileSystem);
+			var engine = new App.Engine.@this(fileSystem);
 			engine.SystemDirectory = fileSystem.SystemDirectory;
 
-			var systemMs = engine.System.Context.MemoryStack;
-			var userMs = engine.User.Context.MemoryStack;
+			var systemMs = engine.System.Context.Variables;
+			var userMs = engine.User.Context.Variables;
 
-			// Route CLI parameters: system params (!prefix) → system MemoryStack, user params → user MemoryStack
+			// Route CLI parameters: system params (!prefix) → system Variables, user params → user Variables
 			// !debug is handled separately (routed per actor)
 			foreach (var param in parameters)
 			{
@@ -69,23 +69,23 @@ namespace PLang
 			// Test mode — set up test context
 			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
 			{
-				// Results list on system MemoryStack — test.pr adds to it via list.add
+				// Results list on system Variables — test.pr adds to it via list.add
 				systemMs.Set("testResults", new List<object?>());
 
 				// !test Data with summary that reads from testResults
-				var testData = new Runtime2.Engine.Memory.Data("!test", true);
-				testData.Properties["summary"] = new Runtime2.Engine.Memory.DynamicData("summary", () =>
+				var testData = new App.Engine.Variables.Data("!test", true);
+				testData.Properties["summary"] = new App.Engine.Variables.DynamicData("summary", () =>
 				{
 					var results = systemMs.GetValue("testResults") as List<object?>;
 					if (results == null) return "No test results";
-					var passed = results.Count(r => r is not Runtime2.Engine.Memory.Data d || d.Success);
+					var passed = results.Count(r => r is not App.Engine.Variables.Data d || d.Success);
 					var failed = results.Count - passed;
 
 					var sb = new System.Text.StringBuilder();
 					sb.AppendLine();
 					sb.AppendLine($"{passed} passed, {failed} failed out of {results.Count} tests");
 
-					foreach (var r in results.OfType<Runtime2.Engine.Memory.Data>().Where(r => r.Success == false))
+					foreach (var r in results.OfType<App.Engine.Variables.Data>().Where(r => r.Success == false))
 					{
 						var error = r.Error;
 						var step = error?.Step;

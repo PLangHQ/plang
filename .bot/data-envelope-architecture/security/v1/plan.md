@@ -2,7 +2,7 @@
 
 ## Scope
 
-Security audit of the data-envelope-architecture changes: Data partial class restructure (core, result, navigation, envelope), Engine.Types registry, MemoryStack updates, and ValueNavigators.
+Security audit of the data-envelope-architecture changes: Data partial class restructure (core, result, navigation, envelope), Engine.Types registry, Variables updates, and ValueNavigators.
 
 ## Phase 1: Blue Team (Defensive Audit)
 
@@ -12,7 +12,7 @@ Map the attack surface introduced or modified by this branch:
 2. **Data.cs** — UnwrapJsonElement recursion (deeply nested JSON), Newtonsoft shim via reflection, constructor accepting arbitrary `object?` values
 3. **Data.Navigation.cs** — GetChild recursive path traversal, ValueNavigators dispatch chain
 4. **Data.Result.cs** — Merge with unbounded list growth, implicit bool conversion
-5. **MemoryStack.cs** — ResolveVariablesInPath regex + recursive variable resolution, DeepClone without depth limits, unbounded variable storage
+5. **Variables.cs** — ResolveVariablesInPath regex + recursive variable resolution, DeepClone without depth limits, unbounded variable storage
 6. **Engine.Types/this.cs** — Runtime Add/Remove of type mappings, Clr() recursive generic parsing, reflection in Name()/ComplexSchemas()
 7. **ValueNavigators** — ObjectNavigator reflection-based property access, JsonStringNavigator re-parsing strings as JSON, ListNavigator implicit first-element delegation
 

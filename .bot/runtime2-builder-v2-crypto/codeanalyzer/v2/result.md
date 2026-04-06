@@ -3,7 +3,7 @@
 ## Scope
 Re-review of 4 files changed by coder in response to v1 findings + Ingi's feedback.
 
-## PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs
+## PLang/App/modules/crypto/providers/ICryptoProvider.cs
 
 Returns `Data` now. Clean.
 
@@ -11,7 +11,7 @@ Returns `Data` now. Clean.
 
 ---
 
-## PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs
+## PLang/App/modules/crypto/providers/DefaultProvider.cs
 
 All v1 findings resolved:
 - Returns `Data` instead of throwing — correct
@@ -23,7 +23,7 @@ All v1 findings resolved:
 
 ---
 
-## PLang/Runtime2/modules/crypto/hash.cs
+## PLang/App/modules/crypto/hash.cs
 
 v1 findings status:
 - **Provider exceptions → Data errors**: Fixed at the interface level. Handler no longer needs try/catch for provider errors. Checks `.Success` on provider result.
@@ -37,7 +37,7 @@ Remaining items are low-priority design trade-offs, not correctness issues.
 
 ---
 
-## PLang/Runtime2/modules/crypto/verify.cs
+## PLang/App/modules/crypto/verify.cs
 
 Clean. The only remaining `try/catch` is for `Convert.FromHexString` — a .NET framework call that throws `FormatException`. This is a correct system boundary catch.
 

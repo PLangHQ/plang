@@ -249,7 +249,7 @@ namespace PlangWindowForms
 		public record JsVariable(string name, string goalToCall, Dictionary<string, object?>? parameters);
 		public async Task ListenToVariables()
 		{
-			var variables = context.MemoryStack.GetVariablesWithEvent(VariableEventType.OnChange);
+			var variables = context.Variables.GetVariablesWithEvent(VariableEventType.OnChange);
 			List<JsVariable> jsVars = new();
 			foreach (var variable in variables)
 			{
@@ -345,7 +345,7 @@ namespace PlangWindowForms
 			{
 				var parsedUrl = ParseUrl(e.Uri);
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-				//engine.GetMemoryStack().GetMemoryStack().Clear();
+				//engine.GetVariables().GetVariables().Clear();
 				//goalName = args.Request.Uri.ToString().Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
 				Task.Run(() =>
 				{
@@ -405,7 +405,7 @@ namespace PlangWindowForms
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
 
 				var variable = @event["Variable"];
-				var memoryStack = context.MemoryStack;
+				var memoryStack = context.Variables;
 				memoryStack.Put(variable["name"].Value<string>(), variable["value"].Value<object?>());
 
 			}
@@ -511,7 +511,7 @@ namespace PlangWindowForms
 
 				GoalToCallInfo goalToCall = new GoalToCallInfo(parsedUrl.goalName, parsedUrl.param);
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-				//engine.GetMemoryStack().GetMemoryStack().Clear();
+				//engine.GetVariables().GetVariables().Clear();
 				//goalName = args.Request.Uri.ToString().Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
 				var wait =  pseudoRuntime.RunGoal(engine, contextAccessor, "", goalToCall).ConfigureAwait(false);
 				var goalResult = await wait;

@@ -26,4 +26,4 @@ Full 5-pass analysis (OBP, simplification, readability, behavioral reasoning, de
 - `DefaultHttpProvider.cs` change — CLEAN
 
 ## Recommendation
-Send findings #1-4 to coder. Finding #5 may need architect input on whether `FormatForLlm` should use a Runtime2 context type.
+Send findings #1-4 to coder. Finding #5 may need architect input on whether `FormatForLlm` should use a App context type.

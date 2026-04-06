@@ -90,7 +90,7 @@ Engine (root)
 ├── Events      — before/after hooks on goals, steps, actions
 ├── Libraries   — handler discovery and resolution
 ├── Cache       — step-level result caching
-└── Memory      — variable storage (MemoryStack)
+└── Memory      — variable storage (Variables)
 ```
 
 The engine resolves each action to a **handler** — a C# class that does the actual work. Handlers are organized by module:

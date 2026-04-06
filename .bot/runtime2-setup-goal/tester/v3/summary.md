@@ -5,7 +5,7 @@ Test quality review of the Setup.goal run-once execution system (coder v1-v3) an
 
 ## Test Run Results
 - **C# tests**: 1478 passed, 0 failed
-- **PLang tests**: 23 passed, 0 failed (run from `Tests/Runtime2/`)
+- **PLang tests**: 23 passed, 0 failed (run from `Tests/App/`)
 - **Coverage**: TUnit `--coverage` crashes in WSL2 (PipeConnection error). Used static analysis.
 
 ## Code Changes Reviewed

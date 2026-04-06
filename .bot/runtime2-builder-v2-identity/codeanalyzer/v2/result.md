@@ -1,6 +1,6 @@
 # Code Analysis v2 — Re-review of Coder Fixes
 
-## PLang/Runtime2/modules/identity/get.cs
+## PLang/App/modules/identity/get.cs
 
 ### Fix #1: Identity.Update() removed from by-name path
 
@@ -16,7 +16,7 @@
 
 ---
 
-## PLang/Runtime2/modules/identity/types.cs
+## PLang/App/modules/identity/types.cs
 
 ### Fix #2: GetOrCreateDefaultAsync — consolidated auto-create
 
@@ -56,7 +56,7 @@ JSON round-trip fallback (old lines 106-114) removed. `Deserialize` now returns 
 
 ---
 
-## PLang/Runtime2/modules/identity/IdentityData.cs
+## PLang/App/modules/identity/IdentityData.cs
 
 ### Fix #2b: Delegates to GetOrCreateDefaultAsync
 
@@ -69,7 +69,7 @@ Clean delegation. The `<remarks>` comment (lines 46-49) documents why sync-over-
 
 ---
 
-## PLang/Runtime2/modules/identity/rename.cs
+## PLang/App/modules/identity/rename.cs
 
 ### Fix #5: Save-first-then-remove
 
@@ -96,7 +96,7 @@ identity.Name = NewName       // restore to new name
 
 ---
 
-## PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs
+## PLang.Tests/App/Modules/identity/IdentityHandlerTests.cs
 
 ### New test: Get_ByName_DoesNotOverwriteMyIdentity (line 538)
 

@@ -5,7 +5,7 @@ This branch is a comprehensive cleanup of pieces 1-4 (identity, crypto, signing,
 
 ## What Needs Documentation
 
-### 1. Architecture Docs Updates (Documentation/Runtime2/)
+### 1. Architecture Docs Updates (Documentation/App/)
 
 **modules.md** — Stale references:
 - `library` action listed in Built-in Action Handlers table → should be `module` (with `add`, `remove`)

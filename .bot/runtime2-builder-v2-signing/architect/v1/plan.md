@@ -55,7 +55,7 @@ Same upgrade applies to `ICryptoProvider` — add `Name` and `IsDefault` propert
 
 **Provider interface hierarchy:** `IProvider` is the marker. `IKeyProvider : IProvider` adds `GenerateKeyPair()`. `ISigningProvider : IKeyProvider` and `ICryptoProvider : IProvider` extend from there. Provider discovery scans for `IProvider` — no hardcoded list of specific interfaces.
 
-**Sub-engine inheritance (scope chain):** Sub-engines hold a reference to the parent's provider registry, plus their own local overlay. `Get` checks local first, falls back to parent — same pattern as MemoryStack. `Register` on a sub-engine adds to the local overlay only. On pool return, the local overlay is cleared. Parent providers are never copied — always accessed by reference.
+**Sub-engine inheritance (scope chain):** Sub-engines hold a reference to the parent's provider registry, plus their own local overlay. `Get` checks local first, falls back to parent — same pattern as Variables. `Register` on a sub-engine adds to the local overlay only. On pool return, the local overlay is cleared. Parent providers are never copied — always accessed by reference.
 
 ### Provider module (new)
 
@@ -153,7 +153,7 @@ public SignedData? Signature { get; set; }
 
 ## Settings
 
-Context-scoped via existing `Engine.Settings` infrastructure. Not DataSource (not persisted). Not MemoryStack (not a PLang variable). Internal module config that lives at the C# runtime level, actor-aware through the scope chain.
+Context-scoped via existing `Engine.Settings` infrastructure. Not DataSource (not persisted). Not Variables (not a PLang variable). Internal module config that lives at the C# runtime level, actor-aware through the scope chain.
 
 ```csharp
 public partial class Settings : ISettings
@@ -506,18 +506,18 @@ Default uses the default `IKeyProvider` (which is Ed25519 unless changed). Optio
 ## Module structure
 
 ```
-PLang/Runtime2/Engine/Providers/
+PLang/App/Engine/Providers/
 ├── IProvider.cs                     — marker interface (Name, IsDefault), all providers extend this
 ├── IKeyProvider.cs                  — key generation interface (extends IProvider)
 ├── KeyPair.cs                       — record KeyPair(string PublicKey, string PrivateKey)
 ├── ISigningProvider.cs               — signing provider interface (extends IKeyProvider) — engine-level so Ed25519Provider can implement it without module dependency
 ├── Ed25519Provider.cs               — default Ed25519 provider (ISigningProvider) — engine-level, not signing-module-dependent
-PLang/Runtime2/modules/provider/
+PLang/App/modules/provider/
 ├── load.cs                          — load DLL, scan for IProvider, register on Engine.Providers
 ├── remove.cs                        — remove provider by name (error if default)
 ├── setDefault.cs                    — change default provider for an interface type
 ├── list.cs                          — list registered providers, optionally filtered by interface type
-PLang/Runtime2/modules/signing/
+PLang/App/modules/signing/
 ├── sign.cs                          — sign action handler
 ├── verify.cs                        — verify action handler
 ├── SignedData.cs                    — standalone POCO (Algorithm, HashedData, Headers, Verified)
@@ -530,34 +530,34 @@ PLang/Runtime2/modules/signing/
 
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/signing/sign.cs` | Sign action handler — builds SignedData, sets `data.Signature` |
-| `PLang/Runtime2/modules/signing/verify.cs` | Verify action handler — checks all fields, sets `data.Signature.Verified` |
-| `PLang/Runtime2/modules/signing/SignedData.cs` | Standalone POCO with Algorithm, Headers, HashedData, Verified (`Data?`, `[JsonIgnore]`, public setter) |
-| `PLang/Runtime2/modules/signing/Settings.cs` | Module settings (ISettings): Provider, TimeoutMs |
-| `PLang/Runtime2/Engine/Providers/IProvider.cs` | Marker interface (Name, IsDefault) — all providers extend this |
-| `PLang/Runtime2/Engine/Providers/IKeyProvider.cs` | Key generation interface (extends IProvider) |
-| `PLang/Runtime2/Engine/Providers/KeyPair.cs` | `record KeyPair(string PublicKey, string PrivateKey)` — named return type for `GenerateKeyPair()` |
-| `PLang/Runtime2/Engine/Providers/ISigningProvider.cs` | Signing provider interface (extends IKeyProvider) — engine-level so providers don't depend on signing module |
-| `PLang/Runtime2/Engine/Providers/Ed25519Provider.cs` | Default Ed25519 provider (engine-level — identity needs `IKeyProvider` without depending on signing module) |
-| `PLang/Runtime2/modules/provider/load.cs` | Load DLL, discover IProvider types, register on Engine.Providers |
-| `PLang/Runtime2/modules/provider/remove.cs` | Remove provider by name (error if default) |
-| `PLang/Runtime2/modules/provider/setDefault.cs` | Change default provider for interface type |
-| `PLang/Runtime2/modules/provider/list.cs` | List registered providers, optionally filtered by interface type |
+| `PLang/App/modules/signing/sign.cs` | Sign action handler — builds SignedData, sets `data.Signature` |
+| `PLang/App/modules/signing/verify.cs` | Verify action handler — checks all fields, sets `data.Signature.Verified` |
+| `PLang/App/modules/signing/SignedData.cs` | Standalone POCO with Algorithm, Headers, HashedData, Verified (`Data?`, `[JsonIgnore]`, public setter) |
+| `PLang/App/modules/signing/Settings.cs` | Module settings (ISettings): Provider, TimeoutMs |
+| `PLang/App/Engine/Providers/IProvider.cs` | Marker interface (Name, IsDefault) — all providers extend this |
+| `PLang/App/Engine/Providers/IKeyProvider.cs` | Key generation interface (extends IProvider) |
+| `PLang/App/Engine/Providers/KeyPair.cs` | `record KeyPair(string PublicKey, string PrivateKey)` — named return type for `GenerateKeyPair()` |
+| `PLang/App/Engine/Providers/ISigningProvider.cs` | Signing provider interface (extends IKeyProvider) — engine-level so providers don't depend on signing module |
+| `PLang/App/Engine/Providers/Ed25519Provider.cs` | Default Ed25519 provider (engine-level — identity needs `IKeyProvider` without depending on signing module) |
+| `PLang/App/modules/provider/load.cs` | Load DLL, discover IProvider types, register on Engine.Providers |
+| `PLang/App/modules/provider/remove.cs` | Remove provider by name (error if default) |
+| `PLang/App/modules/provider/setDefault.cs` | Change default provider for interface type |
+| `PLang/App/modules/provider/list.cs` | List registered providers, optionally filtered by interface type |
 
 ## Files to modify
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Providers/this.cs` | Upgrade to `ConcurrentDictionary<Type, ConcurrentDictionary<string, IProvider>>` named provider registry. Provider owns `Name` and `IsDefault`. Registry enforces default constraint via `SetDefault<T>(name)`. Error on duplicate name (`"ProviderExists"`), error on removing default (`"CannotRemoveDefault"`) |
-| `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` | Change `Signature` from `byte[]?` to `SignedData?`. Remove `Verified` property and `SetVerified()` method — verification state moves to `SignedData.Verified` |
-| `PLang/Runtime2/modules/identity/create.cs` | Delegate key generation to `IKeyProvider` (default or named via optional provider param) |
-| `PLang/Runtime2/modules/identity/KeyGenerator.cs` | Remove (moved to Ed25519Provider) |
-| `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs` | Extend `IProvider` (adds `Name` and `IsDefault` properties) |
-| `PLang/Runtime2/modules/crypto/types.cs` | `HashedData.Hash` doc: hex → base64. `HashedData.Type` = `"hash"` |
-| `PLang/Runtime2/modules/crypto/hash.cs` | `FormatHash`: `ToHexString` → `ToBase64String` |
-| `PLang/Runtime2/modules/crypto/verify.cs` | `FromHexString` → `FromBase64String`, error message updated |
-| `PLang/Runtime2/Engine/Cache/this.cs` | Add `TryAddAsync` to `ICache` interface — atomic add-if-not-exists for nonce replay prevention |
-| `PLang/Runtime2/Engine/Cache/MemoryStepCache.cs` | Implement `TryAddAsync` via `MemoryCache.AddOrGetExisting` (atomic) |
+| `PLang/App/Engine/Providers/this.cs` | Upgrade to `ConcurrentDictionary<Type, ConcurrentDictionary<string, IProvider>>` named provider registry. Provider owns `Name` and `IsDefault`. Registry enforces default constraint via `SetDefault<T>(name)`. Error on duplicate name (`"ProviderExists"`), error on removing default (`"CannotRemoveDefault"`) |
+| `PLang/App/Engine/Memory/Data.Envelope.cs` | Change `Signature` from `byte[]?` to `SignedData?`. Remove `Verified` property and `SetVerified()` method — verification state moves to `SignedData.Verified` |
+| `PLang/App/modules/identity/create.cs` | Delegate key generation to `IKeyProvider` (default or named via optional provider param) |
+| `PLang/App/modules/identity/KeyGenerator.cs` | Remove (moved to Ed25519Provider) |
+| `PLang/App/modules/crypto/providers/ICryptoProvider.cs` | Extend `IProvider` (adds `Name` and `IsDefault` properties) |
+| `PLang/App/modules/crypto/types.cs` | `HashedData.Hash` doc: hex → base64. `HashedData.Type` = `"hash"` |
+| `PLang/App/modules/crypto/hash.cs` | `FormatHash`: `ToHexString` → `ToBase64String` |
+| `PLang/App/modules/crypto/verify.cs` | `FromHexString` → `FromBase64String`, error message updated |
+| `PLang/App/Engine/Cache/this.cs` | Add `TryAddAsync` to `ICache` interface — atomic add-if-not-exists for nonce replay prevention |
+| `PLang/App/Engine/Cache/MemoryStepCache.cs` | Implement `TryAddAsync` via `MemoryCache.AddOrGetExisting` (atomic) |
 
 **Not modified:** `modules/library/load.cs` — stays focused on compiled action handlers. Provider discovery is in the new `provider/load` module.
 

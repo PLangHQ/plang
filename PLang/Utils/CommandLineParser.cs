@@ -111,7 +111,7 @@ public class CommandLineParser
 				value = ParseValue(rawValue);
 			}
 
-			// System params (--key) get ! prefix for MemoryStack storage
+			// System params (--key) get ! prefix for Variables storage
 			var storageKey = isSystem ? "!" + key : key;
 			Parameters[storageKey] = value;
 		}

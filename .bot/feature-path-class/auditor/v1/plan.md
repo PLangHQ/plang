@@ -10,19 +10,19 @@ Review the Path class implementation (coder v1-v5) for:
 
 ## Files to Review
 
-- `PLang/Runtime2/Engine/Memory/Path.cs` — the core new type
-- `PLang/Runtime2/actions/file/*.cs` — all 7 handler files
-- `PLang.Tests/Runtime2/Modules/Path/PathTests.cs` — Path unit tests
-- `PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs` — handler integration tests
-- `PLang/Runtime2/GlobalUsings.cs` — alias registration
-- `PLang/Runtime2/Engine/Utility/TypeMapping.cs` — type mapping
+- `PLang/App/Engine/Memory/Path.cs` — the core new type
+- `PLang/App/actions/file/*.cs` — all 7 handler files
+- `PLang.Tests/App/Modules/Path/PathTests.cs` — Path unit tests
+- `PLang.Tests/App/Modules/file/FileHandlerTests.cs` — handler integration tests
+- `PLang/App/GlobalUsings.cs` — alias registration
+- `PLang/App/Engine/Utility/TypeMapping.cs` — type mapping
 
 ## Cross-references
 
 - `PLang.Generators/LazyParamsGenerator.cs` — source generator detection
-- `PLang/Runtime2/actions/file/types.cs` — @file type
-- `PLang/Runtime2/Engine/Errors/ServiceError.cs` — error contracts
-- `PLang/Runtime2/Engine/Memory/Data.cs` — Data.Ok/FromError
+- `PLang/App/actions/file/types.cs` — @file type
+- `PLang/App/Engine/Errors/ServiceError.cs` — error contracts
+- `PLang/App/Engine/Memory/Data.cs` — Data.Ok/FromError
 - `PLang/SafeFileSystem/PLangFileSystem.cs` — RootDirectory behavior
 
 ## Deliverables

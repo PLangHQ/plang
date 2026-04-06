@@ -25,8 +25,8 @@ Coder v6 is complete. Auditor: PASS. Tester: APPROVED. Security: PASS. All 1649 
 
 ## Plan
 
-1. Update `Documentation/Runtime2/modules.md` — add identity module to the built-in handlers table with all 8 actions
-2. Update `Documentation/Runtime2/good_to_know.md` — add [Sensitive] attribute pattern, IdentityData lazy resolution, %MyIdentity% DynamicData pattern
-3. Update `Documentation/Runtime2/README.md` — add identity/ to file tree, add SensitivePropertyFilter to Serializers section
+1. Update `Documentation/App/modules.md` — add identity module to the built-in handlers table with all 8 actions
+2. Update `Documentation/App/good_to_know.md` — add [Sensitive] attribute pattern, IdentityData lazy resolution, %MyIdentity% DynamicData pattern
+3. Update `Documentation/App/README.md` — add identity/ to file tree, add SensitivePropertyFilter to Serializers section
 4. Write `v6/result.md` with CHANGELOG-style entry for user-visible changes
 5. Write reports and verdict

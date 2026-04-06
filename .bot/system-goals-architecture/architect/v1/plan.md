@@ -1,7 +1,7 @@
 # Plan: Revise Everything is Data Proposal
 
 ## Goal
-Rewrite `Documentation/Runtime2/proposals/everything_is_data.md` to reflect the refined design from the architecture conversation. The original proposal had several ideas that were discussed and either refined or rejected.
+Rewrite `Documentation/App/proposals/everything_is_data.md` to reflect the refined design from the architecture conversation. The original proposal had several ideas that were discussed and either refined or rejected.
 
 ## Key Design Decisions (from conversation)
 
@@ -35,4 +35,4 @@ Rewrite `Documentation/Runtime2/proposals/everything_is_data.md` to reflect the 
 - Risks and considerations (updated)
 
 ## Deliverable
-Single file: `Documentation/Runtime2/proposals/everything_is_data.md` (replacement of current content)
+Single file: `Documentation/App/proposals/everything_is_data.md` (replacement of current content)

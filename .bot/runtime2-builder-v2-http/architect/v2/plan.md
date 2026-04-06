@@ -18,7 +18,7 @@ Add `Defaults` to `Action`. The builder fills it at build time by reflecting on 
 
 ### 1. Action: add `Defaults` property
 
-**File:** `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/this.cs`
+**File:** `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/this.cs`
 
 ```csharp
 [Store, Debug, Default]
@@ -34,7 +34,7 @@ No `[LlmBuilder]` — the LLM never sees or writes defaults. Same `List<Data>` s
 Add `__defaults` field alongside `__parameters`:
 
 ```csharp
-private List<PLang.Runtime2.Engine.Memory.Data>? __defaults;
+private List<App.Engine.Variables.Data>? __defaults;
 ```
 
 Wire it in `CodeGeneratedExecuteAsync` — the engine passes defaults from the action:
@@ -98,7 +98,7 @@ __Resolve (parameters → defaults) ?? [Default] attribute value
 
 ### 3. Engine: pass defaults through
 
-**File:** `PLang/Runtime2/Engine/this.cs`
+**File:** `PLang/App/Engine/this.cs`
 
 Update `RunAction` to pass empty defaults (no `.pr` = no build-time defaults):
 
@@ -120,10 +120,10 @@ await codeGenerated.CodeGeneratedExecuteAsync(action.Parameters, engine, context
 
 ### 4. Configure actions: `IConfigure<TConfig>`
 
-**File:** `PLang/Runtime2/modules/IConfigure.cs` (new)
+**File:** `PLang/App/modules/IConfigure.cs` (new)
 
 ```csharp
-namespace PLang.Runtime2.modules;
+namespace App.modules;
 
 /// <summary>
 /// Marks a configure action and links it to its IConfig class.
@@ -133,7 +133,7 @@ namespace PLang.Runtime2.modules;
 public interface IConfigure<TConfig> where TConfig : Engine.Settings.IConfig, new() { }
 ```
 
-**File:** `PLang/Runtime2/modules/http/configure.cs` (update)
+**File:** `PLang/App/modules/http/configure.cs` (update)
 
 ```csharp
 [Action("configure", Cacheable = false)]
@@ -244,7 +244,7 @@ private static void FillFromConfigInstance(ActionData action, Type configType, H
 
 ### 6. GoalMapper: map defaults from .pr
 
-**File:** `PLang/Runtime2/Engine/Utility/GoalMapper.cs`
+**File:** `PLang/App/Engine/Utility/GoalMapper.cs`
 
 When creating `Action` from `.pr` JSON, map the `defaults` array:
 
@@ -287,13 +287,13 @@ Defaults = MapParameters(prAction.Defaults),  // same shape as Parameters
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/this.cs` | Add `Defaults` property |
-| `PLang/Runtime2/modules/ICodeGenerated.cs` | Add `defaults` parameter |
-| `PLang/Runtime2/modules/IConfigure.cs` | New — `IConfigure<TConfig>` interface |
-| `PLang/Runtime2/modules/http/configure.cs` | Implement `IConfigure<Config>` |
+| `PLang/App/Engine/Goals/Goal/Steps/Step/Actions/Action/this.cs` | Add `Defaults` property |
+| `PLang/App/modules/ICodeGenerated.cs` | Add `defaults` parameter |
+| `PLang/App/modules/IConfigure.cs` | New — `IConfigure<TConfig>` interface |
+| `PLang/App/modules/http/configure.cs` | Implement `IConfigure<Config>` |
 | `PLang.Generators/LazyParamsGenerator.cs` | 3-tier resolution: `__defaults` field, update `__Resolve`, `__HasParam`, `CodeGeneratedExecuteAsync` |
-| `PLang/Runtime2/Engine/this.cs` | Pass `defaults: null` in `RunAction` |
-| `PLang/Runtime2/Engine/Utility/GoalMapper.cs` | Map `defaults` from `.pr` |
+| `PLang/App/Engine/this.cs` | Pass `defaults: null` in `RunAction` |
+| `PLang/App/Engine/Utility/GoalMapper.cs` | Map `defaults` from `.pr` |
 | `PLang/Modules/PlangModule/Program.cs` | `FillDefaults` in `ValidateActions` |
 
 ## Definition of Done

@@ -16,7 +16,7 @@ The builder's own `.pr` file still contains `"retryOverSeconds"` in the JSON sch
 
 ### Finding 2: OK (non-blocking) — Stale docs
 
-`Documentation/Runtime2/pr-file-format.md` still references `RetryOverSeconds` in one place. Non-blocking, docs bot can handle.
+`Documentation/App/pr-file-format.md` still references `RetryOverSeconds` in one place. Non-blocking, docs bot can handle.
 
 ### Finding 3: NEEDS WORK — PLang retry tests don't verify retry behavior
 

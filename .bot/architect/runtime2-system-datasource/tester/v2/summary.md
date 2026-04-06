@@ -15,14 +15,14 @@ The test runner's assertion tracking mechanism is fundamentally broken:
 1. `TrackAssertionFailures` is registered on the `AfterStep` event
 2. But `Step.RunAsync` (line 74) returns immediately on ANY failure, **skipping the AfterStep event entirely**
 3. The test runner's fallback (line 146) explicitly excludes `AssertionError` from error detection
-4. Result: `__stepResult` is never stored in MemoryStack, and the AfterStep event never fires for failed steps
+4. Result: `__stepResult` is never stored in Variables, and the AfterStep event never fires for failed steps
 
 **Proof**: Running `Settings/SetMaxGzipSize/Start.test.goal` manually produces `Error(400) — AssertionFailed: Expected: 20971520, Actual: (null)`. But the test runner reports PASS.
 
 **Impact**: ALL 22 PLang tests could have failing assertions and we wouldn't know. This is a systemic false-green factory.
 
 ### F2: Settings PLang Test is a False Green
-`Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal` has a `.pr` file that maps to:
+`Tests/App/Settings/SetMaxGzipSize/Start.test.goal` has a `.pr` file that maps to:
 - Step 0: `variable.set` (not `settings.set`)
 - Step 1: `variable.get` (not `settings.get`)
 - Variable names don't match between steps: sets `max gzip size`, gets `archive.max`
@@ -38,7 +38,7 @@ The `settings.set`, `settings.get`, and `settings.remove` action handlers have n
 `SettingsData.GetChild` lines 54-55 (`if (!result.Success) return result;`) — when the DataSource returns an error (database locked, disk error), this path executes. No test covers it.
 
 ## Minor Findings
-- F5: MemoryStack.Clone shares SettingsData by reference; Context setter mutates original's SettingsData.Context
+- F5: Variables.Clone shares SettingsData by reference; Context setter mutates original's SettingsData.Context
 - F6: DeserializeValue doesn't catch InvalidOperationException from depth overflow
 - F7: GetAll with empty table not tested
 - F8: Test cleanup uses bare catch

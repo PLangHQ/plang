@@ -43,14 +43,14 @@ private static object? DeserializeValue(string json)
 
 ## Files reviewed
 
-- `PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs` — InMemory factory, sentinel, CRUD, DeserializeValue
-- `PLang/Runtime2/Engine/DataSource/SettingsData.cs` — GetChild override, depth propagation
-- `PLang/Runtime2/Engine/DataSource/IDataSource.cs` — interface contract
-- `PLang/Runtime2/Engine/Build/this.cs` — Building mode controller
-- `PLang/Runtime2/Engine/Context/Actor.cs` — CreateDataSource routing
-- `PLang/Runtime2/Engine/this.cs` — Building property, actor lazy init
-- `PLang/Runtime2/Engine/Errors/DataSourceError.cs`, `AskError.cs` — error types
-- `PLang/Runtime2/actions/settings/get.cs`, `set.cs`, `remove.cs` — settings handlers
-- `PLang/Runtime2/Engine/Memory/Data.cs` — UnwrapJsonElement depth guard
-- `PLang/Runtime2/Engine/Memory/Data.Navigation.cs` — GetChild depth guard
-- `PLang/Runtime2/Engine/Memory/MemoryStack.cs` — Clone, SettingsData preservation
+- `PLang/App/Engine/DataSource/SqliteDataSource.cs` — InMemory factory, sentinel, CRUD, DeserializeValue
+- `PLang/App/Engine/DataSource/SettingsData.cs` — GetChild override, depth propagation
+- `PLang/App/Engine/DataSource/IDataSource.cs` — interface contract
+- `PLang/App/Engine/Build/this.cs` — Building mode controller
+- `PLang/App/Engine/Context/Actor.cs` — CreateDataSource routing
+- `PLang/App/Engine/this.cs` — Building property, actor lazy init
+- `PLang/App/Engine/Errors/DataSourceError.cs`, `AskError.cs` — error types
+- `PLang/App/actions/settings/get.cs`, `set.cs`, `remove.cs` — settings handlers
+- `PLang/App/Engine/Memory/Data.cs` — UnwrapJsonElement depth guard
+- `PLang/App/Engine/Memory/Data.Navigation.cs` — GetChild depth guard
+- `PLang/App/Engine/Memory/Variables.cs` — Clone, SettingsData preservation

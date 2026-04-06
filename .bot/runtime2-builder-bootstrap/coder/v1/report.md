@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make the PLang v2 builder self-hosting. The builder is written in PLang (`.goal` files in `/system/builder/`). These files are proven working — they were built and tested with the v1 builder. Now we need Runtime2 to be able to run them.
+Make the PLang v2 builder self-hosting. The builder is written in PLang (`.goal` files in `/system/builder/`). These files are proven working — they were built and tested with the v1 builder. Now we need App to be able to run them.
 
 There are **3 gaps** in the runtime that block this. Once fixed, we can hand-craft `.pr` files for the builder, and it will be able to build itself and all other PLang code.
 
@@ -10,11 +10,11 @@ There are **3 gaps** in the runtime that block this. Once fixed, we can hand-cra
 
 ## Gap 1: `variable.set` needs `AsDefault` property
 
-**File:** `PLang/Runtime2/modules/variable/set.cs`
+**File:** `PLang/App/modules/variable/set.cs`
 
 **Problem:** PLang has `set default %path% = "."` which means "set this variable only if it hasn't been set already" (e.g., by goal parameters from the caller). The current `variable.set` action has no way to express this.
 
-**Solution:** Add an optional `AsDefault` property (bool, default false). When true, check `Context.MemoryStack.Get(Name)` first — if it returns a non-null Data with `IsInitialized == true`, skip the set and return the existing value.
+**Solution:** Add an optional `AsDefault` property (bool, default false). When true, check `Context.Variables.Get(Name)` first — if it returns a non-null Data with `IsInitialized == true`, skip the set and return the existing value.
 
 ```csharp
 [Action("set", Cacheable = false)]
@@ -31,14 +31,14 @@ public partial class Set : IContext
     {
         if (AsDefault)
         {
-            var existing = Context.MemoryStack.Get(Name);
+            var existing = Context.Variables.Get(Name);
             if (existing != null && existing.IsInitialized)
                 return Task.FromResult(existing);
         }
 
-        Context.MemoryStack.Set(Name, Value,
-            Type != null ? PLang.Runtime2.Engine.Memory.Type.FromName(Type) : null);
-        return Task.FromResult(Context.MemoryStack.Get(Name) ?? Data.Ok());
+        Context.Variables.Set(Name, Value,
+            Type != null ? App.Engine.Variables.Type.FromName(Type) : null);
+        return Task.FromResult(Context.Variables.Get(Name) ?? Data.Ok());
     }
 }
 ```
@@ -52,13 +52,13 @@ public partial class Set : IContext
 
 ## Gap 2: `file.read` needs `ResolveVariables` property
 
-**File:** `PLang/Runtime2/modules/file/read.cs`
+**File:** `PLang/App/modules/file/read.cs`
 
 **Problem:** PLang has `read file "llm/BuildGoal.llm", load vars, write to %buildGoalPrompt%`. The `load vars` modifier means: after reading the file content, resolve any `%variable%` references in it using the current memory stack. The current `file.read` action just returns raw content.
 
-**Solution:** Add an optional `ResolveVariables` property (bool, default false). When true, call `Context.MemoryStack.Resolve(content)` on the string result before returning.
+**Solution:** Add an optional `ResolveVariables` property (bool, default false). When true, call `Context.Variables.Resolve(content)` on the string result before returning.
 
-`MemoryStack.Resolve(string)` already exists at `PLang/Runtime2/Engine/Memory/MemoryStack.cs:143` — it does regex replacement of `%var%` patterns.
+`Variables.Resolve(string)` already exists at `PLang/App/Engine/Memory/Variables.cs:143` — it does regex replacement of `%var%` patterns.
 
 ```csharp
 [Action("read")]
@@ -77,7 +77,7 @@ public partial class Read : IContext
         var result = Files.Read(this);
         if (ResolveVariables && result.Success && result.Value is string content)
         {
-            var resolved = Context.MemoryStack.Resolve(content);
+            var resolved = Context.Variables.Resolve(content);
             return Task.FromResult(new Data(result.Name, resolved, result.Type));
         }
         return Task.FromResult(result);
@@ -94,7 +94,7 @@ public partial class Read : IContext
 
 ## Gap 3: `TypeMapping.ConvertTo` — auto-wrap single value into `List<T>`
 
-**File:** `PLang/Runtime2/Engine/Utility/TypeMapping.cs`
+**File:** `PLang/App/Engine/Utility/TypeMapping.cs`
 
 **Problem:** In PLang, a single object is just a list of 1. When an action parameter expects `List<T>` (e.g., `goals.save` expects `List<Goal>`) but receives a single `T`, the runtime should auto-wrap it. Currently `ConvertTo` doesn't handle this case, so passing a single Goal to `goals.save` would fail.
 
@@ -140,19 +140,19 @@ if (targetType.IsGenericType)
 
 | # | File | Change |
 |---|------|--------|
-| 1 | `PLang/Runtime2/modules/variable/set.cs` | Add `AsDefault` property + conditional logic |
-| 2 | `PLang/Runtime2/modules/file/read.cs` | Add `ResolveVariables` property + resolve after read |
-| 3 | `PLang/Runtime2/Engine/Utility/TypeMapping.cs` | Add single→list auto-wrap in `ConvertTo` |
+| 1 | `PLang/App/modules/variable/set.cs` | Add `AsDefault` property + conditional logic |
+| 2 | `PLang/App/modules/file/read.cs` | Add `ResolveVariables` property + resolve after read |
+| 3 | `PLang/App/Engine/Utility/TypeMapping.cs` | Add single→list auto-wrap in `ConvertTo` |
 
 ## Files for reference (read-only)
 
-- `PLang/Runtime2/Engine/Memory/MemoryStack.cs` — has `Resolve(string)` method (line 143)
+- `PLang/App/Engine/Memory/Variables.cs` — has `Resolve(string)` method (line 143)
 - `PLang.Generators/LazyParamsGenerator.cs` — source generator, generates `__Resolve<T>` which uses `TypeMapping.ConvertTo`
-- `PLang/Runtime2/modules/builder/goalsSave.cs` — example of `List<Goal>` parameter that needs auto-wrap
+- `PLang/App/modules/builder/goalsSave.cs` — example of `List<Goal>` parameter that needs auto-wrap
 
 ## What comes after
 
-Once these 3 gaps are fixed, we hand-craft the `.pr` files for the builder goals (`/system/Build.goal`, `/system/builder/Build.goal`, `BuildGoal.goal`, `BuildStep.goal`, `ApplyStep.goal`). Then the builder can run on Runtime2 and build itself + all other PLang code.
+Once these 3 gaps are fixed, we hand-craft the `.pr` files for the builder goals (`/system/Build.goal`, `/system/builder/Build.goal`, `BuildGoal.goal`, `BuildStep.goal`, `ApplyStep.goal`). Then the builder can run on App and build itself + all other PLang code.
 
 ## Branch
 

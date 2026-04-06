@@ -36,7 +36,7 @@ Create 6 new test suites. Each tests one specific error-handling or caching beha
 - `Retry.test.goal`: `throw error "...", on error retry 2 times, ignore`
 - `Cache.test.goal`: `save → read with cache → change file → read again → assert stale value`
 
-#### Test 1: `Tests/Runtime2/ErrorCall/ErrorCall.test.goal`
+#### Test 1: `Tests/App/ErrorCall/ErrorCall.test.goal`
 Tests: `on error call GoalName` — error goal receives control.
 
 ```plang
@@ -46,13 +46,13 @@ ErrorCall
 - assert %errorHandled% is true, "error goal should have set errorHandled to true"
 ```
 
-Supporting: `Tests/Runtime2/ErrorCall/HandleTestError.goal`
+Supporting: `Tests/App/ErrorCall/HandleTestError.goal`
 ```plang
 HandleTestError
 - set %errorHandled% = true
 ```
 
-#### Test 2: `Tests/Runtime2/ErrorChain/ErrorChain.test.goal`
+#### Test 2: `Tests/App/ErrorChain/ErrorChain.test.goal`
 Tests: error propagation through chained goal calls with onError at different levels.
 
 ```plang
@@ -61,25 +61,25 @@ ErrorChain
 - assert %chainCaught% is true, "outer on error should catch inner throw"
 ```
 
-Supporting: `Tests/Runtime2/ErrorChain/MiddleGoal.goal`
+Supporting: `Tests/App/ErrorChain/MiddleGoal.goal`
 ```plang
 MiddleGoal
 - call InnerGoal
 ```
 
-Supporting: `Tests/Runtime2/ErrorChain/InnerGoal.goal`
+Supporting: `Tests/App/ErrorChain/InnerGoal.goal`
 ```plang
 InnerGoal
 - throw error "inner failure"
 ```
 
-Supporting: `Tests/Runtime2/ErrorChain/ChainCatcher.goal`
+Supporting: `Tests/App/ErrorChain/ChainCatcher.goal`
 ```plang
 ChainCatcher
 - set %chainCaught% = true
 ```
 
-#### Test 3: `Tests/Runtime2/ErrorProps/ErrorProps.test.goal`
+#### Test 3: `Tests/App/ErrorProps/ErrorProps.test.goal`
 Tests: error goal can access error properties (`%__Error%` or however error context is passed).
 
 ```plang
@@ -88,7 +88,7 @@ ErrorProps
 - assert %errorMessage% is not null, "error goal should capture error message"
 ```
 
-Supporting: `Tests/Runtime2/ErrorProps/InspectError.goal`
+Supporting: `Tests/App/ErrorProps/InspectError.goal`
 ```plang
 InspectError
 - set %errorMessage% = %__Error.Message%
@@ -96,7 +96,7 @@ InspectError
 
 **Note to coder:** Check how the runtime passes error context to the error handler goal. Look at `Step/Methods.cs` for the error handling flow — there may be `%__Error%` or a different variable name. Read the actual code to get the right variable name. If error context isn't passed to the handler goal yet, this test documents that gap.
 
-#### Test 4: `Tests/Runtime2/ErrorTypes/ErrorTypes.test.goal`
+#### Test 4: `Tests/App/ErrorTypes/ErrorTypes.test.goal`
 Tests: different error modifier combinations in one goal.
 
 ```plang
@@ -114,13 +114,13 @@ ErrorTypes
 - assert %afterRetryIgnore% is true, "should continue after retry exhaustion + ignore"
 ```
 
-Supporting: `Tests/Runtime2/ErrorTypes/TypesCatcher.goal`
+Supporting: `Tests/App/ErrorTypes/TypesCatcher.goal`
 ```plang
 TypesCatcher
 - set %typesCaught% = true
 ```
 
-#### Test 5: `Tests/Runtime2/ErrorInHandler/ErrorInHandler.test.goal`
+#### Test 5: `Tests/App/ErrorInHandler/ErrorInHandler.test.goal`
 Tests: what happens when the error handler goal itself throws.
 
 ```plang
@@ -129,7 +129,7 @@ ErrorInHandler
 - set %reachedEnd% = true
 ```
 
-Supporting: `Tests/Runtime2/ErrorInHandler/ThrowingHandler.goal`
+Supporting: `Tests/App/ErrorInHandler/ThrowingHandler.goal`
 ```plang
 ThrowingHandler
 - throw error "handler also failed"
@@ -137,7 +137,7 @@ ThrowingHandler
 
 **Note to coder:** This test documents current behavior. The outcome depends on how the runtime handles errors in error handlers. Either `%reachedEnd%` is set (error swallowed) or the test fails with an unhandled error. Run it, see what happens, then write the correct assertion. The point is to document the behavior, not to prescribe it.
 
-#### Test 6: `Tests/Runtime2/CacheDynamicKey/CacheDynamicKey.test.goal`
+#### Test 6: `Tests/App/CacheDynamicKey/CacheDynamicKey.test.goal`
 Tests: cache returns stale data when content changes — asserts the STALE value intentionally.
 
 ```plang
@@ -160,7 +160,7 @@ CacheDynamicKey
 
 For each test:
 
-1. `cd Tests/Runtime2/ErrorCall && plang p build` (repeat for each test dir)
+1. `cd Tests/App/ErrorCall && plang p build` (repeat for each test dir)
 2. **Read the .pr file** — verify:
    - Steps with error modifiers have `onError` property
    - CacheDynamicKey assertion says `"content1"` not `"content2"`
@@ -174,9 +174,9 @@ For each test:
 
 ### 4. Process: build from root
 
-Actually, build everything from the Tests/Runtime2 root:
+Actually, build everything from the Tests/App root:
 ```
-cd Tests/Runtime2
+cd Tests/App
 plang p build
 ```
 This builds all .goal files including the new ones. Then verify each new .pr file individually.
@@ -185,19 +185,19 @@ This builds all .goal files including the new ones. Then verify each new .pr fil
 
 | # | File | What it is |
 |---|------|-----------|
-| 1 | `Tests/Runtime2/ErrorCall/ErrorCall.test.goal` | Test: on error call GoalName |
-| 2 | `Tests/Runtime2/ErrorCall/HandleTestError.goal` | Handler: sets flag |
-| 3 | `Tests/Runtime2/ErrorChain/ErrorChain.test.goal` | Test: error propagates through goal chain |
-| 4 | `Tests/Runtime2/ErrorChain/MiddleGoal.goal` | Calls InnerGoal |
-| 5 | `Tests/Runtime2/ErrorChain/InnerGoal.goal` | Throws error |
-| 6 | `Tests/Runtime2/ErrorChain/ChainCatcher.goal` | Handler: sets flag |
-| 7 | `Tests/Runtime2/ErrorProps/ErrorProps.test.goal` | Test: error goal accesses error properties |
-| 8 | `Tests/Runtime2/ErrorProps/InspectError.goal` | Handler: captures error message |
-| 9 | `Tests/Runtime2/ErrorTypes/ErrorTypes.test.goal` | Test: ignore + call + retry in one goal |
-| 10 | `Tests/Runtime2/ErrorTypes/TypesCatcher.goal` | Handler: sets flag |
-| 11 | `Tests/Runtime2/ErrorInHandler/ErrorInHandler.test.goal` | Test: error handler throws |
-| 12 | `Tests/Runtime2/ErrorInHandler/ThrowingHandler.goal` | Handler: throws error |
-| 13 | `Tests/Runtime2/CacheDynamicKey/CacheDynamicKey.test.goal` | Test: cache returns stale data |
+| 1 | `Tests/App/ErrorCall/ErrorCall.test.goal` | Test: on error call GoalName |
+| 2 | `Tests/App/ErrorCall/HandleTestError.goal` | Handler: sets flag |
+| 3 | `Tests/App/ErrorChain/ErrorChain.test.goal` | Test: error propagates through goal chain |
+| 4 | `Tests/App/ErrorChain/MiddleGoal.goal` | Calls InnerGoal |
+| 5 | `Tests/App/ErrorChain/InnerGoal.goal` | Throws error |
+| 6 | `Tests/App/ErrorChain/ChainCatcher.goal` | Handler: sets flag |
+| 7 | `Tests/App/ErrorProps/ErrorProps.test.goal` | Test: error goal accesses error properties |
+| 8 | `Tests/App/ErrorProps/InspectError.goal` | Handler: captures error message |
+| 9 | `Tests/App/ErrorTypes/ErrorTypes.test.goal` | Test: ignore + call + retry in one goal |
+| 10 | `Tests/App/ErrorTypes/TypesCatcher.goal` | Handler: sets flag |
+| 11 | `Tests/App/ErrorInHandler/ErrorInHandler.test.goal` | Test: error handler throws |
+| 12 | `Tests/App/ErrorInHandler/ThrowingHandler.goal` | Handler: throws error |
+| 13 | `Tests/App/CacheDynamicKey/CacheDynamicKey.test.goal` | Test: cache returns stale data |
 
 ## Files to modify
 

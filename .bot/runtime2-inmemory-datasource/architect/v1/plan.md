@@ -13,7 +13,7 @@ The in-memory DB must stay alive across operations (so CREATE TABLE in step 1 is
 
 ### 1. `SqliteDataSource` — add in-memory construction path
 
-**File:** `PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs`
+**File:** `PLang/App/Engine/DataSource/SqliteDataSource.cs`
 
 Add a static factory method and private constructor for in-memory mode:
 
@@ -39,12 +39,12 @@ Lifecycle: sentinel lives as long as DataSource → DataSource lives as long as 
 
 ### 2. `Engine.Building` — new object on Engine
 
-**New file:** `PLang/Runtime2/Engine/Build/this.cs`
+**New file:** `PLang/App/Engine/Build/this.cs`
 
-Follow the exact pattern of `PLang/Runtime2/Engine/Test/this.cs` and `PLang/Runtime2/Engine/Debug/this.cs`:
+Follow the exact pattern of `PLang/App/Engine/Test/this.cs` and `PLang/App/Engine/Debug/this.cs`:
 
 ```csharp
-namespace PLang.Runtime2.Engine.Build;
+namespace App.Engine.Build;
 
 public sealed class @this
 {
@@ -61,18 +61,18 @@ public sealed class @this
 
 Minimal for now — just `IsEnabled`. The runtime2 builder will add more properties later. The `_engine` back-reference follows the same pattern as Debug and Test.
 
-**Wire into Engine (`PLang/Runtime2/Engine/this.cs`):**
+**Wire into Engine (`PLang/App/Engine/this.cs`):**
 - Add property: `public Building Building { get; }`
 - In constructor: `Building = new Building(this);`
 
-**Add global alias (`PLang/Runtime2/GlobalUsings.cs`):**
+**Add global alias (`PLang/App/GlobalUsings.cs`):**
 ```csharp
-global using Building = PLang.Runtime2.Engine.Build.@this;
+global using Building = App.Engine.Build.@this;
 ```
 
 ### 3. `Actor.CreateDataSource()` — navigate and decide
 
-**File:** `PLang/Runtime2/Engine/Context/Actor.cs`
+**File:** `PLang/App/Engine/Context/Actor.cs`
 
 Change `CreateDataSource()` to check Engine context:
 
@@ -93,8 +93,8 @@ Actor navigates to Engine to read context that already exists (Testing, Building
 ### 4. Update existing tests
 
 **Files:**
-- `PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs`
-- `PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs`
+- `PLang.Tests/App/Modules/datasource/DataSourceTests.cs`
+- `PLang.Tests/App/Modules/settings/SettingsDataTests.cs`
 
 These currently create temp directories and real SQLite files. After this change, when tests set `engine.Testing.IsEnabled = true`, the Actor will automatically use in-memory datasources. The tests should:
 - Set `engine.Testing.IsEnabled = true` in setup
@@ -105,7 +105,7 @@ Review each test to determine the right approach — some may intentionally test
 
 ### 5. Add in-memory DataSource tests
 
-**File:** `PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs` (extend existing)
+**File:** `PLang.Tests/App/Modules/datasource/DataSourceTests.cs` (extend existing)
 
 Add test cases that verify:
 - `SqliteDataSource.InMemory(name)` creates a working datasource
@@ -121,12 +121,12 @@ Add test cases that verify:
 
 | File | Change |
 |---|---|
-| `PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs` | Add `InMemory()` factory, sentinel field, in-memory constructor, update `Dispose()` |
-| `PLang/Runtime2/Engine/Build/this.cs` | **New file** — Building object with `IsEnabled` |
-| `PLang/Runtime2/Engine/this.cs` | Add `Building` property and constructor wiring |
-| `PLang/Runtime2/GlobalUsings.cs` | Add `Building` global alias |
-| `PLang/Runtime2/Engine/Context/Actor.cs` | Update `CreateDataSource()` to check Testing/Building |
-| `PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs` | Add in-memory tests, update existing if appropriate |
+| `PLang/App/Engine/DataSource/SqliteDataSource.cs` | Add `InMemory()` factory, sentinel field, in-memory constructor, update `Dispose()` |
+| `PLang/App/Engine/Build/this.cs` | **New file** — Building object with `IsEnabled` |
+| `PLang/App/Engine/this.cs` | Add `Building` property and constructor wiring |
+| `PLang/App/GlobalUsings.cs` | Add `Building` global alias |
+| `PLang/App/Engine/Context/Actor.cs` | Update `CreateDataSource()` to check Testing/Building |
+| `PLang.Tests/App/Modules/datasource/DataSourceTests.cs` | Add in-memory tests, update existing if appropriate |
 
 ## OBP compliance
 
@@ -138,5 +138,5 @@ Add test cases that verify:
 ## Out of scope
 
 - PLang test `.goal` files for in-memory datasource (add when the setup.goal execution system is implemented)
-- Runtime2 builder integration (the builder is still runtime1 — this prepares the property for when it migrates)
+- App builder integration (the builder is still runtime1 — this prepares the property for when it migrates)
 - C# unit test helpers/utilities (test authors use `SqliteDataSource.InMemory()` directly or set `Testing.IsEnabled`)

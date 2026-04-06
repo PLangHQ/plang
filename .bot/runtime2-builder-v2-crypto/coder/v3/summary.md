@@ -7,7 +7,7 @@ Handler save/remove error path tests — covers all 8 untested data-mutation err
 ## What was done
 
 ### File modified
-- `PLang.Tests/Runtime2/Modules/identity/IdentityErrorPathTests.cs` — added 8 tests, 1 new DataSource mock, strengthened 2 existing assertions
+- `PLang.Tests/App/Modules/identity/IdentityErrorPathTests.cs` — added 8 tests, 1 new DataSource mock, strengthened 2 existing assertions
 
 ### Tests added
 

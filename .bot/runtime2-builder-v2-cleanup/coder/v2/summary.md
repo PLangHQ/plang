@@ -1,7 +1,7 @@
 # v2 Summary: Module Cleanup & Data Pattern Consistency
 
 ## What this is
-Comprehensive cleanup of PLang Runtime2 modules, enforcing consistent patterns: Data as the universal type, [Provider] attribute for dependency injection, proper return types, and elimination of unnecessary wrapper types.
+Comprehensive cleanup of PLang App modules, enforcing consistent patterns: Data as the universal type, [Provider] attribute for dependency injection, proper return types, and elimination of unnecessary wrapper types.
 
 ## What was done
 
@@ -13,7 +13,7 @@ Comprehensive cleanup of PLang Runtime2 modules, enforcing consistent patterns: 
 
 ### [GoalCallback] Attribute + Streaming Refactor
 - New attribute marks GoalCall properties with their injected variable name
-- Streaming callbacks create a fresh GoalCall per chunk instead of mutating MemoryStack
+- Streaming callbacks create a fresh GoalCall per chunk instead of mutating Variables
 - Eliminated `ResolveCallbackVarName` and `varName` parameter threading
 - **Files**: `Attributes.cs`, `DefaultHttpProvider.cs`, HTTP action records
 
@@ -50,14 +50,14 @@ Comprehensive cleanup of PLang Runtime2 modules, enforcing consistent patterns: 
 - Added `module.remove` action
 
 ### Variable Module Simplification
-- `Get` returns Data from MemoryStack directly
+- `Get` returns Data from Variables directly
 - `Set` returns the Data it stored
 - `Exists` returns `Data.Ok(bool)`
 - Deleted `types.variable` wrapper record
 
 ### Step Runner: Condition-Only Child Skipping
 - Fixed `RunAsync_NonConditionStep_FalseValue_DoesNotSkip` — `variable.set` returning `Data` with `.Value=false` was triggering child-skipping. Added `IsConditionStep()` check so only `condition` module steps can skip indented children on false result.
-- **File**: `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs`
+- **File**: `PLang/App/Engine/Goals/Goal/Steps/this.cs`
 
 ## Code example — before/after pattern
 

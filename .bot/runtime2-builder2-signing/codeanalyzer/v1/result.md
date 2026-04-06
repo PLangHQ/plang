@@ -5,7 +5,7 @@ Post-coder-fix review (7 OBP violations already addressed).
 
 ---
 
-## PLang/Runtime2/Engine/Providers/IKeyProvider.cs
+## PLang/App/Engine/Providers/IKeyProvider.cs
 
 ### OBP Violations
 1. **Line 8: Behavior methods that throw instead of returning Data**
@@ -19,7 +19,7 @@ IKeyProvider breaks the "providers return Data, never throw" rule that applies t
 
 ---
 
-## PLang/Runtime2/Engine/Providers/Ed25519Provider.cs
+## PLang/App/Engine/Providers/Ed25519Provider.cs
 
 ### OBP Violations
 1. **Line 15: GenerateKeyPair throws instead of returning Data** — Consequence of the IKeyProvider interface issue. NSec's `Key.Create` and `Key.Export` can throw `CryptographicException`. Currently unhandled.
@@ -55,7 +55,7 @@ Must change when IKeyProvider changes.
 
 ---
 
-## PLang/Runtime2/Engine/Providers/this.cs (EngineProviders)
+## PLang/App/Engine/Providers/this.cs (EngineProviders)
 
 ### OBP Violations
 None.
@@ -80,7 +80,7 @@ Generic/non-generic duplication is the main simplification target.
 
 ---
 
-## PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs
+## PLang/App/Engine/Providers/DefaultIdentityProvider.cs
 
 ### OBP Violations
 None — the coder's fixes are correct.
@@ -116,7 +116,7 @@ Duplicated resolve pattern + bare catch.
 
 ---
 
-## PLang/Runtime2/modules/signing/SignedData.cs
+## PLang/App/modules/signing/SignedData.cs
 
 ### OBP Violations
 None — the coder's fixes (Sign takes IdentityVariable, ContractsMatch extracted) are correct.
@@ -145,56 +145,56 @@ VerifyAsync works correctly. The method length is the only actionable finding �
 
 ---
 
-## PLang/Runtime2/modules/signing/sign.cs
+## PLang/App/modules/signing/sign.cs
 
 ### Verdict: CLEAN
 Thin handler that delegates to SignedData.CreateAsync. Perfect OBP — handler doesn't own signing logic.
 
 ---
 
-## PLang/Runtime2/modules/signing/verify.cs
+## PLang/App/modules/signing/verify.cs
 
 ### Verdict: CLEAN
 Thin handler that delegates to SignedData.VerifyAsync. Signature null check is appropriate guard.
 
 ---
 
-## PLang/Runtime2/modules/crypto/hash.cs
+## PLang/App/modules/crypto/hash.cs
 
 ### Verdict: CLEAN
 Resolves provider, delegates hashing to provider, wraps result in HashedData. No issues.
 
 ---
 
-## PLang/Runtime2/modules/crypto/verify.cs
+## PLang/App/modules/crypto/verify.cs
 
 ### Verdict: CLEAN
 Validates inputs, resolves provider, delegates verification. No issues.
 
 ---
 
-## PLang/Runtime2/modules/crypto/types.cs (HashedData)
+## PLang/App/modules/crypto/types.cs (HashedData)
 
 ### Verdict: CLEAN
 Owns SerializeData and FormatHash. Static methods are appropriate here — HashedData is a result type, and these are factory-adjacent utilities.
 
 ---
 
-## PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs
+## PLang/App/modules/crypto/providers/DefaultProvider.cs
 
 ### Verdict: CLEAN
 Returns Data on all paths. Pattern-match dispatch for algorithms. No issues.
 
 ---
 
-## PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs
+## PLang/App/modules/crypto/providers/ICryptoProvider.cs
 
 ### Verdict: CLEAN
 Both Hash and Verify return Data. Consistent with the "providers return Data" rule.
 
 ---
 
-## PLang/Runtime2/modules/identity/IdentityData.cs
+## PLang/App/modules/identity/IdentityData.cs
 
 ### Readability
 1. **Line 14: `_resolved` is unclear** — The name tracks "have we attempted resolution?" but reads like "is the identity resolved successfully?" Consider `_loadAttempted` for clarity.
@@ -203,28 +203,28 @@ Both Hash and Verify return Data. Consistent with the "providers return Data" ru
 
 ---
 
-## PLang/Runtime2/modules/identity/get.cs, create.cs, list.cs, archive.cs, unarchive.cs, rename.cs, setDefault.cs, export.cs
+## PLang/App/modules/identity/get.cs, create.cs, list.cs, archive.cs, unarchive.cs, rename.cs, setDefault.cs, export.cs
 
 ### Verdict: CLEAN (all)
 All identity handlers follow the same pattern: resolve IIdentityProvider, delegate to provider method. No logic in handlers. Perfect OBP.
 
 ---
 
-## PLang/Runtime2/modules/identity/types.cs (IdentityVariable)
+## PLang/App/modules/identity/types.cs (IdentityVariable)
 
 ### Verdict: CLEAN
 Pure data class. [Sensitive] on PrivateKey. ToString returns PublicKey.
 
 ---
 
-## PLang/Runtime2/modules/provider/load.cs
+## PLang/App/modules/provider/load.cs
 
 ### Verdict: CLEAN
 Uses non-generic Register to avoid reflection. Properly discovers all IProvider interfaces on loaded types.
 
 ---
 
-## PLang/Runtime2/modules/provider/list.cs, remove.cs, setDefault.cs
+## PLang/App/modules/provider/list.cs, remove.cs, setDefault.cs
 
 ### Simplifications
 1. **Repeated pattern across all 3 files** — Each handler does:
@@ -240,7 +240,7 @@ Uses non-generic Register to avoid reflection. Properly discovers all IProvider 
 
 ---
 
-## PLang/Runtime2/Engine/this.cs
+## PLang/App/Engine/this.cs
 
 ### Readability
 1. **Lines 226-230: Provider registration block** — 4 lines of manual registration. Clear and intentional. No issue.
@@ -249,68 +249,68 @@ Uses non-generic Register to avoid reflection. Properly discovers all IProvider 
 
 ---
 
-## PLang/Runtime2/Engine/Context/Actor.cs
+## PLang/App/Engine/Context/Actor.cs
 
 ### Verdict: CLEAN
 DynamicData for %MyIdentity% correctly points to System.Identity.Value. SettingsVariable shared across all actors. Lazy DataSource creation with test/build isolation.
 
 ---
 
-## PLang/Runtime2/Engine/Memory/Data.Envelope.cs
+## PLang/App/Engine/Memory/Data.Envelope.cs
 
 ### Verdict: CLEAN
 Signature property correctly [JsonIgnore] + [Out]. SensitivePropertyFilter wired into _envelopeJsonOptions.
 
 ---
 
-## PLang/Runtime2/Engine/Cache/this.cs + MemoryStepCache.cs
+## PLang/App/Engine/Cache/this.cs + MemoryStepCache.cs
 
 ### Verdict: CLEAN
 TryAddAsync correctly implements atomic add-if-absent for nonce replay prevention.
 
 ---
 
-## PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs
+## PLang/App/Engine/Channels/Serializers/SensitivePropertyFilter.cs
 
 ### Verdict: CLEAN
 Correct backward iteration for property removal. Attribute check is properly null-safe.
 
 ---
 
-## PLang/Runtime2/Engine/View.cs
+## PLang/App/Engine/View.cs
 
 ### Verdict: CLEAN
 [Sensitive] attribute well-documented. Two-mode serialization design is sound.
 
 ---
 
-## PLang/Runtime2/modules/signing/Settings.cs
+## PLang/App/modules/signing/Settings.cs
 
 ### Verdict: CLEAN
 
 ---
 
-## PLang/Runtime2/Engine/Providers/KeyPair.cs
+## PLang/App/Engine/Providers/KeyPair.cs
 
 ### Verdict: CLEAN
 Simple record.
 
 ---
 
-## PLang/Runtime2/Engine/Providers/IProvider.cs
+## PLang/App/Engine/Providers/IProvider.cs
 
 ### Verdict: CLEAN
 
 ---
 
-## PLang/Runtime2/Engine/Providers/ISigningProvider.cs
+## PLang/App/Engine/Providers/ISigningProvider.cs
 
 ### Verdict: CLEAN
 Returns Data from both Sign and Verify.
 
 ---
 
-## PLang/Runtime2/Engine/Providers/IIdentityProvider.cs
+## PLang/App/Engine/Providers/IIdentityProvider.cs
 
 ### Verdict: CLEAN
 All methods return Data. Consistent.

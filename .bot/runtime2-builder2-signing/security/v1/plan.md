@@ -4,13 +4,13 @@
 Full security audit of the signing, crypto, identity, and provider modules added on this branch. Both blue team (defensive) and red team (offensive) analysis.
 
 ## Files in Scope
-- `PLang/Runtime2/modules/signing/` — sign.cs, verify.cs, SignedData.cs, Settings.cs
-- `PLang/Runtime2/modules/crypto/` — hash.cs, verify.cs, types.cs, providers/
-- `PLang/Runtime2/modules/identity/` — all handlers + types.cs, IdentityData.cs
-- `PLang/Runtime2/modules/provider/` — load.cs, list.cs, remove.cs, setDefault.cs
-- `PLang/Runtime2/Engine/Providers/` — Ed25519Provider, DefaultIdentityProvider, ISigningProvider, IKeyProvider, KeyPair, NamedProviderRegistry
-- `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` — Signature property
-- `PLang/Runtime2/Engine/Cache/` — nonce replay dependency
+- `PLang/App/modules/signing/` — sign.cs, verify.cs, SignedData.cs, Settings.cs
+- `PLang/App/modules/crypto/` — hash.cs, verify.cs, types.cs, providers/
+- `PLang/App/modules/identity/` — all handlers + types.cs, IdentityData.cs
+- `PLang/App/modules/provider/` — load.cs, list.cs, remove.cs, setDefault.cs
+- `PLang/App/Engine/Providers/` — Ed25519Provider, DefaultIdentityProvider, ISigningProvider, IKeyProvider, KeyPair, NamedProviderRegistry
+- `PLang/App/Engine/Memory/Data.Envelope.cs` — Signature property
+- `PLang/App/Engine/Cache/` — nonce replay dependency
 
 ## Approach
 1. **Blue team**: Map attack surface — what's exposed, trust boundaries, mitigations, gaps

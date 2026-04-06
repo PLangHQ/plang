@@ -6,21 +6,21 @@ Phase 1 only: Rename leaf types + build navigator registry. This is the lowest-r
 ## Phase 1 Tasks
 
 ### 1a. Rename PathData → Path : Data<Path>
-- `PLang/Runtime2/Engine/FileSystem/PathData.cs` → rename class to `Path`, keep in same file (or rename file)
+- `PLang/App/Engine/FileSystem/PathData.cs` → rename class to `Path`, keep in same file (or rename file)
 - Update `Data<T>` base: `PathData : Data` → `Path : Data<Path>`
 - Update all references across the codebase (GlobalUsings, imports, handlers)
 - Existing PathData properties (Exists, Size, Extension, etc.) stay as-is — they're own properties
 
 ### 1b. Rename IdentityData → Identity : Data<Identity>
-- `PLang/Runtime2/modules/identity/types.cs` — rename class
+- `PLang/App/modules/identity/types.cs` — rename class
 - Update all references
 
 ### 1c. Rename SettingsData → Settings : Data<Settings>
-- `PLang/Runtime2/Engine/Settings/SettingsData.cs` — rename class
+- `PLang/App/Engine/Settings/SettingsData.cs` — rename class
 - Update all references
 
 ### 1d. Build Navigator Registry
-- Create `PLang/Runtime2/Engine/Navigators/` directory
+- Create `PLang/App/Engine/Navigators/` directory
 - `INavigator` interface: `object? Navigate(Data data, string key)`
 - `NavigatorRegistry` on engine: `Dictionary<Type, INavigator>`, with `Get(Type)` and `Register<T>(INavigator)`
 - Built-in navigators:
@@ -49,5 +49,5 @@ Phase 1 only: Rename leaf types + build navigator registry. This is the lowest-r
 
 ## Build/Test
 - `dotnet build` after each rename to catch all references
-- Run `plang --test` from Tests/Runtime2 to verify 85+ tests still pass
+- Run `plang --test` from Tests/App to verify 85+ tests still pass
 - Any new failures = regression from rename, investigate immediately

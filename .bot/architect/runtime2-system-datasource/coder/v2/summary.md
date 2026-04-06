@@ -7,27 +7,27 @@ Addresses all findings from the code analyzer's v1 review of the DataSource + Se
 
 ### Code Fixes (3 files)
 
-**`PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs`**
+**`PLang/App/Engine/DataSource/SqliteDataSource.cs`**
 - `DeserializeValue`: bare `catch` → `catch (JsonException)` — no longer masks non-JSON errors
 - `EnableWalMode`: bare `catch` → `catch (SqliteException)` — consistency
 
-**`PLang/Runtime2/Engine/Memory/MemoryStack.cs`**
-- `Clone()` now preserves specialized `Data` subclasses (SettingsData, DynamicData) by reference instead of creating plain `Data` objects. This fixes the type-loss bug where cloning the System actor's MemoryStack would silently break Settings lazy-loading.
+**`PLang/App/Engine/Memory/Variables.cs`**
+- `Clone()` now preserves specialized `Data` subclasses (SettingsData, DynamicData) by reference instead of creating plain `Data` objects. This fixes the type-loss bug where cloning the System actor's Variables would silently break Settings lazy-loading.
 
-**`PLang/Runtime2/Engine/Context/Actor.cs`**
+**`PLang/App/Engine/Context/Actor.cs`**
 - `DataSource` property now uses `Lazy<IDataSource>` instead of `??=` for thread-safe lazy initialization. `DisposeAsync` checks `IsValueCreated` to avoid triggering creation during cleanup.
 
 ### Tests Added (14 new tests)
 
-**`PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs`** (+9 tests)
+**`PLang.Tests/App/Modules/datasource/DataSourceTests.cs`** (+9 tests)
 - SanitizeTableName: special chars stripped, underscores preserved, empty → "default_table", case normalization
 - ClassifyException: locked, disk error, corrupt, permission denied, unknown default
 
-**`PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs`** (+5 tests)
+**`PLang.Tests/App/Modules/settings/SettingsDataTests.cs`** (+5 tests)
 - Nested path navigation: `Settings.Config.SubKey` with JSON object value
-- MemoryStack.Clone preserves SettingsData (success + AskError paths)
-- Error propagation integration: MemoryStack.Get("Settings.MissingKey") returns AskError (simulates LazyParamsGenerator's `__Resolve<T>` call path)
-- Error propagation integration: MemoryStack.Get("Settings.ApiKey") returns success
+- Variables.Clone preserves SettingsData (success + AskError paths)
+- Error propagation integration: Variables.Get("Settings.MissingKey") returns AskError (simulates LazyParamsGenerator's `__Resolve<T>` call path)
+- Error propagation integration: Variables.Get("Settings.ApiKey") returns success
 
 ### Not changed
 - `__resolutionError` single-check pattern — design limitation, works correctly for Settings. Out of scope.
@@ -37,7 +37,7 @@ All 1460 C# tests pass (14 new, 0 failures).
 
 ## Code example
 
-**MemoryStack.Clone() fix** — the key pattern change:
+**Variables.Clone() fix** — the key pattern change:
 ```csharp
 // Before: always created plain Data, losing virtual GetChild override
 clone._variables[kvp.Key] = new Data(kvp.Value.Name, clonedValue, kvp.Value.Type);
@@ -56,7 +56,7 @@ else
 
 ## What the reviewer flagged and how it was fixed
 1. **Bare catch masks exceptions** → Narrowed to specific exception types
-2. **MemoryStack.Clone type loss** → Preserve subclasses by reference
+2. **Variables.Clone type loss** → Preserve subclasses by reference
 3. **Thread-unsafe lazy init** → `Lazy<T>`
 4. **Untested SanitizeTableName** → 4 tests including SQL injection attempt
 5. **Untested ClassifyException** → 5 tests covering all branches

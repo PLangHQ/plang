@@ -19,18 +19,18 @@ The test-designer delivered:
 ### Step 0: Restore identity module (revert destructive changes)
 
 Git-restore all deleted/gutted files from parent branch:
-- `PLang/Runtime2/modules/identity/*.cs` (all source files)
-- `PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs`
-- `PLang/Runtime2/Engine/View.cs` (restore `[Sensitive]` attribute)
-- `PLang/Runtime2/Engine/Context/Actor.cs` (restore Identity references)
-- `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` (restore SensitivePropertyFilter)
-- `PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs` (restore filter)
+- `PLang/App/modules/identity/*.cs` (all source files)
+- `PLang/App/Engine/Channels/Serializers/SensitivePropertyFilter.cs`
+- `PLang/App/Engine/View.cs` (restore `[Sensitive]` attribute)
+- `PLang/App/Engine/Context/Actor.cs` (restore Identity references)
+- `PLang/App/Engine/Memory/Data.Envelope.cs` (restore SensitivePropertyFilter)
+- `PLang/App/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs` (restore filter)
 - All identity test files (restore implementations)
 - Serialization test files (restore implementations)
 
 ### Step 1: Create provider interface
 
-**File:** `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs`
+**File:** `PLang/App/modules/crypto/providers/ICryptoProvider.cs`
 
 ```csharp
 public interface ICryptoProvider
@@ -42,7 +42,7 @@ public interface ICryptoProvider
 
 ### Step 2: Create DefaultProvider
 
-**File:** `PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs`
+**File:** `PLang/App/modules/crypto/providers/DefaultProvider.cs`
 
 Supports:
 - **keccak256** — via `Nethereum.Util.Sha3Keccack` (already a dependency)
@@ -53,7 +53,7 @@ Throws `NotSupportedException` for unknown algorithms.
 
 ### Step 3: Create HashedData type
 
-**File:** `PLang/Runtime2/modules/crypto/types.cs`
+**File:** `PLang/App/modules/crypto/types.cs`
 
 ```csharp
 public class HashedData
@@ -67,7 +67,7 @@ public class HashedData
 
 ### Step 4: Create hash action handler
 
-**File:** `PLang/Runtime2/modules/crypto/hash.cs`
+**File:** `PLang/App/modules/crypto/hash.cs`
 
 - `[Action("hash")]`
 - Properties: `Data : object`, `Algorithm : string` (default "keccak256")
@@ -77,7 +77,7 @@ public class HashedData
 
 ### Step 5: Create verify action handler
 
-**File:** `PLang/Runtime2/modules/crypto/verify.cs`
+**File:** `PLang/App/modules/crypto/verify.cs`
 
 - `[Action("verify")]`
 - Properties: `Data : object`, `Hash : string`, `Algorithm : string` (default "keccak256")
@@ -98,11 +98,11 @@ Replace `Assert.Fail("stub")` with real test implementations that exercise the h
 
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs` | Provider interface |
-| `PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs` | Keccak256 + SHA256 + Bcrypt |
-| `PLang/Runtime2/modules/crypto/types.cs` | HashedData type |
-| `PLang/Runtime2/modules/crypto/hash.cs` | Hash action handler |
-| `PLang/Runtime2/modules/crypto/verify.cs` | Verify action handler |
+| `PLang/App/modules/crypto/providers/ICryptoProvider.cs` | Provider interface |
+| `PLang/App/modules/crypto/providers/DefaultProvider.cs` | Keccak256 + SHA256 + Bcrypt |
+| `PLang/App/modules/crypto/types.cs` | HashedData type |
+| `PLang/App/modules/crypto/hash.cs` | Hash action handler |
+| `PLang/App/modules/crypto/verify.cs` | Verify action handler |
 
 ## Files to Restore (from parent branch)
 

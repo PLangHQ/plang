@@ -21,7 +21,7 @@ Coverage was collected via TUnit's built-in Cobertura. Key results on changed fi
 | DefaultAssertProvider | 94.0% | 60.7% | Branch gaps in numeric coercion |
 | DefaultFileProvider | 100% | 95.5% | Excellent (codeanalyzer concern resolved) |
 | PlangSerializer | 90.0% | 56.2% | Async methods at 0% |
-| MemoryStack | 99.4% | 92.7% | Near-complete |
+| Variables | 99.4% | 92.7% | Near-complete |
 | Steps runner | 97.1% | 94.7% | Condition fix well tested |
 | **module.remove** | **0%** | **0%** | **Zero tests** |
 | **list.set** | **0%** | **0%** | **Zero tests** |

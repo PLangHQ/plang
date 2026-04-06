@@ -47,7 +47,7 @@ Added `ArgumentNullException.ThrowIfNull()` for both constructor parameters.
 Added `ResolveDestination()` helper: if source is a file and destination is an existing directory, append source filename.
 
 ### #9 Nit — Test namespace
-Changed `PLang.Tests.Runtime2.Memory` → `PLang.Tests.Runtime2.Modules.Path`.
+Changed `PLang.Tests.App.Memory` → `PLang.Tests.App.Modules.Path`.
 
 ### #10 Nit — Explicit Pattern in List tests
 All List test action records now set `Pattern = "*"` explicitly.
@@ -57,8 +57,8 @@ All List test action records now set `Pattern = "*"` explicitly.
 - **#6** (operator ==) — Path not yet used in collections/LINQ. Low risk.
 
 ## Files modified
-- `PLang/Runtime2/Engine/Memory/Path.cs` — all code fixes
-- `PLang.Tests/Runtime2/Modules/Path/PathTests.cs` — namespace, explicit Pattern, 6 new edge-case tests
+- `PLang/App/Engine/Memory/Path.cs` — all code fixes
+- `PLang.Tests/App/Modules/Path/PathTests.cs` — namespace, explicit Pattern, 6 new edge-case tests
 
 ## Verification
 - `dotnet build` — 0 errors

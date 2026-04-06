@@ -62,7 +62,7 @@ A name is an identity. Creating "alice" when an archived "alice" exists is an er
 | `%Identity%` | User | Set by HTTP/signing layer | No |
 | `%ServiceIdentity%` | Service | Set by HTTP/signing layer | No |
 
-Only `%MyIdentity%` has a lazy resolver. `%Identity%` and `%ServiceIdentity%` are plain MemoryStack values set by the HTTP/signing modules (Pieces 2-3). The identity module does not manage them.
+Only `%MyIdentity%` has a lazy resolver. `%Identity%` and `%ServiceIdentity%` are plain Variables values set by the HTTP/signing modules (Pieces 2-3). The identity module does not manage them.
 
 ### Key generation: Ed25519, internal
 
@@ -109,7 +109,7 @@ This is added to the default `JsonStreamSerializer` constructor's options as a T
 ## Module structure
 
 ```
-PLang/Runtime2/modules/identity/
+PLang/App/modules/identity/
 ├── create.cs           — generate key pair, store in DataSource
 ├── get.cs              — get by name or default, auto-create if none exist
 ├── getAll.cs           — list all non-archived identities
@@ -136,7 +136,7 @@ PLang/Runtime2/modules/identity/
 4. Build `IdentityVariable` (Name, PublicKey, PrivateKey, IsDefault=false, IsArchived=false, Created=now)
 5. If SetAsDefault: clear IsDefault on all others in DataSource, set this one as default
 6. Store in `System.DataSource.Set("identity", name, identityVariable)`
-7. If it became default: register/update `%MyIdentity%` on System MemoryStack
+7. If it became default: register/update `%MyIdentity%` on System Variables
 8. Return `Data.Ok(identityVariable)`
 
 ### get
@@ -148,7 +148,7 @@ PLang/Runtime2/modules/identity/
 1. If name provided: `System.DataSource.Get("identity", name)` → return (error if not found)
 2. If no name: scan all identities, find `IsDefault == true`
 3. If no default exists: call create internally (name="default", setAsDefault=true)
-4. Register/update `%MyIdentity%` on System MemoryStack
+4. Register/update `%MyIdentity%` on System Variables
 5. Return `Data.Ok(identityVariable)`
 
 ### getAll
@@ -198,7 +198,7 @@ PLang/Runtime2/modules/identity/
 4. Remove old entry from DataSource: `System.DataSource.Remove("identity", name)`
 5. Update identity.Name = NewName
 6. Store under new key: `System.DataSource.Set("identity", newName, identity)`
-7. If this was the default identity: update `%MyIdentity%` on System MemoryStack (same object, new name)
+7. If this was the default identity: update `%MyIdentity%` on System Variables (same object, new name)
 8. Return `Data.Ok(identityVariable)`
 
 ### setDefault
@@ -211,7 +211,7 @@ PLang/Runtime2/modules/identity/
 2. Find target (error if not found or archived)
 3. Clear IsDefault on all, set IsDefault on target
 4. Save all changed identities back to DataSource
-5. Update `%MyIdentity%` on System MemoryStack with the new default
+5. Update `%MyIdentity%` on System Variables with the new default
 6. Return `Data.Ok(identityVariable)`
 
 ### export
@@ -228,11 +228,11 @@ PLang/Runtime2/modules/identity/
 
 ## Lazy resolver for %MyIdentity%
 
-Registered on System actor's MemoryStack during engine initialization. Pattern similar to `%Now%` — a func/lazy that triggers on first access.
+Registered on System actor's Variables during engine initialization. Pattern similar to `%Now%` — a func/lazy that triggers on first access.
 
 **Flow:**
-1. Engine starts → registers `%MyIdentity%` as lazy resolver on System MemoryStack
-2. PLang step accesses `%MyIdentity%` → MemoryStack invokes resolver
+1. Engine starts → registers `%MyIdentity%` as lazy resolver on System Variables
+2. PLang step accesses `%MyIdentity%` → Variables invokes resolver
 3. Resolver: query DataSource for default identity → auto-create if none → cache IdentityVariable → return
 4. Subsequent accesses return cached value (updated by create/setDefault/archive/rename actions)
 
@@ -289,8 +289,8 @@ internal static class KeyGenerator
 ### New PLang tests needed
 | Directory | Test | Purpose |
 |-----------|------|---------|
-| `Tests/Runtime2/IdentityUnarchive/` | Unarchive | archive then unarchive, verify accessible |
-| `Tests/Runtime2/IdentityRename/` | Rename | rename identity, verify old name gone, new name works |
+| `Tests/App/IdentityUnarchive/` | Unarchive | archive then unarchive, verify accessible |
+| `Tests/App/IdentityRename/` | Rename | rename identity, verify old name gone, new name works |
 
 ### Test count
 - **C# tests:** 40 (existing, with 1 renamed) + 9 new = **49**
@@ -302,36 +302,36 @@ internal static class KeyGenerator
 ### New files
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/identity/create.cs` | Create action handler |
-| `PLang/Runtime2/modules/identity/get.cs` | Get action handler |
-| `PLang/Runtime2/modules/identity/getAll.cs` | GetAll action handler |
-| `PLang/Runtime2/modules/identity/archive.cs` | Archive action handler |
-| `PLang/Runtime2/modules/identity/unarchive.cs` | Unarchive action handler |
-| `PLang/Runtime2/modules/identity/rename.cs` | Rename action handler |
-| `PLang/Runtime2/modules/identity/setDefault.cs` | SetDefault action handler |
-| `PLang/Runtime2/modules/identity/export.cs` | Export action handler |
-| `PLang/Runtime2/modules/identity/types.cs` | IdentityVariable class |
-| `PLang/Runtime2/modules/identity/KeyGenerator.cs` | Ed25519 key generation (internal) |
-| `PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs` | [Sensitive] filter |
+| `PLang/App/modules/identity/create.cs` | Create action handler |
+| `PLang/App/modules/identity/get.cs` | Get action handler |
+| `PLang/App/modules/identity/getAll.cs` | GetAll action handler |
+| `PLang/App/modules/identity/archive.cs` | Archive action handler |
+| `PLang/App/modules/identity/unarchive.cs` | Unarchive action handler |
+| `PLang/App/modules/identity/rename.cs` | Rename action handler |
+| `PLang/App/modules/identity/setDefault.cs` | SetDefault action handler |
+| `PLang/App/modules/identity/export.cs` | Export action handler |
+| `PLang/App/modules/identity/types.cs` | IdentityVariable class |
+| `PLang/App/modules/identity/KeyGenerator.cs` | Ed25519 key generation (internal) |
+| `PLang/App/Engine/Channels/Serializers/SensitivePropertyFilter.cs` | [Sensitive] filter |
 
 ### Modified files
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/View.cs` | Add `[Sensitive]` attribute |
-| `PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs` | Add SensitivePropertyFilter to default options |
-| `PLang/Runtime2/Engine/this.cs` | Register `%MyIdentity%` lazy resolver on System MemoryStack |
+| `PLang/App/Engine/View.cs` | Add `[Sensitive]` attribute |
+| `PLang/App/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs` | Add SensitivePropertyFilter to default options |
+| `PLang/App/Engine/this.cs` | Register `%MyIdentity%` lazy resolver on System Variables |
 
 ### Test files to modify
 | File | Change |
 |------|--------|
-| `PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs` | Add 9 new test stubs (rename, unarchive, duplicate-archived), remove architect question comment |
-| `PLang.Tests/Runtime2/Modules/identity/IdentityVariableTests.cs` | Rename PrivateKey test, remove architect question comment |
+| `PLang.Tests/App/Modules/identity/IdentityHandlerTests.cs` | Add 9 new test stubs (rename, unarchive, duplicate-archived), remove architect question comment |
+| `PLang.Tests/App/Modules/identity/IdentityVariableTests.cs` | Rename PrivateKey test, remove architect question comment |
 
 ### Test files to create
 | File | Purpose |
 |------|---------|
-| `Tests/Runtime2/IdentityUnarchive/IdentityUnarchive.test.goal` | PLang unarchive test |
-| `Tests/Runtime2/IdentityRename/IdentityRename.test.goal` | PLang rename test |
+| `Tests/App/IdentityUnarchive/IdentityUnarchive.test.goal` | PLang unarchive test |
+| `Tests/App/IdentityRename/IdentityRename.test.goal` | PLang rename test |
 
 ## Definition of done
 

@@ -19,11 +19,11 @@ Full module reference covering:
 ### 2. Module index: `docs/modules/index.md` — UPDATED
 Added LLM to the I/O section between `http` and `ui`.
 
-### 3. Architecture docs: `Documentation/Runtime2/modules.md` — UPDATED
+### 3. Architecture docs: `Documentation/App/modules.md` — UPDATED
 - Added `llm | query` row to Built-in Action Handlers table
 - Added full Details section: provider pattern, tool execution, parallel tools, callbacks, conversation continuity, caching, format/schema handling, images, response properties, types
 
-### 4. Architecture docs: `Documentation/Runtime2/good_to_know.md` — UPDATED
+### 4. Architecture docs: `Documentation/App/good_to_know.md` — UPDATED
 - Added ILlmProvider section explaining: provider pattern, config resolution, tool execution loop, conversation continuity, cache, GoalCall extensions
 - Added `ILlmProvider : IProvider` to provider interfaces list
 - Added `"llm"` / `"illmprovider"` → `ILlmProvider` to type name mapping

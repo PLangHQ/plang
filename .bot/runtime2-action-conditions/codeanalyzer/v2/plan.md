@@ -3,8 +3,8 @@
 Re-verify all 5 v1 findings are fixed. Run abbreviated 5-pass analysis on changed code only. Focus on fix-introduced surface (Pass 5) — every fix adds code that itself needs review.
 
 ## Files to review
-- `PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs` — fixes 1, 3, 5
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` — fixes 2, 4
+- `PLang/App/modules/condition/providers/DefaultEvaluator.cs` — fixes 1, 3, 5
+- `PLang/App/Engine/Goals/Goal/Steps/this.cs` — fixes 2, 4
 
 ## Verification checklist
 1. DefaultEvaluator is sealed

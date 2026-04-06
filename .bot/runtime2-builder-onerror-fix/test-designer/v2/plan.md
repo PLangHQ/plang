@@ -65,14 +65,14 @@ User directive: time should be in **milliseconds**. The coder needs to:
 
 | # | Path | Purpose |
 |---|------|---------|
-| 1 | `Tests/Runtime2/ErrorRetryOnly/ErrorRetryOnly.test.goal` | Bare retry + timed retry |
-| 2 | `Tests/Runtime2/ErrorRetryOnly/BareRetryGoal.goal` | Throws with bare retry |
-| 3 | `Tests/Runtime2/ErrorRetryOnly/TimedRetryGoal.goal` | Throws with timed retry (ms) |
-| 4 | `Tests/Runtime2/ErrorRetryOnly/BareRetryCatcher.goal` | Handler sets flag |
-| 5 | `Tests/Runtime2/ErrorRetryOnly/TimedRetryCatcher.goal` | Handler sets flag |
-| 6 | `Tests/Runtime2/ErrorGoalFirst/ErrorGoalFirst.test.goal` | GoalFirst order test |
-| 7 | `Tests/Runtime2/ErrorGoalFirst/AlwaysFails.goal` | Throws error |
-| 8 | `Tests/Runtime2/ErrorGoalFirst/GoalFirstHandler.goal` | Handler sets flag |
-| 9 | `Tests/Runtime2/ErrorMixed/ErrorMixed.test.goal` | Mixed strategies |
-| 10 | `Tests/Runtime2/ErrorMixed/MixedThrow.goal` | Throws error |
-| 11 | `Tests/Runtime2/ErrorMixed/MixedCatcher.goal` | Handler sets flag |
+| 1 | `Tests/App/ErrorRetryOnly/ErrorRetryOnly.test.goal` | Bare retry + timed retry |
+| 2 | `Tests/App/ErrorRetryOnly/BareRetryGoal.goal` | Throws with bare retry |
+| 3 | `Tests/App/ErrorRetryOnly/TimedRetryGoal.goal` | Throws with timed retry (ms) |
+| 4 | `Tests/App/ErrorRetryOnly/BareRetryCatcher.goal` | Handler sets flag |
+| 5 | `Tests/App/ErrorRetryOnly/TimedRetryCatcher.goal` | Handler sets flag |
+| 6 | `Tests/App/ErrorGoalFirst/ErrorGoalFirst.test.goal` | GoalFirst order test |
+| 7 | `Tests/App/ErrorGoalFirst/AlwaysFails.goal` | Throws error |
+| 8 | `Tests/App/ErrorGoalFirst/GoalFirstHandler.goal` | Handler sets flag |
+| 9 | `Tests/App/ErrorMixed/ErrorMixed.test.goal` | Mixed strategies |
+| 10 | `Tests/App/ErrorMixed/MixedThrow.goal` | Throws error |
+| 11 | `Tests/App/ErrorMixed/MixedCatcher.goal` | Handler sets flag |

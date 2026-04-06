@@ -15,12 +15,12 @@ This v2 review covers the **final state** of all changed files — a fresh analy
 
 ### Runtime source (5 files):
 1. `PLang/Executor.cs` — setup integration in Run2
-2. `PLang/Runtime2/Engine/Goals/Goal/Methods.cs` — return value propagation
-3. `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` — lastResult tracking
-4. `PLang/Runtime2/Engine/Goals/Goal/this.cs` — PrPath computed property, Path enforcement
-5. `PLang/Runtime2/Engine/Goals/Setup/this.cs` — convention-based discovery, RunAsync
-6. `PLang/Runtime2/Engine/Goals/this.cs` — PrPath keying, Names filter, Get() fallback chain
-7. `PLang/Runtime2/Engine/Test/this.cs` — per-test root, setup before test, Data-based results
+2. `PLang/App/Engine/Goals/Goal/Methods.cs` — return value propagation
+3. `PLang/App/Engine/Goals/Goal/Steps/this.cs` — lastResult tracking
+4. `PLang/App/Engine/Goals/Goal/this.cs` — PrPath computed property, Path enforcement
+5. `PLang/App/Engine/Goals/Setup/this.cs` — convention-based discovery, RunAsync
+6. `PLang/App/Engine/Goals/this.cs` — PrPath keying, Names filter, Get() fallback chain
+7. `PLang/App/Engine/Test/this.cs` — per-test root, setup before test, Data-based results
 
 ### C# test files (7 files):
 - GoalsTests.cs, SetupTests.cs, EngineTests.cs, StartGoalTests.cs, StepErrorHandlingTests.cs, StepRetryTests.cs, ConditionHandlerTests.cs, ForeachTests.cs

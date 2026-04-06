@@ -7,8 +7,8 @@ Addresses all 8 findings from code analyzer v1 review of `OpenAiProvider.cs` —
 ## What was done
 
 ### Files Modified
-- `PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs` — All 6 code fixes
-- `PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs` — 2 new tests
+- `PLang/App/modules/llm/providers/OpenAiProvider.cs` — All 6 code fixes
+- `PLang.Tests/App/Modules/llm/QueryToolTests.cs` — 2 new tests
 
 ### Changes
 

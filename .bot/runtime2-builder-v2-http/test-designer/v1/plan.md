@@ -29,7 +29,7 @@ End-to-end pipeline tests using mock intercept for HTTP calls.
 
 ## Mock Strategy
 
-All Runtime2 module tests follow the same pattern: real `PLangEngine` with a temp directory, custom provider implementations registered via `engine.Providers.Register<T>()`. No external mocking frameworks (NSubstitute, Moq) for Runtime2 tests.
+All App module tests follow the same pattern: real `PLangEngine` with a temp directory, custom provider implementations registered via `engine.Providers.Register<T>()`. No external mocking frameworks (NSubstitute, Moq) for App tests.
 
 For HTTP tests, mock at the **provider level** — not at `HttpClient` or `DelegatingHandler`. This follows the established pattern from crypto/signing tests (e.g., `FailingCryptoProvider`, `MockSigningProvider`).
 
@@ -135,25 +135,25 @@ For tests that verify signing integration (X-Signature header, application/plang
 For OnStream/OnProgress callback tests:
 - Use `StreamResponse()` helper with newline-delimited content
 - Set `Response.Content.Headers.ContentType` to appropriate media type (text/event-stream for SSE)
-- Verify goal invocation by checking `context.MemoryStack` for `%!data%` after streaming
+- Verify goal invocation by checking `context.Variables` for `%!data%` after streaming
 - For timeout tests, use `MockHttpProvider.Delay` to simulate slow responses
 
 ### What NOT to Mock
 
 - **Signing module** — let it run for real. The HTTP tests need to verify actual signing integration, not mock it away.
-- **MemoryStack** — use real context from `_engine.System.Context`. Verify scoped vars (`%!ServiceIdentity%`, `%!data%`) by reading them back.
+- **Variables** — use real context from `_engine.System.Context`. Verify scoped vars (`%!ServiceIdentity%`, `%!data%`) by reading them back.
 - **Config/Settings** — use real `engine.Settings` scope chain. The configure tests verify the real resolution behavior.
 
 ## Files Created
 
-**C# tests** (`PLang.Tests/Runtime2/Modules/http/`):
+**C# tests** (`PLang.Tests/App/Modules/http/`):
 - RequestActionTests.cs (21 tests)
 - DownloadActionTests.cs (6 tests)
 - UploadActionTests.cs (5 tests)
 - ConfigureActionTests.cs (5 tests)
 - DefaultHttpProviderTests.cs (4 tests)
 
-**PLang tests** (`Tests/Runtime2/Http/`):
+**PLang tests** (`Tests/App/Http/`):
 - GetRequest, PostRequest, DownloadFile, DownloadSkip, UploadFile
 - SignedRequest, UnsignedRequest, StreamCallback (+ProcessChunk.goal)
 - ConfigBaseUrl, ConfigHeaders

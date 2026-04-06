@@ -8,7 +8,7 @@ Full blue+red team security audit of the cleanup branch. 642 files changed, ~14.
 2. **HTTP module** — Size-limited reads, SSE buffer protection, signing integration
 3. **Identity module** — Key persistence, export, [Sensitive] filtering
 4. **Module/Provider loaders** — Assembly.LoadFrom without signature verification
-5. **Engine core** — Data deserialization, depth guards, __condition__ removal, MemoryStack
+5. **Engine core** — Data deserialization, depth guards, __condition__ removal, Variables
 6. **Event module** — Consolidation (6→3 handlers), skipAction mechanism
 7. **Condition module** — DefaultEvaluator exception handling
 8. **File module** — Provider pattern, path validation

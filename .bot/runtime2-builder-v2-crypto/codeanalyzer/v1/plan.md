@@ -5,30 +5,30 @@
 Crypto module + Engine.Providers + identity-related changes (SensitivePropertyFilter, Actor.Identity, IdentityData).
 
 ### Files to analyze (crypto — new)
-- `PLang/Runtime2/modules/crypto/hash.cs`
-- `PLang/Runtime2/modules/crypto/verify.cs`
-- `PLang/Runtime2/modules/crypto/types.cs`
-- `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs`
-- `PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs`
-- `PLang/Runtime2/Engine/Providers/this.cs`
+- `PLang/App/modules/crypto/hash.cs`
+- `PLang/App/modules/crypto/verify.cs`
+- `PLang/App/modules/crypto/types.cs`
+- `PLang/App/modules/crypto/providers/ICryptoProvider.cs`
+- `PLang/App/modules/crypto/providers/DefaultProvider.cs`
+- `PLang/App/Engine/Providers/this.cs`
 
 ### Files to analyze (identity — from merged branch)
-- `PLang/Runtime2/Engine/Context/Actor.cs` (Identity property, DynamicData registration)
-- `PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs`
-- `PLang/Runtime2/modules/identity/types.cs` (IdentityVariable)
-- `PLang/Runtime2/modules/identity/IdentityData.cs`
+- `PLang/App/Engine/Context/Actor.cs` (Identity property, DynamicData registration)
+- `PLang/App/Engine/Channels/Serializers/SensitivePropertyFilter.cs`
+- `PLang/App/modules/identity/types.cs` (IdentityVariable)
+- `PLang/App/modules/identity/IdentityData.cs`
 
 ### Files to verify (wiring)
-- `PLang/Runtime2/Engine/this.cs` (Providers property)
-- `PLang/Runtime2/GlobalUsings.cs` (EngineProviders alias)
-- `PLang/Runtime2/Engine/View.cs` (SensitiveAttribute)
-- `PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs`
-- `PLang/Runtime2/Engine/Memory/Data.Envelope.cs`
+- `PLang/App/Engine/this.cs` (Providers property)
+- `PLang/App/GlobalUsings.cs` (EngineProviders alias)
+- `PLang/App/Engine/View.cs` (SensitiveAttribute)
+- `PLang/App/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs`
+- `PLang/App/Engine/Memory/Data.Envelope.cs`
 
 ### Test files (review for coverage gaps)
-- `PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs`
-- `PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs`
-- `PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs`
+- `PLang.Tests/App/Modules/crypto/HashActionTests.cs`
+- `PLang.Tests/App/Modules/crypto/DefaultProviderTests.cs`
+- `PLang.Tests/App/Modules/crypto/ProviderResolutionTests.cs`
 
 ## Analysis passes
 1. OBP Compliance — all 5 rules

@@ -23,8 +23,8 @@ await Assert.That(deserialized.GetProperty("publicKey").GetString()).IsEqualTo(i
 
 ## Files modified
 
-- `PLang.Tests/Runtime2/Serializers/SensitivePropertyFilterTests.cs`
-- `PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs`
+- `PLang.Tests/App/Serializers/SensitivePropertyFilterTests.cs`
+- `PLang.Tests/App/Modules/identity/IdentityHandlerTests.cs`
 
 ## Verification
 

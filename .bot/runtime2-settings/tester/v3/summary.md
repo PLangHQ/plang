@@ -19,7 +19,7 @@ Changed to `catch (Exception ex) when (ex is InvalidCastException or FormatExcep
 
 ### Finding 1: MAJOR — Cast<T> narrowed catch misses ArgumentException from Enum.ToObject
 
-**File:** `PLang/Runtime2/Engine/Settings/this.cs:51,54`
+**File:** `PLang/App/Engine/Settings/this.cs:51,54`
 
 `Enum.ToObject(target, value)` throws `ArgumentException` when the value is not a valid underlying type (SByte/Int16/Int32/Int64/Byte/UInt16/UInt32/UInt64). A string like `"Fastest"` is not in that list.
 
@@ -73,7 +73,7 @@ public async Task Resolve_ConvertsStringToEnum()
 
 ### Finding 2: MINOR — Scope.Clone() is shallow copy of values
 
-**File:** `PLang/Runtime2/Engine/Settings/Scope.cs:38-41`
+**File:** `PLang/App/Engine/Settings/Scope.cs:38-41`
 
 `clone._values[kvp.Key] = kvp.Value` copies object references, not deep copies. If a setting value is a mutable object (e.g., a `List<string>`), clone and original share that object — mutations through one affect the other.
 

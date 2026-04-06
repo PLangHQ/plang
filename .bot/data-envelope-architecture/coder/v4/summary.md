@@ -6,13 +6,13 @@ Data is PLang's universal type. When Data crosses the runtime boundary (io.read/
 
 ## What was done
 
-### Pipeline methods in `PLang/Runtime2/Engine/Memory/Data.Envelope.cs`
+### Pipeline methods in `PLang/App/Engine/Memory/Data.Envelope.cs`
 
 | Method | Status | What it does |
 |--------|--------|-------------|
 | `Wrap()` | Implemented | Navigates Type.Kind through context → creates envelope: `Data { type = kind, value = this }`. No-op for PLang primitives or unknown types. |
 | `Compress()` | Implemented | Checks compressibility via `Engine.Types.Compressible(Type.Value)`. If compressible: serialize to JSON → GZip → wrap as `Data { type = "archived", value = Data { type = "gzip", value = bytes } }`. No-op otherwise. |
-| `Encrypt()` | Pass-through | No crypto service in Runtime2 yet. Returns self. Comments document intended pattern. |
+| `Encrypt()` | Pass-through | No crypto service in App yet. Returns self. Comments document intended pattern. |
 | `Decrypt()` | Pass-through | If Type != "encrypted" → no-op. Otherwise returns self (no crypto). |
 | `Decompress()` | Implemented | If Type == "archived" → reads inner gzip bytes → GZip decompress → JSON deserialize → rehydrate nested Data objects. |
 | `Unwrap()` | Implemented | If Value is Data → returns it (strips envelope). Otherwise returns self. |
@@ -25,7 +25,7 @@ Data is PLang's universal type. When Data crosses the runtime boundary (io.read/
 
 ### Tests
 
-17 new tests in `PLang.Tests/Runtime2/Memory/DataTests.cs`:
+17 new tests in `PLang.Tests/App/Memory/DataTests.cs`:
 - Wrap: MIME type → kind envelope, PLang primitive → self, no context → self
 - Unwrap: envelope → inner, flat → self, stamps context
 - Compress: compressible → archived envelope, non-compressible → self, no context → self
@@ -58,5 +58,5 @@ var content = envelope.Decrypt().Decompress().Unwrap();
 
 ## Files modified
 
-- `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` — 6 pipeline methods + GZip helpers + rehydration + static JSON options
-- `PLang.Tests/Runtime2/Memory/DataTests.cs` — 17 new tests
+- `PLang/App/Engine/Memory/Data.Envelope.cs` — 6 pipeline methods + GZip helpers + rehydration + static JSON options
+- `PLang.Tests/App/Memory/DataTests.cs` — 17 new tests

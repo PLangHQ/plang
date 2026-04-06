@@ -5,7 +5,7 @@
 // Convention-wired wrapper around ICache.
 // engine.Cache.GetAsync(...) delegates to the pluggable implementation.
 
-namespace PLang.Runtime2.Engine.Cache;
+namespace App.Engine.Cache;
 
 public sealed class EngineCache
 {
@@ -42,7 +42,7 @@ public sealed class EngineCache
 // Currently: DebugMode.Apply(engine, value)
 // After:     engine.Debug.Enable(value)
 
-namespace PLang.Runtime2.Engine.Debug;
+namespace App.Engine.Debug;
 
 public sealed class EngineDebug
 {
@@ -73,7 +73,7 @@ public sealed class EngineDebug
 // Currently: TestMode.RunAsync(engine, ct)
 // After:     engine.Testing.RunAsync(ct)
 
-namespace PLang.Runtime2.Engine.Testing;
+namespace App.Engine.Testing;
 
 public sealed class EngineTesting
 {

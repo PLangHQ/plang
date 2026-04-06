@@ -15,15 +15,15 @@ Security audit of the signing, crypto, identity, and provider modules. Blue team
 - **Nonce replay** rated medium (accepted-risk). ICache is pluggable — distributed deployments swap to Redis. Single-process is safe.
 
 ## Files reviewed
-- `PLang/Runtime2/modules/signing/SignedData.cs` — core signing/verification logic
-- `PLang/Runtime2/modules/signing/sign.cs`, `verify.cs` — action handlers
-- `PLang/Runtime2/Engine/Providers/Ed25519Provider.cs` — crypto implementation
-- `PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs` — identity persistence
-- `PLang/Runtime2/Engine/Providers/this.cs` — provider registry
-- `PLang/Runtime2/modules/provider/load.cs` — DLL loading
-- `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` — Signature property, transport
-- `PLang/Runtime2/Engine/Cache/MemoryStepCache.cs` — nonce cache
-- `PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs` — hashing
+- `PLang/App/modules/signing/SignedData.cs` — core signing/verification logic
+- `PLang/App/modules/signing/sign.cs`, `verify.cs` — action handlers
+- `PLang/App/Engine/Providers/Ed25519Provider.cs` — crypto implementation
+- `PLang/App/Engine/Providers/DefaultIdentityProvider.cs` — identity persistence
+- `PLang/App/Engine/Providers/this.cs` — provider registry
+- `PLang/App/modules/provider/load.cs` — DLL loading
+- `PLang/App/Engine/Memory/Data.Envelope.cs` — Signature property, transport
+- `PLang/App/Engine/Cache/MemoryStepCache.cs` — nonce cache
+- `PLang/App/modules/crypto/providers/DefaultProvider.cs` — hashing
 - All identity handlers, crypto handlers, provider handlers
 
 ## Verdict: PASS

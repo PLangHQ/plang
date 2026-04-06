@@ -45,8 +45,8 @@ Changed from `string.Empty` to `"."`. Added `Relative_RootPath_ReturnsDot` test.
 **Blocked**: Requires LLM builder to generate .pr files. Noted as future work.
 
 ## Files modified
-- `PLang/Runtime2/Engine/Memory/Path.cs` — ResolveDestination in Move, Relative root="."
-- `PLang.Tests/Runtime2/Modules/Path/PathTests.cs` — 12 new tests, 6 strengthened assertions
+- `PLang/App/Engine/Memory/Path.cs` — ResolveDestination in Move, Relative root="."
+- `PLang.Tests/App/Modules/Path/PathTests.cs` — 12 new tests, 6 strengthened assertions
 
 ## Verification
 - 1239/1239 tests pass (+12 new)

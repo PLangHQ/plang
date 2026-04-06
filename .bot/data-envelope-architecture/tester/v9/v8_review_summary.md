@@ -16,7 +16,7 @@ Plus carry-forwards from v6: thread safety (major), inner context (minor), numer
 
 Test-only changes — no production code:
 
-1. **Finding #1 (Major, blocking)**: Added `MemoryStackCycleDetectionTests` class with 2 tests — one using reflection to pre-seed `_resolvingVars` (verifying guard fires), one verifying no ThreadStatic leakage between calls.
+1. **Finding #1 (Major, blocking)**: Added `VariablesCycleDetectionTests` class with 2 tests — one using reflection to pre-seed `_resolvingVars` (verifying guard fires), one verifying no ThreadStatic leakage between calls.
 2. **Finding #2 (Minor)**: Added 2 boundary tests — `Clr_ExactlyAtMaxDepth_Resolves` (20 nestings) and `Clr_OneOverMaxDepth_ReturnsNull` (21 nestings).
 3. **Finding #3 (Observation)**: No action — dead code acknowledged.
 

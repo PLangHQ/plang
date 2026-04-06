@@ -10,7 +10,7 @@ Audited 4 cross-file areas: Settings→Config rename, Data type hierarchy + clon
 
 | # | Severity | Category | Issue |
 |---|----------|----------|-------|
-| 1 | Major | Cross-file | DataList<T> clone contract gap — shared by reference in MemoryStack.Clone() but is stateful |
+| 1 | Major | Cross-file | DataList<T> clone contract gap — shared by reference in Variables.Clone() but is stateful |
 | 2 | Minor | Cross-file | Data.Clone() shares Properties reference (shallow copy) |
 | 3 | Minor | Contract | DefaultEvaluator missing InvalidCastException in catch filter |
 | 4 | Minor | Contract | Decompress() missing InvalidOperationException catch |
@@ -22,7 +22,7 @@ Audited 4 cross-file areas: Settings→Config rename, Data type hierarchy + clon
 - **Security**: Agree with all 5 findings. Findings #1 and #2 confirmed still open.
 
 ### New Finding: DataList<T> Clone Gap
-The codeanalyzer reviewed files individually and correctly found no OBP violations. But MemoryStack.Clone() at line 207 assumes all Data subclasses are "stateless/factory-based" — which was true for SettingsData and DynamicData, but DataList<T> has a mutable `_items` list. When context is cloned, both stacks share the same DataList reference, breaking isolation.
+The codeanalyzer reviewed files individually and correctly found no OBP violations. But Variables.Clone() at line 207 assumes all Data subclasses are "stateless/factory-based" — which was true for SettingsData and DynamicData, but DataList<T> has a mutable `_items` list. When context is cloned, both stacks share the same DataList reference, breaking isolation.
 
 **Practical risk**: Low. DataList is currently used only by identity.list and is read-only after creation. But the architectural contract is broken.
 

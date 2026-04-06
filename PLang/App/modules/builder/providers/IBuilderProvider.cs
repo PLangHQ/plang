@@ -1,0 +1,23 @@
+using App.Engine.Variables;
+using App.Engine.Providers;
+using App.Engine.Utility;
+using Goal = App.Engine.Goals.Goal.@this;
+using Actions = App.Engine.Goals.Goal.Steps.Step.Actions.@this;
+
+namespace App.modules.builder.providers;
+
+/// <summary>
+/// Builder provider interface. Owns all builder logic — actions are thin delegation.
+/// Swappable via engine.Providers.
+/// </summary>
+public interface IBuilderProvider : IProvider
+{
+    Task<Data> Actions(GetActions action);
+    Data Types(types action);
+    Task<Data> Goals(goals action);
+    Task<Data> GoalsSave(goalsSave action);
+    Task<Data> Validate(validate action);
+    Data Merge(merge action);
+    Task<Data> App(app action);
+    Task<Data> AppSave(appSave action);
+}

@@ -36,7 +36,7 @@ A bug reported as int→long gets fixed and tested for int→long. But if the ge
 
 ### 7. Clone/copy methods are a family — audit together
 
-When a property is added to any object, check ALL methods that create copies: constructor, Clone, CreateChild, factory methods, deserialization. `PLangContext.Clone()` missed `SettingsScope`. `MemoryStack.Clone()` missed `Context`. Same bug, different branch. Always review the family.
+When a property is added to any object, check ALL methods that create copies: constructor, Clone, CreateChild, factory methods, deserialization. `PLangContext.Clone()` missed `SettingsScope`. `Variables.Clone()` missed `Context`. Same bug, different branch. Always review the family.
 
 ### 8. Ask the deletion test: "if I deleted this code, would a test fail?"
 

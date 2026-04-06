@@ -1,8 +1,8 @@
-# Task: Law of Names — Runtime2 Restructuring (Phases 1-4)
+# Task: Law of Names — App Restructuring (Phases 1-4)
 
 ## What this is
 
-A large mechanical refactoring of PLang Runtime2. Every file moves to a new folder, gets a new namespace, and ~11 classes get renamed. **Zero behavior change** in phases 1-3. Small behavioral changes in phase 4.
+A large mechanical refactoring of PLang App. Every file moves to a new folder, gets a new namespace, and ~11 classes get renamed. **Zero behavior change** in phases 1-3. Small behavioral changes in phase 4.
 
 All design decisions are locked. No ambiguity. This is pure execution.
 
@@ -17,45 +17,45 @@ All design decisions are locked. No ambiguity. This is pure execution.
 
 ### Phase 1: Folder Restructure + Namespace Migration (one atomic commit)
 
-1. Create the folder structure under `PLang/Runtime2/Engine/`
+1. Create the folder structure under `PLang/App/Engine/`
 2. Move all files to their new locations per the tree map
 3. Update namespace declarations in every moved file
 4. Update `using` statements in ALL files (production + tests + PlangModule)
 5. Update LazyParamsGenerator.cs — 15 hardcoded namespace strings
-6. Update `Library.Discover("PLang.Runtime2.modules")` → `Library.Discover("PLang.Runtime2.Engine.modules")`
+6. Update `Library.Discover("App.modules")` → `Library.Discover("App.Engine.modules")`
 7. Build and fix any remaining references
 
 **Namespace search-and-replace** (order matters — longest match first):
 ```
-PLang.Runtime2.Memory.Navigators → PLang.Runtime2.Engine.Memory.Navigators
-PLang.Runtime2.Core              → PLang.Runtime2.Engine
-PLang.Runtime2.Context           → PLang.Runtime2.Engine.Context
-PLang.Runtime2.Memory            → PLang.Runtime2.Engine.Memory
-PLang.Runtime2.IO                → PLang.Runtime2.Engine.Channels
-PLang.Runtime2.Errors            → PLang.Runtime2.Engine.Errors
-PLang.Runtime2.Serialization     → PLang.Runtime2.Engine.Serializers
-PLang.Runtime2.Utility           → PLang.Runtime2.Engine.Utility
-PLang.Runtime2.Parsing           → PLang.Runtime2.Engine.Parsing
-PLang.Runtime2.Mapping           → PLang.Runtime2.Engine.Mapping
+App.Memory.Navigators → App.Engine.Variables.Navigators
+App.Core              → App.Engine
+App.Context           → App.Engine.Context
+App.Memory            → App.Engine.Variables
+App.IO                → App.Engine.Channels
+App.Errors            → App.Engine.Errors
+App.Serialization     → App.Engine.Serializers
+App.Utility           → App.Engine.Utility
+App.Parsing           → App.Engine.Parsing
+App.Mapping           → App.Engine.Mapping
 ```
 
 **modules/ split:**
-- Infrastructure files (IClass, ICodeGenerated, Libraries, Library, ActionAttribute, DefaultAttribute, VariableNameAttribute, IContext) → `Engine/Libraries/` namespace `PLang.Runtime2.Engine.Libraries`
-- Handler subfolders (variable/, file/, etc.) → `Engine/modules/` namespace `PLang.Runtime2.Engine.modules`
+- Infrastructure files (IClass, ICodeGenerated, Libraries, Library, ActionAttribute, DefaultAttribute, VariableNameAttribute, IContext) → `Engine/Libraries/` namespace `App.Engine.Libraries`
+- Handler subfolders (variable/, file/, etc.) → `Engine/modules/` namespace `App.Engine.modules`
 
 **Data/Type split:**
 - `Memory/Data.cs` contains both `Data` and `Type` classes
-- `Type` moves to `Engine/Type.cs` with namespace `PLang.Runtime2.Engine`
-- `Data`, `Data<T>`, `DynamicData` move to `Engine/Data.cs` with namespace `PLang.Runtime2.Engine`
+- `Type` moves to `Engine/Type.cs` with namespace `App.Engine`
+- `Data`, `Data<T>`, `DynamicData` move to `Engine/Data.cs` with namespace `App.Engine`
 - Remaining Memory files move to `Engine/Memory/`
 
 **EventScope move:**
-- `Context/EventScope.cs` → `Engine/Events/EventScope.cs` with namespace `PLang.Runtime2.Engine.Events`
+- `Context/EventScope.cs` → `Engine/Events/EventScope.cs` with namespace `App.Engine.Events`
 
 **External files to update:**
 - `PLang.Generators/LazyParamsGenerator.cs` — 15 namespace strings
 - `PLang/Modules/PlangModule/Program.cs` — 4 using statements + ~32 references
-- All 55 test files in `PLang.Tests/Runtime2/` — ~322 references
+- All 55 test files in `PLang.Tests/App/` — ~322 references
 
 **Verification:** `dotnet build PLang.sln` && `dotnet run --project PLang.Tests`
 
@@ -86,7 +86,7 @@ Rename these 11 classes and update ALL references:
 | `TestMode` | `EngineTesting` |
 
 **Watch out for:**
-- `Actions` is aliased in PlangModule: `using Actions = PLang.Runtime2.Core.Actions` — update alias
+- `Actions` is aliased in PlangModule: `using Actions = App.Core.Actions` — update alias
 - `Events` is a common word — only rename the class, not `EventType`, `EventBinding`, etc.
 - `Channels` — only rename the collection class, not the `Channel` entity
 
@@ -131,7 +131,7 @@ Rename these 11 classes and update ALL references:
 
 | Area | Files | References |
 |------|-------|-----------|
-| Runtime2 production | ~165 | Every namespace declaration |
+| App production | ~165 | Every namespace declaration |
 | LazyParamsGenerator | 1 | 15 hardcoded strings |
 | PlangModule/Program.cs | 1 | ~32 references |
 | Test files | 55 | ~322 references |

@@ -46,7 +46,7 @@ received.Decrypt().Decompress().Unwrap()
 - Stamps context on result
 
 **Encrypt()** — structural pass-through:
-- No crypto service exists in Runtime2 yet
+- No crypto service exists in App yet
 - Returns self unchanged
 - Comment documents the intended pattern for when crypto is added
 
@@ -68,8 +68,8 @@ This is NOT transport serialization (which goes through Channels/Serializers). T
 
 | File | Action |
 |------|--------|
-| `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` | Add 6 pipeline methods + GZip helpers + static JSON options |
-| `PLang.Tests/Runtime2/Memory/DataTests.cs` | Add pipeline tests (Wrap, Unwrap, Compress, Decompress, round-trip, Encrypt/Decrypt stubs) |
+| `PLang/App/Engine/Memory/Data.Envelope.cs` | Add 6 pipeline methods + GZip helpers + static JSON options |
+| `PLang.Tests/App/Memory/DataTests.cs` | Add pipeline tests (Wrap, Unwrap, Compress, Decompress, round-trip, Encrypt/Decrypt stubs) |
 
 ## Risk
 

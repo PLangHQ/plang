@@ -25,11 +25,11 @@ Architectural design covering four interconnected concerns:
 
 ### Files in plan
 
-- `PLang/Runtime2/modules/condition/if.cs` — modify
-- `PLang/Runtime2/modules/condition/compare.cs` — new
-- `PLang/Runtime2/modules/condition/providers/IEvaluator.cs` — new
-- `PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs` — new
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` — modify (sub-step skip logic)
+- `PLang/App/modules/condition/if.cs` — modify
+- `PLang/App/modules/condition/compare.cs` — new
+- `PLang/App/modules/condition/providers/IEvaluator.cs` — new
+- `PLang/App/modules/condition/providers/DefaultEvaluator.cs` — new
+- `PLang/App/Engine/Goals/Goal/Steps/this.cs` — modify (sub-step skip logic)
 - `system/builder/llm/BuildGoal.llm` — modify (condition examples + rules)
 
 ## Next step

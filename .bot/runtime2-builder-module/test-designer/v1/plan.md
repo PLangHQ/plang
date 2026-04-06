@@ -2,7 +2,7 @@
 
 ## Overview
 
-The builder module (`PLang.Runtime2.modules.builder`) is a native v2 builder with zero Runtime1 dependencies. It parses `.goal` files into Runtime2 Goal/Step types, manages `.pr` files, reflects action metadata for the LLM, and validates LLM output. This test suite defines the behavioral contract.
+The builder module (`App.modules.builder`) is a native v2 builder with zero Runtime1 dependencies. It parses `.goal` files into App Goal/Step types, manages `.pr` files, reflects action metadata for the LLM, and validates LLM output. This test suite defines the behavioral contract.
 
 ## Test Areas & Batches
 
@@ -107,5 +107,5 @@ The core build pipeline actions.
 
 ## File Locations
 
-- C# tests: `PLang.Tests/Runtime2/Modules/builder/`
-- PLang tests: `Tests/Runtime2/Builder/`
+- C# tests: `PLang.Tests/App/Modules/builder/`
+- PLang tests: `Tests/App/Builder/`

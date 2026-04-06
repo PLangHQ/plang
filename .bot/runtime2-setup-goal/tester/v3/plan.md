@@ -5,7 +5,7 @@ Review coder v3 (Setup.goal run-once system + SettingsData sharing fix). Code an
 
 ## Steps
 1. Run C# tests (1478 expected) — verify all pass
-2. Run PLang tests (23 expected) — verify all pass from Tests/Runtime2/
+2. Run PLang tests (23 expected) — verify all pass from Tests/App/
 3. Run coverage with TUnit --coverage
 4. Read all changed source files and test files
 5. Analyze test quality: false greens, missing coverage, weak assertions

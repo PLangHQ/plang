@@ -11,12 +11,12 @@
 
 ## Files modified
 
-- `PLang/Runtime2/Engine/Memory/Path.cs` — added using + 6 methods
-- `PLang/Runtime2/actions/file/copy.cs` — rewritten as thin delegator
-- `PLang/Runtime2/actions/file/move.cs` — rewritten as thin delegator
-- `PLang/Runtime2/actions/file/delete.cs` — rewritten as thin delegator
-- `PLang.Tests/Runtime2/Modules/Path/PathTests.cs` — added 11 tests
-- `PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs` — added 3 tests
+- `PLang/App/Engine/Memory/Path.cs` — added using + 6 methods
+- `PLang/App/actions/file/copy.cs` — rewritten as thin delegator
+- `PLang/App/actions/file/move.cs` — rewritten as thin delegator
+- `PLang/App/actions/file/delete.cs` — rewritten as thin delegator
+- `PLang.Tests/App/Modules/Path/PathTests.cs` — added 11 tests
+- `PLang.Tests/App/Modules/file/FileHandlerTests.cs` — added 3 tests
 
 ## Build & Test
 

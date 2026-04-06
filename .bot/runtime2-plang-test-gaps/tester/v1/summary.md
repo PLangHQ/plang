@@ -7,7 +7,7 @@ Quality analysis of 33 new PLang integration test suites and runtime changes (3 
 
 ### C# Tests: BUILD FAILURE
 - `DiscoverAsync` was made private in `Setup/this.cs` but 3 C# tests still call it
-- **Files**: `PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs` lines 305, 331, 346
+- **Files**: `PLang.Tests/App/Goals/Setup/SetupTests.cs` lines 305, 331, 346
 - **Impact**: Entire C# test suite cannot run — zero validation of runtime changes
 
 ### PLang Tests: 59/64 passed, 5 failed

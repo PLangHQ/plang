@@ -2,13 +2,13 @@
 
 ## Scope
 5-pass analysis of all new code on `runtime2-builder-v2-llm`:
-- `PLang/Runtime2/modules/llm/query.cs` (74 lines)
-- `PLang/Runtime2/modules/llm/LlmMessage.cs` (28 lines)
-- `PLang/Runtime2/modules/llm/ToolCall.cs` (18 lines)
-- `PLang/Runtime2/modules/llm/providers/ILlmProvider.cs` (14 lines)
-- `PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs` (874 lines)
-- `PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs` (28 lines, modified)
-- `PLang/Runtime2/Engine/Providers/this.cs` (2 lines added)
+- `PLang/App/modules/llm/query.cs` (74 lines)
+- `PLang/App/modules/llm/LlmMessage.cs` (28 lines)
+- `PLang/App/modules/llm/ToolCall.cs` (18 lines)
+- `PLang/App/modules/llm/providers/ILlmProvider.cs` (14 lines)
+- `PLang/App/modules/llm/providers/OpenAiProvider.cs` (874 lines)
+- `PLang/App/Engine/Goals/Goal/GoalCall.cs` (28 lines, modified)
+- `PLang/App/Engine/Providers/this.cs` (2 lines added)
 
 ## Approach
 1. Pass 1: OBP compliance

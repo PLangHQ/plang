@@ -16,8 +16,8 @@ Reverted manual .pr file edits from v1 and properly rebuilt all .pr files using 
 ## Key files modified
 - `system/builder/.build/` — Old per-step BuildGoal/ folder replaced by v0.2 single-file `buildgoal.pr`
 - `system/builder/.build/build.pr`, `applystep.pr`, `buildstep.pr`, `app.pr` — Rebuilt
-- `Tests/Runtime2/ErrorRetryOnly/.build/` — New .pr files from builder
-- `Tests/Runtime2/ErrorGoalFirst/.build/` — New .pr files from builder
+- `Tests/App/ErrorRetryOnly/.build/` — New .pr files from builder
+- `Tests/App/ErrorGoalFirst/.build/` — New .pr files from builder
 
 ## What the reviewer flagged (v1)
 v1 manually edited .pr files instead of rebuilding. This is a hard rule violation — .pr files are builder output only. Fix: revert and rebuild.
