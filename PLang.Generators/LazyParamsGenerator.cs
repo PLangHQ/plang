@@ -461,6 +461,16 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
         sb.AppendLine("        if (__resolutionError != null) { context.Step = __previousStep; context.Goal = __previousGoal; return __resolutionError; }");
         sb.AppendLine();
+
+        // Actor switching — if the class has an Actor property, wrap Run() with save/switch/restore
+        var hasActorProperty = info.Properties.Any(p => p.Name == "Actor" && p.TypeName.Contains("Actor"));
+        if (hasActorProperty)
+        {
+            sb.AppendLine("        var __previousActor = app.CurrentActor;");
+            sb.AppendLine("        if (Actor != null && Actor != context.Actor)");
+            sb.AppendLine("            app.CurrentActor = Actor;");
+        }
+
         sb.AppendLine("        try");
         sb.AppendLine("        {");
         sb.AppendLine("            return await Run();");
@@ -472,6 +482,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine("        finally");
         sb.AppendLine("        {");
+        if (hasActorProperty)
+        {
+            sb.AppendLine("            app.CurrentActor = __previousActor;");
+        }
         sb.AppendLine("            __frame?.SnapshotVariables(context.Variables);");
         sb.AppendLine("            if (context.CallStack != null) context.CallStack.PopAsync().GetAwaiter().GetResult();");
         sb.AppendLine("            context.Step = __previousStep;");

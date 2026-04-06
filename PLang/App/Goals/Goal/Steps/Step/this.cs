@@ -111,38 +111,38 @@ public sealed partial class @this : Data.@this<@this>
     /// <summary>
     /// Runs all actions in this step, handling timeout if configured.
     /// </summary>
-    public async Task<Data.@this> RunAsync(App.@this app, Context.@this context, Context.Actor? targetActor = null)
+    public async Task<Data.@this> RunAsync()
     {
         if (Timeout is > 0)
         {
-            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(Context!.CancellationToken);
             timeoutCts.CancelAfter(Timeout.Value);
-            context.PushCancellation(timeoutCts);
+            Context.PushCancellation(timeoutCts);
             try
             {
-                return await RunActions(app, context, targetActor);
+                return await RunActions();
             }
-            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !Context.CancellationToken.IsCancellationRequested)
             {
                 return Data.@this.FromError(new Errors.ServiceError(
                     $"Step timed out after {Timeout}ms: {Text}", "Timeout", 408));
             }
             finally
             {
-                context.PopCancellation();
+                Context.PopCancellation();
             }
         }
 
-        return await RunActions(app, context, targetActor);
+        return await RunActions();
     }
 
-    private async Task<Data.@this> RunActions(App.@this app, Context.@this context, Context.Actor? targetActor)
+    private async Task<Data.@this> RunActions()
     {
         Data.@this result = Data.@this.Ok();
         foreach (var action in Actions)
         {
-            context.CancellationToken.ThrowIfCancellationRequested();
-            result = await action.RunAsync(app, context, targetActor);
+            Context!.CancellationToken.ThrowIfCancellationRequested();
+            result = await action.RunAsync();
             if (!result.Success) break;
         }
         return result;

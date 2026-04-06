@@ -47,25 +47,13 @@ public sealed partial class @this : Data.@this<@this>
     public List<Data.@this> Examples { get; init; } = new();
 
     /// <summary>
-    /// Runs this action, switching to the target actor context if specified.
+    /// Runs this action via the app dispatcher.
+    /// Actor switching is handled by the source generator when an Actor property is present.
     /// </summary>
-    public async Task<Data.@this> RunAsync(App.@this app, Context.@this context, Context.Actor? targetActor = null)
+    public async Task<Data.@this> RunAsync()
     {
-        if (targetActor != null && targetActor != context.Actor)
-        {
-            var previousActor = app.CurrentActor;
-            app.CurrentActor = targetActor;
-            try
-            {
-                return await app.Run(this, targetActor.Context);
-            }
-            finally
-            {
-                app.CurrentActor = previousActor;
-            }
-        }
-
-        return await app.Run(this, context);
+        var context = Step!.Context!;
+        return await context.App!.Run(this, context);
     }
 
     /// <summary>

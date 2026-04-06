@@ -5,7 +5,7 @@ namespace App.modules.app;
 
 /// <summary>
 /// Unified run action — runs a GoalCall, Step, or Action.
-/// Each object owns its own execution behavior.
+/// Actor switching is handled by the source generator.
 /// </summary>
 [Action("run")]
 public partial class run : IContext
@@ -17,10 +17,9 @@ public partial class run : IContext
 
     public async Task<Data.@this> Run()
     {
-        var app = Context.App!;
-
         if (GoalName != null)
         {
+            var app = Context.App!;
             var goal = await GoalName.GetGoalAsync(app, Context);
             if (goal == null)
                 return Error(new ServiceError(
@@ -30,10 +29,10 @@ public partial class run : IContext
         }
 
         if (Step != null)
-            return await Step.RunAsync(app, Context, Actor);
+            return await Step.RunAsync();
 
         if (Action != null)
-            return await Action.RunAsync(app, Context, Actor);
+            return await Action.RunAsync();
 
         return Error(new ActionError(
             "run requires a GoalCall, Step, or Action", "MissingInput", 400));
