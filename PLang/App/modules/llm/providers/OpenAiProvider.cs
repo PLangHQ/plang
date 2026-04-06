@@ -44,7 +44,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
         // --- Validate ---
         if (action.Messages.Count == 0)
-            return Data.@this.FromError(new ActionError("Messages list is empty", "ValidationError", 400));
+            return App.Data.@this.FromError(new ActionError("Messages list is empty", "ValidationError", 400));
 
         // --- Build messages ---
         var messages = CloneMessages(action.Messages);
@@ -167,8 +167,8 @@ public sealed class OpenAiProvider : ILlmProvider
             if (responseJson == null)
             {
                 if (parseEx != null)
-                    return Data.@this.FromError(ActionError.FromException(parseEx, "ParseError", 500));
-                return Data.@this.FromError(new ActionError("Failed to parse LLM API response", "ParseError", 500));
+                    return App.Data.@this.FromError(ActionError.FromException(parseEx, "ParseError", 500));
+                return App.Data.@this.FromError(new ActionError("Failed to parse LLM API response", "ParseError", 500));
             }
 
             // Extract usage
@@ -181,7 +181,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
             // Get first choice
             if (!responseJson.Value.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0)
-                return Data.@this.FromError(new ActionError("No choices in LLM response", "EmptyResponse", 500));
+                return App.Data.@this.FromError(new ActionError("No choices in LLM response", "EmptyResponse", 500));
 
             var choice = choices[0];
             var message = choice.GetProperty("message");
@@ -264,7 +264,7 @@ public sealed class OpenAiProvider : ILlmProvider
                         parsed = TryParseJson(fromBlock);
 
                     if (parsed == null)
-                        return Data.@this.FromError(new ActionError(
+                        return App.Data.@this.FromError(new ActionError(
                             "Response is not valid JSON", "JsonParseError", 400));
 
                     extracted = fromBlock!;
@@ -275,7 +275,7 @@ public sealed class OpenAiProvider : ILlmProvider
             if (action.OnValidateResponse != null)
             {
                 if (validationRetries >= action.MaxValidationRetries)
-                    return Data.@this.FromError(new ActionError(
+                    return App.Data.@this.FromError(new ActionError(
                         $"Validation failed after {action.MaxValidationRetries} retries",
                         "ValidationFailed", 400));
 
@@ -283,7 +283,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 {
                     Name = action.OnValidateResponse.Name,
                     PrPath = action.OnValidateResponse.PrPath,
-                    Parameters = new List<Data.@this> { new Data("response", extracted) }
+                    Parameters = new List<Data.@this> { new Data.@this("response", extracted) }
                 };
                 var validationResult = await engine.RunGoalAsync(validationCall, context);
 
@@ -308,7 +308,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
             // --- Build result ---
             object? resultValue = effectiveFormat == "json" ? TryParseJson(extracted) : (object?)extracted;
-            var result = Data.@this.Ok(resultValue);
+            var result = App.Data.@this.Ok(resultValue);
 
             // --- Cache store ---
             // Properties are [JsonIgnore] on Data, so store metadata as the value itself
@@ -328,7 +328,7 @@ public sealed class OpenAiProvider : ILlmProvider
                     ["Format"] = effectiveFormat,
                     ["Schema"] = schema
                 };
-                await settings.Set(CacheTable, cacheKey, new Data("cache", cacheEntry));
+                await settings.Set(CacheTable, cacheKey, new Data.@this("cache", cacheEntry));
             }
 
             // --- Populate response properties ---
@@ -351,7 +351,7 @@ public sealed class OpenAiProvider : ILlmProvider
         }
 
         // Loop exited via break (MaxToolCalls or streaming)
-        var exitResult = Data.@this.Ok(lastContent);
+        var exitResult = App.Data.@this.Ok(lastContent);
         SetProp(exitResult, "Model", model);
         SetProp(exitResult, "ToolCallCount", toolCallCount);
         SetProp(exitResult, "PromptTokens", totalPromptTokens);
@@ -377,9 +377,9 @@ public sealed class OpenAiProvider : ILlmProvider
                 PrPath = action.OnToolCall.PrPath,
                 Parameters = new List<Data.@this>
                 {
-                    new Data("name", toolCall.Name),
-                    new Data("arguments", toolCall.Arguments),
-                    new Data("status", "starting")
+                    new Data.@this("name", toolCall.Name),
+                    new Data.@this("arguments", toolCall.Arguments),
+                    new Data.@this("status", "starting")
                 }
             };
             await engine.RunGoalAsync(startCall, context);
@@ -426,10 +426,10 @@ public sealed class OpenAiProvider : ILlmProvider
                 PrPath = action.OnToolCall.PrPath,
                 Parameters = new List<Data.@this>
                 {
-                    new Data("name", toolCall.Name),
-                    new Data("arguments", toolCall.Arguments),
-                    new Data("result", result),
-                    new Data("status", "completed")
+                    new Data.@this("name", toolCall.Name),
+                    new Data.@this("arguments", toolCall.Arguments),
+                    new Data.@this("result", result),
+                    new Data.@this("status", "completed")
                 }
             };
             await engine.RunGoalAsync(endCall, context);
@@ -463,7 +463,7 @@ public sealed class OpenAiProvider : ILlmProvider
                     JsonValueKind.Null => null,
                     _ => prop.Value.GetRawText()
                 };
-                result.Add(new Data(prop.Name, value));
+                result.Add(new Data.@this(prop.Name, value));
             }
         }
         catch (JsonException ex)
@@ -471,7 +471,7 @@ public sealed class OpenAiProvider : ILlmProvider
             // Return error Data so the caller sees the parse failure with full exception
             return new List<Data.@this>
             {
-                Data.@this.FromError(ActionError.FromException(ex, "JsonParseError", 400))
+                App.Data.@this.FromError(ActionError.FromException(ex, "JsonParseError", 400))
             };
         }
 
@@ -481,7 +481,7 @@ public sealed class OpenAiProvider : ILlmProvider
             foreach (var def in parameterDefs)
             {
                 if (!result.Any(r => r.Name == def.Name) && def.Value != null)
-                    result.Add(new Data(def.Name, def.Value));
+                    result.Add(new Data.@this(def.Name, def.Value));
             }
         }
 
@@ -842,7 +842,7 @@ public sealed class OpenAiProvider : ILlmProvider
             resultValue = cached.Value;
         }
 
-        var result = Data.@this.Ok(resultValue);
+        var result = App.Data.@this.Ok(resultValue);
         SetProp(result, "Cached", true);
         foreach (var kvp in props)
             SetProp(result, kvp.Key, kvp.Value);
@@ -851,7 +851,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
     private static void SetProp(Data.@this data, string name, object? value)
     {
-        data.Properties[name] = new Data(name, value);
+        data.Properties[name] = new Data.@this(name, value);
     }
 
     private static List<LlmMessage> CloneMessages(List<LlmMessage> messages)

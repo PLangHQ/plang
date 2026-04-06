@@ -19,6 +19,6 @@ public partial class Remove : IContext
         if (!result.Success)
             return result;
 
-        return Data.@this.Ok(new types.setting { key = Key });
+        return App.Data.@this.Ok(new types.setting { key = Key });
     }
 }

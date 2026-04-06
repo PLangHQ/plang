@@ -12,10 +12,10 @@ public partial class Modulo : IContext
     {
         var divisor = MathHelper.ToDouble(B);
         if (divisor == 0)
-            return Task.FromResult(Data.@this.FromError(
+            return Task.FromResult(App.Data.@this.FromError(
                 new App.Errors.ValidationError("Modulo by zero", "DivisionByZero")));
 
         var result = MathHelper.ToDouble(A) % divisor;
-        return Task.FromResult(Data.@this.Ok(MathHelper.PreserveType(result, A, B)));
+        return Task.FromResult(App.Data.@this.Ok(MathHelper.PreserveType(result, A, B)));
     }
 }

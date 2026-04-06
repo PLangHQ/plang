@@ -94,14 +94,14 @@ public sealed class SqliteSettingsStore : ISettingsStore
 
             var result = cmd.ExecuteScalar();
             if (result == null || result == DBNull.Value)
-                return Task.FromResult(Data.@this.Ok(null));
+                return Task.FromResult(App.Data.@this.Ok(null));
 
             var data = _serializer.Deserialize<Data.@this>(result.ToString()!);
-            return Task.FromResult(data ?? Data.@this.Ok(null));
+            return Task.FromResult(data ?? App.Data.@this.Ok(null));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.@this.FromError(
+            return Task.FromResult(App.Data.@this.FromError(
                 SettingsError.FromException(ex, table, key)));
         }
     }
@@ -119,15 +119,15 @@ public sealed class SqliteSettingsStore : ISettingsStore
 
             var result = cmd.ExecuteScalar();
             if (result == null || result == DBNull.Value)
-                return Task.FromResult(Data.@this.Ok(null));
+                return Task.FromResult(App.Data.@this.Ok(null));
 
             var data = _serializer.Deserialize<T>(result.ToString()!);
             if (data != null) RehydrateValue(data);
-            return Task.FromResult((Data.@this?)data ?? Data.@this.Ok(null));
+            return Task.FromResult((Data.@this?)data ?? App.Data.@this.Ok(null));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.@this.FromError(
+            return Task.FromResult(App.Data.@this.FromError(
                 SettingsError.FromException(ex, table, key)));
         }
     }
@@ -153,11 +153,11 @@ public sealed class SqliteSettingsStore : ISettingsStore
                     if (data != null) items.Add(data);
                 }
             }
-            return Task.FromResult(Data.@this.Ok((object)items));
+            return Task.FromResult(App.Data.@this.Ok((object)items));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.@this.FromError(
+            return Task.FromResult(App.Data.@this.FromError(
                 SettingsError.FromException(ex, table)));
         }
     }
@@ -211,11 +211,11 @@ public sealed class SqliteSettingsStore : ISettingsStore
             cmd.Parameters.AddWithValue("@data", _serializer.Serialize(data));
             cmd.ExecuteNonQuery();
 
-            return Task.FromResult(Data.@this.Ok());
+            return Task.FromResult(App.Data.@this.Ok());
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.@this.FromError(
+            return Task.FromResult(App.Data.@this.FromError(
                 SettingsError.FromException(ex, table, key)));
         }
     }
@@ -232,11 +232,11 @@ public sealed class SqliteSettingsStore : ISettingsStore
             cmd.Parameters.AddWithValue("@key", key);
             cmd.ExecuteNonQuery();
 
-            return Task.FromResult(Data.@this.Ok());
+            return Task.FromResult(App.Data.@this.Ok());
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.@this.FromError(
+            return Task.FromResult(App.Data.@this.FromError(
                 SettingsError.FromException(ex, table, key)));
         }
     }
@@ -253,11 +253,11 @@ public sealed class SqliteSettingsStore : ISettingsStore
             cmd.Parameters.AddWithValue("@key", key);
 
             var count = Convert.ToInt64(cmd.ExecuteScalar());
-            return Task.FromResult(Data.@this.Ok((object)(count > 0)));
+            return Task.FromResult(App.Data.@this.Ok((object)(count > 0)));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.@this.FromError(
+            return Task.FromResult(App.Data.@this.FromError(
                 SettingsError.FromException(ex, table, key)));
         }
     }
@@ -276,11 +276,11 @@ public sealed class SqliteSettingsStore : ISettingsStore
             while (reader.Read())
                 tables.Add(reader.GetString(0));
 
-            return Task.FromResult(Data.@this.Ok((object)tables));
+            return Task.FromResult(App.Data.@this.Ok((object)tables));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.@this.FromError(
+            return Task.FromResult(App.Data.@this.FromError(
                 SettingsError.FromException(ex)));
         }
     }

@@ -12,8 +12,8 @@ public partial class Last : IContext
     {
         var existing = Context.Variables.Get(ListName)?.Value;
         if (existing is System.Collections.IList list && list.Count > 0)
-            return Task.FromResult(Data.@this.Ok(list[list.Count - 1]));
+            return Task.FromResult(App.Data.@this.Ok(list[list.Count - 1]));
 
-        return Task.FromResult(Data.@this.Ok());
+        return Task.FromResult(App.Data.@this.Ok());
     }
 }

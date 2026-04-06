@@ -14,7 +14,7 @@ public partial class Sort : IContext
     {
         var data = Context.Variables.Get(ListName);
         if (data?.Value is not List<object?> list)
-            return Task.FromResult(Data.@this.FromError(
+            return Task.FromResult(App.Data.@this.FromError(
                 new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
         if (Descending)
@@ -22,6 +22,6 @@ public partial class Sort : IContext
         else
             list.Sort((a, b) => Comparer<object>.Default.Compare(a, b));
 
-        return Task.FromResult(Data.@this.Ok(new types.list { count = list.Count, value = list }, App.Data.Type.FromName("list")));
+        return Task.FromResult(App.Data.@this.Ok(new types.list { count = list.Count, value = list }, App.Data.Type.FromName("list")));
     }
 }

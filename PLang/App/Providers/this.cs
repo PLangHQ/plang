@@ -118,12 +118,12 @@ public sealed class @this
         var typeDict = _providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, IProvider>(StringComparer.OrdinalIgnoreCase));
 
         if (!typeDict.TryAdd(provider.Name, provider))
-            return Data.@this.FromError(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
+            return App.Data.@this.FromError(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
 
         if (typeDict.Count == 1)
             provider.IsDefault = true;
 
-        return Data.@this.Ok(provider);
+        return App.Data.@this.Ok(provider);
     }
 
     /// <summary>
@@ -132,9 +132,9 @@ public sealed class @this
     public Data.@this List(System.Type providerType)
     {
         if (!_providers.TryGetValue(providerType, out var typeDict))
-            return Data.@this.Ok(Array.Empty<IProvider>());
+            return App.Data.@this.Ok(Array.Empty<IProvider>());
 
-        return Data.@this.Ok(typeDict.Values.ToList());
+        return App.Data.@this.Ok(typeDict.Values.ToList());
     }
 
     /// <summary>
@@ -143,19 +143,19 @@ public sealed class @this
     public Data.@this Remove(System.Type providerType, string name)
     {
         if (string.IsNullOrEmpty(name))
-            return Data.@this.FromError(new ActionError("Provider name is required", "ValidationError", 400));
+            return App.Data.@this.FromError(new ActionError("Provider name is required", "ValidationError", 400));
 
         if (!_providers.TryGetValue(providerType, out var typeDict))
-            return Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return App.Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var provider))
-            return Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return App.Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (provider.IsDefault)
-            return Data.@this.FromError(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
+            return App.Data.@this.FromError(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
 
         typeDict.TryRemove(name, out _);
-        return Data.@this.Ok();
+        return App.Data.@this.Ok();
     }
 
     /// <summary>
@@ -164,13 +164,13 @@ public sealed class @this
     public Data.@this SetDefault(System.Type providerType, string name)
     {
         if (string.IsNullOrEmpty(name))
-            return Data.@this.FromError(new ActionError("Provider name is required", "ValidationError", 400));
+            return App.Data.@this.FromError(new ActionError("Provider name is required", "ValidationError", 400));
 
         if (!_providers.TryGetValue(providerType, out var typeDict))
-            return Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return App.Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var newDefault))
-            return Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return App.Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         // Set new default first, then clear old — avoids window where Get<T>() returns null
         newDefault.IsDefault = true;
@@ -179,7 +179,7 @@ public sealed class @this
             if (kvp.Value != newDefault)
                 kvp.Value.IsDefault = false;
         }
-        return Data.@this.Ok();
+        return App.Data.@this.Ok();
     }
 
     /// <summary>
@@ -224,6 +224,6 @@ public sealed class @this
         Register<ITemplateProvider>(new FluidProvider());
         Register<modules.llm.providers.ILlmProvider>(new modules.llm.providers.OpenAiProvider());
         Register<modules.builder.providers.IBuilderProvider>(new modules.builder.providers.DefaultBuilderProvider());
-        Register<Variables.Providers.IGrepProvider>(new Variables.Providers.DefaultGrepProvider());
+        Register<Data.Providers.IGrepProvider>(new Data.Providers.DefaultGrepProvider());
     }
 }

@@ -138,6 +138,6 @@ public sealed class @this
             ["error"] = error?.Message
         };
 
-        return await engine.System.SettingsStore.Set(Table, step.Hash, new Data(step.Hash, metadata));
+        return await engine.System.SettingsStore.Set(Table, step.Hash, new Data.@this(step.Hash, metadata));
     }
 }

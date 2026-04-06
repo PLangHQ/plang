@@ -41,6 +41,6 @@ public partial class Add : IContext
         else
             list.Add(Value);
 
-        return Task.FromResult(Data.@this.Ok(new types.list { count = list.Count, value = list }, App.Data.Type.FromName("list")));
+        return Task.FromResult(App.Data.@this.Ok(new types.list { count = list.Count, value = list }, App.Data.Type.FromName("list")));
     }
 }

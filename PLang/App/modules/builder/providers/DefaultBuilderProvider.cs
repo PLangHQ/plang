@@ -15,7 +15,7 @@ public class DefaultBuilderProvider : IBuilderProvider
     private static Data.@this? BuildingGuard(IContext action)
     {
         if (!action.Context.App.Building.IsEnabled)
-            return Data.@this.FromError(new Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
+            return global::App.Data.@this.FromError(new Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
         return null;
     }
 
@@ -26,7 +26,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return Task.FromResult(guard);
 
-        return Task.FromResult(Data.@this.Ok(action.Context.App.Modules.Describe()));
+        return Task.FromResult(global::App.Data.@this.Ok(action.Context.App.Modules.Describe()));
     }
 
     // --- Types ---
@@ -40,7 +40,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var schemas = TypeMapping.GetComplexTypeSchemas();
         var schemaLines = schemas.Select(kvp => $"  {kvp.Key}: {kvp.Value}");
 
-        return Data.@this.Ok(new BuilderTypeInfo(
+        return global::App.Data.@this.Ok(new BuilderTypeInfo(
             string.Join(", ", names),
             string.Join("\n", schemaLines)));
     }
@@ -69,7 +69,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var files = listResult.Value as FileSystem.Path[];
         if (files == null || files.Length == 0)
-            return Data.@this.Ok(new List<Goal>());
+            return global::App.Data.@this.Ok(new List<Goal>());
 
         // Filter by app.Building.Files if set (--build={"files":"test.goal"})
         var buildFiles = engine.Building.Files;
@@ -80,7 +80,7 @@ public class DefaultBuilderProvider : IBuilderProvider
                     || f.Relative.EndsWith(bf.Relative, StringComparison.OrdinalIgnoreCase)))
                 .ToArray();
             if (files.Length == 0)
-                return Data.@this.Ok(new List<Goal>());
+                return global::App.Data.@this.Ok(new List<Goal>());
         }
 
         var allGoals = new List<Goal>();
@@ -119,7 +119,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             allGoals.AddRange(parsedGoals);
         }
 
-        var result = Data.@this.Ok(allGoals);
+        var result = global::App.Data.@this.Ok(allGoals);
         if (allErrors.Count > 0)
             result.Warnings = allErrors;
         return result;
@@ -134,7 +134,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var context = action.Context;
 
         if (action.Goals.Count == 0)
-            return Data.@this.FromError(new Errors.ActionError("No goals to save", "NoGoals", 400));
+            return global::App.Data.@this.FromError(new Errors.ActionError("No goals to save", "NoGoals", 400));
 
         // Apply LLM-generated description if available in Variables
         var stepResults = context.Variables.Get("stepResults");
@@ -148,7 +148,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var prPath = action.Goals[0].PrPath;
         if (string.IsNullOrEmpty(prPath))
-            return Data.@this.FromError(new Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));
+            return global::App.Data.@this.FromError(new Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));
 
         // Load existing goals from .pr file — merge by name (replace or append)
         var existingGoals = new List<Goal>();
@@ -181,10 +181,10 @@ public class DefaultBuilderProvider : IBuilderProvider
         {
             Context = context,
             Path = FileSystem.Path.Resolve(prPath, context),
-            Value = new Data("", json)
+            Value = new Data.@this("", json)
         };
         var saveResult = await engine.RunAction(saveAction, context);
-        return saveResult.Success ? Data.@this.Ok(true) : saveResult;
+        return saveResult.Success ? global::App.Data.@this.Ok(true) : saveResult;
     }
 
     // --- Validate ---
@@ -199,7 +199,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var modules = engine.Modules;
 
         if (action.Actions == null || action.Actions.Count == 0)
-            return Data.@this.Ok(true);
+            return global::App.Data.@this.Ok(true);
 
         var notFound = new List<string>();
         foreach (var a in action.Actions)
@@ -209,7 +209,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         }
 
         if (notFound.Count > 0)
-            return Data.@this.FromError(new Errors.ActionError(
+            return global::App.Data.@this.FromError(new Errors.ActionError(
                 $"Actions not found: {string.Join(", ", notFound)}", "ActionNotFound", 400));
 
         await ResolveGoalCallPaths(action.Actions, engine, context);
@@ -223,7 +223,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             a.Defaults = modules.GetDefaults(a.Module, a.ActionName, paramNames);
         }
 
-        return Data.@this.Ok(true);
+        return global::App.Data.@this.Ok(true);
     }
 
     // --- Merge ---
@@ -234,7 +234,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (guard != null) return guard;
 
         action.Step.Merge(action.StepFromLlm);
-        return Data.@this.Ok(action.Step);
+        return global::App.Data.@this.Ok(action.Step);
     }
 
     // --- App ---
@@ -246,7 +246,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var engine = action.Context.App;
         // App loads its identity from app.pr at Start() — just return it
-        return Data.@this.Ok(engine);
+        return global::App.Data.@this.Ok(engine);
     }
 
     public async Task<Data.@this> AppSave(appSave action)

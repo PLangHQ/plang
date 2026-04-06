@@ -10,6 +10,6 @@ public partial class Abs : IContext
     public Task<Data.@this> Run()
     {
         var result = Math.Abs(MathHelper.ToDouble(Value));
-        return Task.FromResult(Data.@this.Ok(MathHelper.PreserveType(result, Value)));
+        return Task.FromResult(App.Data.@this.Ok(MathHelper.PreserveType(result, Value)));
     }
 }

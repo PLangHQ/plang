@@ -18,14 +18,14 @@ public partial class Store : IContext
     public async Task<Data.@this> Run()
     {
         // No cache settings, no data, or failed result — don't cache
-        if (Step.Cache == null || Data.@this == null || !Data.Success) return Data.@this ?? Data.@this.Ok();
+        if (Step.Cache == null || this.Data == null || !this.Data.Success) return this.Data ?? App.Data.@this.Ok();
 
         // Any non-cacheable action — don't cache
         var modules = Context.App!.Modules;
         foreach (var action in Step.Actions)
         {
             if (!modules.IsCacheable(action.Module, action.ActionName))
-                return Data.@this;
+                return this.Data;
         }
 
         var key = BuildCacheKey();
@@ -33,7 +33,7 @@ public partial class Store : IContext
 
         await Context.App!.Cache.SetAsync(key, entry, Step.Cache);
 
-        return Data.@this;
+        return this.Data;
     }
 
     private string BuildCacheKey()
@@ -45,9 +45,9 @@ public partial class Store : IContext
         return $"step:{goalPath}:{Step.Index}";
     }
 
-    private Data.@this CollectReturnVariables()
+    private App.Data.@this CollectReturnVariables()
     {
-        var entry = Data.@this.Ok();
+        var entry = App.Data.@this.Ok();
         foreach (var action in Step.Actions)
         {
             if (action.Return == null) continue;

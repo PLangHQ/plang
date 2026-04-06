@@ -46,7 +46,7 @@ public class @this
     /// <summary>
     /// Stores a value with the given name.
     /// </summary>
-    public void Set(string name, object? value, Type? type = null)
+    public void Set(string name, object? value, Data.Type? type = null)
     {
         name = CleanName(name);
 
@@ -67,7 +67,7 @@ public class @this
             }
             else
             {
-                var data = new Data(name, value, type);
+                var data = new Data.@this(name, value, type);
                 data.Context = _context;
                 _variables[name] = data;
             }
@@ -79,7 +79,7 @@ public class @this
         {
             // Root doesn't exist — create it as a dictionary so dot-path properties work
             var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-            root = new Data(rootName, dict);
+            root = new Data.@this(rootName, dict);
             root.Context = _context;
             _variables[rootName] = root;
         }
@@ -336,7 +336,7 @@ public class @this
     public void Clear()
     {
         var toRemove = _variables
-            .Where(kvp => !kvp.Key.StartsWith("!") && kvp.Value is not DynamicData)
+            .Where(kvp => !kvp.Key.StartsWith("!") && kvp.Value is not Data.DynamicData)
             .Select(kvp => kvp.Key)
             .ToList();
 

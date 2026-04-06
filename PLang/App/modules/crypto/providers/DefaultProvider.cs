@@ -25,20 +25,20 @@ public class DefaultCryptoProvider : ICryptoProvider
         };
 
         if (hashBytes == null)
-            return Data.@this.FromError(new ActionError($"Algorithm '{action.Algorithm}' is not supported", "UnsupportedAlgorithm", 400));
+            return App.Data.@this.FromError(new ActionError($"Algorithm '{action.Algorithm}' is not supported", "UnsupportedAlgorithm", 400));
 
-        return Data.@this.Ok(hashBytes, Data.Type.FromName(algorithm));
+        return App.Data.@this.Ok(hashBytes, Data.Type.FromName(algorithm));
     }
 
     public Data.@this Verify(Verify action)
     {
         byte[] expectedHash;
         try { expectedHash = Convert.FromBase64String(action.Hash); }
-        catch (FormatException) { return Data.@this.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
+        catch (FormatException) { return App.Data.@this.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
 
-        var hashResult = Hash(new Hash { Context = action.Context, Data.@this = action.Data, Algorithm = action.Algorithm });
+        var hashResult = Hash(new Hash { Context = action.Context, Data = action.Data, Algorithm = action.Algorithm });
         if (!hashResult.Success) return hashResult;
 
-        return Data.@this.Ok(((byte[])hashResult.Value!).AsSpan().SequenceEqual(expectedHash));
+        return App.Data.@this.Ok(((byte[])hashResult.Value!).AsSpan().SequenceEqual(expectedHash));
     }
 }

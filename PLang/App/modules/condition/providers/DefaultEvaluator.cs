@@ -13,7 +13,7 @@ public sealed class DefaultEvaluator : IEvaluator
         try
         {
             bool result = action.Operator.Evaluate(action.Left, action.Right);
-            return Data.@this.Ok(result);
+            return App.Data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
@@ -26,7 +26,7 @@ public sealed class DefaultEvaluator : IEvaluator
         try
         {
             bool result = action.Operator.Evaluate(action.Left, action.Right);
-            return Data.@this.Ok(result);
+            return App.Data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
@@ -39,7 +39,7 @@ public sealed class DefaultEvaluator : IEvaluator
         var leftType = left?.Value?.GetType().Name ?? "null";
         var rightType = right?.Value?.GetType().Name ?? "null";
 
-        return Data.@this.FromError(new ValidationError(
+        return App.Data.@this.FromError(new ValidationError(
             $"Condition evaluation failed: '{left?.Value}' ({leftType}) {op.Value} '{right?.Value}' ({rightType}) — {ex.Message}",
             "EvaluationError")
         {

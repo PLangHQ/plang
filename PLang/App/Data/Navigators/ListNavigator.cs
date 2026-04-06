@@ -7,7 +7,7 @@ namespace App.Data.Navigators;
 /// </summary>
 public sealed class ListNavigator : INavigator
 {
-    public object? Navigate(@this data, string key)
+    public object? Navigate(Data.@this data, string key)
     {
         var value = data.Value;
         if (value is not System.Collections.IList list) return null;

@@ -274,7 +274,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
 
         Providers.RegisterDefaults();
         Types.RegisterDomainTypes();
-        Data.Navigators.RegisterDefaults();
+        Navigators.RegisterDefaults();
 
         // Default actor is User — Start() switches to System for bootstrap
         CurrentActor = User;
@@ -318,7 +318,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         if (dir != null && !FileSystem.Directory.Exists(dir))
             FileSystem.Directory.CreateDirectory(dir);
         await FileSystem.File.WriteAllTextAsync(path, json);
-        return Data.@this.Ok(this);
+        return App.Data.@this.Ok(this);
     }
 
     /// <summary>
@@ -359,7 +359,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     {
         var (executor, error) = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
         if (error != null)
-            return Data.@this.FromError(error);
+            return App.Data.@this.FromError(error);
 
         var result = await executor!.ExecuteAsync(action, this, context);
 
@@ -390,7 +390,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         var goalCall = new GoalCall { PrPath = "system/.build/run.pr" };
         var goal = await goalCall.GetGoalAsync(this, context);
         if (goal == null)
-            return Data.@this.FromError(new Errors.ServiceError(
+            return App.Data.@this.FromError(new Errors.ServiceError(
                 "system/.build/run.pr not found", "RuntimeNotFound", 500));
 
         return await RunSteps(goal.Steps, context);
@@ -402,7 +402,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// </summary>
     public async Task<Data.@this> RunSteps(GoalSteps steps, Context.@this context)
     {
-        Data.@this result = Data.@this.Ok();
+        Data.@this result = App.Data.@this.Ok();
         int? skipBelowIndent = null;
 
         for (int i = 0; i < steps.Count; i++)
@@ -446,7 +446,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         context ??= User.Context;
         var goal = await goalCall.GetGoalAsync(this, context);
         if (goal == null)
-            return Data.@this.FromError(Errors.GoalError.NotFound(goalCall.Name ?? goalCall.PrPath ?? "unknown"));
+            return App.Data.@this.FromError(Errors.GoalError.NotFound(goalCall.Name ?? goalCall.PrPath ?? "unknown"));
 
         return await RunGoalAsync(goal, context, ct);
     }
@@ -459,7 +459,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         context ??= User.Context;
 
         if (ct.IsCancellationRequested)
-            return Data.@this.FromError(new Errors.Error("Operation was cancelled", "Cancelled", 499));
+            return App.Data.@this.FromError(new Errors.Error("Operation was cancelled", "Cancelled", 499));
 
         var previousGoal = context.Goal;
         context.Goal = goal;

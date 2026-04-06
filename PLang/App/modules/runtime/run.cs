@@ -34,7 +34,7 @@ public partial class run : IContext
             goal = await GoalName.GetGoalAsync(engine, Context);
             if (goal == null)
             {
-                var result = Data.@this.FromError(new Errors.ServiceError(
+                var result = App.Data.@this.FromError(new Errors.ServiceError(
                     $"Goal '{GoalName.Name ?? GoalName.PrPath}' not found", "NotFound", 404));
                 result.Handled = true;
                 return result;
@@ -50,7 +50,7 @@ public partial class run : IContext
 
         try
         {
-            Context.Variables.Put(new Data("goal", goal!));
+            Context.Variables.Put(new Data.@this("goal", goal!));
 
             var runGoalCall = new GoalCall { Name = "RunGoal", PrPath = "/system/.build/run.pr" };
             var runResult = await engine.RunGoalAsync(runGoalCall, Context);

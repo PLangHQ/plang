@@ -29,7 +29,7 @@ public sealed class @this
     {
         public string FilePath { get; init; } = "";
         public List<AssertionFailure> Failures { get; } = new();
-        public Data.@this Result { get; set; } = Data.@this.Ok();
+        public Data.@this Result { get; set; } = App.Data.@this.Ok();
         public bool Passed => Result.Success && Failures.Count == 0;
     }
 
@@ -81,7 +81,7 @@ public sealed class @this
             }
             catch (Exception ex)
             {
-                result.Result = Data.@this.FromError(Error.FromException(ex));
+                result.Result = App.Data.@this.FromError(Error.FromException(ex));
                 Console.WriteLine(" ERROR");
             }
 
@@ -117,7 +117,7 @@ public sealed class @this
 
         var prPath = fileSystem.Path.Combine(dir, ".build", fileName.ToLowerInvariant() + ".test.pr");
         if (!fileSystem.File.Exists(prPath))
-            return Data.@this.FromError(new ServiceError("PrNotFound", "Built .pr file not found. Run 'plang p build' first.", 404));
+            return App.Data.@this.FromError(new ServiceError("PrNotFound", "Built .pr file not found. Run 'plang p build' first.", 404));
 
         // Each test folder is its own PLang app root.
         // Setup discovery and goal resolution work relative to this root.
@@ -136,7 +136,7 @@ public sealed class @this
         var testGoalName = "Start";
         var goal = testEngine.Goals.Get(testGoalName);
         if (goal == null)
-            return Data.@this.FromError(new ServiceError("GoalNotFound", $"Goal '{testGoalName}' not found in {prPath}", 404));
+            return App.Data.@this.FromError(new ServiceError("GoalNotFound", $"Goal '{testGoalName}' not found in {prPath}", 404));
 
         // Register assertion failure tracking
         var events = testEngine.Context.Events;
@@ -153,7 +153,7 @@ public sealed class @this
     private static Task<Data.@this> TrackAssertionFailures(Context.@this context, TestResult result)
     {
         var step = context.Step;
-        if (step == null) return Task.FromResult(Data.@this.Ok());
+        if (step == null) return Task.FromResult(App.Data.@this.Ok());
 
         var lastResult = context.Variables.Get("__stepResult");
         if (lastResult != null && !lastResult.Success && lastResult.Error is AssertionError assertError)
@@ -168,7 +168,7 @@ public sealed class @this
             });
         }
 
-        return Task.FromResult(Data.@this.Ok());
+        return Task.FromResult(App.Data.@this.Ok());
     }
 
     private static void PrintSummary(List<TestResult> results)

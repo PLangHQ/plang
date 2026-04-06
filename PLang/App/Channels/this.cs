@@ -38,7 +38,7 @@ public sealed class @this : IAsyncDisposable
     public async Task<Data.@this> WriteAsync(string actorName, string channelName, object? data, CancellationToken ct = default)
     {
         var (actor, error) = _engine.GetActor(actorName);
-        if (error != null) return Data.@this.FromError(error);
+        if (error != null) return App.Data.@this.FromError(error);
         return await actor!.Channels.WriteAsync(channelName, data, cancellationToken: ct);
     }
 
@@ -76,13 +76,13 @@ public sealed class @this : IAsyncDisposable
     {
         var channel = Get(name);
         if (channel == null)
-            return (null, Data.@this.FromError(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404)));
+            return (null, App.Data.@this.FromError(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404)));
 
         if (requireRead == true && !channel.CanRead)
-            return (null, Data.@this.FromError(new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400)));
+            return (null, App.Data.@this.FromError(new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400)));
 
         if (requireWrite == true && !channel.CanWrite)
-            return (null, Data.@this.FromError(new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400)));
+            return (null, App.Data.@this.FromError(new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400)));
 
         return (channel, null);
     }
@@ -144,15 +144,15 @@ public sealed class @this : IAsyncDisposable
             await Serializers.SerializeAsync(new SerializeOptions
             {
                 Stream = channel!.Stream,
-                Data.@this = data,
+                Data = data,
                 ContentType = contentType ?? channel.ContentType ?? "application/json",
                 CancellationToken = cancellationToken
             });
-            return Data.@this.Ok();
+            return App.Data.@this.Ok();
         }
         catch (Exception ex)
         {
-            return Data.@this.FromError(new ServiceError($"Failed to write to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
+            return App.Data.@this.FromError(new ServiceError($"Failed to write to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
         }
     }
 
@@ -172,11 +172,11 @@ public sealed class @this : IAsyncDisposable
                 ContentType = channel.ContentType ?? "application/json",
                 CancellationToken = cancellationToken
             });
-            return Data.@this.Ok(result);
+            return App.Data.@this.Ok(result);
         }
         catch (Exception ex)
         {
-            return Data.@this.FromError(new ServiceError($"Failed to read from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
+            return App.Data.@this.FromError(new ServiceError($"Failed to read from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
         }
     }
 
@@ -191,11 +191,11 @@ public sealed class @this : IAsyncDisposable
         try
         {
             await channel!.WriteTextAsync(text, cancellationToken);
-            return Data.@this.Ok();
+            return App.Data.@this.Ok();
         }
         catch (Exception ex)
         {
-            return Data.@this.FromError(new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
+            return App.Data.@this.FromError(new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
         }
     }
 
@@ -210,11 +210,11 @@ public sealed class @this : IAsyncDisposable
         try
         {
             var text = await channel!.ReadAllTextAsync(cancellationToken);
-            return Data.@this.Ok(text);
+            return App.Data.@this.Ok(text);
         }
         catch (Exception ex)
         {
-            return Data.@this.FromError(new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
+            return App.Data.@this.FromError(new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
         }
     }
 

@@ -16,7 +16,7 @@ public partial class Foreach : IContext
     public async Task<Data.@this> Run()
     {
         if (Collection == null)
-            return Data.@this.Ok(new types.loop { itemCount = 0, completed = true });
+            return App.Data.@this.Ok(new types.loop { itemCount = 0, completed = true });
 
         var engine = Context.App!;
         var variableName = ItemName ?? "item";
@@ -26,7 +26,7 @@ public partial class Foreach : IContext
         foreach (var (key, value) in EnumerateCollection())
         {
             if (Context.CancellationToken.IsCancellationRequested)
-                return Data.@this.Ok(new types.loop { itemCount = count, completed = false });
+                return App.Data.@this.Ok(new types.loop { itemCount = count, completed = false });
 
             Context.Variables.Set(variableName, value);
 
@@ -38,7 +38,7 @@ public partial class Foreach : IContext
             count++;
         }
 
-        return Data.@this.Ok(new types.loop { itemCount = count, completed = true });
+        return App.Data.@this.Ok(new types.loop { itemCount = count, completed = true });
     }
 
     private IEnumerable<(object? key, object? value)> EnumerateCollection()

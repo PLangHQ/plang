@@ -29,7 +29,7 @@ public class Ed25519Provider : ISigningProvider
         var identity = (Identity)identityResult;
 
         // Hash the data
-        var hash = await engine.RunAction<Hash>(new Hash { Data.@this = action.Data, Algorithm = "keccak256" }, action.Context);
+        var hash = await engine.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = "keccak256" }, action.Context);
         if (!hash.Success) return hash;
 
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
@@ -60,7 +60,7 @@ public class Ed25519Provider : ISigningProvider
     public virtual async Task<Data.@this> VerifyAsync(verify action)
     {
         if (action.Data?.Signature == null)
-            return Data.@this.FromError(new ActionError("Data has no signature", "NoSignature", 400));
+            return App.Data.@this.FromError(new ActionError("Data has no signature", "NoSignature", 400));
 
         var signedData = action.Data.Signature;
         var engine = action.Context.App;
@@ -70,68 +70,68 @@ public class Ed25519Provider : ISigningProvider
 
         // 1. Type check
         if (signedData.Type != "signature")
-            return Data.@this.FromError(new ActionError($"Invalid signed data type: '{signedData.Type}'", "InvalidType", 400));
+            return App.Data.@this.FromError(new ActionError($"Invalid signed data type: '{signedData.Type}'", "InvalidType", 400));
 
         // 2. Timeout check (Created too old)
         var age = now - signedData.Created;
         if (age.TotalMilliseconds > effectiveTimeout)
-            return Data.@this.FromError(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
+            return App.Data.@this.FromError(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
 
         // 3. Expiry check
         if (signedData.Expires.HasValue && now > signedData.Expires.Value)
-            return Data.@this.FromError(new ActionError("Signature has expired", "Expired", 400));
+            return App.Data.@this.FromError(new ActionError("Signature has expired", "Expired", 400));
 
         // 4. Nonce replay check
         var nonceCacheKey = $"nonce:{signedData.Nonce}";
         var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
-        var nonceAdded = await engine.Cache.TryAddAsync(nonceCacheKey, Data.@this.Ok(true), cacheSettings);
+        var nonceAdded = await engine.Cache.TryAddAsync(nonceCacheKey, App.Data.@this.Ok(true), cacheSettings);
         if (!nonceAdded)
-            return Data.@this.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
+            return App.Data.@this.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
         // 5. Contract matching
         if (!ContractsMatch(signedData.Contracts, action.Contracts))
-            return Data.@this.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
+            return App.Data.@this.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
         // 6. Header matching
         if (action.Headers != null)
         {
             if (signedData.Headers == null)
-                return Data.@this.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
+                return App.Data.@this.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
 
             foreach (var kvp in action.Headers)
             {
                 if (!signedData.Headers.TryGetValue(kvp.Key, out var signedValue) ||
                     !string.Equals(signedValue?.ToString(), kvp.Value?.ToString(), StringComparison.Ordinal))
-                    return Data.@this.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
+                    return App.Data.@this.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
             }
         }
 
         // 7. Data hash verification
         if (signedData.Hash?.Value is not byte[] storedHash || storedHash.Length == 0)
-            return Data.@this.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
+            return App.Data.@this.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
         if (action.Data?.Value != null)
         {
             var rehash = await engine.RunAction<Hash>(
-                new Hash { Data.@this = action.Data, Algorithm = signedData.Hash!.Type?.Value ?? "keccak256" }, action.Context);
+                new Hash { Data = action.Data, Algorithm = signedData.Hash!.Type?.Value ?? "keccak256" }, action.Context);
             if (!rehash.Success) return rehash;
             if (rehash.Value is not byte[] rehashBytes || !rehashBytes.AsSpan().SequenceEqual(storedHash))
-                return Data.@this.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
+                return App.Data.@this.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
         }
 
         // 8. Signature verification
         if (string.IsNullOrEmpty(signedData.Signature))
-            return Data.@this.FromError(new ActionError("Missing signature", "SignatureInvalid", 400));
+            return App.Data.@this.FromError(new ActionError("Missing signature", "SignatureInvalid", 400));
 
         byte[] signatureBytes;
         try { signatureBytes = Convert.FromBase64String(signedData.Signature); }
-        catch (FormatException) { return Data.@this.FromError(new ActionError("Invalid base64 signature", "SignatureInvalid", 400)); }
+        catch (FormatException) { return App.Data.@this.FromError(new ActionError("Invalid base64 signature", "SignatureInvalid", 400)); }
 
         var signingBytes = signedData.ToSigningBytes();
         var verifyResult = Verify(signingBytes, signatureBytes, signedData.Identity);
         if (!verifyResult.Success) return verifyResult;
 
-        return Data.@this.Ok(true);
+        return App.Data.@this.Ok(true);
     }
 
     private static bool ContractsMatch(List<string>? signed, List<string>? required)
@@ -182,11 +182,11 @@ public class Ed25519Provider : ISigningProvider
                 new KeyCreationParameters { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
 
             var signature = algorithm.Sign(key, data);
-            return Data.@this.Ok(signature);
+            return App.Data.@this.Ok(signature);
         }
         catch (Exception ex)
         {
-            return Data.@this.FromError(ActionError.FromException(ex, "SigningError", 500));
+            return App.Data.@this.FromError(ActionError.FromException(ex, "SigningError", 500));
         }
     }
 
@@ -201,14 +201,14 @@ public class Ed25519Provider : ISigningProvider
             var isValid = algorithm.Verify(publicKey, data, signature);
 
             if (!isValid)
-                return Data.@this.FromError(new ActionError("Signature verification failed", "SignatureInvalid", 400));
+                return App.Data.@this.FromError(new ActionError("Signature verification failed", "SignatureInvalid", 400));
 
-            return Data.@this.Ok(true);
+            return App.Data.@this.Ok(true);
         }
         catch (Exception ex) when (ex is FormatException or ArgumentException
             or System.Security.Cryptography.CryptographicException or InvalidOperationException)
         {
-            return Data.@this.FromError(ActionError.FromException(ex, "SignatureInvalid", 400));
+            return App.Data.@this.FromError(ActionError.FromException(ex, "SignatureInvalid", 400));
         }
     }
 }

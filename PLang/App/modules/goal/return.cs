@@ -12,7 +12,7 @@ public partial class Return : IContext
 
     public Task<Data.@this> Run()
     {
-        var result = Data.@this ?? Data.@this.Ok();
+        var result = this.Data ?? App.Data.@this.Ok();
         // Signal RunSteps to stop iteration — even for successful returns
         result.Returned = true;
         return Task.FromResult(result);

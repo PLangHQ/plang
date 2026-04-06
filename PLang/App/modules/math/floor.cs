@@ -10,6 +10,6 @@ public partial class Floor : IContext
     public Task<Data.@this> Run()
     {
         var result = Math.Floor(MathHelper.ToDouble(Value));
-        return Task.FromResult(Data.@this.Ok(MathHelper.PreserveType(result, Value)));
+        return Task.FromResult(App.Data.@this.Ok(MathHelper.PreserveType(result, Value)));
     }
 }

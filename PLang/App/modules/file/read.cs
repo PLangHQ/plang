@@ -23,7 +23,7 @@ public partial class Read : IContext
         if (ResolveVariables && result.Success && result.Value is string content)
         {
             var resolved = Context.Variables.Resolve(content);
-            return Task.FromResult(new Data(result.Name, resolved, result.Type));
+            return Task.FromResult(new Data.@this(result.Name, resolved, result.Type));
         }
         return Task.FromResult(result);
     }

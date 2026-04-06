@@ -11,5 +11,5 @@ public interface INavigator
     /// <summary>
     /// Navigate into the data's content by key. Returns null if the key doesn't exist.
     /// </summary>
-    object? Navigate(@this data, string key);
+    object? Navigate(Data.@this data, string key);
 }

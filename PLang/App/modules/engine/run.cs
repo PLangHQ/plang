@@ -29,7 +29,7 @@ public partial class Dispatch : IContext
         if (targetActor != null && targetActor != callingActor)
         {
             if (callingActor != null && callingActor.EscalationLevel < targetActor.EscalationLevel)
-                return Data.@this.FromError(new Errors.ActionError(
+                return App.Data.@this.FromError(new Errors.ActionError(
                     $"Actor '{callingActor.Name}' cannot escalate to '{targetActor.Name}'",
                     "EscalationDenied", 403));
 

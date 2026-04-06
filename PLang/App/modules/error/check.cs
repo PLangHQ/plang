@@ -18,7 +18,7 @@ public partial class Check : IContext, IAction
 
     public async Task<Data.@this> Run()
     {
-        if (Data.@this == null || Data.Success) return Data.@this ?? Data.@this.Ok();
+        if (this.Data == null || this.Data.Success) return this.Data ?? App.Data.@this.Ok();
 
         var onError = Step?.OnError;
 
@@ -26,19 +26,19 @@ public partial class Check : IContext, IAction
         if (onError == null)
         {
             Data.Handled = false;
-            return Data.@this;
+            return this.Data;
         }
 
         // Filter — does this error match the handler's criteria?
         if (!ErrorMatches(Data.Error, onError))
         {
             Data.Handled = false;
-            return Data.@this;
+            return this.Data;
         }
 
         // Ignore — swallow
         if (onError.IgnoreError)
-            return Data.@this.Ok();
+            return App.Data.@this.Ok();
 
         var engine = Context.App!;
         var order = onError.Order ?? ErrorOrder.RetryFirst;
@@ -52,7 +52,7 @@ public partial class Check : IContext, IAction
             if (retryResult != null) return retryResult;
 
             // Goal ran but no retry or retry failed — goal alone counts as handled
-            if (onError.Goal != null) return Data.@this.Ok();
+            if (onError.Goal != null) return App.Data.@this.Ok();
         }
         else
         {
@@ -63,18 +63,18 @@ public partial class Check : IContext, IAction
             if (onError.Goal != null)
             {
                 await CallErrorGoal(engine, Step!, onError);
-                return Data.@this.Ok();
+                return App.Data.@this.Ok();
             }
         }
 
         // Nothing handled it — propagate
         Data.Handled = false;
-        return Data.@this;
+        return this.Data;
     }
 
     /// <summary>
     /// Retry the step up to RetryCount times, with delay spread over RetryOverMs.
-    /// Returns Data.@this.Ok() on success, null if retries exhausted or not configured.
+    /// Returns App.Data.@this.Ok() on success, null if retries exhausted or not configured.
     /// </summary>
     private async Task<Data.@this?> Retry(App.@this engine, App.Goals.Goal.Steps.Step.@this Step)
     {
@@ -92,7 +92,7 @@ public partial class Check : IContext, IAction
 
             // Re-execute the user step's actions on the user actor's context
             var userContext = engine.User.Context;
-            Data.@this result = Data.@this.Ok();
+            App.Data.@this result = App.Data.@this.Ok();
             foreach (var action in Step.Actions)
             {
                 result = await engine.Run(action, userContext);

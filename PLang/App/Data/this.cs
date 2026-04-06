@@ -407,7 +407,7 @@ public class DataList<T> : @this, IList<T>
     /// </summary>
     public override @this Clone()
     {
-        var clone = new @this.DataList<T>(Name);
+        var clone = new DataList<T>(Name);
         foreach (var item in _items)
             clone._items.Add(item);
         clone.Error = Error;

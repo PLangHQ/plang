@@ -18,7 +18,7 @@ public class DefaultFileProvider : IFileProvider
         var fs = action.Context.App.FileSystem;
         var path = action.Path;
         if (!fs.File.Exists(path.Absolute))
-            return Data.@this.FromError(new ServiceError($"File not found: {path.Raw}", "NotFound", 404));
+            return App.Data.@this.FromError(new ServiceError($"File not found: {path.Raw}", "NotFound", 404));
 
         try
         {
@@ -54,7 +54,7 @@ public class DefaultFileProvider : IFileProvider
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return App.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
     }
 
@@ -75,18 +75,18 @@ public class DefaultFileProvider : IFileProvider
             {
                 await using var stream = fs.File.Create(path.Absolute);
                 await action.Context.App.Channels.Serializers.SerializeAsync(new SerializeOptions
-                    { Stream = stream, Data.@this = value, Extension = path.Extension });
+                    { Stream = stream, Data = value, Extension = path.Extension });
             }
 
             return new FileSystem.Path(path.Absolute);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return App.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
         catch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)
         {
-            return Data.@this.FromError(new ServiceError(ex.Message, "SerializationError", 500));
+            return App.Data.@this.FromError(new ServiceError(ex.Message, "SerializationError", 500));
         }
     }
 
@@ -101,19 +101,19 @@ public class DefaultFileProvider : IFileProvider
             else if (fs.Directory.Exists(path.Absolute))
             {
                 if (!action.Recursive && fs.Directory.GetFileSystemEntries(path.Absolute).Length > 0)
-                    return Data.@this.FromError(new ServiceError(
+                    return App.Data.@this.FromError(new ServiceError(
                         $"Directory is not empty: {path.Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
 
                 fs.Directory.Delete(path.Absolute, action.Recursive);
             }
             else if (!action.IgnoreIfNotFound)
-                return Data.@this.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
+                return App.Data.@this.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
 
             return new FileSystem.Path(path.Absolute);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return App.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
     }
 
@@ -122,7 +122,7 @@ public class DefaultFileProvider : IFileProvider
         var fs = action.Context.App.FileSystem;
         var source = action.Source;
         if (!source.Exists)
-            return Data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
+            return App.Data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
 
         try
         {
@@ -138,7 +138,7 @@ public class DefaultFileProvider : IFileProvider
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return App.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
     }
 
@@ -147,7 +147,7 @@ public class DefaultFileProvider : IFileProvider
         var fs = action.Context.App.FileSystem;
         var source = action.Source;
         if (!source.Exists)
-            return Data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
+            return App.Data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
 
         try
         {
@@ -168,7 +168,7 @@ public class DefaultFileProvider : IFileProvider
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return App.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
     }
 
@@ -177,7 +177,7 @@ public class DefaultFileProvider : IFileProvider
         var fs = action.Context.App.FileSystem;
         var path = action.Path;
         if (!fs.Directory.Exists(path.Absolute))
-            return Data.@this.FromError(new ServiceError($"Directory not found: {path.Raw}", "NotFound", 404));
+            return App.Data.@this.FromError(new ServiceError($"Directory not found: {path.Raw}", "NotFound", 404));
 
         try
         {
@@ -185,11 +185,11 @@ public class DefaultFileProvider : IFileProvider
             var files = fs.Directory.GetFiles(path.Absolute, action.Pattern, option)
                 .Select(f => new FileSystem.Path(f))
                 .ToArray();
-            return Data.@this.Ok(files);
+            return App.Data.@this.Ok(files);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return App.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
     }
 

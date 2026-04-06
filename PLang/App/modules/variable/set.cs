@@ -23,6 +23,6 @@ public partial class Set : IContext
 
         Context.Variables.Set(Name, Value,
             Type != null ? App.Data.Type.FromName(Type) : null);
-        return Task.FromResult(Context.Variables.Get(Name) ?? Data.@this.Ok());
+        return Task.FromResult(Context.Variables.Get(Name) ?? App.Data.@this.Ok());
     }
 }

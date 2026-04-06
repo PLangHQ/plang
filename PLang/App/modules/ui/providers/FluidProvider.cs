@@ -36,7 +36,7 @@ public class FluidProvider : ITemplateProvider
         {
             var pathData = FileSystem.Path.Resolve(templateContent, action.Context);
             if (!pathData.Exists)
-                return Data.@this.FromError(new ServiceError(
+                return App.Data.@this.FromError(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
             sourceFile = pathData.Relative;
@@ -47,7 +47,7 @@ public class FluidProvider : ITemplateProvider
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                return Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+                return App.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
             }
         }
 
@@ -56,7 +56,7 @@ public class FluidProvider : ITemplateProvider
         if (!parser.TryParse(templateContent, out var fluidTemplate, out var parseError))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            return Data.@this.FromError(new ServiceError(
+            return App.Data.@this.FromError(new ServiceError(
                 $"Template syntax error{location}: {parseError}", "TemplateError", 400));
         }
 
@@ -101,12 +101,12 @@ public class FluidProvider : ITemplateProvider
         {
             var writer = new StringWriter();
             await fluidTemplate.RenderAsync(writer, NullEncoder.Default, fluidContext);
-            return Data.@this.Ok(writer.ToString());
+            return App.Data.@this.Ok(writer.ToString());
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            return Data.@this.FromError(new ServiceError(
+            return App.Data.@this.FromError(new ServiceError(
                 $"Template render error{location}: {ex.Message}", "RenderError", 500));
         }
     }

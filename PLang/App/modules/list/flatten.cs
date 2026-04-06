@@ -12,13 +12,13 @@ public partial class Flatten : IContext
     {
         var existing = Context.Variables.Get(ListName)?.Value;
         if (existing is not System.Collections.IList list)
-            return Task.FromResult(Data.@this.FromError(
+            return Task.FromResult(App.Data.@this.FromError(
                 new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
         var result = new List<object?>();
         FlattenRecursive(list, result);
 
-        return Task.FromResult(Data.@this.Ok(new types.list { count = result.Count, value = result }, App.Data.Type.FromName("list")));
+        return Task.FromResult(App.Data.@this.Ok(new types.list { count = result.Count, value = result }, App.Data.Type.FromName("list")));
     }
 
     private static void FlattenRecursive(System.Collections.IList source, List<object?> target)

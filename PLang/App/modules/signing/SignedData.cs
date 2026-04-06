@@ -37,7 +37,7 @@ public class SignedData
 
     [JsonPropertyOrder(9), JsonPropertyName("hash"), JsonInclude]
     [JsonConverter(typeof(HashDataConverter))]
-    public Data.@this Hash { get; internal set; } = Data.@this.Ok("");
+    public Data.@this Hash { get; internal set; } = App.Data.@this.Ok("");
 
     /// <summary>
     /// Serializes Data as { "type": "algorithm", "value": "base64hash" } in the signing envelope.
@@ -58,7 +58,7 @@ public class SignedData
             var typeObj = string.IsNullOrEmpty(type) ? null : Data.Type.FromName(type);
             byte[] bytes;
             try { bytes = Convert.FromBase64String(value); } catch (FormatException) { bytes = Array.Empty<byte>(); }
-            return Data.@this.Ok(bytes, typeObj);
+            return App.Data.@this.Ok(bytes, typeObj);
         }
 
         public override void Write(Utf8JsonWriter writer, Data.@this value, JsonSerializerOptions options)

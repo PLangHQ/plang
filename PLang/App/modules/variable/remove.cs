@@ -11,6 +11,6 @@ public partial class Remove : IContext
     public Task<Data.@this> Run()
     {
         Context.Variables.Remove(Name);
-        return Task.FromResult(Data.@this.Ok());
+        return Task.FromResult(App.Data.@this.Ok());
     }
 }

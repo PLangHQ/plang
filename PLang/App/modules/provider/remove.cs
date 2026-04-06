@@ -19,7 +19,7 @@ public partial class remove : IContext
     {
         var providerType = Context.App.Providers.ResolveType(Type);
         if (providerType == null)
-            return Data.@this.FromError(new Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
+            return App.Data.@this.FromError(new Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
 
         return Context.App.Providers.Remove(providerType, Name);
     }

@@ -10,6 +10,6 @@ public partial class Get : IContext
 
     public Task<Data.@this> Run()
     {
-        return Task.FromResult(Context.Variables.Get(Name) ?? Data.@this.Ok(null));
+        return Task.FromResult(Context.Variables.Get(Name) ?? App.Data.@this.Ok(null));
     }
 }

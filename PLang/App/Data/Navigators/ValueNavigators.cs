@@ -8,8 +8,8 @@ internal static class ValueNavigators
 {
     private static readonly IValueNavigator[] _navigators =
     [
-        new DictionaryNavigator(),
-        new ListNavigator(),
+        new ValueDictionaryNavigator(),
+        new ValueListNavigator(),
         new JsonStringNavigator(),
         new ObjectNavigator(),
     ];

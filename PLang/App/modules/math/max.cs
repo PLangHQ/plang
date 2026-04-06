@@ -11,6 +11,6 @@ public partial class Max : IContext
     public Task<Data.@this> Run()
     {
         var result = Math.Max(MathHelper.ToDouble(A), MathHelper.ToDouble(B));
-        return Task.FromResult(Data.@this.Ok(MathHelper.PreserveType(result, A, B)));
+        return Task.FromResult(App.Data.@this.Ok(MathHelper.PreserveType(result, A, B)));
     }
 }
