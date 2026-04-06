@@ -76,8 +76,8 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (buildFiles.Count > 0)
         {
             files = files.Where(f =>
-                buildFiles.Any(bf => f.FileName.Equals(bf, StringComparison.OrdinalIgnoreCase)
-                    || f.Relative.EndsWith(bf, StringComparison.OrdinalIgnoreCase)))
+                buildFiles.Any(bf => f.FileName.Equals(bf.FileName, StringComparison.OrdinalIgnoreCase)
+                    || f.Relative.EndsWith(bf.Relative, StringComparison.OrdinalIgnoreCase)))
                 .ToArray();
             if (files.Length == 0)
                 return Data.Ok(new List<Goal>());

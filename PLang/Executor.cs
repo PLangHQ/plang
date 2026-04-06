@@ -134,18 +134,18 @@ namespace PLang
 					buildDict.TryGetValue("files", out var filesVal))
 				{
 					if (filesVal is string singleFile)
-						engine.Building.Files.Add(singleFile);
+						engine.Building.Files.Add(new PLangPath(singleFile, engine.FileSystem));
 					else if (filesVal is System.Collections.IEnumerable fileList)
 						foreach (var f in fileList)
-							if (f?.ToString() is string s) engine.Building.Files.Add(s);
+							if (f?.ToString() is string s) engine.Building.Files.Add(new PLangPath(s, engine.FileSystem));
 				}
 				else if (buildValue is Newtonsoft.Json.Linq.JObject buildJobj &&
 					buildJobj.TryGetValue("files", StringComparison.OrdinalIgnoreCase, out var filesToken))
 				{
 					if (filesToken is Newtonsoft.Json.Linq.JArray arr)
-						foreach (var item in arr) engine.Building.Files.Add(item.ToString());
+						foreach (var item in arr) engine.Building.Files.Add(new PLangPath(item.ToString(), engine.FileSystem));
 					else
-						engine.Building.Files.Add(filesToken.ToString());
+						engine.Building.Files.Add(new PLangPath(filesToken.ToString(), engine.FileSystem));
 				}
 			}
 
