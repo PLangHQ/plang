@@ -1,5 +1,5 @@
 using App;
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 using App.modules.condition;
 using App.FileSystem;
@@ -28,7 +28,7 @@ public class IfHandlerTests : IDisposable
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private Context.@this CreateContext() => _engine.CreateContext();
+    private global::App.Actor.Context.@this CreateContext() => _engine.CreateContext();
 
     [Test]
     public async Task Run_Truthy_InitializedNonBool_ReturnsTrue()

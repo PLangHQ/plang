@@ -289,7 +289,7 @@ public class DefaultBuilderProvider : IBuilderProvider
     /// Merges existing .pr data into a goal. Returns any errors encountered (corrupt .pr files).
     /// </summary>
     private static async Task<List<Info>> MergePrData(Goal goal, App.@this app,
-        Context.@this context)
+        Actor.Context.@this context)
     {
         var errors = new List<Info>();
         var prPath = goal.PrPath;
@@ -330,7 +330,7 @@ public class DefaultBuilderProvider : IBuilderProvider
     }
 
     private static async Task ResolveGoalCallPaths(Actions actions, App.@this app,
-        Context.@this context)
+        Actor.Context.@this context)
     {
         foreach (var action in actions)
         {

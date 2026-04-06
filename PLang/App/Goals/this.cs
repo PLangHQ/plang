@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using App.Context;
+using App.Actor.Context;
 using App.Errors;
 using App.Variables;
 using Error = App.Errors.Error;
@@ -303,7 +303,7 @@ public sealed class @this
     /// <summary>
     /// Loads a goal from a .pr file, deserializes and adds to this collection.
     /// </summary>
-    public async Task<Data.@this> LoadFromFileAsync(App.@this app, string prFilePath, Context.@this? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data.@this> LoadFromFileAsync(App.@this app, string prFilePath, Actor.Context.@this? context = null, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -351,7 +351,7 @@ public sealed class @this
     /// <summary>
     /// Loads all goals from a directory.
     /// </summary>
-    public async Task<Data.@this> LoadFromDirectoryAsync(App.@this app, string directory, string pattern = "*.pr", Context.@this? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data.@this> LoadFromDirectoryAsync(App.@this app, string directory, string pattern = "*.pr", Actor.Context.@this? context = null, CancellationToken cancellationToken = default)
     {
         try
         {

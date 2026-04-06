@@ -38,7 +38,7 @@ public class Path : Data.@this
     }
 
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
-    public static Path Resolve(string rawPath, Context.@this context)
+    public static Path Resolve(string rawPath, Actor.Context.@this context)
     {
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);

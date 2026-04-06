@@ -27,7 +27,7 @@ public partial class MockAction : IContext
         var goalToCall = GoalToCall;
         var paramMatchers = Parameters;
 
-        Func<Context.@this, Task<Data.@this>> handler = async ctx =>
+        Func<Actor.Context.@this, Task<Data.@this>> handler = async ctx =>
         {
             // Find the current action being executed from the step
             var currentAction = FindCurrentAction(ctx);
@@ -73,7 +73,7 @@ public partial class MockAction : IContext
         return Task.FromResult(Data(handle));
     }
 
-    private static Goals.Goal.Steps.Step.Actions.Action.@this? FindCurrentAction(Context.@this ctx)
+    private static Goals.Goal.Steps.Step.Actions.Action.@this? FindCurrentAction(Actor.Context.@this ctx)
     {
         var step = ctx.Step;
         if (step == null) return null;

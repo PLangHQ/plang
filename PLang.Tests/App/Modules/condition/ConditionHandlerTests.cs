@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App;
 using App.Variables;
 using App.modules.condition;
@@ -27,7 +27,7 @@ public class ConditionHandlerTests : IDisposable
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private Context.@this CreateContext()
+    private global::App.Actor.Context.@this CreateContext()
     {
         return _engine.CreateContext();
     }

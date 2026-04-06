@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 using ActionType = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 
@@ -10,5 +10,5 @@ namespace App.modules;
 /// </summary>
 public interface ICodeGenerated
 {
-    Task<Data.@this> ExecuteAsync(ActionType action, App.@this app, Context.@this context);
+    Task<Data.@this> ExecuteAsync(ActionType action, App.@this app, Actor.Context.@this context);
 }

@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App;
 using App.Variables;
 using App.Events;
@@ -16,9 +16,9 @@ public class EventHandlerTests
         _engine = new App.@this("/test");
     }
 
-    private Context.@this CreateContext() => _engine.CreateContext();
+    private global::App.Actor.Context.@this CreateContext() => _engine.CreateContext();
 
-    private On MakeOn(Context.@this context, string type, string goalName,
+    private On MakeOn(global::App.Actor.Context.@this context, string type, string goalName,
         string? goalPattern = null, string? stepPattern = null, string? actionPattern = null,
         bool isRegex = false, int priority = 0)
         => new()

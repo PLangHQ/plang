@@ -1,5 +1,5 @@
 using System.Text;
-using App.Context;
+using App.Actor.Context;
 
 namespace App.Errors;
 
@@ -19,7 +19,7 @@ public class ActionError : Error
     public ActionError(string message, Step step, string key = "ActionError", int statusCode = 400)
         : base(message, step, key, statusCode) { }
 
-    public ActionError(string message, Context.@this context, string key = "ActionError", int statusCode = 400)
+    public ActionError(string message, Actor.Context.@this context, string key = "ActionError", int statusCode = 400)
         : base(message, context, key, statusCode) { }
 
     public new static ActionError FromException(Exception ex, string key = "Exception", int statusCode = 500)
@@ -30,7 +30,7 @@ public class ActionError : Error
         };
     }
 
-    public new static ActionError FromException(Exception ex, Context.@this context, string key = "Exception", int statusCode = 500)
+    public new static ActionError FromException(Exception ex, Actor.Context.@this context, string key = "Exception", int statusCode = 500)
     {
         return new ActionError(ex.Message, context, key, statusCode)
         {
@@ -39,7 +39,7 @@ public class ActionError : Error
     }
 
     public static ActionError NotFound(string what) => new($"{what} not found", "ActionNotFound", 404);
-    public static ActionError NotFound(string what, Context.@this context) => new($"{what} not found", context, "ActionNotFound", 404);
+    public static ActionError NotFound(string what, Actor.Context.@this context) => new($"{what} not found", context, "ActionNotFound", 404);
 
     protected override void FormatExtra(StringBuilder sb, string indent)
     {

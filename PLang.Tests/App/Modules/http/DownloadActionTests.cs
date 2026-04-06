@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text;
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 using App.modules.http;
 using App.modules.http.providers;
@@ -43,7 +43,7 @@ public class DownloadActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
 
     private class MockHttpMessageHandler : System.Net.Http.HttpMessageHandler
     {

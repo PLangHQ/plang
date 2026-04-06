@@ -1,5 +1,5 @@
 using System.Reflection;
-using App.Context;
+using App.Actor.Context;
 using App.Settings;
 using App.Errors;
 using App.Variables;
@@ -41,7 +41,7 @@ public class IdentityErrorPathTests
         catch { /* best effort cleanup */ }
     }
 
-    private Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
 
     // --- GetOrCreateDefaultAsync: auto-create save failure (via Get action) ---
 
@@ -326,9 +326,9 @@ public class IdentityErrorPathTests
     /// Swaps the DataSource on an Actor via reflection.
     /// Required because Actor._dataSource is private readonly Lazy&lt;ISettingsStore&gt;.
     /// </summary>
-    private static void SwapDataSource(Actor actor, ISettingsStore newDataSource)
+    private static void SwapDataSource(global::App.Actor.@this actor, ISettingsStore newDataSource)
     {
-        var field = typeof(Actor).GetField("_dataSource",
+        var field = typeof(global::App.Actor.@this).GetField("_dataSource",
             BindingFlags.NonPublic | BindingFlags.Instance);
         field!.SetValue(actor, new Lazy<ISettingsStore>(() => newDataSource));
     }

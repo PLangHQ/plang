@@ -1,5 +1,5 @@
 using App;
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 
 namespace App.modules.goal;
@@ -12,7 +12,7 @@ public partial class Call : IContext
     /// <summary>
     /// Target actor to run the goal on. If null, runs on the current context.
     /// </summary>
-    public partial Actor? Actor { get; init; }
+    public partial Actor.@this? Actor { get; init; }
 
     public async Task<Data.@this> Run()
     {

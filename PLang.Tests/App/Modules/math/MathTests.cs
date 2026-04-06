@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App;
 using App.Variables;
 using App.modules.math;
@@ -7,11 +7,11 @@ namespace PLang.Tests.App.actions.math;
 
 public class MathTests
 {
-    private (Context.@this context, Variables memory) CreateContext()
+    private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
     {
         var engine = new App.@this("/app");
         var memory = new Variables();
-        var context = new Context.@this(engine, memory);
+        var context = new global::App.Actor.Context.@this(engine, memory);
         return (context, memory);
     }
 

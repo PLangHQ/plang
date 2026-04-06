@@ -1,5 +1,5 @@
 using App;
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 using App.modules.ui;
 using App.modules.ui.providers;
@@ -27,7 +27,7 @@ public class RenderTests : IDisposable
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private Context.@this CreateContext()
+    private global::App.Actor.Context.@this CreateContext()
     {
         return _engine.CreateContext();
     }

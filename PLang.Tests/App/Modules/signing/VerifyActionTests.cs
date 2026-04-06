@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App.Errors;
 using App.Variables;
 using App.Providers;
@@ -39,7 +39,7 @@ public class VerifyActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
 
     private async Task<Data> SignHelper(object data, List<string>? contracts = null,
         int? expiresInMs = null, Dictionary<string, object>? headers = null)

@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using App.Context;
+using App.Actor.Context;
 using App.Goals.Goal;
 using App.Variables;
 using App.modules.http.providers;
@@ -43,7 +43,7 @@ public class LlmIntegrationTests
         catch { /* best effort cleanup */ }
     }
 
-    private Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
 
     // --- Test 1: Simple arithmetic ---
 

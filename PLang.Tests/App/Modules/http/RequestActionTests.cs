@@ -4,7 +4,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using App.Channels.Serializers;
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 using App.Providers;
 using App.modules.http;
@@ -52,7 +52,7 @@ public class RequestActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
 
     #region Test Infrastructure
 

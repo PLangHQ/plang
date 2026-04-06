@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App.Errors;
 using App.Variables;
 using App.modules.crypto;
@@ -32,7 +32,7 @@ public class HashActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
 
     // --- Hash action ---
 

@@ -101,7 +101,7 @@ internal static class LlmTestHelper
     /// <summary>
     /// Creates a basic query action with system + user messages.
     /// </summary>
-    internal static query MakeQuery(App.Context.@this ctx,
+    internal static query MakeQuery(global::App.Actor.Context.@this ctx,
         string systemText = "You are helpful", string userText = "Hello")
     {
         return new query

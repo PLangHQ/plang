@@ -1,5 +1,5 @@
 using App;
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 using App.modules.condition;
 using App.FileSystem;
@@ -28,7 +28,7 @@ public class StepsSubStepTests : IDisposable
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private Context.@this CreateContext() => _engine.CreateContext();
+    private global::App.Actor.Context.@this CreateContext() => _engine.CreateContext();
 
     /// <summary>
     /// Creates a step that runs a condition.if action returning the given bool value.

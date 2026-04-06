@@ -4,13 +4,14 @@ using App.Variables;
 using App.modules.identity;
 using App.modules.identity.providers;
 
-namespace App.Context;
+namespace App.Actor;
 
 /// <summary>
 /// Represents an actor in the system with its own context and IO channels.
 /// </summary>
-public sealed class Actor : IAsyncDisposable
+public sealed class @this : IAsyncDisposable
 {
+    private readonly CancellationTokenSource _cts;
     private readonly Lazy<ISettingsStore> _dataSource;
 
     /// <summary>
@@ -40,6 +41,13 @@ public sealed class Actor : IAsyncDisposable
     public ISettingsStore SettingsStore => _dataSource.Value;
 
     /// <summary>
+    /// Cancellation token for this actor. Cancel this to stop the actor and all its children.
+    /// System is the root — cancelling System cascades to User and Service.
+    /// User/Service can be cancelled independently.
+    /// </summary>
+    public CancellationToken CancellationToken => _cts.Token;
+
+    /// <summary>
     /// Identity for this actor.
     /// For System actor: resolved via Data.DynamicData %MyIdentity% on first access.
     /// For User/Service: set externally by HTTP/signing layer.
@@ -50,7 +58,7 @@ public sealed class Actor : IAsyncDisposable
     /// Resolves an actor by name using the app.
     /// Convention: types with this signature are auto-resolved by the source generator.
     /// </summary>
-    public static Actor? Resolve(string name, Context.@this context) => context.App.GetActor(name).Actor;
+    public static @this? Resolve(string name, Context.@this context) => context.App.GetActor(name).Actor;
 
     /// <summary>
     /// Valid values for LLM action summaries.
@@ -66,12 +74,15 @@ public sealed class Actor : IAsyncDisposable
         "system" => 2, "service" => 1, "user" => 1, _ => 0
     };
 
-    public Actor(string name, App.@this app)
+    public @this(string name, App.@this app, CancellationToken parentToken = default)
     {
         Name = name;
         App = app;
+        _cts = parentToken == default
+            ? new CancellationTokenSource()
+            : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
         _dataSource = new Lazy<ISettingsStore>(CreateSettingsStore);
-        Context = new Context.@this(app)
+        Context = new Context.@this(app, parentToken: _cts.Token)
         {
             CallStack = new CallStack.@this()
         };
@@ -107,8 +118,15 @@ public sealed class Actor : IAsyncDisposable
         return new SqliteSettingsStore(dbPath, App.FileSystem);
     }
 
+    /// <summary>
+    /// Cancels this actor. If System, cascades to User and Service.
+    /// </summary>
+    public void Cancel() => _cts.Cancel();
+
     public async ValueTask DisposeAsync()
     {
+        _cts.Cancel();
+        _cts.Dispose();
         if (_dataSource.IsValueCreated)
             _dataSource.Value.Dispose();
         Context.Dispose();

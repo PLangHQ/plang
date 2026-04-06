@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App.Goals.Goal;
 
 namespace App.modules;
@@ -11,7 +11,7 @@ public class Events : IContext
 {
     private readonly object _owner;
 
-    public Context.@this Context { get; set; } = null!;
+    public Actor.Context.@this Context { get; set; } = null!;
 
     public Events(object owner) => _owner = owner;
 

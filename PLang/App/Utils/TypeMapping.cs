@@ -42,7 +42,7 @@ public static class TypeMapping
         ["dynamic"] = typeof(object),
         ["json"] = typeof(JsonNode),
         ["json[]"] = typeof(JsonArray),
-        ["actor"] = typeof(App.Context.Actor),
+        ["actor"] = typeof(App.Actor.@this),
         ["goal.call"] = typeof(App.Goals.Goal.GoalCall),
         ["tstring"] = typeof(App.Data.TString),
         ["translatable"] = typeof(App.Data.TString),

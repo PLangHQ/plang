@@ -135,7 +135,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                             && m.Parameters.Length == 2
                             && m.Parameters[0].Type.SpecialType == SpecialType.System_String
                             && (m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App"
-                                || m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App.Context"));
+                                || m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App.Actor.Context"));
 
                 // Check if property type is Data (pass through without unwrapping .Value)
                 var rawType = prop.Type;
@@ -195,7 +195,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // IContext auto-provision
         if (info.ImplementsIContext)
         {
-            sb.AppendLine("    public App.Context.@this Context { get; set; } = null!;");
+            sb.AppendLine("    public App.Actor.Context.@this Context { get; set; } = null!;");
             sb.AppendLine();
         }
 
@@ -342,7 +342,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("    private App.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
         sb.AppendLine();
         sb.AppendLine("    public async System.Threading.Tasks.Task<App.Data.@this> ExecuteAsync(");
-        sb.AppendLine("        App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this app, App.Context.@this context)");
+        sb.AppendLine("        App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this app, App.Actor.Context.@this context)");
         sb.AppendLine("    {");
         sb.AppendLine("        __action = action;");
         sb.AppendLine("        __parameters = action.Parameters;");

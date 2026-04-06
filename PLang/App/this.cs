@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App.Settings;
 using App.Errors;
 using App.Variables;
@@ -21,9 +21,9 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     private readonly List<object> _keepAlive = new();
     private bool _disposed;
 
-    private Actor? _system;
-    private Actor? _service;
-    private Actor? _user;
+    private Actor.@this? _system;
+    private Actor.@this? _service;
+    private Actor.@this? _user;
 
     /// <summary>
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
@@ -174,36 +174,38 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     public Types.@this Types { get; }
 
     /// <summary>
-    /// System actor for internal app operations. Created lazily on first access.
+    /// System actor — the root of the cancellation hierarchy.
+    /// Cancelling System cascades to User and Service.
+    /// Links to App's shutdown token so RequestShutdown() cascades through everything.
     /// </summary>
-    public Actor System => _system ??= new Actor("System", this);
+    public Actor.@this System => _system ??= new Actor.@this("System", this, _shutdownCts.Token);
 
     /// <summary>
-    /// Service actor for external service operations. Created lazily on first access.
+    /// Service actor for external service operations. Links to System's cancellation token.
     /// </summary>
-    public Actor Service => _service ??= new Actor("Service", this);
+    public Actor.@this Service => _service ??= new Actor.@this("Service", this, System.CancellationToken);
 
     /// <summary>
-    /// User actor for end user operations. Created lazily on first access.
+    /// User actor for end user operations. Links to System's cancellation token.
     /// </summary>
-    public Actor User => _user ??= new Actor("User", this);
+    public Actor.@this User => _user ??= new Actor.@this("User", this, System.CancellationToken);
 
     /// <summary>
     /// The currently executing actor. Defaults to User. Changed to System during bootstrap (Start).
     /// app.execute switches temporarily for context-crossing dispatch.
     /// </summary>
-    public Actor CurrentActor { get; set; } = null!; // initialized to User in constructor
+    public Actor.@this CurrentActor { get; set; } = null!; // initialized to User in constructor
 
     /// <summary>
     /// Context of the current executor.
     /// </summary>
-    public Context.@this Context => CurrentActor.Context;
+    public Actor.Context.@this Context => CurrentActor.Context;
     public Variables.@this Variables => Context.Variables;
 
     /// <summary>
     /// Resolves an actor by name. Returns error instead of null — object reports its own errors.
     /// </summary>
-    public (Actor? Actor, IError? Error) GetActor(string? name)
+    public (Actor.@this? Actor, IError? Error) GetActor(string? name)
     {
         if (string.IsNullOrEmpty(name))
             return (null, new ActionError("Actor name is required", "ActorRequired", 400));
@@ -213,7 +215,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
             "system" => System,
             "service" => Service,
             "user" => User,
-            _ => (Actor?)null
+            _ => (Actor.@this?)null
         };
 
         if (actor == null)
@@ -331,7 +333,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// Set properties via init, then call RunAction — app wires context, memory, validation, error handling.
     /// Usage: var result = await app.RunAction&lt;Hash, string&gt;(new Hash { Data = x, Algorithm = "keccak256" }, context);
     /// </summary>
-    public async Task<Data.@this<TResult>> RunAction<TAction, TResult>(TAction action, Context.@this context)
+    public async Task<Data.@this<TResult>> RunAction<TAction, TResult>(TAction action, Actor.Context.@this context)
         where TAction : ICodeGenerated
     {
         var emptyAction = new Goals.Goal.Steps.Step.Actions.Action.@this();
@@ -344,7 +346,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// Runs a module action and returns the raw Data result (preserves Signature, Properties, etc.).
     /// Use when the result convention puts data on properties other than Value (e.g., sign puts SignedData on Signature).
     /// </summary>
-    public async Task<Data.@this> RunAction<TAction>(TAction action, Context.@this context)
+    public async Task<Data.@this> RunAction<TAction>(TAction action, Actor.Context.@this context)
         where TAction : ICodeGenerated
     {
         var emptyAction = new Goals.Goal.Steps.Step.Actions.Action.@this();
@@ -355,7 +357,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// Dispatches a single action. The app dispatcher doesn.t know about goals or steps.
     /// It receives an action, finds the module handler, executes it, returns result.
     /// </summary>
-    public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Context.@this context)
+    public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context)
     {
         var (executor, error) = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
         if (error != null)
@@ -380,7 +382,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// Bootstrap: reads system/.build/run.pr, pushes its actions to Run().
     /// This is the ONLY loop in C#. After this, PLang code drives everything.
     /// </summary>
-    public async Task<Data.@this> Start(Context.@this? context = null)
+    public async Task<Data.@this> Start(Actor.Context.@this? context = null)
     {
         await Load();
 
@@ -400,7 +402,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// Iterates steps and dispatches each action via Run().
     /// Used by Start() for bootstrap and by app.execute for user steps.
     /// </summary>
-    public async Task<Data.@this> RunSteps(GoalSteps steps, Context.@this context)
+    public async Task<Data.@this> RunSteps(GoalSteps steps, Actor.Context.@this context)
     {
         Data.@this result = App.Data.@this.Ok();
         int? skipBelowIndent = null;
@@ -441,7 +443,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// <summary>
     /// Runs a goal via GoalCall. Used by goal.call and backward compat.
     /// </summary>
-    public async Task<Data.@this> RunGoalAsync(GoalCall goalCall, Context.@this? context = null, CancellationToken ct = default)
+    public async Task<Data.@this> RunGoalAsync(GoalCall goalCall, Actor.Context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
         var goal = await goalCall.GetGoalAsync(this, context);
@@ -454,7 +456,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// <summary>
     /// Kernel-executes a goal already in memory.
     /// </summary>
-    public async Task<Data.@this> RunGoalAsync(Goal goal, Context.@this? context = null, CancellationToken ct = default)
+    public async Task<Data.@this> RunGoalAsync(Goal goal, Actor.Context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
 
@@ -476,9 +478,9 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// <summary>
     /// Creates a new execution context.
     /// </summary>
-    public Context.@this CreateContext(Variables.@this? variables = null)
+    public Actor.Context.@this CreateContext(Variables.@this? variables = null)
     {
-        var context = new Context.@this(this, variables)
+        var context = new Actor.Context.@this(this, variables)
         {
             CallStack = new CallStack.@this()
         };

@@ -1,5 +1,5 @@
 using System.Text.Json;
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 using App.modules.llm;
 using App.modules.llm.providers;
@@ -39,7 +39,7 @@ public class QueryFormatTests
         catch { /* best effort cleanup */ }
     }
 
-    private Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
 
     #region Schema Defaulting
 

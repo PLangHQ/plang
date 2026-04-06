@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App.Errors;
 using App.Variables;
 
@@ -73,7 +73,7 @@ public sealed class @this
     /// can check run-once semantics. Any goal called from within setup execution
     /// inherits the setup context (context.Setup propagates through goal.call).
     /// </summary>
-    public async Task<Data.@this> RunAsync(App.@this app, Context.@this context, CancellationToken ct = default)
+    public async Task<Data.@this> RunAsync(App.@this app, Actor.Context.@this context, CancellationToken ct = default)
     {
         var discoverResult = await DiscoverAsync(app, ct);
         if (!discoverResult.Success) return discoverResult;

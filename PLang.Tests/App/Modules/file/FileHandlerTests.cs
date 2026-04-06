@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App;
 using App.Variables;
 using App.modules.file;
@@ -38,7 +38,7 @@ public class FileHandlerTests : IDisposable
     private FileSystem.Path MakeAbsPath(string absolutePath) =>
         new FileSystem.Path(absolutePath, _engine.Context);
 
-    private Context.@this CreateContext()
+    private global::App.Actor.Context.@this CreateContext()
     {
         return _engine.CreateContext();
     }

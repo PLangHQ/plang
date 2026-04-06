@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 
 namespace App.Errors;
 
@@ -15,10 +15,10 @@ public class StepError : Error
     public StepError(string message, Step step, string key = "StepError", int statusCode = 400)
         : base(message, step, key, statusCode) { }
 
-    public StepError(string message, Context.@this context, string key = "StepError", int statusCode = 400)
+    public StepError(string message, Actor.Context.@this context, string key = "StepError", int statusCode = 400)
         : base(message, context, key, statusCode) { }
 
-    public new static StepError FromException(Exception ex, Context.@this context, string key = "Exception", int statusCode = 500)
+    public new static StepError FromException(Exception ex, Actor.Context.@this context, string key = "Exception", int statusCode = 500)
     {
         return new StepError(ex.Message, context, key, statusCode)
         {

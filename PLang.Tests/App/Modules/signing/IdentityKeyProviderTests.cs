@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App.Errors;
 using App.Variables;
 using App.Providers;
@@ -36,7 +36,7 @@ public class IdentityKeyProviderTests
         catch { /* best effort cleanup */ }
     }
 
-    private Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
 
     [Test]
     public async Task Create_UsesKeyProviderFromRegistry()

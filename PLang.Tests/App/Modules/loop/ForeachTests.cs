@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App;
 using App.Variables;
 using App.modules.loop;
@@ -16,7 +16,7 @@ public class ForeachTests
         _engine = new App.@this("/app");
     }
 
-    private Context.@this CreateContext(Variables? memory = null)
+    private global::App.Actor.Context.@this CreateContext(Variables? memory = null)
     {
         var context = _engine.CreateContext(memory);
         return context;

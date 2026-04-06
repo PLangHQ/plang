@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 
 namespace App.Config;
 
@@ -15,10 +15,10 @@ namespace App.Config;
 public sealed class ModuleView<T> where T : IConfig, new()
 {
     private readonly @this _settings;
-    private readonly Context.@this _context;
+    private readonly Actor.Context.@this _context;
     private readonly string _modulePrefix;
 
-    public ModuleView(@this settings, Context.@this context, string modulePrefix)
+    public ModuleView(@this settings, Actor.Context.@this context, string modulePrefix)
     {
         _settings = settings;
         _context = context;

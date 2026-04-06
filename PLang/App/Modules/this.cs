@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using App.modules;
-using App.Context;
+using App.Actor.Context;
 using App.Errors;
 
 namespace App.Modules;
@@ -74,7 +74,7 @@ public sealed class @this
     /// Resolves an action for execution. Returns (action, null) or (null, error).
     /// </summary>
     public (ICodeGenerated? Action, IError? Error) GetCodeGenerated(
-        string module, string actionName, Context.@this context)
+        string module, string actionName, Actor.Context.@this context)
     {
         if (!_modules.TryGetValue(module, out var actions) ||
             !actions.TryGetValue(actionName, out var entry))

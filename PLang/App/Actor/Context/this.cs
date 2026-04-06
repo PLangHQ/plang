@@ -6,7 +6,7 @@ using App.Events;
 using Goal = App.Goals.Goal.@this;
 using Action = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 using Setup = App.Goals.Setup.@this;
-namespace App.Context;
+namespace App.Actor.Context;
 
 /// <summary>
 /// Request-level context for a single PLang execution.
@@ -73,7 +73,7 @@ public sealed class @this : IDisposable
     /// <summary>
     /// The actor that owns this context (if any).
     /// </summary>
-    public Actor? Actor { get; internal set; }
+    public Actor.@this? Actor { get; internal set; }
 
     /// <summary>
     /// Event bindings registered on this context.
@@ -131,14 +131,15 @@ public sealed class @this : IDisposable
     /// </summary>
     public Config.Scope? ConfigScope { get; set; }
 
-    public @this(App.@this app, Variables.@this? variables = null, @this? parent = null)
+    public @this(App.@this app, Variables.@this? variables = null, @this? parent = null, CancellationToken? parentToken = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         App = app;
         Variables = variables ?? new Variables.@this();
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(app.ShutdownToken);
+        var linkTo = parentToken ?? parent?.CancellationToken ?? app.ShutdownToken;
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(linkTo);
         // Wire event registration to invalidate the resolved-events cache
         Events.OnChanged = InvalidateEventCache;
 

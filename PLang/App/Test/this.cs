@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App.Errors;
 using App.Variables;
 using App.Events;
@@ -150,7 +150,7 @@ public sealed class @this
         return await testEngine.RunGoalAsync(goal, ct: cancellationToken);
     }
 
-    private static Task<Data.@this> TrackAssertionFailures(Context.@this context, TestResult result)
+    private static Task<Data.@this> TrackAssertionFailures(Actor.Context.@this context, TestResult result)
     {
         var step = context.Step;
         if (step == null) return Task.FromResult(App.Data.@this.Ok());

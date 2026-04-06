@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 using App.modules;
 using Action = App.Goals.Goal.Steps.Step.Actions.Action.@this;
@@ -12,7 +12,7 @@ namespace App.Goals.Goal.Steps.Step;
 public sealed partial class @this : Data.@this<@this>
 {
     [JsonIgnore]
-    public new Context.@this? Context { get; set; }
+    public new Actor.Context.@this? Context { get; set; }
 
     /// <summary>
     /// Whether this step is disabled for the current execution.

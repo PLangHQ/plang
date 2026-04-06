@@ -36,7 +36,7 @@ public partial class On : IContext
     public partial int Priority { get; init; }
 
     /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
-    public partial Context.Actor? Actor { get; init; }
+    public partial Actor.@this? Actor { get; init; }
 
     public Task<Data.@this> Run()
     {
@@ -47,7 +47,7 @@ public partial class On : IContext
         // Resolve target actor — default to current context's actor
         var targetActor = Actor ?? Context.Actor ?? Context.App!.User;
 
-        Func<Context.@this, Task<Data.@this>> handler = async ctx =>
+        Func<Actor.Context.@this, Task<Data.@this>> handler = async ctx =>
             await ctx.App!.RunGoalAsync(GoalToCall, targetActor.Context, ctx.CancellationToken);
 
         var binding = new EventBinding(

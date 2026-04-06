@@ -1,6 +1,6 @@
 using App.FileSystem;
 using App.Variables;
-using App.Context;
+using App.Actor.Context;
 
 namespace App.Goals.Goal;
 
@@ -40,7 +40,7 @@ public sealed class GoalCall : modules.IEvent
     /// Resolves the Goal. PrPath is authoritative when set — file.read only.
     /// Otherwise: action chain → app.Goals → file.read fallback.
     /// </summary>
-    public async Task<@this?> GetGoalAsync(App.@this app, Context.@this context)
+    public async Task<@this?> GetGoalAsync(App.@this app, Actor.Context.@this context)
     {
         // PrPath is authoritative — load from file, no name-based search
         if (!string.IsNullOrEmpty(PrPath))
@@ -88,7 +88,7 @@ public sealed class GoalCall : modules.IEvent
         return await LoadFromFile(prFile, app, context);
     }
 
-    private async Task<@this?> LoadFromFile(string prPath, App.@this app, Context.@this context)
+    private async Task<@this?> LoadFromFile(string prPath, App.@this app, Actor.Context.@this context)
     {
         // Inject parameters
         if (Parameters != null)

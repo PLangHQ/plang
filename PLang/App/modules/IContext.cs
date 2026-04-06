@@ -1,8 +1,8 @@
-using App.Context;
+using App.Actor.Context;
 
 namespace App.modules;
 
 public interface IContext
 {
-    Context.@this Context { get; set; }
+    Actor.Context.@this Context { get; set; }
 }

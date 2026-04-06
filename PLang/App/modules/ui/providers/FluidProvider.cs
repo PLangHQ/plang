@@ -77,7 +77,7 @@ public class FluidProvider : ITemplateProvider
 
         var fluidContext = new TemplateContext(options);
 
-        // Store app + Context.@this for callGoal tag access
+        // Store app + Actor.Context.@this for callGoal tag access
         fluidContext.AmbientValues["app"] = action.Context.App;
         fluidContext.AmbientValues["context"] = action.Context;
 
@@ -154,7 +154,7 @@ public class FluidProvider : ITemplateProvider
         TemplateContext context)
     {
         var app = (App.@this)context.AmbientValues["app"];
-        var plangContext = (Context.@this)context.AmbientValues["context"];
+        var plangContext = (Actor.Context.@this)context.AmbientValues["context"];
 
         try
         {

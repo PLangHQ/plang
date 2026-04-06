@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App;
 using App.Variables;
 using App.modules.variable;
@@ -8,11 +8,11 @@ namespace PLang.Tests.App.actions.variable;
 
 public class SetTests
 {
-    private (Context.@this context, Variables memory) CreateContext(Variables? variables = null)
+    private (global::App.Actor.Context.@this context, Variables memory) CreateContext(Variables? variables = null)
     {
         var memory = variables ?? new Variables();
         var engine = new App.@this("/app");
-        var context = new Context.@this(engine, memory);
+        var context = new global::App.Actor.Context.@this(engine, memory);
         return (context, memory);
     }
 

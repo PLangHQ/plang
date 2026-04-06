@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App.Events;
 using App.Variables;
 using EventBinding = App.Events.Lifecycle.Bindings.Binding.@this;
@@ -18,12 +18,12 @@ public sealed class @this
 
     public IReadOnlyList<EventBinding> ToList() => _bindings.ToList();
 
-    public Task<Data.@this> Run(Context.@this context) => RunBindings(_bindings, context);
+    public Task<Data.@this> Run(Actor.Context.@this context) => RunBindings(_bindings, context);
 
-    public Task<Data.@this> Run(Context.@this context, EventType type)
+    public Task<Data.@this> Run(Actor.Context.@this context, EventType type)
         => RunBindings(_bindings.Where(b => b.Type == type), context);
 
-    private static async Task<Data.@this> RunBindings(IEnumerable<EventBinding> bindings, Context.@this context)
+    private static async Task<Data.@this> RunBindings(IEnumerable<EventBinding> bindings, Actor.Context.@this context)
     {
         foreach (var binding in bindings.OrderByDescending(b => b.Priority))
         {

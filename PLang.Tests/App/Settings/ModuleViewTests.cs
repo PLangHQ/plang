@@ -1,5 +1,5 @@
 using App;
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 using App.Config;
 using SigningConfig = App.modules.signing.Config;
@@ -9,10 +9,10 @@ namespace PLang.Tests.App.Settings;
 
 public class ModuleViewTests
 {
-    private (EngineType engine, Context.@this context) CreateEngine()
+    private (EngineType engine, global::App.Actor.Context.@this context) CreateEngine()
     {
         var engine = new EngineType("/app");
-        var context = new Context.@this(engine, new Variables());
+        var context = new global::App.Actor.Context.@this(engine, new Variables());
         return (engine, context);
     }
 
@@ -57,7 +57,7 @@ public class ModuleViewTests
     public async Task ModuleView_DifferentContextsGetDifferentValues()
     {
         var (engine, context1) = CreateEngine();
-        var context2 = new Context.@this(engine, new Variables());
+        var context2 = new global::App.Actor.Context.@this(engine, new Variables());
         long classDefault = 300_000;
 
         engine.Config.Set("signing.TimeoutMs", 60_000L, context1);

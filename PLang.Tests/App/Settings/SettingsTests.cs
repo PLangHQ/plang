@@ -1,6 +1,6 @@
 using System.IO.Compression;
 using App;
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 using App.Config;
 using EngineType = App.@this;
@@ -9,10 +9,10 @@ namespace PLang.Tests.App.Settings;
 
 public class SettingsTests
 {
-    private (EngineType engine, Context.@this context) CreateEngine()
+    private (EngineType engine, global::App.Actor.Context.@this context) CreateEngine()
     {
         var engine = new EngineType("/app");
-        var context = new Context.@this(engine, new Variables());
+        var context = new global::App.Actor.Context.@this(engine, new Variables());
         return (engine, context);
     }
 

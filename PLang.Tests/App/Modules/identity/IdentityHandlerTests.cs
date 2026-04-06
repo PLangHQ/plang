@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App.Variables;
 using App.modules.identity;
 using PLangEngine = App.@this;
@@ -30,7 +30,7 @@ public class IdentityHandlerTests
         catch { /* best effort cleanup */ }
     }
 
-    private Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
 
     // --- create ---
 

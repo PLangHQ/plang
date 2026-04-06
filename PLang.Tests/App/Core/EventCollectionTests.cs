@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App;
 using App.Errors;
 using App.Variables;
@@ -7,10 +7,10 @@ namespace PLang.Tests.App.Core;
 
 public class EventsTests
 {
-    private static Context.@this CreateContext()
+    private static global::App.Actor.Context.@this CreateContext()
     {
         var engine = new App.@this("/app");
-        return new Context.@this(engine);
+        return new global::App.Actor.Context.@this(engine);
     }
 
     [Test]
@@ -188,7 +188,7 @@ public class EventBindingTests
     [Test]
     public async Task Constructor_SetsProperties()
     {
-        Func<Context.@this, Task<Data>> handler = _ => Task.FromResult(Data.Ok());
+        Func<global::App.Actor.Context.@this, Task<Data>> handler = _ => Task.FromResult(Data.Ok());
         var binding = new EventBinding(EventType.AfterStep, handler, "TestGoal", "http", null, 10, false);
 
         await Assert.That(binding.Type).IsEqualTo(EventType.AfterStep);

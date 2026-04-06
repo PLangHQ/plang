@@ -1,5 +1,5 @@
 using System.Collections;
-using App.Context;
+using App.Actor.Context;
 using App.modules;
 
 namespace App.Goals.Goal.Steps;
@@ -11,7 +11,7 @@ public sealed class @this : IList<Step.@this>, IContext
     public @this() { }
     public @this(IEnumerable<Step.@this> steps) { _items = new List<Step.@this>(steps); }
 
-    public Context.@this Context { get; set; } = null!;
+    public Actor.Context.@this Context { get; set; } = null!;
 
     public List<Step.@this> Value => _items;
 

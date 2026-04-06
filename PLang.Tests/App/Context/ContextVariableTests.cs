@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App;
 using App.Variables;
 
@@ -41,7 +41,7 @@ public class ContextVariableTests
         var value = vars.GetValue("!context");
 
         await Assert.That(value).IsNotNull();
-        await Assert.That(value).IsTypeOf<Context.@this>();
+        await Assert.That(value).IsTypeOf<global::App.Actor.Context.@this>();
     }
 
     [Test]

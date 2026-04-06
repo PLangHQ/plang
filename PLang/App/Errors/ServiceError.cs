@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 
 namespace App.Errors;
 
@@ -18,7 +18,7 @@ public class ServiceError : Error
     public ServiceError(string message, Step step, IReadOnlyList<CallFrame> callFrames, string key = "ServiceError", int statusCode = 400)
         : base(message, step, callFrames, key, statusCode) { }
 
-    public ServiceError(string message, Context.@this context, string key = "ServiceError", int statusCode = 400)
+    public ServiceError(string message, Actor.Context.@this context, string key = "ServiceError", int statusCode = 400)
         : base(message, context, key, statusCode) { }
 
     public new static ServiceError FromException(Exception ex, string key = "Exception", int statusCode = 500)
@@ -29,7 +29,7 @@ public class ServiceError : Error
         };
     }
 
-    public new static ServiceError FromException(Exception ex, Context.@this context, string key = "Exception", int statusCode = 500)
+    public new static ServiceError FromException(Exception ex, Actor.Context.@this context, string key = "Exception", int statusCode = 500)
     {
         return new ServiceError(ex.Message, context, key, statusCode)
         {

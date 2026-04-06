@@ -1,4 +1,4 @@
-using App.Context;
+using App.Actor.Context;
 using App.Goals.Goal;
 using App.Variables;
 using App.modules.llm;
@@ -39,7 +39,7 @@ public class QueryEdgeCaseTests
         catch { /* best effort cleanup */ }
     }
 
-    private Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
 
     [Test]
     public async Task Query_EmptyMessages_ReturnsError()

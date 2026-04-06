@@ -13,7 +13,7 @@ public partial class run : IContext
     public partial GoalCall? GoalName { get; init; }
     public partial Step? Step { get; init; }
     public partial Goals.Goal.Steps.Step.Actions.Action.@this? Action { get; init; }
-    public partial Context.Actor? Actor { get; init; }
+    public partial Actor.@this? Actor { get; init; }
 
     public async Task<Data.@this> Run()
     {

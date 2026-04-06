@@ -5,7 +5,7 @@ using App.Attributes;
 using App;
 using App.Channels.Serializers;
 using App.Errors;
-using App.Context;
+using App.Actor.Context;
 using App.Utils;
 
 namespace App.Data;
@@ -20,7 +20,7 @@ public sealed class Type
     public string Value { get; }
 
     [JsonIgnore]
-    internal Context.@this? Context { get; set; }
+    internal Actor.Context.@this? Context { get; set; }
 
     public Type(string value) { Value = value; }
 
@@ -70,13 +70,13 @@ public partial class @this
 {
     private object? _value;
     private Type? _type;
-    private Context.@this? _context;
+    private Actor.Context.@this? _context;
 
     [JsonPropertyName("name")]
     public string Name { get; set; }
 
     [JsonIgnore]
-    public Context.@this? Context
+    public Actor.Context.@this? Context
     {
         get => _context;
         set

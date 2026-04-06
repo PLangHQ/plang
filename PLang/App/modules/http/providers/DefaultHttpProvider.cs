@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using App.Channels.Serializers;
-using App.Context;
+using App.Actor.Context;
 using App.Errors;
 using App.Goals.Goal;
 using App.Variables;
@@ -108,7 +108,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             ? HttpCompletionOption.ResponseHeadersRead
             : HttpCompletionOption.ResponseContentRead;
 
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.App.ShutdownToken);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
         var response = await SendHttpAsync(requestMessage, completionOption, config, cts.Token);
@@ -169,7 +169,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             ApplySignature(requestMessage, signResult);
         }
 
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(app.ShutdownToken);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
         using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, config, cts.Token);
@@ -227,7 +227,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             ApplySignature(requestMessage, signResult);
         }
 
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(app.ShutdownToken);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
         using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, config, cts.Token);
@@ -361,7 +361,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// Returns null if unsigned, the sign result Data on success (navigate .Signature for SignedData).
     /// </summary>
     private static async Task<Data.@this?> SignRequestAsync(
-        Context.@this context,
+        Actor.Context.@this context,
         bool unsigned,
         signing.sign? signOptions,
         string? bodyContent,
@@ -466,7 +466,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         HttpRequestMessage request,
         bool unsigned,
         AppType app,
-        Context.@this context,
+        Actor.Context.@this context,
         long maxResponseSize = DefaultMaxResponseSize)
     {
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
@@ -551,7 +551,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         HttpResponseMessage response,
         HttpRequestMessage request,
         AppType app,
-        Context.@this context,
+        Actor.Context.@this context,
         long maxResponseSize = DefaultMaxResponseSize)
     {
         var body = await ReadLimitedStringAsync(response.Content, maxResponseSize);
@@ -604,7 +604,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// The error body may be a Data with Signature, or have a "signature" field.
     /// </summary>
     private static async Task TryExtractSignedErrorIdentity(
-        string errorBody, AppType app, Context.@this context)
+        string errorBody, AppType app, Actor.Context.@this context)
     {
         // Try deserializing as Data.@this with transport options (may have Signature via [In])
         Data.@this? data = null;
@@ -702,7 +702,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         StreamFormat? streamAs,
         bool unsigned,
         AppType app,
-        Context.@this context,
+        Actor.Context.@this context,
         long maxSSEBufferSize,
         CancellationToken ct)
     {
@@ -765,7 +765,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// </summary>
     private static async Task RunCallbackAsync(
         GoalCall template, object? value, PlangType? type, string defaultName,
-        AppType app, Context.@this context, CancellationToken ct)
+        AppType app, Actor.Context.@this context, CancellationToken ct)
     {
         var paramName = template.Parameters?.Count > 0 ? template.Parameters[0].Name : defaultName;
         var call = new GoalCall
@@ -788,7 +788,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     private static async Task StreamLinesAsync(
         Stream stream, GoalCall onStream,
-        AppType app, Context.@this context, CancellationToken ct)
+        AppType app, Actor.Context.@this context, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
         while (!ct.IsCancellationRequested)
@@ -803,7 +803,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     private static async Task StreamSSEAsync(
         Stream stream, GoalCall onStream,
-        AppType app, Context.@this context, long maxBufferSize, CancellationToken ct)
+        AppType app, Actor.Context.@this context, long maxBufferSize, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
         var dataBuffer = new StringBuilder();
@@ -846,7 +846,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     private static async Task StreamBytesAsync(
         Stream stream, GoalCall onStream,
-        AppType app, Context.@this context, CancellationToken ct)
+        AppType app, Actor.Context.@this context, CancellationToken ct)
     {
         var buffer = new byte[8192];
         int bytesRead;
@@ -861,7 +861,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     private static async Task StreamPlangAsync(
         Stream stream, GoalCall onStream,
-        AppType app, Context.@this context, CancellationToken ct)
+        AppType app, Actor.Context.@this context, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
 
@@ -912,7 +912,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         long? totalBytes,
         GoalCall? onProgress,
         AppType app,
-        Context.@this context,
+        Actor.Context.@this context,
         CancellationToken ct)
     {
         var buffer = new byte[8192];

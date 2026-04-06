@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Force.DeepCloner;
-using App.Context;
+using App.Actor.Context;
 
 namespace App.Variables;
 
@@ -12,10 +12,10 @@ namespace App.Variables;
 public class @this
 {
     private readonly ConcurrentDictionary<string, Data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
-    private Context.@this? _context;
+    private Actor.Context.@this? _context;
 
     [JsonIgnore]
-    internal Context.@this? Context
+    internal Actor.Context.@this? Context
     {
         get => _context;
         set
