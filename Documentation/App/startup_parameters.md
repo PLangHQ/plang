@@ -115,24 +115,25 @@ Note: `debug=1` (no `--`) is a user variable `%debug%`, NOT the system debug mod
 
 ## JSON Values
 
-Parameters support JSON objects as values. The CLI parser handles commas inside braces:
+Values are parsed as pure JSON. Any valid JSON value works — objects, arrays, strings, numbers, booleans, null:
 
 ```bash
 plang --build={"cache":false,"model":"gpt-4o","temperature":0.2}
+plang --files=["a.goal","b.goal"]
+plang count=42 active=true name="Alice"
 ```
 
 Each property becomes navigable via dot-path: `%!build.cache%`, `%!build.model%`, `%!build.temperature%`.
 
-Type inference is automatic: `false` → bool, `0.2` → number, `"gpt-4o"` → string.
+Unquoted values that aren't valid JSON are treated as strings: `name=Alice` → "Alice".
 
 ## How It Works
 
-1. CLI parser detects `--` prefix → marks as system parameter
-2. Key is stored with `!` prefix: `--build` → `!build`
-3. JSON values are deserialized into dictionaries
-4. Dictionary is placed on the Variables
-5. Dot-path navigation works: `%!build.cache%` navigates into the dictionary
-6. If root doesn't exist when setting a default, a dictionary is auto-created
+1. CLI args are split into `key=value` pairs (or bare `--flag` → true)
+2. `--` prefix → system parameter, stored with `!` prefix: `--build` → `!build`
+3. Values are parsed via JSON — handles types natively (no custom regex)
+4. JSON objects/arrays that span multiple CLI args are reassembled automatically
+5. Placed on Variables, navigable via dot-path: `%!build.cache%`
 
 ## Design Notes
 
