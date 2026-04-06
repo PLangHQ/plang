@@ -8,7 +8,7 @@ namespace App.modules.file;
 [Action("save", Cacheable = false)]
 public partial class Save : IContext
 {
-    public partial PLangPath Path { get; init; }
+    public partial FileSystem.Path Path { get; init; }
     public partial Data? Value { get; init; }
 
     [Provider]

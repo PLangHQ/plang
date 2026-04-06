@@ -29,7 +29,6 @@ global using SerializeOptions = App.Channels.Serializers.SerializeOptions;
 global using DeserializeOptions = App.Channels.Serializers.DeserializeOptions;
 
 // FileSystem types
-global using PLangPath = App.FileSystem.Path;
 
 // Config subsystem
 global using EngineConfig = App.Config.@this;

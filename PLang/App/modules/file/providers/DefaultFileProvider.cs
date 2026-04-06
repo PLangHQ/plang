@@ -50,7 +50,7 @@ public class DefaultFileProvider : IFileProvider
                 }
             }
 
-            return new PLangPath(path.Absolute, fs, content);
+            return new FileSystem.Path(path.Absolute, content);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -78,7 +78,7 @@ public class DefaultFileProvider : IFileProvider
                     { Stream = stream, Data = value, Extension = path.Extension });
             }
 
-            return new PLangPath(path.Absolute, fs);
+            return new FileSystem.Path(path.Absolute);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -109,7 +109,7 @@ public class DefaultFileProvider : IFileProvider
             else if (!action.IgnoreIfNotFound)
                 return Data.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
 
-            return new PLangPath(path.Absolute, fs);
+            return new FileSystem.Path(path.Absolute);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -134,7 +134,7 @@ public class DefaultFileProvider : IFileProvider
             else
                 CopyDirectory(fs, source.Absolute, destPath, action.Overwrite, action.IncludeSubfolders);
 
-            return new PLangPath(destPath, fs, source: source.Absolute);
+            return new FileSystem.Path(destPath, source: source.Absolute);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -164,7 +164,7 @@ public class DefaultFileProvider : IFileProvider
                 fs.Directory.Move(source.Absolute, destPath);
             }
 
-            return new PLangPath(destPath, fs, source: source.Absolute);
+            return new FileSystem.Path(destPath, source: source.Absolute);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -183,7 +183,7 @@ public class DefaultFileProvider : IFileProvider
         {
             var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             var files = fs.Directory.GetFiles(path.Absolute, action.Pattern, option)
-                .Select(f => new PLangPath(f, fs))
+                .Select(f => new FileSystem.Path(f))
                 .ToArray();
             return Data.Ok(files);
         }
@@ -193,14 +193,14 @@ public class DefaultFileProvider : IFileProvider
         }
     }
 
-    public PLangPath Exists(Exists action)
+    public FileSystem.Path Exists(Exists action)
     {
-        return new PLangPath(action.Path.Absolute, action.Context.App.FileSystem);
+        return new FileSystem.Path(action.Path.Absolute);
     }
 
     // --- Helpers ---
 
-    private static string ResolveDestinationPath(IPLangFileSystem fs, PLangPath source, PLangPath destination)
+    private static string ResolveDestinationPath(IPLangFileSystem fs, FileSystem.Path source, FileSystem.Path destination)
     {
         if (fs.File.Exists(source.Absolute) && fs.Directory.Exists(destination.Absolute))
             return fs.Path.Combine(destination.Absolute, source.FileName);

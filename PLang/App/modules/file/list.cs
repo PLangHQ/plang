@@ -8,7 +8,7 @@ namespace App.modules.file;
 [Action("list")]
 public partial class List : IContext
 {
-    public partial PLangPath Path { get; init; }
+    public partial FileSystem.Path Path { get; init; }
 
     [Default("*")]
     public partial string Pattern { get; init; }

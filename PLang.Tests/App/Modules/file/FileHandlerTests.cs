@@ -32,11 +32,11 @@ public class FileHandlerTests : IDisposable
     private string TempPath(string relativePath) =>
         _fs.Path.Combine(_tempDir, relativePath);
 
-    private PLangPath MakePath(string relativePath) =>
-        new PLangPath(TempPath(relativePath), _engine.Context);
+    private FileSystem.Path MakePath(string relativePath) =>
+        new FileSystem.Path(TempPath(relativePath), _engine.Context);
 
-    private PLangPath MakeAbsPath(string absolutePath) =>
-        new PLangPath(absolutePath, _engine.Context);
+    private FileSystem.Path MakeAbsPath(string absolutePath) =>
+        new FileSystem.Path(absolutePath, _engine.Context);
 
     private Context.@this CreateContext()
     {

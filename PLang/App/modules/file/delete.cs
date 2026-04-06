@@ -9,7 +9,7 @@ namespace App.modules.file;
 [Action("delete", Cacheable = false)]
 public partial class Delete : IContext
 {
-    public partial PLangPath Path { get; init; }
+    public partial FileSystem.Path Path { get; init; }
 
     [Default(false)]
     public partial bool IgnoreIfNotFound { get; init; }

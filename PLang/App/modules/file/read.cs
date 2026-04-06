@@ -9,7 +9,7 @@ namespace App.modules.file;
 [Action("read")]
 public partial class Read : IContext
 {
-    public partial PLangPath Path { get; init; }
+    public partial FileSystem.Path Path { get; init; }
 
     [Default(false)]
     public partial bool ResolveVariables { get; init; }

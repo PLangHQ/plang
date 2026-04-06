@@ -37,7 +37,6 @@ global using DeserializeOptions = App.Channels.Serializers.DeserializeOptions;
 global using Variables = App.Variables.@this;
 
 // FileSystem types
-global using PLangPath = App.FileSystem.Path;
 
 // Type system
 global using EngineTypes = App.Types.@this;

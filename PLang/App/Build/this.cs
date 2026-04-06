@@ -18,7 +18,7 @@ public sealed class @this
     /// Optional file filter. When set, only these files are built.
     /// Set via --build={"files":"test.goal"} or --build={"files":["test.goal","run.goal"]}
     /// </summary>
-    public List<PLangPath> Files { get; set; } = new();
+    public List<FileSystem.Path> Files { get; set; } = new();
 
     public @this(App.@this engine)
     {

@@ -9,10 +9,10 @@ namespace App.modules.file;
 [Action("exists")]
 public partial class Exists : IContext
 {
-    public partial PLangPath Path { get; init; }
+    public partial FileSystem.Path Path { get; init; }
 
     [Provider]
     public partial IFileProvider Files { get; }
 
-    public Task<PLangPath> Run() => Task.FromResult(Files.Exists(this));
+    public Task<FileSystem.Path> Run() => Task.FromResult(Files.Exists(this));
 }

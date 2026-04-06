@@ -59,7 +59,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var listAction = new file.List
         {
             Context = context,
-            Path = new PLangPath(searchPath, context),
+            Path = FileSystem.Path.Resolve(searchPath, context),
             Pattern = "*.goal",
             Recursive = true
         };
@@ -67,7 +67,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (!listResult.Success)
             return listResult;
 
-        var files = listResult.Value as PLangPath[];
+        var files = listResult.Value as FileSystem.Path[];
         if (files == null || files.Length == 0)
             return Data.Ok(new List<Goal>());
 
@@ -152,7 +152,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         // Load existing goals from .pr file — merge by name (replace or append)
         var existingGoals = new List<Goal>();
-        var readAction = new file.Read { Context = context, Path = new PLangPath(prPath, context) };
+        var readAction = new file.Read { Context = context, Path = FileSystem.Path.Resolve(prPath, context) };
         var readResult = await engine.RunAction(readAction, context);
         if (readResult.Success && readResult.Value?.ToString() is string existingJson && !string.IsNullOrWhiteSpace(existingJson))
         {
@@ -180,7 +180,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var saveAction = new file.Save
         {
             Context = context,
-            Path = new PLangPath(prPath, context),
+            Path = FileSystem.Path.Resolve(prPath, context),
             Value = new Data("", json)
         };
         var saveResult = await engine.RunAction(saveAction, context);
@@ -298,7 +298,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var readAction = new file.Read
         {
             Context = context,
-            Path = new PLangPath(prPath, context)
+            Path = FileSystem.Path.Resolve(prPath, context)
         };
         var readResult = await engine.RunAction(readAction, context);
         if (!readResult.Success) return errors;
@@ -366,10 +366,10 @@ public class DefaultBuilderProvider : IBuilderProvider
                     var existsAction = new file.Exists
                     {
                         Context = context,
-                        Path = new PLangPath(expectedPrPath, context)
+                        Path = FileSystem.Path.Resolve(expectedPrPath, context)
                     };
                     var existsResult = await engine.RunAction(existsAction, context);
-                    if (existsResult.Success && existsResult is PLangPath pathData && pathData.Exists)
+                    if (existsResult.Success && existsResult is FileSystem.Path pathData && pathData.Exists)
                     {
                         goalCall.PrPath = expectedPrPath;
                     }

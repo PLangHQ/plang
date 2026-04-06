@@ -1,5 +1,3 @@
-using App.FileSystem;
-using App.FileSystem.Default;
 using App.Variables;
 using App.Utils;
 
@@ -7,13 +5,12 @@ namespace App.FileSystem;
 
 /// <summary>
 /// Path that IS a Data — flows through PLang as a variable.
-/// Resolution/metadata from the old Path class + Data inheritance.
+/// FileSystem is resolved lazily from Context.App.FileSystem.
 /// Exists and Size are live (lazy filesystem checks).
 /// Value holds file content when set by the provider (e.g., Read).
 /// </summary>
 public class Path : Data
 {
-    private readonly IPLangFileSystem _fs;
     private readonly string _absolutePath;
 
     // Cached string-derived properties
@@ -24,53 +21,50 @@ public class Path : Data
     private string? _relative;
 
     /// <summary>
-    /// Creates a Path from an absolute path. Used by providers to build results.
+    /// Lazy FileSystem access — resolved from Context.App.FileSystem.
     /// </summary>
-    public Path(string absolutePath, IPLangFileSystem fs, object? content = null, string? source = null)
+    private IPLangFileSystem Fs => Context?.App?.FileSystem
+        ?? throw new InvalidOperationException("Path requires Context with App.FileSystem");
+
+    /// <summary>
+    /// Creates a Path from an absolute path with optional content.
+    /// </summary>
+    public Path(string absolutePath, object? content = null, string? source = null)
         : base("", content, content != null ? Variables.Type.FromMime(TypeMapping.GetMimeType(
-            fs.Path.GetExtension(absolutePath))) : null)
+            global::System.IO.Path.GetExtension(absolutePath))) : null)
     {
-        _fs = fs;
-        _absolutePath = fs.ValidatePath(absolutePath);
+        _absolutePath = absolutePath;
         Source = source;
     }
 
-    /// <summary>
-    /// Creates a Path from a raw path string, resolving relative paths against the goal folder.
-    /// Used by the source generator via Resolve().
-    /// </summary>
-    public Path(string rawPath, Context.@this context)
-        : base("", null)
+    /// <summary>Source generator convention — auto-wraps string parameters.</summary>
+    public static Path Resolve(string rawPath, Context.@this context)
     {
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
 
-        Raw = rawPath;
-        _fs = context.App.FileSystem;
+        var fs = context.App.FileSystem;
+        var resolved = rawPath;
 
         // Relative paths resolve against the goal's folder
-        var resolved = rawPath;
         if (!rawPath.StartsWith('/') && !rawPath.StartsWith('\\') && !rawPath.Contains("://"))
         {
             var goalPath = context.Goal?.Path;
             if (!string.IsNullOrEmpty(goalPath))
             {
-                var goalDir = _fs.Path.GetDirectoryName(goalPath);
+                var goalDir = fs.Path.GetDirectoryName(goalPath);
                 if (!string.IsNullOrEmpty(goalDir))
-                    resolved = _fs.Path.Combine(goalDir, rawPath);
+                    resolved = fs.Path.Combine(goalDir, rawPath);
             }
         }
 
-        _absolutePath = _fs.ValidatePath(resolved);
+        var path = new Path(fs.ValidatePath(resolved)) { Raw = rawPath, Context = context };
+        return path;
     }
-
-    /// <summary>Source generator convention — auto-wraps string parameters.</summary>
-    public static Path Resolve(string rawPath, Context.@this context)
-        => new Path(rawPath, context);
 
     // --- Path properties ---
 
-    public string Raw { get; } = "";
+    public string Raw { get; init; } = "";
     public string Absolute => _absolutePath;
 
     public string Relative
@@ -79,13 +73,13 @@ public class Path : Data
         {
             if (_relative != null) return _relative;
 
-            var root = _fs.RootDirectory;
-            if (!root.EndsWith(_fs.Path.DirectorySeparatorChar) && !root.EndsWith(_fs.Path.AltDirectorySeparatorChar))
-                root += _fs.Path.DirectorySeparatorChar;
+            var root = Fs.RootDirectory;
+            if (!root.EndsWith(Fs.Path.DirectorySeparatorChar) && !root.EndsWith(Fs.Path.AltDirectorySeparatorChar))
+                root += Fs.Path.DirectorySeparatorChar;
 
             if (_absolutePath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
                 _relative = _absolutePath[root.Length..];
-            else if (string.Equals(_absolutePath, _fs.RootDirectory, StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(_absolutePath, Fs.RootDirectory, StringComparison.OrdinalIgnoreCase))
                 _relative = ".";
             else
                 _relative = _absolutePath;
@@ -94,11 +88,11 @@ public class Path : Data
         }
     }
 
-    public string Extension => _extension ??= _fs.Path.GetExtension(_absolutePath);
-    public string FileName => _fileName ??= _fs.Path.GetFileName(_absolutePath);
+    public string Extension => _extension ??= Fs.Path.GetExtension(_absolutePath);
+    public string FileName => _fileName ??= Fs.Path.GetFileName(_absolutePath);
     public string FileNameWithoutExtension
-        => _fileNameWithoutExtension ??= _fs.Path.GetFileNameWithoutExtension(_absolutePath);
-    public string Directory => _directory ??= _fs.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
+        => _fileNameWithoutExtension ??= Fs.Path.GetFileNameWithoutExtension(_absolutePath);
+    public string Directory => _directory ??= Fs.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
     public string MimeType => TypeMapping.GetMimeType(Extension);
 
     public bool IsFile => !string.IsNullOrEmpty(Extension);
@@ -106,16 +100,14 @@ public class Path : Data
 
     /// <summary>
     /// Converts this path to a GoalCall. Derives PrPath from the .goal file path.
-    /// E.g., "SettingsCrud/Start.test.goal" → GoalCall { Name = "Start", PrPath = "/SettingsCrud/.build/start.test.pr" }
     /// </summary>
     public Goals.Goal.GoalCall GoalCall
     {
         get
         {
             var rel = Relative.Replace('\\', '/');
-            var dir = _fs.Path.GetDirectoryName(rel)?.Replace('\\', '/') ?? "";
-            var baseName = _fs.Path.GetFileNameWithoutExtension(rel);
-            // Build PrPath: dir/.build/basename.pr
+            var dir = Fs.Path.GetDirectoryName(rel)?.Replace('\\', '/') ?? "";
+            var baseName = Fs.Path.GetFileNameWithoutExtension(rel);
             var prDir = string.IsNullOrEmpty(dir) ? ".build" : $"{dir}/.build";
             var prPath = $"/{prDir}/{baseName.ToLowerInvariant()}.pr";
             return new Goals.Goal.GoalCall { Name = "", PrPath = prPath };
@@ -124,13 +116,13 @@ public class Path : Data
 
     // --- Live filesystem properties ---
 
-    public bool Exists => _fs.File.Exists(_absolutePath) || _fs.Directory.Exists(_absolutePath);
+    public bool Exists => Fs.File.Exists(_absolutePath) || Fs.Directory.Exists(_absolutePath);
 
     public long Size
     {
         get
         {
-            var info = _fs.FileInfo.New(_absolutePath);
+            var info = Fs.FileInfo.New(_absolutePath);
             return info.Exists ? info.Length : 0;
         }
     }
@@ -158,16 +150,16 @@ public class Path : Data
 
     public override Data Clone()
     {
-        var clone = new Path(_absolutePath, _fs, Value, Source)
+        var clone = new Path(_absolutePath, Value, Source)
         {
             Name = Name,
-            Properties = Properties.Clone()
+            Properties = Properties.Clone(),
+            Context = Context
         };
         clone.Error = Error;
         clone.Handled = Handled;
         clone.Warnings = Warnings != null ? new List<Info>(Warnings) : null;
         clone.Signature = Signature;
-        clone.Context = Context;
         return clone;
     }
 }
