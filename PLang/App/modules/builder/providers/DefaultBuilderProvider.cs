@@ -1,7 +1,7 @@
+using App.Utility;
 using System.Text.Json;
 using App.Goals.Goal;
 using App.Variables;
-using App.Utility;
 using Goal = App.Goals.Goal.@this;
 using Actions = App.Goals.Goal.Steps.Step.Actions.@this;
 

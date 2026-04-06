@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace App.Utility;
+namespace App;
 
 /// <summary>
 /// Represents the app.pr file data for a PLang application.
