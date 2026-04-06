@@ -47,6 +47,28 @@ public sealed partial class @this : Data.@this<@this>
     public List<Data.@this> Examples { get; init; } = new();
 
     /// <summary>
+    /// Runs this action, switching to the target actor context if specified.
+    /// </summary>
+    public async Task<Data.@this> RunAsync(App.@this app, Context.@this context, Context.Actor? targetActor = null)
+    {
+        if (targetActor != null && targetActor != context.Actor)
+        {
+            var previousActor = app.CurrentActor;
+            app.CurrentActor = targetActor;
+            try
+            {
+                return await app.Run(this, targetActor.Context);
+            }
+            finally
+            {
+                app.CurrentActor = previousActor;
+            }
+        }
+
+        return await app.Run(this, context);
+    }
+
+    /// <summary>
     /// Return type properties for the builder summary. Null when Run() returns plain Data.
     /// Derived from the concrete return type of Run() via reflection in Describe().
     /// </summary>

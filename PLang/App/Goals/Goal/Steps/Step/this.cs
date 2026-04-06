@@ -108,6 +108,46 @@ public sealed partial class @this : Data.@this<@this>
     [JsonIgnore]
     public Goals.Goal.@this? Goal { get; set; }
 
+    /// <summary>
+    /// Runs all actions in this step, handling timeout if configured.
+    /// </summary>
+    public async Task<Data.@this> RunAsync(App.@this app, Context.@this context, Context.Actor? targetActor = null)
+    {
+        if (Timeout is > 0)
+        {
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
+            timeoutCts.CancelAfter(Timeout.Value);
+            context.PushCancellation(timeoutCts);
+            try
+            {
+                return await RunActions(app, context, targetActor);
+            }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested)
+            {
+                return Data.@this.FromError(new Errors.ServiceError(
+                    $"Step timed out after {Timeout}ms: {Text}", "Timeout", 408));
+            }
+            finally
+            {
+                context.PopCancellation();
+            }
+        }
+
+        return await RunActions(app, context, targetActor);
+    }
+
+    private async Task<Data.@this> RunActions(App.@this app, Context.@this context, Context.Actor? targetActor)
+    {
+        Data.@this result = Data.@this.Ok();
+        foreach (var action in Actions)
+        {
+            context.CancellationToken.ThrowIfCancellationRequested();
+            result = await action.RunAsync(app, context, targetActor);
+            if (!result.Success) break;
+        }
+        return result;
+    }
+
     public @this Clone()
     {
         return new @this
