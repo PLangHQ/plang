@@ -16,8 +16,8 @@ All system flags use `--` prefix. They accept JSON values for structured paramet
 | `--debug={actor:"system"}` | | Debug system actor steps |
 | `--test` | `plang --test` | Discover and run all `*.test.goal` files recursively |
 | `--build` | `plang --build` | Build all .goal files in current directory |
-| `--build={files:"test.goal"}` | | Build only specific file(s) |
-| `--build={files:["a.goal","b.goal"]}` | | Build multiple specific files |
+| `--build={"files":"test.goal"}` | | Build only specific file(s) |
+| `--build={"files":["a.goal","b.goal"]}` | | Build multiple specific files |
 | `--version` | `plang --version` | Print version and exit |
 | `key=value` | `plang Start name="John"` | Set a user memory stack variable |
 
@@ -26,7 +26,7 @@ All system flags use `--` prefix. They accept JSON values for structured paramet
 - `plang` — runs `Start.goal` by default
 - `plang MyGoal.goal` — runs a specific goal file
 - `plang --build` — builds all .goal files
-- `plang --build={files:"test.goal"}` — builds only matching file(s)
+- `plang --build={"files":"test.goal"}` — builds only matching file(s)
 
 ---
 
@@ -39,7 +39,7 @@ System flags (`--flag`) accept JSON for structured configuration. The CommandLin
 plang --build                          # !build = true
 
 # JSON object
-plang '--build={files:"test.goal"}'    # !build = {files: "test.goal"}
+plang '--build={"files":"test.goal"}'    # !build = {"files": "test.goal"}
 plang '--debug={actor:"system"}'       # !debug = {actor: "system"}
 
 # Simple value
@@ -86,8 +86,8 @@ plang --test                       # All *.test.goal files
 ### Building
 ```bash
 plang --build                              # All .goal files
-plang '--build={files:"test.goal"}'        # Single file
-plang '--build={files:["a.goal","b.goal"]}' # Multiple files
+plang '--build={"files":"test.goal"}'        # Single file
+plang '--build={"files":["a.goal","b.goal"]}' # Multiple files
 ```
 
 ### Running with parameters

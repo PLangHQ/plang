@@ -122,7 +122,7 @@ namespace PLang
 			}
 
 			// Build mode — set engine flag and resolve build path
-			// Supports: --build (all), --build={files:"test.goal"}, --build={files:["a.goal","b.goal"]}
+			// Supports: --build (all), --build={"files":"test.goal"}, --build={"files":["a.goal","b.goal"]}
 			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
 			{
 				engine.Building.IsEnabled = true;

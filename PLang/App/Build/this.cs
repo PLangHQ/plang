@@ -16,7 +16,7 @@ public sealed class @this
 
     /// <summary>
     /// Optional file filter. When set, only these files are built.
-    /// Set via --build={files:"test.goal"} or --build={files:["test.goal","run.goal"]}
+    /// Set via --build={"files":"test.goal"} or --build={"files":["test.goal","run.goal"]}
     /// </summary>
     public List<string> Files { get; set; } = new();
 

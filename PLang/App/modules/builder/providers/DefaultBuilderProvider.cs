@@ -71,7 +71,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (files == null || files.Length == 0)
             return Data.Ok(new List<Goal>());
 
-        // Filter by engine.Building.Files if set (--build={files:"test.goal"})
+        // Filter by engine.Building.Files if set (--build={"files":"test.goal"})
         var buildFiles = engine.Building.Files;
         if (buildFiles.Count > 0)
         {
