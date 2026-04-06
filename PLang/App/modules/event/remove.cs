@@ -12,6 +12,6 @@ public partial class Remove : IContext
     public Task<Data.@this> Run()
     {
         var removed = Context.Events.Unregister(EventId);
-        return Task.FromResult(App.Data.@this.Ok(removed));
+        return Task.FromResult(Data(removed));
     }
 }

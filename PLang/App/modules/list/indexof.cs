@@ -11,10 +11,10 @@ public partial class IndexOf : IContext
 
     public Task<Data.@this> Run()
     {
-        var existing = Context.Variables.Get(ListName)?.Value;
+        var existing = Context.Variables.Get(ListName).Value;
         if (existing is System.Collections.IList list)
-            return Task.FromResult(App.Data.@this.Ok(list.IndexOf(Value)));
+            return Task.FromResult(Data(list.IndexOf(Value)));
 
-        return Task.FromResult(App.Data.@this.Ok(-1));
+        return Task.FromResult(Data(-1));
     }
 }

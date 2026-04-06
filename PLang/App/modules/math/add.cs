@@ -11,6 +11,6 @@ public partial class Add : IContext
     public Task<Data.@this> Run()
     {
         var result = MathHelper.ToDouble(A) + MathHelper.ToDouble(B);
-        return Task.FromResult(App.Data.@this.Ok(MathHelper.PreserveType(result, A, B)));
+        return Task.FromResult(Data(MathHelper.PreserveType(result, A, B)));
     }
 }

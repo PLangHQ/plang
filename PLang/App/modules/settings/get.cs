@@ -22,7 +22,7 @@ public partial class Get : IContext
             return result;
 
         if (result.Value == null)
-            return App.Data.@this.FromError(new AskError(
+            return Error(new AskError(
                 $"Settings value '{Key}' is not set. Please provide a value.",
                 "settings", Key));
 

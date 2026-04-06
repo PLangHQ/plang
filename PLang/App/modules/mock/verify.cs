@@ -14,11 +14,11 @@ public partial class Verify : IContext
     {
         if (Mock.CallCount != ExpectedCount)
         {
-            return Task.FromResult(App.Data.@this.FromError(new AssertionError(
+            return Task.FromResult(Error(new AssertionError(
                 ExpectedCount, Mock.CallCount,
                 Message ?? $"Expected {Mock.ActionPattern} to be called {ExpectedCount} time(s), but was called {Mock.CallCount} time(s)")));
         }
 
-        return Task.FromResult(App.Data.@this.Ok(true));
+        return Task.FromResult(Data(true));
     }
 }

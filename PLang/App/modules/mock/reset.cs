@@ -27,6 +27,6 @@ public partial class Reset : IContext
                 }
             }
         }
-        return Task.FromResult(App.Data.@this.Ok());
+        return Task.FromResult(Data());
     }
 }

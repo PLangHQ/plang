@@ -13,7 +13,7 @@ public partial class Round : IContext
     {
         var result = Math.Round(MathHelper.ToDouble(Value), Decimals, MidpointRounding.AwayFromZero);
         if (Decimals == 0)
-            return Task.FromResult(App.Data.@this.Ok(MathHelper.PreserveType(result, Value)));
-        return Task.FromResult(App.Data.@this.Ok(result));
+            return Task.FromResult(Data(MathHelper.PreserveType(result, Value)));
+        return Task.FromResult(Data(result));
     }
 }

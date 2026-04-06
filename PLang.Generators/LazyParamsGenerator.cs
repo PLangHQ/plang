@@ -322,6 +322,22 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        => __paramData != null && __paramData.TryGetValue(paramName, out var d) ? d : null;");
         sb.AppendLine();
 
+        // Data() / Error() convenience helpers — so handlers write Data(value) instead of App.Data.@this.Ok(value)
+        // Skip if the class has a property named "Data" (would collide)
+        var hasDataProperty = info.Properties.Any(p => p.Name == "Data");
+        if (!hasDataProperty)
+        {
+            sb.AppendLine("    protected static App.Data.@this Data() => App.Data.@this.Ok();");
+            sb.AppendLine("    protected static App.Data.@this Data(object? value) => App.Data.@this.Ok(value);");
+            sb.AppendLine("    protected static App.Data.@this Data(object? value, App.Data.Type? type) => App.Data.@this.Ok(value, type);");
+        }
+        var hasErrorProperty = info.Properties.Any(p => p.Name == "Error");
+        if (!hasErrorProperty)
+        {
+            sb.AppendLine("    protected static App.Data.@this Error(App.Errors.IError error) => App.Data.@this.FromError(error);");
+        }
+        sb.AppendLine();
+
         // ExecuteAsync
         sb.AppendLine("    private App.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
         sb.AppendLine();

@@ -14,8 +14,8 @@ public partial class Remove : IContext
     public Task<Data.@this> Run()
     {
         var data = Context.Variables.Get(ListName);
-        if (data?.Value is not List<object?> list)
-            return Task.FromResult(App.Data.@this.FromError(
+        if (data.Value is not List<object?> list)
+            return Task.FromResult(Error(
                 new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
         if (AtIndex >= 0)
@@ -28,6 +28,6 @@ public partial class Remove : IContext
             list.Remove(Value);
         }
 
-        return Task.FromResult(App.Data.@this.Ok(new types.list { count = list.Count, value = list }, App.Data.Type.FromName("list")));
+        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, App.Data.Type.FromName("list")));
     }
 }

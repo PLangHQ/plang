@@ -164,10 +164,10 @@ public class @this
     /// <summary>
     /// Gets a variable by name (supports dot notation path).
     /// </summary>
-    public Data.@this? Get(string name)
+    public Data.@this Get(string name)
     {
         if (string.IsNullOrEmpty(name))
-            return null;
+            return Data.@this.Null(name ?? "");
 
         name = CleanName(name);
 
@@ -193,7 +193,7 @@ public class @this
 
         if (!_variables.TryGetValue(rootName, out var root))
         {
-            return null;
+            return Data.@this.Null(name);
         }
 
         if (string.IsNullOrEmpty(remaining))

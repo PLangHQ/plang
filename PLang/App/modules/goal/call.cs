@@ -20,7 +20,7 @@ public partial class Call : IContext
         var execContext = Actor?.Context ?? Context;
         var goal = await GoalName.GetGoalAsync(engine, execContext);
         if (goal == null)
-            return App.Data.@this.FromError(new Errors.ServiceError(
+            return Error(new Errors.ServiceError(
                 $"Goal '{GoalName.Name}' not found", "NotFound", 404));
 
         return await engine.RunGoalAsync(goal, execContext);

@@ -11,6 +11,6 @@ public partial class Power : IContext
     public Task<Data.@this> Run()
     {
         var result = Math.Pow(MathHelper.ToDouble(Base), MathHelper.ToDouble(Exponent));
-        return Task.FromResult(App.Data.@this.Ok(MathHelper.PreserveType(result, Base, Exponent)));
+        return Task.FromResult(Data(MathHelper.PreserveType(result, Base, Exponent)));
     }
 }

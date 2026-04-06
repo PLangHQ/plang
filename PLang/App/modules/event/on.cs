@@ -41,7 +41,7 @@ public partial class On : IContext
     public Task<Data.@this> Run()
     {
         if (!Enum.TryParse<EventType>(Type, ignoreCase: true, out var eventType))
-            return Task.FromResult(App.Data.@this.FromError(
+            return Task.FromResult(Error(
                 new Errors.ValidationError($"Unknown event type: '{Type}'", "InvalidEventType", 400)));
 
         // Resolve target actor — default to current context's actor
@@ -63,6 +63,6 @@ public partial class On : IContext
         // Register on the target actor's event scope
         targetActor.Context.Events.Register(binding);
 
-        return Task.FromResult(App.Data.@this.Ok(binding.Id));
+        return Task.FromResult(Data(binding.Id));
     }
 }

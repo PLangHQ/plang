@@ -29,7 +29,7 @@ public partial class If : IContext, IStep
 
         var conditionResult = evalResult.Value is true;
         if (Negate) conditionResult = !conditionResult;
-        evalResult = App.Data.@this.Ok(conditionResult);
+        evalResult = Data(conditionResult);
 
         // Mark indented sub-steps: disabled when false, clean when true
         // Step comes from IStep capability (action.Step = the user step being executed)

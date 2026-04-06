@@ -36,7 +36,7 @@ public partial class MockAction : IContext
             if (paramMatchers != null && currentAction != null)
             {
                 if (!ParametersMatch(currentAction, ctx.Variables, paramMatchers))
-                    return App.Data.@this.Ok(); // no match, let real action run
+                    return Data(); // no match, let real action run
             }
 
             // Record the call
@@ -50,12 +50,12 @@ public partial class MockAction : IContext
             // Return value mock — skip action and return the value
             if (returnValue != null)
             {
-                ctx.EventOverride = App.Data.@this.Ok(returnValue);
-                return App.Data.@this.Ok(returnValue);
+                ctx.EventOverride = Data(returnValue);
+                return Data(returnValue);
             }
 
             // Spy mode — just tracked the call, let real action run
-            return App.Data.@this.Ok();
+            return Data();
         };
 
         var binding = new EventBinding(
@@ -70,7 +70,7 @@ public partial class MockAction : IContext
 
         Context.Events.Register(binding);
 
-        return Task.FromResult(App.Data.@this.Ok(handle));
+        return Task.FromResult(Data(handle));
     }
 
     private static Goals.Goal.Steps.Step.Actions.Action.@this? FindCurrentAction(Context.@this ctx)

@@ -17,12 +17,12 @@ public partial class Set : IContext
         if (AsDefault)
         {
             var existing = Context.Variables.Get(Name);
-            if (existing != null && existing.IsInitialized)
+            if (existing.IsInitialized)
                 return Task.FromResult(existing);
         }
 
         Context.Variables.Set(Name, Value,
             Type != null ? App.Data.Type.FromName(Type) : null);
-        return Task.FromResult(Context.Variables.Get(Name) ?? App.Data.@this.Ok());
+        return Task.FromResult(Context.Variables.Get(Name));
     }
 }

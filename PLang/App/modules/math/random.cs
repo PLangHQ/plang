@@ -14,6 +14,6 @@ public partial class Random : IContext
     {
         var rng = System.Random.Shared;
         var result = rng.Next(Min, Max + 1);
-        return Task.FromResult(App.Data.@this.Ok(result));
+        return Task.FromResult(Data(result));
     }
 }

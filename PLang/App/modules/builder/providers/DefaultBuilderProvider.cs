@@ -138,7 +138,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         // Apply LLM-generated description if available in Variables
         var stepResults = context.Variables.Get("stepResults");
-        if (stepResults?.Value is IDictionary<string, object?> resultsDict
+        if (stepResults.Value is IDictionary<string, object?> resultsDict
             && resultsDict.TryGetValue("description", out var desc)
             && desc is string description
             && !string.IsNullOrEmpty(description))

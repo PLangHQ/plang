@@ -10,12 +10,12 @@ public partial class Count : IContext
 
     public Task<Data.@this> Run()
     {
-        var existing = Context.Variables.Get(ListName)?.Value;
+        var existing = Context.Variables.Get(ListName).Value;
         if (existing is System.Collections.IList list)
-            return Task.FromResult(App.Data.@this.Ok(list.Count));
+            return Task.FromResult(Data(list.Count));
         if (existing is System.Collections.IDictionary dict)
-            return Task.FromResult(App.Data.@this.Ok(dict.Count));
+            return Task.FromResult(Data(dict.Count));
 
-        return Task.FromResult(App.Data.@this.Ok(0));
+        return Task.FromResult(Data(0));
     }
 }

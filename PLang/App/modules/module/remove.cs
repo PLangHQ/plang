@@ -16,10 +16,10 @@ public partial class Remove : IContext
     {
         var engine = Context.App!;
         if (!engine.Modules.Contains(Name))
-            return Task.FromResult(App.Data.@this.FromError(
+            return Task.FromResult(Error(
                 new App.Errors.ServiceError($"Module '{Name}' not found", "NotFound", 404)));
 
         engine.Modules.Remove(Name);
-        return Task.FromResult(App.Data.@this.Ok());
+        return Task.FromResult(Data());
     }
 }

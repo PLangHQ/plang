@@ -14,7 +14,7 @@ public partial class Add : IContext
     public Task<Data.@this> Run()
     {
         var data = Context.Variables.Get(ListName);
-        var existing = data?.Value;
+        var existing = data.Value;
         var list = existing as List<object?>;
 
         if (list == null)
@@ -41,6 +41,6 @@ public partial class Add : IContext
         else
             list.Add(Value);
 
-        return Task.FromResult(App.Data.@this.Ok(new types.list { count = list.Count, value = list }, App.Data.Type.FromName("list")));
+        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, App.Data.Type.FromName("list")));
     }
 }

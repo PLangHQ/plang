@@ -10,6 +10,6 @@ public partial class Ceiling : IContext
     public Task<Data.@this> Run()
     {
         var result = Math.Ceiling(MathHelper.ToDouble(Value));
-        return Task.FromResult(App.Data.@this.Ok(MathHelper.PreserveType(result, Value)));
+        return Task.FromResult(Data(MathHelper.PreserveType(result, Value)));
     }
 }
