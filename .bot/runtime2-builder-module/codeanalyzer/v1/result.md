@@ -132,14 +132,14 @@ None.
 
 ### Behavioral Reasoning
 
-1. **Line 84: `FormatForLlm` takes `PLang.Interfaces.PLangContext?`** — This references `PLang.Interfaces`, which is a Runtime1 namespace. The rest of this branch is pure App. **Finding: Runtime1 type reference in App code.** Check if this method existed before this branch or was added here.
+1. **Line 84: `FormatForLlm` takes `App.SafeFileSystem.PLangContext?`** — This references `App.SafeFileSystem`, which is a Runtime1 namespace. The rest of this branch is pure App. **Finding: Runtime1 type reference in App code.** Check if this method existed before this branch or was added here.
 
 ### Deletion Test
 
 1. **`FormatForLlm` and `FormatForLlmFallback`** — No tests exist for these methods on this branch. Could delete the entire `Methods.cs` file and no builder module test would fail. However, these may be tested elsewhere or used by the builder goals at runtime. **Flag but don't block on this.**
 
 ### Verdict: NEEDS WORK
-Runtime1 type reference (`PLang.Interfaces.PLangContext`) in `FormatForLlm`. Empty `JsonSerializerOptions` should be removed or replaced with centralized options.
+Runtime1 type reference (`App.SafeFileSystem.PLangContext`) in `FormatForLlm`. Empty `JsonSerializerOptions` should be removed or replaced with centralized options.
 
 ---
 
@@ -276,7 +276,7 @@ None.
 | 2 | Goal/this.cs | 279 | `Parse()` bare dash (`- ` with no text) is untested | minor |
 | 3 | Modules/this.cs | 211 | `Activator.CreateInstance` in `GetDefaults()` can throw unhandled | minor |
 | 4 | Modules/this.cs | 206-224 | `GetDefaults()` IConfigure<T> path is untested | minor |
-| 5 | Goal/Methods.cs | 84 | `FormatForLlm` references Runtime1 type `PLang.Interfaces.PLangContext` | minor |
+| 5 | Goal/Methods.cs | 84 | `FormatForLlm` references Runtime1 type `App.SafeFileSystem.PLangContext` | minor |
 
 ## Nits (2)
 

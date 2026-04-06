@@ -9,12 +9,12 @@ using PLang;
 using PLang.Container;
 using PLang.Errors;
 using PLang.Events;
-using PLang.Interfaces;
+using App.SafeFileSystem;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
-using PLang.Utils;
+using App.Utils;
 using PLangWindowForms;
 using Scriban;
 using Scriban.Syntax;
@@ -32,7 +32,7 @@ using System.Windows.Forms;
 using static PLang.Executor;
 using static PLang.Modules.OutputModule.Program;
 using static PLang.Modules.UiModule.Program;
-using static PLang.Utils.StepHelper;
+using static App.Utils.StepHelper;
 
 namespace PlangWindowForms
 {

@@ -11,7 +11,7 @@ Full 5-pass analysis (OBP, simplification, readability, behavioral reasoning, de
 2. `Goal.Parse()` bare dash `- ` with no text — untested
 3. `EngineModules.GetDefaults()` uses `Activator.CreateInstance` that can throw unhandled
 4. `GetDefaults()` IConfigure<T> path — untested
-5. `FormatForLlm` references Runtime1 type `PLang.Interfaces.PLangContext`
+5. `FormatForLlm` references Runtime1 type `App.SafeFileSystem.PLangContext`
 
 ## Files analyzed
 - `DefaultBuilderProvider.cs` (344 lines) — CLEAN

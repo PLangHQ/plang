@@ -948,7 +948,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     // --- Upload content resolution ---
 
     private static async Task<HttpContent> ResolveUploadContentAsync(
-        upload action, PLang.Interfaces.IPLangFileSystem fs, string encoding)
+        upload action, App.SafeFileSystem.IPLangFileSystem fs, string encoding)
     {
         if (action.As.HasValue)
         {
@@ -986,7 +986,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             "application/json");
     }
 
-    private static async Task<HttpContent> CreateFileContentAsync(PLang.Interfaces.IPLangFileSystem fs, string path)
+    private static async Task<HttpContent> CreateFileContentAsync(App.SafeFileSystem.IPLangFileSystem fs, string path)
     {
         var validPath = fs.ValidatePath(path);
         var bytes = await fs.File.ReadAllBytesAsync(validPath);
@@ -1003,7 +1003,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         return content;
     }
 
-    private static async Task<HttpContent> CreateFormContentAsync(PLang.Interfaces.IPLangFileSystem fs, object content)
+    private static async Task<HttpContent> CreateFormContentAsync(App.SafeFileSystem.IPLangFileSystem fs, object content)
     {
         var form = new MultipartFormDataContent();
         Dictionary<string, object> fields;
