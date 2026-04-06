@@ -1,11 +1,11 @@
 using App.Variables;
 
-namespace App.modules.runtime;
+namespace App.modules.app;
 
 /// <summary>
 /// Runs a goal through the full RunStep pipeline (events, caching, error handling).
 /// Accepts a GoalCall, resolves the goal, then delegates to app.RunGoalAsync.
-/// Always marks result as Handled — callers decide what to do with errors.
+/// Callers decide what to do with errors.
 /// </summary>
 [Action("run")]
 public partial class run : IContext
