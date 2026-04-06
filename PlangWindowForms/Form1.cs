@@ -405,7 +405,7 @@ namespace PlangWindowForms
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
 
 				var variable = @event["Variable"];
-				var memoryStack = context.Variables;
+				var variables = context.Variables;
 				memoryStack.Put(variable["name"].Value<string>(), variable["value"].Value<object?>());
 
 			}

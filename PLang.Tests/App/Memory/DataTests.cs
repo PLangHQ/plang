@@ -931,13 +931,13 @@ public class DataTests
         // Valid GZip of non-JSON bytes
         var plainBytes = System.Text.Encoding.UTF8.GetBytes("this is not json {{{}}}");
         byte[] gzipped;
-        using (var ms = new System.IO.MemoryStream())
+        using (var vars = new System.IO.MemoryStream())
         {
-            using (var gz = new System.IO.Compression.GZipStream(ms, System.IO.Compression.CompressionLevel.Optimal))
+            using (var gz = new System.IO.Compression.GZipStream(vars, System.IO.Compression.CompressionLevel.Optimal))
             {
                 gz.Write(plainBytes, 0, plainBytes.Length);
             }
-            gzipped = ms.ToArray();
+            gzipped = vars.ToArray();
         }
 
         var inner = new Data("", gzipped, Type.FromName("gzip"));
@@ -1082,15 +1082,15 @@ public class DataTests
         // 10MB of zeros → small compressed, but tests the limit check path
         var bigPayload = new byte[10 * 1024 * 1024]; // 10MB of zeros
         byte[] compressed;
-        using (var ms = new System.IO.MemoryStream())
+        using (var vars = new System.IO.MemoryStream())
         {
-            using (var gz = new System.IO.Compression.GZipStream(ms, System.IO.Compression.CompressionLevel.Optimal))
+            using (var gz = new System.IO.Compression.GZipStream(vars, System.IO.Compression.CompressionLevel.Optimal))
             {
                 // Write 11 times = 110MB total — exceeds 100MB limit
                 for (int i = 0; i < 11; i++)
                     gz.Write(bigPayload, 0, bigPayload.Length);
             }
-            compressed = ms.ToArray();
+            compressed = vars.ToArray();
         }
 
         var inner = new Data("", compressed, Type.FromName("gzip"));
@@ -1143,13 +1143,13 @@ public class DataTests
     {
         var plainBytes = System.Text.Encoding.UTF8.GetBytes("this is not json {{{}}}");
         byte[] gzipped;
-        using (var ms = new System.IO.MemoryStream())
+        using (var vars = new System.IO.MemoryStream())
         {
-            using (var gz = new System.IO.Compression.GZipStream(ms, System.IO.Compression.CompressionLevel.Optimal))
+            using (var gz = new System.IO.Compression.GZipStream(vars, System.IO.Compression.CompressionLevel.Optimal))
             {
                 gz.Write(plainBytes, 0, plainBytes.Length);
             }
-            gzipped = ms.ToArray();
+            gzipped = vars.ToArray();
         }
 
         var inner = new Data("", gzipped, Type.FromName("gzip"));

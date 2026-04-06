@@ -132,9 +132,9 @@ public sealed class CallFrame : IAsyncDisposable
     /// Snapshots variables that changed during this frame's execution.
     /// Captures Data.Updated > StartedAt from the Variables.
     /// </summary>
-    public void SnapshotVariables(App.Variables.@this memoryStack)
+    public void SnapshotVariables(App.Variables.@this variables)
     {
-        Variables = memoryStack.GetChangedSince(StartedAt);
+        Variables = variables.GetChangedSince(StartedAt);
     }
 
     /// <summary>

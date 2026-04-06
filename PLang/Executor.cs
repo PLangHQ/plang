@@ -24,8 +24,8 @@ namespace PLang
 			var engine = new App.@this(fileSystem);
 			engine.SystemDirectory = fileSystem.SystemDirectory;
 
-			var systemMs = engine.System.Context.Variables;
-			var userMs = engine.User.Context.Variables;
+			var systemVars = engine.System.Context.Variables;
+			var userVars = engine.User.Context.Variables;
 
 			// Route CLI parameters: system params (!prefix) → system Variables, user params → user Variables
 			// !debug is handled separately (routed per actor)
@@ -33,9 +33,9 @@ namespace PLang
 			{
 				if (param.Key == "!debug") continue;
 				if (param.Key.StartsWith("!"))
-					systemMs.Set(param.Key, param.Value);
+					systemVars.Set(param.Key, param.Value);
 				else
-					userMs.Set(param.Key, param.Value);
+					userVars.Set(param.Key, param.Value);
 			}
 
 			// Debug wiring — route to target actor, default user
@@ -53,15 +53,15 @@ namespace PLang
 					targetActor = actorToken.ToString().ToLowerInvariant();
 
 				// Set on target actor(s) + system (run.pr checks %!debug% to setup events)
-				systemMs.Set("!debug", debugValue);
+				systemVars.Set("!debug", debugValue);
 				switch (targetActor)
 				{
 					case "system": break; // already on system
 					case "all":
-						userMs.Set("!debug", debugValue);
+						userVars.Set("!debug", debugValue);
 						break;
 					default: // "user"
-						userMs.Set("!debug", debugValue);
+						userVars.Set("!debug", debugValue);
 						break;
 				}
 			}
@@ -70,13 +70,13 @@ namespace PLang
 			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
 			{
 				// Results list on system Variables — test.pr adds to it via list.add
-				systemMs.Set("testResults", new List<object?>());
+				systemVars.Set("testResults", new List<object?>());
 
 				// !test Data with summary that reads from testResults
 				var testData = new App.Variables.Data("!test", true);
 				testData.Properties["summary"] = new App.Variables.DynamicData("summary", () =>
 				{
-					var results = systemMs.GetValue("testResults") as List<object?>;
+					var results = systemVars.GetValue("testResults") as List<object?>;
 					if (results == null) return "No test results";
 					var passed = results.Count(r => r is not App.Variables.Data d || d.Success);
 					var failed = results.Count - passed;
@@ -115,9 +115,9 @@ namespace PLang
 					return sb.ToString().TrimEnd();
 				});
 				engine.System.Context.Test = testData;
-				systemMs.Set("!test", testData);
+				systemVars.Set("!test", testData);
 				if (!parameters.ContainsKey("path"))
-					systemMs.Set("path", fileSystem.RootDirectory);
+					systemVars.Set("path", fileSystem.RootDirectory);
 			}
 
 			// Build mode — set engine flag and resolve build path
@@ -126,7 +126,7 @@ namespace PLang
 			{
 				engine.Building.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
-					systemMs.Set("path", fileSystem.RootDirectory);
+					systemVars.Set("path", fileSystem.RootDirectory);
 
 				// Extract files filter from JSON build value → engine.Building.Files
 				if (buildValue is IDictionary<string, object?> buildDict &&
@@ -154,7 +154,7 @@ namespace PLang
 				var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
 				if (!prPath.StartsWith(".build"))
 					prPath = ".build/" + prPath;
-				systemMs.Set("goalFile", "/" + prPath.ToLowerInvariant());
+				systemVars.Set("goalFile", "/" + prPath.ToLowerInvariant());
 			}
 
 			// Start the engine — system actor runs system/.build/run.pr

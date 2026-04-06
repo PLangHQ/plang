@@ -413,9 +413,9 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// <summary>
     /// Creates a new execution context.
     /// </summary>
-    public PLangContext CreateContext(Variables.@this? memoryStack = null)
+    public PLangContext CreateContext(Variables.@this? variables = null)
     {
-        var context = new PLangContext(this, memoryStack)
+        var context = new PLangContext(this, variables)
         {
             CallStack = new CallStack.@this()
         };

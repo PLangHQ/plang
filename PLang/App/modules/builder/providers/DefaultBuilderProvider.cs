@@ -136,7 +136,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (action.Goals.Count == 0)
             return Data.FromError(new Errors.ActionError("No goals to save", "NoGoals", 400));
 
-        // Apply LLM-generated description if available in the memory stack
+        // Apply LLM-generated description if available in Variables
         var stepResults = context.Variables.Get("stepResults");
         if (stepResults?.Value is IDictionary<string, object?> resultsDict
             && resultsDict.TryGetValue("description", out var desc)

@@ -255,7 +255,7 @@ public class @this
     }
 
     /// <summary>
-    /// Resolves %variable% references in a string using this memory stack.
+    /// Resolves %variable% references in a string using this Variables instance.
     /// Returns the input unchanged if no %var% patterns are found.
     /// </summary>
     public string Resolve(string input)
@@ -347,7 +347,7 @@ public class @this
     }
 
     /// <summary>
-    /// Creates a deep clone of this memory stack.
+    /// Creates a deep clone of this Variables instance.
     /// Values are deep-cloned so mutations in the clone do not affect the original.
     /// </summary>
     public @this Clone()
@@ -393,7 +393,7 @@ public class @this
     }
 
     /// <summary>
-    /// Converts the memory stack to a dictionary (for serialization/debugging).
+    /// Converts Variables to a dictionary (for serialization/debugging).
     /// </summary>
     public Dictionary<string, object?> ToDictionary(bool includeSystem = false)
     {

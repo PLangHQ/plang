@@ -243,12 +243,12 @@ public class EngineTests
     public async Task CreateContext_AcceptsCustomVariables()
     {
         await using var engine = new App.@this("/app");
-        var memoryStack = new Variables();
-        memoryStack.Set("test", "value");
+        var variables = new Variables();
+        variables.Set("test", "value");
 
-        using var context = engine.CreateContext(memoryStack);
+        using var context = engine.CreateContext(variables);
 
-        await Assert.That(context.Variables).IsEqualTo(memoryStack);
+        await Assert.That(context.Variables).IsEqualTo(variables);
     }
 
     [Test]

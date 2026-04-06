@@ -223,7 +223,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // Resolution state
         sb.AppendLine("    private List<App.Variables.Data>? __parameters;");
         sb.AppendLine("    private List<App.Variables.Data>? __defaults;");
-        sb.AppendLine("    private App.Variables.@this? __memoryStack;");
+        sb.AppendLine("    private App.Variables.@this? __variables;");
         sb.AppendLine("    private App.@this? __engine;");
         sb.AppendLine("    private App.Variables.Data? __resolutionError;");
         sb.AppendLine();
@@ -331,7 +331,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        __action = action;");
         sb.AppendLine("        __parameters = action.Parameters;");
         sb.AppendLine("        __defaults = action.Defaults;");
-        sb.AppendLine("        __memoryStack = context.Variables;");
+        sb.AppendLine("        __variables = context.Variables;");
         sb.AppendLine("        __engine = engine;");
         sb.AppendLine("        __resolutionError = null;");
         sb.AppendLine("        __paramData = new(StringComparer.OrdinalIgnoreCase);");
@@ -477,7 +477,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
         sb.AppendLine("            if (fullMatch.Success)");
         sb.AppendLine("            {");
-        sb.AppendLine("                var __resolved = __memoryStack!.Get(fullMatch.Groups[1].Value);");
+        sb.AppendLine("                var __resolved = __variables!.Get(fullMatch.Groups[1].Value);");
         sb.AppendLine("                __paramData?[name] = __resolved;");
         sb.AppendLine("                if (__resolved != null && !__resolved.Success)");
         sb.AppendLine("                {");
@@ -487,7 +487,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("                return __TryConvert<T>(__resolved?.Value, name);");
         sb.AppendLine("            }");
         sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
-        sb.AppendLine("                var __r = __memoryStack!.Get(m.Groups[1].Value);");
+        sb.AppendLine("                var __r = __variables!.Get(m.Groups[1].Value);");
         sb.AppendLine("                // Error Data passes through — format the error instead of aborting");
         sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
         sb.AppendLine("                return __FormatValue(__r?.Value);");
@@ -496,7 +496,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine("        if (data?.Value is System.Collections.IList || data?.Value is System.Collections.IDictionary)");
         sb.AppendLine("        {");
-        sb.AppendLine("            var __deepResolved = __memoryStack!.ResolveDeep(data.Value);");
+        sb.AppendLine("            var __deepResolved = __variables!.ResolveDeep(data.Value);");
         sb.AppendLine("            __paramData?[name] = data;");
         sb.AppendLine("            return __TryConvert<T>(__deepResolved, name);");
         sb.AppendLine("        }");
@@ -561,13 +561,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
         sb.AppendLine("            if (fullMatch.Success)");
         sb.AppendLine("            {");
-        sb.AppendLine("                var __resolved = __memoryStack!.Get(fullMatch.Groups[1].Value);");
+        sb.AppendLine("                var __resolved = __variables!.Get(fullMatch.Groups[1].Value);");
         sb.AppendLine("                // Data properties pass through regardless of Success — the Data IS the value");
         sb.AppendLine("                return __resolved;");
         sb.AppendLine("            }");
         sb.AppendLine("            // Interpolate %var% patterns in mixed strings");
         sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
-        sb.AppendLine("                var __r = __memoryStack!.Get(m.Groups[1].Value);");
+        sb.AppendLine("                var __r = __variables!.Get(m.Groups[1].Value);");
         sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
         sb.AppendLine("                return __FormatValue(__r?.Value);");
         sb.AppendLine("            });");

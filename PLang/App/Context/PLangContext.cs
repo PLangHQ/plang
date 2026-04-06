@@ -28,7 +28,7 @@ public sealed class PLangContext : IDisposable
     public App.@this Engine { get; }
 
     /// <summary>
-    /// Memory stack for this execution.
+    /// Variables for this execution.
     /// </summary>
     public Variables.@this Variables { get; }
 
@@ -131,11 +131,11 @@ public sealed class PLangContext : IDisposable
     /// </summary>
     public Config.Scope? ConfigScope { get; set; }
 
-    public PLangContext(App.@this engine, Variables.@this? memoryStack = null, PLangContext? parent = null)
+    public PLangContext(App.@this engine, Variables.@this? variables = null, PLangContext? parent = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         Engine = engine;
-        Variables = memoryStack ?? new Variables.@this();
+        Variables = variables ?? new Variables.@this();
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
         _cts = CancellationTokenSource.CreateLinkedTokenSource(engine.ShutdownToken);
@@ -145,33 +145,33 @@ public sealed class PLangContext : IDisposable
         // Stamp context on Variables (propagates to all existing Data)
         Variables.Context = this;
 
-        // Register context variables on the memory stack
+        // Register context variables on the Variables
         RegisterContextVariables();
     }
 
     /// <summary>
-    /// Registers context variables (prefixed with !) on the memory stack.
+    /// Registers context variables (prefixed with !) on the Variables.
     /// </summary>
     private void RegisterContextVariables()
     {
-        var ms = Variables;
+        var vars = Variables;
 
         // Static references (same object for lifetime of context)
-        ms.Put(new Data("!engine", Engine));
-        ms.Put(new Data("!context", this));
-        ms.Put(new Data("!memoryStack", ms));
-        ms.Put(new Data("!fileSystem", Engine.FileSystem));
-        ms.Put(new DynamicData("!callStack", () => CallStack));
-        ms.Put(new Data("!channels", Engine.Channels));
-        ms.Put(new Data("!serializers", Engine.Channels.Serializers));
+        vars.Put(new Data("!engine", Engine));
+        vars.Put(new Data("!context", this));
+        vars.Put(new Data("!variables", vars));
+        vars.Put(new Data("!fileSystem", Engine.FileSystem));
+        vars.Put(new DynamicData("!callStack", () => CallStack));
+        vars.Put(new Data("!channels", Engine.Channels));
+        vars.Put(new Data("!serializers", Engine.Channels.Serializers));
 
         // Dynamic references (change per goal/step)
-        ms.Put(new DynamicData("!goal", () => Goal));
-        ms.Put(new DynamicData("!step", () => Step));
-        ms.Put(new DynamicData("!error", () => CurrentError ?? CallStack?.Current?.Error));
-        ms.Put(new DynamicData("!data", () => Engine.System.Context.Variables.GetValue("data")));
-        ms.Put(new DynamicData("!event", () => Event ?? Engine.System?.Context?.Event));
-        ms.Put(new DynamicData("!test", () => Test));
+        vars.Put(new DynamicData("!goal", () => Goal));
+        vars.Put(new DynamicData("!step", () => Step));
+        vars.Put(new DynamicData("!error", () => CurrentError ?? CallStack?.Current?.Error));
+        vars.Put(new DynamicData("!data", () => Engine.System.Context.Variables.GetValue("data")));
+        vars.Put(new DynamicData("!event", () => Event ?? Engine.System?.Context?.Event));
+        vars.Put(new DynamicData("!test", () => Test));
     }
 
     /// <summary>
@@ -218,17 +218,17 @@ public sealed class PLangContext : IDisposable
     /// <summary>
     /// Creates a child context for nested execution.
     /// </summary>
-    public PLangContext CreateChild(Variables.@this? memoryStack = null)
+    public PLangContext CreateChild(Variables.@this? variables = null)
     {
-        return new PLangContext(Engine, memoryStack ?? Variables.Clone(), this);
+        return new PLangContext(Engine, variables ?? Variables.Clone(), this);
     }
 
     /// <summary>
-    /// Clones this context with a new memory stack.
+    /// Clones this context with a new Variables.
     /// </summary>
-    public PLangContext Clone(Variables.@this? memoryStack = null)
+    public PLangContext Clone(Variables.@this? variables = null)
     {
-        var clone = new PLangContext(Engine, memoryStack ?? Variables.Clone(), Parent)
+        var clone = new PLangContext(Engine, variables ?? Variables.Clone(), Parent)
         {
             IsAsync = IsAsync,
             Setup = Setup,

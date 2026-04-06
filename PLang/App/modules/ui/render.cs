@@ -14,7 +14,7 @@ public partial class Render : IContext
     [IsNotNull]
     public partial string Template { get; init; }
 
-    /// <summary>Explicit parameters that override memory stack variables in the template.</summary>
+    /// <summary>Explicit parameters that override Variables in the template.</summary>
     public partial List<Data>? Parameters { get; init; }
 
     /// <summary>

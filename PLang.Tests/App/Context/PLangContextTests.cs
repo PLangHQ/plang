@@ -44,12 +44,12 @@ public class PLangContextTests
     public async Task Constructor_AcceptsCustomVariables()
     {
         await using var engine = new App.@this("/app");
-        var memoryStack = new Variables();
-        memoryStack.Set("test", "value");
+        var variables = new Variables();
+        variables.Set("test", "value");
 
-        using var context = new PLangContext(engine, memoryStack);
+        using var context = new PLangContext(engine, variables);
 
-        await Assert.That(context.Variables).IsEqualTo(memoryStack);
+        await Assert.That(context.Variables).IsEqualTo(variables);
     }
 
     [Test]

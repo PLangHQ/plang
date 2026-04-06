@@ -7,9 +7,9 @@ namespace PLang.Tests.App.actions.variable;
 
 public class GetTests
 {
-    private (PLangContext context, Variables memory) CreateContext(Variables? memoryStack = null)
+    private (PLangContext context, Variables memory) CreateContext(Variables? variables = null)
     {
-        var memory = memoryStack ?? new Variables();
+        var memory = variables ?? new Variables();
         var engine = new App.@this("/app");
         var context = new PLangContext(engine, memory);
         return (context, memory);

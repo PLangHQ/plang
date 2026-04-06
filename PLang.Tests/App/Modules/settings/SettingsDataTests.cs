@@ -236,12 +236,12 @@ public class SettingsDataTests
         // This simulates what LazyParamsGenerator's __Resolve<T> does:
         // 1. Gets a parameter with value "%Settings.MissingKey%"
         // 2. Regex matches the full variable: Settings.MissingKey
-        // 3. Calls __memoryStack.Get("Settings.MissingKey")
+        // 3. Calls __variables.Get("Settings.MissingKey")
         // 4. Checks if result is non-null and !Success → sets __resolutionError
-        var memoryStack = _engine.Context.Variables;
+        var variables = _engine.Context.Variables;
 
         // This is the exact call the generated code makes
-        var resolved = memoryStack.Get("Settings.MissingKey");
+        var resolved = variables.Get("Settings.MissingKey");
 
         // The generated code checks: if (__resolved != null && !__resolved.Success)
         await Assert.That(resolved).IsNotNull();
@@ -258,10 +258,10 @@ public class SettingsDataTests
     public async Task ErrorPropagation_VariablesGet_SettingsExists_ReturnsSuccess()
     {
         await _engine.System.SettingsStore.Set("settings", "ApiKey", new SettingsVariable("ApiKey", "sk-real-key"));
-        var memoryStack = _engine.Context.Variables;
+        var variables = _engine.Context.Variables;
 
         // Same call path as generated code
-        var resolved = memoryStack.Get("Settings.ApiKey");
+        var resolved = variables.Get("Settings.ApiKey");
 
         // Generated code checks: if (__resolved != null && !__resolved.Success) — should NOT trigger
         await Assert.That(resolved).IsNotNull();

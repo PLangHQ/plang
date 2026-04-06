@@ -81,7 +81,7 @@ public class FluidProvider : ITemplateProvider
         fluidContext.AmbientValues["engine"] = action.Context.Engine;
         fluidContext.AmbientValues["context"] = action.Context;
 
-        // Load memory stack variables (GetAll already excludes !-prefixed)
+        // Load Variables (GetAll already excludes !-prefixed)
         foreach (var data in action.Context.Variables.GetAll())
         {
             fluidContext.SetValue(data.Name, FluidValue.Create(data.Value, options));

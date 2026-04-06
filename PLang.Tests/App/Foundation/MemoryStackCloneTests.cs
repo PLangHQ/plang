@@ -12,50 +12,50 @@ public class VariablesCloneTests
     [Test]
     public async Task Clone_ListValue_IsIsolatedFromOriginal()
     {
-        var ms = new Variables();
+        var vars = new Variables();
         var list = new List<string> { "a", "b" };
-        ms.Set("items", list);
+        vars.Set("items", list);
 
-        var clone = ms.Clone();
+        var clone = vars.Clone();
 
         // Mutate via the clone
         var cloneList = clone.Get<List<string>>("items");
         cloneList!.Add("c");
 
         // Original should NOT be affected
-        var originalList = ms.Get<List<string>>("items");
+        var originalList = vars.Get<List<string>>("items");
         await Assert.That(originalList!.Count).IsEqualTo(2);
     }
 
     [Test]
     public async Task Clone_DictionaryValue_IsIsolatedFromOriginal()
     {
-        var ms = new Variables();
+        var vars = new Variables();
         var dict = new Dictionary<string, object?> { ["key1"] = "val1" };
-        ms.Set("config", dict);
+        vars.Set("config", dict);
 
-        var clone = ms.Clone();
+        var clone = vars.Clone();
 
         // Mutate via the clone
         var cloneDict = clone.Get<Dictionary<string, object?>>("config");
         cloneDict!["key2"] = "val2";
 
         // Original should NOT be affected
-        var originalDict = ms.Get<Dictionary<string, object?>>("config");
+        var originalDict = vars.Get<Dictionary<string, object?>>("config");
         await Assert.That(originalDict!.ContainsKey("key2")).IsFalse();
     }
 
     [Test]
     public async Task Clone_NestedListInDict_IsIsolatedFromOriginal()
     {
-        var ms = new Variables();
+        var vars = new Variables();
         var data = new Dictionary<string, object?>
         {
             ["tags"] = new List<string> { "alpha", "beta" }
         };
-        ms.Set("record", data);
+        vars.Set("record", data);
 
-        var clone = ms.Clone();
+        var clone = vars.Clone();
 
         // Navigate into the clone and mutate the nested list
         var cloneData = clone.Get<Dictionary<string, object?>>("record");
@@ -63,7 +63,7 @@ public class VariablesCloneTests
         cloneTags.Add("gamma");
 
         // Original's nested list should NOT be affected
-        var originalData = ms.Get<Dictionary<string, object?>>("record");
+        var originalData = vars.Get<Dictionary<string, object?>>("record");
         var originalTags = (List<string>)originalData!["tags"]!;
         await Assert.That(originalTags.Count).IsEqualTo(2);
     }
@@ -72,16 +72,16 @@ public class VariablesCloneTests
     public async Task Clone_ScalarValue_RemainsIndependent()
     {
         // Scalars (strings, ints) are immutable — clone should always work for these
-        var ms = new Variables();
-        ms.Set("count", 42);
-        ms.Set("name", "original");
+        var vars = new Variables();
+        vars.Set("count", 42);
+        vars.Set("name", "original");
 
-        var clone = ms.Clone();
+        var clone = vars.Clone();
         clone.Set("count", 99);
         clone.Set("name", "modified");
 
-        var originalCount = ms.Get<long>("count");
-        var originalName = ms.Get<string>("name");
+        var originalCount = vars.Get<long>("count");
+        var originalName = vars.Get<string>("name");
         await Assert.That(originalCount).IsEqualTo(42);
         await Assert.That(originalName).IsEqualTo("original");
     }

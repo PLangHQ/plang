@@ -88,21 +88,21 @@ public partial class MockAction : IContext
         return null;
     }
 
-    private static Dictionary<string, object?> CaptureParameters(Goals.Goal.Steps.Step.Actions.Action.@this? action, Variables.@this memoryStack)
+    private static Dictionary<string, object?> CaptureParameters(Goals.Goal.Steps.Step.Actions.Action.@this? action, Variables.@this variables)
     {
         var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         if (action == null) return result;
 
         foreach (var param in action.Parameters)
         {
-            var value = ResolveParamValue(param, memoryStack);
+            var value = ResolveParamValue(param, variables);
             result[param.Name] = value;
         }
         return result;
     }
 
     private static bool ParametersMatch(
-        Goals.Goal.Steps.Step.Actions.Action.@this action, Variables.@this memoryStack, Dictionary<string, object?> matchers)
+        Goals.Goal.Steps.Step.Actions.Action.@this action, Variables.@this variables, Dictionary<string, object?> matchers)
     {
         foreach (var (name, expected) in matchers)
         {
@@ -110,17 +110,17 @@ public partial class MockAction : IContext
                 p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
             if (param == null) continue;
 
-            var actual = ResolveParamValue(param, memoryStack);
+            var actual = ResolveParamValue(param, variables);
             if (!MatchValue(expected, actual))
                 return false;
         }
         return true;
     }
 
-    private static object? ResolveParamValue(Data param, Variables.@this memoryStack)
+    private static object? ResolveParamValue(Data param, Variables.@this variables)
     {
         if (param.Value is string s && s.Contains('%'))
-            return memoryStack.Resolve(s);
+            return variables.Resolve(s);
 
         return param.Value;
     }
