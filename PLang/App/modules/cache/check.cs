@@ -19,7 +19,7 @@ public partial class Check : IContext
         if (Step.Cache == null) return Data.Ok(false);
 
         // Any non-cacheable action — skip (miss)
-        var modules = Context.Engine!.Modules;
+        var modules = Context.App!.Modules;
         foreach (var action in Step.Actions)
         {
             if (!modules.IsCacheable(action.Module, action.ActionName))
@@ -27,7 +27,7 @@ public partial class Check : IContext
         }
 
         var key = BuildCacheKey();
-        var cached = await Context.Engine!.Cache.GetAsync(key);
+        var cached = await Context.App!.Cache.GetAsync(key);
 
         // Miss — return false
         if (cached == null) return Data.Ok(false);

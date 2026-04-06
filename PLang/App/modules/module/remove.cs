@@ -14,7 +14,7 @@ public partial class Remove : IContext
 
     public Task<Data> Run()
     {
-        var engine = Context.Engine!;
+        var engine = Context.App!;
         if (!engine.Modules.Contains(Name))
             return Task.FromResult(Data.FromError(
                 new App.Errors.ServiceError($"Module '{Name}' not found", "NotFound", 404)));

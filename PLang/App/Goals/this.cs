@@ -14,7 +14,7 @@ public sealed class @this
 {
     private readonly ConcurrentDictionary<string, Goal.@this> _goals = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, Goal.@this> _byPath = new(StringComparer.OrdinalIgnoreCase);
-    internal App.@this Engine { get; set; } = null!;
+    internal App.@this App { get; set; } = null!;
 
     /// <summary>
     /// Run-once setup execution system.
@@ -32,7 +32,7 @@ public sealed class @this
     /// </summary>
     public void Add(Goal.@this goal)
     {
-        goal.Engine = Engine;
+        goal.App = App;
         if (string.IsNullOrEmpty(goal.PrPath))
             throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
         _goals[goal.PrPath] = goal;
@@ -112,14 +112,14 @@ public sealed class @this
         if (isAbsolute)
             cleanName = cleanName.TrimStart('/', '\\');
 
-        var file = Engine.FileSystem.Path.GetFileName(cleanName);
-        var nameDir = Engine.FileSystem.Path.GetDirectoryName(cleanName) ?? "";
+        var file = App.FileSystem.Path.GetFileName(cleanName);
+        var nameDir = App.FileSystem.Path.GetDirectoryName(cleanName) ?? "";
 
         // If relative and we have a calling folder, try resolving relative to it first
         if (!isAbsolute && !string.IsNullOrEmpty(callingFolderPath))
         {
             var relativeDir = callingFolderPath.Trim('/', '\\');
-            var combinedDir = string.IsNullOrEmpty(nameDir) ? relativeDir : Engine.FileSystem.Path.Combine(relativeDir, nameDir);
+            var combinedDir = string.IsNullOrEmpty(nameDir) ? relativeDir : App.FileSystem.Path.Combine(relativeDir, nameDir);
 
             var loaded = await TryLoadPr(combinedDir, file, name, cancellationToken);
             if (loaded != null) return loaded;
@@ -146,10 +146,10 @@ public sealed class @this
         var prFile = file.ToLowerInvariant() + ".pr";
 
         // 1. Try user's root directory
-        var rootPath = Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, dir, ".build", prFile);
-        if (Engine.FileSystem.File.Exists(rootPath))
+        var rootPath = App.FileSystem.Path.Combine(App.FileSystem.RootDirectory, dir, ".build", prFile);
+        if (App.FileSystem.File.Exists(rootPath))
         {
-            var result = await LoadFromFileAsync(Engine, rootPath, cancellationToken: ct);
+            var result = await LoadFromFileAsync(App, rootPath, cancellationToken: ct);
             if (result.Success)
             {
                 var goal = result.Value as Goal.@this;
@@ -161,7 +161,7 @@ public sealed class @this
         }
 
         // 2. Try system directory — only for paths under system/
-        if (!string.IsNullOrEmpty(Engine.SystemDirectory))
+        if (!string.IsNullOrEmpty(App.SystemDirectory))
         {
             var normalized = dir.Replace('\\', '/');
             if (normalized.StartsWith("system/", StringComparison.OrdinalIgnoreCase)
@@ -169,10 +169,10 @@ public sealed class @this
             {
                 // Strip the "system/" prefix — SystemDirectory IS the system folder
                 var withinSystem = normalized.Length > 7 ? normalized[7..] : "";
-                var systemPath = Engine.FileSystem.Path.Combine(Engine.SystemDirectory, withinSystem, ".build", prFile);
-                if (Engine.FileSystem.File.Exists(systemPath))
+                var systemPath = App.FileSystem.Path.Combine(App.SystemDirectory, withinSystem, ".build", prFile);
+                if (App.FileSystem.File.Exists(systemPath))
                 {
-                    var result = await LoadFromFileAsync(Engine, systemPath, cancellationToken: ct);
+                    var result = await LoadFromFileAsync(App, systemPath, cancellationToken: ct);
                     if (result.Success)
                     {
                         var goal = result.Value as Goal.@this;
@@ -282,14 +282,14 @@ public sealed class @this
             return cached.IsSetup ? null : cached;
 
         // Resolve relative path against root directory
-        var absolutePath = Engine.FileSystem.Path.IsPathRooted(prPath)
+        var absolutePath = App.FileSystem.Path.IsPathRooted(prPath)
             ? prPath
-            : Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, prPath);
+            : App.FileSystem.Path.Combine(App.FileSystem.RootDirectory, prPath);
 
-        if (!Engine.FileSystem.File.Exists(absolutePath))
+        if (!App.FileSystem.File.Exists(absolutePath))
             return null;
 
-        var loadResult = await LoadFromFileAsync(Engine, absolutePath, cancellationToken: ct);
+        var loadResult = await LoadFromFileAsync(App, absolutePath, cancellationToken: ct);
         if (!loadResult.Success)
             return null;
 

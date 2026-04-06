@@ -98,7 +98,7 @@ public partial class Data
     public Data Encrypt()
     {
         // Encryption requires a crypto service on Engine (not yet implemented).
-        // When available: navigate through _context.Engine to the crypto handler,
+        // When available: navigate through _context.App to the crypto handler,
         // serialize this Data to bytes, encrypt, wrap in encrypted envelope.
         return this;
     }
@@ -116,7 +116,7 @@ public partial class Data
             return this;
 
         // Decryption requires a crypto service on Engine (not yet implemented).
-        // When available: navigate through _context.Engine to the crypto handler,
+        // When available: navigate through _context.App to the crypto handler,
         // read inner Data (algorithm, keyId, nonce from Properties), decrypt, deserialize.
         return this;
     }

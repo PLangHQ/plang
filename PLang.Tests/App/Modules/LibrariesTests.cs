@@ -394,10 +394,10 @@ public class LibrariesTests
     private class MockHandler : IAction
     {
         public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this Engine { get; private set; } = null!;
+        public App.@this App { get; private set; } = null!;
         public Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
-        public void Initialize(App.@this engine, Context.@this context) { Engine = engine; Context = context; }
+        public void Initialize(App.@this engine, Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
     }
 
@@ -408,10 +408,10 @@ public class LibrariesTests
     {
         public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
         public string Tag { get; set; } = "";
-        public App.@this Engine { get; private set; } = null!;
+        public App.@this App { get; private set; } = null!;
         public Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
-        public void Initialize(App.@this engine, Context.@this context) { Engine = engine; Context = context; }
+        public void Initialize(App.@this engine, Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
         public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, Context.@this context)
         {

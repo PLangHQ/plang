@@ -21,7 +21,7 @@ public class Ed25519Provider : ISigningProvider
 
     public virtual async Task<Data> SignAsync(sign action)
     {
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
 
         // Get identity
         var identityResult = await engine.RunAction<identity.Get>(new identity.Get(), action.Context);
@@ -63,7 +63,7 @@ public class Ed25519Provider : ISigningProvider
             return Data.FromError(new ActionError("Data has no signature", "NoSignature", 400));
 
         var signedData = action.Data.Signature;
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
         var signingSettings = engine.Config.For<Config>(action.Context);
         var effectiveTimeout = action.TimeoutMs ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);

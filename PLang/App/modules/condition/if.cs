@@ -38,7 +38,7 @@ public partial class If : IContext, IStep
         {
             // Use system context for disabled flags — the GoalSteps enumerator
             // runs on system context (run.pr iterates steps)
-            var disableContext = Context.Engine!.System.Context;
+            var disableContext = Context.App!.System.Context;
             var steps = userStep.Goal.Steps;
             for (int i = userStep.Index + 1; i < steps.Count; i++)
             {
@@ -51,7 +51,7 @@ public partial class If : IContext, IStep
         var goalToCall = conditionResult ? GoalIfTrue : GoalIfFalse;
         if (goalToCall != null)
         {
-            var goalResult = await Context.Engine!.RunGoalAsync(goalToCall, Context, Context.CancellationToken);
+            var goalResult = await Context.App!.RunGoalAsync(goalToCall, Context, Context.CancellationToken);
             if (!goalResult.Success) return goalResult;
         }
 

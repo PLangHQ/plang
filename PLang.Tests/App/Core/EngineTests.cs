@@ -91,7 +91,7 @@ public class EngineTests
         // User should have its own context
         await Assert.That(user.Context).IsNotNull();
         await Assert.That(user.Channels).IsNotNull();
-        await Assert.That(user.Engine).IsEqualTo(engine);
+        await Assert.That(user.App).IsEqualTo(engine);
     }
 
     [Test]
@@ -235,7 +235,7 @@ public class EngineTests
         using var context = engine.CreateContext();
 
         await Assert.That(context).IsNotNull();
-        await Assert.That(context.Engine).IsEqualTo(engine);
+        await Assert.That(context.App).IsEqualTo(engine);
         await Assert.That(context.CallStack).IsNotNull();
     }
 
@@ -557,23 +557,23 @@ public class EngineTests
     private class NonGeneratedHandler : IAction
     {
         public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this Engine { get; private set; } = null!;
+        public App.@this App { get; private set; } = null!;
         public Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(App.@this engine, Context.@this context) { Engine = engine; Context = context; }
+        public void Initialize(App.@this engine, Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
     }
 
     private class DisposableHandler : IAction, ICodeGenerated, IDisposable
     {
         public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this Engine { get; private set; } = null!;
+        public App.@this App { get; private set; } = null!;
         public Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
-        public void Initialize(App.@this engine, Context.@this context) { Engine = engine; Context = context; }
+        public void Initialize(App.@this engine, Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
         public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, Context.@this context)
         {
@@ -586,12 +586,12 @@ public class EngineTests
     private class AsyncDisposableHandler : IAction, ICodeGenerated, IAsyncDisposable
     {
         public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this Engine { get; private set; } = null!;
+        public App.@this App { get; private set; } = null!;
         public Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
-        public void Initialize(App.@this engine, Context.@this context) { Engine = engine; Context = context; }
+        public void Initialize(App.@this engine, Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
         public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, Context.@this context)
         {
@@ -604,11 +604,11 @@ public class EngineTests
     private class ThrowingHandler : IAction, ICodeGenerated
     {
         public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this Engine { get; private set; } = null!;
+        public App.@this App { get; private set; } = null!;
         public Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(App.@this engine, Context.@this context) { Engine = engine; Context = context; }
+        public void Initialize(App.@this engine, Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters)
         {
             throw new InvalidOperationException("Test exception");

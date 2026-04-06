@@ -11,7 +11,7 @@ public partial class Add : IContext
 
     public Task<Data> Run()
     {
-        var engine = Context.Engine!;
+        var engine = Context.App!;
         var fs = engine.FileSystem;
         var absPath = fs.Path.GetFullPath(Path);
 

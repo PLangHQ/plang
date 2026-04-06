@@ -351,13 +351,13 @@ public class PrPipelineTests
         public List<string> Lines { get; } = new();
 
         public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public App.@this Engine { get; private set; } = null!;
+        public App.@this App { get; private set; } = null!;
         public Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
         public void Initialize(App.@this engine, Context.@this context)
         {
-            Engine = engine;
+            App = engine;
             Context = context;
         }
 

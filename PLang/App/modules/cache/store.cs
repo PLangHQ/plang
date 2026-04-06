@@ -21,7 +21,7 @@ public partial class Store : IContext
         if (Step.Cache == null || Data == null || !Data.Success) return Data ?? Data.Ok();
 
         // Any non-cacheable action — don't cache
-        var modules = Context.Engine!.Modules;
+        var modules = Context.App!.Modules;
         foreach (var action in Step.Actions)
         {
             if (!modules.IsCacheable(action.Module, action.ActionName))
@@ -31,7 +31,7 @@ public partial class Store : IContext
         var key = BuildCacheKey();
         var entry = CollectReturnVariables();
 
-        await Context.Engine!.Cache.SetAsync(key, entry, Step.Cache);
+        await Context.App!.Cache.SetAsync(key, entry, Step.Cache);
 
         return Data;
     }

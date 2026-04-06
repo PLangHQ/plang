@@ -17,10 +17,10 @@ public partial class setDefault : IContext
 
     public async Task<Data> Run()
     {
-        var providerType = Context.Engine.Providers.ResolveType(Type);
+        var providerType = Context.App.Providers.ResolveType(Type);
         if (providerType == null)
             return Data.FromError(new Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
 
-        return Context.Engine.Providers.SetDefault(providerType, Name);
+        return Context.App.Providers.SetDefault(providerType, Name);
     }
 }

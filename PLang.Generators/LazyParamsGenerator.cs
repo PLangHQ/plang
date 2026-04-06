@@ -235,10 +235,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
             var setFlag = $"__{prop.Name}_set";
 
             // [Provider] properties — resolved lazily from engine.Providers
-            // Works both via ExecuteAsync (__engine) and direct test usage (Context.Engine)
+            // Works both via ExecuteAsync (__engine) and direct test usage (Context.App)
             if (prop.IsProvider)
             {
-                var engineExpr = info.ImplementsIContext ? "__engine ?? Context?.Engine" : "__engine";
+                var engineExpr = info.ImplementsIContext ? "__engine ?? Context?.App" : "__engine";
                 sb.AppendLine($"    private {prop.TypeName}? {backingField};");
                 sb.AppendLine($"    public partial {prop.TypeName} {prop.Name}");
                 sb.AppendLine("    {");

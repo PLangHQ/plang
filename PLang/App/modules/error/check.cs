@@ -40,7 +40,7 @@ public partial class Check : IContext, IAction
         if (onError.IgnoreError)
             return Variables.Data.Ok();
 
-        var engine = Context.Engine!;
+        var engine = Context.App!;
         var order = onError.Order ?? ErrorOrder.RetryFirst;
 
         if (order == ErrorOrder.GoalFirst)

@@ -58,7 +58,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     public Task<Data> SendAsync(request action) => ExecuteHttpAsync(async () =>
     {
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var config = engine.Config.For<Config>(action.Context);
 
         var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
@@ -108,7 +108,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             ? HttpCompletionOption.ResponseHeadersRead
             : HttpCompletionOption.ResponseContentRead;
 
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.Engine.ShutdownToken);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.App.ShutdownToken);
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
         var response = await SendHttpAsync(requestMessage, completionOption, config, cts.Token);
@@ -131,7 +131,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     public Task<Data> DownloadAsync(download action) => ExecuteHttpAsync(async () =>
     {
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var config = engine.Config.For<Config>(action.Context);
         var fs = engine.FileSystem;
 
@@ -196,7 +196,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     public Task<Data> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
     {
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var config = engine.Config.For<Config>(action.Context);
         var fs = engine.FileSystem;
 
@@ -244,7 +244,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
                 "ConfigLocked", 409));
 
-        action.Context.Engine.Config.Apply<Config>(action, action.Context, action.Default);
+        action.Context.App.Config.Apply<Config>(action, action.Context, action.Default);
         return Data.Ok();
     }
 
@@ -383,7 +383,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             ExpiresInMs = signOptions?.ExpiresInMs
         };
 
-        return await context.Engine.RunAction<signing.sign>(httpSign, context);
+        return await context.App.RunAction<signing.sign>(httpSign, context);
     }
 
     private static void ApplySignature(HttpRequestMessage request, Data signResult)

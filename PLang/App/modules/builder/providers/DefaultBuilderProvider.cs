@@ -14,7 +14,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     private static Data? BuildingGuard(IContext action)
     {
-        if (!action.Context.Engine.Building.IsEnabled)
+        if (!action.Context.App.Building.IsEnabled)
             return Data.FromError(new Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
         return null;
     }
@@ -26,7 +26,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return Task.FromResult(guard);
 
-        return Task.FromResult(Data.Ok(action.Context.Engine.Modules.Describe()));
+        return Task.FromResult(Data.Ok(action.Context.App.Modules.Describe()));
     }
 
     // --- Types ---
@@ -52,7 +52,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var context = action.Context;
         var searchPath = string.IsNullOrWhiteSpace(action.Path) ? "." : action.Path;
 
@@ -130,7 +130,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var context = action.Context;
 
         if (action.Goals.Count == 0)
@@ -194,7 +194,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var context = action.Context;
         var modules = engine.Modules;
 
@@ -244,8 +244,8 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        var engine = action.Context.Engine;
-        // Engine loads its identity from app.pr at Start() — just return it
+        var engine = action.Context.App;
+        // App loads its identity from app.pr at Start() — just return it
         return Data.Ok(engine);
     }
 
@@ -254,7 +254,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        return await action.Context.Engine.Save();
+        return await action.Context.App.Save();
     }
 
     /// <summary>

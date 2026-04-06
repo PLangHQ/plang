@@ -31,7 +31,7 @@ public sealed class Actor : IAsyncDisposable
     /// <summary>
     /// Back-reference to the engine.
     /// </summary>
-    public App.@this Engine { get; }
+    public App.@this App { get; }
 
     /// <summary>
     /// Persistent key-value storage for this actor.
@@ -50,7 +50,7 @@ public sealed class Actor : IAsyncDisposable
     /// Resolves an actor by name using the engine.
     /// Convention: types with this signature are auto-resolved by the source generator.
     /// </summary>
-    public static Actor? Resolve(string name, Context.@this context) => context.Engine.GetActor(name).Actor;
+    public static Actor? Resolve(string name, Context.@this context) => context.App.GetActor(name).Actor;
 
     /// <summary>
     /// Valid values for LLM action summaries.
@@ -69,7 +69,7 @@ public sealed class Actor : IAsyncDisposable
     public Actor(string name, App.@this engine)
     {
         Name = name;
-        Engine = engine;
+        App = engine;
         _dataSource = new Lazy<ISettingsStore>(CreateSettingsStore);
         Context = new Context.@this(engine)
         {
@@ -98,13 +98,13 @@ public sealed class Actor : IAsyncDisposable
         // System actor always uses on-disk — it holds the LLM cache and other
         // persistent system data that must survive across engine instances.
         // User/Service actors use in-memory during building/testing for isolation.
-        if ((Engine.Testing.IsEnabled || Engine.Building.IsEnabled)
+        if ((App.Testing.IsEnabled || App.Building.IsEnabled)
             && !Name.Equals("System", StringComparison.OrdinalIgnoreCase))
             return SqliteSettingsStore.InMemory(Name.ToLowerInvariant());
 
-        var dbDir = Engine.FileSystem.Path.Combine(Engine.AbsolutePath, ".db");
-        var dbPath = Engine.FileSystem.Path.Combine(dbDir, $"{Name.ToLowerInvariant()}.sqlite");
-        return new SqliteSettingsStore(dbPath, Engine.FileSystem);
+        var dbDir = App.FileSystem.Path.Combine(App.AbsolutePath, ".db");
+        var dbPath = App.FileSystem.Path.Combine(dbDir, $"{Name.ToLowerInvariant()}.sqlite");
+        return new SqliteSettingsStore(dbPath, App.FileSystem);
     }
 
     public async ValueTask DisposeAsync()

@@ -1,5 +1,5 @@
 // Engine root (works in tests — App.@this is the engine)
-global using Engine = App.@this;
+global using App = App.@this;
 
 // Goals subsystem — mirrors PLang/App/GlobalUsings.cs
 global using EngineGoals = App.Goals.@this;

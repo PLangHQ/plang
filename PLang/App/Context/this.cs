@@ -25,7 +25,7 @@ public sealed class @this : IDisposable
     /// <summary>
     /// Reference to the engine.
     /// </summary>
-    public App.@this Engine { get; }
+    public App.@this App { get; }
 
     /// <summary>
     /// Variables for this execution.
@@ -127,14 +127,14 @@ public sealed class @this : IDisposable
     /// <summary>
     /// Goal-scoped settings storage. Lazy-initialized when a settings handler writes
     /// to this context. Keys are "module.property" format (e.g., "archive.max").
-    /// Resolution walks: this.ConfigScope → Parent.ConfigScope → Engine.Config.Defaults → class default.
+    /// Resolution walks: this.ConfigScope → Parent.ConfigScope → App.Config.Defaults → class default.
     /// </summary>
     public Config.Scope? ConfigScope { get; set; }
 
     public @this(App.@this engine, Variables.@this? variables = null, @this? parent = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
-        Engine = engine;
+        App = engine;
         Variables = variables ?? new Variables.@this();
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
@@ -157,18 +157,18 @@ public sealed class @this : IDisposable
         var vars = Variables;
 
         // All context variables are lazy — context has engine, fetch at request time
-        vars.Put(new DynamicData("!engine", () => Engine));
+        vars.Put(new DynamicData("!engine", () => App));
         vars.Put(new DynamicData("!context", () => this));
         vars.Put(new DynamicData("!variables", () => Variables));
-        vars.Put(new DynamicData("!fileSystem", () => Engine.FileSystem));
+        vars.Put(new DynamicData("!fileSystem", () => App.FileSystem));
         vars.Put(new DynamicData("!callStack", () => CallStack));
-        vars.Put(new DynamicData("!channels", () => Engine.Channels));
-        vars.Put(new DynamicData("!serializers", () => Engine.Channels.Serializers));
+        vars.Put(new DynamicData("!channels", () => App.Channels));
+        vars.Put(new DynamicData("!serializers", () => App.Channels.Serializers));
         vars.Put(new DynamicData("!goal", () => Goal));
         vars.Put(new DynamicData("!step", () => Step));
         vars.Put(new DynamicData("!error", () => CurrentError ?? CallStack?.Current?.Error));
-        vars.Put(new DynamicData("!data", () => Engine.System.Context.Variables.GetValue("data")));
-        vars.Put(new DynamicData("!event", () => Event ?? Engine.System?.Context?.Event));
+        vars.Put(new DynamicData("!data", () => App.System.Context.Variables.GetValue("data")));
+        vars.Put(new DynamicData("!event", () => Event ?? App.System?.Context?.Event));
         vars.Put(new DynamicData("!test", () => Test));
     }
 
@@ -218,7 +218,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public @this CreateChild(Variables.@this? variables = null)
     {
-        return new @this(Engine, variables ?? Variables.Clone(), this);
+        return new @this(App, variables ?? Variables.Clone(), this);
     }
 
     /// <summary>
@@ -226,7 +226,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public @this Clone(Variables.@this? variables = null)
     {
-        var clone = new @this(Engine, variables ?? Variables.Clone(), Parent)
+        var clone = new @this(App, variables ?? Variables.Clone(), Parent)
         {
             IsAsync = IsAsync,
             Setup = Setup,

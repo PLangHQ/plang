@@ -26,14 +26,14 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
         // Refresh cached %MyIdentity% when resolving the default
         if (action.Name == null)
-            action.Context.Engine.System.Identity = result;
+            action.Context.App.System.Identity = result;
 
         return result;
     }
 
     public async Task<Identity> CreateAsync(Create action)
     {
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
 
         if (string.IsNullOrWhiteSpace(action.Name))
             return Data.FromError<Identity>(new ActionError("Identity name cannot be empty", "ValidationError", 400));
@@ -102,7 +102,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
     public async Task<Identity> SetDefaultAsync(SetDefault action)
     {
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var all = await LoadAllAsync(action);
         if (!all.Success) return all.ToError<Identity>();
 
@@ -136,7 +136,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
     public async Task<Identity> RenameAsync(Rename action)
     {
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
 
         if (string.IsNullOrWhiteSpace(action.NewName))
             return Data.FromError<Identity>(new ActionError("New name cannot be empty", "ValidationError", 400));
@@ -202,7 +202,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>Loads a single identity by name from the settings store.</summary>
     internal async Task<Identity> LoadAsync(IContext action, string name)
     {
-        var store = action.Context.Engine.System.SettingsStore;
+        var store = action.Context.App.System.SettingsStore;
         var result = await store.Get<Identity>(Table, name);
 
         if (result is Identity identity)
@@ -217,7 +217,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>Loads all identities (including archived) from the settings store.</summary>
     internal async Task<DataList<Identity>> LoadAllAsync(IContext action)
     {
-        var store = action.Context.Engine.System.SettingsStore;
+        var store = action.Context.App.System.SettingsStore;
         return await store.GetAll<Identity>(Table);
     }
 
@@ -249,7 +249,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>Persists an identity to the settings store. Sets error on the identity if save fails.</summary>
     private async Task<Identity> SaveAsync(IContext action, Identity identity)
     {
-        var store = action.Context.Engine.System.SettingsStore;
+        var store = action.Context.App.System.SettingsStore;
         var result = await store.Set(Table, identity.Name, identity);
         if (!result.Success) identity.Error = result.Error;
         return identity;
@@ -258,7 +258,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>Removes an identity from store. Sets error on the identity if remove fails.</summary>
     private async Task<Identity> RemoveAsync(IContext action, Identity identity)
     {
-        var store = action.Context.Engine.System.SettingsStore;
+        var store = action.Context.App.System.SettingsStore;
         var result = await store.Remove(Table, identity.Name);
         if (!result.Success) identity.Error = result.Error;
         return identity;
@@ -270,7 +270,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// </summary>
     private Identity GenerateIdentity(IContext action, string name, bool isDefault, string? providerName = null)
     {
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var keyResult = engine.Providers.Get<IKeyProvider>(providerName);
         if (!keyResult.Success)
             return keyResult.ToError<Identity>();

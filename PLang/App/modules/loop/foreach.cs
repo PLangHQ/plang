@@ -18,7 +18,7 @@ public partial class Foreach : IContext
         if (Collection == null)
             return Data.Ok(new types.loop { itemCount = 0, completed = true });
 
-        var engine = Context.Engine!;
+        var engine = Context.App!;
         var variableName = ItemName ?? "item";
         int count = 0;
 

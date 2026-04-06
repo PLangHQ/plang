@@ -29,7 +29,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
     public async Task<Data> Query(query action)
     {
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var context = action.Context;
         var config = engine.Config.For<http.Config>(context);
 
@@ -364,7 +364,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
     private static async Task<string> ExecuteToolAsync(query action, ToolCall toolCall)
     {
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var context = action.Context;
 
         // OnToolCall — starting

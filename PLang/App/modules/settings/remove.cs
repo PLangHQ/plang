@@ -13,7 +13,7 @@ public partial class Remove : IContext
 
     public async Task<Data> Run()
     {
-        var store = Context.Engine.System.SettingsStore;
+        var store = Context.App.System.SettingsStore;
         var result = await store.Remove("settings", Key);
 
         if (!result.Success)

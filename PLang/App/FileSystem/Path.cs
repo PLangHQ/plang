@@ -45,7 +45,7 @@ public class Path : Data
         ArgumentNullException.ThrowIfNull(context);
 
         Raw = rawPath;
-        _fs = context.Engine.FileSystem;
+        _fs = context.App.FileSystem;
 
         // Relative paths resolve against the goal's folder
         var resolved = rawPath;

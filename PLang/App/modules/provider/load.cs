@@ -26,7 +26,7 @@ public partial class load : IContext
         Assembly assembly;
         try
         {
-            var fullPath = Context.Engine.FileSystem.Path.GetFullPath(Path, Context.Engine.AbsolutePath);
+            var fullPath = Context.App.FileSystem.Path.GetFullPath(Path, Context.App.AbsolutePath);
             assembly = Assembly.LoadFrom(fullPath);
         }
         catch (Exception ex)
@@ -57,7 +57,7 @@ public partial class load : IContext
 
             foreach (var iface in interfaces)
             {
-                var result = Context.Engine.Providers.Register(iface, instance);
+                var result = Context.App.Providers.Register(iface, instance);
                 if (!result.Success) return result;
             }
 

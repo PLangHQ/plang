@@ -16,7 +16,7 @@ public partial class Call : IContext
 
     public async Task<Data> Run()
     {
-        var engine = Context.Engine!;
+        var engine = Context.App!;
         var execContext = Actor?.Context ?? Context;
         var goal = await GoalName.GetGoalAsync(engine, execContext);
         if (goal == null)

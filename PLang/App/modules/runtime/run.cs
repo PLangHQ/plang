@@ -25,7 +25,7 @@ public partial class run : IContext
 
     public async Task<Data> Run()
     {
-        var engine = Context.Engine!;
+        var engine = Context.App!;
 
         // Resolve goal from GoalCall if Goal not provided directly
         var goal = Goal;

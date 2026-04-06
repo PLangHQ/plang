@@ -21,7 +21,7 @@ public partial class Dispatch : IContext
 
     public async Task<Data> Run()
     {
-        var engine = Context.Engine!;
+        var engine = Context.App!;
         var callingActor = Context.Actor;
         var targetActor = Actor;
 

@@ -145,7 +145,7 @@ public sealed partial class @this : Variables.Data<@this>
 
     [LlmIgnore]
     [JsonIgnore]
-    public App.@this? Engine { get; set; }
+    public App.@this? App { get; set; }
 
     [Debug]
     public List<Info> Errors { get; init; } = new();

@@ -15,7 +15,7 @@ public partial class Get : IContext
 
     public async Task<Data> Run()
     {
-        var store = Context.Engine.System.SettingsStore;
+        var store = Context.App.System.SettingsStore;
         var result = await store.Get<SettingsVariable>("settings", Key);
 
         if (!result.Success)

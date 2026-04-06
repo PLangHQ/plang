@@ -15,12 +15,12 @@ public partial class list : IContext
     public async Task<Data> Run()
     {
         if (string.IsNullOrEmpty(Type))
-            return Data.Ok(Context.Engine.Providers.List());
+            return Data.Ok(Context.App.Providers.List());
 
-        var providerType = Context.Engine.Providers.ResolveType(Type);
+        var providerType = Context.App.Providers.ResolveType(Type);
         if (providerType == null)
             return Data.FromError(new Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
 
-        return Context.Engine.Providers.List(providerType);
+        return Context.App.Providers.List(providerType);
     }
 }

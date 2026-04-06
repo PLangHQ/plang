@@ -14,7 +14,7 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Read(Read action)
     {
-        var fs = action.Context.Engine.FileSystem;
+        var fs = action.Context.App.FileSystem;
         var path = action.Path;
         if (!fs.File.Exists(path.Absolute))
             return Data.FromError(new ServiceError($"File not found: {path.Raw}", "NotFound", 404));
@@ -59,7 +59,7 @@ public class DefaultFileProvider : IFileProvider
 
     public async Task<Data> Save(Save action)
     {
-        var fs = action.Context.Engine.FileSystem;
+        var fs = action.Context.App.FileSystem;
         var path = action.Path;
         try
         {
@@ -73,7 +73,7 @@ public class DefaultFileProvider : IFileProvider
             else
             {
                 await using var stream = fs.File.Create(path.Absolute);
-                await action.Context.Engine.Channels.Serializers.SerializeAsync(new SerializeOptions
+                await action.Context.App.Channels.Serializers.SerializeAsync(new SerializeOptions
                     { Stream = stream, Data = value, Extension = path.Extension });
             }
 
@@ -91,7 +91,7 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Delete(Delete action)
     {
-        var fs = action.Context.Engine.FileSystem;
+        var fs = action.Context.App.FileSystem;
         var path = action.Path;
         try
         {
@@ -118,7 +118,7 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Copy(Copy action)
     {
-        var fs = action.Context.Engine.FileSystem;
+        var fs = action.Context.App.FileSystem;
         var source = action.Source;
         if (!source.Exists)
             return Data.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
@@ -143,7 +143,7 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Move(Move action)
     {
-        var fs = action.Context.Engine.FileSystem;
+        var fs = action.Context.App.FileSystem;
         var source = action.Source;
         if (!source.Exists)
             return Data.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
@@ -173,7 +173,7 @@ public class DefaultFileProvider : IFileProvider
 
     public Data List(List action)
     {
-        var fs = action.Context.Engine.FileSystem;
+        var fs = action.Context.App.FileSystem;
         var path = action.Path;
         if (!fs.Directory.Exists(path.Absolute))
             return Data.FromError(new ServiceError($"Directory not found: {path.Raw}", "NotFound", 404));
@@ -194,7 +194,7 @@ public class DefaultFileProvider : IFileProvider
 
     public PLangPath Exists(Exists action)
     {
-        return new PLangPath(action.Path.Absolute, action.Context.Engine.FileSystem);
+        return new PLangPath(action.Path.Absolute, action.Context.App.FileSystem);
     }
 
     // --- Helpers ---

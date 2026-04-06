@@ -27,17 +27,17 @@ public sealed class Type
     /// <summary>
     /// Derive CLR type: navigate through context to Engine.Types, fall back to static TypeMapping.
     /// </summary>
-    public System.Type? ClrType => Context?.Engine.Types.Clr(Value) ?? TypeMapping.GetType(Value);
+    public System.Type? ClrType => Context?.App.Types.Clr(Value) ?? TypeMapping.GetType(Value);
 
     /// <summary>
     /// Kind of this type value (e.g. "image", "text"). Null for PLang type names like "string".
     /// </summary>
-    public string? Kind => Context?.Engine.Types.KindOf(Value);
+    public string? Kind => Context?.App.Types.KindOf(Value);
 
     /// <summary>
     /// Whether content of this type benefits from compression.
     /// </summary>
-    public bool Compressible => Kind != null && (Context?.Engine.Types.Compressible(Kind) ?? false);
+    public bool Compressible => Kind != null && (Context?.App.Types.Compressible(Kind) ?? false);
 
     public static Type String => new("string");
     public static Type Int => new("int");
@@ -154,7 +154,7 @@ public partial class Data
         {
             if (_type != null) return _type;
             if (_value == null) return null;
-            var typeName = _context?.Engine.Types.Name(_value.GetType())
+            var typeName = _context?.App.Types.Name(_value.GetType())
                            ?? TypeMapping.GetTypeName(_value.GetType());
             var derived = new Type(typeName);
             derived.Context = _context;

@@ -45,7 +45,7 @@ public partial class MockAction : IContext
 
             // Goal-based mock — call the goal
             if (goalToCall != null)
-                return await ctx.Engine!.RunGoalAsync(goalToCall, ctx, ctx.CancellationToken);
+                return await ctx.App!.RunGoalAsync(goalToCall, ctx, ctx.CancellationToken);
 
             // Return value mock — skip action and return the value
             if (returnValue != null)

@@ -7,7 +7,7 @@ public sealed partial class @this
 {
 	public async Task<string> FormatForLlm(Context.@this? context = null)
 	{
-		var fs = context?.Engine?.FileSystem;
+		var fs = context?.App?.FileSystem;
 		if (fs == null)
 			return FormatForLlmFallback();
 

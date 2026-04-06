@@ -161,7 +161,7 @@ public partial class Data
 
     private Providers.IGrepProvider ResolveGrepProvider()
     {
-        var engine = _context?.Engine;
+        var engine = _context?.App;
         if (engine != null)
         {
             var result = engine.Providers.Get<Providers.IGrepProvider>();
@@ -250,7 +250,7 @@ public partial class Data
         // Navigate the Value object via registered navigator (dict, list, CLR reflection, etc.)
         if (val != null)
         {
-            var navigator = _context?.Engine?.Navigators?.Get(val.GetType());
+            var navigator = _context?.App?.Navigators?.Get(val.GetType());
             var navResult = navigator?.Navigate(this, key);
             if (navResult != null) return navResult;
 

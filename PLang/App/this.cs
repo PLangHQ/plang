@@ -268,7 +268,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
         Config = new Config.@this();
         SettingsVariable = new SettingsVariable(this);
         _modules = modules ?? new EngineModules();
-        _goals = new EngineGoals { Engine = this };
+        _goals = new EngineGoals { App = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
         Channels = new EngineChannels(this);
 

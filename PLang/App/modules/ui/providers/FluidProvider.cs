@@ -41,7 +41,7 @@ public class FluidProvider : ITemplateProvider
             sourceFile = pathData.Relative;
             try
             {
-                var fs = action.Context.Engine.FileSystem;
+                var fs = action.Context.App.FileSystem;
                 templateContent = fs.File.ReadAllText(pathData.Absolute);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -70,14 +70,14 @@ public class FluidProvider : ITemplateProvider
         options.MemberAccessStrategy.MemberNameStrategy = MemberNameStrategies.Default;
 
         // Configure file provider for {% include %} / {% render %} tags
-        var fs2 = action.Context.Engine.FileSystem;
+        var fs2 = action.Context.App.FileSystem;
         var basePath = GetTemplateBaseDir(action);
         options.FileProvider = new PlangFileProvider(fs2, basePath);
 
         var fluidContext = new TemplateContext(options);
 
         // Store engine + Context.@this for callGoal tag access
-        fluidContext.AmbientValues["engine"] = action.Context.Engine;
+        fluidContext.AmbientValues["engine"] = action.Context.App;
         fluidContext.AmbientValues["context"] = action.Context;
 
         // Load Variables (GetAll already excludes !-prefixed)
@@ -132,7 +132,7 @@ public class FluidProvider : ITemplateProvider
     /// </summary>
     private static string GetTemplateBaseDir(Render action)
     {
-        var engine = action.Context.Engine;
+        var engine = action.Context.App;
         var goalPath = action.Context.Goal?.Path;
         if (!string.IsNullOrEmpty(goalPath))
         {

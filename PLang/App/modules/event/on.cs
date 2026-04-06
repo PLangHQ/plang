@@ -45,10 +45,10 @@ public partial class On : IContext
                 new Errors.ValidationError($"Unknown event type: '{Type}'", "InvalidEventType", 400)));
 
         // Resolve target actor — default to current context's actor
-        var targetActor = Actor ?? Context.Actor ?? Context.Engine!.User;
+        var targetActor = Actor ?? Context.Actor ?? Context.App!.User;
 
         Func<Context.@this, Task<Data>> handler = async ctx =>
-            await ctx.Engine!.RunGoalAsync(GoalToCall, targetActor.Context, ctx.CancellationToken);
+            await ctx.App!.RunGoalAsync(GoalToCall, targetActor.Context, ctx.CancellationToken);
 
         var binding = new EventBinding(
             eventType,

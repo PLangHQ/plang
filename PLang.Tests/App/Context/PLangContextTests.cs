@@ -12,7 +12,7 @@ public class PLangContextTests
         await using var engine = new App.@this("/app");
         using var context = new Context.@this(engine);
 
-        await Assert.That(context.Engine).IsEqualTo(engine);
+        await Assert.That(context.App).IsEqualTo(engine);
         await Assert.That(context.Variables).IsNotNull();
         await Assert.That(context.Parent).IsNull();
     }
