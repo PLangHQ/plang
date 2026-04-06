@@ -6,7 +6,6 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
 using App.SafeFileSystem;
 using App.Errors;
-using PLangContext = App.Context.PLangContext;
 using App.FileSystem;
 using App.Goals.Goal;
 using App.Variables;
@@ -77,7 +76,7 @@ public class FluidProvider : ITemplateProvider
 
         var fluidContext = new TemplateContext(options);
 
-        // Store engine + PLangContext for callGoal tag access
+        // Store engine + Context.@this for callGoal tag access
         fluidContext.AmbientValues["engine"] = action.Context.Engine;
         fluidContext.AmbientValues["context"] = action.Context;
 
@@ -154,7 +153,7 @@ public class FluidProvider : ITemplateProvider
         TemplateContext context)
     {
         var engine = (App.@this)context.AmbientValues["engine"];
-        var plangContext = (PLangContext)context.AmbientValues["context"];
+        var plangContext = (Context.@this)context.AmbientValues["context"];
 
         try
         {

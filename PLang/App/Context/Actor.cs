@@ -21,7 +21,7 @@ public sealed class Actor : IAsyncDisposable
     /// <summary>
     /// The PLang execution context owned by this actor.
     /// </summary>
-    public PLangContext Context { get; }
+    public Context.@this Context { get; }
 
     /// <summary>
     /// Named channels owned by this actor.
@@ -50,7 +50,7 @@ public sealed class Actor : IAsyncDisposable
     /// Resolves an actor by name using the engine.
     /// Convention: types with this signature are auto-resolved by the source generator.
     /// </summary>
-    public static Actor? Resolve(string name, PLangContext context) => context.Engine.GetActor(name).Actor;
+    public static Actor? Resolve(string name, Context.@this context) => context.Engine.GetActor(name).Actor;
 
     /// <summary>
     /// Valid values for LLM action summaries.
@@ -71,7 +71,7 @@ public sealed class Actor : IAsyncDisposable
         Name = name;
         Engine = engine;
         _dataSource = new Lazy<ISettingsStore>(CreateSettingsStore);
-        Context = new PLangContext(engine)
+        Context = new Context.@this(engine)
         {
             CallStack = new CallStack.@this()
         };

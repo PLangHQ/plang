@@ -43,7 +43,7 @@ public class LlmIntegrationTests
         catch { /* best effort cleanup */ }
     }
 
-    private PLangContext Ctx => _engine.System.Context;
+    private Context.@this Ctx => _engine.System.Context;
 
     // --- Test 1: Simple arithmetic ---
 

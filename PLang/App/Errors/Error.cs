@@ -47,7 +47,7 @@ public class Error : IError
         CallFrames = callFrames;
     }
 
-    public Error(string message, PLangContext context, string key = "Error", int statusCode = 400)
+    public Error(string message, Context.@this context, string key = "Error", int statusCode = 400)
         : this(message, context.Step, key, statusCode)
     {
         Goal = context.Goal;
@@ -62,7 +62,7 @@ public class Error : IError
         };
     }
 
-    public static Error FromException(Exception ex, PLangContext context, string key = "Exception", int statusCode = 500)
+    public static Error FromException(Exception ex, Context.@this context, string key = "Exception", int statusCode = 500)
     {
         return new Error(ex.Message, context, key, statusCode)
         {

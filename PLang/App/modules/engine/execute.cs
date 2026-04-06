@@ -27,7 +27,7 @@ public partial class Execute : IContext
         var targetActor = Actor;
 
         // Determine execution context
-        PLangContext execContext;
+        Context.@this execContext;
         if (targetActor != null && targetActor != callingActor)
         {
             // Escalation check: caller must have >= level of target
@@ -80,7 +80,7 @@ public partial class Execute : IContext
         }
     }
 
-    private async Task<Data> ExecuteActions(App.@this engine, PLangContext execContext)
+    private async Task<Data> ExecuteActions(App.@this engine, Context.@this execContext)
     {
         Data result = Data.Ok();
         foreach (var action in Step.Actions)

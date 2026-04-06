@@ -4,5 +4,5 @@ namespace App.modules;
 
 public interface IContext
 {
-    PLangContext Context { get; set; }
+    Context.@this Context { get; set; }
 }

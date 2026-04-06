@@ -11,7 +11,7 @@ public class Events : IContext
 {
     private readonly object _owner;
 
-    public PLangContext Context { get; set; } = null!;
+    public Context.@this Context { get; set; } = null!;
 
     public Events(object owner) => _owner = owner;
 

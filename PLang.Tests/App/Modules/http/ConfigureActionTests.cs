@@ -39,7 +39,7 @@ public class ConfigureActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private PLangContext Ctx => _engine.System.Context;
+    private Context.@this Ctx => _engine.System.Context;
 
     [Test]
     public async Task Configure_SetsTimeoutOnScopeChain()

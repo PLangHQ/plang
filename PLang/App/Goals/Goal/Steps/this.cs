@@ -11,7 +11,7 @@ public sealed class @this : IList<Step.@this>, IContext
     public @this() { }
     public @this(IEnumerable<Step.@this> steps) { _items = new List<Step.@this>(steps); }
 
-    public PLangContext Context { get; set; } = null!;
+    public Context.@this Context { get; set; } = null!;
 
     public List<Step.@this> Value => _items;
 

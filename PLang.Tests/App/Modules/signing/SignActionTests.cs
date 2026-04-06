@@ -39,7 +39,7 @@ public class SignActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private PLangContext Ctx => _engine.System.Context;
+    private Context.@this Ctx => _engine.System.Context;
 
     private async Task<Data> SignData(object? data, List<string>? contracts = null,
         int? expiresInMs = null, Dictionary<string, object>? headers = null)

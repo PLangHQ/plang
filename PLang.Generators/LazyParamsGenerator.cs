@@ -127,7 +127,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 var isNotNull = prop.GetAttributes().Any(a =>
                     a.AttributeClass?.Name == "IsNotNullAttribute");
 
-                // Check if type has static Resolve(string, PLangContext) method
+                // Check if type has static Resolve(string, Context.@this) method
                 var isEngineResolvable = prop.Type is INamedTypeSymbol namedType
                     && namedType.GetMembers("Resolve")
                         .OfType<IMethodSymbol>()
@@ -195,7 +195,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // IContext auto-provision
         if (info.ImplementsIContext)
         {
-            sb.AppendLine("    public App.Context.PLangContext Context { get; set; } = null!;");
+            sb.AppendLine("    public App.Context.@this Context { get; set; } = null!;");
             sb.AppendLine();
         }
 
@@ -326,7 +326,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("    private App.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
         sb.AppendLine();
         sb.AppendLine("    public async System.Threading.Tasks.Task<App.Variables.Data> ExecuteAsync(");
-        sb.AppendLine("        App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, App.Context.PLangContext context)");
+        sb.AppendLine("        App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this engine, App.Context.@this context)");
         sb.AppendLine("    {");
         sb.AppendLine("        __action = action;");
         sb.AppendLine("        __parameters = action.Parameters;");

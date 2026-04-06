@@ -22,7 +22,7 @@ public sealed class @this
     /// Resolves a setting value by walking the scope chain:
     /// context.ConfigScope → context.Parent.ConfigScope → ... → Defaults → classDefault.
     /// </summary>
-    public T Resolve<T>(string key, PLangContext context, T classDefault)
+    public T Resolve<T>(string key, Context.@this context, T classDefault)
     {
         // Walk: context.ConfigScope → parent.ConfigScope → ... → Defaults → classDefault
         var current = context;
@@ -64,7 +64,7 @@ public sealed class @this
     /// Returns a context-bound view for a specific IConfig type.
     /// The view resolves property values through the scope chain for the given context.
     /// </summary>
-    public ModuleView<T> For<T>(PLangContext context) where T : IConfig, new()
+    public ModuleView<T> For<T>(Context.@this context) where T : IConfig, new()
     {
         return new ModuleView<T>(this, context, ResolvePrefix<T>());
     }
@@ -74,7 +74,7 @@ public sealed class @this
     /// Matches source properties against TConfig property names, writes with module prefix.
     /// Replaces manual if-null-set chains in provider Configure methods.
     /// </summary>
-    public void Apply<TConfig>(object source, PLangContext context, bool isDefault = false)
+    public void Apply<TConfig>(object source, Context.@this context, bool isDefault = false)
         where TConfig : IConfig, new()
     {
         var prefix = ResolvePrefix<TConfig>();
@@ -105,7 +105,7 @@ public sealed class @this
     /// Writes a setting value to the appropriate scope.
     /// If isDefault is true, writes to engine Defaults. Otherwise writes to the context's goal scope.
     /// </summary>
-    public void Set(string key, object value, PLangContext context, bool isDefault = false)
+    public void Set(string key, object value, Context.@this context, bool isDefault = false)
     {
         if (isDefault) { Defaults.Set(key, value); return; }
 

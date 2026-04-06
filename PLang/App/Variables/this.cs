@@ -12,10 +12,10 @@ namespace App.Variables;
 public class @this
 {
     private readonly ConcurrentDictionary<string, Data> _variables = new(StringComparer.OrdinalIgnoreCase);
-    private PLangContext? _context;
+    private Context.@this? _context;
 
     [JsonIgnore]
-    internal PLangContext? Context
+    internal Context.@this? Context
     {
         get => _context;
         set

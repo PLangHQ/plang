@@ -16,9 +16,9 @@ public class EventHandlerTests
         _engine = new App.@this("/test");
     }
 
-    private PLangContext CreateContext() => _engine.CreateContext();
+    private Context.@this CreateContext() => _engine.CreateContext();
 
-    private On MakeOn(PLangContext context, string type, string goalName,
+    private On MakeOn(Context.@this context, string type, string goalName,
         string? goalPattern = null, string? stepPattern = null, string? actionPattern = null,
         bool isRegex = false, int priority = 0)
         => new()

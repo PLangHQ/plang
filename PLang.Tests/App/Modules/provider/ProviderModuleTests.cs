@@ -38,7 +38,7 @@ public class ProviderModuleTests
         catch { /* best effort cleanup */ }
     }
 
-    private PLangContext Ctx => _engine.System.Context;
+    private Context.@this Ctx => _engine.System.Context;
 
     // Fixture DLL paths — pre-built DLLs committed under PLang.Tests/App/Fixtures/dlls/
     private static readonly string FixtureBase = System.IO.Path.GetFullPath(

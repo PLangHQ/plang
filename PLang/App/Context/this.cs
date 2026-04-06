@@ -12,7 +12,7 @@ namespace App.Context;
 /// Request-level context for a single PLang execution.
 /// Created per request/goal execution and contains execution-specific state.
 /// </summary>
-public sealed class PLangContext : IDisposable
+public sealed class @this : IDisposable
 {
     private readonly ConcurrentDictionary<string, object> _data = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
@@ -68,7 +68,7 @@ public sealed class PLangContext : IDisposable
     /// <summary>
     /// Parent context (if this is a child execution).
     /// </summary>
-    public PLangContext? Parent { get; }
+    public @this? Parent { get; }
 
     /// <summary>
     /// The actor that owns this context (if any).
@@ -131,7 +131,7 @@ public sealed class PLangContext : IDisposable
     /// </summary>
     public Config.Scope? ConfigScope { get; set; }
 
-    public PLangContext(App.@this engine, Variables.@this? variables = null, PLangContext? parent = null)
+    public @this(App.@this engine, Variables.@this? variables = null, @this? parent = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         Engine = engine;
@@ -156,16 +156,14 @@ public sealed class PLangContext : IDisposable
     {
         var vars = Variables;
 
-        // Static references (same object for lifetime of context)
-        vars.Put(new Data("!engine", Engine));
-        vars.Put(new Data("!context", this));
-        vars.Put(new Data("!variables", vars));
-        vars.Put(new Data("!fileSystem", Engine.FileSystem));
+        // All context variables are lazy — context has engine, fetch at request time
+        vars.Put(new DynamicData("!engine", () => Engine));
+        vars.Put(new DynamicData("!context", () => this));
+        vars.Put(new DynamicData("!variables", () => Variables));
+        vars.Put(new DynamicData("!fileSystem", () => Engine.FileSystem));
         vars.Put(new DynamicData("!callStack", () => CallStack));
-        vars.Put(new Data("!channels", Engine.Channels));
-        vars.Put(new Data("!serializers", Engine.Channels.Serializers));
-
-        // Dynamic references (change per goal/step)
+        vars.Put(new DynamicData("!channels", () => Engine.Channels));
+        vars.Put(new DynamicData("!serializers", () => Engine.Channels.Serializers));
         vars.Put(new DynamicData("!goal", () => Goal));
         vars.Put(new DynamicData("!step", () => Step));
         vars.Put(new DynamicData("!error", () => CurrentError ?? CallStack?.Current?.Error));
@@ -218,17 +216,17 @@ public sealed class PLangContext : IDisposable
     /// <summary>
     /// Creates a child context for nested execution.
     /// </summary>
-    public PLangContext CreateChild(Variables.@this? variables = null)
+    public @this CreateChild(Variables.@this? variables = null)
     {
-        return new PLangContext(Engine, variables ?? Variables.Clone(), this);
+        return new @this(Engine, variables ?? Variables.Clone(), this);
     }
 
     /// <summary>
     /// Clones this context with a new Variables.
     /// </summary>
-    public PLangContext Clone(Variables.@this? variables = null)
+    public @this Clone(Variables.@this? variables = null)
     {
-        var clone = new PLangContext(Engine, variables ?? Variables.Clone(), Parent)
+        var clone = new @this(Engine, variables ?? Variables.Clone(), Parent)
         {
             IsAsync = IsAsync,
             Setup = Setup,
@@ -401,21 +399,21 @@ public sealed class PLangContext : IDisposable
 }
 
 /// <summary>
-/// Provides async-local access to PLangContext.
+/// Provides async-local access to @this.
 /// </summary>
-public interface IPLangContextAccessor
+public interface IContextAccessor
 {
-    PLangContext? Current { get; set; }
+    @this? Current { get; set; }
 }
 
 /// <summary>
 /// Default implementation using AsyncLocal.
 /// </summary>
-public class PLangContextAccessor : IPLangContextAccessor
+public class @thisAccessor : IContextAccessor
 {
-    private static readonly AsyncLocal<PLangContext?> _current = new();
+    private static readonly AsyncLocal<@this?> _current = new();
 
-    public PLangContext? Current
+    public @this? Current
     {
         get => _current.Value;
         set => _current.Value = value;

@@ -25,7 +25,7 @@ public partial class Dispatch : IContext
         var callingActor = Context.Actor;
         var targetActor = Actor;
 
-        PLangContext execContext;
+        Context.@this execContext;
         if (targetActor != null && targetActor != callingActor)
         {
             if (callingActor != null && callingActor.EscalationLevel < targetActor.EscalationLevel)

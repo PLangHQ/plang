@@ -26,7 +26,7 @@ public class ConditionHandlerTests : IDisposable
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private PLangContext CreateContext()
+    private Context.@this CreateContext()
     {
         return _engine.CreateContext();
     }

@@ -12,13 +12,13 @@ namespace PLang.Tests.App.Settings;
 public class SettingsApplyTests
 {
     private PLangEngine _engine = null!;
-    private PLangContext _ctx = null!;
+    private Context.@this _ctx = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _engine = new PLangEngine("/app");
-        _ctx = new PLangContext(_engine, new Variables());
+        _ctx = new Context.@this(_engine, new Variables());
     }
 
     [After(Test)]
@@ -77,7 +77,7 @@ public class SettingsApplyTests
         _engine.Config.Apply<Config>(source, _ctx, isDefault: true);
 
         // Should be visible from a completely different context
-        var newCtx = new PLangContext(_engine, new Variables());
+        var newCtx = new Context.@this(_engine, new Variables());
         var view = _engine.Config.For<Config>(newCtx);
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(120);
     }
@@ -94,7 +94,7 @@ public class SettingsApplyTests
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(90);
 
         // Not visible from different context
-        var otherCtx = new PLangContext(_engine, new Variables());
+        var otherCtx = new Context.@this(_engine, new Variables());
         var otherView = _engine.Config.For<Config>(otherCtx);
         await Assert.That(otherView.Resolve("TimeoutInSec", 30)).IsEqualTo(30);
     }

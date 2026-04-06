@@ -40,7 +40,7 @@ public class QueryBasicTests
         catch { /* best effort cleanup */ }
     }
 
-    private PLangContext Ctx => _engine.System.Context;
+    private Context.@this Ctx => _engine.System.Context;
 
     #region Happy Path
 

@@ -604,7 +604,7 @@ public class EngineTypesTests
     public async Task Add_CustomType_LazyDerivationUsesEngineTypes()
     {
         await using var engine = new App.@this("/test");
-        var context = new App.Context.PLangContext(engine);
+        var context = new App.Context.@this(engine);
 
         // Add a custom type mapping that static TypeMapping does NOT have
         engine.Types.Add(".custom", "custom-kind", "application/custom");

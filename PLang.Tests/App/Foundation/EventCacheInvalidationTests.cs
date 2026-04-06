@@ -16,7 +16,7 @@ public class EventCacheInvalidationTests
     public async Task EventsFor_Goal_PicksUpNewlyRegisteredEvent()
     {
         await using var engine = new App.@this("/app");
-        using var context = new PLangContext(engine);
+        using var context = new Context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register first event
@@ -44,7 +44,7 @@ public class EventCacheInvalidationTests
     public async Task EventsFor_Step_PicksUpNewlyRegisteredEvent()
     {
         await using var engine = new App.@this("/app");
-        using var context = new PLangContext(engine);
+        using var context = new Context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
         var step = new Step { Text = "do something" };
         step.Goal = goal;
@@ -76,7 +76,7 @@ public class EventCacheInvalidationTests
     public async Task EventsFor_Action_PicksUpNewlyRegisteredEvent()
     {
         await using var engine = new App.@this("/app");
-        using var context = new PLangContext(engine);
+        using var context = new Context.@this(engine);
         var action = new App.Goals.Goal.Steps.Step.Actions.Action.@this
         {
             Module = "variable",
@@ -108,7 +108,7 @@ public class EventCacheInvalidationTests
     public async Task EventsFor_ManualInvalidation_Works()
     {
         await using var engine = new App.@this("/app");
-        using var context = new PLangContext(engine);
+        using var context = new Context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register and cache

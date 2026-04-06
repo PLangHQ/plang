@@ -17,7 +17,7 @@ public class ValidationError : Error
     public ValidationError(string message, Step step, string key = "ValidationError", int statusCode = 400)
         : base(message, step, key, statusCode) { }
 
-    public ValidationError(string message, PLangContext context, string key = "ValidationError", int statusCode = 400)
+    public ValidationError(string message, Context.@this context, string key = "ValidationError", int statusCode = 400)
         : base(message, context, key, statusCode) { }
 
     public static ValidationError Required(string parameterName) =>

@@ -27,7 +27,7 @@ public class IfHandlerTests : IDisposable
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private PLangContext CreateContext() => _engine.CreateContext();
+    private Context.@this CreateContext() => _engine.CreateContext();
 
     [Test]
     public async Task Run_Truthy_InitializedNonBool_ReturnsTrue()

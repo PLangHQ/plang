@@ -303,7 +303,7 @@ public sealed class @this
     /// <summary>
     /// Loads a goal from a .pr file, deserializes and adds to this collection.
     /// </summary>
-    public async Task<Data> LoadFromFileAsync(App.@this engine, string prFilePath, PLangContext? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data> LoadFromFileAsync(App.@this engine, string prFilePath, Context.@this? context = null, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -351,7 +351,7 @@ public sealed class @this
     /// <summary>
     /// Loads all goals from a directory.
     /// </summary>
-    public async Task<Data> LoadFromDirectoryAsync(App.@this engine, string directory, string pattern = "*.pr", PLangContext? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data> LoadFromDirectoryAsync(App.@this engine, string directory, string pattern = "*.pr", Context.@this? context = null, CancellationToken cancellationToken = default)
     {
         try
         {

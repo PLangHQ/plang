@@ -39,7 +39,7 @@ public class QueryCacheTests
         catch { /* best effort cleanup */ }
     }
 
-    private PLangContext Ctx => _engine.System.Context;
+    private Context.@this Ctx => _engine.System.Context;
 
     [Test]
     public async Task Query_CacheTrue_SecondCallReturnsCached()

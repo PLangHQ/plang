@@ -150,7 +150,7 @@ public sealed class @this
         return await testEngine.RunGoalAsync(goal, ct: cancellationToken);
     }
 
-    private static Task<Data> TrackAssertionFailures(PLangContext context, TestResult result)
+    private static Task<Data> TrackAssertionFailures(Context.@this context, TestResult result)
     {
         var step = context.Step;
         if (step == null) return Task.FromResult(Data.Ok());

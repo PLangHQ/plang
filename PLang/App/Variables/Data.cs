@@ -20,7 +20,7 @@ public sealed class Type
     public string Value { get; }
 
     [JsonIgnore]
-    internal PLangContext? Context { get; set; }
+    internal Context.@this? Context { get; set; }
 
     public Type(string value) { Value = value; }
 
@@ -70,13 +70,13 @@ public partial class Data
 {
     private object? _value;
     private Type? _type;
-    private PLangContext? _context;
+    private Context.@this? _context;
 
     [JsonPropertyName("name")]
     public string Name { get; set; }
 
     [JsonIgnore]
-    public PLangContext? Context
+    public Context.@this? Context
     {
         get => _context;
         set

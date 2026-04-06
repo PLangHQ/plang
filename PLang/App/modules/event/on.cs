@@ -47,7 +47,7 @@ public partial class On : IContext
         // Resolve target actor — default to current context's actor
         var targetActor = Actor ?? Context.Actor ?? Context.Engine!.User;
 
-        Func<Context.PLangContext, Task<Data>> handler = async ctx =>
+        Func<Context.@this, Task<Data>> handler = async ctx =>
             await ctx.Engine!.RunGoalAsync(GoalToCall, targetActor.Context, ctx.CancellationToken);
 
         var binding = new EventBinding(

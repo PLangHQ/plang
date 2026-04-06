@@ -17,7 +17,7 @@ public class SettingsError : Error
     public SettingsError(string message, string key = "SettingsError", int statusCode = 500)
         : base(message, key, statusCode) { }
 
-    public SettingsError(string message, PLangContext context, string key = "SettingsError", int statusCode = 500)
+    public SettingsError(string message, Context.@this context, string key = "SettingsError", int statusCode = 500)
         : base(message, context, key, statusCode) { }
 
     public static SettingsError FromException(Exception ex, string? tableName = null, string? keyName = null)

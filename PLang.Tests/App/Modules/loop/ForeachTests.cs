@@ -16,7 +16,7 @@ public class ForeachTests
         _engine = new App.@this("/app");
     }
 
-    private PLangContext CreateContext(Variables? memory = null)
+    private Context.@this CreateContext(Variables? memory = null)
     {
         var context = _engine.CreateContext(memory);
         return context;

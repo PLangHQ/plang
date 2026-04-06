@@ -177,7 +177,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// <summary>
     /// Context of the current executor.
     /// </summary>
-    public PLangContext Context => CurrentActor.Context;
+    public Context.@this Context => CurrentActor.Context;
     public Variables.@this Variables => Context.Variables;
 
     /// <summary>
@@ -270,7 +270,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// Set properties via init, then call RunAction — engine wires context, memory, validation, error handling.
     /// Usage: var result = await engine.RunAction&lt;Hash, string&gt;(new Hash { Data = x, Algorithm = "keccak256" }, context);
     /// </summary>
-    public async Task<Data<TResult>> RunAction<TAction, TResult>(TAction action, PLangContext context)
+    public async Task<Data<TResult>> RunAction<TAction, TResult>(TAction action, Context.@this context)
         where TAction : ICodeGenerated
     {
         var emptyAction = new Goals.Goal.Steps.Step.Actions.Action.@this();
@@ -283,7 +283,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// Runs a module action and returns the raw Data result (preserves Signature, Properties, etc.).
     /// Use when the result convention puts data on properties other than Value (e.g., sign puts SignedData on Signature).
     /// </summary>
-    public async Task<Data> RunAction<TAction>(TAction action, PLangContext context)
+    public async Task<Data> RunAction<TAction>(TAction action, Context.@this context)
         where TAction : ICodeGenerated
     {
         var emptyAction = new Goals.Goal.Steps.Step.Actions.Action.@this();
@@ -294,7 +294,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// Dispatches a single action. The engine doesn't know about goals or steps.
     /// It receives an action, finds the module handler, executes it, returns result.
     /// </summary>
-    public async Task<Data> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, PLangContext context)
+    public async Task<Data> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Context.@this context)
     {
         var (executor, error) = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
         if (error != null)
@@ -319,7 +319,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// Bootstrap: reads system/.build/run.pr, pushes its actions to Run().
     /// This is the ONLY loop in C#. After this, PLang code drives everything.
     /// </summary>
-    public async Task<Data> Start(PLangContext? context = null)
+    public async Task<Data> Start(Context.@this? context = null)
     {
         context ??= System.Context;
         CurrentActor = System;
@@ -337,7 +337,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// Iterates steps and dispatches each action via Run().
     /// Used by Start() for bootstrap and by engine.execute for user steps.
     /// </summary>
-    public async Task<Data> RunSteps(GoalSteps steps, PLangContext context)
+    public async Task<Data> RunSteps(GoalSteps steps, Context.@this context)
     {
         Data result = Data.Ok();
         int? skipBelowIndent = null;
@@ -378,7 +378,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// <summary>
     /// Runs a goal via GoalCall. Used by goal.call and backward compat.
     /// </summary>
-    public async Task<Data> RunGoalAsync(GoalCall goalCall, PLangContext? context = null, CancellationToken ct = default)
+    public async Task<Data> RunGoalAsync(GoalCall goalCall, Context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
         var goal = await goalCall.GetGoalAsync(this, context);
@@ -391,7 +391,7 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// <summary>
     /// Kernel-executes a goal already in memory.
     /// </summary>
-    public async Task<Data> RunGoalAsync(Goal goal, PLangContext? context = null, CancellationToken ct = default)
+    public async Task<Data> RunGoalAsync(Goal goal, Context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
 
@@ -413,9 +413,9 @@ public sealed class @this : Data<@this>, IAsyncDisposable
     /// <summary>
     /// Creates a new execution context.
     /// </summary>
-    public PLangContext CreateContext(Variables.@this? variables = null)
+    public Context.@this CreateContext(Variables.@this? variables = null)
     {
-        var context = new PLangContext(this, variables)
+        var context = new Context.@this(this, variables)
         {
             CallStack = new CallStack.@this()
         };

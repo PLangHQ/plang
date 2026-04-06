@@ -7,11 +7,11 @@ namespace PLang.Tests.App.actions.variable;
 
 public class ClearTests
 {
-    private (PLangContext context, Variables memory) CreateContext(Variables? variables = null)
+    private (Context.@this context, Variables memory) CreateContext(Variables? variables = null)
     {
         var memory = variables ?? new Variables();
         var engine = new App.@this("/app");
-        var context = new PLangContext(engine, memory);
+        var context = new Context.@this(engine, memory);
         return (context, memory);
     }
 

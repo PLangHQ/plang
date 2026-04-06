@@ -41,7 +41,7 @@ public class IdentityErrorPathTests
         catch { /* best effort cleanup */ }
     }
 
-    private PLangContext Ctx => _engine.System.Context;
+    private Context.@this Ctx => _engine.System.Context;
 
     // --- GetOrCreateDefaultAsync: auto-create save failure (via Get action) ---
 

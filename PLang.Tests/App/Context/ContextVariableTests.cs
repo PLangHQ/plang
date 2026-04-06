@@ -41,7 +41,7 @@ public class ContextVariableTests
         var value = vars.GetValue("!context");
 
         await Assert.That(value).IsNotNull();
-        await Assert.That(value).IsTypeOf<PLangContext>();
+        await Assert.That(value).IsTypeOf<Context.@this>();
     }
 
     [Test]

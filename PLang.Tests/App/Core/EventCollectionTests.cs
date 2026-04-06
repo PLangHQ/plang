@@ -7,10 +7,10 @@ namespace PLang.Tests.App.Core;
 
 public class EventsTests
 {
-    private static PLangContext CreateContext()
+    private static Context.@this CreateContext()
     {
         var engine = new App.@this("/app");
-        return new PLangContext(engine);
+        return new Context.@this(engine);
     }
 
     [Test]
@@ -188,7 +188,7 @@ public class EventBindingTests
     [Test]
     public async Task Constructor_SetsProperties()
     {
-        Func<PLangContext, Task<Data>> handler = _ => Task.FromResult(Data.Ok());
+        Func<Context.@this, Task<Data>> handler = _ => Task.FromResult(Data.Ok());
         var binding = new EventBinding(EventType.AfterStep, handler, "TestGoal", "http", null, 10, false);
 
         await Assert.That(binding.Type).IsEqualTo(EventType.AfterStep);

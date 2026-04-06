@@ -8,11 +8,11 @@ namespace PLang.Tests.App.actions.list;
 
 public class ListTests
 {
-    private (PLangContext context, Variables memory) CreateContext()
+    private (Context.@this context, Variables memory) CreateContext()
     {
         var engine = new App.@this("/app");
         var memory = new Variables();
-        var context = new PLangContext(engine, memory);
+        var context = new Context.@this(engine, memory);
         return (context, memory);
     }
 

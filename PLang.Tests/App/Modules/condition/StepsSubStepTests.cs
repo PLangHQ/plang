@@ -27,7 +27,7 @@ public class StepsSubStepTests : IDisposable
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private PLangContext CreateContext() => _engine.CreateContext();
+    private Context.@this CreateContext() => _engine.CreateContext();
 
     /// <summary>
     /// Creates a step that runs a condition.if action returning the given bool value.

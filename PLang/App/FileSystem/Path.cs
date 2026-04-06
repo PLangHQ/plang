@@ -1,7 +1,6 @@
 using App.SafeFileSystem;
 using App.Variables;
 using App.Utility;
-using PLangContext = App.Context.PLangContext;
 
 namespace App.FileSystem;
 
@@ -39,7 +38,7 @@ public class Path : Data
     /// Creates a Path from a raw path string, resolving relative paths against the goal folder.
     /// Used by the source generator via Resolve().
     /// </summary>
-    public Path(string rawPath, PLangContext context)
+    public Path(string rawPath, Context.@this context)
         : base("", null)
     {
         ArgumentNullException.ThrowIfNull(rawPath);
@@ -65,7 +64,7 @@ public class Path : Data
     }
 
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
-    public static Path Resolve(string rawPath, PLangContext context)
+    public static Path Resolve(string rawPath, Context.@this context)
         => new Path(rawPath, context);
 
     // --- Path properties ---

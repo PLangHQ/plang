@@ -12,7 +12,7 @@ public class ModuleAddTests
     /// Creates an engine rooted at the directory containing the PLang assembly,
     /// so the sandboxed filesystem can find the assembly file via fs.File.Exists.
     /// </summary>
-    private static (PLangContext context, App.@this engine, string assemblyPath) CreateContextWithAssembly()
+    private static (Context.@this context, App.@this engine, string assemblyPath) CreateContextWithAssembly()
     {
         var assemblyPath = typeof(App.@this).Assembly.Location;
         var assemblyDir = global::System.IO.Path.GetDirectoryName(assemblyPath)!;

@@ -35,7 +35,7 @@ public class DefaultHttpProviderTests
         catch { /* best effort cleanup */ }
     }
 
-    private PLangContext Ctx => _engine.System.Context;
+    private Context.@this Ctx => _engine.System.Context;
 
     [Test]
     public async Task Provider_Configure_AcceptsValidConfig()

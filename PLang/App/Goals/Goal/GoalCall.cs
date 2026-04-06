@@ -40,7 +40,7 @@ public sealed class GoalCall : modules.IEvent
     /// Resolves the Goal. PrPath is authoritative when set — file.read only.
     /// Otherwise: action chain → engine.Goals → file.read fallback.
     /// </summary>
-    public async Task<@this?> GetGoalAsync(App.@this engine, PLangContext context)
+    public async Task<@this?> GetGoalAsync(App.@this engine, Context.@this context)
     {
         // PrPath is authoritative — load from file, no name-based search
         if (!string.IsNullOrEmpty(PrPath))
@@ -88,7 +88,7 @@ public sealed class GoalCall : modules.IEvent
         return await LoadFromFile(prFile, engine, context);
     }
 
-    private async Task<@this?> LoadFromFile(string prPath, App.@this engine, PLangContext context)
+    private async Task<@this?> LoadFromFile(string prPath, App.@this engine, Context.@this context)
     {
         // Inject parameters
         if (Parameters != null)

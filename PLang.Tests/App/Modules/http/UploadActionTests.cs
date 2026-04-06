@@ -45,7 +45,7 @@ public class UploadActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private PLangContext Ctx => _engine.System.Context;
+    private Context.@this Ctx => _engine.System.Context;
 
     private class MockHttpMessageHandler : System.Net.Http.HttpMessageHandler
     {

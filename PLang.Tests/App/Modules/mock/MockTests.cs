@@ -9,11 +9,11 @@ namespace PLang.Tests.App.Modules.mock;
 
 public class MockTests
 {
-    private (PLangContext context, Variables memory, App.@this engine) CreateContext()
+    private (Context.@this context, Variables memory, App.@this engine) CreateContext()
     {
         var engine = new App.@this("/app");
         var memory = new Variables();
-        var context = new PLangContext(engine, memory);
+        var context = new Context.@this(engine, memory);
         return (context, memory, engine);
     }
 

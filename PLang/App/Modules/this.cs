@@ -74,7 +74,7 @@ public sealed class @this
     /// Resolves an action for execution. Returns (action, null) or (null, error).
     /// </summary>
     public (ICodeGenerated? Action, IError? Error) GetCodeGenerated(
-        string module, string actionName, PLangContext context)
+        string module, string actionName, Context.@this context)
     {
         if (!_modules.TryGetValue(module, out var actions) ||
             !actions.TryGetValue(actionName, out var entry))

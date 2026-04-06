@@ -47,7 +47,7 @@ public class FakeGetPath : App.modules.ICodeGenerated
 
     public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action,
         App.@this engine,
-        App.Context.PLangContext context) => Task.FromResult(Data.Ok());
+        App.Context.@this context) => Task.FromResult(Data.Ok());
 }
 
 // Fake action returning plain Data
@@ -58,7 +58,7 @@ public class FakeBasicAction : App.modules.ICodeGenerated
 
     public Task<Data> ExecuteAsync(App.Goals.Goal.Steps.Step.Actions.Action.@this action,
         App.@this engine,
-        App.Context.PLangContext context) => Task.FromResult(Data.Ok());
+        App.Context.@this context) => Task.FromResult(Data.Ok());
 }
 
 // Fake return type simulating Path-like properties

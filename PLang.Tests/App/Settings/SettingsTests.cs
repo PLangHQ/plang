@@ -9,10 +9,10 @@ namespace PLang.Tests.App.Settings;
 
 public class SettingsTests
 {
-    private (EngineType engine, PLangContext context) CreateEngine()
+    private (EngineType engine, Context.@this context) CreateEngine()
     {
         var engine = new EngineType("/app");
-        var context = new PLangContext(engine, new Variables());
+        var context = new Context.@this(engine, new Variables());
         return (engine, context);
     }
 

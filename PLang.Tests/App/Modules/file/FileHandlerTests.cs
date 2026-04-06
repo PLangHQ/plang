@@ -37,7 +37,7 @@ public class FileHandlerTests : IDisposable
     private PLangPath MakeAbsPath(string absolutePath) =>
         new PLangPath(absolutePath, _engine.Context);
 
-    private PLangContext CreateContext()
+    private Context.@this CreateContext()
     {
         return _engine.CreateContext();
     }

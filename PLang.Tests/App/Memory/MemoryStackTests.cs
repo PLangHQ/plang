@@ -734,15 +734,15 @@ public class VariablesTests
         await Assert.That(dict.ContainsKey("NAME")).IsTrue();
     }
 
-    // --- Phase 2: Context stamping via PLangContext ---
+    // --- Phase 2: Context stamping via Context.@this ---
 
     [Test]
     public async Task PLangContext_StampsContextOnVariablesData()
     {
         await using var engine = new App.@this("/test");
-        var context = new App.Context.PLangContext(engine);
+        var context = new App.Context.@this(engine);
 
-        // Variables set through PLangContext's Variables get context stamped
+        // Variables set through Context.@this's Variables get context stamped
         context.Variables.Set("name", "John");
 
         await Assert.That(context.Variables.Get("name")!.Context).IsEqualTo(context);
@@ -752,7 +752,7 @@ public class VariablesTests
     public async Task PLangContext_Put_StampsContext()
     {
         await using var engine = new App.@this("/test");
-        var context = new App.Context.PLangContext(engine);
+        var context = new App.Context.@this(engine);
 
         var data = new Data("test", "hello");
         context.Variables.Put(data);
@@ -763,17 +763,17 @@ public class VariablesTests
     [Test]
     public async Task PLangContext_ExistingData_GetsContext()
     {
-        // Pre-populate a Variables, then create PLangContext with it
+        // Pre-populate a Variables, then create Context.@this with it
         var stack = new Variables();
         stack.Set("name", "John");
 
-        // Data has no context before PLangContext creation
+        // Data has no context before Context.@this creation
         await Assert.That(stack.Get("name")!.Context).IsNull();
 
         await using var engine = new App.@this("/test");
-        var context = new App.Context.PLangContext(engine, stack);
+        var context = new App.Context.@this(engine, stack);
 
-        // After PLangContext creation, existing data gets context
+        // After Context.@this creation, existing data gets context
         await Assert.That(stack.Get("name")!.Context).IsEqualTo(context);
     }
 
@@ -781,7 +781,7 @@ public class VariablesTests
     public async Task Clone_PreservesDataContext()
     {
         await using var engine = new App.@this("/test");
-        var context = new App.Context.PLangContext(engine);
+        var context = new App.Context.@this(engine);
 
         context.Variables.Set("name", "John");
 
@@ -795,7 +795,7 @@ public class VariablesTests
     public async Task ChildContext_StampsClonedData()
     {
         await using var engine = new App.@this("/test");
-        var parentContext = new App.Context.PLangContext(engine);
+        var parentContext = new App.Context.@this(engine);
         parentContext.Variables.Set("name", "John");
 
         var childContext = parentContext.CreateChild();
@@ -894,7 +894,7 @@ public class VariablesAccessorTests
     public async Task Clone_PreservesContext()
     {
         var engine = new App.@this("/app");
-        var context = new App.Context.PLangContext(engine, new Variables());
+        var context = new App.Context.@this(engine, new Variables());
         context.Variables.Set("x", 1);
 
         var clone = context.Variables.Clone();

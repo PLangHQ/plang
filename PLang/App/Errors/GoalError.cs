@@ -15,7 +15,7 @@ public class GoalError : Error
     public GoalError(string message, Step step, string key = "GoalError", int statusCode = 400)
         : base(message, step, key, statusCode) { }
 
-    public GoalError(string message, PLangContext context, string key = "GoalError", int statusCode = 400)
+    public GoalError(string message, Context.@this context, string key = "GoalError", int statusCode = 400)
         : base(message, context, key, statusCode) { }
 
     public new static GoalError FromException(Exception ex, string key = "Exception", int statusCode = 500)
@@ -28,5 +28,5 @@ public class GoalError : Error
 
     public static GoalError NotFound(string goalName) => new($"Goal '{goalName}' not found", "NotFound", 404);
     public static GoalError Cancelled() => new("Execution cancelled", "Cancelled", 499);
-    public static GoalError Cancelled(PLangContext context) => new("Execution cancelled", context, "Cancelled", 499);
+    public static GoalError Cancelled(Context.@this context) => new("Execution cancelled", context, "Cancelled", 499);
 }

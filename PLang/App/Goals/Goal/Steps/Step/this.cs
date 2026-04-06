@@ -12,7 +12,7 @@ namespace App.Goals.Goal.Steps.Step;
 public sealed partial class @this : Variables.Data<@this>
 {
     [JsonIgnore]
-    public new PLangContext? Context { get; set; }
+    public new Context.@this? Context { get; set; }
 
     /// <summary>
     /// Whether this step is disabled for the current execution.
