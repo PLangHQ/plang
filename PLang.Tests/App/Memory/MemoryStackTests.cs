@@ -325,22 +325,22 @@ public class VariablesTests
     }
 
     [Test]
-    public async Task Get_NonexistentName_ReturnsNull()
+    public async Task Get_NonexistentName_ReturnsUninitialized()
     {
         var stack = new Variables();
 
         var ov = stack.Get("nonexistent");
 
-        await Assert.That(ov).IsNull();
+        await Assert.That(ov.IsInitialized).IsFalse();
     }
 
     [Test]
-    public async Task Get_NullOrEmpty_ReturnsNull()
+    public async Task Get_NullOrEmpty_ReturnsUninitialized()
     {
         var stack = new Variables();
 
-        await Assert.That(stack.Get(null!)).IsNull();
-        await Assert.That(stack.Get("")).IsNull();
+        await Assert.That(stack.Get(null!).IsInitialized).IsFalse();
+        await Assert.That(stack.Get("").IsInitialized).IsFalse();
     }
 
     [Test]

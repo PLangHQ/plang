@@ -132,9 +132,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var app = action.Context.App;
         var context = action.Context;
-
-        if (action.Goals.Count == 0)
-            return global::App.Data.@this.FromError(new Errors.ActionError("No goals to save", "NoGoals", 400));
+        var goal = action.Goal;
 
         // Apply LLM-generated description if available in Variables
         var stepResults = context.Variables.Get("stepResults");
@@ -143,39 +141,14 @@ public class DefaultBuilderProvider : IBuilderProvider
             && desc is string description
             && !string.IsNullOrEmpty(description))
         {
-            action.Goals[0].Description = description;
+            goal.Description = description;
         }
 
-        var prPath = action.Goals[0].PrPath;
+        var prPath = goal.PrPath;
         if (string.IsNullOrEmpty(prPath))
-            return global::App.Data.@this.FromError(new Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));
+            return global::App.Data.@this.FromError(new Errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
 
-        // Load existing goals from .pr file — merge by name (replace or append)
-        var existingGoals = new List<Goal>();
-        var readAction = new file.Read { Context = context, Path = FileSystem.Path.Resolve(prPath, context) };
-        var readResult = await app.RunAction(readAction, context);
-        if (readResult.Success && readResult.Value?.ToString() is string existingJson && !string.IsNullOrWhiteSpace(existingJson))
-        {
-            try
-            {
-                var parsed = JsonSerializer.Deserialize<List<Goal>>(existingJson, Json.CaseInsensitiveRead);
-                if (parsed != null) existingGoals = parsed;
-            }
-            catch (JsonException) { /* corrupt file — start fresh */ }
-        }
-
-        // Replace existing goals by name, append new ones
-        foreach (var goal in action.Goals)
-        {
-            var idx = existingGoals.FindIndex(g =>
-                string.Equals(g.Name, goal.Name, StringComparison.OrdinalIgnoreCase));
-            if (idx >= 0)
-                existingGoals[idx] = goal;
-            else
-                existingGoals.Add(goal);
-        }
-
-        var json = JsonSerializer.Serialize(existingGoals, Json.PrWrite);
+        var json = JsonSerializer.Serialize(goal, Json.PrWrite);
 
         var saveAction = new file.Save
         {
@@ -303,28 +276,19 @@ public class DefaultBuilderProvider : IBuilderProvider
         var readResult = await app.RunAction(readAction, context);
         if (!readResult.Success) return errors;
 
-        var prJson = readResult.Value?.ToString();
-        if (string.IsNullOrWhiteSpace(prJson)) return errors;
-
-        try
-        {
-            var prGoals = JsonSerializer.Deserialize<List<Goal>>(prJson, Json.CaseInsensitiveRead);
-            if (prGoals != null)
-            {
-                var match = prGoals.FirstOrDefault(g =>
-                    g.Name.Equals(goal.Name, StringComparison.OrdinalIgnoreCase));
-                if (match != null)
-                    goal.MergeFrom(match);
-            }
-        }
-        catch (JsonException ex)
+        // File provider auto-deserializes .pr files into a single Goal
+        if (readResult.Value is not Goal prGoal)
         {
             errors.Add(new Info
             {
                 Key = "CorruptPrFile",
-                Message = $"Failed to parse .pr file at {prPath}: {ex.Message}"
+                Message = $"Failed to parse .pr file at {prPath}"
             });
+            return errors;
         }
+
+        if (prGoal.Name.Equals(goal.Name, StringComparison.OrdinalIgnoreCase))
+            goal.MergeFrom(prGoal);
 
         return errors;
     }

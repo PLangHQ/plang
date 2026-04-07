@@ -39,10 +39,6 @@ public class DefaultFileProvider : IFileProvider
                 {
                     var (converted, convertError) = TypeMapping.TryConvertTo(text, clr);
                     content = converted ?? text;
-
-                    // Set back-references for .pr deserialization (temporary — will be replaced by Variables provenance)
-                    if (content is Goals.Goal.@this prGoal)
-                        prGoal.SetStepBackReferences();
                 }
                 else
                 {

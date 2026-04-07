@@ -49,12 +49,12 @@ public class CommandLineParserTests
     }
 
     [Test]
-    public async Task Parse_IntParam_ParsedAsInt()
+    public async Task Parse_IntParam_ParsedAsLong()
     {
         var (_, parameters) = CommandLineParser.Parse(["count=42"]);
 
         await Assert.That(parameters).ContainsKey("count");
-        await Assert.That(parameters["count"]).IsEqualTo(42);
+        await Assert.That(parameters["count"]).IsEqualTo(42L);
     }
 
     [Test]

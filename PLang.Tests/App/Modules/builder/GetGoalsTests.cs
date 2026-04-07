@@ -118,12 +118,7 @@ public class GetGoalsTests
                 }
             }
         };
-        var prJson = JsonSerializer.Serialize(new List<Goal> { prGoal },
-            new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-            });
+        var prJson = JsonSerializer.Serialize(new List<Goal> { prGoal }, global::App.Utils.Json.PrWrite);
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "start.pr"), prJson);
 
         var action = new goals { Context = _app.Context, Path = "." };

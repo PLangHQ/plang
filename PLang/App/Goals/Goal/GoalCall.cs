@@ -114,7 +114,6 @@ public sealed class GoalCall : modules.IEvent
 
         if (found == null) return null;
 
-        found.SetStepBackReferences();
         return found;
     }
 }

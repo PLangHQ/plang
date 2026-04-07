@@ -13,13 +13,16 @@ public sealed class @this : IList<Step.@this>, IContext
 
     public Actor.Context.@this Context { get; set; } = null!;
 
+    [System.Text.Json.Serialization.JsonIgnore]
+    public Goal.@this? Goal { get; set; }
+
     public List<Step.@this> Value => _items;
 
     // --- IList<Step> implementation ---
 
     public Step.@this this[int index]
     {
-        get => _items[index];
+        get { var s = _items[index]; s.Goal ??= Goal; return s; }
         set => _items[index] = value;
     }
 
@@ -45,6 +48,7 @@ public sealed class @this : IList<Step.@this>, IContext
         for (int i = 0; i < _items.Count; i++)
         {
             var step = _items[i];
+            step.Goal ??= Goal;
             step.Context = Context;
 
             if (step.Disabled)

@@ -35,14 +35,37 @@ public sealed partial class @this : Data.@this<@this>
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; init; }
 
+    private Steps.@this _steps = new();
     [Store, Debug, Default]
-    public Steps.@this Steps { get; init; } = new();
+    public Steps.@this Steps
+    {
+        get { _steps.Goal = this; return _steps; }
+        init => _steps = value;
+    }
 
+    private List<@this> _goals = new();
     [Store, Debug, Default]
-    public List<@this> Goals { get; set; } = new();
+    public List<@this> Goals
+    {
+        get { foreach (var g in _goals) g.Parent ??= this; return _goals; }
+        set => _goals = value;
+    }
 
     [Store, LlmBuilder, Debug, Default]
     public Visibility Visibility { get; init; } = Visibility.Private;
+
+    public override string ToString()
+    {
+        var sb = new StringBuilder(Name);
+        foreach (var step in Steps)
+        {
+            sb.AppendLine();
+            sb.Append(new string(' ', step.Indent * 4));
+            sb.Append("- ");
+            sb.Append(step.Text);
+        }
+        return sb.ToString();
+    }
 
     [Store, Debug]
     public new string? Path { get; set; }
@@ -99,19 +122,6 @@ public sealed partial class @this : Data.@this<@this>
     [Store, Debug, Default]
     public bool IsTest { get; set; }
 
-    /// <summary>
-    /// Sets step.Goal back-references after deserialization.
-    /// JSON doesn't serialize circular refs — this restores them.
-    /// </summary>
-    public void SetStepBackReferences()
-    {
-        foreach (var step in Steps) step.Goal = this;
-        foreach (var sub in Goals)
-        {
-            sub.Parent = this;
-            sub.SetStepBackReferences();
-        }
-    }
 
     /// <summary>
     /// Folder path of this goal, derived from Path.

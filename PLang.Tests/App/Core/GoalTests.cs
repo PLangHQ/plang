@@ -212,14 +212,20 @@ public class GoalTests
     }
 
     [Test]
-    public async Task ToString_ReturnsTypeName()
+    public async Task ToString_ReturnsGoalText()
     {
-        var goal = new Goal { Name = "TestGoal" };
+        var goal = new Goal
+        {
+            Name = "Start",
+            Steps = new GoalSteps
+            {
+                new Step { Index = 0, Text = "write out \"hello\"" }
+            }
+        };
 
         var str = goal.ToString();
 
-        // Goal does not override ToString; returns default type name
-        await Assert.That(str).IsEqualTo("App.Goals.Goal.this");
+        await Assert.That(str).IsEqualTo("Start\n- write out \"hello\"");
     }
 
     [Test]

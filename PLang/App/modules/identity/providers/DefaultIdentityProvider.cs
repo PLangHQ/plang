@@ -41,7 +41,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         var all = await LoadAllAsync(action);
         if (!all.Success) return all.ToError<Identity>();
         var items = all.Value!;
-        if (items.Exists(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase) && !i.IsArchived))
+        if (items.Exists(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase)))
             return App.Data.@this.FromError<Identity>(new ActionError($"Identity '{action.Name}' already exists", "DuplicateName", 409));
 
         var identity = GenerateIdentity(action, action.Name, action.SetAsDefault, action.Provider);

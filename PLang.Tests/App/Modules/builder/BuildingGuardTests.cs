@@ -69,8 +69,8 @@ public class BuildingGuardTests
     [Test]
     public async Task SaveGoals_BuildingDisabled_ReturnsError()
     {
-        var goals = new List<Goal> { new Goal { Name = "Test", Path = "/Test.goal" } };
-        var action = new goalsSave { Context = _app.Context, Goals = goals };
+        var goal = new Goal { Name = "Test", Path = "/Test.goal" };
+        var action = new goalsSave { Context = _app.Context, Goal = goal };
         var result = await _app.RunAction(action, _app.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");

@@ -7,8 +7,8 @@ using PLangEngine = global::App.@this;
 namespace PLang.Tests.App.Modules.builder;
 
 /// <summary>
-/// Tests for builder.saveGoals — serializes goals to a v0.2 .pr file.
-/// One .goal file → one .pr file containing List&lt;Goal&gt;.
+/// Tests for builder.saveGoals — serializes a goal to a v0.2 .pr file.
+/// One .goal file → one .pr file containing a single Goal (with optional sub-goals in .Goals).
 /// </summary>
 public class SaveGoalsTests
 {
@@ -38,22 +38,19 @@ public class SaveGoalsTests
     }
 
     [Test]
-    public async Task SaveGoals_SerializesToPrPath()
+    public async Task SaveGoal_SerializesToPrPath()
     {
-        var goals = new List<Goal>
+        var goal = new Goal
         {
-            new Goal
+            Name = "Start",
+            Path = "/Start.goal",
+            Steps = new GoalSteps
             {
-                Name = "Start",
-                Path = "/Start.goal",
-                Steps = new GoalSteps
-                {
-                    new Step { Text = "write hello", Index = 0 }
-                }
+                new Step { Text = "write hello", Index = 0 }
             }
         };
 
-        var action = new goalsSave { Context = _app.Context, Goals = goals };
+        var action = new goalsSave { Context = _app.Context, Goal = goal };
         var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
@@ -61,28 +58,24 @@ public class SaveGoalsTests
         // Verify file content
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "start.pr");
         var json = System.IO.File.ReadAllText(prPath);
-        var saved = JsonSerializer.Deserialize<List<Goal>>(json,
+        var saved = JsonSerializer.Deserialize<Goal>(json,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         await Assert.That(saved).IsNotNull();
-        await Assert.That(saved!.Count).IsEqualTo(1);
-        await Assert.That(saved[0].Name).IsEqualTo("Start");
-        await Assert.That(saved[0].Steps.Count).IsEqualTo(1);
+        await Assert.That(saved!.Name).IsEqualTo("Start");
+        await Assert.That(saved.Steps.Count).IsEqualTo(1);
     }
 
     [Test]
-    public async Task SaveGoals_CamelCase_StoreOnly()
+    public async Task SaveGoal_CamelCase_StoreOnly()
     {
-        var goals = new List<Goal>
+        var goal = new Goal
         {
-            new Goal
-            {
-                Name = "Test",
-                Path = "/Test.goal",
-                Description = null
-            }
+            Name = "Test",
+            Path = "/Test.goal",
+            Description = null
         };
 
-        var action = new goalsSave { Context = _app.Context, Goals = goals };
+        var action = new goalsSave { Context = _app.Context, Goal = goal };
         await _app.RunAction(action, _app.Context);
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
@@ -98,43 +91,39 @@ public class SaveGoalsTests
     }
 
     [Test]
-    public async Task SaveGoals_MultipleGoals_SingleFile()
+    public async Task SaveGoal_WithSubGoals_SingleFile()
     {
-        var goals = new List<Goal>
+        var goal = new Goal
         {
-            new Goal { Name = "Public", Path = "/Multi.goal" },
-            new Goal { Name = "Private", Path = "/Multi.goal" }
+            Name = "Public",
+            Path = "/Multi.goal",
+            Goals = new List<Goal>
+            {
+                new Goal { Name = "Private" }
+            }
         };
 
-        var action = new goalsSave { Context = _app.Context, Goals = goals };
+        var action = new goalsSave { Context = _app.Context, Goal = goal };
         var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "multi.pr");
         var json = System.IO.File.ReadAllText(prPath);
-        var deserialized = JsonSerializer.Deserialize<List<Goal>>(json,
+        var saved = JsonSerializer.Deserialize<Goal>(json,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-        await Assert.That(deserialized).IsNotNull();
-        await Assert.That(deserialized!.Count).IsEqualTo(2);
+        await Assert.That(saved).IsNotNull();
+        await Assert.That(saved!.Name).IsEqualTo("Public");
+        await Assert.That(saved.Goals.Count).IsEqualTo(1);
+        await Assert.That(saved.Goals[0].Name).IsEqualTo("Private");
     }
 
     [Test]
-    public async Task SaveGoals_EmptyGoalsList_ReturnsError()
+    public async Task SaveGoal_NoPrPath_ReturnsError()
     {
-        var action = new goalsSave { Context = _app.Context, Goals = new List<Goal>() };
-        var result = await _app.RunAction(action, _app.Context);
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("NoGoals");
-    }
-
-    [Test]
-    public async Task SaveGoals_NoPrPath_ReturnsError()
-    {
-        var goals = new List<Goal> { new Goal { Name = "Test" } }; // No Path → no PrPath
-        var action = new goalsSave { Context = _app.Context, Goals = goals };
+        var goal = new Goal { Name = "Test" }; // No Path → no PrPath
+        var action = new goalsSave { Context = _app.Context, Goal = goal };
         var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsFalse();

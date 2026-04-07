@@ -133,8 +133,7 @@ public class CommandLineParser
 			{
 				JTokenType.Object => token.ToObject<Dictionary<string, object?>>()!,
 				JTokenType.Array => token.ToObject<List<object?>>()!,
-				JTokenType.Integer => token.Value<long>() is long l && l >= int.MinValue && l <= int.MaxValue
-					? (int)l : token.Value<long>(),
+				JTokenType.Integer => token.Value<long>(),
 				JTokenType.Float => token.Value<double>(),
 				JTokenType.Boolean => token.Value<bool>(),
 				JTokenType.Null => null!,
