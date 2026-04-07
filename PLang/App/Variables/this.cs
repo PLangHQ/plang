@@ -90,7 +90,7 @@ public class @this
 
         // Split remaining into parent path + final property name
         var lastDot = remaining.LastIndexOf('.');
-        Data.@this? parent;
+        Data.@this parent;
         string propertyName;
 
         if (lastDot >= 0)
@@ -104,7 +104,7 @@ public class @this
             propertyName = remaining;
         }
 
-        if (parent?.Value == null) return;
+        if (!parent.IsInitialized && parent.Value == null) return;
 
         var result = SetValueOnObject(parent.Value, propertyName, value);
         if (!ReferenceEquals(result, parent.Value))
@@ -153,11 +153,15 @@ public class @this
     private static Dictionary<string, object?> ConvertToDictionary(object obj)
     {
         var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        foreach (var prop in obj.GetType().GetProperties(
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        var props = obj.GetType().GetProperties(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        foreach (var prop in props)
         {
             dict[prop.Name] = prop.GetValue(obj);
         }
+        // Primitive/value type with no navigable properties — preserve original value
+        if (dict.Count == 0)
+            dict["value"] = obj;
         return dict;
     }
 

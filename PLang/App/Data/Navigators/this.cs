@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using App.Variables;
 
 namespace App.Data.Navigators;
 
@@ -10,7 +9,7 @@ namespace App.Data.Navigators;
 public sealed class @this
 {
     private readonly ConcurrentDictionary<System.Type, INavigator> _navigators = new();
-    private readonly INavigator _fallback = new ClrReflectionNavigator();
+    private readonly INavigator _fallback = new ObjectNavigator();
 
     /// <summary>
     /// Register a navigator for a specific type.

@@ -1,26 +1,27 @@
 namespace App.Data.Navigators;
 
 /// <summary>
-/// Static registry of navigators in priority order.
+/// Static fallback chain of navigators in priority order.
 /// Dictionary → List → JsonString → Object (reflection).
+/// Used when no app-level navigator is registered for a type.
 /// </summary>
 internal static class ValueNavigators
 {
-    private static readonly IValueNavigator[] _navigators =
+    private static readonly INavigator[] _navigators =
     [
-        new ValueDictionaryNavigator(),
-        new ValueListNavigator(),
+        new DictionaryNavigator(),
+        new ListNavigator(),
         new JsonStringNavigator(),
         new ObjectNavigator(),
     ];
 
-    public static object? Navigate(object value, string key)
+    public static Data.@this Navigate(Data.@this data, string key)
     {
         foreach (var nav in _navigators)
         {
-            if (nav.CanNavigate(value))
-                return nav.GetProperty(value, key);
+            if (nav.CanNavigate(data))
+                return nav.Navigate(data, key);
         }
-        return null;
+        return Data.@this.Null(key);
     }
 }

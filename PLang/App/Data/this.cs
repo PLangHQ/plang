@@ -118,6 +118,8 @@ public partial class @this
         Created = System.DateTime.UtcNow;
         Updated = Created;
         Properties = new Properties();
+        if (parent != null)
+            _context = parent._context;
     }
 
     [JsonPropertyName("value")]

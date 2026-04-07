@@ -268,36 +268,36 @@ public class DataTests
     }
 
     [Test]
-    public async Task GetChild_NonexistentPath_ReturnsNull()
+    public async Task GetChild_NonexistentPath_ReturnsNotInitialized()
     {
         var data = new Dictionary<string, object?> { { "name", "test" } };
         var ov = new Data("data", data);
 
         var child = ov.GetChild("nonexistent");
 
-        await Assert.That(child).IsNull();
+        await Assert.That(child.IsInitialized).IsFalse();
     }
 
     [Test]
-    public async Task GetChild_OutOfBoundsIndex_ReturnsNull()
+    public async Task GetChild_OutOfBoundsIndex_ReturnsNotInitialized()
     {
         var data = new List<int> { 1, 2, 3 };
         var ov = new Data("items", data);
 
         var child = ov.GetChild("[10]");
 
-        await Assert.That(child).IsNull();
+        await Assert.That(child.IsInitialized).IsFalse();
     }
 
     [Test]
-    public async Task GetChild_NegativeIndex_ReturnsNull()
+    public async Task GetChild_NegativeIndex_ReturnsNotInitialized()
     {
         var data = new List<int> { 1, 2, 3 };
         var ov = new Data("items", data);
 
         var child = ov.GetChild("[-1]");
 
-        await Assert.That(child).IsNull();
+        await Assert.That(child.IsInitialized).IsFalse();
     }
 
     [Test]
@@ -326,13 +326,13 @@ public class DataTests
     }
 
     [Test]
-    public async Task GetChild_NullValue_ReturnsNull()
+    public async Task GetChild_NullValue_ReturnsNotInitialized()
     {
         var ov = new Data("test");
 
         var child = ov.GetChild("anything");
 
-        await Assert.That(child).IsNull();
+        await Assert.That(child.IsInitialized).IsFalse();
     }
 
     [Test]
@@ -568,8 +568,8 @@ public class DataTests
 
         var child = ov.GetChild("name");
 
-        await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Context).IsEqualTo(context);
+        await Assert.That(child.IsInitialized).IsTrue();
+        await Assert.That(child.Context).IsEqualTo(context);
     }
 
     // --- Phase 3: Envelope properties + Out view ---

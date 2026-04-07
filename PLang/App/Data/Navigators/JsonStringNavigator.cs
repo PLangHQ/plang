@@ -6,13 +6,13 @@ namespace App.Data.Navigators;
 /// Navigates string values that contain JSON objects or arrays.
 /// Parses on access, then delegates to the appropriate navigator.
 /// </summary>
-public class JsonStringNavigator : IValueNavigator
+public sealed class JsonStringNavigator : INavigator
 {
     private const int MaxJsonStringSize = 10 * 1024 * 1024; // 10MB
 
-    public bool CanNavigate(object value)
+    public bool CanNavigate(Data.@this data)
     {
-        if (value is not string str)
+        if (data.Value is not string str)
             return false;
 
         if (str.Length > MaxJsonStringSize)
@@ -22,22 +22,23 @@ public class JsonStringNavigator : IValueNavigator
         return trimmed.Length > 0 && (trimmed[0] == '{' || trimmed[0] == '[');
     }
 
-    public object? GetProperty(object value, string key)
+    public Data.@this Navigate(Data.@this data, string key)
     {
-        if (value is not string str)
-            return null;
+        if (data.Value is not string str)
+            return Data.@this.Null(key);
 
         try
         {
             var doc = JsonDocument.Parse(str);
             var parsed = UnwrapElement(doc.RootElement);
-            if (parsed == null) return null;
+            if (parsed == null) return Data.@this.Null(key);
 
-            return ValueNavigators.Navigate(parsed, key);
+            var parsedData = new Data.@this(data.Name, parsed, parent: data);
+            return ValueNavigators.Navigate(parsedData, key);
         }
         catch (JsonException)
         {
-            return null;
+            return Data.@this.Null(key);
         }
     }
 

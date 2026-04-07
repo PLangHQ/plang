@@ -37,7 +37,7 @@ public class SettingsVariable : Data.@this
     /// We load the value from the settings store instead of navigating an in-memory Value.
     /// Only active for the runtime proxy (context constructor). Storage instances navigate normally.
     /// </summary>
-    public override Data.@this? GetChild(string path, int depth = 0)
+    public override Data.@this GetChild(string path, int depth = 0)
     {
         if (_app == null)
             return base.GetChild(path, depth);

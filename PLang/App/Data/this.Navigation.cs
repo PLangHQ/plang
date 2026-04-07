@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using App.Errors;
-using App.Data.Navigators;
 
 namespace App.Data;
 
@@ -15,8 +14,9 @@ public partial class @this
 
     /// <summary>
     /// Gets a child value by path (dot notation, index, or method call).
+    /// Never returns null — returns Data.Null(key) when the path doesn't resolve.
     /// </summary>
-    public virtual @this? GetChild(string path, int depth = 0)
+    public virtual @this GetChild(string path, int depth = 0)
     {
         if (string.IsNullOrEmpty(path))
             return this;
@@ -45,7 +45,7 @@ public partial class @this
             var methodName = segment[..parenIndex];
             var argsStr = segment[(parenIndex + 1)..^1]; // strip ( and )
             var result = InvokeMethod(methodName, argsStr);
-            if (result == null) return null;
+            if (!result.IsInitialized) return result;
 
             if (string.IsNullOrEmpty(remaining))
                 return result;
@@ -58,17 +58,13 @@ public partial class @this
         if (isInfrastructure)
             segment = segment[1..]; // strip the !
 
-        var childValue = isInfrastructure
+        var child = isInfrastructure
             ? GetInfrastructureValue(segment)
             : GetChildValue(segment);
-        if (childValue == null)
-            return null;
-
-        var child = new @this(segment, childValue, parent: this);
-        child.Context = _context;
+        if (!child.IsInitialized) return child;
 
         // Inject context on IContext values during traversal
-        if (childValue is App.modules.IContext contextual && _context != null)
+        if (child.Value is App.modules.IContext contextual && _context != null)
             contextual.Context = _context;
 
         if (string.IsNullOrEmpty(remaining))
@@ -129,7 +125,7 @@ public partial class @this
     /// Invokes a method-like navigation on Data. Chainable — returns Data.
     /// Override in subclasses to add domain-specific methods.
     /// </summary>
-    protected virtual @this? InvokeMethod(string method, string args)
+    protected virtual @this InvokeMethod(string method, string args)
     {
         var str = Value?.ToString();
 
@@ -142,7 +138,7 @@ public partial class @this
             "tolower" => new @this(Name, str?.ToLowerInvariant()),
             "toupper" => new @this(Name, str?.ToUpperInvariant()),
             "replace" => Replace(str, args),
-            _ => null
+            _ => Null(method)
         };
     }
 
@@ -222,7 +218,11 @@ public partial class @this
         return int.TryParse(args, out var n) ? n : 0;
     }
 
-    private object? GetChildValue(string key)
+    /// <summary>
+    /// Navigates into the Data's value by key. Checks Properties, subclass properties,
+    /// navigators, and whitelisted base properties. Returns Data — never null.
+    /// </summary>
+    private @this GetChildValue(string key)
     {
         var val = Value;
 
@@ -231,9 +231,9 @@ public partial class @this
         if (val is @this dataVal)
         {
             var dataProp = dataVal.Properties[key];
-            if (dataProp != null) return dataProp.Value;
+            if (dataProp != null) return dataProp;
             var dataChild = dataVal.GetChildValue(key);
-            if (dataChild != null) return dataChild;
+            if (dataChild.IsInitialized) return dataChild;
         }
 
         // Check Data subclass properties (e.g., Path.Exists, Identity.PublicKey)
@@ -241,22 +241,25 @@ public partial class @this
         var ownProp = GetType().GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
         if (ownProp != null && ownProp.DeclaringType != typeof(@this))
-            return ownProp.GetValue(this);
+            return new @this(key, ownProp.GetValue(this), parent: this);
 
         // Check Data.Properties (extensible key-value pairs on the Data)
         var prop = Properties[key];
-        if (prop != null) return prop.Value;
+        if (prop != null) return prop;
 
         // Navigate the Value object via registered navigator (dict, list, CLR reflection, etc.)
         if (val != null)
         {
             var navigator = _context?.App?.Navigators?.Get(val.GetType());
-            var navResult = navigator?.Navigate(this, key);
-            if (navResult != null) return navResult;
+            if (navigator != null)
+            {
+                var navResult = navigator.Navigate(this, key);
+                if (navResult.IsInitialized) return navResult;
+            }
 
             // Fallback when no app context (e.g., during deserialization)
-            var fallbackResult = Navigators.ValueNavigators.Navigate(val, key);
-            if (fallbackResult != null) return fallbackResult;
+            var fallbackResult = Navigators.ValueNavigators.Navigate(this, key);
+            if (fallbackResult.IsInitialized) return fallbackResult;
         }
 
         // Fallback: whitelisted Data base properties (Success, Error, Name)
@@ -267,10 +270,10 @@ public partial class @this
             || key.Equals("Error", StringComparison.OrdinalIgnoreCase)
             || key.Equals("Name", StringComparison.OrdinalIgnoreCase)))
         {
-            return ownProp.GetValue(this);
+            return new @this(key, ownProp.GetValue(this), parent: this);
         }
 
-        return null;
+        return Null(key);
     }
 
     /// <summary>
@@ -278,16 +281,19 @@ public partial class @this
     /// Used when navigating with ! prefix: %user!Name%, %result!Error%, etc.
     /// Full hierarchy reflection — reaches any property on the Data class itself.
     /// </summary>
-    private object? GetInfrastructureValue(string key)
+    private @this GetInfrastructureValue(string key)
     {
         var prop = typeof(@this).GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
         if (prop != null)
-            return prop.GetValue(this);
+            return new @this(key, prop.GetValue(this), parent: this);
 
         // Also check subclass properties (e.g., Path.Exists IS infrastructure too)
         prop = GetType().GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        return prop?.GetValue(this);
+        if (prop != null)
+            return new @this(key, prop.GetValue(this), parent: this);
+
+        return Null(key);
     }
 }

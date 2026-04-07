@@ -1,37 +1,40 @@
-using App.Variables;
+using System.Collections;
 
 namespace App.Data.Navigators;
 
 /// <summary>
 /// Navigates dictionaries by case-insensitive key lookup.
+/// Handles IDictionary&lt;string, object?&gt; and IDictionary.
 /// </summary>
 public sealed class DictionaryNavigator : INavigator
 {
-    public object? Navigate(Data.@this data, string key)
+    public bool CanNavigate(Data.@this data)
+        => data.Value is IDictionary<string, object?> or IDictionary;
+
+    public Data.@this Navigate(Data.@this data, string key)
     {
         var value = data.Value;
 
-        if (value is IDictionary<string, object?> dict)
+        if (value is IDictionary<string, object?> generic)
         {
-            // Case-insensitive key lookup
-            foreach (var kvp in dict)
+            foreach (var kvp in generic)
             {
                 if (string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
-                    return kvp.Value;
+                    return new Data.@this(key, kvp.Value, parent: data);
             }
-            return null;
+            return Data.@this.Null(key);
         }
 
-        if (value is System.Collections.IDictionary rawDict)
+        if (value is IDictionary dict)
         {
-            foreach (System.Collections.DictionaryEntry entry in rawDict)
+            foreach (DictionaryEntry entry in dict)
             {
                 if (entry.Key is string k && string.Equals(k, key, StringComparison.OrdinalIgnoreCase))
-                    return entry.Value;
+                    return new Data.@this(key, entry.Value, parent: data);
             }
-            return null;
+            return Data.@this.Null(key);
         }
 
-        return null;
+        return Data.@this.Null(key);
     }
 }

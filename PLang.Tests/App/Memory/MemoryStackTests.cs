@@ -833,10 +833,10 @@ public class VariablesCycleDetectionTests
         {
             // With "idx" already in visited set → cycle detected → [idx] left unresolved
             // Path stays "data.items[idx]" → GetChild tries to navigate list with key "idx"
-            // → "idx" is not a valid index → returns null
+            // → "idx" is not a valid index → returns Data.Null
             var cycleResult = stack.Get("data.items[idx]");
 
-            await Assert.That(cycleResult).IsNull();
+            await Assert.That(cycleResult.IsInitialized).IsFalse();
         }
         finally
         {
