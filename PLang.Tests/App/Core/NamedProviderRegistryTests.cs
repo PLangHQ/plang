@@ -350,33 +350,6 @@ public class NamedProviderRegistryTests
 
     #endregion
 
-    #region Sub-engine scope
-
-    [Test, Skip("Sub-engine provider scope chain deferred")]
-    public async Task SubEngine_InheritsParentProviders()
-    {
-        await Task.CompletedTask;
-    }
-
-    [Test, Skip("Sub-engine provider scope chain deferred")]
-    public async Task SubEngine_LocalOverlay_DoesNotAffectParent()
-    {
-        await Task.CompletedTask;
-    }
-
-    [Test, Skip("Sub-engine provider scope chain deferred")]
-    public async Task SubEngine_LocalOverlay_ClearedOnPoolReturn()
-    {
-        await Task.CompletedTask;
-    }
-
-    [Test, Skip("Sub-engine provider scope chain deferred")]
-    public async Task SubEngine_FallsBackToParent_WhenLocalOverlayLacksProvider()
-    {
-        await Task.CompletedTask;
-    }
-
-    #endregion
 
     private class MockSigningProvider : ISigningProvider
     {
