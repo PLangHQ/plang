@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using App;
-using App.Errors;
 using App.Variables;
 using App.Events;
 using Goal = App.Goals.Goal.@this;
@@ -98,12 +97,6 @@ public sealed class @this : IDisposable
     public Data.@this? EventOverride { get; set; }
 
     /// <summary>
-    /// The current error being handled. Set by error.check before calling the error goal.
-    /// Accessible via %!error%. Falls back to CallStack.Current.Error when callstack is active.
-    /// </summary>
-    public IError? CurrentError { get; set; }
-
-    /// <summary>
     /// Test context — a Data with Properties for results, summary, etc.
     /// Set when --test flag is active. Accessible via %!test%.
     /// Properties are extensible — results, summary can be GoalCalls.
@@ -167,7 +160,8 @@ public sealed class @this : IDisposable
         vars.Put(new Data.DynamicData("!serializers", () => App.Channels.Serializers));
         vars.Put(new Data.DynamicData("!goal", () => Goal));
         vars.Put(new Data.DynamicData("!step", () => Step));
-        vars.Put(new Data.DynamicData("!error", () => CurrentError ?? CallStack?.Current?.Error));
+        // %!error% is not registered here — it's passed as a parameter to the error goal
+        // via onError.Goal.Parameters. See error.check.
         vars.Put(new Data.DynamicData("!data", () => App.System.Context.Variables.GetValue("data")));
         vars.Put(new Data.DynamicData("!event", () => Event ?? App.System?.Context?.Event));
         vars.Put(new Data.DynamicData("!test", () => Test));

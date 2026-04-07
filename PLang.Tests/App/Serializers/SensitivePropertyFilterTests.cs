@@ -9,14 +9,14 @@ namespace PLang.Tests.App.Serializers;
 public class SensitivePropertyFilterTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_sensitive_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -24,7 +24,7 @@ public class SensitivePropertyFilterTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -107,7 +107,7 @@ public class SensitivePropertyFilterTests
     public async Task Sensitive_IdentityData_PrivateKeyExcluded()
     {
         // End-to-end: create real identity, serialize, verify PrivateKey absent
-        var create = new Create { Context = _engine.System.Context, Name = "e2e", SetAsDefault = true };
+        var create = new Create { Context = _app.System.Context, Name = "e2e", SetAsDefault = true };
         var result = await create.Run();
         var identity = result as Identity;
 

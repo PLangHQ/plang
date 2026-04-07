@@ -13,7 +13,7 @@ namespace PLang.Tests.App.Modules.builder;
 public class SaveGoalsTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
@@ -21,8 +21,8 @@ public class SaveGoalsTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_savegoals_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
-        _engine.Building.IsEnabled = true;
+        _app = new PLangEngine(_tempDir);
+        _app.Building.IsEnabled = true;
     }
 
     [After(Test)]
@@ -30,7 +30,7 @@ public class SaveGoalsTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -53,8 +53,8 @@ public class SaveGoalsTests
             }
         };
 
-        var action = new goalsSave { Context = _engine.Context, Goals = goals };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new goalsSave { Context = _app.Context, Goals = goals };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
 
@@ -82,8 +82,8 @@ public class SaveGoalsTests
             }
         };
 
-        var action = new goalsSave { Context = _engine.Context, Goals = goals };
-        await _engine.RunAction(action, _engine.Context);
+        var action = new goalsSave { Context = _app.Context, Goals = goals };
+        await _app.RunAction(action, _app.Context);
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
         var json = System.IO.File.ReadAllText(prPath);
@@ -106,8 +106,8 @@ public class SaveGoalsTests
             new Goal { Name = "Private", Path = "/Multi.goal" }
         };
 
-        var action = new goalsSave { Context = _engine.Context, Goals = goals };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new goalsSave { Context = _app.Context, Goals = goals };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
 
@@ -123,8 +123,8 @@ public class SaveGoalsTests
     [Test]
     public async Task SaveGoals_EmptyGoalsList_ReturnsError()
     {
-        var action = new goalsSave { Context = _engine.Context, Goals = new List<Goal>() };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new goalsSave { Context = _app.Context, Goals = new List<Goal>() };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("NoGoals");
@@ -134,8 +134,8 @@ public class SaveGoalsTests
     public async Task SaveGoals_NoPrPath_ReturnsError()
     {
         var goals = new List<Goal> { new Goal { Name = "Test" } }; // No Path → no PrPath
-        var action = new goalsSave { Context = _engine.Context, Goals = goals };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new goalsSave { Context = _app.Context, Goals = goals };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPrPath");

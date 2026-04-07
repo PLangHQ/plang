@@ -16,14 +16,14 @@ namespace PLang.Tests.App.Modules.provider;
 public class ProviderModuleTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_provider_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -31,14 +31,14 @@ public class ProviderModuleTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     // Fixture DLL paths — pre-built DLLs committed under PLang.Tests/App/Fixtures/dlls/
     private static readonly string FixtureBase = System.IO.Path.GetFullPath(
@@ -53,10 +53,10 @@ public class ProviderModuleTests
     public async Task Load_RegistersProviderByName()
     {
         var provider = new MockSigningProvider("mock");
-        var result = _engine.Providers.Register<ISigningProvider>(provider);
+        var result = _app.Providers.Register<ISigningProvider>(provider);
 
         await Assert.That(result.Success).IsTrue();
-        var retrieved = _engine.Providers.Get<ISigningProvider>("mock");
+        var retrieved = _app.Providers.Get<ISigningProvider>("mock");
         await Assert.That(retrieved.Success).IsTrue();
         await Assert.That(retrieved.Value!.Name).IsEqualTo("mock");
     }
@@ -64,8 +64,8 @@ public class ProviderModuleTests
     [Test]
     public async Task Load_DuplicateName_ReturnsError()
     {
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("mock"));
-        var result = _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("mock"));
+        _app.Providers.Register<ISigningProvider>(new MockSigningProvider("mock"));
+        var result = _app.Providers.Register<ISigningProvider>(new MockSigningProvider("mock"));
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderExists");
@@ -117,7 +117,7 @@ public class ProviderModuleTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var loaded = _engine.Providers.Get<ISigningProvider>("test-signing");
+        var loaded = _app.Providers.Get<ISigningProvider>("test-signing");
         await Assert.That(loaded.Success).IsTrue();
         await Assert.That(loaded.Value!.Name).IsEqualTo("test-signing");
     }
@@ -171,8 +171,8 @@ public class ProviderModuleTests
     [Test]
     public async Task Remove_NonDefault_Succeeds()
     {
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("first"));
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("second"));
+        _app.Providers.Register<ISigningProvider>(new MockSigningProvider("first"));
+        _app.Providers.Register<ISigningProvider>(new MockSigningProvider("second"));
 
         var action = new global::App.modules.provider.remove
         {
@@ -183,7 +183,7 @@ public class ProviderModuleTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_engine.Providers.Get<ISigningProvider>("second").Success).IsFalse();
+        await Assert.That(_app.Providers.Get<ISigningProvider>("second").Success).IsFalse();
     }
 
     [Test]
@@ -241,8 +241,8 @@ public class ProviderModuleTests
     {
         var first = new MockSigningProvider("first");
         var second = new MockSigningProvider("second");
-        _engine.Providers.Register<ISigningProvider>(first);
-        _engine.Providers.Register<ISigningProvider>(second);
+        _app.Providers.Register<ISigningProvider>(first);
+        _app.Providers.Register<ISigningProvider>(second);
 
         var action = new global::App.modules.provider.setDefault
         {
@@ -260,7 +260,7 @@ public class ProviderModuleTests
     [Test]
     public async Task SetDefault_UnknownName_ReturnsError()
     {
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("first"));
+        _app.Providers.Register<ISigningProvider>(new MockSigningProvider("first"));
 
         var action = new global::App.modules.provider.setDefault
         {
@@ -298,10 +298,10 @@ public class ProviderModuleTests
     {
         var first = new MockSigningProvider("first");
         var second = new MockSigningProvider("second");
-        _engine.Providers.Register<ISigningProvider>(first);
-        _engine.Providers.Register<ISigningProvider>(second);
+        _app.Providers.Register<ISigningProvider>(first);
+        _app.Providers.Register<ISigningProvider>(second);
 
-        var providers = _engine.Providers.List<ISigningProvider>();
+        var providers = _app.Providers.List<ISigningProvider>();
         await Assert.That(providers.Count).IsEqualTo(3); // ed25519 (built-in) + first + second
         // ed25519 is default from engine startup
         await Assert.That(first.IsDefault).IsFalse();
@@ -312,7 +312,7 @@ public class ProviderModuleTests
     public async Task List_FilteredByType_ReturnsOnlyMatchingInterface()
     {
         // Engine registers ICryptoProvider at startup, ISigningProvider separately
-        var signingProviders = _engine.Providers.List<ISigningProvider>();
+        var signingProviders = _app.Providers.List<ISigningProvider>();
         await Assert.That(signingProviders.Count).IsEqualTo(1); // only ed25519
         await Assert.That(signingProviders[0].Name).IsEqualTo("ed25519");
     }
@@ -320,7 +320,7 @@ public class ProviderModuleTests
     [Test]
     public async Task ListAction_NoType_ReturnsAll()
     {
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("extra"));
+        _app.Providers.Register<ISigningProvider>(new MockSigningProvider("extra"));
 
         var action = new global::App.modules.provider.list
         {
@@ -338,7 +338,7 @@ public class ProviderModuleTests
     [Test]
     public async Task ListAction_ByType_ReturnsFiltered()
     {
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("extra"));
+        _app.Providers.Register<ISigningProvider>(new MockSigningProvider("extra"));
 
         var action = new global::App.modules.provider.list
         {

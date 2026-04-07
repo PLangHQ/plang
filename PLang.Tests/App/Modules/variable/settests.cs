@@ -8,12 +8,10 @@ namespace PLang.Tests.App.actions.variable;
 
 public class SetTests
 {
-    private (global::App.Actor.Context.@this context, Variables memory) CreateContext(Variables? variables = null)
+    private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
     {
-        var memory = variables ?? new Variables();
-        var engine = new global::App.@this("/app");
-        var context = new global::App.Actor.Context.@this(engine, memory);
-        return (context, memory);
+        var app = new global::App.@this("/app");
+        return (app.Context, app.Context.Variables);
     }
 
     [Test]

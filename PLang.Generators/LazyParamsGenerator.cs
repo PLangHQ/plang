@@ -137,12 +137,9 @@ public class LazyParamsGenerator : IIncrementalGenerator
                             && (m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App"
                                 || m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App.Actor.Context"));
 
-                // Check if property type is Data (pass through without unwrapping .Value)
                 var rawType = prop.Type;
                 if (rawType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullableType)
                     rawType = nullableType.TypeArguments[0];
-                var isDataType = rawType.Name == "Data"
-                    && rawType.ContainingNamespace?.ToDisplayString() == "App.Variables";
 
                 var implementsIEvent = rawType is INamedTypeSymbol evt
                     && evt.AllInterfaces.Any(i =>
@@ -158,7 +155,6 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     isVariableName,
                     isAppResolvable,
                     isProvider,
-                    isDataType,
                     isInitiated,
                     isNotNull,
                     implementsIEvent));
@@ -266,12 +262,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
             // Build the get expression
             var paramName = prop.Name.ToLowerInvariant();
             string resolveExpr;
-            if (prop.IsDataType)
-            {
-                // Data-typed properties: pass the Data object through, don't unwrap .Value
-                resolveExpr = $"__ResolveData(\"{paramName}\")";
-            }
-            else if (prop.IsAppResolvable)
+            if (prop.IsAppResolvable)
             {
                 // Context-resolvable types: resolve raw string then call Type.Resolve(string, Context)
                 var rawStr = $"__Resolve<string>(\"{paramName}\")";
@@ -398,7 +389,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // The object tells us at runtime if it carries event context
         foreach (var prop in info.Properties)
         {
-            if (prop.IsProvider || prop.IsVariableName || prop.IsValueType || prop.IsDataType) continue;
+            if (prop.IsProvider || prop.IsVariableName || prop.IsValueType) continue;
             if (prop.TypeName is "string" or "global::System.String") continue;
             // Only emit for types that implement IEvent (compile-time safe)
             if (!prop.ImplementsIEvent) continue;
@@ -428,34 +419,15 @@ public class LazyParamsGenerator : IIncrementalGenerator
             }
         }
 
-        // Validate [IsInitiated] and [IsNotNull] attributes
+        // Validate [IsNotNull] — check the Data parameter's .Value directly
         foreach (var prop in info.Properties)
         {
-            if (prop.IsInitiated || prop.IsNotNull)
+            if (prop.IsNotNull && !prop.IsValueType)
             {
-                if (prop.IsDataType)
-                {
-                    if (prop.IsNotNull)
-                    {
-                        // IsNotNull implies IsInitiated — check both
-                        sb.AppendLine($"        if (!{prop.Name}.IsInitialized || {prop.Name}.Value == null)");
-                        sb.AppendLine($"            return App.Data.@this.FromError(new App.Errors.ServiceError(");
-                        sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
-                    }
-                    else
-                    {
-                        // IsInitiated only
-                        sb.AppendLine($"        if (!{prop.Name}.IsInitialized)");
-                        sb.AppendLine($"            return App.Data.@this.FromError(new App.Errors.ServiceError(");
-                        sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must be provided\", __step, __callFrames, \"ParameterRequired\", 400));");
-                    }
-                }
-                else if (prop.IsNotNull && !prop.IsValueType)
-                {
-                    sb.AppendLine($"        if ({prop.Name} == null)");
-                    sb.AppendLine($"            return App.Data.@this.FromError(new App.Errors.ServiceError(");
-                    sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
-                }
+                var paramName = prop.Name.ToLowerInvariant();
+                sb.AppendLine($"        if (__parameters?.FirstOrDefault(d => string.Equals(d.Name, \"{paramName}\", StringComparison.OrdinalIgnoreCase))?.Value == null)");
+                sb.AppendLine($"            return App.Data.@this.FromError(new App.Errors.ServiceError(");
+                sb.AppendLine($"                \"'{paramName}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
             }
         }
 
@@ -580,32 +552,6 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        return data?.Value?.ToString();");
         sb.AppendLine("    }");
         sb.AppendLine();
-        sb.AppendLine("    private App.Data.@this? __ResolveData(string name)");
-        sb.AppendLine("    {");
-        sb.AppendLine("        var data = __parameters?.FirstOrDefault(");
-        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
-        sb.AppendLine("        data ??= __defaults?.FirstOrDefault(");
-        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
-        sb.AppendLine("        if (data?.Value is string str && str.Contains('%'))");
-        sb.AppendLine("        {");
-        sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
-        sb.AppendLine("            if (fullMatch.Success)");
-        sb.AppendLine("            {");
-        sb.AppendLine("                var __resolved = __variables!.Get(fullMatch.Groups[1].Value);");
-        sb.AppendLine("                // Data properties pass through regardless of Success — the Data IS the value");
-        sb.AppendLine("                return __resolved;");
-        sb.AppendLine("            }");
-        sb.AppendLine("            // Interpolate %var% patterns in mixed strings");
-        sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
-        sb.AppendLine("                var __r = __variables!.Get(m.Groups[1].Value);");
-        sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
-        sb.AppendLine("                return __FormatValue(__r?.Value);");
-        sb.AppendLine("            });");
-        sb.AppendLine("            return new App.Data.@this(data.Name, interpolated);");
-        sb.AppendLine("        }");
-        sb.AppendLine("        return data;");
-        sb.AppendLine("    }");
-
         sb.AppendLine("}");
 
         return sb.ToString();
@@ -647,14 +593,13 @@ internal class ActionPropertyInfo
     public bool IsVariableName { get; }
     public bool IsAppResolvable { get; }
     public bool IsProvider { get; }
-    public bool IsDataType { get; }
     public bool IsInitiated { get; }
     public bool IsNotNull { get; }
     public bool ImplementsIEvent { get; }
 
     public ActionPropertyInfo(string name, string typeName, bool isNullable,
         bool isValueType, string? defaultValue, bool isVariableName = false,
-        bool isAppResolvable = false, bool isProvider = false, bool isDataType = false,
+        bool isAppResolvable = false, bool isProvider = false,
         bool isInitiated = false, bool isNotNull = false, bool implementsIEvent = false)
     {
         Name = name;
@@ -665,7 +610,6 @@ internal class ActionPropertyInfo
         IsVariableName = isVariableName;
         IsAppResolvable = isAppResolvable;
         IsProvider = isProvider;
-        IsDataType = isDataType;
         IsInitiated = isInitiated;
         IsNotNull = isNotNull;
         ImplementsIEvent = implementsIEvent;

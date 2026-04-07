@@ -10,14 +10,14 @@ namespace PLang.Tests.App.Modules.crypto;
 public class ProviderResolutionTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_crypto_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -25,21 +25,21 @@ public class ProviderResolutionTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Hash_UsesProviderFromSettings_NotDefault()
     {
         var mock = new MockCryptoProvider();
-        _engine.Providers.Register<ICryptoProvider>(mock);
-        _engine.Providers.SetDefault<ICryptoProvider>("mock");
+        _app.Providers.Register<ICryptoProvider>(mock);
+        _app.Providers.SetDefault<ICryptoProvider>("mock");
 
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
@@ -68,8 +68,8 @@ public class ProviderResolutionTests
     public async Task Verify_UsesProviderFromSettings()
     {
         var mock = new AlwaysTrueVerifier();
-        _engine.Providers.Register<ICryptoProvider>(mock);
-        _engine.Providers.SetDefault<ICryptoProvider>("always-true");
+        _app.Providers.Register<ICryptoProvider>(mock);
+        _app.Providers.SetDefault<ICryptoProvider>("always-true");
 
         // Even with garbage hash, mock returns true
         var action = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };

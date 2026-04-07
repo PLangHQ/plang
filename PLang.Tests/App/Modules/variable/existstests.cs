@@ -7,20 +7,17 @@ namespace PLang.Tests.App.actions.variable;
 
 public class ExistsTests
 {
-    private (global::App.Actor.Context.@this context, Variables memory) CreateContext(Variables? variables = null)
+    private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
     {
-        var memory = variables ?? new Variables();
-        var engine = new global::App.@this("/app");
-        var context = new global::App.Actor.Context.@this(engine, memory);
-        return (context, memory);
+        var app = new global::App.@this("/app");
+        return (app.Context, app.Context.Variables);
     }
 
     [Test]
     public async Task Exists_ExistingVariable_ReturnsTrue()
     {
-        var memory = new Variables();
-        memory.Set("testVar", "testValue");
-        var (context, _) = CreateContext(memory);
+        var (context, _) = CreateContext();
+        context.Variables.Set("testVar", "testValue");
 
         var action = new Exists { Context = context, Name = "testVar" };
         var result = await action.Run();

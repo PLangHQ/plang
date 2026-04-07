@@ -8,24 +8,18 @@ namespace PLang.Tests.App.actions.loop;
 
 public class ForeachTests
 {
-    private global::App.@this _engine = null!;
+    private global::App.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new global::App.@this("/app");
-    }
-
-    private global::App.Actor.Context.@this CreateContext(Variables? memory = null)
-    {
-        var context = _engine.CreateContext(memory);
-        return context;
+        _app = new global::App.@this("/app");
     }
 
     [Test]
     public async Task Foreach_IteratesList()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var items = new List<object?> { "a", "b", "c" };
         context.Variables.Set("items", items);
 
@@ -57,7 +51,7 @@ public class ForeachTests
                 }
             }
         };
-        _engine.Goals.Add(captureGoal);
+        _app.Goals.Add(captureGoal);
 
         var action = new Foreach
         {
@@ -79,7 +73,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_EmptyCollection_ReturnsZeroCount()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var items = new List<object?>();
 
         var action = new Foreach
@@ -101,7 +95,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_SetsItemVariable()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var items = new List<object?> { "hello" };
 
         // Simple goal that does nothing (just captures that item was set)
@@ -111,7 +105,7 @@ public class ForeachTests
             Path = "/CaptureGoal.goal",
             Steps = new GoalSteps()
         };
-        _engine.Goals.Add(goal);
+        _app.Goals.Add(goal);
 
         var action = new Foreach
         {
@@ -131,11 +125,11 @@ public class ForeachTests
     [Test]
     public async Task Foreach_IteratesDictionary()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
 
         var goal = new Goal { Name = "DictGoal", Path = "/DictGoal.goal", Steps = new GoalSteps() };
-        _engine.Goals.Add(goal);
+        _app.Goals.Add(goal);
 
         var action = new Foreach
         {

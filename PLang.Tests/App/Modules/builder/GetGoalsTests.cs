@@ -13,7 +13,7 @@ namespace PLang.Tests.App.Modules.builder;
 public class GetGoalsTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
@@ -21,8 +21,8 @@ public class GetGoalsTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_getgoals_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
-        _engine.Building.IsEnabled = true;
+        _app = new PLangEngine(_tempDir);
+        _app.Building.IsEnabled = true;
     }
 
     [After(Test)]
@@ -30,7 +30,7 @@ public class GetGoalsTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -45,8 +45,8 @@ public class GetGoalsTests
             System.IO.Path.Combine(_tempDir, "Start.goal"),
             "Start\n- write out 'hello'\n- set %x% = 1");
 
-        var action = new goals { Context = _engine.Context, Path = "." };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new goals { Context = _app.Context, Path = "." };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         var goals = result.Value as List<Goal>;
@@ -71,8 +71,8 @@ public class GetGoalsTests
             System.IO.Path.Combine(systemDir, "Build.goal"),
             "Build\n- build step");
 
-        var action = new goals { Context = _engine.Context, Path = "." };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new goals { Context = _app.Context, Path = "." };
+        var result = await _app.RunAction(action, _app.Context);
         var goals = result.Value as List<Goal>;
 
         await Assert.That(goals).IsNotNull();
@@ -126,8 +126,8 @@ public class GetGoalsTests
             });
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "start.pr"), prJson);
 
-        var action = new goals { Context = _engine.Context, Path = "." };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new goals { Context = _app.Context, Path = "." };
+        var result = await _app.RunAction(action, _app.Context);
         var goals = result.Value as List<Goal>;
 
         await Assert.That(goals).IsNotNull();
@@ -141,8 +141,8 @@ public class GetGoalsTests
     [Test]
     public async Task GetGoals_EmptyFolder_ReturnsEmptyList()
     {
-        var action = new goals { Context = _engine.Context, Path = "." };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new goals { Context = _app.Context, Path = "." };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         var goals = result.Value as List<Goal>;
@@ -165,8 +165,8 @@ public class GetGoalsTests
             System.IO.Path.Combine(buildDir, "start.pr"),
             "{ invalid json {{{}}}");
 
-        var action = new goals { Context = _engine.Context, Path = "." };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new goals { Context = _app.Context, Path = "." };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         var goals = result.Value as List<Goal>;

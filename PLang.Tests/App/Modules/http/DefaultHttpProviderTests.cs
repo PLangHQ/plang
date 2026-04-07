@@ -12,7 +12,7 @@ namespace PLang.Tests.App.Modules.http;
 public class DefaultHttpProviderTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
@@ -20,7 +20,7 @@ public class DefaultHttpProviderTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_http_prov_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -28,14 +28,14 @@ public class DefaultHttpProviderTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Provider_Configure_AcceptsValidConfig()
@@ -68,7 +68,7 @@ public class DefaultHttpProviderTests
 
         await Assert.That(result.Success).IsTrue();
         // Verify via settings scope
-        var view = _engine.Config.For<Config>(Ctx);
+        var view = _app.Config.For<Config>(Ctx);
         var timeout = view.Resolve("TimeoutInSec", 30);
         await Assert.That(timeout).IsEqualTo(60);
         provider.Dispose();
@@ -87,7 +87,7 @@ public class DefaultHttpProviderTests
         var result = provider.Configure(action);
 
         await Assert.That(result.Success).IsTrue();
-        var view = _engine.Config.For<Config>(Ctx);
+        var view = _app.Config.For<Config>(Ctx);
         var baseUrl = view.Resolve<string?>("BaseUrl", null);
         await Assert.That(baseUrl).IsEqualTo("https://api.example.com");
         provider.Dispose();

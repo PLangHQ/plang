@@ -14,7 +14,7 @@ namespace PLang.Tests.App.Modules.builder;
 public class BuildingGuardTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
@@ -22,7 +22,7 @@ public class BuildingGuardTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_guard_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
         // Building is NOT enabled — default state
     }
 
@@ -31,7 +31,7 @@ public class BuildingGuardTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -41,8 +41,8 @@ public class BuildingGuardTests
     [Test]
     public async Task GetGoals_BuildingDisabled_ReturnsError()
     {
-        var action = new goals { Context = _engine.Context, Path = "." };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new goals { Context = _app.Context, Path = "." };
+        var result = await _app.RunAction(action, _app.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
     }
@@ -50,8 +50,8 @@ public class BuildingGuardTests
     [Test]
     public async Task GetActions_BuildingDisabled_ReturnsError()
     {
-        var action = new GetActions { Context = _engine.Context };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new GetActions { Context = _app.Context };
+        var result = await _app.RunAction(action, _app.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
     }
@@ -60,8 +60,8 @@ public class BuildingGuardTests
     public async Task ValidateActions_BuildingDisabled_ReturnsError()
     {
         var actions = new StepActions { new Action { Module = "file", ActionName = "read" } };
-        var action = new validate { Context = _engine.Context, Actions = actions };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new validate { Context = _app.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
     }
@@ -70,8 +70,8 @@ public class BuildingGuardTests
     public async Task SaveGoals_BuildingDisabled_ReturnsError()
     {
         var goals = new List<Goal> { new Goal { Name = "Test", Path = "/Test.goal" } };
-        var action = new goalsSave { Context = _engine.Context, Goals = goals };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new goalsSave { Context = _app.Context, Goals = goals };
+        var result = await _app.RunAction(action, _app.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
     }
@@ -79,8 +79,8 @@ public class BuildingGuardTests
     [Test]
     public async Task GetApp_BuildingDisabled_ReturnsError()
     {
-        var action = new app { Context = _engine.Context };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new app { Context = _app.Context };
+        var result = await _app.RunAction(action, _app.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
     }
@@ -88,8 +88,8 @@ public class BuildingGuardTests
     [Test]
     public async Task SaveApp_BuildingDisabled_ReturnsError()
     {
-        var action = new appSave { Context = _engine.Context };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new appSave { Context = _app.Context };
+        var result = await _app.RunAction(action, _app.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
     }
@@ -99,8 +99,8 @@ public class BuildingGuardTests
     {
         var step = new Step { Text = "step" };
         var from = new Step { Text = "step" };
-        var action = new merge { Context = _engine.Context, Step = step, StepFromLlm = from };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new merge { Context = _app.Context, Step = step, StepFromLlm = from };
+        var result = await _app.RunAction(action, _app.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
     }
@@ -108,8 +108,8 @@ public class BuildingGuardTests
     [Test]
     public async Task GetTypeInfo_BuildingDisabled_ReturnsError()
     {
-        var action = new types { Context = _engine.Context };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new types { Context = _app.Context };
+        var result = await _app.RunAction(action, _app.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
     }

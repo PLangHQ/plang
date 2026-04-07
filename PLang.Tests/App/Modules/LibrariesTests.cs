@@ -178,7 +178,7 @@ public class LibrariesTests
     {
         var modules = new EngineModules();
         await using var engine = new global::App.@this("/app", modules);
-        using var context = engine.CreateContext();
+        var context = engine.Context;
 
         var (action, error) = modules.GetCodeGenerated("variable", "set", context);
 
@@ -193,7 +193,7 @@ public class LibrariesTests
         var action = new MockCodeGenHandler();
         modules.Register("custom", "run", action);
         await using var engine = new global::App.@this("/app", modules);
-        using var context = engine.CreateContext();
+        var context = engine.Context;
 
         var (result, error) = modules.GetCodeGenerated("custom", "run", context);
 
@@ -207,7 +207,7 @@ public class LibrariesTests
         var modules = new EngineModules();
         modules.Register("legacy", "do", new MockHandler());
         await using var engine = new global::App.@this("/app", modules);
-        using var context = engine.CreateContext();
+        var context = engine.Context;
 
         var (action, error) = modules.GetCodeGenerated("legacy", "do", context);
 
@@ -221,7 +221,7 @@ public class LibrariesTests
     {
         var modules = new EngineModules();
         await using var engine = new global::App.@this("/app", modules);
-        using var context = engine.CreateContext();
+        var context = engine.Context;
 
         var (action, error) = modules.GetCodeGenerated("nonexistent_xyz", "nope", context);
 
@@ -240,7 +240,7 @@ public class LibrariesTests
         modules.Register("custom", "run", handler2);
 
         await using var engine = new global::App.@this("/app", modules);
-        using var context = engine.CreateContext();
+        var context = engine.Context;
 
         var (result, error) = modules.GetCodeGenerated("custom", "run", context);
 
@@ -253,7 +253,7 @@ public class LibrariesTests
     {
         var modules = new EngineModules();
         await using var engine = new global::App.@this("/app", modules);
-        using var context = engine.CreateContext();
+        var context = engine.Context;
 
         // variable.set is type-registered (discovered via [Action] attribute)
         var (action1, _) = modules.GetCodeGenerated("variable", "set", context);

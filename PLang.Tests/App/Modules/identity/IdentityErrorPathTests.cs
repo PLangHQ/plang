@@ -19,14 +19,14 @@ namespace PLang.Tests.App.Modules.identity;
 public class IdentityErrorPathTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_iderr_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -34,14 +34,14 @@ public class IdentityErrorPathTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     // --- GetOrCreateDefaultAsync: auto-create save failure (via Get action) ---
 
@@ -49,8 +49,8 @@ public class IdentityErrorPathTests
     public async Task GetOrCreateDefault_AutoCreateSaveFails_ReturnsError()
     {
         // No identities exist → auto-create path → save fails
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         var result = await new Get { Context = Ctx, Name = null }.Run();
         await Assert.That(result.Success).IsFalse();
@@ -66,8 +66,8 @@ public class IdentityErrorPathTests
         await Assert.That(createResult.Success).IsTrue();
 
         // Now swap to failing DataSource — GetAll still works (delegates), but Set fails
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         var result = await new Get { Context = Ctx, Name = null }.Run();
         await Assert.That(result.Success).IsFalse();
@@ -80,8 +80,8 @@ public class IdentityErrorPathTests
     public async Task Get_NullName_SaveFails_ReturnsError()
     {
         // Swap to failing save — Get(null) calls GetOrCreateDefaultAsync which returns error
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         var handler = new Get { Context = Ctx, Name = null };
         var result = await handler.Run();
@@ -95,8 +95,8 @@ public class IdentityErrorPathTests
     public async Task Export_NullName_SaveFails_ReturnsError()
     {
         // Swap to failing save — Export(null) calls GetOrCreateDefaultAsync which returns error
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         var handler = new Export { Context = Ctx, Name = null };
         var result = await handler.Run();
@@ -110,11 +110,11 @@ public class IdentityErrorPathTests
     public async Task MyIdentity_ResolveDefault_SaveFails_ReturnsNull()
     {
         // Swap to failing save before %MyIdentity% resolves
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         // Access %MyIdentity% — DynamicData lambda calls provider, which fails, returns null
-        var data = _engine.Context.Variables.Get("MyIdentity");
+        var data = _app.Context.Variables.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
         await Assert.That(data!.Value).IsNull();
     }
@@ -129,8 +129,8 @@ public class IdentityErrorPathTests
         await h.Run();
 
         // Swap to failing save — clearing old default fails
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         var handler = new Create { Context = Ctx, Name = "new", SetAsDefault = true };
         var result = await handler.Run();
@@ -144,8 +144,8 @@ public class IdentityErrorPathTests
     public async Task Create_SaveNewIdentityFails_ReturnsError()
     {
         // Swap to failing save — saving the new identity fails
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         var handler = new Create { Context = Ctx, Name = "newid", SetAsDefault = false };
         var result = await handler.Run();
@@ -165,8 +165,8 @@ public class IdentityErrorPathTests
         await h2.Run();
 
         // Swap to failing save — clearing old default fails
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         var handler = new SetDefault { Context = Ctx, Name = "new" };
         var result = await handler.Run();
@@ -184,8 +184,8 @@ public class IdentityErrorPathTests
         await h.Run();
 
         // Swap to failing save — saving the new default fails
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         var handler = new SetDefault { Context = Ctx, Name = "target" };
         var result = await handler.Run();
@@ -202,8 +202,8 @@ public class IdentityErrorPathTests
         await h.Run();
 
         // Swap to failing save — saving with new name fails
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         var handler = new Rename { Context = Ctx, Name = "oldname", NewName = "newname" };
         var result = await handler.Run();
@@ -220,8 +220,8 @@ public class IdentityErrorPathTests
         await h.Run();
 
         // Swap to failing remove — save succeeds but remove fails
-        SwapDataSource(_engine.System, new FailingRemoveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingRemoveDataSource(
+            _app.System.SettingsStore));
 
         var handler = new Rename { Context = Ctx, Name = "oldname", NewName = "newname" };
         var result = await handler.Run();
@@ -238,8 +238,8 @@ public class IdentityErrorPathTests
         await h.Run();
 
         // Swap to failing save
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         var handler = new Archive { Context = Ctx, Name = "toarchive" };
         var result = await handler.Run();
@@ -259,8 +259,8 @@ public class IdentityErrorPathTests
         await archiveH.Run();
 
         // Swap to failing save
-        SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.SettingsStore));
+        SwapDataSource(_app.System, new FailingSaveDataSource(
+            _app.System.SettingsStore));
 
         var handler = new Unarchive { Context = Ctx, Name = "tounarchive" };
         var result = await handler.Run();
@@ -275,7 +275,7 @@ public class IdentityErrorPathTests
     [Test]
     public async Task GetAll_DataSourceFails_ReturnsError()
     {
-        SwapDataSource(_engine.System, new FailingGetAllDataSource());
+        SwapDataSource(_app.System, new FailingGetAllDataSource());
 
         var handler = new list { Context = Ctx };
         var result = await handler.Run();
@@ -289,7 +289,7 @@ public class IdentityErrorPathTests
     public async Task Get_UnrecognizedValueType_ReturnsEmptyIdentity()
     {
         // Store a raw integer in the identity table — deserializes as Identity with empty fields
-        var ds = _engine.System.SettingsStore;
+        var ds = _app.System.SettingsStore;
         await ds.Set("identity", "weird", new Data("weird", 42));
 
         var result = await new Get { Context = Ctx, Name = "weird" }.Run();
@@ -302,7 +302,7 @@ public class IdentityErrorPathTests
     [Test]
     public async Task GetAll_MixedValues_IncludesAll()
     {
-        var ds = _engine.System.SettingsStore;
+        var ds = _app.System.SettingsStore;
 
         // Store a valid identity via Create action
         var create = new Create { Context = Ctx, Name = "valid", SetAsDefault = true };

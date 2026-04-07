@@ -20,7 +20,7 @@ namespace PLang.Tests.App.Modules.llm;
 public class LlmIntegrationTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
@@ -28,7 +28,7 @@ public class LlmIntegrationTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_integ_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -36,14 +36,14 @@ public class LlmIntegrationTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     // --- Test 1: Simple arithmetic ---
 
@@ -225,8 +225,8 @@ public class LlmIntegrationTests
         {
             var handler = new SnapshotReplayHandler(new List<string> { snapshot });
             var httpProvider = new DefaultHttpProvider(handler) { Name = "snapshot" };
-            _engine.Providers.Register<IHttpProvider>(httpProvider);
-            _engine.Providers.SetDefault<IHttpProvider>("snapshot");
+            _app.Providers.Register<IHttpProvider>(httpProvider);
+            _app.Providers.SetDefault<IHttpProvider>("snapshot");
         }
         else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
         {
@@ -259,8 +259,8 @@ public class LlmIntegrationTests
         {
             var handler = new SnapshotReplayHandler(multiSnapshot);
             var httpProvider = new DefaultHttpProvider(handler) { Name = "snapshot" };
-            _engine.Providers.Register<IHttpProvider>(httpProvider);
-            _engine.Providers.SetDefault<IHttpProvider>("snapshot");
+            _app.Providers.Register<IHttpProvider>(httpProvider);
+            _app.Providers.SetDefault<IHttpProvider>("snapshot");
         }
         else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
         {
@@ -271,8 +271,8 @@ public class LlmIntegrationTests
             // Capture all responses during the live call
             captureHandler = new CaptureHandler();
             var httpProvider = new DefaultHttpProvider(captureHandler) { Name = "capture" };
-            _engine.Providers.Register<IHttpProvider>(httpProvider);
-            _engine.Providers.SetDefault<IHttpProvider>("capture");
+            _app.Providers.Register<IHttpProvider>(httpProvider);
+            _app.Providers.SetDefault<IHttpProvider>("capture");
         }
 
         var action = new query

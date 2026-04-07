@@ -8,14 +8,14 @@ namespace PLang.Tests.App.Modules.identity;
 public class IdentityHandlerTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_identity_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -23,14 +23,14 @@ public class IdentityHandlerTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     // --- create ---
 
@@ -496,7 +496,7 @@ public class IdentityHandlerTests
         await handler.Run();
 
         // %MyIdentity% should reflect the new name
-        var myIdentity = _engine.System.Identity;
+        var myIdentity = _app.System.Identity;
         await Assert.That(myIdentity!.Name).IsEqualTo("renamed");
     }
 
@@ -567,7 +567,7 @@ public class IdentityHandlerTests
         await getOther.Run();
 
         // %MyIdentity% should still be the default, not "other"
-        var myIdentity = _engine.System.Identity;
+        var myIdentity = _app.System.Identity;
         await Assert.That(myIdentity!.Name).IsEqualTo("default");
     }
 

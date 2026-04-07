@@ -186,7 +186,7 @@ public class StepError { public Step? Step { get; init; } }
 
 Wrapper DTOs are only allowed at serialization boundaries.
 
-### 5. Collections own their loops
+### 5. Collections are the API
 
 Collection types inherit `List<T>` and add domain operations. Parents delegate — they never iterate directly:
 
@@ -215,6 +215,32 @@ public sealed class Actions : List<Action>
     }
 }
 ```
+
+**Expose the collection, don't proxy it.** If an object owns a collection, the collection itself is the interface. Don't wrap `Add`, `Remove`, `Get` in owner methods — that creates a middleman that hides what's actually happening.
+
+```csharp
+// Wrong: owner proxies the collection
+public class CallStack
+{
+    private readonly List<IError> _errors = new();
+    public void AddError(IError error) => _errors.Add(error);
+    public IReadOnlyList<IError> GetErrors() => _errors;
+    public void ClearErrors() => _errors.Clear();
+}
+
+// Correct: collection is the API
+public class CallStack
+{
+    public List<IError> Errors { get; } = new();
+}
+
+// Callers use the collection directly
+callStack.Errors.Add(error);
+callStack.Errors.Clear();
+var last = callStack.Errors.Last();
+```
+
+The owner's job is to *have* the collection, not to *proxy* it. When the collection needs domain-specific operations (like `Steps.Load` or `Actions.RunAsync`), those belong on the collection type itself — still not on the parent.
 
 ### 6. Request state is a parameter, never stored
 
@@ -424,6 +450,7 @@ If you're doing any of these, stop:
 5. **Wrapping data into a new DTO** — pass the existing object
 6. **Extracting `.Value` from Data to rewrap it** — relay the Data as-is
 7. **Caching context on a shared object** — pass it as a parameter
+8. **Proxying a collection through wrapper methods** — expose the collection, let callers use it directly
 
 The fix progression:
 1. Create the type, use it everywhere (basic plumbing)

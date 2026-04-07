@@ -7,13 +7,12 @@ namespace App.CallStack;
 
 /// <summary>
 /// Tracks the call stack during PLang execution.
-/// Thread-safe and optional (can be disabled for performance).
+/// Optional (can be disabled for performance). When disabled, frames are only
+/// created on error — zero overhead on the happy path.
 /// </summary>
 public sealed class @this
 {
     private readonly ConcurrentStack<CallFrame> _frames = new();
-    private readonly List<IError> _errors = new();
-    private readonly object _errorLock = new();
 
     /// <summary>
     /// Maximum depth allowed (prevents infinite recursion).
@@ -21,9 +20,16 @@ public sealed class @this
     public int MaxDepth { get; set; } = 1000;
 
     /// <summary>
-    /// Whether tracking is enabled.
+    /// Whether tracking is enabled during normal execution.
+    /// When disabled, error frames are still created on demand.
     /// </summary>
     public bool IsEnabled { get; set; } = true;
+
+    /// <summary>
+    /// All errors that occurred during execution. Inspect at end of run
+    /// for a complete error history, even if errors were handled.
+    /// </summary>
+    public List<IError> Errors { get; } = new();
 
     /// <summary>
     /// Current depth of the call stack.
@@ -53,11 +59,28 @@ public sealed class @this
     }
 
     /// <summary>
+    /// Creates an error frame on demand. Used when IsEnabled=false and an error occurs.
+    /// Captures the action and pushes a frame so the error trace is available.
+    /// </summary>
+    public CallFrame PushError(App.Goals.Goal.Steps.Step.Actions.Action.@this action, IError error,
+        App.Variables.@this? variables = null)
+    {
+        var parent = Current;
+        var frame = new CallFrame(action, parent);
+        frame.Error = error;
+        frame.Errors.Add(error);
+        if (variables != null) frame.SnapshotVariables(variables);
+        _frames.Push(frame);
+        Errors.Add(error);
+        return frame;
+    }
+
+    /// <summary>
     /// Pops the current frame from the call stack and disposes its tracked objects.
     /// </summary>
     public async Task<CallFrame?> PopAsync()
     {
-        if (!IsEnabled || !_frames.TryPop(out var frame))
+        if (!_frames.TryPop(out var frame))
             return null;
 
         frame.Complete();
@@ -69,53 +92,6 @@ public sealed class @this
     /// Peeks at the current frame without removing it.
     /// </summary>
     public CallFrame? Peek() => Current;
-
-    /// <summary>
-    /// Records a step execution in the current frame.
-    /// </summary>
-    public void RecordStep(Step step)
-    {
-        if (!IsEnabled) return;
-
-        var frame = Current;
-        if (frame == null) return;
-
-        frame.RecordStep(step);
-    }
-
-    /// <summary>
-    /// Adds an error to the current frame and global error list.
-    /// </summary>
-    public void AddError(IError error)
-    {
-        lock (_errorLock) { _errors.Add(error); }
-
-        if (!IsEnabled) return;
-
-        Current?.AddError(error);
-    }
-
-    /// <summary>
-    /// Gets all errors that have occurred.
-    /// </summary>
-    public IReadOnlyList<IError> GetErrors()
-    {
-        lock (_errorLock)
-        {
-            return _errors.ToList();
-        }
-    }
-
-    /// <summary>
-    /// Clears all errors.
-    /// </summary>
-    public void ClearErrors()
-    {
-        lock (_errorLock)
-        {
-            _errors.Clear();
-        }
-    }
 
     /// <summary>
     /// Gets all frames in the call stack (from top to bottom).
@@ -130,7 +106,7 @@ public sealed class @this
     /// </summary>
     public string GetStackTrace()
     {
-        if (!IsEnabled || _frames.IsEmpty)
+        if (_frames.IsEmpty)
             return "(no stack trace available)";
 
         var sb = new StringBuilder();
@@ -139,20 +115,6 @@ public sealed class @this
             sb.AppendLine(frame.GetStackTrace());
         }
         return sb.ToString().TrimEnd();
-    }
-
-    /// <summary>
-    /// Gets the flat execution history across all frames.
-    /// </summary>
-    public IEnumerable<(CallFrame Frame, ExecutedStep Step)> GetExecutionHistory()
-    {
-        foreach (var frame in _frames.Reverse())
-        {
-            foreach (var step in frame.ExecutedSteps)
-            {
-                yield return (frame, step);
-            }
-        }
     }
 
     /// <summary>
@@ -169,12 +131,12 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Clears the call stack.
+    /// Clears the call stack and error history.
     /// </summary>
     public void Clear()
     {
         _frames.Clear();
-        ClearErrors();
+        Errors.Clear();
     }
 
     /// <summary>

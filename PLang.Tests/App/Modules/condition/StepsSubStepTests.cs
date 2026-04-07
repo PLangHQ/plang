@@ -11,24 +11,22 @@ public class StepsSubStepTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly global::App.@this _engine;
+    private readonly global::App.@this _app;
 
     public StepsSubStepTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new global::App.@this(_tempDir, fileSystem: _fs);
+        _app = new global::App.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
     {
-        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
         if (System.IO.Directory.Exists(_tempDir))
             System.IO.Directory.Delete(_tempDir, true);
     }
-
-    private global::App.Actor.Context.@this CreateContext() => _engine.CreateContext();
 
     /// <summary>
     /// Creates a step that runs a condition.if action returning the given bool value.
@@ -108,7 +106,7 @@ public class StepsSubStepTests : IDisposable
     private (System.IO.MemoryStream stream, Func<string> getOutput) SetupCapture()
     {
         var stream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new Channel(
             EngineChannels.Default, stream,
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
@@ -129,8 +127,8 @@ public class StepsSubStepTests : IDisposable
             MakeConditionStep(0, 0, false),
             MakeOutputStep(1, 4, "should-be-skipped")
         };
-        var context = CreateContext();
-        var result = await _engine.RunSteps(steps, context);
+        var context = _app.Context;
+        var result = await _app.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(getOutput()).DoesNotContain("should-be-skipped");
@@ -145,8 +143,8 @@ public class StepsSubStepTests : IDisposable
             MakeConditionStep(0, 0, true),
             MakeOutputStep(1, 4, "child-executed")
         };
-        var context = CreateContext();
-        var result = await _engine.RunSteps(steps, context);
+        var context = _app.Context;
+        var result = await _app.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(getOutput()).Contains("child-executed");
@@ -162,8 +160,8 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(1, 4, "child-skipped"),
             MakeOutputStep(2, 0, "next-runs")
         };
-        var context = CreateContext();
-        var result = await _engine.RunSteps(steps, context);
+        var context = _app.Context;
+        var result = await _app.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         var output = getOutput();
@@ -182,8 +180,8 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(2, 8, "inner-skipped"), // inner child
             MakeOutputStep(3, 4, "outer-runs")     // outer child at indent 4
         };
-        var context = CreateContext();
-        var result = await _engine.RunSteps(steps, context);
+        var context = _app.Context;
+        var result = await _app.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         var output = getOutput();
@@ -200,8 +198,8 @@ public class StepsSubStepTests : IDisposable
             MakeConditionStep(0, 0, false),  // false but no indented children
             MakeOutputStep(1, 0, "next-runs") // same indent — not a child
         };
-        var context = CreateContext();
-        var result = await _engine.RunSteps(steps, context);
+        var context = _app.Context;
+        var result = await _app.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(getOutput()).Contains("next-runs");
@@ -218,8 +216,8 @@ public class StepsSubStepTests : IDisposable
             MakeConditionStep(2, 0, true),
             MakeOutputStep(3, 4, "child-B-runs")
         };
-        var context = CreateContext();
-        var result = await _engine.RunSteps(steps, context);
+        var context = _app.Context;
+        var result = await _app.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         var output = getOutput();
@@ -237,8 +235,8 @@ public class StepsSubStepTests : IDisposable
             MakeConditionStep(1, 4, true),
             MakeOutputStep(2, 8, "leaf-runs")
         };
-        var context = CreateContext();
-        var result = await _engine.RunSteps(steps, context);
+        var context = _app.Context;
+        var result = await _app.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(getOutput()).Contains("leaf-runs");
@@ -256,8 +254,8 @@ public class StepsSubStepTests : IDisposable
             MakeSetStep(0, 0, "myVar", false),
             MakeOutputStep(1, 4, "child-runs")
         };
-        var context = CreateContext();
-        var result = await _engine.RunSteps(steps, context);
+        var context = _app.Context;
+        var result = await _app.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
         // variable.set returns Data.Ok({name, value, type}) — Value is a variable object, not bool false

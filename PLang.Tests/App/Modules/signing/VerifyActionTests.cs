@@ -17,14 +17,14 @@ namespace PLang.Tests.App.Modules.signing;
 public class VerifyActionTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_verify_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -32,14 +32,14 @@ public class VerifyActionTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     private async Task<Data> SignHelper(object data, List<string>? contracts = null,
         int? expiresInMs = null, Dictionary<string, object>? headers = null)
@@ -52,7 +52,7 @@ public class VerifyActionTests
             ExpiresInMs = expiresInMs,
             Headers = headers
         };
-        return await _engine.RunAction<sign>(action, Ctx);
+        return await _app.RunAction<sign>(action, Ctx);
     }
 
     private async Task<Data> VerifyHelper(Data signedData, List<string>? contracts = null,
@@ -66,7 +66,7 @@ public class VerifyActionTests
             Headers = headers,
             TimeoutMs = timeoutMs
         };
-        return await _engine.RunAction<verify>(action, Ctx);
+        return await _app.RunAction<verify>(action, Ctx);
     }
 
     #region Happy Path
@@ -263,7 +263,7 @@ public class VerifyActionTests
         await Assert.That(result.Success).IsTrue();
 
         // Check nonce is in cache
-        var cached = await _engine.Cache.GetAsync($"nonce:{nonce}");
+        var cached = await _app.Cache.GetAsync($"nonce:{nonce}");
         await Assert.That(cached).IsNotNull();
     }
 
@@ -409,7 +409,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         // Register a throwing provider and point the signed data at it
         var throwing = new ThrowingProvider();
-        _engine.Providers.Register<ISigningProvider>(throwing);
+        _app.Providers.Register<ISigningProvider>(throwing);
         signed.Signature!.Algorithm = "throwing";
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });

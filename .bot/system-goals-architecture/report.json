@@ -31,20 +31,74 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Complete rewrite of proposal incorporating design decisions from architecture conversation. Dropped CRTP, __ prefix, DataList. Added . vs ! navigation, DeclaredOnly, registered navigators, scoped inheritance."
-        },
-        {
-          "paths": [".bot/system-goals-architecture/architect/v1/plan.md", ".bot/system-goals-architecture/architect/v1/summary.md", ".bot/system-goals-architecture/architect/summary.md"],
-          "type": "create",
-          "category": "doc",
-          "confidence": "high",
-          "context": "Session artifacts — plan, summary, bot root summary."
+          "context": "Complete rewrite of proposal incorporating design decisions from architecture conversation."
         }
       ],
       "after": {
         "status": "complete",
         "health": "green",
-        "notes": "Proposal rewritten. Ready for test-designer to create test suites for navigation split and navigator registry."
+        "notes": "Proposal rewritten."
+      }
+    },
+    {
+      "id": "d5e6f7a8-b9c0-1234-5678-9abcdef01234",
+      "bot": "coder",
+      "timestamp_start": "2026-04-07T00:00:00Z",
+      "timestamp_end": "2026-04-07T00:30:00Z",
+      "intent": "Replace all CreateContext() usage with app.Context, remove CreateContext from App",
+      "before": {
+        "assumptions": "CreateContext creates orphan contexts. app.Context is canonical.",
+        "risk": "Low - mechanical refactor."
+      },
+      "plan": "Remove CreateContext from App/this.cs. Update all test files to use app.Context.",
+      "actions": [
+        {
+          "paths": ["PLang/App/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Removed CreateContext method"
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/event/EventHandlerTests.cs",
+            "PLang.Tests/App/Modules/condition/IfHandlerTests.cs",
+            "PLang.Tests/App/Modules/condition/StepsSubStepTests.cs",
+            "PLang.Tests/App/Modules/condition/ConditionHandlerTests.cs",
+            "PLang.Tests/App/Modules/condition/CompareHandlerTests.cs",
+            "PLang.Tests/App/Modules/file/FileHandlerTests.cs",
+            "PLang.Tests/App/Modules/ui/RenderTests.cs",
+            "PLang.Tests/App/Modules/loop/ForeachTests.cs",
+            "PLang.Tests/App/PlangRuntimeTests.cs",
+            "PLang.Tests/App/Modules/http/ConfigureActionTests.cs",
+            "PLang.Tests/App/Modules/math/MathTests.cs",
+            "PLang.Tests/App/Modules/variable/settests.cs",
+            "PLang.Tests/App/Modules/variable/gettests.cs",
+            "PLang.Tests/App/Modules/variable/removetests.cs",
+            "PLang.Tests/App/Modules/variable/existstests.cs",
+            "PLang.Tests/App/Modules/variable/cleartests.cs",
+            "PLang.Tests/App/Modules/list/ListTests.cs",
+            "PLang.Tests/App/Modules/list/ListSetTests.cs",
+            "PLang.Tests/App/Modules/assert/AssertTests.cs",
+            "PLang.Tests/App/Modules/error/ThrowTests.cs",
+            "PLang.Tests/App/Modules/mock/MockTests.cs",
+            "PLang.Tests/App/Core/EventCollectionTests.cs",
+            "PLang.Tests/App/Modules/library/LibraryLoadTests.cs",
+            "PLang.Tests/App/Core/EngineTests.cs",
+            "PLang.Tests/App/Core/PrPipelineTests.cs",
+            "PLang.Tests/App/Core/StartGoalTests.cs",
+            "PLang.Tests/App/Modules/LibrariesTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replaced all CreateContext usage with app.Context"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "All CreateContext usage removed. Build succeeds with 0 errors."
       }
     }
   ]

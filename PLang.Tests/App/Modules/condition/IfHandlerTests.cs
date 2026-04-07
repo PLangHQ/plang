@@ -11,29 +11,27 @@ public class IfHandlerTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly global::App.@this _engine;
+    private readonly global::App.@this _app;
 
     public IfHandlerTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new global::App.@this(_tempDir, fileSystem: _fs);
+        _app = new global::App.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
     {
-        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
         if (System.IO.Directory.Exists(_tempDir))
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private global::App.Actor.Context.@this CreateContext() => _engine.CreateContext();
-
     [Test]
     public async Task Run_Truthy_InitializedNonBool_ReturnsTrue()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(42), Operator = "==", Right = Data.Ok(true) };
+        var action = new If { Context = _app.Context, Left = Data.Ok(42), Operator = "==", Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -43,7 +41,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_Truthy_UninitializedLeft_ReturnsFalse()
     {
-        var action = new If { Context = CreateContext(), Left = new Data(""), Operator = "==", Right = Data.Ok(true) };
+        var action = new If { Context = _app.Context, Left = new Data(""), Operator = "==", Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -53,7 +51,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_WithOperator_DelegatesToEvaluator()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
+        var action = new If { Context = _app.Context, Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -64,7 +62,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_ConditionTrue_GoalIfTrue_CallsGoal()
     {
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new Channel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
@@ -91,11 +89,11 @@ public class IfHandlerTests : IDisposable
                 }
             }
         };
-        _engine.Goals.Add(trueGoal);
+        _app.Goals.Add(trueGoal);
 
         var action = new If
         {
-            Context = CreateContext(),
+            Context = _app.Context,
             Left = Data.Ok(true),
             Operator = "==",
             Right = Data.Ok(true),
@@ -115,7 +113,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_ConditionFalse_GoalIfFalse_CallsGoal()
     {
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new Channel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
@@ -142,11 +140,11 @@ public class IfHandlerTests : IDisposable
                 }
             }
         };
-        _engine.Goals.Add(falseGoal);
+        _app.Goals.Add(falseGoal);
 
         var action = new If
         {
-            Context = CreateContext(),
+            Context = _app.Context,
             Left = Data.Ok(false),
             Operator = "==",
             Right = Data.Ok(true),
@@ -165,7 +163,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_ConditionTrue_NoGoalIfTrue_ReturnsTrueNoCall()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
+        var action = new If { Context = _app.Context, Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -175,7 +173,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_ConditionFalse_NoGoals_ReturnsFalse()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5) };
+        var action = new If { Context = _app.Context, Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -185,7 +183,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_TrueCondition_ReturnsBoolTrue()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
+        var action = new If { Context = _app.Context, Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -196,7 +194,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_FalseCondition_ReturnsBoolFalse()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5) };
+        var action = new If { Context = _app.Context, Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -209,7 +207,7 @@ public class IfHandlerTests : IDisposable
     {
         var action = new If
         {
-            Context = CreateContext(),
+            Context = _app.Context,
             Left = Data.Ok(true),
             Operator = "==",
             Right = Data.Ok(true),
@@ -224,7 +222,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_Negate_FlipsTrue_ToFalse()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5), Negate = true };
+        var action = new If { Context = _app.Context, Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5), Negate = true };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -234,7 +232,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_Negate_FlipsFalse_ToTrue()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5), Negate = true };
+        var action = new If { Context = _app.Context, Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5), Negate = true };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -263,7 +261,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_EqualsTrueWithToBooleanTrue_ReturnsTrue()
     {
         var data = new TestData(true);
-        var action = new If { Context = CreateContext(), Left = data, Operator = "==", Right = Data.Ok(true) };
+        var action = new If { Context = _app.Context, Left = data, Operator = "==", Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -274,7 +272,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_EqualsTrueWithToBooleanFalse_ReturnsFalse()
     {
         var data = new TestData(false);
-        var action = new If { Context = CreateContext(), Left = data, Operator = "==", Right = Data.Ok(true) };
+        var action = new If { Context = _app.Context, Left = data, Operator = "==", Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -285,7 +283,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_Negate_IsEmpty_CallsGoalWhenNotEmpty()
     {
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new Channel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
@@ -312,12 +310,12 @@ public class IfHandlerTests : IDisposable
                 }
             }
         };
-        _engine.Goals.Add(goal);
+        _app.Goals.Add(goal);
 
         var list = new List<string> { "item1" };
         var action = new If
         {
-            Context = CreateContext(),
+            Context = _app.Context,
             Left = Data.Ok(list),
             Operator = "isempty",
             Negate = true,
@@ -343,7 +341,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_IncompatibleComparisonTypes_ReturnsEvaluationError()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(new object()), Operator = ">", Right = Data.Ok(5) };
+        var action = new If { Context = _app.Context, Left = Data.Ok(new object()), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();

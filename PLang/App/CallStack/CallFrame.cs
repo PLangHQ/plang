@@ -19,12 +19,12 @@ public enum ExecutionPhase
 
 /// <summary>
 /// Represents a single frame in the call stack.
-/// Tracks the execution of a goal and its steps.
+/// Holds the Action reference — navigate the full trace on demand:
+/// action.Step.Goal.Parent...
 /// </summary>
 public sealed class CallFrame : IAsyncDisposable
 {
     private readonly Stopwatch _stopwatch;
-    private readonly List<ExecutedStep> _executedSteps = new();
     private readonly List<object> _disposables = new();
 
     /// <summary>
@@ -33,7 +33,8 @@ public sealed class CallFrame : IAsyncDisposable
     public string Id { get; }
 
     /// <summary>
-    /// The action being executed. Gives us the full tree: action.Step.Goal.
+    /// The action being executed. Navigate the full trace on demand:
+    /// action.Step.Goal.Parent...
     /// </summary>
     public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; }
 
@@ -59,13 +60,12 @@ public sealed class CallFrame : IAsyncDisposable
     public DateTime? CompletedAt { get; private set; }
 
     /// <summary>
-    /// Errors that occurred during execution.
+    /// Errors that occurred during this frame's execution.
     /// </summary>
     public List<IError> Errors { get; } = new();
 
     /// <summary>
-    /// The current error being handled. Set by error.check before calling the error goal.
-    /// Accessible via %!error% DynamicData. Future: %!error.Previous% walks Parent frames.
+    /// The error being handled in this frame. Set by error.check before calling the error goal.
     /// </summary>
     public IError? Error { get; set; }
 
@@ -101,34 +101,6 @@ public sealed class CallFrame : IAsyncDisposable
     public TimeSpan Duration => _stopwatch.Elapsed;
 
     /// <summary>
-    /// Records that a step has been executed.
-    /// </summary>
-    public void RecordStep(Step step)
-    {
-        if (_executedSteps.Count >= MaxStepsPerFrame)
-            return;
-
-        _executedSteps.Add(new ExecutedStep(step));
-    }
-
-    /// <summary>
-    /// Marks the current step as completed.
-    /// </summary>
-    public void CompleteCurrentStep(TimeSpan? duration = null)
-    {
-        if (_executedSteps.Count == 0) return;
-
-        var last = _executedSteps[^1];
-        last.CompletedAt = DateTime.UtcNow;
-        last.Duration = duration ?? (last.CompletedAt.Value - last.StartedAt);
-    }
-
-    /// <summary>
-    /// Gets all executed steps in this frame.
-    /// </summary>
-    public IReadOnlyList<ExecutedStep> ExecutedSteps => _executedSteps;
-
-    /// <summary>
     /// Snapshots variables that changed during this frame's execution.
     /// Captures Data.Updated > StartedAt from the Variables.
     /// </summary>
@@ -145,14 +117,6 @@ public sealed class CallFrame : IAsyncDisposable
         CompletedAt = DateTime.UtcNow;
         _stopwatch.Stop();
         Phase = Errors.Count > 0 ? ExecutionPhase.Error : ExecutionPhase.None;
-    }
-
-    /// <summary>
-    /// Adds an error to this frame.
-    /// </summary>
-    public void AddError(IError error)
-    {
-        Errors.Add(error);
     }
 
     /// <summary>
@@ -236,6 +200,4 @@ public sealed class CallFrame : IAsyncDisposable
     };
 
     public override string ToString() => $"[{Id}] {Action.Step?.Goal?.Name ?? Action.Module} - {Phase}";
-
-    public const int MaxStepsPerFrame = 100_000;
 }

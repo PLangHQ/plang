@@ -14,19 +14,19 @@ public class PlangRuntimeTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly global::App.@this _engine;
+    private readonly global::App.@this _app;
 
     public PlangRuntimeTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_runtime_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new global::App.@this(_tempDir, fileSystem: _fs);
+        _app = new global::App.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
     {
-        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
         if (System.IO.Directory.Exists(_tempDir))
             System.IO.Directory.Delete(_tempDir, true);
     }
@@ -37,7 +37,7 @@ public class PlangRuntimeTests : IDisposable
     public async Task Kernel_Execute_RunsStepActions()
     {
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new Channel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
@@ -58,8 +58,8 @@ public class PlangRuntimeTests : IDisposable
         };
 
         var steps = new GoalSteps { step };
-        var context = _engine.CreateContext();
-        var result = await _engine.RunSteps(steps, context);
+        var context = _app.Context;
+        var result = await _app.RunSteps(steps, context);
 
         await Assert.That(result.Success).IsTrue();
 
@@ -74,7 +74,7 @@ public class PlangRuntimeTests : IDisposable
     public async Task Step_Event_Before_ReturnsEmptyWhenNoBindings()
     {
         var step = new Step { Index = 0, Text = "test step" };
-        var context = _engine.CreateContext();
+        var context = _app.Context;
 
         // Step implements IEvent — Event property should exist
         await Assert.That(step.Events).IsNotNull();
@@ -89,7 +89,7 @@ public class PlangRuntimeTests : IDisposable
     [Test]
     public async Task Step_Event_Before_ReturnsMatchingBindings()
     {
-        var context = _engine.CreateContext();
+        var context = _app.Context;
 
         // Register a before-step event
         var onAction = new global::App.modules.@event.On
@@ -115,7 +115,7 @@ public class PlangRuntimeTests : IDisposable
     public async Task PlangRuntime_SimpleGoal_ExecutesThroughRunGoal()
     {
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new Channel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
@@ -144,8 +144,8 @@ public class PlangRuntimeTests : IDisposable
         };
         foreach (var s in goal.Steps) s.Goal = goal;
 
-        var context = _engine.CreateContext();
-        var result = await _engine.RunGoalAsync(goal, context);
+        var context = _app.Context;
+        var result = await _app.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
 

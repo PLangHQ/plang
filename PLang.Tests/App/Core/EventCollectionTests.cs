@@ -9,8 +9,8 @@ public class EventsTests
 {
     private static global::App.Actor.Context.@this CreateContext()
     {
-        var engine = new global::App.@this("/app");
-        return new global::App.Actor.Context.@this(engine);
+        var app = new global::App.@this("/app");
+        return app.Context;
     }
 
     [Test]

@@ -7,24 +7,24 @@ namespace PLang.Tests.App.Modules.EventTests;
 
 public class SkipActionTests
 {
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new PLangEngine("/app");
+        _app = new PLangEngine("/app");
     }
 
     [After(Test)]
     public void Cleanup()
     {
-        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 
     [Test]
     public async Task SkipAction_SetsEventOverride()
     {
-        var context = _engine.Context;
+        var context = _app.Context;
 
         var action = new SkipAction { Context = context, Value = "override-value" };
         var result = await action.Run();
@@ -37,7 +37,7 @@ public class SkipActionTests
     [Test]
     public async Task SkipAction_NullValue_SetsOverrideWithNull()
     {
-        var context = _engine.Context;
+        var context = _app.Context;
 
         var action = new SkipAction { Context = context, Value = null };
         var result = await action.Run();
@@ -50,7 +50,7 @@ public class SkipActionTests
     [Test]
     public async Task SkipAction_ReturnsValue()
     {
-        var context = _engine.Context;
+        var context = _app.Context;
 
         var action = new SkipAction { Context = context, Value = 42 };
         var result = await action.Run();
@@ -62,7 +62,7 @@ public class SkipActionTests
     [Test]
     public async Task SkipAction_ObjectValue_SetsOverride()
     {
-        var context = _engine.Context;
+        var context = _app.Context;
         var obj = new Dictionary<string, object> { ["status"] = 200 };
 
         var action = new SkipAction { Context = context, Value = obj };

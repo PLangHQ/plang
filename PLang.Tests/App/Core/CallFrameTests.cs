@@ -156,90 +156,6 @@ public class CallFrameTests
     }
 
     [Test]
-    public async Task RecordStep_AddsStep()
-    {
-        var frame = new CallFrame(MakeAction("TestGoal"));
-        var step = new Step { Index = 0, Text = "first step" };
-
-        frame.RecordStep(step);
-
-        await Assert.That(frame.ExecutedSteps.Count).IsEqualTo(1);
-        await Assert.That(frame.ExecutedSteps[0].Step.Index).IsEqualTo(0);
-        await Assert.That(frame.ExecutedSteps[0].Step.Text).IsEqualTo("first step");
-    }
-
-    [Test]
-    public async Task RecordStep_SetsStartedAt()
-    {
-        var before = DateTime.UtcNow;
-
-        var frame = new CallFrame(MakeAction("TestGoal"));
-        frame.RecordStep(new Step { Index = 0, Text = "step" });
-
-        var after = DateTime.UtcNow;
-        await Assert.That(frame.ExecutedSteps[0].StartedAt).IsGreaterThanOrEqualTo(before);
-        await Assert.That(frame.ExecutedSteps[0].StartedAt).IsLessThanOrEqualTo(after);
-    }
-
-    [Test]
-    public async Task RecordStep_RespectsMaxStepsLimit()
-    {
-        var frame = new CallFrame(MakeAction("TestGoal"));
-
-        for (int i = 0; i <= CallFrame.MaxStepsPerFrame; i++)
-        {
-            frame.RecordStep(new Step { Index = i, Text = $"step {i}" });
-        }
-
-        await Assert.That(frame.ExecutedSteps.Count).IsEqualTo(CallFrame.MaxStepsPerFrame);
-    }
-
-    [Test]
-    public async Task CompleteCurrentStep_SetsCompletedAt()
-    {
-        var frame = new CallFrame(MakeAction("TestGoal"));
-        frame.RecordStep(new Step { Index = 0, Text = "step" });
-
-        frame.CompleteCurrentStep();
-
-        await Assert.That(frame.ExecutedSteps[0].CompletedAt).IsNotNull();
-    }
-
-    [Test]
-    public async Task CompleteCurrentStep_SetsDuration()
-    {
-        var frame = new CallFrame(MakeAction("TestGoal"));
-        frame.RecordStep(new Step { Index = 0, Text = "step" });
-        await Task.Delay(10);
-
-        frame.CompleteCurrentStep();
-
-        await Assert.That(frame.ExecutedSteps[0].Duration).IsNotNull();
-        await Assert.That(frame.ExecutedSteps[0].Duration!.Value.TotalMilliseconds).IsGreaterThan(0);
-    }
-
-    [Test]
-    public async Task CompleteCurrentStep_WithExplicitDuration_UsesDuration()
-    {
-        var frame = new CallFrame(MakeAction("TestGoal"));
-        frame.RecordStep(new Step { Index = 0, Text = "step" });
-
-        frame.CompleteCurrentStep(TimeSpan.FromMilliseconds(100));
-
-        await Assert.That(frame.ExecutedSteps[0].Duration!.Value.TotalMilliseconds).IsEqualTo(100);
-    }
-
-    [Test]
-    public async Task CompleteCurrentStep_NoSteps_DoesNotThrow()
-    {
-        var frame = new CallFrame(MakeAction("TestGoal"));
-
-        frame.CompleteCurrentStep();
-
-        await Assert.That(frame.ExecutedSteps.Count).IsEqualTo(0);
-    }
-
-    [Test]
     public async Task Complete_SetsCompletedAt()
     {
         var frame = new CallFrame(MakeAction("TestGoal"));
@@ -263,7 +179,7 @@ public class CallFrameTests
     public async Task Complete_SetsPhaseToError_WhenHasErrors()
     {
         var frame = new CallFrame(MakeAction("TestGoal"));
-        frame.AddError(new Error("Test error"));
+        frame.Errors.Add(new Error("Test error"));
 
         frame.Complete();
 
@@ -271,12 +187,12 @@ public class CallFrameTests
     }
 
     [Test]
-    public async Task AddError_AddsToErrorsList()
+    public async Task Errors_Add_AddsToList()
     {
         var frame = new CallFrame(MakeAction("TestGoal"));
         var error = new Error("Test error");
 
-        frame.AddError(error);
+        frame.Errors.Add(error);
 
         await Assert.That(frame.Errors.Count).IsEqualTo(1);
         await Assert.That(frame.Errors[0]).IsEqualTo(error);
@@ -389,41 +305,5 @@ public class CallFrameTests
         await Assert.That(str).Contains(frame.Id);
         await Assert.That(str).Contains("TestGoal");
         await Assert.That(str).Contains("ExecutingStep");
-    }
-}
-
-public class ExecutedStepTests
-{
-    [Test]
-    public async Task Properties_StoresStepReference()
-    {
-        var step = new Step { Index = 5, Text = "test step" };
-        var executed = new ExecutedStep(step);
-
-        await Assert.That(executed.Step).IsEqualTo(step);
-        await Assert.That(executed.Step.Index).IsEqualTo(5);
-        await Assert.That(executed.Step.Text).IsEqualTo("test step");
-        await Assert.That(executed.StartedAt).IsNotEqualTo(default(DateTime));
-    }
-
-    [Test]
-    public async Task CompletedAt_CanBeSet()
-    {
-        var executed = new ExecutedStep(new Step { Index = 0, Text = "step" });
-
-        executed.CompletedAt = DateTime.UtcNow;
-
-        await Assert.That(executed.CompletedAt).IsNotNull();
-    }
-
-    [Test]
-    public async Task Duration_CanBeSet()
-    {
-        var executed = new ExecutedStep(new Step { Index = 0, Text = "step" });
-
-        executed.Duration = TimeSpan.FromMilliseconds(100);
-
-        await Assert.That(executed.Duration).IsNotNull();
-        await Assert.That(executed.Duration!.Value.TotalMilliseconds).IsEqualTo(100);
     }
 }

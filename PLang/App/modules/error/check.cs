@@ -113,25 +113,22 @@ public partial class Check : IContext, IAction
     {
         if (onError.Goal == null) return;
 
-        // Set error on context so %!error% resolves during the error goal
-        var previousError = Context.CurrentError;
-        Context.CurrentError = Data.Error;
+        // Pass the error as a parameter to the error goal — %!error% inside the goal
+        onError.Goal.Parameters ??= new();
+        onError.Goal.Parameters.Add(new App.Data.@this("!error", Data.Error));
 
-        // Also set on callstack frame if available (for future %!error.Previous% support)
-        var frame = Context.CallStack?.Current;
-        if (frame != null) frame.Error = Data.Error;
+        // Record on callstack for error history
+        var callStack = Context.CallStack;
+        if (callStack != null)
+        {
+            var action = Step.Actions.FirstOrDefault();
+            if (action != null && Data.Error != null)
+                callStack.PushError(action, Data.Error, Context.Variables);
+        }
 
-        try
-        {
-            // Stamp Action so GoalCall can navigate to sub-goals
-            onError.Goal.Action ??= Step.Actions.FirstOrDefault();
-            await app.RunGoalAsync(onError.Goal, Context);
-        }
-        finally
-        {
-            Context.CurrentError = previousError;
-            if (frame != null) frame.Error = previousError;
-        }
+        // Stamp Action so GoalCall can navigate to sub-goals
+        onError.Goal.Action ??= Step.Actions.FirstOrDefault();
+        await app.RunGoalAsync(onError.Goal, Context);
     }
 
     /// <summary>

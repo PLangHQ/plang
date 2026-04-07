@@ -9,14 +9,14 @@ namespace PLang.Tests.App.Modules.datasource;
 public class DataSourceTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_ds_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -24,7 +24,7 @@ public class DataSourceTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -33,8 +33,8 @@ public class DataSourceTests
 
     private SqliteSettingsStore CreateDataSource()
     {
-        var dbPath = _engine.FileSystem.Path.Combine(_tempDir, ".db", "test.sqlite");
-        return new SqliteSettingsStore(dbPath, _engine.FileSystem);
+        var dbPath = _app.FileSystem.Path.Combine(_tempDir, ".db", "test.sqlite");
+        return new SqliteSettingsStore(dbPath, _app.FileSystem);
     }
 
     [Test]

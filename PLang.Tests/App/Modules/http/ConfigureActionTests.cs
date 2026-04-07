@@ -16,7 +16,7 @@ namespace PLang.Tests.App.Modules.http;
 public class ConfigureActionTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
@@ -24,7 +24,7 @@ public class ConfigureActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_http_cfg_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -32,14 +32,14 @@ public class ConfigureActionTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Configure_SetsTimeoutOnScopeChain()
@@ -48,7 +48,7 @@ public class ConfigureActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var view = _engine.Config.For<Config>(Ctx);
+        var view = _app.Config.For<Config>(Ctx);
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(60);
     }
 
@@ -59,7 +59,7 @@ public class ConfigureActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var view = _engine.Config.For<Config>(Ctx);
+        var view = _app.Config.For<Config>(Ctx);
         await Assert.That(view.Resolve<string?>("BaseUrl", null)).IsEqualTo("https://api.example.com/v2");
     }
 
@@ -72,8 +72,8 @@ public class ConfigureActionTests
         await Assert.That(result.Success).IsTrue();
 
         // New context should still see the engine-level default
-        var newContext = _engine.CreateContext();
-        var view = _engine.Config.For<Config>(newContext);
+        var newContext = _app.Context;
+        var view = _app.Config.For<Config>(newContext);
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(120);
     }
 
@@ -86,12 +86,12 @@ public class ConfigureActionTests
         await Assert.That(result.Success).IsTrue();
 
         // Current context sees 90
-        var view = _engine.Config.For<Config>(Ctx);
+        var view = _app.Config.For<Config>(Ctx);
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(90);
 
         // New context sees class default (30)
-        var newContext = _engine.CreateContext();
-        var newView = _engine.Config.For<Config>(newContext);
+        var newContext = _app.Context;
+        var newView = _app.Config.For<Config>(newContext);
         await Assert.That(newView.Resolve("TimeoutInSec", 30)).IsEqualTo(30);
     }
 
@@ -101,8 +101,8 @@ public class ConfigureActionTests
         // Create a handler and make a request to lock the client
         var handler = new MockHttpMessageHandler();
         var provider = new DefaultHttpProvider(handler);
-        _engine.Providers.Register<IHttpProvider>(provider);
-        _engine.Providers.SetDefault<IHttpProvider>("default");
+        _app.Providers.Register<IHttpProvider>(provider);
+        _app.Providers.SetDefault<IHttpProvider>("default");
 
         var req = new request { Context = Ctx, Url = "https://example.com", Unsigned = true };
         await req.Run(); // locks the client
@@ -122,7 +122,7 @@ public class ConfigureActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var view = _engine.Config.For<Config>(Ctx);
+        var view = _app.Config.For<Config>(Ctx);
         // TimeoutInSec was not set — should still be class default
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(30);
     }
@@ -135,7 +135,7 @@ public class ConfigureActionTests
         await configAction.Run();
 
         // Verify config has 60
-        var view = _engine.Config.For<Config>(Ctx);
+        var view = _app.Config.For<Config>(Ctx);
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(60);
 
         // Make a request with per-step TimeoutInSec = 1
@@ -143,8 +143,8 @@ public class ConfigureActionTests
         var handler = new MockHttpMessageHandler();
         handler.SlowDelay = 3000; // 3 seconds
         var provider = new DefaultHttpProvider(handler) { Name = "timeout-test" };
-        _engine.Providers.Register<IHttpProvider>(provider);
-        _engine.Providers.SetDefault<IHttpProvider>("timeout-test");
+        _app.Providers.Register<IHttpProvider>(provider);
+        _app.Providers.SetDefault<IHttpProvider>("timeout-test");
 
         var requestAction = new request
         {

@@ -14,7 +14,7 @@ namespace PLang.Tests.App.Modules.llm;
 public class QueryEdgeCaseTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
     private MockHttpMessageHandler _handler = null!;
 
     [Before(Test)]
@@ -23,8 +23,8 @@ public class QueryEdgeCaseTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_edge_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
-        _handler = LlmTestHelper.SetupMockHttp(_engine);
+        _app = new PLangEngine(_tempDir);
+        _handler = LlmTestHelper.SetupMockHttp(_app);
     }
 
     [After(Test)]
@@ -32,14 +32,14 @@ public class QueryEdgeCaseTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Query_EmptyMessages_ReturnsError()

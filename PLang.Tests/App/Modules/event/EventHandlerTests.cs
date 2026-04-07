@@ -8,15 +8,13 @@ namespace PLang.Tests.App.actions.EventTests;
 
 public class EventHandlerTests
 {
-    private global::App.@this _engine = null!;
+    private global::App.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new global::App.@this("/test");
+        _app = new global::App.@this("/test");
     }
-
-    private global::App.Actor.Context.@this CreateContext() => _engine.CreateContext();
 
     private On MakeOn(global::App.Actor.Context.@this context, string type, string goalName,
         string? goalPattern = null, string? stepPattern = null, string? actionPattern = null,
@@ -36,7 +34,7 @@ public class EventHandlerTests
     [Test]
     public async Task On_BeforeGoal_RegistersEvent()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var result = await MakeOn(context, "BeforeGoal", "LogGoal", goalPattern: "TestGoal").Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -47,7 +45,7 @@ public class EventHandlerTests
     [Test]
     public async Task On_AfterGoal_RegistersEvent()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var result = await MakeOn(context, "AfterGoal", "LogGoal", goalPattern: "*").Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -57,7 +55,7 @@ public class EventHandlerTests
     [Test]
     public async Task On_BeforeStep_RegistersEvent()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var result = await MakeOn(context, "BeforeStep", "LogStep", goalPattern: "TestGoal", stepPattern: "set*").Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -67,7 +65,7 @@ public class EventHandlerTests
     [Test]
     public async Task On_AfterStep_RegistersEvent()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var result = await MakeOn(context, "AfterStep", "LogStep", priority: 5).Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -77,7 +75,7 @@ public class EventHandlerTests
     [Test]
     public async Task On_BeforeAction_RegistersEvent()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var result = await MakeOn(context, "BeforeAction", "OnVarSet", actionPattern: "variable.set").Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -87,7 +85,7 @@ public class EventHandlerTests
     [Test]
     public async Task On_AfterAction_RegistersEvent()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var result = await MakeOn(context, "AfterAction", "OnAfterAction", actionPattern: "variable.*").Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -97,7 +95,7 @@ public class EventHandlerTests
     [Test]
     public async Task On_InvalidType_ReturnsError()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var result = await MakeOn(context, "NonExistentType", "Goal").Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -107,7 +105,7 @@ public class EventHandlerTests
     [Test]
     public async Task Remove_UnregistersEvent()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         var registerResult = await MakeOn(context, "BeforeGoal", "LogGoal", goalPattern: "*").Run();
         var eventId = (string)registerResult.Value!;
 
@@ -123,7 +121,7 @@ public class EventHandlerTests
     [Test]
     public async Task On_WithRegex_MatchesRegexPattern()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         await MakeOn(context, "BeforeGoal", "LogGoal", goalPattern: "^Admin", isRegex: true).Run();
 
         var match = context.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "AdminGoal");
@@ -136,7 +134,7 @@ public class EventHandlerTests
     [Test]
     public async Task GoalPattern_Wildcard_MatchesPrefix()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         await MakeOn(context, "BeforeGoal", "LogGoal", goalPattern: "/admin/*").Run();
 
         var match = context.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "/admin/Users");
@@ -149,7 +147,7 @@ public class EventHandlerTests
     [Test]
     public async Task ActionPattern_Wildcard_MatchesModule()
     {
-        var context = CreateContext();
+        var context = _app.Context;
         await MakeOn(context, "BeforeAction", "OnVar", actionPattern: "variable.*").Run();
 
         var match = context.Events.GetMatchingBindings(EventType.BeforeAction, module: "variable", actionName: "set");
@@ -162,8 +160,8 @@ public class EventHandlerTests
     [Test]
     public async Task PerContextIsolation_TwoContexts_DifferentEvents()
     {
-        var context1 = CreateContext();
-        var context2 = CreateContext();
+        var context1 = _app.User.Context;
+        var context2 = _app.Service.Context;
 
         await MakeOn(context1, "BeforeGoal", "LogGoal", goalPattern: "TestGoal").Run();
 

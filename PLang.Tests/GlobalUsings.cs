@@ -9,6 +9,7 @@ global using Step = App.Goals.Goal.Steps.Step.@this;
 global using ErrorOrder = App.Goals.Goal.Steps.Step.ErrorOrder;
 global using CacheSettings = App.Goals.Goal.Steps.Step.CacheSettings;
 global using StepActions = App.Goals.Goal.Steps.Step.Actions.@this;
+global using PrAction = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 // Types that have v1 conflicts in PLang project but NOT in PLang.Tests (no Building.Model here)
 global using Goal = App.Goals.Goal.@this;
@@ -52,7 +53,6 @@ global using ICache = App.Cache.ICache;
 global using MemoryStepCache = App.Cache.MemoryStepCache;
 global using CallStack = App.CallStack.@this;
 global using CallFrame = App.CallStack.CallFrame;
-global using ExecutedStep = App.CallStack.ExecutedStep;
 global using SerializableCallStack = App.CallStack.SerializableCallStack;
 global using ExecutionPhase = App.CallStack.ExecutionPhase;
 global using SerializableCallFrame = App.CallStack.SerializableCallFrame;

@@ -23,7 +23,7 @@ namespace PLang.Tests.App.Modules.http;
 public class RequestActionTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
     private MockHttpMessageHandler _handler = null!;
 
     [Before(Test)]
@@ -32,12 +32,12 @@ public class RequestActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_http_req_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
 
         _handler = new MockHttpMessageHandler();
         var provider = new DefaultHttpProvider(_handler) { Name = "test" };
-        _engine.Providers.Register<IHttpProvider>(provider);
-        _engine.Providers.SetDefault<IHttpProvider>("test");
+        _app.Providers.Register<IHttpProvider>(provider);
+        _app.Providers.SetDefault<IHttpProvider>("test");
     }
 
     [After(Test)]
@@ -45,14 +45,14 @@ public class RequestActionTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     #region Test Infrastructure
 
@@ -271,7 +271,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_RelativeUrlWithBaseUrl_CombinesCorrectly()
     {
-        _engine.Config.Set("http.BaseUrl", "https://api.example.com", Ctx, isDefault: true);
+        _app.Config.Set("http.BaseUrl", "https://api.example.com", Ctx, isDefault: true);
 
         var action = new request { Context = Ctx, Url = "/users/1", Unsigned = true };
         var result = await action.Run();
@@ -746,7 +746,7 @@ public class RequestActionTests
     public async Task Get_DefaultAndStepHeaders_BothApplied()
     {
         var defaults = new Dictionary<string, object> { ["X-Api-Key"] = "default-key", ["X-Shared"] = "default" };
-        _engine.Config.Set("http.DefaultHeaders", defaults, Ctx, isDefault: true);
+        _app.Config.Set("http.DefaultHeaders", defaults, Ctx, isDefault: true);
 
         var action = new request
         {
@@ -920,7 +920,7 @@ public class RequestActionTests
     public async Task Get_OversizedResponse_ReturnsResponseTooLarge()
     {
         // Configure a tiny max response size
-        _engine.Config.Set("http.MaxResponseSize", 50L, Ctx, isDefault: true);
+        _app.Config.Set("http.MaxResponseSize", 50L, Ctx, isDefault: true);
 
         // Return a response larger than 50 bytes
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -939,7 +939,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_OversizedBinaryResponse_ReturnsResponseTooLarge()
     {
-        _engine.Config.Set("http.MaxResponseSize", 50L, Ctx, isDefault: true);
+        _app.Config.Set("http.MaxResponseSize", 50L, Ctx, isDefault: true);
 
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -959,7 +959,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_WithinSizeLimit_Succeeds()
     {
-        _engine.Config.Set("http.MaxResponseSize", 1000L, Ctx, isDefault: true);
+        _app.Config.Set("http.MaxResponseSize", 1000L, Ctx, isDefault: true);
 
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -976,7 +976,7 @@ public class RequestActionTests
     public async Task Stream_SSE_OversizedBuffer_StreamContinues()
     {
         // Configure a tiny SSE buffer (50 bytes)
-        _engine.Config.Set("http.MaxSSEBufferSize", 50L, Ctx, isDefault: true);
+        _app.Config.Set("http.MaxSSEBufferSize", 50L, Ctx, isDefault: true);
 
         // SSE with one message that exceeds the buffer, followed by a normal-sized message
         var sseContent = "data: " + new string('x', 100) + "\n\ndata: ok\n\n";

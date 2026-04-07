@@ -104,7 +104,6 @@ Context
   .CancellationToken    from actor (with timeout stack on top)
   .Parent               for nested execution (child contexts)
   .ConfigScope          goal-scoped settings
-  .CurrentError         error being handled (for %!error%)
   .Setup                during setup execution (run-once semantics)
   .Test                 test context when --test flag active
   .Event                current event context (in event handlers)
@@ -115,7 +114,7 @@ Context
 All prefixed with `!`, resolved on access via `DynamicData`:
 
 ```
-%!app%  %!context%  %!goal%  %!step%  %!error%
+%!app%  %!context%  %!goal%  %!step%
 %!variables%  %!callStack%  %!channels%  %!event%  %!test%
 ```
 
@@ -348,14 +347,17 @@ Modules define `IConfig` types. The source generator wires `app.Config.For<T>(co
 Optional frame tracking for debugging and error reporting.
 
 ```csharp
-CallStack.Push(action)      // create CallFrame, check MaxDepth (1000)
-CallStack.PopAsync()        // remove frame
-CallStack.RecordStep(step)  // track step in current frame
+CallStack.Push(action)              // create CallFrame, check MaxDepth (1000)
+CallStack.PopAsync()                // remove frame
+CallStack.PushError(action, error)  // create frame on error (even when disabled)
+CallStack.Errors                    // all errors that occurred (collection, not proxy)
 ```
 
-Each `CallFrame` captures: Action, Parent frame, Variables snapshot, Errors, Phase (BeforeGoal/ExecutingStep/etc.), timing.
+Each `CallFrame` captures: Action (navigate trace on demand: `action.Step.Goal.Parent...`), Parent frame, Variables snapshot, Errors, Phase, timing.
 
-Can be disabled for performance (`IsEnabled = false`).
+Can be disabled for performance (`IsEnabled = false`). When disabled, zero overhead on happy path — error frames are created on demand via `PushError()`.
+
+`%!error%` is not a context variable — it's passed as a parameter to the error goal via `onError.Goal.Parameters`.
 
 ---
 
@@ -381,6 +383,8 @@ Error hierarchy: `Error` -> `ActionError`, `StepError`, `GoalError`, `ServiceErr
 - `string` / `Type?` -> null
 
 Steps can configure error handling via `ErrorHandler`: retry count, retry interval, error goal to call, ignore flag.
+
+When an error goal is called, the error is passed as `%!error%` parameter to the goal call — it flows in as data, not as context state. After the error goal returns, `%!error%` is scoped to that goal's variables.
 
 ---
 
@@ -467,7 +471,7 @@ App/
 2. **Navigate, don't pass** — reach dependencies through the object graph, never decompose into parameters.
 3. **Names describe what the object IS** — nouns for properties, verbs for methods.
 4. **Keep object references, not extracted fields** — store `Step`, not `step.Text`.
-5. **Collections own their loops** — parents delegate, never iterate children directly.
+5. **Collections are the API** — expose the collection, don't proxy it. Parents delegate, never iterate children directly.
 6. **Request state is a parameter, never stored** — if per-request, pass it. If per-object, store it.
 7. **Data flows — relay, don't repackage** — never extract `.Value` and rewrap. Relay the Data.
 8. **No redundant wrappers** — if the data already exists on an object, pass that object.

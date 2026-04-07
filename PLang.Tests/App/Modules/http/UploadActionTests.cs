@@ -16,7 +16,7 @@ namespace PLang.Tests.App.Modules.http;
 public class UploadActionTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
     private MockHttpMessageHandler _handler = null!;
 
     [Before(Test)]
@@ -25,12 +25,12 @@ public class UploadActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_http_ul_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
 
         _handler = new MockHttpMessageHandler();
         var provider = new DefaultHttpProvider(_handler) { Name = "test" };
-        _engine.Providers.Register<IHttpProvider>(provider);
-        _engine.Providers.SetDefault<IHttpProvider>("test");
+        _app.Providers.Register<IHttpProvider>(provider);
+        _app.Providers.SetDefault<IHttpProvider>("test");
     }
 
     [After(Test)]
@@ -38,14 +38,14 @@ public class UploadActionTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     private class MockHttpMessageHandler : System.Net.Http.HttpMessageHandler
     {

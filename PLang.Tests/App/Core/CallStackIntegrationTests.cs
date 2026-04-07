@@ -14,12 +14,12 @@ public class CallStackIntegrationTests
         return action;
     }
 
-    private global::App.@this _engine = null!;
+    private global::App.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new global::App.@this("/test");
+        _app = new global::App.@this("/test");
     }
 
     [Test]
@@ -45,7 +45,7 @@ public class CallStackIntegrationTests
             Steps = new GoalSteps { step }
         };
 
-        var result = await _engine.RunGoalAsync(goal);
+        var result = await _app.RunGoalAsync(goal);
 
         // The goal should have failed
         await Assert.That(result.Success).IsFalse();
@@ -77,21 +77,6 @@ public class CallStackIntegrationTests
 
         await callStack.PopAsync();
         await Assert.That(callStack.Depth).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task CallStack_RecordStep_TracksInCurrentFrame()
-    {
-        var callStack = new CallStack();
-        callStack.Push(MakeAction("TestGoal"));
-
-        callStack.RecordStep(new Step { Index = 0, Text = "step one" });
-        callStack.RecordStep(new Step { Index = 1, Text = "step two" });
-
-        var frame = callStack.Current!;
-        await Assert.That(frame.ExecutedSteps.Count).IsEqualTo(2);
-        await Assert.That(frame.ExecutedSteps[0].Step.Text).IsEqualTo("step one");
-        await Assert.That(frame.ExecutedSteps[1].Step.Text).IsEqualTo("step two");
     }
 
     [Test]

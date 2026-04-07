@@ -13,7 +13,7 @@ namespace PLang.Tests.App.Modules.builder;
 public class ValidateActionsTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
@@ -21,8 +21,8 @@ public class ValidateActionsTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_validate_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
-        _engine.Building.IsEnabled = true;
+        _app = new PLangEngine(_tempDir);
+        _app.Building.IsEnabled = true;
     }
 
     [After(Test)]
@@ -30,7 +30,7 @@ public class ValidateActionsTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -45,8 +45,8 @@ public class ValidateActionsTests
             new Action { Module = "file", ActionName = "read", Parameters = new List<Data> { new("Path", "test.txt") } }
         };
 
-        var action = new validate { Context = _engine.Context, Actions = actions };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new validate { Context = _app.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That((bool)result.Value!).IsTrue();
@@ -60,8 +60,8 @@ public class ValidateActionsTests
             new Action { Module = "nonexistent", ActionName = "fake" }
         };
 
-        var action = new validate { Context = _engine.Context, Actions = actions };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new validate { Context = _app.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("nonexistent.fake");
@@ -95,8 +95,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _engine.Context, Actions = actions };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new validate { Context = _app.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         // Verify PrPath was actually resolved
@@ -121,8 +121,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _engine.Context, Actions = actions };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new validate { Context = _app.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
     }
@@ -141,8 +141,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _engine.Context, Actions = actions };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new validate { Context = _app.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         // Defaults should be filled for missing params
@@ -174,8 +174,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _engine.Context, Actions = actions };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new validate { Context = _app.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
@@ -201,8 +201,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _engine.Context, Actions = actions };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new validate { Context = _app.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
@@ -227,8 +227,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _engine.Context, Actions = actions };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new validate { Context = _app.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         // %flag% should NOT be converted — it's a variable reference
@@ -250,8 +250,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _engine.Context, Actions = actions };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new validate { Context = _app.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         var httpConfigure = actions[0];

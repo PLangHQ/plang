@@ -146,17 +146,6 @@ public class CallStackTests
     }
 
     [Test]
-    public async Task Pop_WhenDisabled_ReturnsNull()
-    {
-        var stack = new CallStack { IsEnabled = false };
-        stack.Push(MakeAction("TestGoal"));
-
-        var frame = await stack.PopAsync();
-
-        await Assert.That(frame).IsNull();
-    }
-
-    [Test]
     public async Task Pop_EmptyStack_ReturnsNull()
     {
         var stack = new CallStack();
@@ -189,114 +178,67 @@ public class CallStackTests
     }
 
     [Test]
-    public async Task RecordStep_UpdatesCurrentFrame()
-    {
-        var stack = new CallStack();
-        stack.Push(MakeAction("TestGoal"));
-        var step = new Step { Index = 5, Text = "test step", LineNumber = 6 };
-
-        stack.RecordStep(step);
-
-        await Assert.That(stack.Current!.ExecutedSteps.Count).IsEqualTo(1);
-        await Assert.That(stack.Current!.ExecutedSteps[0].Step.Index).IsEqualTo(5);
-        await Assert.That(stack.Current!.ExecutedSteps[0].Step.Text).IsEqualTo("test step");
-    }
-
-    [Test]
-    public async Task RecordStep_AddsExecutedStep()
-    {
-        var stack = new CallStack();
-        stack.Push(MakeAction("TestGoal"));
-        var step = new Step { Index = 0, Text = "test step", LineNumber = 1 };
-
-        stack.RecordStep(step);
-
-        await Assert.That(stack.Current!.ExecutedSteps.Count).IsEqualTo(1);
-    }
-
-    [Test]
-    public async Task RecordStep_WhenDisabled_DoesNothing()
-    {
-        var stack = new CallStack { IsEnabled = false };
-        stack.Push(MakeAction("TestGoal"));
-        var step = new Step { Index = 0, Text = "test step", LineNumber = 1 };
-
-        stack.RecordStep(step);
-
-        // No exception and no updates (stack is disabled so no current frame)
-    }
-
-    [Test]
-    public async Task RecordStep_NoCurrentFrame_DoesNotThrow()
-    {
-        var stack = new CallStack();
-        var step = new Step { Index = 0, Text = "test step", LineNumber = 1 };
-
-        stack.RecordStep(step);
-
-        await Assert.That(stack.Depth).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task AddError_AddsToErrorList()
+    public async Task Errors_Add_TracksErrors()
     {
         var stack = new CallStack();
         var error = new Error("Test error");
 
-        stack.AddError(error);
+        stack.Errors.Add(error);
 
-        var errors = stack.GetErrors();
-        await Assert.That(errors.Count).IsEqualTo(1);
-        await Assert.That(errors[0]).IsEqualTo(error);
+        await Assert.That(stack.Errors.Count).IsEqualTo(1);
+        await Assert.That(stack.Errors[0]).IsEqualTo(error);
     }
 
     [Test]
-    public async Task AddError_AddsToCurrentFrame()
+    public async Task Errors_MultipleAdds()
     {
         var stack = new CallStack();
-        stack.Push(MakeAction("TestGoal"));
-        var error = new Error("Test error");
+        stack.Errors.Add(new Error("Error 1"));
+        stack.Errors.Add(new Error("Error 2"));
 
-        stack.AddError(error);
-
-        await Assert.That(stack.Current!.Errors.Count).IsEqualTo(1);
+        await Assert.That(stack.Errors.Count).IsEqualTo(2);
     }
 
     [Test]
-    public async Task AddError_WhenDisabled_AddsToGlobalListOnly()
+    public async Task Errors_Clear_RemovesAll()
+    {
+        var stack = new CallStack();
+        stack.Errors.Add(new Error("Error 1"));
+        stack.Errors.Add(new Error("Error 2"));
+
+        stack.Errors.Clear();
+
+        await Assert.That(stack.Errors.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task PushError_CreatesFrameWhenDisabled()
     {
         var stack = new CallStack { IsEnabled = false };
         var error = new Error("Test error");
+        var action = MakeAction("FailingGoal");
 
-        stack.AddError(error);
+        var frame = stack.PushError(action, error);
 
-        var errors = stack.GetErrors();
-        await Assert.That(errors.Count).IsEqualTo(1);
+        await Assert.That(frame).IsNotNull();
+        await Assert.That(frame.Error).IsEqualTo(error);
+        await Assert.That(frame.Errors.Count).IsEqualTo(1);
+        await Assert.That(stack.Errors.Count).IsEqualTo(1);
+        await Assert.That(stack.Current).IsEqualTo(frame);
     }
 
     [Test]
-    public async Task GetErrors_ReturnsAllErrors()
+    public async Task PushError_CreatesFrameWhenEnabled()
     {
         var stack = new CallStack();
-        stack.AddError(new Error("Error 1"));
-        stack.AddError(new Error("Error 2"));
+        var error = new Error("Test error");
+        var action = MakeAction("FailingGoal");
 
-        var errors = stack.GetErrors();
+        var frame = stack.PushError(action, error);
 
-        await Assert.That(errors.Count).IsEqualTo(2);
-    }
-
-    [Test]
-    public async Task ClearErrors_RemovesAllErrors()
-    {
-        var stack = new CallStack();
-        stack.AddError(new Error("Error 1"));
-        stack.AddError(new Error("Error 2"));
-
-        stack.ClearErrors();
-
-        var errors = stack.GetErrors();
-        await Assert.That(errors.Count).IsEqualTo(0);
+        await Assert.That(frame.Error).IsEqualTo(error);
+        await Assert.That(stack.Errors.Count).IsEqualTo(1);
+        await Assert.That(stack.Current).IsEqualTo(frame);
     }
 
     [Test]
@@ -326,16 +268,6 @@ public class CallStackTests
     }
 
     [Test]
-    public async Task GetStackTrace_WhenDisabled_ReturnsNoTraceMessage()
-    {
-        var stack = new CallStack { IsEnabled = false };
-
-        var trace = stack.GetStackTrace();
-
-        await Assert.That(trace).IsEqualTo("(no stack trace available)");
-    }
-
-    [Test]
     public async Task GetStackTrace_EmptyStack_ReturnsNoTraceMessage()
     {
         var stack = new CallStack();
@@ -343,20 +275,6 @@ public class CallStackTests
         var trace = stack.GetStackTrace();
 
         await Assert.That(trace).IsEqualTo("(no stack trace available)");
-    }
-
-    [Test]
-    public async Task GetExecutionHistory_ReturnsFrameStepPairs()
-    {
-        var stack = new CallStack();
-        stack.Push(MakeAction("Goal1"));
-        stack.RecordStep(new Step { Index = 0, Text = "step1" });
-        stack.Push(MakeAction("Goal2"));
-        stack.RecordStep(new Step { Index = 0, Text = "step2" });
-
-        var history = stack.GetExecutionHistory().ToList();
-
-        await Assert.That(history.Count).IsEqualTo(2);
     }
 
     [Test]
@@ -413,12 +331,12 @@ public class CallStackTests
         var stack = new CallStack();
         stack.Push(MakeAction("Goal1"));
         stack.Push(MakeAction("Goal2"));
-        stack.AddError(new Error("Error"));
+        stack.Errors.Add(new Error("Error"));
 
         stack.Clear();
 
         await Assert.That(stack.Depth).IsEqualTo(0);
-        await Assert.That(stack.GetErrors().Count).IsEqualTo(0);
+        await Assert.That(stack.Errors.Count).IsEqualTo(0);
     }
 
     [Test]

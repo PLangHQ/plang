@@ -12,20 +12,19 @@ public class ModuleAddTests
     /// Creates an engine rooted at the directory containing the PLang assembly,
     /// so the sandboxed filesystem can find the assembly file via fs.File.Exists.
     /// </summary>
-    private static (global::App.Actor.Context.@this context, global::App.@this engine, string assemblyPath) CreateContextWithAssembly()
+    private static (global::App.Actor.Context.@this context, global::App.@this app, string assemblyPath) CreateContextWithAssembly()
     {
         var assemblyPath = typeof(global::App.@this).Assembly.Location;
         var assemblyDir = global::System.IO.Path.GetDirectoryName(assemblyPath)!;
-        var engine = new global::App.@this(assemblyDir);
-        var context = engine.CreateContext();
-        return (context, engine, assemblyPath);
+        var app = new global::App.@this(assemblyDir);
+        return (app.Context, app, assemblyPath);
     }
 
     [Test]
     public async Task Add_NonexistentPath_ReturnsError()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = engine.CreateContext();
+        await using var app = new global::App.@this("/app");
+        var context = app.Context;
 
         var add = new Add
         {
@@ -43,8 +42,8 @@ public class ModuleAddTests
     [Test]
     public async Task Add_ValidAssembly_DiscoverActions()
     {
-        var (context, engine, assemblyPath) = CreateContextWithAssembly();
-        await using (engine)
+        var (context, app, assemblyPath) = CreateContextWithAssembly();
+        await using (app)
         {
             var add = new Add
             {
@@ -53,7 +52,7 @@ public class ModuleAddTests
                 Namespace = "App.modules"
             };
 
-            var countBefore = engine.Modules.Count;
+            var countBefore = app.Modules.Count;
             var result = await add.Run();
 
             await Assert.That(result.Success).IsTrue();
@@ -65,8 +64,8 @@ public class ModuleAddTests
     [Test]
     public async Task Add_ValidAssembly_DiscoveredActionsAccessible()
     {
-        var (context, engine, assemblyPath) = CreateContextWithAssembly();
-        await using (engine)
+        var (context, app, assemblyPath) = CreateContextWithAssembly();
+        await using (app)
         {
             var add = new Add
             {
@@ -79,15 +78,15 @@ public class ModuleAddTests
             await Assert.That(result.Success).IsTrue();
 
             // After adding, actions should be discoverable via the flat registry
-            await Assert.That(engine.Modules.Contains("variable", "set")).IsTrue();
+            await Assert.That(app.Modules.Contains("variable", "set")).IsTrue();
         }
     }
 
     [Test]
     public async Task Add_WithCustomNamespace_OnlyDiscoversMatchingTypes()
     {
-        var (context, engine, assemblyPath) = CreateContextWithAssembly();
-        await using (engine)
+        var (context, app, assemblyPath) = CreateContextWithAssembly();
+        await using (app)
         {
             var add = new Add
             {
@@ -107,8 +106,8 @@ public class ModuleAddTests
     [Test]
     public async Task Add_ReturnsModuleInfo()
     {
-        var (context, engine, assemblyPath) = CreateContextWithAssembly();
-        await using (engine)
+        var (context, app, assemblyPath) = CreateContextWithAssembly();
+        await using (app)
         {
             var add = new Add
             {
@@ -127,8 +126,8 @@ public class ModuleAddTests
     [Test]
     public async Task Add_NullNamespace_DefaultsToBuiltInNamespace()
     {
-        var (context, engine, assemblyPath) = CreateContextWithAssembly();
-        await using (engine)
+        var (context, app, assemblyPath) = CreateContextWithAssembly();
+        await using (app)
         {
             var add = new Add
             {
@@ -141,15 +140,15 @@ public class ModuleAddTests
             await Assert.That(result.Success).IsTrue();
 
             // With null namespace, Discover defaults to App.modules
-            await Assert.That(engine.Modules.Contains("variable", "set")).IsTrue();
+            await Assert.That(app.Modules.Contains("variable", "set")).IsTrue();
         }
     }
 
     [Test]
     public async Task Add_AddedActions_ResolvableViaGetCodeGenerated()
     {
-        var (context, engine, assemblyPath) = CreateContextWithAssembly();
-        await using (engine)
+        var (context, app, assemblyPath) = CreateContextWithAssembly();
+        await using (app)
         {
             var add = new Add
             {
@@ -162,7 +161,7 @@ public class ModuleAddTests
             await Assert.That(result.Success).IsTrue();
 
             // Actions registered via Discover should be resolvable
-            var (action, error) = engine.Modules.GetCodeGenerated("variable", "set", context);
+            var (action, error) = app.Modules.GetCodeGenerated("variable", "set", context);
             await Assert.That(action).IsNotNull();
             await Assert.That(error).IsNull();
         }

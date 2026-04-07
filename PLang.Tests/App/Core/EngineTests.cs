@@ -165,11 +165,11 @@ public class EngineTests
     }
 
     [Test]
-    public async Task Constructor_DefaultsNameToApp()
+    public async Task Constructor_DefaultsNameFromFolder()
     {
-        await using var engine = new global::App.@this("/app");
+        await using var engine = new global::App.@this("/myapp");
 
-        await Assert.That(engine.Name).IsEqualTo("App");
+        await Assert.That(engine.Name).IsEqualTo("myapp");
     }
 
     [Test]
@@ -228,27 +228,15 @@ public class EngineTests
     }
 
     [Test]
-    public async Task CreateContext_CreatesNewContext()
+    public async Task Context_ReturnsContext()
     {
         await using var engine = new global::App.@this("/app");
 
-        using var context = engine.CreateContext();
+        var context = engine.Context;
 
         await Assert.That(context).IsNotNull();
         await Assert.That(context.App).IsEqualTo(engine);
         await Assert.That(context.CallStack).IsNotNull();
-    }
-
-    [Test]
-    public async Task CreateContext_AcceptsCustomVariables()
-    {
-        await using var engine = new global::App.@this("/app");
-        var variables = new Variables();
-        variables.Set("test", "value");
-
-        using var context = engine.CreateContext(variables);
-
-        await Assert.That(context.Variables).IsEqualTo(variables);
     }
 
     [Test]
@@ -305,7 +293,7 @@ public class EngineTests
         await using var engine = new global::App.@this("/app");
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         engine.Goals.Add(goal);
-        using var context = engine.CreateContext();
+        var context = engine.Context;
         await engine.RunGoalAsync(goal, context);
 
         // Goal is restored after execution, but during execution context.Goal was set
@@ -321,7 +309,7 @@ public class EngineTests
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         engine.Goals.Add(goal);
 
-        using var context = engine.CreateContext();
+        var context = engine.Context;
         await engine.RunGoalAsync(goal, context);
 
         // After completion, frame should be popped
@@ -346,7 +334,7 @@ public class EngineTests
         };
         engine.Goals.Add(goal);
 
-        using var context = engine.CreateContext();
+        var context = engine.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -380,7 +368,7 @@ public class EngineTests
     {
         await using var engine = new global::App.@this("/app");
         var step = MakeStep("nonexistent", "method");
-        using var context = engine.CreateContext();
+        var context = engine.Context;
 
         var result = await engine.RunSteps(new GoalSteps { step }, context);
 
@@ -396,7 +384,7 @@ public class EngineTests
         var step = MakeStep("variable", "set",
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
 
-        using var context = engine.CreateContext();
+        var context = engine.Context;
         await engine.RunSteps(new GoalSteps { step }, context);
 
         await Assert.That(context.Variables.GetValue("source")).IsEqualTo("hello");
@@ -411,7 +399,7 @@ public class EngineTests
         engine.Modules.Register("throwing", "fail", throwingHandler);
 
         var step = MakeStep("throwing", "fail");
-        using var context = engine.CreateContext();
+        var context = engine.Context;
 
         // Engine kernel does not catch handler exceptions — they propagate
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -427,7 +415,7 @@ public class EngineTests
         engine.Modules.Register("legacy", "do", nonGeneratedHandler);
 
         var step = MakeStep("legacy", "do");
-        using var context = engine.CreateContext();
+        var context = engine.Context;
 
         var result = await engine.RunSteps(new GoalSteps { step }, context);
 

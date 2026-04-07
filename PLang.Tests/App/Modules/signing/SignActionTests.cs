@@ -17,14 +17,14 @@ namespace PLang.Tests.App.Modules.signing;
 public class SignActionTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_sign_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -32,14 +32,14 @@ public class SignActionTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     private async Task<Data> SignData(object? data, List<string>? contracts = null,
         int? expiresInMs = null, Dictionary<string, object>? headers = null)
@@ -52,7 +52,7 @@ public class SignActionTests
             ExpiresInMs = expiresInMs,
             Headers = headers
         };
-        return await _engine.RunAction<sign>(action, Ctx);
+        return await _app.RunAction<sign>(action, Ctx);
     }
 
     #region Happy Path & Field Population
@@ -222,8 +222,8 @@ public class SignActionTests
         await new Get { Context = Ctx, Name = null }.Run();
 
         var mock = new MockSigningProvider("mock");
-        _engine.Providers.Register<ISigningProvider>(mock);
-        _engine.Providers.SetDefault<ISigningProvider>("mock");
+        _app.Providers.Register<ISigningProvider>(mock);
+        _app.Providers.SetDefault<ISigningProvider>("mock");
 
         var result = await SignData("test");
         await Assert.That(result.Success).IsTrue();
@@ -253,8 +253,8 @@ public class SignActionTests
     {
         // Register a key provider that throws to simulate identity creation failure
         var throwingProvider = new ThrowingKeyProvider();
-        _engine.Providers.Register<IKeyProvider>(throwingProvider);
-        _engine.Providers.SetDefault<IKeyProvider>("throwing-key");
+        _app.Providers.Register<IKeyProvider>(throwingProvider);
+        _app.Providers.SetDefault<IKeyProvider>("throwing-key");
 
         var result = await SignData("test");
         await Assert.That(result.Success).IsFalse();
@@ -269,8 +269,8 @@ public class SignActionTests
         await new Get { Context = Ctx, Name = null }.Run();
 
         var throwing = new ThrowingSigningProvider();
-        _engine.Providers.Register<ISigningProvider>(throwing);
-        _engine.Providers.SetDefault<ISigningProvider>("throwing");
+        _app.Providers.Register<ISigningProvider>(throwing);
+        _app.Providers.SetDefault<ISigningProvider>("throwing");
 
         var result = await SignData("test");
         await Assert.That(result.Success).IsFalse();

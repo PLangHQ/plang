@@ -6,37 +6,37 @@ namespace PLang.Tests.App.Modules.module;
 
 public class ModuleRemoveTests
 {
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new PLangEngine("/app");
+        _app = new PLangEngine("/app");
     }
 
     [After(Test)]
     public void Cleanup()
     {
-        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 
     [Test]
     public async Task Remove_ExistingModule_Succeeds()
     {
         // "variable" is a built-in module
-        await Assert.That(_engine.Modules.Contains("variable")).IsTrue();
+        await Assert.That(_app.Modules.Contains("variable")).IsTrue();
 
-        var action = new Remove { Context = _engine.Context, Name = "variable" };
+        var action = new Remove { Context = _app.Context, Name = "variable" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_engine.Modules.Contains("variable")).IsFalse();
+        await Assert.That(_app.Modules.Contains("variable")).IsFalse();
     }
 
     [Test]
     public async Task Remove_NonexistentModule_ReturnsNotFound()
     {
-        var action = new Remove { Context = _engine.Context, Name = "nonexistent" };
+        var action = new Remove { Context = _app.Context, Name = "nonexistent" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -47,10 +47,10 @@ public class ModuleRemoveTests
     [Test]
     public async Task Remove_ThenActions_NotResolvable()
     {
-        var action = new Remove { Context = _engine.Context, Name = "variable" };
+        var action = new Remove { Context = _app.Context, Name = "variable" };
         await action.Run();
 
-        var (resolved, error) = _engine.Modules.GetCodeGenerated("variable", "set", _engine.Context);
+        var (resolved, error) = _app.Modules.GetCodeGenerated("variable", "set", _app.Context);
         await Assert.That(resolved).IsNull();
         await Assert.That(error).IsNotNull();
     }

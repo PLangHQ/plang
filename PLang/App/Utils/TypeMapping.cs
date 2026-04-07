@@ -303,6 +303,10 @@ public static class TypeMapping
         if (targetType.IsAssignableFrom(sourceType))
             return (value, null);
 
+        // Data.@this is the universal value wrapper — any value can become Data
+        if (targetType == typeof(Data.@this) && value is not Data.@this)
+            return (new Data.@this("", value), null);
+
         // Handle nullable target types
         var underlying = Nullable.GetUnderlyingType(targetType);
         if (underlying != null)

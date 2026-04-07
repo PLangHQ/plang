@@ -8,14 +8,14 @@ namespace PLang.Tests.App.Modules.identity;
 public class MyIdentityResolverTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_myid_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -23,7 +23,7 @@ public class MyIdentityResolverTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -34,7 +34,7 @@ public class MyIdentityResolverTests
     public async Task MyIdentity_ResolvesOnFirstAccess_AutoCreates()
     {
         // Access %MyIdentity% via Variables — should auto-create default identity
-        var data = _engine.System.Context.Variables.Get("MyIdentity");
+        var data = _app.System.Context.Variables.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
 
         var identity = data!.Value as Identity;
@@ -47,7 +47,7 @@ public class MyIdentityResolverTests
     public async Task MyIdentity_DotNotation_Name()
     {
         // DynamicData auto-creates on access
-        var data = _engine.System.Context.Variables.Get("MyIdentity");
+        var data = _app.System.Context.Variables.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
 
         var identity = data!.Value as Identity;
@@ -58,7 +58,7 @@ public class MyIdentityResolverTests
     [Test]
     public async Task MyIdentity_DotNotation_PublicKey()
     {
-        var data = _engine.System.Context.Variables.Get("MyIdentity");
+        var data = _app.System.Context.Variables.Get("MyIdentity");
         var identity = data!.Value as Identity;
         var child = identity!.GetChild("PublicKey");
         await Assert.That(child).IsNotNull();
@@ -72,7 +72,7 @@ public class MyIdentityResolverTests
     [Test]
     public async Task MyIdentity_StringContext_ReturnsPublicKey()
     {
-        var data = _engine.System.Context.Variables.Get("MyIdentity");
+        var data = _app.System.Context.Variables.Get("MyIdentity");
         var identity = data!.Value as Identity;
 
         // ToString() should return the public key
@@ -82,7 +82,7 @@ public class MyIdentityResolverTests
     [Test]
     public async Task MyIdentity_UpdatedAfterSetDefault()
     {
-        var ctx = _engine.System.Context;
+        var ctx = _app.System.Context;
 
         // Create two identities
         var h1 = new Create { Context = ctx, Name = "first", SetAsDefault = true };
@@ -91,7 +91,7 @@ public class MyIdentityResolverTests
         await h2.Run();
 
         // Verify %MyIdentity% is "first" — DynamicData re-evaluates on each access
-        var data1 = _engine.System.Context.Variables.Get("MyIdentity");
+        var data1 = _app.System.Context.Variables.Get("MyIdentity");
         var id1 = data1!.Value as Identity;
         await Assert.That(id1!.Name).IsEqualTo("first");
 
@@ -100,7 +100,7 @@ public class MyIdentityResolverTests
         await setDefault.Run();
 
         // %MyIdentity% should now be "second" — DynamicData lambda calls provider again
-        var data2 = _engine.System.Context.Variables.Get("MyIdentity");
+        var data2 = _app.System.Context.Variables.Get("MyIdentity");
         var id2 = data2!.Value as Identity;
         await Assert.That(id2!.Name).IsEqualTo("second");
     }

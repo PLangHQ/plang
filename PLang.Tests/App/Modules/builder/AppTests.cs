@@ -13,7 +13,7 @@ namespace PLang.Tests.App.Modules.builder;
 public class AppTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
@@ -21,8 +21,8 @@ public class AppTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_app_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
-        _engine.Building.IsEnabled = true;
+        _app = new PLangEngine(_tempDir);
+        _app.Building.IsEnabled = true;
     }
 
     [After(Test)]
@@ -30,7 +30,7 @@ public class AppTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -47,29 +47,29 @@ public class AppTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "app.pr"), json);
 
         // Load triggers reading app.pr
-        await _engine.Load();
+        await _app.Load();
 
-        await Assert.That(_engine.Id).IsEqualTo("test-id-123");
-        await Assert.That(_engine.Name).IsEqualTo("TestApp");
+        await Assert.That(_app.Id).IsEqualTo("test-id-123");
+        await Assert.That(_app.Name).IsEqualTo("TestApp");
     }
 
     [Test]
     public async Task GetApp_ReturnsAppWithGeneratedId()
     {
         // No app.pr exists — app keeps its generated Id
-        await _engine.Load();
+        await _app.Load();
 
-        await Assert.That(_engine.Id).IsNotNull();
-        await Assert.That(_engine.Id.Length).IsGreaterThan(0);
+        await Assert.That(_app.Id).IsNotNull();
+        await Assert.That(_app.Id.Length).IsGreaterThan(0);
     }
 
     [Test]
     public async Task SaveApp_UpdatesTimestamp()
     {
-        _engine.Id = "test-id";
-        _engine.Version = "0.2";
+        _app.Id = "test-id";
+        _app.Version = "0.2";
 
-        var result = await _engine.Save();
+        var result = await _app.Save();
 
         await Assert.That(result.Success).IsTrue();
 
@@ -90,9 +90,9 @@ public class AppTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "app.pr"), "{ broken json {{");
 
         // Corrupt app.pr — Load() silently keeps generated identity
-        await _engine.Load();
+        await _app.Load();
 
-        await Assert.That(_engine.Id).IsNotNull();
-        await Assert.That(_engine.Id.Length).IsGreaterThan(0);
+        await Assert.That(_app.Id).IsNotNull();
+        await Assert.That(_app.Id.Length).IsGreaterThan(0);
     }
 }

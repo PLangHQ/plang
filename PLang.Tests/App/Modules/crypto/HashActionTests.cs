@@ -10,14 +10,14 @@ namespace PLang.Tests.App.Modules.crypto;
 public class HashActionTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_crypto_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -25,14 +25,14 @@ public class HashActionTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     // --- Hash action ---
 
@@ -90,9 +90,12 @@ public class HashActionTests
     [Test]
     public async Task Hash_NullInput_ReturnsError()
     {
-        // [IsNotNull] validation runs in ExecuteAsync
-        var action = new Hash { Data = new Data(""), Algorithm = "keccak256" };
-        var result = await action.ExecuteAsync(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this(), _engine, Ctx);
+        var action = new PrAction
+        {
+            Module = "crypto", ActionName = "hash",
+            Parameters = new List<Data> { new Data("data", null), new Data("algorithm", "keccak256") }
+        };
+        var result = await _app.Run(action, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -114,8 +117,8 @@ public class HashActionTests
     [Test]
     public async Task Hash_ProviderReturnsError_RelaysError()
     {
-        _engine.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
-        _engine.Providers.SetDefault<ICryptoProvider>("failing");
+        _app.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
+        _app.Providers.SetDefault<ICryptoProvider>("failing");
 
         var action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "keccak256" };
         var result = await action.Run();
@@ -171,7 +174,7 @@ public class HashActionTests
     public async Task Verify_NullHash_ReturnsError()
     {
         var verifyAction = new Verify { Data = Data.Ok("hello"), Hash = null!, Algorithm = "keccak256" };
-        var result = await verifyAction.ExecuteAsync(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this(), _engine, Ctx);
+        var result = await verifyAction.ExecuteAsync(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this(), _app, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -182,8 +185,12 @@ public class HashActionTests
     [Test]
     public async Task Verify_NullInput_ReturnsError()
     {
-        var verifyAction = new Verify { Data = new Data(""), Hash = "abc123", Algorithm = "keccak256" };
-        var result = await verifyAction.ExecuteAsync(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this(), _engine, Ctx);
+        var action = new PrAction
+        {
+            Module = "crypto", ActionName = "verify",
+            Parameters = new List<Data> { new Data("data", null), new Data("hash", "abc123"), new Data("algorithm", "keccak256") }
+        };
+        var result = await _app.Run(action, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -194,8 +201,8 @@ public class HashActionTests
     [Test]
     public async Task Verify_ProviderReturnsError_RelaysError()
     {
-        _engine.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
-        _engine.Providers.SetDefault<ICryptoProvider>("failing");
+        _app.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
+        _app.Providers.SetDefault<ICryptoProvider>("failing");
 
         var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("test"), Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
         var result = await verifyAction.Run();

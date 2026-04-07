@@ -12,7 +12,7 @@ namespace PLang.Tests.App.Modules.builder;
 public class GetActionsTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
@@ -20,8 +20,8 @@ public class GetActionsTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_actions_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
-        _engine.Building.IsEnabled = true;
+        _app = new PLangEngine(_tempDir);
+        _app.Building.IsEnabled = true;
     }
 
     [After(Test)]
@@ -29,7 +29,7 @@ public class GetActionsTests
     {
         try
         {
-            await _engine.DisposeAsync();
+            await _app.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -39,8 +39,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ReturnsAllModulesAndActions()
     {
-        var action = new GetActions { Context = _engine.Context };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new GetActions { Context = _app.Context };
+        var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         var actions = result.Value as StepActions;
@@ -51,8 +51,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ParameterTypes_IncludeNullableMarkers()
     {
-        var action = new GetActions { Context = _engine.Context };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new GetActions { Context = _app.Context };
+        var result = await _app.RunAction(action, _app.Context);
         var actions = (StepActions)result.Value!;
 
         // Find an action with nullable parameters (e.g., file.read has optional properties)
@@ -65,8 +65,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_VariableNameParams_Marked()
     {
-        var action = new GetActions { Context = _engine.Context };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new GetActions { Context = _app.Context };
+        var result = await _app.RunAction(action, _app.Context);
         var actions = (StepActions)result.Value!;
 
         // variable.set has a Name property with [VariableName]
@@ -81,8 +81,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_DefaultValues_Included()
     {
-        var action = new GetActions { Context = _engine.Context };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new GetActions { Context = _app.Context };
+        var result = await _app.RunAction(action, _app.Context);
         var actions = (StepActions)result.Value!;
 
         // file.list has Pattern with [Default("*")]
@@ -97,8 +97,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_CacheableFlag_FromActionAttribute()
     {
-        var action = new GetActions { Context = _engine.Context };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new GetActions { Context = _app.Context };
+        var result = await _app.RunAction(action, _app.Context);
         var actions = (StepActions)result.Value!;
 
         // file.save has [Action("save", Cacheable = false)]
@@ -115,8 +115,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ExcludesProviderProperties()
     {
-        var action = new GetActions { Context = _engine.Context };
-        var result = await _engine.RunAction(action, _engine.Context);
+        var action = new GetActions { Context = _app.Context };
+        var result = await _app.RunAction(action, _app.Context);
         var actions = (StepActions)result.Value!;
 
         // No action should expose [Provider]-attributed interface properties

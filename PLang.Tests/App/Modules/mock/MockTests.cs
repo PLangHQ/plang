@@ -9,12 +9,10 @@ namespace PLang.Tests.App.Modules.mock;
 
 public class MockTests
 {
-    private (global::App.Actor.Context.@this context, Variables memory, global::App.@this engine) CreateContext()
+    private (global::App.Actor.Context.@this context, Variables memory, global::App.@this app) CreateContext()
     {
-        var engine = new global::App.@this("/app");
-        var memory = new Variables();
-        var context = new global::App.Actor.Context.@this(engine, memory);
-        return (context, memory, engine);
+        var app = new global::App.@this("/app");
+        return (app.Context, app.Context.Variables, app);
     }
 
     // --- mock.action: simple return ---

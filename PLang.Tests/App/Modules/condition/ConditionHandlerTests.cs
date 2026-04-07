@@ -10,26 +10,21 @@ public class ConditionHandlerTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly global::App.@this _engine;
+    private readonly global::App.@this _app;
 
     public ConditionHandlerTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new global::App.@this(_tempDir, fileSystem: _fs);
+        _app = new global::App.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
     {
-        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
         if (System.IO.Directory.Exists(_tempDir))
             System.IO.Directory.Delete(_tempDir, true);
-    }
-
-    private global::App.Actor.Context.@this CreateContext()
-    {
-        return _engine.CreateContext();
     }
 
     // --- Unit tests: no goals ---
@@ -37,7 +32,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfTrue_NoGoals_ReturnsSuccessWithTrue()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(true), Operator = "==", Right = Data.Ok(true) };
+        var action = new If { Context = _app.Context, Left = Data.Ok(true), Operator = "==", Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -47,7 +42,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfFalse_NoGoals_ReturnsSuccessWithFalse()
     {
-        var action = new If { Context = CreateContext(), Left = Data.Ok(false), Operator = "==", Right = Data.Ok(true) };
+        var action = new If { Context = _app.Context, Left = Data.Ok(false), Operator = "==", Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -61,7 +56,7 @@ public class ConditionHandlerTests : IDisposable
     {
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new Channel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
@@ -89,11 +84,11 @@ public class ConditionHandlerTests : IDisposable
                 }
             }
         };
-        _engine.Goals.Add(trueGoal);
+        _app.Goals.Add(trueGoal);
 
         var action = new If
         {
-            Context = CreateContext(),
+            Context = _app.Context,
             Left = Data.Ok(true),
             Operator = "==",
             Right = Data.Ok(true),
@@ -115,7 +110,7 @@ public class ConditionHandlerTests : IDisposable
     {
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new Channel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
@@ -142,11 +137,11 @@ public class ConditionHandlerTests : IDisposable
                 }
             }
         };
-        _engine.Goals.Add(falseGoal);
+        _app.Goals.Add(falseGoal);
 
         var action = new If
         {
-            Context = CreateContext(),
+            Context = _app.Context,
             Left = Data.Ok(false),
             Operator = "==",
             Right = Data.Ok(true),
@@ -169,7 +164,7 @@ public class ConditionHandlerTests : IDisposable
 
         var action = new If
         {
-            Context = CreateContext(),
+            Context = _app.Context,
             Left = Data.Ok(true),
             Operator = "==",
             Right = Data.Ok(true),
@@ -190,7 +185,7 @@ public class ConditionHandlerTests : IDisposable
 
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new Channel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
@@ -218,7 +213,7 @@ public class ConditionHandlerTests : IDisposable
                 }
             }
         };
-        _engine.Goals.Add(writeGoal);
+        _app.Goals.Add(writeGoal);
 
         // Build main goal: file.exists → condition.if (using %fileResult.Exists%)
         var mainGoal = new Goal
@@ -264,8 +259,8 @@ public class ConditionHandlerTests : IDisposable
             }
         };
 
-        var context = _engine.CreateContext();
-        var goalResult = await _engine.RunGoalAsync(mainGoal, context);
+        var context = _app.Context;
+        var goalResult = await _app.RunGoalAsync(mainGoal, context);
 
         // Assert: goal succeeded
         await Assert.That(goalResult.Success).IsTrue();

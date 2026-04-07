@@ -14,14 +14,14 @@ namespace PLang.Tests.App.Modules.signing;
 public class IdentityKeyProviderTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_keyprovider_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -29,21 +29,21 @@ public class IdentityKeyProviderTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _engine.System.Context;
+    private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Create_UsesKeyProviderFromRegistry()
     {
         var mockProvider = new MockKeyProvider("mock-pub-key", "mock-priv-key");
-        _engine.Providers.Register<IKeyProvider>(mockProvider);
-        _engine.Providers.SetDefault<IKeyProvider>("mock");
+        _app.Providers.Register<IKeyProvider>(mockProvider);
+        _app.Providers.SetDefault<IKeyProvider>("mock");
 
         var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
         var result = await action.Run();
@@ -76,8 +76,8 @@ public class IdentityKeyProviderTests
     public async Task Create_KeyProvider_Throws_ReturnsError()
     {
         var throwingProvider = new ThrowingKeyProvider();
-        _engine.Providers.Register<IKeyProvider>(throwingProvider);
-        _engine.Providers.SetDefault<IKeyProvider>("throwing");
+        _app.Providers.Register<IKeyProvider>(throwingProvider);
+        _app.Providers.SetDefault<IKeyProvider>("throwing");
 
         var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
         var result = await action.Run();
@@ -90,8 +90,8 @@ public class IdentityKeyProviderTests
     public async Task Create_StoresKeysFromProvider()
     {
         var mockProvider = new MockKeyProvider("stored-pub", "stored-priv");
-        _engine.Providers.Register<IKeyProvider>(mockProvider);
-        _engine.Providers.SetDefault<IKeyProvider>("mock");
+        _app.Providers.Register<IKeyProvider>(mockProvider);
+        _app.Providers.SetDefault<IKeyProvider>("mock");
 
         var action = new Create { Context = Ctx, Name = "stored-test", SetAsDefault = true };
         var result = await action.Run();
@@ -111,7 +111,7 @@ public class IdentityKeyProviderTests
     {
         // Ed25519 already registered as default IKeyProvider at engine startup
         var mock = new MockKeyProvider("named-pub", "named-priv") { ProviderName = "mock" };
-        _engine.Providers.Register<IKeyProvider>(mock);
+        _app.Providers.Register<IKeyProvider>(mock);
 
         var action = new Create { Context = Ctx, Name = "named-test", SetAsDefault = true, Provider = "mock" };
         var result = await action.Run();

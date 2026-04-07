@@ -6,28 +6,28 @@ namespace PLang.Tests.App.Context;
 
 public class ContextVariableTests
 {
-    private global::App.@this _engine = null!;
+    private global::App.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new global::App.@this("/test");
+        _app = new global::App.@this("/test");
     }
 
     [Test]
     public async Task ContextVar_Engine_ReturnsEngineInstance()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         var value = vars.GetValue("!app");
 
         await Assert.That(value).IsNotNull();
-        await Assert.That(value).IsEqualTo(_engine);
+        await Assert.That(value).IsEqualTo(_app);
     }
 
     [Test]
     public async Task ContextVar_Variables_ReturnsVariables()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         var value = vars.GetValue("!variables");
 
         await Assert.That(value).IsNotNull();
@@ -37,7 +37,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Context_ReturnsPLangContext()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         var value = vars.GetValue("!context");
 
         await Assert.That(value).IsNotNull();
@@ -47,7 +47,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_FileSystem_ReturnsFileSystem()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         var value = vars.GetValue("!fileSystem");
 
         await Assert.That(value).IsNotNull();
@@ -56,7 +56,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_CallStack_ReturnsCallStack()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         var value = vars.GetValue("!callStack");
 
         await Assert.That(value).IsNotNull();
@@ -66,7 +66,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Channels_ReturnsChannels()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         var value = vars.GetValue("!channels");
 
         await Assert.That(value).IsNotNull();
@@ -75,7 +75,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Serializers_ReturnsSerializerRegistry()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         var value = vars.GetValue("!serializers");
 
         await Assert.That(value).IsNotNull();
@@ -84,7 +84,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Goal_IsNullInitially()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         var value = vars.GetValue("!goal");
 
         await Assert.That(value).IsNull();
@@ -93,7 +93,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Step_IsNullInitially()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         var value = vars.GetValue("!step");
 
         await Assert.That(value).IsNull();
@@ -102,11 +102,11 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Goal_ReturnsDynamic_WhenSet()
     {
-        var context = _engine.Context;
+        var context = _app.Context;
         var goal = new Goal { Name = "TestGoal" };
         context.Goal = goal;
 
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         var value = vars.GetValue("!goal");
 
         await Assert.That(value).IsNotNull();
@@ -116,11 +116,11 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Step_ReturnsDynamic_WhenSet()
     {
-        var context = _engine.Context;
+        var context = _app.Context;
         var step = new Step { Index = 0, Text = "test step" };
         context.Step = step;
 
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         var value = vars.GetValue("!step");
 
         await Assert.That(value).IsNotNull();
@@ -130,7 +130,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVars_ExcludedFromGetNames()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         vars.Set("regularVar", "hello");
 
         var names = vars.GetNames().ToList();
@@ -144,7 +144,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVars_ExcludedFromGetAll()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         vars.Set("regularVar", "hello");
 
         var all = vars.GetAll().ToList();
@@ -158,7 +158,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVars_SurviveClear()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         vars.Set("regularVar", "hello");
 
         vars.Clear();
@@ -174,7 +174,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVars_NotCloned()
     {
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
         vars.Set("regularVar", "hello");
 
         var clone = vars.Clone();
@@ -191,7 +191,7 @@ public class ContextVariableTests
     {
         // Proves the virtual/override fix: accessing .Value through a Data reference
         // correctly calls DynamicData.Value (not base Data.Value which returns null)
-        var vars = _engine.Variables;
+        var vars = _app.Variables;
 
         // Now is a DynamicData registered by Variables constructor
         var nowValue = vars.GetValue("Now");
@@ -199,7 +199,7 @@ public class ContextVariableTests
         await Assert.That(nowValue).IsTypeOf<DateTimeOffset>();
 
         // !goal is a DynamicData registered by RegisterContextVariables
-        var context = _engine.Context;
+        var context = _app.Context;
         var goal = new Goal { Name = "DynamicTest" };
         context.Goal = goal;
 
@@ -209,12 +209,12 @@ public class ContextVariableTests
     }
 
     [Test]
-    public async Task ContextVar_EngineProperty_AccessibleViaDotNotation()
+    public async Task ContextVar_AppProperty_AccessibleViaDotNotation()
     {
-        var vars = _engine.Variables;
-        var data = vars.Get("!engine.Name");
+        var vars = _app.Variables;
+        var data = vars.Get("!app.Name");
 
         await Assert.That(data).IsNotNull();
-        await Assert.That(data!.Value).IsEqualTo("App");
+        await Assert.That(data!.Value).IsEqualTo("test");
     }
 }

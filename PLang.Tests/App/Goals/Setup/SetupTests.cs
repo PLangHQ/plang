@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Goals.Setup;
 public class SetupTests
 {
     private string _tempDir = null!;
-    private global::App.@this _engine = null!;
+    private global::App.@this _app = null!;
 
     [Before(Test)]
     public void SetUp()
@@ -17,13 +17,13 @@ public class SetupTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-setup-test-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         var fs = new global::App.FileSystem.Default.PLangFileSystem(_tempDir, "");
-        _engine = new global::App.@this(fs);
+        _app = new global::App.@this(fs);
     }
 
     [After(Test)]
     public void TearDown()
     {
-        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
         if (System.IO.Directory.Exists(_tempDir))
             System.IO.Directory.Delete(_tempDir, true);
     }
@@ -31,12 +31,12 @@ public class SetupTests
     [Test]
     public async Task Setup_Goals_OrdersSetupFirst_ThenAlphabetical()
     {
-        _engine.Goals.Add(new Goal { Name = "Zebra", IsSetup = true, Path = "/Zebra.goal" });
-        _engine.Goals.Add(new Goal { Name = "Setup", IsSetup = true, Path = "/Setup.goal" });
-        _engine.Goals.Add(new Goal { Name = "Alpha", IsSetup = true, Path = "/Alpha.goal" });
-        _engine.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = "/NormalGoal.goal" });
+        _app.Goals.Add(new Goal { Name = "Zebra", IsSetup = true, Path = "/Zebra.goal" });
+        _app.Goals.Add(new Goal { Name = "Setup", IsSetup = true, Path = "/Setup.goal" });
+        _app.Goals.Add(new Goal { Name = "Alpha", IsSetup = true, Path = "/Alpha.goal" });
+        _app.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = "/NormalGoal.goal" });
 
-        var setupGoals = _engine.Goals.Setup.Goals.ToList();
+        var setupGoals = _app.Goals.Setup.Goals.ToList();
 
         await Assert.That(setupGoals.Count).IsEqualTo(3);
         await Assert.That(setupGoals[0].Name).IsEqualTo("Setup");
@@ -47,11 +47,11 @@ public class SetupTests
     [Test]
     public async Task Setup_ExcludesSetupGoalsFromRegularLookup()
     {
-        _engine.Goals.Add(new Goal { Name = "SetupGoal", IsSetup = true, Path = "/SetupGoal.goal" });
-        _engine.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = "/NormalGoal.goal" });
+        _app.Goals.Add(new Goal { Name = "SetupGoal", IsSetup = true, Path = "/SetupGoal.goal" });
+        _app.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = "/NormalGoal.goal" });
 
-        var found = _engine.Goals.Get("SetupGoal");
-        var normal = _engine.Goals.Get("NormalGoal");
+        var found = _app.Goals.Get("SetupGoal");
+        var normal = _app.Goals.Get("NormalGoal");
 
         await Assert.That(found).IsNull();
         await Assert.That(normal).IsNotNull();
@@ -61,7 +61,7 @@ public class SetupTests
     public async Task IsExecuted_ReturnsFalse_ForNewStep()
     {
         var step = new Step { Text = "do something" };
-        var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
+        var result = await _app.Goals.Setup.IsExecuted(step, _app);
 
         await Assert.That(result).IsFalse();
     }
@@ -71,8 +71,8 @@ public class SetupTests
     {
         var step = new Step { Text = "do something", Index = 0 };
 
-        await _engine.Goals.Setup.Record(step, _engine);
-        var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
+        await _app.Goals.Setup.Record(step, _app);
+        var result = await _app.Goals.Setup.IsExecuted(step, _app);
 
         await Assert.That(result).IsTrue();
     }
@@ -81,7 +81,7 @@ public class SetupTests
     public async Task IsExecuted_ReturnsFalse_ForNullHash()
     {
         var step = new Step { Text = "" };
-        var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
+        var result = await _app.Goals.Setup.IsExecuted(step, _app);
 
         await Assert.That(result).IsFalse();
     }
@@ -102,24 +102,24 @@ public class SetupTests
         step1.Goal = goal;
         step2.Goal = goal;
 
-        _engine.Goals.Add(goal);
+        _app.Goals.Add(goal);
 
         // Pre-record step1 with a distinctive marker value via raw DataSource.
         // Record() would overwrite with {goalPath, stepIndex, stepText, executedAt, error}.
         // If step1 is skipped, the marker survives.
-        await _engine.System.SettingsStore.Set("setup", "skip_hash1", new Data("skip_hash1", "MARKER_NOT_RE_EXECUTED"));
+        await _app.System.SettingsStore.Set("setup", "skip_hash1", new Data("skip_hash1", "MARKER_NOT_RE_EXECUTED"));
 
         // Run setup — step1 should be skipped, step2 should run
-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
         await Assert.That(result.Success).IsTrue();
 
         // Verify step1 was skipped: marker value should still be there (not overwritten by Record)
-        var step1Data = await _engine.System.SettingsStore.Get("setup", "skip_hash1");
+        var step1Data = await _app.System.SettingsStore.Get("setup", "skip_hash1");
         await Assert.That(step1Data.Success).IsTrue();
         await Assert.That(step1Data.Value?.ToString()).IsEqualTo("MARKER_NOT_RE_EXECUTED");
 
         // Verify step2 was executed and recorded (has executedAt metadata, not our marker)
-        var step2Data = await _engine.System.SettingsStore.Get("setup", "skip_hash2");
+        var step2Data = await _app.System.SettingsStore.Get("setup", "skip_hash2");
         await Assert.That(step2Data.Success).IsTrue();
         await Assert.That(step2Data.Value?.ToString()).IsNotEqualTo("MARKER_NOT_RE_EXECUTED");
     }
@@ -135,11 +135,11 @@ public class SetupTests
             Steps = new global::App.Goals.Goal.Steps.@this(new[] { step })
         };
         step.Goal = goal;
-        _engine.Goals.Add(goal);
+        _app.Goals.Add(goal);
 
         // Record with original hash
-        await _engine.Goals.Setup.Record(step, _engine);
-        await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsTrue();
+        await _app.Goals.Setup.Record(step, _app);
+        await Assert.That(await _app.Goals.Setup.IsExecuted(step, _app)).IsTrue();
 
         // Simulate changed step (different hash) — new step object with different hash
         var changedStep = new Step { Index = 0, Text = "create table v2",
@@ -147,7 +147,7 @@ public class SetupTests
         changedStep.Goal = goal;
 
         // The changed step should NOT be found as executed
-        await Assert.That(await _engine.Goals.Setup.IsExecuted(changedStep, _engine)).IsFalse();
+        await Assert.That(await _app.Goals.Setup.IsExecuted(changedStep, _app)).IsFalse();
     }
 
     [Test]
@@ -158,13 +158,13 @@ public class SetupTests
             Name = "Setup", IsSetup = true, Path = "/Setup.goal",
             Steps = new global::App.Goals.Goal.Steps.@this()
         };
-        _engine.Goals.Add(goal);
+        _app.Goals.Add(goal);
 
-        var context = _engine.Context;
+        var context = _app.Context;
 
         await Assert.That(context.Setup).IsNull();
 
-        var result = await _engine.Goals.Setup.RunAsync(_engine, context);
+        var result = await _app.Goals.Setup.RunAsync(_app, context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(context.Setup).IsNull(); // cleared after RunAsync
@@ -173,8 +173,8 @@ public class SetupTests
     [Test]
     public async Task Clone_PreservesSetup()
     {
-        var context = _engine.Context;
-        context.Setup = _engine.Goals.Setup;
+        var context = _app.Context;
+        context.Setup = _app.Goals.Setup;
 
         var clone = context.Clone();
 
@@ -196,14 +196,14 @@ public class SetupTests
             Steps = new global::App.Goals.Goal.Steps.@this(new[] { step })
         };
         step.Goal = goal;
-        _engine.Goals.Add(goal);
+        _app.Goals.Add(goal);
 
-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
 
         // Setup should fail
         await Assert.That(result.Success).IsFalse();
         // Step should NOT be recorded — it needs to re-run on next startup
-        await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsFalse();
+        await Assert.That(await _app.Goals.Setup.IsExecuted(step, _app)).IsFalse();
     }
 
     [Test]
@@ -220,13 +220,13 @@ public class SetupTests
         };
         step1.Goal = goal;
         step2.Goal = goal;
-        _engine.Goals.Add(goal);
+        _app.Goals.Add(goal);
 
         // Cancel after the first step completes
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context, cts.Token);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context, cts.Token);
 
         // Setup should abort with cancellation error
         await Assert.That(result.Success).IsFalse();
@@ -250,15 +250,15 @@ public class SetupTests
             System.IO.Path.Combine(buildDir, "start.pr"),
             """{"name":"Start","isSetup":false,"path":"/Start.goal","steps":[]}""");
 
-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         // Only the setup goal should be in the collection
-        var setupGoals = _engine.Goals.Setup.Goals.ToList();
+        var setupGoals = _app.Goals.Setup.Goals.ToList();
         await Assert.That(setupGoals.Count).IsEqualTo(1);
         await Assert.That(setupGoals[0].Name).IsEqualTo("Setup");
         // Non-setup goal should NOT be in the collection (not at a convention path)
-        await Assert.That(_engine.Goals.Get("Start")).IsNull();
+        await Assert.That(_app.Goals.Get("Start")).IsNull();
     }
 
     [Test]
@@ -276,13 +276,13 @@ public class SetupTests
             """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","steps":[]}""");
 
         // RunAsync discovers and runs setup goals internally
-        await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+        await _app.Goals.Setup.RunAsync(_app, _app.Context);
 
         // Non-setup goal should not be in collection yet
-        await Assert.That(_engine.Goals.Get("NormalGoal")).IsNull();
+        await Assert.That(_app.Goals.Get("NormalGoal")).IsNull();
 
         // But it should be lazy-loadable via GetAsync
-        var lazyLoaded = await _engine.Goals.GetAsync("NormalGoal");
+        var lazyLoaded = await _app.Goals.GetAsync("NormalGoal");
         await Assert.That(lazyLoaded).IsNotNull();
         await Assert.That(lazyLoaded!.Name).IsEqualTo("NormalGoal");
     }
@@ -291,10 +291,10 @@ public class SetupTests
     public async Task RunAsync_HandlesEmptyDirectory()
     {
         // No .pr files at all — RunAsync discovers nothing and succeeds
-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_engine.Goals.Setup.Goals.Any()).IsFalse();
+        await Assert.That(_app.Goals.Setup.Goals.Any()).IsFalse();
     }
 
     [Test]
@@ -308,10 +308,10 @@ public class SetupTests
             System.IO.Path.Combine(setupBuildDir, "setup.pr"),
             """{"name":"Setup","isSetup":true,"path":"/Setup/Setup.goal","steps":[]}""");
 
-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
-        var setupGoals = _engine.Goals.Setup.Goals.ToList();
+        var setupGoals = _app.Goals.Setup.Goals.ToList();
         await Assert.That(setupGoals.Count).IsEqualTo(1);
         await Assert.That(setupGoals[0].Name).IsEqualTo("Setup");
     }
@@ -327,11 +327,11 @@ public class SetupTests
             System.IO.Path.Combine(customDir, "setup.pr"),
             """{"name":"CustomSetup","isSetup":true,"path":"/CustomFolder/CustomSetup.goal","steps":[]}""");
 
-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
         // No setup goals discovered from non-convention path
-        await Assert.That(_engine.Goals.Setup.Goals.Any()).IsFalse();
+        await Assert.That(_app.Goals.Setup.Goals.Any()).IsFalse();
     }
 
     // --- IsTolerableError tests ---
@@ -340,34 +340,34 @@ public class SetupTests
     public async Task IsTolerableError_RecognizesTableAlreadyExists()
     {
         var error = Data.FromError(new Error("SQLite Error 1: 'table users already exists'"));
-        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
+        await Assert.That(_app.Goals.Setup.IsTolerableError(error)).IsTrue();
     }
 
     [Test]
     public async Task IsTolerableError_RecognizesIndexAlreadyExists()
     {
         var error = Data.FromError(new Error("index idx_users_email already exists"));
-        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
+        await Assert.That(_app.Goals.Setup.IsTolerableError(error)).IsTrue();
     }
 
     [Test]
     public async Task IsTolerableError_RecognizesDuplicateColumnName()
     {
         var error = Data.FromError(new Error("duplicate column name: email"));
-        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
+        await Assert.That(_app.Goals.Setup.IsTolerableError(error)).IsTrue();
     }
 
     [Test]
     public async Task IsTolerableError_RejectsUnrelatedError()
     {
         var error = Data.FromError(new Error("connection refused"));
-        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsFalse();
+        await Assert.That(_app.Goals.Setup.IsTolerableError(error)).IsFalse();
     }
 
     [Test]
     public async Task IsTolerableError_ReturnsFalseForSuccess()
     {
-        await Assert.That(_engine.Goals.Setup.IsTolerableError(Data.Ok())).IsFalse();
+        await Assert.That(_app.Goals.Setup.IsTolerableError(Data.Ok())).IsFalse();
     }
 
     /// <summary>

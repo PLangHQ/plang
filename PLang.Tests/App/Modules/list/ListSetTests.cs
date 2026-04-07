@@ -8,10 +8,8 @@ public class ListSetTests
 {
     private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
     {
-        var engine = new global::App.@this("/app");
-        var memory = new Variables();
-        var context = new global::App.Actor.Context.@this(engine, memory);
-        return (context, memory);
+        var app = new global::App.@this("/app");
+        return (app.Context, app.Context.Variables);
     }
 
     [Test]

@@ -259,6 +259,9 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         : base("!app")
     {
         Id = Guid.NewGuid().ToString("N")[..12];
+        var trimmed = absolutePath.TrimEnd('/', '\\');
+        var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
+        Name = lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
         AbsolutePath = absolutePath;
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
@@ -473,18 +476,6 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         {
             context.Goal = previousGoal;
         }
-    }
-
-    /// <summary>
-    /// Creates a new execution context.
-    /// </summary>
-    public Actor.Context.@this CreateContext(Variables.@this? variables = null)
-    {
-        var context = new Actor.Context.@this(this, variables)
-        {
-            CallStack = new CallStack.@this()
-        };
-        return context;
     }
 
     private static App.FileSystem.IPLangFileSystem CreateDefaultFileSystem(string rootPath)

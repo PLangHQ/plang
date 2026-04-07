@@ -18,14 +18,14 @@ namespace PLang.Tests.App.Core;
 public class NamedProviderRegistryTests
 {
     private string _tempDir = null!;
-    private PLangEngine _engine = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_registry_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _engine = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir);
     }
 
     [After(Test)]
@@ -33,7 +33,7 @@ public class NamedProviderRegistryTests
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -46,9 +46,9 @@ public class NamedProviderRegistryTests
     public async Task Register_SingleProvider_CanRetrieveByName()
     {
         var provider = new MockSigningProvider("custom");
-        _engine.Providers.Register<ISigningProvider>(provider);
+        _app.Providers.Register<ISigningProvider>(provider);
 
-        var result = _engine.Providers.Get<ISigningProvider>("custom");
+        var result = _app.Providers.Get<ISigningProvider>("custom");
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsSameReferenceAs(provider);
         await Assert.That(result.Value!.Name).IsEqualTo("custom");
@@ -58,7 +58,7 @@ public class NamedProviderRegistryTests
     public async Task Register_FirstProvider_BecomesDefault()
     {
         var provider = new MockSigningProvider("first");
-        _engine.Providers.Register<ISigningProvider>(provider);
+        _app.Providers.Register<ISigningProvider>(provider);
 
         // Ed25519 was registered first at engine startup, so it's the default
         // "first" should NOT be default
@@ -70,11 +70,11 @@ public class NamedProviderRegistryTests
     {
         var ed = new MockSigningProvider("mock-ed");
         var ec = new MockSigningProvider("mock-ec");
-        _engine.Providers.Register<ISigningProvider>(ed);
-        _engine.Providers.Register<ISigningProvider>(ec);
+        _app.Providers.Register<ISigningProvider>(ed);
+        _app.Providers.Register<ISigningProvider>(ec);
 
-        var edResult = _engine.Providers.Get<ISigningProvider>("mock-ed");
-        var ecResult = _engine.Providers.Get<ISigningProvider>("mock-ec");
+        var edResult = _app.Providers.Get<ISigningProvider>("mock-ed");
+        var ecResult = _app.Providers.Get<ISigningProvider>("mock-ec");
         await Assert.That(edResult.Value).IsSameReferenceAs(ed);
         await Assert.That(ecResult.Value).IsSameReferenceAs(ec);
     }
@@ -84,9 +84,9 @@ public class NamedProviderRegistryTests
     {
         // Ed25519 is already default from engine startup
         var second = new MockSigningProvider("second");
-        _engine.Providers.Register<ISigningProvider>(second);
+        _app.Providers.Register<ISigningProvider>(second);
 
-        var builtIn = _engine.Providers.Get<ISigningProvider>("ed25519");
+        var builtIn = _app.Providers.Get<ISigningProvider>("ed25519");
         await Assert.That(builtIn.Value!.IsDefault).IsTrue();
         await Assert.That(second.IsDefault).IsFalse();
     }
@@ -95,7 +95,7 @@ public class NamedProviderRegistryTests
     public async Task Register_DuplicateName_ReturnsProviderExistsError()
     {
         // "ed25519" already registered at startup
-        var result = _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("ed25519"));
+        var result = _app.Providers.Register<ISigningProvider>(new MockSigningProvider("ed25519"));
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderExists");
@@ -108,9 +108,9 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Get_DefaultCryptoProvider_ReturnsIsDefaultTrue()
     {
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("second"));
+        _app.Providers.Register<ISigningProvider>(new MockSigningProvider("second"));
 
-        var result = _engine.Providers.Get<ISigningProvider>();
+        var result = _app.Providers.Get<ISigningProvider>();
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value!.IsDefault).IsTrue();
         await Assert.That(result.Value.Name).IsEqualTo("ed25519");
@@ -129,7 +129,7 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Get_ByName_NonExistent_ReturnsError()
     {
-        var result = _engine.Providers.Get<ISigningProvider>("ecdsa");
+        var result = _app.Providers.Get<ISigningProvider>("ecdsa");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
@@ -141,22 +141,22 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Remove_NonDefaultCryptoProvider_Succeeds()
     {
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("second"));
+        _app.Providers.Register<ISigningProvider>(new MockSigningProvider("second"));
 
-        var result = _engine.Providers.Remove<ISigningProvider>("second");
+        var result = _app.Providers.Remove<ISigningProvider>("second");
         await Assert.That(result.Success).IsTrue();
 
-        var getRemoved = _engine.Providers.Get<ISigningProvider>("second");
+        var getRemoved = _app.Providers.Get<ISigningProvider>("second");
         await Assert.That(getRemoved.Success).IsFalse();
 
-        var getBuiltIn = _engine.Providers.Get<ISigningProvider>("ed25519");
+        var getBuiltIn = _app.Providers.Get<ISigningProvider>("ed25519");
         await Assert.That(getBuiltIn.Success).IsTrue();
     }
 
     [Test]
     public async Task Remove_DefaultCryptoProvider_ReturnsCannotRemoveDefaultError()
     {
-        var result = _engine.Providers.Remove<ISigningProvider>("ed25519");
+        var result = _app.Providers.Remove<ISigningProvider>("ed25519");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("CannotRemoveDefault");
     }
@@ -164,7 +164,7 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Remove_NonExistent_ReturnsProviderNotFoundError()
     {
-        var result = _engine.Providers.Remove<ISigningProvider>("unknown");
+        var result = _app.Providers.Remove<ISigningProvider>("unknown");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
@@ -177,20 +177,20 @@ public class NamedProviderRegistryTests
     public async Task SetDefault_ExistingProvider_BecomesDefault()
     {
         var second = new MockSigningProvider("second");
-        _engine.Providers.Register<ISigningProvider>(second);
+        _app.Providers.Register<ISigningProvider>(second);
 
-        var result = _engine.Providers.SetDefault<ISigningProvider>("second");
+        var result = _app.Providers.SetDefault<ISigningProvider>("second");
         await Assert.That(result.Success).IsTrue();
         await Assert.That(second.IsDefault).IsTrue();
 
-        var builtIn = _engine.Providers.Get<ISigningProvider>("ed25519");
+        var builtIn = _app.Providers.Get<ISigningProvider>("ed25519");
         await Assert.That(builtIn.Value!.IsDefault).IsFalse();
     }
 
     [Test]
     public async Task SetDefault_NonExistent_ReturnsProviderNotFoundError()
     {
-        var result = _engine.Providers.SetDefault<ISigningProvider>("unknown");
+        var result = _app.Providers.SetDefault<ISigningProvider>("unknown");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
@@ -203,11 +203,11 @@ public class NamedProviderRegistryTests
     public async Task List_ReturnsAllProvidersOfType()
     {
         // Ed25519 already registered at startup = 1
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("a"));
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("b"));
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("c"));
+        _app.Providers.Register<ISigningProvider>(new MockSigningProvider("a"));
+        _app.Providers.Register<ISigningProvider>(new MockSigningProvider("b"));
+        _app.Providers.Register<ISigningProvider>(new MockSigningProvider("c"));
 
-        var list = _engine.Providers.List<ISigningProvider>();
+        var list = _app.Providers.List<ISigningProvider>();
         await Assert.That(list.Count).IsEqualTo(4); // ed25519 + a + b + c
     }
 
@@ -215,7 +215,7 @@ public class NamedProviderRegistryTests
     public async Task List_AllInterfaces_ReturnsProvidersAcrossTypes()
     {
         // Engine registers ISigningProvider, IKeyProvider, IIdentityProvider, ICryptoProvider at startup
-        var all = _engine.Providers.List();
+        var all = _app.Providers.List();
         await Assert.That(all.Count).IsGreaterThanOrEqualTo(4);
     }
 
@@ -226,56 +226,56 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task ResolveType_Signing_ReturnsISigningProvider()
     {
-        var result = _engine.Providers.ResolveType("signing");
+        var result = _app.Providers.ResolveType("signing");
         await Assert.That(result).IsEqualTo(typeof(ISigningProvider));
     }
 
     [Test]
     public async Task ResolveType_Identity_ReturnsIIdentityProvider()
     {
-        var result = _engine.Providers.ResolveType("identity");
+        var result = _app.Providers.ResolveType("identity");
         await Assert.That(result).IsEqualTo(typeof(IIdentityProvider));
     }
 
     [Test]
     public async Task ResolveType_Crypto_ReturnsICryptoProvider()
     {
-        var result = _engine.Providers.ResolveType("crypto");
+        var result = _app.Providers.ResolveType("crypto");
         await Assert.That(result).IsEqualTo(typeof(ICryptoProvider));
     }
 
     [Test]
     public async Task ResolveType_Key_ReturnsIKeyProvider()
     {
-        var result = _engine.Providers.ResolveType("key");
+        var result = _app.Providers.ResolveType("key");
         await Assert.That(result).IsEqualTo(typeof(IKeyProvider));
     }
 
     [Test]
     public async Task ResolveType_Unknown_ReturnsNull()
     {
-        var result = _engine.Providers.ResolveType("quantum");
+        var result = _app.Providers.ResolveType("quantum");
         await Assert.That(result).IsNull();
     }
 
     [Test]
     public async Task ResolveType_Null_DefaultsToSigning()
     {
-        var result = _engine.Providers.ResolveType(null);
+        var result = _app.Providers.ResolveType(null);
         await Assert.That(result).IsEqualTo(typeof(ISigningProvider));
     }
 
     [Test]
     public async Task ResolveType_Empty_DefaultsToSigning()
     {
-        var result = _engine.Providers.ResolveType("");
+        var result = _app.Providers.ResolveType("");
         await Assert.That(result).IsEqualTo(typeof(ISigningProvider));
     }
 
     [Test]
     public async Task ResolveType_CaseInsensitive()
     {
-        var result = _engine.Providers.ResolveType("SIGNING");
+        var result = _app.Providers.ResolveType("SIGNING");
         await Assert.That(result).IsEqualTo(typeof(ISigningProvider));
     }
 
@@ -286,7 +286,7 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Remove_NullName_ReturnsValidationError()
     {
-        var result = _engine.Providers.Remove<ISigningProvider>(null!);
+        var result = _app.Providers.Remove<ISigningProvider>(null!);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
     }
@@ -294,7 +294,7 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Remove_EmptyName_ReturnsValidationError()
     {
-        var result = _engine.Providers.Remove<ISigningProvider>("");
+        var result = _app.Providers.Remove<ISigningProvider>("");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
     }
@@ -302,7 +302,7 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task SetDefault_NullName_ReturnsValidationError()
     {
-        var result = _engine.Providers.SetDefault<ISigningProvider>(null!);
+        var result = _app.Providers.SetDefault<ISigningProvider>(null!);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
     }
@@ -310,7 +310,7 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task SetDefault_EmptyName_ReturnsValidationError()
     {
-        var result = _engine.Providers.SetDefault<ISigningProvider>("");
+        var result = _app.Providers.SetDefault<ISigningProvider>("");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
     }
@@ -322,7 +322,7 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task GetOrDefault_WhenRegistered_ReturnsRegistered()
     {
-        var result = _engine.Providers.GetOrDefault<ISigningProvider>(new MockSigningProvider("fallback"));
+        var result = _app.Providers.GetOrDefault<ISigningProvider>(new MockSigningProvider("fallback"));
         await Assert.That(result.Name).IsEqualTo("ed25519");
     }
 
@@ -338,7 +338,7 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Has_WhenRegistered_ReturnsTrue()
     {
-        await Assert.That(_engine.Providers.Has<ISigningProvider>()).IsTrue();
+        await Assert.That(_app.Providers.Has<ISigningProvider>()).IsTrue();
     }
 
     [Test]
