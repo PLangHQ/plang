@@ -390,6 +390,9 @@ public class StartGoalTests
         public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
+        public List<Data>? PrParameters { get; set; }
+        public List<Data>? PrDefaults { get; set; }
+        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this? PrAction { get; set; }
 
         public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context)
         {
@@ -399,10 +402,11 @@ public class StartGoalTests
 
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
 
-        public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.@this engine, global::App.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::App.@this app, global::App.Actor.Context.@this context)
         {
-            Initialize(engine, context);
-            var contentData = action.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
+            Initialize(app, context);
+            var action = PrAction;
+            var contentData = action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
             object? content = contentData?.Value;
             if (content is string str && str.Contains('%'))
             {

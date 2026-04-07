@@ -332,33 +332,30 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     // --- [Method] primitives — the kernel ---
 
     /// <summary>
-    /// Runs a module action through the same code-generated execution path as steps.
-    /// Set properties via init, then call RunAction — app wires context, memory, validation, error handling.
-    /// Usage: var result = await app.RunAction&lt;Hash, string&gt;(new Hash { Data = x, Algorithm = "keccak256" }, context);
+    /// Runs a strongly-typed action. Properties are already set via init.
+    /// Used by C# code composing actions (providers, tests).
     /// </summary>
     public async Task<Data.@this<TResult>> RunAction<TAction, TResult>(TAction action, Actor.Context.@this context)
         where TAction : ICodeGenerated
     {
-        var emptyAction = new Goals.Goal.Steps.Step.Actions.Action.@this();
-        var result = await action.ExecuteAsync(emptyAction, this, context);
+        var result = await action.ExecuteAsync(this, context);
         if (!result.Success) return Data.@this<TResult>.FromError(result.Error!);
         return Data.@this<TResult>.Ok((TResult)result.Value!);
     }
 
     /// <summary>
-    /// Runs a module action and returns the raw Data result (preserves Signature, Properties, etc.).
-    /// Use when the result convention puts data on properties other than Value (e.g., sign puts SignedData on Signature).
+    /// Runs a strongly-typed action and returns the raw Data result.
+    /// Used by C# code composing actions (providers, tests).
     /// </summary>
     public async Task<Data.@this> RunAction<TAction>(TAction action, Actor.Context.@this context)
         where TAction : ICodeGenerated
     {
-        var emptyAction = new Goals.Goal.Steps.Step.Actions.Action.@this();
-        return await action.ExecuteAsync(emptyAction, this, context);
+        return await action.ExecuteAsync(this, context);
     }
 
     /// <summary>
-    /// Dispatches a single action. The app dispatcher doesn.t know about goals or steps.
-    /// It receives an action, finds the module handler, executes it, returns result.
+    /// Dispatches a .pr action. Sets parameters on the handler, then runs it.
+    /// This is the runtime path — .pr file → handler.
     /// </summary>
     public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context)
     {
@@ -366,7 +363,11 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         if (error != null)
             return App.Data.@this.FromError(error);
 
-        var result = await executor!.ExecuteAsync(action, this, context);
+        executor!.PrParameters = action.Parameters;
+        executor.PrDefaults = action.Defaults;
+        executor.PrAction = action;
+
+        var result = await executor.ExecuteAsync(this, context);
 
         // Handle return mapping — set variable on Variables
         if (action.Return != null)

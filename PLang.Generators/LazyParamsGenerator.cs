@@ -216,9 +216,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
             sb.AppendLine();
         }
 
+        // ICodeGenerated properties — set by App.Run before ExecuteAsync
+        sb.AppendLine("    public List<App.Data.@this>? PrParameters { get; set; }");
+        sb.AppendLine("    public List<App.Data.@this>? PrDefaults { get; set; }");
+        sb.AppendLine("    public App.Goals.Goal.Steps.Step.Actions.Action.@this? PrAction { get; set; }");
+        sb.AppendLine();
+
         // Resolution state
-        sb.AppendLine("    private List<App.Data.@this>? __parameters;");
-        sb.AppendLine("    private List<App.Data.@this>? __defaults;");
         sb.AppendLine("    private App.Variables.@this? __variables;");
         sb.AppendLine("    private App.@this? __app;");
         sb.AppendLine("    private App.Data.@this? __resolutionError;");
@@ -330,19 +334,16 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine();
 
         // ExecuteAsync
-        sb.AppendLine("    private App.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
+        // PrAction is set by App.Run (from ICodeGenerated), __action removed
         sb.AppendLine();
         sb.AppendLine("    public async System.Threading.Tasks.Task<App.Data.@this> ExecuteAsync(");
-        sb.AppendLine("        App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.@this app, App.Actor.Context.@this context)");
+        sb.AppendLine("        App.@this app, App.Actor.Context.@this context)");
         sb.AppendLine("    {");
-        sb.AppendLine("        __action = action;");
-        sb.AppendLine("        __parameters = action.Parameters;");
-        sb.AppendLine("        __defaults = action.Defaults;");
         sb.AppendLine("        __variables = context.Variables;");
         sb.AppendLine("        __app = app;");
         sb.AppendLine("        __resolutionError = null;");
         sb.AppendLine("        __paramData = new(StringComparer.OrdinalIgnoreCase);");
-        sb.AppendLine("        var __step = action.Step;");
+        sb.AppendLine("        var __step = PrAction?.Step;");
         sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<App.CallStack.CallFrame>)System.Array.Empty<App.CallStack.CallFrame>();");
 
         if (info.ImplementsIContext)
@@ -355,23 +356,23 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
         if (info.ImplementsIAction)
         {
-            sb.AppendLine("        Action = action;");
+            sb.AppendLine("        Action = PrAction;");
         }
         if (info.ImplementsIStep)
         {
-            sb.AppendLine("        Step = action.Step;");
+            sb.AppendLine("        Step = PrAction?.Step;");
         }
 
-        // Push callstack frame for this action
-        sb.AppendLine("        var __frame = context.CallStack?.Push(action);");
+        // Push callstack frame for this action (only when dispatched from .pr)
+        sb.AppendLine("        var __frame = PrAction != null ? context.CallStack?.Push(PrAction) : null;");
         sb.AppendLine();
 
         // Save and set context.Step/Goal/Event — restored in finally after Run()
         sb.AppendLine("        var __previousStep = context.Step;");
         sb.AppendLine("        var __previousGoal = context.Goal;");
         sb.AppendLine("        var __previousEvent = context.Event;");
-        sb.AppendLine("        context.Step = action.Step;");
-        sb.AppendLine("        context.Goal = action.Step?.Goal;");
+        sb.AppendLine("        context.Step = PrAction?.Step;");
+        sb.AppendLine("        context.Goal = PrAction?.Step?.Goal;");
         sb.AppendLine();
 
         // Resolve [Provider] properties from app.Providers
@@ -420,15 +421,22 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
 
         // Validate [IsNotNull] — check the Data parameter's .Value directly
-        foreach (var prop in info.Properties)
+        // Only when dispatched from .pr (PrParameters set). For C# composition, properties are set via init.
+        if (info.Properties.Any(p => p.IsNotNull && !p.IsValueType))
         {
-            if (prop.IsNotNull && !prop.IsValueType)
+            sb.AppendLine("        if (PrParameters != null)");
+            sb.AppendLine("        {");
+            foreach (var prop in info.Properties)
             {
-                var paramName = prop.Name.ToLowerInvariant();
-                sb.AppendLine($"        if (__parameters?.FirstOrDefault(d => string.Equals(d.Name, \"{paramName}\", StringComparison.OrdinalIgnoreCase))?.Value == null)");
-                sb.AppendLine($"            return App.Data.@this.FromError(new App.Errors.ServiceError(");
-                sb.AppendLine($"                \"'{paramName}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
+                if (prop.IsNotNull && !prop.IsValueType)
+                {
+                    var paramName = prop.Name.ToLowerInvariant();
+                    sb.AppendLine($"            if (PrParameters.FirstOrDefault(d => string.Equals(d.Name, \"{paramName}\", StringComparison.OrdinalIgnoreCase))?.Value == null)");
+                    sb.AppendLine($"                return App.Data.@this.FromError(new App.Errors.ServiceError(");
+                    sb.AppendLine($"                    \"'{paramName}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
+                }
             }
+            sb.AppendLine("        }");
         }
 
         sb.AppendLine("        if (__resolutionError != null) { context.Step = __previousStep; context.Goal = __previousGoal; return __resolutionError; }");
@@ -470,9 +478,9 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // __Resolve<T> helper
         sb.AppendLine("    private T? __Resolve<T>(string name)");
         sb.AppendLine("    {");
-        sb.AppendLine("        var data = __parameters?.FirstOrDefault(");
+        sb.AppendLine("        var data = PrParameters?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
-        sb.AppendLine("        data ??= __defaults?.FirstOrDefault(");
+        sb.AppendLine("        data ??= PrDefaults?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine("        if (data?.Value is string str && str.Contains('%'))");
         sb.AppendLine("        {");
@@ -522,14 +530,14 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine("        // Stamp GoalCalls with the action so goal resolution can navigate action → step → goal");
         sb.AppendLine("        if (__result is App.Goals.Goal.GoalCall __gc && __gc.Action == null)");
-        sb.AppendLine("            __gc.Action = __action;");
+        sb.AppendLine("            __gc.Action = PrAction;");
         sb.AppendLine("        return (T?)__result;");
         sb.AppendLine("    }");
         sb.AppendLine();
         sb.AppendLine("    private bool __HasParam(string name)");
         sb.AppendLine("    {");
-        sb.AppendLine("        return (__parameters?.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)) ?? false)");
-        sb.AppendLine("            || (__defaults?.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)) ?? false);");
+        sb.AppendLine("        return (PrParameters?.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)) ?? false)");
+        sb.AppendLine("            || (PrDefaults?.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)) ?? false);");
         sb.AppendLine("    }");
         sb.AppendLine();
         sb.AppendLine("    private static string __FormatValue(object? value)");
@@ -543,9 +551,9 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine("    private string? __StripPercent(string name)");
         sb.AppendLine("    {");
-        sb.AppendLine("        var data = __parameters?.FirstOrDefault(");
+        sb.AppendLine("        var data = PrParameters?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
-        sb.AppendLine("        data ??= __defaults?.FirstOrDefault(");
+        sb.AppendLine("        data ??= PrDefaults?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine("        if (data?.Value is string str)");
         sb.AppendLine("            return str.Trim('%');");

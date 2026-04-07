@@ -99,7 +99,7 @@ public class HashActionTests
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
+        await Assert.That(result.Error!.Key).IsEqualTo("MissingParameter");
         await Assert.That(result.Error.StatusCode).IsEqualTo(400);
     }
 
@@ -174,7 +174,7 @@ public class HashActionTests
     public async Task Verify_NullHash_ReturnsError()
     {
         var verifyAction = new Verify { Data = Data.Ok("hello"), Hash = null!, Algorithm = "keccak256" };
-        var result = await verifyAction.ExecuteAsync(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this(), _app, Ctx);
+        var result = await verifyAction.ExecuteAsync(_app, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -194,7 +194,7 @@ public class HashActionTests
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
+        await Assert.That(result.Error!.Key).IsEqualTo("MissingParameter");
         await Assert.That(result.Error.StatusCode).IsEqualTo(400);
     }
 

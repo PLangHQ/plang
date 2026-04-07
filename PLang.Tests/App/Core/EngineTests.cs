@@ -559,13 +559,16 @@ public class EngineTests
         public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
+        public List<Data>? PrParameters { get; set; }
+        public List<Data>? PrDefaults { get; set; }
+        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this? PrAction { get; set; }
         public bool IsDisposed { get; private set; }
 
         public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
-        public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.@this engine, global::App.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::App.@this app, global::App.Actor.Context.@this context)
         {
-            Initialize(engine, context);
+            Initialize(app, context);
             return ExecuteAsync(null);
         }
         public void Dispose() => IsDisposed = true;
@@ -577,13 +580,16 @@ public class EngineTests
         public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
+        public List<Data>? PrParameters { get; set; }
+        public List<Data>? PrDefaults { get; set; }
+        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this? PrAction { get; set; }
         public bool IsDisposed { get; private set; }
 
         public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
-        public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.@this engine, global::App.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::App.@this app, global::App.Actor.Context.@this context)
         {
-            Initialize(engine, context);
+            Initialize(app, context);
             return ExecuteAsync(null);
         }
         public ValueTask DisposeAsync() { IsDisposed = true; return ValueTask.CompletedTask; }
@@ -595,15 +601,18 @@ public class EngineTests
         public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
+        public List<Data>? PrParameters { get; set; }
+        public List<Data>? PrDefaults { get; set; }
+        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this? PrAction { get; set; }
 
         public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters)
         {
             throw new InvalidOperationException("Test exception");
         }
-        public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.@this engine, global::App.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::App.@this app, global::App.Actor.Context.@this context)
         {
-            Initialize(engine, context);
+            Initialize(app, context);
             return ExecuteAsync(null);
         }
     }

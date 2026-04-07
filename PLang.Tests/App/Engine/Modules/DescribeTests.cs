@@ -43,10 +43,13 @@ public class DescribeTests
 [global::App.modules.Action("getpath")]
 public class FakeGetPath : global::App.modules.ICodeGenerated
 {
+    public List<Data>? PrParameters { get; set; }
+    public List<Data>? PrDefaults { get; set; }
+    public global::App.Goals.Goal.Steps.Step.Actions.Action.@this? PrAction { get; set; }
+
     public Task<FakePathResult> Run() => Task.FromResult(new FakePathResult());
 
-    public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        global::App.@this engine,
+    public Task<Data> ExecuteAsync(global::App.@this app,
         global::App.Actor.Context.@this context) => Task.FromResult(Data.Ok());
 }
 
@@ -54,10 +57,13 @@ public class FakeGetPath : global::App.modules.ICodeGenerated
 [global::App.modules.Action("basic")]
 public class FakeBasicAction : global::App.modules.ICodeGenerated
 {
+    public List<Data>? PrParameters { get; set; }
+    public List<Data>? PrDefaults { get; set; }
+    public global::App.Goals.Goal.Steps.Step.Actions.Action.@this? PrAction { get; set; }
+
     public Task<Data> Run() => Task.FromResult(Data.Ok("hello"));
 
-    public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        global::App.@this engine,
+    public Task<Data> ExecuteAsync(global::App.@this app,
         global::App.Actor.Context.@this context) => Task.FromResult(Data.Ok());
 }
 
