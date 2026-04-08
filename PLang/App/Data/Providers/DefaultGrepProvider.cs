@@ -56,7 +56,7 @@ public class DefaultGrepProvider : IGrepProvider
         Regex? regex = null;
 
         try { regex = new Regex(pattern, RegexOptions.IgnoreCase); }
-        catch { /* invalid regex — fallback to contains */ }
+        catch (ArgumentException) { /* invalid regex — fallback to contains */ }
 
         for (int i = 0; i < lines.Length; i++)
         {

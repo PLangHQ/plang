@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using App.Attributes;
 using App.modules;
+using App.Utils;
 namespace App.Goals.Goal;
 
 /// <summary>
@@ -81,7 +82,7 @@ public sealed partial class @this : Data.@this<@this>
             var fileName = sepIndex >= 0 ? Path[(sepIndex + 1)..] : Path;
             var dotIndex = fileName.LastIndexOf('.');
             var baseName = dotIndex >= 0 ? fileName[..dotIndex] : fileName;
-            return dir + ".build" + (sepIndex >= 0 ? Path[sepIndex].ToString() : "\\") + baseName.ToLowerInvariant() + ".pr";
+            return (dir + ".build" + (sepIndex >= 0 ? Path[sepIndex].ToString() : "/") + baseName.ToLowerInvariant() + ".pr").AdjustPathToOs();
         }
         init { } // PrPath is derived from Path; init-only so callers get compile errors instead of silent no-op
     }

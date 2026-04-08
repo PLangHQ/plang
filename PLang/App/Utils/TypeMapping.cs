@@ -334,7 +334,7 @@ public static class TypeMapping
                         if (listResult != null && listResult.Count > 0)
                             return (listResult[0], null);
                     }
-                    catch { }
+                    catch (System.Text.Json.JsonException) { }
                 }
             }
         }
@@ -437,7 +437,7 @@ public static class TypeMapping
             if (value.GetType().IsEnum)
                 return (value, null);
             try { return (Enum.ToObject(targetType, value), null); }
-            catch { return (null, new Errors.Error(
+            catch (ArgumentException) { return (null, new Errors.Error(
                 $"Cannot convert {sourceType.Name} to enum {targetType.Name}",
                 "EnumConversionFailed", 400)); }
         }

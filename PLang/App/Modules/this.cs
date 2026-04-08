@@ -269,7 +269,7 @@ public sealed class @this
                 var configType = iface.GetGenericArguments()[0];
                 object? instance;
                 try { instance = Activator.CreateInstance(configType); }
-                catch { break; } // No parameterless constructor — fall through to [Default] attributes
+                catch (MissingMethodException) { break; } // No parameterless constructor — fall through to [Default] attributes
                 if (instance == null) break;
 
                 var defaults = new List<Data.@this>();

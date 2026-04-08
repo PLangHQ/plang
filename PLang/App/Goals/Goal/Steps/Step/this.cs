@@ -130,7 +130,7 @@ public sealed partial class @this : Data.@this<@this>
                 ? await RunActionsWithTimeout(context)
                 : await RunActions(context);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
         {
             result = Data.@this.FromError(new Errors.ServiceError(
                 ex.Message, "StepError", 400) { Exception = ex });

@@ -1,4 +1,5 @@
 using App;
+using App.Utils;
 
 namespace PLang.Tests.App.Foundation;
 
@@ -13,15 +14,15 @@ public class GoalPrPathTests
     [Test]
     public async Task PrPath_DerivedFromPath_Correctly()
     {
-        var goal = new Goal { Name = "Test", Path = "\\Test.goal" };
-        await Assert.That(goal.PrPath).IsEqualTo("\\.build\\test.pr");
+        var goal = new Goal { Name = "Test", Path = "\\Test.goal".AdjustPathToOs() };
+        await Assert.That(goal.PrPath).IsEqualTo("\\.build\\test.pr".AdjustPathToOs());
     }
 
     [Test]
     public async Task PrPath_SubDirectory_DerivedCorrectly()
     {
-        var goal = new Goal { Name = "Inner", Path = "\\SubDir\\Inner.goal" };
-        await Assert.That(goal.PrPath).IsEqualTo("\\SubDir\\.build\\inner.pr");
+        var goal = new Goal { Name = "Inner", Path = "\\SubDir\\Inner.goal".AdjustPathToOs() };
+        await Assert.That(goal.PrPath).IsEqualTo("\\SubDir\\.build\\inner.pr".AdjustPathToOs());
     }
 
     [Test]
@@ -41,10 +42,10 @@ public class GoalPrPathTests
     [Test]
     public async Task PrPath_UpdatesWhenPathChanges()
     {
-        var goal = new Goal { Name = "Test", Path = "\\Test.goal" };
-        await Assert.That(goal.PrPath).IsEqualTo("\\.build\\test.pr");
+        var goal = new Goal { Name = "Test", Path = "\\Test.goal".AdjustPathToOs() };
+        await Assert.That(goal.PrPath).IsEqualTo("\\.build\\test.pr".AdjustPathToOs());
 
-        goal.Path = "\\Other\\Test.goal";
-        await Assert.That(goal.PrPath).IsEqualTo("\\Other\\.build\\test.pr");
+        goal.Path = "\\Other\\Test.goal".AdjustPathToOs();
+        await Assert.That(goal.PrPath).IsEqualTo("\\Other\\.build\\test.pr".AdjustPathToOs());
     }
 }

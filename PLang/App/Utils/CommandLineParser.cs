@@ -1,5 +1,4 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace App.Utils;
 
@@ -98,8 +97,8 @@ public class CommandLineParser
 
 	private static bool IsValidJson(string s)
 	{
-		try { JToken.Parse(s); return true; }
-		catch { return false; }
+		try { JsonDocument.Parse(s); return true; }
+		catch (JsonException) { return false; }
 	}
 
 	private bool IsParameter(string arg)
@@ -128,20 +127,21 @@ public class CommandLineParser
 		// Try JSON deserialization — handles numbers, booleans, null, objects, arrays
 		try
 		{
-			var token = JToken.Parse(rawValue);
-			return token.Type switch
+			using var doc = JsonDocument.Parse(rawValue);
+			var element = doc.RootElement;
+			return element.ValueKind switch
 			{
-				JTokenType.Object => token.ToObject<Dictionary<string, object?>>()!,
-				JTokenType.Array => token.ToObject<List<object?>>()!,
-				JTokenType.Integer => token.Value<long>(),
-				JTokenType.Float => token.Value<double>(),
-				JTokenType.Boolean => token.Value<bool>(),
-				JTokenType.Null => null!,
-				JTokenType.String => token.Value<string>()!,
+				JsonValueKind.Object => JsonSerializer.Deserialize<Dictionary<string, object?>>(rawValue)!,
+				JsonValueKind.Array => JsonSerializer.Deserialize<List<object?>>(rawValue)!,
+				JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
+				JsonValueKind.True => true,
+				JsonValueKind.False => false,
+				JsonValueKind.Null => null!,
+				JsonValueKind.String => element.GetString()!,
 				_ => rawValue
 			};
 		}
-		catch
+		catch (JsonException)
 		{
 			// Not valid JSON — return as string
 			return rawValue;

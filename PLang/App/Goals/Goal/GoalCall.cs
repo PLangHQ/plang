@@ -91,11 +91,6 @@ public sealed class GoalCall : modules.IEvent
 
     private async Task<Data.@this> LoadFromFile(string prPath, App.@this app, Actor.Context.@this context)
     {
-        // Inject parameters
-        if (Parameters != null)
-            foreach (var param in Parameters)
-                context.Variables.Put(param);
-
         var readAction = new modules.file.Read
         {
             Context = context,
@@ -130,6 +125,11 @@ public sealed class GoalCall : modules.IEvent
         if (found == null)
             return Data.@this.FromError(new Errors.ActionError(
                 $"Goal '{Name}' not found in '{prPath}'", "GoalNotFound", 404));
+
+        // Inject parameters only after successful load — avoids polluting caller's Variables on failure
+        if (Parameters != null)
+            foreach (var param in Parameters)
+                context.Variables.Put(param);
 
         return Data.@this.Ok(found);
     }
