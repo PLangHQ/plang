@@ -60,35 +60,7 @@
           "context": "Removed CreateContext method"
         },
         {
-          "paths": [
-            "PLang.Tests/App/Modules/event/EventHandlerTests.cs",
-            "PLang.Tests/App/Modules/condition/IfHandlerTests.cs",
-            "PLang.Tests/App/Modules/condition/StepsSubStepTests.cs",
-            "PLang.Tests/App/Modules/condition/ConditionHandlerTests.cs",
-            "PLang.Tests/App/Modules/condition/CompareHandlerTests.cs",
-            "PLang.Tests/App/Modules/file/FileHandlerTests.cs",
-            "PLang.Tests/App/Modules/ui/RenderTests.cs",
-            "PLang.Tests/App/Modules/loop/ForeachTests.cs",
-            "PLang.Tests/App/PlangRuntimeTests.cs",
-            "PLang.Tests/App/Modules/http/ConfigureActionTests.cs",
-            "PLang.Tests/App/Modules/math/MathTests.cs",
-            "PLang.Tests/App/Modules/variable/settests.cs",
-            "PLang.Tests/App/Modules/variable/gettests.cs",
-            "PLang.Tests/App/Modules/variable/removetests.cs",
-            "PLang.Tests/App/Modules/variable/existstests.cs",
-            "PLang.Tests/App/Modules/variable/cleartests.cs",
-            "PLang.Tests/App/Modules/list/ListTests.cs",
-            "PLang.Tests/App/Modules/list/ListSetTests.cs",
-            "PLang.Tests/App/Modules/assert/AssertTests.cs",
-            "PLang.Tests/App/Modules/error/ThrowTests.cs",
-            "PLang.Tests/App/Modules/mock/MockTests.cs",
-            "PLang.Tests/App/Core/EventCollectionTests.cs",
-            "PLang.Tests/App/Modules/library/LibraryLoadTests.cs",
-            "PLang.Tests/App/Core/EngineTests.cs",
-            "PLang.Tests/App/Core/PrPipelineTests.cs",
-            "PLang.Tests/App/Core/StartGoalTests.cs",
-            "PLang.Tests/App/Modules/LibrariesTests.cs"
-          ],
+          "paths": ["PLang.Tests/"],
           "type": "modify",
           "category": "test",
           "confidence": "high",
@@ -111,24 +83,20 @@
         "assumptions": "RunSteps was removed from App.@this. Tests still call it. OBP says steps own their execution.",
         "risk": "Low - mechanical refactor, same pattern at every call site."
       },
-      "plan": "Replace _app.RunSteps(steps, context) and engine.RunSteps(new GoalSteps{step}, context) with steps.RunAsync(context) in 3 test files.",
+      "plan": "Replace _app.RunSteps(steps, context) with steps.RunAsync(context) in 3 test files.",
       "actions": [
         {
-          "paths": [
-            "PLang.Tests/App/Modules/condition/StepsSubStepTests.cs",
-            "PLang.Tests/App/PlangRuntimeTests.cs",
-            "PLang.Tests/App/Core/EngineTests.cs"
-          ],
+          "paths": ["PLang.Tests/"],
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Replaced all engine.RunSteps / _app.RunSteps calls with steps.RunAsync(context) to match OBP pattern where GoalSteps owns execution."
+          "context": "Replaced all engine.RunSteps / _app.RunSteps calls with steps.RunAsync(context)"
         }
       ],
       "after": {
         "status": "complete",
         "health": "green",
-        "notes": "All 14 call sites updated across 3 files. Build succeeds with 0 errors."
+        "notes": "All 14 call sites updated across 3 files."
       }
     },
     {
@@ -138,42 +106,49 @@
       "timestamp_end": "2026-04-08T18:45:00Z",
       "intent": "Analyze core architecture of App namespace rewrite for OBP compliance, bugs, and code quality",
       "before": {
-        "assumptions": "883 C# files changed — massive rewrite from Runtime2 to App namespace. Need to focus on highest-impact files.",
-        "risk": "Branch is too large for full analysis. May miss issues in modules or tests."
+        "assumptions": "883 C# files changed. Need to focus on highest-impact files.",
+        "risk": "Branch is too large for full analysis."
       },
-      "plan": "5-pass analysis on 18 core architecture files: App root, Actor, Context, Goal, Steps, Step, Action, Data, Variables, Modules, GoalCall, Path, Identity, CommandLineParser, SettingsVariable. Cross-cutting scans for bare catches, sync-over-async, System.IO, Newtonsoft.",
+      "plan": "5-pass analysis on 18 core architecture files.",
       "actions": [
         {
-          "paths": [
-            "PLang/App/this.cs",
-            "PLang/App/Actor/this.cs",
-            "PLang/App/Actor/Context/this.cs",
-            "PLang/App/Goals/Goal/this.cs",
-            "PLang/App/Goals/Goal/GoalCall.cs",
-            "PLang/App/Goals/Goal/Steps/this.cs",
-            "PLang/App/Goals/Goal/Steps/Step/this.cs",
-            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
-            "PLang/App/Data/this.cs",
-            "PLang/App/Data/this.Result.cs",
-            "PLang/App/Data/this.Navigation.cs",
-            "PLang/App/Variables/this.cs",
-            "PLang/App/Modules/this.cs",
-            "PLang/App/FileSystem/Path.cs",
-            "PLang/App/modules/identity/types.cs",
-            "PLang/App/Utils/CommandLineParser.cs",
-            "PLang/App/Settings/SettingsVariable.cs",
-            "PLang/App/modules/goal/call.cs"
-          ],
+          "paths": ["PLang/App/"],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "5-pass analysis: OBP, simplification, readability, behavioral reasoning, deletion test. Cross-cutting scans for bare catches, sync-over-async, System.IO, Newtonsoft."
+          "context": "3 medium findings, 4 minor, 3 low. Verdict: NEEDS WORK."
         }
       ],
       "after": {
         "status": "complete",
         "health": "yellow",
-        "notes": "3 medium findings: PrPath backslash on Linux, GoalCall parameter pollution, Newtonsoft in CommandLineParser. 4 minor, 3 low. Verdict: NEEDS WORK."
+        "notes": "3 medium findings: PrPath backslash on Linux, GoalCall parameter pollution, Newtonsoft in CommandLineParser."
+      }
+    },
+    {
+      "id": "f8a2c1d0-4e3b-4f5a-9c6d-7e8f9a0b1c2d",
+      "bot": "tester",
+      "timestamp_start": "2026-04-08T19:00:00Z",
+      "timestamp_end": "2026-04-08T20:00:00Z",
+      "intent": "Test quality analysis for system-goals-architecture branch",
+      "before": {
+        "assumptions": "Large restructuring branch (170 new production files). Expecting coverage gaps and possibly false-green tests.",
+        "risk": "Core execution paths may lack tests entirely. Streaming tests may be broken."
+      },
+      "plan": "1. Run C# test suite. 2. Run Cobertura coverage. 3. Identify 0% and low-coverage files. 4. Investigate 6 streaming test failures. 5. False-green hunt on key test files. 6. Write test-report.json and verdict.",
+      "actions": [
+        {
+          "paths": ["PLang.Tests/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Full test suite: 1986 total, 1980 passed, 6 failed (HTTP streaming). Coverage: 138/170 files >0%, 8 at 0%. False-green analysis on 12 test files."
+        }
+      ],
+      "after": {
+        "status": "completed",
+        "health": "needs-fixes",
+        "notes": "6 test failures, 5 critical 0% coverage gaps, 15+ false-green findings. Verdict: needs-fixes."
       }
     },
     {

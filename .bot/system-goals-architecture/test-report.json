@@ -1,0 +1,218 @@
+{
+  "tester": "tester",
+  "branch": "system-goals-architecture",
+  "timestamp": "2026-04-08T20:00:00Z",
+  "tested_version": "v4",
+  "test_run": {
+    "csharp": { "total": 1986, "passed": 1980, "failed": 6, "skipped": 0 },
+    "plang": { "total": 0, "passed": 0, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 138,
+    "changed_files_total": 170,
+    "uncovered_files": [
+      "PLang/App/modules/app/run.cs",
+      "PLang/App/modules/cache/check.cs",
+      "PLang/App/modules/cache/store.cs",
+      "PLang/App/modules/error/check.cs",
+      "PLang/App/modules/goal/call.cs",
+      "PLang/App/modules/goal/return.cs",
+      "PLang/App/modules/http/types.cs",
+      "PLang/App/modules/ui/render.cs"
+    ]
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/error/check.cs",
+      "issue": "Error handling policy engine has 0% test coverage. No tests exist for error filtering (message/statusCode/key), retry logic, error goal execution, or error propagation.",
+      "impact": "Any bug in error handling silently passes. Retry logic, GoalFirst vs RetryFirst ordering, and error filtering are untested.",
+      "suggestion": "Create ErrorCheckTests.cs covering: filter matching (message/key/statusCode), retry with count and delay, GoalFirst vs RetryFirst ordering, error propagation when no handler matches, null error handling."
+    },
+    {
+      "id": 2,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/app/run.cs",
+      "issue": "Core execution dispatcher has 0% test coverage. This routes GoalCall, Step, and Action execution — every PLang execution flows through here.",
+      "impact": "If routing logic breaks (wrong type dispatched, context not passed), nothing catches it.",
+      "suggestion": "Create AppRunTests.cs covering: GoalCall resolution+execution, Step execution, Action execution, error when no input type provided, actor context switching."
+    },
+    {
+      "id": 3,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/goal/call.cs",
+      "issue": "Goal invocation module has 0% coverage. GoalCall resolution, actor targeting, and result propagation are untested.",
+      "impact": "Goal calls are fundamental to PLang — sub-goal invocation, event handlers, and forEach all use this. A broken call path would be catastrophic.",
+      "suggestion": "Create GoalCallTests.cs covering: successful call, call with target actor, call with missing goal (error path), result propagation."
+    },
+    {
+      "id": 4,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/http/RequestActionTests.cs",
+      "code_file": "PLang/App/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "6 streaming tests fail because callback goals (HandleLine, HandleSSE, HandleBytes) don't exist as real goals. GoalCall.GetGoalAsync fails silently, parameters never injected into context, variables remain null.",
+      "impact": "All streaming behavior is effectively untested. If streaming parsing (line/SSE/bytes) were broken, no test would catch it.",
+      "suggestion": "Either: (1) Create actual .pr files for callback goals that set variables, or (2) redesign tests to mock RunGoalAsync to capture callback parameters directly."
+    },
+    {
+      "id": 5,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/event/EventHandlerTests.cs",
+      "code_file": "PLang/App/modules/event/on.cs",
+      "issue": "6 of 11 event tests only verify registration count (Events.Count == 1). None verify the callback actually fires when the event triggers. A broken callback mechanism would pass all tests.",
+      "impact": "Event-driven behavior (Before/AfterGoal, Before/AfterStep, Before/AfterAction) could silently break.",
+      "suggestion": "Add integration tests that register an event, trigger it (by running a goal/step), and verify the callback executed (e.g., set a variable in the callback and assert it after)."
+    },
+    {
+      "id": 6,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/cache/check.cs",
+      "issue": "Cache hit detection has 0% coverage. Cache key generation, hit/miss logic, and variable restoration from cache are untested.",
+      "impact": "Cache hits could silently return stale or wrong data. Cache key collisions between steps would go undetected.",
+      "suggestion": "Create CacheCheckTests.cs covering: cache miss (no settings), cache miss (not in store), cache hit (variables restored), custom vs auto-generated keys."
+    },
+    {
+      "id": 7,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/cache/store.cs",
+      "issue": "Cache storage has 0% coverage. Companion to cache/check — stores step results with duration/sliding settings.",
+      "impact": "Cache writes could silently fail or store wrong data without detection.",
+      "suggestion": "Create CacheStoreTests.cs alongside CacheCheckTests.cs. Test store + retrieve roundtrip."
+    },
+    {
+      "id": 8,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Core/EngineTests.cs",
+      "code_file": "PLang/App/this.cs",
+      "issue": "DisposeAsync tests (lines 468-497) assert `true == true` — tautological. All disposal code could be deleted and these tests would still pass.",
+      "impact": "Resource leaks from broken disposal would never be caught by tests.",
+      "suggestion": "After disposal, verify actors are actually unusable (e.g., accessing context throws ObjectDisposedException) or verify IAsyncDisposable.DisposeAsync was called on dependencies."
+    },
+    {
+      "id": 9,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/llm/QueryBasicTests.cs",
+      "code_file": "PLang/App/modules/llm/query.cs",
+      "issue": "LLM tests mock the handler to return exactly expected values, then assert those same values came back. This only proves the mock works, not that the LLM module correctly parses responses, handles token counts, or calculates costs.",
+      "impact": "JSON parsing bugs, token count miscalculation, or cost formula errors would pass these tests.",
+      "suggestion": "Add tests with realistic API response bodies that verify parsing logic: token extraction, cost calculation, property mapping from actual JSON structure."
+    },
+    {
+      "id": 10,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/goal/return.cs",
+      "issue": "Goal return module has 0% coverage. ReturnDepth logic (multi-level goal exits) is untested.",
+      "impact": "Nested goal return behavior could break silently. Depth calculation (depth <= 0 defaults to 1) is an edge case.",
+      "suggestion": "Create GoalReturnTests.cs covering: basic return, return with depth > 1, return with depth <= 0 (should default to 1), null data handling."
+    },
+    {
+      "id": 11,
+      "severity": "major",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/builder/ValidateActionsTests.cs",
+      "code_file": "PLang/App/modules/builder/validate.cs",
+      "issue": "DefaultsFilled test (test 5) checks that a Default with name 'pattern' exists but never verifies its VALUE. Type normalization tests (tests 6-7) check type but not the converted value.",
+      "impact": "Defaults could be filled with wrong values. Bool conversion could flip true/false. Tests would still pass.",
+      "suggestion": "Assert `patternDefault.Value == \"*\"` (or whatever the default should be). For type normalization, assert `rightParam.Value == false` not just `rightParam.Value is bool`."
+    },
+    {
+      "id": 12,
+      "severity": "major",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/builder/SaveGoalsTests.cs",
+      "code_file": "PLang/App/modules/builder/goalsSave.cs",
+      "issue": "SaveGoal serialization test only checks Name and Steps.Count after round-trip. CamelCase test uses string Contains instead of JSON structure validation. Half the serialized data could be dropped and tests pass.",
+      "impact": "Serialization bugs that drop fields (e.g., Step.Text, Step.Index, Action parameters) would go undetected.",
+      "suggestion": "Verify key fields survive round-trip: Steps[0].Text, Steps[0].Index, Actions[0].Module, Actions[0].ActionName. Parse JSON and check structure instead of Contains."
+    },
+    {
+      "id": 13,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Memory/DataTests.cs",
+      "code_file": "PLang/App/Data/this.Navigation.cs",
+      "issue": "Navigation method invocation (grep, grepcount, maxlength, trim, tolower, toupper, replace) and infrastructure navigation (!prefix) have 0 test coverage (44.1% overall, but entire method invocation branch uncovered).",
+      "impact": "Method calls like `%data.grep(pattern)%` could fail at runtime. Infrastructure navigation (`%data!Error%`) untested.",
+      "suggestion": "Add DataTests for: GetChild with method calls (.trim(), .tolower(), .grep(pattern)), GetChild with ! prefix (!Error, !Name, !Type)."
+    },
+    {
+      "id": 14,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/Data/Providers/DefaultGrepProvider.cs",
+      "issue": "Grep provider at 3.2% coverage. Regex matching, context lines, line numbering all untested.",
+      "impact": "Grep functionality in PLang expressions could silently produce wrong results.",
+      "suggestion": "Create GrepProviderTests.cs covering: regex match, invalid regex fallback, context lines formatting, empty input, no matches."
+    },
+    {
+      "id": 15,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/Debug/this.cs",
+      "issue": "Debug module at 1.9% coverage. Event handler registration, step/variable output, grep/maxLength filtering all untested.",
+      "impact": "Debug mode could silently break without affecting production — lower impact but affects developer experience.",
+      "suggestion": "Create DebugTests.cs covering: Apply(true) registers events, Apply(false) is no-op, filter parsing, output formatting."
+    },
+    {
+      "id": 16,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/builder/GetGoalsTests.cs",
+      "code_file": "PLang/App/modules/builder/goals.cs",
+      "issue": "ParsesGoalFilesFromFolder uses `Count >= 1` instead of exact count. MergesExistingPrData only checks Module name, not ActionName or Parameters.",
+      "impact": "Extra phantom goals could be returned without detection. Merge could partially work (module correct but action wrong) and pass.",
+      "suggestion": "Use exact count assertions. Check ActionName and at least one parameter value after merge."
+    },
+    {
+      "id": 17,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/App/Modules/variable/settests.cs",
+      "code_file": "PLang/App/modules/variable/set.cs",
+      "issue": "Variable set at 54.5% coverage with only 4 tests. AsDefault=true behavior (skip if exists, create if not) is completely untested.",
+      "impact": "Default variable initialization could overwrite existing values or fail to create when missing.",
+      "suggestion": "Add tests: Set with AsDefault=true when variable exists (should skip), Set with AsDefault=true when variable doesn't exist (should create)."
+    },
+    {
+      "id": 18,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/App/Core/CacheTryAddTests.cs",
+      "code_file": "PLang/App/Cache/MemoryStepCache.cs",
+      "issue": "MemoryStepCache at 40.9% — only TryAddAsync is tested. GetAsync, SetAsync, RemoveAsync have zero tests. Expiration policy logic untested.",
+      "impact": "Cache retrieval and storage could silently break. Sliding vs absolute expiration might not work correctly.",
+      "suggestion": "Add tests: SetAsync + GetAsync roundtrip, GetAsync on expired entry, RemoveAsync, sliding expiration behavior."
+    },
+    {
+      "id": 19,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": null,
+      "code_file": null,
+      "issue": "No PLang .goal tests exist for this branch. The entire App namespace restructuring has 0 PLang integration tests validating builder->runtime pipeline.",
+      "impact": "Builder might map steps to wrong modules/actions in the new App namespace. GoalMapper might fail on the new structure. Only C# unit tests exist.",
+      "suggestion": "Create basic PLang .goal tests for core modules: variable.set, file.read, output.write, condition.if, goal.call. Build and verify .pr files map correctly."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "1980/1986 C# tests pass. 6 HTTP streaming tests fail due to a design issue where GoalCall.GetGoalAsync silently fails for non-existent callback goals, leaving variables null. Coverage is generally good (138/170 new files have >0% coverage), but 5 critical execution-path files (error/check, app/run, goal/call, goal/return, cache) have 0% coverage. False-green analysis found registration-only event tests (6 tests that never verify callbacks fire), tautological disposal tests, mock-echo LLM tests, and weak builder test assertions. No PLang integration tests exist for the new App namespace."
+}
