@@ -78,7 +78,7 @@ namespace App.FileSystem.Default
 
 
 			this.fileAccesses = new List<FileAccessControl>();
-			fileAccesses.Add(new FileAccessControl(appStartupPath, SystemDirectory, ProcessId: Id));
+			fileAccesses.Add(new FileAccessControl(RootDirectory, SystemDirectory, ProcessId: Id));
 
 			this.IsRootApp = (relativeAppPath == Path.DirectorySeparatorChar.ToString());
 			if (AppContext.GetData("sharedPath") != null)
