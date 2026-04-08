@@ -410,6 +410,12 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 
+        // Inject parameters — GetGoalAsync only injects when loading from file,
+        // but goals found in memory (app.Goals.Get) need parameters too
+        if (goalCall.Parameters != null)
+            foreach (var param in goalCall.Parameters)
+                context.Variables.Put(param);
+
         return await ((Goal)goalResult.Value!).RunAsync(context);
     }
 

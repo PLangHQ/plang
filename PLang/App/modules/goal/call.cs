@@ -18,9 +18,6 @@ public partial class Call : IContext
     {
         var app = Context.App!;
         var execContext = Actor?.Context ?? Context;
-        var goalResult = await GoalName.GetGoalAsync(app, execContext);
-        if (!goalResult.Success) return goalResult;
-
-        return await ((Goals.Goal.@this)goalResult.Value!).RunAsync(execContext);
+        return await app.RunGoalAsync(GoalName, execContext);
     }
 }

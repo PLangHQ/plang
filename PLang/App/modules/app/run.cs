@@ -18,13 +18,8 @@ public partial class run : IContext
     public async Task<Data.@this> Run()
     {
         if (GoalName != null)
-        {
-            var app = Context.App!;
-            var goalResult = await GoalName.GetGoalAsync(app, Context);
-            if (!goalResult.Success) return goalResult;
+            return await Context.App!.RunGoalAsync(GoalName, Context);
 
-            return await ((Goals.Goal.@this)goalResult.Value!).RunAsync(Context);
-        }
 
         if (Step != null)
             return await Step.RunAsync(Context);

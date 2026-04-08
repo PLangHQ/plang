@@ -126,11 +126,6 @@ public sealed class GoalCall : modules.IEvent
             return Data.@this.FromError(new Errors.ActionError(
                 $"Goal '{Name}' not found in '{prPath}'", "GoalNotFound", 404));
 
-        // Inject parameters only after successful load — avoids polluting caller's Variables on failure
-        if (Parameters != null)
-            foreach (var param in Parameters)
-                context.Variables.Put(param);
-
         return Data.@this.Ok(found);
     }
 }

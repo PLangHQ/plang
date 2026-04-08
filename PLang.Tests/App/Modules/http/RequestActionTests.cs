@@ -38,6 +38,10 @@ public class RequestActionTests
         var provider = new DefaultHttpProvider(_handler) { Name = "test" };
         _app.Providers.Register<IHttpProvider>(provider);
         _app.Providers.SetDefault<IHttpProvider>("test");
+
+        // Register stub goals for streaming callbacks — GoalCall needs to find them
+        foreach (var name in new[] { "HandleLine", "HandleSSE", "HandleBytes", "HandleChunk", "ProcessChunk" })
+            _app.Goals.Add(new global::App.Goals.Goal.@this { Name = name, Path = $"/{name}.goal" });
     }
 
     [After(Test)]

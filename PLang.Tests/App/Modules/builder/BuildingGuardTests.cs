@@ -79,7 +79,7 @@ public class BuildingGuardTests
     [Test]
     public async Task GetApp_BuildingDisabled_ReturnsError()
     {
-        var action = new app { Context = _app.Context };
+        var action = new global::App.modules.builder.app { Context = _app.Context };
         var result = await _app.RunAction(action, _app.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Building is not enabled");
