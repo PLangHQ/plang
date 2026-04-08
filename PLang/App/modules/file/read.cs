@@ -22,7 +22,8 @@ public partial class Read : IContext
         var result = Files.Read(this);
         if (ResolveVariables && result.Success && result.Value is string content)
         {
-            var resolved = Context.Variables.Resolve(content);
+            // skipInfrastructure: file content is untrusted — don't resolve %!app% etc.
+            var resolved = Context.Variables.Resolve(content, skipInfrastructure: true);
             return Task.FromResult(new Data.@this(result.Name, resolved, result.Type));
         }
         return Task.FromResult(result);

@@ -31,8 +31,15 @@ public sealed class @this
         if (!context.TryEnterEvent(Id))
             return Data.@this.Ok();
 
-        var result = await Handler(context);
-        context.ExitEvent(Id);
+        Data.@this result;
+        try
+        {
+            result = await Handler(context);
+        }
+        finally
+        {
+            context.ExitEvent(Id);
+        }
 
         // Check if handler set an override via event.skipAction.
         // Only consume the override for action-level events (BeforeAction/AfterAction)

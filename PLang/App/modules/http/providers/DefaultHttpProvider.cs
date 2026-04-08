@@ -421,10 +421,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
     {
         foreach (var kvp in headers)
         {
+            // Sanitize CRLF to prevent header injection
+            var value = kvp.Value.Replace("\r", "").Replace("\n", "");
             if (IsContentHeader(kvp.Key))
-                request.Content?.Headers.TryAddWithoutValidation(kvp.Key, kvp.Value);
+                request.Content?.Headers.TryAddWithoutValidation(kvp.Key, value);
             else
-                request.Headers.TryAddWithoutValidation(kvp.Key, kvp.Value);
+                request.Headers.TryAddWithoutValidation(kvp.Key, value);
         }
     }
 

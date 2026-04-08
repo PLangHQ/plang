@@ -261,8 +261,11 @@ public class @this
     /// <summary>
     /// Resolves %variable% references in a string using this Variables instance.
     /// Returns the input unchanged if no %var% patterns are found.
+    /// When <paramref name="skipInfrastructure"/> is true, %!variable% references (infrastructure
+    /// variables like %!app%, %!callStack%) are left unresolved. Use this for untrusted input
+    /// (e.g., file content, HTTP responses) to prevent information disclosure.
     /// </summary>
-    public string Resolve(string input)
+    public string Resolve(string input, bool skipInfrastructure = false)
     {
         if (string.IsNullOrEmpty(input) || !input.Contains('%'))
             return input;
@@ -270,6 +273,8 @@ public class @this
         return Regex.Replace(input, @"%([^%]+)%", match =>
         {
             var varName = match.Groups[1].Value;
+            if (skipInfrastructure && varName.StartsWith('!'))
+                return match.Value; // Leave %!var% unresolved for untrusted input
             return Get(varName)?.Value?.ToString() ?? match.Value;
         });
     }
