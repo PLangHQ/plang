@@ -251,16 +251,16 @@ Your answer:
 
 			if (!IsPlangRooted(path) && !System.IO.File.Exists(path) && !System.IO.Directory.Exists(path))
 			{
-				var relativePath = path.Replace(rootPath, "");
-				
-				var osPath = Path.Join(AppContext.BaseDirectory, relativePath);
+				var relativePath = path.Replace(rootPath, "").TrimStart(Path.DirectorySeparatorChar);
+
+				var osPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, relativePath));
 				if (System.IO.File.Exists(osPath) || System.IO.Directory.Exists(path))
 				{
 					path = osPath;
 				}
 				else
 				{
-					var systemPath = Path.Join(AppContext.BaseDirectory, relativePath);
+					var systemPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, relativePath));
 					if (System.IO.File.Exists(systemPath) || System.IO.Directory.Exists(systemPath))
 					{
 						path = systemPath;
