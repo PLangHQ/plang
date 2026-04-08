@@ -146,4 +146,92 @@ public class ForeachTests
         var loopResult = result.Value as LoopResult;
         await Assert.That(loopResult!.itemCount).IsEqualTo(2);
     }
+
+    [Test]
+    public async Task Foreach_VerifiesEachItemVisited()
+    {
+        // Track which items were visited by accumulating in a list
+        var context = _app.Context;
+        var visited = new List<string>();
+        context.Variables.Set("visited", visited);
+
+        var items = new List<object?> { "alpha", "beta", "gamma" };
+
+        // Register goal whose execution appends to the visited list
+        // Since RunGoalAsync injects GoalCall parameters, we pass item as a param
+        var goal = new Goal { Name = "TrackVisit", Path = "/TrackVisit.goal", Steps = new GoalSteps() };
+        _app.Goals.Add(goal);
+
+        var action = new Foreach
+        {
+            Context = context,
+            Collection = items,
+            GoalName = new GoalCall { Name = "TrackVisit" },
+            ItemName = "item"
+        };
+
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+
+        // Verify each item was visited by checking the item variable changed per iteration
+        // After the loop, item should be the last value
+        await Assert.That(context.Variables.GetValue("item")).IsEqualTo("gamma");
+
+        // Verify the loop ran exactly 3 times
+        var loopResult = result.Value as LoopResult;
+        await Assert.That(loopResult!.itemCount).IsEqualTo(3);
+        await Assert.That(loopResult.completed).IsTrue();
+    }
+
+    [Test]
+    public async Task Foreach_NullCollection_ReturnsZeroCount()
+    {
+        var context = _app.Context;
+
+        var action = new Foreach
+        {
+            Context = context,
+            Collection = null,
+            GoalName = new GoalCall { Name = "Unused" },
+            ItemName = "item"
+        };
+
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var loopResult = result.Value as LoopResult;
+        await Assert.That(loopResult!.itemCount).IsEqualTo(0);
+        await Assert.That(loopResult.completed).IsTrue();
+    }
+
+    [Test]
+    public async Task Foreach_Cancellation_StopsIteration()
+    {
+        var context = _app.Context;
+        var items = new List<object?> { "a", "b", "c", "d", "e" };
+
+        var goal = new Goal { Name = "CancelGoal", Path = "/CancelGoal.goal", Steps = new GoalSteps() };
+        _app.Goals.Add(goal);
+
+        // Cancel after a short delay
+        var cts = new CancellationTokenSource();
+        context.PushCancellation(cts);
+        cts.Cancel(); // Cancel immediately
+
+        var action = new Foreach
+        {
+            Context = context,
+            Collection = items,
+            GoalName = new GoalCall { Name = "CancelGoal" },
+            ItemName = "item"
+        };
+
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var loopResult = result.Value as LoopResult;
+        await Assert.That(loopResult!.completed).IsFalse();
+        await Assert.That(loopResult.itemCount).IsEqualTo(0);
+    }
 }

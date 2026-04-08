@@ -265,5 +265,86 @@ public class ErrorCheckTests
         await Assert.That(result.Success).IsTrue();
     }
 
+    [Test]
+    public async Task Check_ErrorGoal_InjectsErrorParameter()
+    {
+        // Verify the error goal actually runs by checking !error was injected on Variables
+        _app.Goals.Add(new global::App.Goals.Goal.@this
+        {
+            Name = "ErrorReceiver",
+            Path = "/ErrorReceiver.goal"
+        });
+
+        var error = MakeError(message: "db timeout", key: "DatabaseError", statusCode: 503);
+        var handler = new ErrorHandler
+        {
+            Order = ErrorOrder.RetryFirst,
+            Goal = new GoalCall { Name = "ErrorReceiver" }
+        };
+        var step = MakeStep(handler);
+        var action = new Check { Context = Ctx, Data = error, Step = step };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+
+        // RunGoalAsync injects GoalCall.Parameters on context.Variables
+        // CallErrorGoal adds !error parameter with the actual error
+        var injectedError = Ctx.Variables.Get("!error");
+        await Assert.That(injectedError).IsNotNull();
+        // The error value should be the IError from the failing Data
+        await Assert.That(injectedError!.Value).IsNotNull();
+    }
+
+    [Test]
+    public async Task Check_RetryExhausted_NoGoal_Propagates()
+    {
+        // Step with a real action that always fails — retry exhausts, no goal fallback
+        var error = MakeError();
+        var handler = new ErrorHandler { RetryCount = 2 };
+        var step = MakeStep(handler);
+        // Add an action that the module system doesn't know — app.Run returns error
+        step.Actions.Add(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+        {
+            Module = "nonexistent",
+            ActionName = "fail"
+        });
+        var action = new Check { Context = Ctx, Data = error, Step = step };
+        var result = await action.Run();
+
+        // Retry ran actions, all failed, no goal configured → propagate
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Handled).IsFalse();
+    }
+
+    [Test]
+    public async Task Check_RetryExhausted_WithGoalFallback_Succeeds()
+    {
+        _app.Goals.Add(new global::App.Goals.Goal.@this
+        {
+            Name = "FallbackGoal",
+            Path = "/FallbackGoal.goal"
+        });
+
+        var error = MakeError();
+        var handler = new ErrorHandler
+        {
+            RetryCount = 1,
+            Order = ErrorOrder.RetryFirst,
+            Goal = new GoalCall { Name = "FallbackGoal" }
+        };
+        var step = MakeStep(handler);
+        // Action that fails (module not found)
+        step.Actions.Add(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+        {
+            Module = "nonexistent",
+            ActionName = "fail"
+        });
+        var action = new Check { Context = Ctx, Data = error, Step = step };
+        var result = await action.Run();
+
+        // Retry exhausted → fallback to goal → Ok
+        await Assert.That(result.Success).IsTrue();
+    }
+
     #endregion
 }
