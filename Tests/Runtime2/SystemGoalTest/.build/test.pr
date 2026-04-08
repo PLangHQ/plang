@@ -1,69 +1,22 @@
 {
   "name": "Start",
+  "description": "Calls WriteOut to display a greeting.",
   "steps": [
     {
       "index": 0,
-      "text": "before step, call BeforeStep",
-      "lineNumber": 2,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "event",
-          "action": "on",
-          "parameters": [
-            {"name": "Type", "value": "BeforeStep", "type": "string"},
-            {"name": "GoalToCall", "value": {"name": "BeforeStep"}, "type": "goal.call"}
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 1,
       "text": "call goal WriteOut",
-      "lineNumber": 3,
+      "lineNumber": 2,
       "indent": 0,
       "actions": [
         {
           "module": "goal",
           "action": "call",
           "parameters": [
-            {"name": "GoalName", "value": {"name": "WriteOut"}, "type": "goal.call"}
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 2,
-      "text": "throw error 'test error', on error ignore",
-      "lineNumber": 4,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "error",
-          "action": "throw",
-          "parameters": [
-            {"name": "Message", "value": "test error", "type": "string"}
-          ]
-        }
-      ],
-      "onError": {
-        "ignoreError": true
-      },
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "write out 'after error ignored'",
-      "lineNumber": 5,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {"name": "Data", "value": "after error ignored", "type": "string"}
+            {
+              "name": "GoalName",
+              "value": { "name": "WriteOut" },
+              "type": "goal.call"
+            }
           ]
         }
       ],
@@ -73,18 +26,23 @@
   "goals": [
     {
       "name": "WriteOut",
+      "description": "Writes hello plang world to output.",
       "steps": [
         {
           "index": 0,
           "text": "write out \"hello plang world\"",
-          "lineNumber": 6,
+          "lineNumber": 5,
           "indent": 0,
           "actions": [
             {
               "module": "output",
               "action": "write",
               "parameters": [
-                {"name": "Data", "value": "hello plang world", "type": "string"}
+                {
+                  "name": "Data",
+                  "value": "hello plang world",
+                  "type": "string"
+                }
               ]
             }
           ],
@@ -94,35 +52,20 @@
       "goals": [],
       "visibility": 0,
       "path": "/Test.goal",
-      "prPath": "/.build/test.pr"
-    },
-    {
-      "name": "BeforeStep",
-      "steps": [
-        {
-          "index": 0,
-          "text": "write out \"before!\"",
-          "lineNumber": 9,
-          "indent": 0,
-          "actions": [
-            {
-              "module": "output",
-              "action": "write",
-              "parameters": [
-                {"name": "Data", "value": "before!", "type": "string"}
-              ]
-            }
-          ],
-          "waitForExecution": true
-        }
-      ],
-      "goals": [],
-      "visibility": 0,
-      "path": "/Test.goal",
-      "prPath": "/.build/test.pr"
+      "prPath": "/.build/test.pr",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false
     }
   ],
   "visibility": 1,
   "path": "/Test.goal",
-  "prPath": "/.build/test.pr"
+  "prPath": "/.build/test.pr",
+  "hash": "",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
 }
