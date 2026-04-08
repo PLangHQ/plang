@@ -1,9 +1,0 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
-
-/.vs/documentation/FileContentIndex
-/.vs/documentation/v17/TestStore/0
-/.vs/documentation/v17
-/.vs
-.db/system.sqlite

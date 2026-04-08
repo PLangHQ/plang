@@ -230,10 +230,10 @@ public sealed partial class @this : Data.@this<@this>
     /// All goals share the same Path. First goal is Public, rest are Private.
     /// Inverse of ToText().
     /// </summary>
-    public static List<@this> Parse(string text, string path)
+    public static @this? Parse(string text, string path)
     {
         if (string.IsNullOrWhiteSpace(text))
-            return new List<@this>();
+            return null;
 
         text = text.Replace("\t", "    ");
 
@@ -403,14 +403,14 @@ public sealed partial class @this : Data.@this<@this>
             currentStep = null;
         }
 
-        // Populate Goals on the first (public) goal — rest are sub-goals
+        // Sub-goals nest under the root (public) goal
         if (goals.Count > 1)
         {
             for (int i = 1; i < goals.Count; i++)
                 goals[0].Goals.Add(goals[i]);
         }
 
-        return goals;
+        return goals[0];
     }
 
 }

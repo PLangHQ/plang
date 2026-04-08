@@ -107,16 +107,13 @@ public class DefaultBuilderProvider : IBuilderProvider
             if (!relativePath.StartsWith('/') && !relativePath.StartsWith('\\'))
                 relativePath = "/" + relativePath;
 
-            var parsedGoals = Goal.Parse(text, relativePath);
+            var goal = Goal.Parse(text, relativePath);
+            if (goal == null) continue;
 
-            // Merge existing .pr data, collect errors
-            foreach (var goal in parsedGoals)
-            {
-                var mergeErrors = await MergePrData(goal, app, context);
-                allErrors.AddRange(mergeErrors);
-            }
+            var mergeErrors = await MergePrData(goal, app, context);
+            allErrors.AddRange(mergeErrors);
 
-            allGoals.AddRange(parsedGoals);
+            allGoals.Add(goal);
         }
 
         var result = global::App.Data.@this.Ok(allGoals);
