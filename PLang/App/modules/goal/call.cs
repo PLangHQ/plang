@@ -18,11 +18,9 @@ public partial class Call : IContext
     {
         var app = Context.App!;
         var execContext = Actor?.Context ?? Context;
-        var goal = await GoalName.GetGoalAsync(app, execContext);
-        if (goal == null)
-            return Error(new Errors.ServiceError(
-                $"Goal '{GoalName.Name}' not found", "NotFound", 404));
+        var goalResult = await GoalName.GetGoalAsync(app, execContext);
+        if (!goalResult.Success) return goalResult;
 
-        return await app.RunGoalAsync(goal, execContext);
+        return await app.RunGoalAsync((Goals.Goal.@this)goalResult.Value!, execContext);
     }
 }

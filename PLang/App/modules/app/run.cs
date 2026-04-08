@@ -20,12 +20,10 @@ public partial class run : IContext
         if (GoalName != null)
         {
             var app = Context.App!;
-            var goal = await GoalName.GetGoalAsync(app, Context);
-            if (goal == null)
-                return Error(new ServiceError(
-                    $"Goal '{GoalName.Name ?? GoalName.PrPath}' not found", "NotFound", 404));
+            var goalResult = await GoalName.GetGoalAsync(app, Context);
+            if (!goalResult.Success) return goalResult;
 
-            return await app.RunGoalAsync(goal, Context, Context.CancellationToken);
+            return await app.RunGoalAsync((Goals.Goal.@this)goalResult.Value!, Context, Context.CancellationToken);
         }
 
         if (Step != null)

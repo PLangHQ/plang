@@ -39,8 +39,9 @@ public sealed class GoalCall : modules.IEvent
     /// <summary>
     /// Resolves the Goal. PrPath is authoritative when set — file.read only.
     /// Otherwise: action chain → app.Goals → file.read fallback.
+    /// Returns Data with the Goal as Value, or Data with Error if not found.
     /// </summary>
-    public async Task<@this?> GetGoalAsync(App.@this app, Actor.Context.@this context)
+    public async Task<Data.@this> GetGoalAsync(App.@this app, Actor.Context.@this context)
     {
         // PrPath is authoritative — load from file, no name-based search
         if (!string.IsNullOrEmpty(PrPath))
@@ -51,18 +52,18 @@ public sealed class GoalCall : modules.IEvent
         while (currentGoal != null)
         {
             if (string.Equals(currentGoal.Name, Name, StringComparison.OrdinalIgnoreCase))
-                return currentGoal;
+                return Data.@this.Ok(currentGoal);
 
             var subGoal = currentGoal.Goals.FirstOrDefault(g =>
                 string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
-            if (subGoal != null) return subGoal;
+            if (subGoal != null) return Data.@this.Ok(subGoal);
 
             currentGoal = currentGoal.Parent;
         }
 
         // 2. Check app's loaded goals
         var loaded = app.Goals.Get(Name);
-        if (loaded != null) return loaded;
+        if (loaded != null) return Data.@this.Ok(loaded);
 
         // 3. Derive PrPath from Name and file.read
         var prFile = $".build/{Name.ToLowerInvariant()}.pr";
@@ -77,18 +78,18 @@ public sealed class GoalCall : modules.IEvent
                 goalDir = goalDir[..lastSlash];
             var goalRelative = $"{goalDir}/{prFile}";
             var goalResult = await LoadFromFile(goalRelative, app, context);
-            if (goalResult != null) return goalResult;
+            if (goalResult.Success) return goalResult;
         }
 
         // Try root-relative (for user goals calling other goals in same project)
         var rootResult = await LoadFromFile("/" + prFile, app, context);
-        if (rootResult != null) return rootResult;
+        if (rootResult.Success) return rootResult;
 
         // Try context-relative
         return await LoadFromFile(prFile, app, context);
     }
 
-    private async Task<@this?> LoadFromFile(string prPath, App.@this app, Actor.Context.@this context)
+    private async Task<Data.@this> LoadFromFile(string prPath, App.@this app, Actor.Context.@this context)
     {
         // Inject parameters
         if (Parameters != null)
@@ -101,9 +102,11 @@ public sealed class GoalCall : modules.IEvent
             Path = FileSystem.Path.Resolve(prPath, context)
         };
         var result = await app.RunAction(readAction, context);
-        if (!result.Success) return null;
+        if (!result.Success) return result;
 
-        if (result.Value is not @this goal) return null;
+        if (result.Value is not @this goal)
+            return Data.@this.FromError(new Errors.ActionError(
+                $"File '{prPath}' did not deserialize to a Goal", "InvalidPrFile", 400));
 
         // Match by name — the loaded goal or one of its sub-goals
         @this? found;
@@ -112,8 +115,10 @@ public sealed class GoalCall : modules.IEvent
         else
             found = goal.Goals.FirstOrDefault(g => string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
 
-        if (found == null) return null;
+        if (found == null)
+            return Data.@this.FromError(new Errors.ActionError(
+                $"Goal '{Name}' not found in '{prPath}'", "GoalNotFound", 404));
 
-        return found;
+        return Data.@this.Ok(found);
     }
 }

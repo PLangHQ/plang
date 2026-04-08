@@ -394,11 +394,10 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         CurrentActor = System;
 
         var goalCall = new GoalCall { PrPath = "system/.build/run.pr" };
-        var goal = await goalCall.GetGoalAsync(this, context);
-        if (goal == null)
-            return App.Data.@this.FromError(new Errors.ServiceError(
-                "system/.build/run.pr not found", "RuntimeNotFound", 500));
+        var goalResult = await goalCall.GetGoalAsync(this, context);
+        if (!goalResult.Success) return goalResult;
 
+        var goal = (Goal)goalResult.Value!;
         return await RunSteps(goal.Steps, context);
     }
 
@@ -450,11 +449,10 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     public async Task<Data.@this> RunGoalAsync(GoalCall goalCall, Actor.Context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
-        var goal = await goalCall.GetGoalAsync(this, context);
-        if (goal == null)
-            return App.Data.@this.FromError(Errors.GoalError.NotFound(goalCall.Name ?? goalCall.PrPath ?? "unknown"));
+        var goalResult = await goalCall.GetGoalAsync(this, context);
+        if (!goalResult.Success) return goalResult;
 
-        return await RunGoalAsync(goal, context, ct);
+        return await RunGoalAsync((Goal)goalResult.Value!, context, ct);
     }
 
     /// <summary>
