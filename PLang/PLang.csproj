@@ -12,6 +12,7 @@
     <FileVersion>$(Version)</FileVersion>
 		<AssemblyVersion>$(Version)</AssemblyVersion>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 		<Authors>Ingi Gauti Ragnarsson</Authors>
 		<Company>Plang</Company>
 		<PackageId>PlangLibrary</PackageId>

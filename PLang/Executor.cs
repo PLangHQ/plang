@@ -74,12 +74,13 @@ namespace PLang
 			}
 
 			// Set the goal file for the PLang runtime (only for normal run mode)
+			// goalFile goes on system context — run.pr executes as system actor
 			if (!engine.Building.IsEnabled && !engine.Testing.IsEnabled)
 			{
 				var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
 				if (!prPath.StartsWith(".build"))
 					prPath = ".build/" + prPath;
-				userVars.Set("goalFile", "/" + prPath.ToLowerInvariant());
+				engine.System.Context.Variables.Set("goalFile", "/" + prPath.ToLowerInvariant());
 			}
 
 			// Start the engine — system actor runs system/.build/run.pr

@@ -372,6 +372,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        var __previousGoal = context.Goal;");
         sb.AppendLine("        var __previousEvent = context.Event;");
         sb.AppendLine("        context.Step = PrAction?.Step;");
+        sb.AppendLine("        if (context.Step != null) context.Step.Context = context;");
         sb.AppendLine("        context.Goal = PrAction?.Step?.Goal;");
         sb.AppendLine();
 

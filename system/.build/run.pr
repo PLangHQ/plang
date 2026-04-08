@@ -66,7 +66,7 @@
             {"index": 0, "indent": 0, "text": "foreach before action events",
               "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%action.events.before%", "type": "list"}, {"name": "GoalName", "value": {"name": "RunEvent"}, "type": "goal.call"}, {"name": "ItemName", "value": "event", "type": "string"}]}], "waitForExecution": true},
             {"index": 1, "indent": 0, "text": "dispatch %action% as \"user\", write to %data%",
-              "actions": [{"module": "engine", "action": "dispatch", "parameters": [{"name": "Action", "value": "%action%", "type": "object"}, {"name": "Actor", "value": "user", "type": "string"}], "return": [{"name": "data"}]}], "waitForExecution": true},
+              "actions": [{"module": "app", "action": "run", "parameters": [{"name": "Action", "value": "%action%", "type": "object"}, {"name": "Actor", "value": "user", "type": "string"}], "return": [{"name": "data"}]}], "waitForExecution": true},
             {"index": 2, "indent": 0, "text": "check %data% %step%",
               "actions": [{"module": "error", "action": "check", "parameters": [{"name": "Data", "value": "%data%", "type": "object"}, {"name": "Step", "value": "%step%", "type": "object"}]}], "waitForExecution": true},
             {"index": 3, "indent": 0, "text": "foreach after action events",
