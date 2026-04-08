@@ -71,22 +71,22 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Resolves an action for execution. Returns (action, null) or (null, error).
+    /// Resolves a handler for a .pr action. Navigates the action for module/actionName.
     /// </summary>
-    public (ICodeGenerated? Action, IError? Error) GetCodeGenerated(
-        string module, string actionName, Actor.Context.@this context)
+    public (ICodeGenerated? Handler, IError? Error) GetCodeGenerated(
+        Goals.Goal.Steps.Step.Actions.Action.@this action)
     {
-        if (!_modules.TryGetValue(module, out var actions) ||
-            !actions.TryGetValue(actionName, out var entry))
-            return (null, ActionError.NotFound($"Action '{module}.{actionName}'", context));
+        if (!_modules.TryGetValue(action.Module, out var actions) ||
+            !actions.TryGetValue(action.ActionName, out var entry))
+            return (null, ActionError.NotFound($"Action '{action.Module}.{action.ActionName}'"));
 
-        var action = entry.Create();
-        if (action == null)
+        var handler = entry.Create();
+        if (handler == null)
             return (null, new ActionError(
-                $"Action '{module}.{actionName}' does not implement ICodeGenerated",
-                context, "ActionError", 500) { ActionModule = module, ActionName = actionName });
+                $"Action '{action.Module}.{action.ActionName}' does not implement ICodeGenerated",
+                "ActionError", 500));
 
-        return (action, null);
+        return (handler, null);
     }
 
     // --- Queries ---

@@ -50,9 +50,8 @@ public sealed partial class @this : Data.@this<@this>
     /// Runs this action via the app dispatcher.
     /// Actor switching is handled by the source generator when an Actor property is present.
     /// </summary>
-    public async Task<Data.@this> RunAsync()
+    public async Task<Data.@this> RunAsync(Actor.Context.@this context)
     {
-        var context = Step!.Context!;
         return await context.App!.Run(this, context);
     }
 

@@ -50,7 +50,7 @@ public class ModuleRemoveTests
         var action = new Remove { Context = _app.Context, Name = "variable" };
         await action.Run();
 
-        var (resolved, error) = _app.Modules.GetCodeGenerated("variable", "set", _app.Context);
+        var (resolved, error) = _app.Modules.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });
         await Assert.That(resolved).IsNull();
         await Assert.That(error).IsNotNull();
     }

@@ -174,7 +174,7 @@ public class HashActionTests
     public async Task Verify_NullHash_ReturnsError()
     {
         var verifyAction = new Verify { Data = Data.Ok("hello"), Hash = null!, Algorithm = "keccak256" };
-        var result = await verifyAction.ExecuteAsync(_app, Ctx);
+        var result = await verifyAction.ExecuteAsync(new PrAction { Module = "crypto", ActionName = "verify" }, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();

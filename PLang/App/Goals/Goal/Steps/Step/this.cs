@@ -142,7 +142,7 @@ public sealed partial class @this : Data.@this<@this>
         foreach (var action in Actions)
         {
             Context!.CancellationToken.ThrowIfCancellationRequested();
-            result = await action.RunAsync();
+            result = await action.RunAsync(Context!);
             if (!result.Success) break;
         }
         return result;

@@ -338,7 +338,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     public async Task<Data.@this<TResult>> RunAction<TAction, TResult>(TAction action, Actor.Context.@this context)
         where TAction : ICodeGenerated
     {
-        var result = await action.ExecuteAsync(this, context);
+        var result = await action.ExecuteAsync(null!, context);
         if (!result.Success) return Data.@this<TResult>.FromError(result.Error!);
         return Data.@this<TResult>.Ok((TResult)result.Value!);
     }
@@ -350,24 +350,20 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     public async Task<Data.@this> RunAction<TAction>(TAction action, Actor.Context.@this context)
         where TAction : ICodeGenerated
     {
-        return await action.ExecuteAsync(this, context);
+        return await action.ExecuteAsync(null!, context);
     }
 
     /// <summary>
-    /// Dispatches a .pr action. Sets parameters on the handler, then runs it.
+    /// Dispatches a .pr action. Looks up the handler, then runs it.
     /// This is the runtime path — .pr file → handler.
     /// </summary>
     public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context)
     {
-        var (executor, error) = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
+        var (handler, error) = Modules.GetCodeGenerated(action);
         if (error != null)
             return App.Data.@this.FromError(error);
 
-        executor!.PrParameters = action.Parameters;
-        executor.PrDefaults = action.Defaults;
-        executor.PrAction = action;
-
-        var result = await executor.ExecuteAsync(this, context);
+        var result = await handler!.ExecuteAsync(action, context);
 
         // Handle return mapping — set variable on Variables
         if (action.Return != null)

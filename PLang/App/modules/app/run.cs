@@ -30,7 +30,7 @@ public partial class run : IContext
             return await Step.RunAsync();
 
         if (Action != null)
-            return await Action.RunAsync();
+            return await Action.RunAsync(Context);
 
         return Error(new ActionError(
             "run requires a GoalCall, Step, or Action", "MissingInput", 400));

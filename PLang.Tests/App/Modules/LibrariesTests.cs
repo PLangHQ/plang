@@ -180,7 +180,7 @@ public class LibrariesTests
         await using var engine = new global::App.@this("/app", modules);
         var context = engine.Context;
 
-        var (action, error) = modules.GetCodeGenerated("variable", "set", context);
+        var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });
 
         await Assert.That(action).IsNotNull();
         await Assert.That(error).IsNull();
@@ -195,7 +195,7 @@ public class LibrariesTests
         await using var engine = new global::App.@this("/app", modules);
         var context = engine.Context;
 
-        var (result, error) = modules.GetCodeGenerated("custom", "run", context);
+        var (result, error) = modules.GetCodeGenerated(new PrAction { Module = "custom", ActionName = "run" });
 
         await Assert.That(result).IsEqualTo(action);
         await Assert.That(error).IsNull();
@@ -209,7 +209,7 @@ public class LibrariesTests
         await using var engine = new global::App.@this("/app", modules);
         var context = engine.Context;
 
-        var (action, error) = modules.GetCodeGenerated("legacy", "do", context);
+        var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "legacy", ActionName = "do" });
 
         await Assert.That(action).IsNull();
         await Assert.That(error).IsNotNull();
@@ -223,7 +223,7 @@ public class LibrariesTests
         await using var engine = new global::App.@this("/app", modules);
         var context = engine.Context;
 
-        var (action, error) = modules.GetCodeGenerated("nonexistent_xyz", "nope", context);
+        var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "nonexistent_xyz", ActionName = "nope" });
 
         await Assert.That(action).IsNull();
         await Assert.That(error).IsNotNull();
@@ -242,7 +242,7 @@ public class LibrariesTests
         await using var engine = new global::App.@this("/app", modules);
         var context = engine.Context;
 
-        var (result, error) = modules.GetCodeGenerated("custom", "run", context);
+        var (result, error) = modules.GetCodeGenerated(new PrAction { Module = "custom", ActionName = "run" });
 
         await Assert.That(error).IsNull();
         await Assert.That(((MockCodeGenHandler)result!).Tag).IsEqualTo("second");
@@ -256,8 +256,8 @@ public class LibrariesTests
         var context = engine.Context;
 
         // variable.set is type-registered (discovered via [Action] attribute)
-        var (action1, _) = modules.GetCodeGenerated("variable", "set", context);
-        var (action2, _) = modules.GetCodeGenerated("variable", "set", context);
+        var (action1, _) = modules.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });
+        var (action2, _) = modules.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });
 
         // Per-call instantiation — different instances each time
         await Assert.That(action1).IsNotNull();
@@ -411,15 +411,11 @@ public class LibrariesTests
         public global::App.@this App { get; private set; } = null!;
         public global::App.Actor.Context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
-        public List<Data>? PrParameters { get; set; }
-        public List<Data>? PrDefaults { get; set; }
-        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this? PrAction { get; set; }
         public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context) { App = engine; Context = context; }
-        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
-        public Task<Data> ExecuteAsync(global::App.@this app, global::App.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.Actor.Context.@this context)
         {
-            Initialize(app, context);
-            return ExecuteAsync(null);
+            Initialize(context.App!, context);
+            return Task.FromResult(Data.Ok());
         }
     }
 

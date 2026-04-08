@@ -108,6 +108,18 @@ public sealed class GoalCall : modules.IEvent
             return Data.@this.FromError(new Errors.ActionError(
                 $"File '{prPath}' did not deserialize to a Goal", "InvalidPrFile", 400));
 
+        // Wire back-references: Goal.App, Step.Goal for root and sub-goals
+        goal.App = app;
+        foreach (var step in goal.Steps)
+            step.Goal = goal;
+        foreach (var subGoal in goal.Goals)
+        {
+            subGoal.App = app;
+            subGoal.Parent = goal;
+            foreach (var step in subGoal.Steps)
+                step.Goal = subGoal;
+        }
+
         // Match by name — the loaded goal or one of its sub-goals
         @this? found;
         if (string.IsNullOrEmpty(Name) || string.Equals(goal.Name, Name, StringComparison.OrdinalIgnoreCase))

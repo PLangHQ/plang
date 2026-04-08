@@ -2,8 +2,8 @@ Run
 / PLang entry point — routes to build, test, or run based on CLI parameters
 - if %!build%, call Build
 - if %!test%, call RunTests
-- read file %goalFile%, write to %goals%
-- foreach %goals%, call RunGoal, item=%goal%
+- read file %goalFile%, write to %goal%
+- call RunGoal
 
 RunGoal
 / Executes a single goal's steps
