@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "All 2017 tests pass but fresh-eyes found 4 critical false-greens: foreach iteration never verified, error retry loop tested with empty actions, error goal execution never verified to run, event callbacks still registration-only. GoalSteps condition detection is fragile." }
