@@ -90,12 +90,11 @@ public partial class Check : IContext, IAction
             if (delayMs > 0)
                 await Task.Delay(delayMs);
 
-            // Re-execute the user step's actions on the user actor's context
-            var userContext = app.User.Context;
+            // Re-execute the step's actions on the caller's context (not hardcoded User)
             App.Data.@this result = App.Data.@this.Ok();
             foreach (var action in Step.Actions)
             {
-                result = await app.Run(action, userContext);
+                result = await app.Run(action, Context);
                 if (!result.Success) break;
             }
 
@@ -115,6 +114,7 @@ public partial class Check : IContext, IAction
 
         // Pass the error as a parameter to the error goal — %!error% inside the goal
         onError.Goal.Parameters ??= new();
+        onError.Goal.Parameters.RemoveAll(p => p.Name == "!error");
         onError.Goal.Parameters.Add(new App.Data.@this("!error", Data.Error));
 
         // Record on callstack for error history

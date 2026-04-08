@@ -63,14 +63,6 @@ namespace PLang
 						foreach (var f in fileList)
 							if (f?.ToString() is string s) engine.Building.Files.Add(new App.FileSystem.Path(s));
 				}
-				else if (buildValue is Newtonsoft.Json.Linq.JObject buildJobj &&
-					buildJobj.TryGetValue("files", StringComparison.OrdinalIgnoreCase, out var filesToken))
-				{
-					if (filesToken is Newtonsoft.Json.Linq.JArray arr)
-						foreach (var item in arr) engine.Building.Files.Add(new App.FileSystem.Path(item.ToString()));
-					else
-						engine.Building.Files.Add(new App.FileSystem.Path(filesToken.ToString()));
-				}
 			}
 
 			// Set the goal file on system context — Start() reads it
