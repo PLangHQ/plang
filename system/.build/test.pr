@@ -1,55 +1,44 @@
 {
   "name": "Test",
-  "description": "Discovers and runs *.test.goal files. Results collected in %!test.results%.",
+  "description": "Discovers and runs *.test.goal files. Collects errors and successfuls for summary.",
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = '.'",
-      "indent": 0,
-      "actions": [{"module": "variable", "action": "set", "parameters": [
-        {"name": "Name", "value": "%path%", "type": "string"},
-        {"name": "Value", "value": ".", "type": "string"},
-        {"name": "AsDefault", "value": true, "type": "bool"}
-      ]}],
-      "waitForExecution": true
-    },
-    {
-      "index": 1,
-      "text": "find files '*.test.goal' in %path% recursive, write to %testFiles%",
+      "text": "find files '*.test.goal' in %path% recursive, write to %tests%",
       "indent": 0,
       "actions": [{"module": "file", "action": "list", "parameters": [
         {"name": "Path", "value": "%path%", "type": "path"},
         {"name": "Pattern", "value": "*.test.goal", "type": "string"},
         {"name": "Recursive", "value": true, "type": "bool"}
-      ], "return": [{"name": "testFiles"}]}],
+      ], "return": [{"name": "tests"}]}],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out 'Found %tests.Count% test files'",
+      "indent": 0,
+      "actions": [{"module": "output", "action": "write", "parameters": [
+        {"name": "Data", "value": "Found %tests.Count% test files", "type": "string"}
+      ]}],
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "write out 'Found %testFiles.Length% test files'",
+      "text": "foreach %tests%, call RunTest, item=%test%",
       "indent": 0,
-      "actions": [{"module": "output", "action": "write", "parameters": [
-        {"name": "Data", "value": "Found %testFiles.Length% test files", "type": "string"}
+      "actions": [{"module": "loop", "action": "foreach", "parameters": [
+        {"name": "Collection", "value": "%tests%", "type": "list"},
+        {"name": "GoalName", "value": {"name": "RunTest"}, "type": "goal.call"},
+        {"name": "ItemName", "value": "test", "type": "string"}
       ]}],
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "foreach %testFiles%, call RunTest, item=%testFile%",
-      "indent": 0,
-      "actions": [{"module": "loop", "action": "foreach", "parameters": [
-        {"name": "Collection", "value": "%testFiles%", "type": "list"},
-        {"name": "GoalName", "value": {"name": "RunTest"}, "type": "goal.call"},
-        {"name": "ItemName", "value": "testFile", "type": "string"}
-      ]}],
-      "waitForExecution": true
-    },
-    {
-      "index": 4,
-      "text": "write out %!test.summary%",
+      "text": "write out summary",
       "indent": 0,
       "actions": [{"module": "output", "action": "write", "parameters": [
-        {"name": "Data", "value": "%!test.summary%", "type": "string"}
+        {"name": "Data", "value": "\n%successfuls.Count% passed, %errors.Count% failed out of %tests.Count% tests", "type": "string"}
       ]}],
       "waitForExecution": true
     }
@@ -60,20 +49,65 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out 'Running %testFile%'",
+          "text": "write out 'Running %test%'",
           "indent": 0,
           "actions": [{"module": "output", "action": "write", "parameters": [
-            {"name": "Data", "value": "Running %testFile%", "type": "string"}
+            {"name": "Data", "value": "Running %test%", "type": "string"}
           ]}],
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "runtime run %testFile.GoalCall%, context=child",
+          "text": "app run %test.GoalCall%",
           "indent": 0,
-          "actions": [{"module": "runtime", "action": "run", "parameters": [
-            {"name": "GoalName", "value": "%testFile.GoalCall%", "type": "goal.call"},
-            {"name": "ContextMode", "value": "child", "type": "string"}
+          "actions": [{"module": "app", "action": "run", "parameters": [
+            {"name": "GoalName", "value": "%test.GoalCall%", "type": "goal.call"}
+          ]}],
+          "onError": {
+            "goal": {
+              "name": "TestError",
+              "prPath": "/system/.build/test.pr"
+            },
+            "ignoreError": false
+          },
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "append %test% to %successfuls%",
+          "indent": 0,
+          "actions": [{"module": "list", "action": "add", "parameters": [
+            {"name": "ListName", "value": "successfuls", "type": "string"},
+            {"name": "Value", "value": "%test%", "type": "object"}
+          ]}],
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/system/test.goal",
+      "prPath": "/system/.build/test.pr",
+      "isSystem": true
+    },
+    {
+      "name": "TestError",
+      "steps": [
+        {
+          "index": 0,
+          "text": "append %!error% to %errors%",
+          "indent": 0,
+          "actions": [{"module": "list", "action": "add", "parameters": [
+            {"name": "ListName", "value": "errors", "type": "string"},
+            {"name": "Value", "value": "%!error%", "type": "object"}
+          ]}],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "end goal and previous",
+          "indent": 0,
+          "actions": [{"module": "goal", "action": "return", "parameters": [
+            {"name": "Depth", "value": 2, "type": "int"}
           ]}],
           "waitForExecution": true
         }

@@ -223,6 +223,8 @@ public partial class @this
         {
             Error = Error,
             Handled = Handled,
+            Returned = Returned,
+            ReturnDepth = ReturnDepth,
             Warnings = Warnings != null ? new List<Info>(Warnings) : null,
             Signature = Signature,
             Properties = Properties.Clone()

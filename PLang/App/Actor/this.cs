@@ -93,6 +93,9 @@ public sealed class @this : IAsyncDisposable
         // %Settings.ApiKey% resolves identically in User, Service, and System contexts.
         Context.Variables.Put(app.SettingsVariable);
 
+        // Register %!app% — navigates the App object graph (e.g., %!app.Testing.IsEnabled%)
+        Context.Variables.Put(new Data.DynamicData("!app", () => app));
+
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.
         // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
         Context.Variables.Put(new Data.DynamicData("MyIdentity", () =>

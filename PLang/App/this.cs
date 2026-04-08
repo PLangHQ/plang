@@ -471,7 +471,17 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         context.Goal = goal;
         try
         {
-            return await RunSteps(goal.Steps, context);
+            var result = await RunSteps(goal.Steps, context);
+
+            // Decrement return depth — clear Returned when we've crossed enough goal boundaries
+            if (result.Returned)
+            {
+                result.ReturnDepth--;
+                if (result.ReturnDepth <= 0)
+                    result.Returned = false;
+            }
+
+            return result;
         }
         finally
         {

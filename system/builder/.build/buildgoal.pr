@@ -353,7 +353,7 @@
           "action": "goals.save",
           "parameters": [
             {
-              "name": "Goals",
+              "name": "Goal",
               "value": "%goal%",
               "type": "object"
             }

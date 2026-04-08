@@ -22,6 +22,12 @@ public partial class @this
     [JsonIgnore]
     public bool Returned { get; set; }
 
+    /// <summary>
+    /// How many goal boundaries this return crosses. Decremented by RunGoalAsync.
+    /// </summary>
+    [JsonIgnore]
+    public int ReturnDepth { get; set; } = 1;
+
     [JsonIgnore]
     public IError? Error { get; set; }
 

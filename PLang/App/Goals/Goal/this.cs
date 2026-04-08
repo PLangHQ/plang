@@ -386,6 +386,7 @@ public sealed partial class @this : Data.@this<@this>
             var isSetup = goalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)
                 || normalizedPath.StartsWith("setup/", StringComparison.OrdinalIgnoreCase);
             var isSystem = normalizedPath.StartsWith("system/", StringComparison.OrdinalIgnoreCase);
+            var isTest = normalizedPath.EndsWith(".test.goal", StringComparison.OrdinalIgnoreCase);
 
             currentGoal = new @this
             {
@@ -394,7 +395,8 @@ public sealed partial class @this : Data.@this<@this>
                 Visibility = goals.Count == 0 ? Visibility.Public : Visibility.Private,
                 Path = path,
                 IsSetup = isSetup,
-                IsSystem = isSystem
+                IsSystem = isSystem,
+                IsTest = isTest
             };
             goals.Add(currentGoal);
             stepIndex = 0;
