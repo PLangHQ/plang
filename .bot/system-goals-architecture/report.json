@@ -100,90 +100,46 @@
       }
     },
     {
-      "id": "f1a2b3c4-d5e6-7890-abcd-codeanalyzer01",
-      "bot": "codeanalyzer",
-      "timestamp_start": "2026-04-08T18:00:00Z",
-      "timestamp_end": "2026-04-08T18:45:00Z",
-      "intent": "Analyze core architecture of App namespace rewrite for OBP compliance, bugs, and code quality",
+      "id": "f1a2b3c4-d5e6-7890-abcd-security00001",
+      "bot": "security",
+      "timestamp_start": "2026-04-08T21:00:00Z",
+      "timestamp_end": "2026-04-08T21:45:00Z",
+      "intent": "Full blue+red team security audit of new App architecture (809 changed production files)",
       "before": {
-        "assumptions": "883 C# files changed. Need to focus on highest-impact files.",
-        "risk": "Branch is too large for full analysis."
+        "assumptions": "Major architectural refactor from Runtime2 to App namespace. Same threat model (user-sovereign). Need to verify all previous security patterns carried over correctly and assess new attack surfaces.",
+        "risk": "High surface area — 809 production files changed. New execution dispatch, new actor model, new variable system, new event lifecycle."
       },
-      "plan": "5-pass analysis on 18 core architecture files.",
-      "actions": [
-        {
-          "paths": ["PLang/App/"],
-          "type": "review",
-          "category": "code",
-          "confidence": "high",
-          "context": "3 medium findings, 4 minor, 3 low. Verdict: NEEDS WORK."
-        }
-      ],
-      "after": {
-        "status": "complete",
-        "health": "yellow",
-        "notes": "3 medium findings: PrPath backslash on Linux, GoalCall parameter pollution, Newtonsoft in CommandLineParser."
-      }
-    },
-    {
-      "id": "f8a2c1d0-4e3b-4f5a-9c6d-7e8f9a0b1c2d",
-      "bot": "tester",
-      "timestamp_start": "2026-04-08T19:00:00Z",
-      "timestamp_end": "2026-04-08T20:00:00Z",
-      "intent": "Test quality analysis for system-goals-architecture branch",
-      "before": {
-        "assumptions": "Large restructuring branch (170 new production files). Expecting coverage gaps and possibly false-green tests.",
-        "risk": "Core execution paths may lack tests entirely. Streaming tests may be broken."
-      },
-      "plan": "1. Run C# test suite. 2. Run Cobertura coverage. 3. Identify 0% and low-coverage files. 4. Investigate 6 streaming test failures. 5. False-green hunt on key test files. 6. Write test-report.json and verdict.",
-      "actions": [
-        {
-          "paths": ["PLang.Tests/"],
-          "type": "review",
-          "category": "test",
-          "confidence": "high",
-          "context": "Full test suite: 1986 total, 1980 passed, 6 failed (HTTP streaming). Coverage: 138/170 files >0%, 8 at 0%. False-green analysis on 12 test files."
-        }
-      ],
-      "after": {
-        "status": "completed",
-        "health": "needs-fixes",
-        "notes": "6 test failures, 5 critical 0% coverage gaps, 15+ false-green findings. Verdict: needs-fixes."
-      }
-    },
-    {
-      "id": "a2b3c4d5-e6f7-8901-abcd-codeanalyzer02",
-      "bot": "codeanalyzer",
-      "timestamp_start": "2026-04-08T19:00:00Z",
-      "timestamp_end": "2026-04-08T19:45:00Z",
-      "intent": "Re-review v1 fixes + fresh-eyes analysis of Executor, error/check, foreach, file module",
-      "before": {
-        "assumptions": "Coder fixed all v1 findings in a single commit. Need to verify fixes and check for regressions.",
-        "risk": "STJ migration may have side effects in code that consumed Newtonsoft types."
-      },
-      "plan": "Verify fix commit (697ce1d6), trace fix-introduced data flow through Executor.cs. Fresh-eyes on error/check.cs, foreach.cs, file provider, Data.Envelope, app/run.cs.",
+      "plan": "Blue team: map 10 attack surface areas. Red team: describe vectors, severity, exploit sketches. Cross-reference against previous branch findings. Write security-report.json, verdict.json, summary.md, result.md.",
       "actions": [
         {
           "paths": [
-            "PLang/Executor.cs",
-            "PLang/App/Utils/CommandLineParser.cs",
-            "PLang/App/modules/error/check.cs",
-            "PLang/App/modules/loop/foreach.cs",
-            "PLang/App/Goals/Goal/GoalCall.cs",
-            "PLang/App/modules/file/providers/DefaultFileProvider.cs",
+            "PLang/App/Events/Lifecycle/Bindings/Binding/this.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/modules/file/read.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang/App/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/Actor/Context/this.cs",
+            "PLang/App/modules/signing/providers/Ed25519Provider.cs",
+            "PLang/App/modules/signing/SignedData.cs",
             "PLang/App/Data/this.Envelope.cs",
-            "PLang/App/modules/app/run.cs"
+            "PLang/App/Data/this.Navigation.cs",
+            "PLang/App/CallStack/this.cs",
+            "PLang/App/FileSystem/Default/PLangFileSystem.cs",
+            "PLang/App/modules/module/add.cs",
+            "PLang/App/modules/provider/load.cs",
+            "PLang/App/modules/error/check.cs"
           ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Fix re-review with behavioral tracing. Fresh-eyes on error handling, iteration, and file modules."
+          "context": "Full security audit: 10 attack surface areas, 12 findings (2 high, 4 medium, 6 low). Verdict: FAIL."
         }
       ],
       "after": {
         "status": "complete",
         "health": "yellow",
-        "notes": "3 medium findings: STJ migration broke Executor file filter (fix-introduced), error.check retry hardcodes User actor, GoalCall params accumulate in foreach. 1 minor (dead Newtonsoft branch), 2 low. Verdict: NEEDS WORK."
+        "notes": "Verdict FAIL. 2 HIGH: (1) Binding.Run missing try-finally permanently disables event guards, (2) variable expansion from untrusted sources via %!app%. 4 MEDIUM: header injection, event timeout gaps, LLM cache isolation, /system/ path fallback. 6 LOW. Signing, CallStack, decompression, LLM tool whitelist all solid."
       }
     },
     {
