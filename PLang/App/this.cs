@@ -354,8 +354,8 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     }
 
     /// <summary>
-    /// Dispatches a .pr action. Looks up the handler, then runs it.
-    /// This is the runtime path — .pr file → handler.
+    /// Pure dispatch: lookup handler by module.action, call ExecuteAsync, return result.
+    /// Return variable mapping is owned by Action.RunAsync, not here.
     /// </summary>
     public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context)
     {
@@ -363,24 +363,12 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         if (error != null)
             return App.Data.@this.FromError(error);
 
-        var result = await handler!.ExecuteAsync(action, context);
-
-        // Handle return mapping — set variable on Variables
-        if (action.Return != null)
-        {
-            foreach (var returnVar in action.Return)
-            {
-                result.Name = returnVar.Name;
-                context.Variables.Put(result);
-            }
-        }
-
-        return result;
+        return await handler!.ExecuteAsync(action, context);
     }
 
     /// <summary>
-    /// Bootstrap: reads system/.build/run.pr, pushes its actions to Run().
-    /// This is the ONLY loop in C#. After this, PLang code drives everything.
+    /// Bootstrap: loads app identity, resolves the goal file, runs it.
+    /// Building is routed to the PLang builder (system/builder/).
     /// </summary>
     public async Task<Data.@this> Start(Actor.Context.@this? context = null)
     {
@@ -389,58 +377,32 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         context ??= System.Context;
         CurrentActor = System;
 
-        var goalCall = new GoalCall { PrPath = "system/.build/run.pr" };
+        // Building → PLang builder
+        if (Building.IsEnabled)
+        {
+            var buildCall = new GoalCall { Name = "Build", PrPath = "/system/builder/.build/build.pr" };
+            return await RunGoalAsync(buildCall, context);
+        }
+
+        // Resolve goal file
+        var goalFile = context.Variables.GetValue("goalFile") as string;
+        if (string.IsNullOrEmpty(goalFile))
+            return App.Data.@this.FromError(new Errors.ServiceError(
+                "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
+
+        var goalCall = new GoalCall { PrPath = goalFile };
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 
         var goal = (Goal)goalResult.Value!;
-        return await RunSteps(goal.Steps, context);
+
+        // Switch to user actor for user code execution
+        CurrentActor = User;
+        return await goal.RunAsync(User.Context);
     }
 
     /// <summary>
-    /// Iterates steps and dispatches each action via Run().
-    /// Used by Start() for bootstrap and by app.execute for user steps.
-    /// </summary>
-    public async Task<Data.@this> RunSteps(GoalSteps steps, Actor.Context.@this context)
-    {
-        Data.@this result = App.Data.@this.Ok();
-        int? skipBelowIndent = null;
-
-        for (int i = 0; i < steps.Count; i++)
-        {
-            var step = steps[i];
-
-            // Sub-step skip: if condition was false, skip indented children
-            if (skipBelowIndent != null)
-            {
-                if (step.Indent > skipBelowIndent)
-                    continue;
-                skipBelowIndent = null;
-            }
-
-            foreach (var action in step.Actions)
-            {
-                result = await Run(action, context);
-                if (!result.Success && !result.Handled) return result;
-                if (result.Returned) return result;
-            }
-
-            // Sub-step control: false condition skips indented children
-            // Only condition module actions control sub-step flow — other modules
-            // may return bool values (e.g., variable.set with false) without intent to skip.
-            if (i + 1 < steps.Count && steps[i + 1].Indent > step.Indent
-                && result.Value is bool conditionResult && !conditionResult
-                && step.Actions.Count > 0
-                && string.Equals(step.Actions[0].Module, "condition", StringComparison.OrdinalIgnoreCase))
-            {
-                skipBelowIndent = step.Indent;
-            }
-        }
-        return result;
-    }
-
-    /// <summary>
-    /// Runs a goal via GoalCall. Used by goal.call and backward compat.
+    /// Runs a goal via GoalCall. Resolves the goal then delegates to Goal.RunAsync.
     /// </summary>
     public async Task<Data.@this> RunGoalAsync(GoalCall goalCall, Actor.Context.@this? context = null, CancellationToken ct = default)
     {
@@ -448,39 +410,16 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 
-        return await RunGoalAsync((Goal)goalResult.Value!, context, ct);
+        return await ((Goal)goalResult.Value!).RunAsync(context);
     }
 
     /// <summary>
-    /// Kernel-executes a goal already in memory.
+    /// Runs a goal already in memory. Delegates to Goal.RunAsync.
     /// </summary>
     public async Task<Data.@this> RunGoalAsync(Goal goal, Actor.Context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
-
-        if (ct.IsCancellationRequested)
-            return App.Data.@this.FromError(new Errors.Error("Operation was cancelled", "Cancelled", 499));
-
-        var previousGoal = context.Goal;
-        context.Goal = goal;
-        try
-        {
-            var result = await RunSteps(goal.Steps, context);
-
-            // Decrement return depth — clear Returned when we've crossed enough goal boundaries
-            if (result.Returned)
-            {
-                result.ReturnDepth--;
-                if (result.ReturnDepth <= 0)
-                    result.Returned = false;
-            }
-
-            return result;
-        }
-        finally
-        {
-            context.Goal = previousGoal;
-        }
+        return await goal.RunAsync(context);
     }
 
     private static App.FileSystem.IPLangFileSystem CreateDefaultFileSystem(string rootPath)

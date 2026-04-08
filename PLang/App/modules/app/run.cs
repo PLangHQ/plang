@@ -23,11 +23,11 @@ public partial class run : IContext
             var goalResult = await GoalName.GetGoalAsync(app, Context);
             if (!goalResult.Success) return goalResult;
 
-            return await app.RunGoalAsync((Goals.Goal.@this)goalResult.Value!, Context, Context.CancellationToken);
+            return await ((Goals.Goal.@this)goalResult.Value!).RunAsync(Context);
         }
 
         if (Step != null)
-            return await Step.RunAsync();
+            return await Step.RunAsync(Context);
 
         if (Action != null)
             return await Action.RunAsync(Context);

@@ -72,4 +72,47 @@ public sealed class @this : IList<Step.@this>, IContext
         return index + 1 < _items.Count && _items[index + 1].Indent > _items[index].Indent;
     }
 
+    /// <summary>
+    /// Runs all steps in sequence. Owns the iteration loop (OBP rule 5).
+    /// Handles sub-step skipping (condition-gated), cancellation, and return propagation.
+    /// </summary>
+    public async Task<Data.@this> RunAsync(Actor.Context.@this context)
+    {
+        Data.@this result = Data.@this.Ok();
+        int? skipBelowIndent = null;
+
+        for (int i = 0; i < _items.Count; i++)
+        {
+            var step = _items[i];
+            step.Goal ??= Goal;
+
+            // Sub-step skip: if condition was false, skip indented children
+            if (skipBelowIndent != null)
+            {
+                if (step.Indent > skipBelowIndent)
+                    continue;
+                skipBelowIndent = null;
+            }
+
+            result = await step.RunAsync(context);
+
+            if (!result.Success && !result.Handled) return result;
+            if (result.Returned) return result;
+
+            // Sub-step control: false condition skips indented children
+            if (i + 1 < _items.Count && _items[i + 1].Indent > step.Indent
+                && result.Value is bool conditionResult && !conditionResult
+                && step.Actions.Count > 0
+                && string.Equals(step.Actions[0].Module, "condition", StringComparison.OrdinalIgnoreCase))
+            {
+                skipBelowIndent = step.Indent;
+            }
+
+            if (context.CancellationToken.IsCancellationRequested)
+                return Data.@this.FromError(new App.Errors.Error("Operation was cancelled", "Cancelled", 499));
+        }
+
+        return result;
+    }
+
 }

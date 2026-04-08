@@ -34,27 +34,22 @@ namespace PLang
 				userVars.Set(param.Key, param.Value);
 			}
 
-			// Debug mode — set on system context so run.pr can see %!debug%
+			// Debug mode
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
-			{
 				engine.Debug.Apply(debugValue);
-				engine.System.Context.Variables.Set("!debug", debugValue);
-			}
 
-			// Test mode — set on system context so run.pr can see %!test%
+			// Test mode
 			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
 			{
 				engine.Testing.IsEnabled = true;
-				engine.System.Context.Variables.Set("!test", testValue);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", fileSystem.RootDirectory);
 			}
 
-			// Build mode — set on system context so run.pr can see %!build%
+			// Build mode
 			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
 			{
 				engine.Building.IsEnabled = true;
-				engine.System.Context.Variables.Set("!build", buildValue);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", fileSystem.RootDirectory);
 
@@ -78,17 +73,12 @@ namespace PLang
 				}
 			}
 
-			// Set the goal file for the PLang runtime (only for normal run mode)
-			// goalFile goes on system context — run.pr executes as system actor
-			if (!engine.Building.IsEnabled && !engine.Testing.IsEnabled)
-			{
-				var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
-				if (!prPath.StartsWith(".build"))
-					prPath = ".build/" + prPath;
-				engine.System.Context.Variables.Set("goalFile", "/" + prPath.ToLowerInvariant());
-			}
+			// Set the goal file on system context — Start() reads it
+			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
+			if (!prPath.StartsWith(".build"))
+				prPath = ".build/" + prPath;
+			engine.System.Context.Variables.Set("goalFile", "/" + prPath.ToLowerInvariant());
 
-			// Start the engine — system actor runs system/.build/run.pr
 			return await engine.Start();
 		}
 	}

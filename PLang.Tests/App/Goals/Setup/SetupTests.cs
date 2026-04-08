@@ -222,11 +222,10 @@ public class SetupTests
         step2.Goal = goal;
         _app.Goals.Add(goal);
 
-        // Cancel after the first step completes
-        using var cts = new CancellationTokenSource();
-        cts.Cancel();
+        // Cancel via engine shutdown — Goal.RunAsync checks context.CancellationToken
+        _app.RequestShutdown();
 
-        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context, cts.Token);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
 
         // Setup should abort with cancellation error
         await Assert.That(result.Success).IsFalse();

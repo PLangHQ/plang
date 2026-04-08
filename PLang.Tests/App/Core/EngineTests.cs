@@ -278,10 +278,11 @@ public class EngineTests
             }
         };
         engine.Goals.Add(goal);
-        var cts = new CancellationTokenSource();
-        cts.Cancel();
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, ct: cts.Token);
+        // Cancel via the engine's shutdown — Goal.RunAsync checks context.CancellationToken
+        engine.RequestShutdown();
+
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" });
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
@@ -370,7 +371,8 @@ public class EngineTests
         var step = MakeStep("nonexistent", "method");
         var context = engine.Context;
 
-        var result = await engine.RunSteps(new GoalSteps { step }, context);
+        var steps = new GoalSteps { step };
+        var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionNotFound");
@@ -385,13 +387,14 @@ public class EngineTests
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
 
         var context = engine.Context;
-        await engine.RunSteps(new GoalSteps { step }, context);
+        var steps = new GoalSteps { step };
+        await steps.RunAsync(context);
 
         await Assert.That(context.Variables.GetValue("source")).IsEqualTo("hello");
     }
 
     [Test]
-    public async Task StepRunAsync_ExceptionInHandler_Throws()
+    public async Task StepRunAsync_ExceptionInHandler_ReturnsError()
     {
         await using var engine = new global::App.@this("/app");
 
@@ -401,9 +404,11 @@ public class EngineTests
         var step = MakeStep("throwing", "fail");
         var context = engine.Context;
 
-        // Engine kernel does not catch handler exceptions — they propagate
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await engine.RunSteps(new GoalSteps { step }, context));
+        // Step.RunAsync catches exceptions and wraps in Data.FromError
+        var steps = new GoalSteps { step };
+        var result = await steps.RunAsync(context);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("StepError");
     }
 
     [Test]
@@ -417,7 +422,8 @@ public class EngineTests
         var step = MakeStep("legacy", "do");
         var context = engine.Context;
 
-        var result = await engine.RunSteps(new GoalSteps { step }, context);
+        var steps = new GoalSteps { step };
+        var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionError");

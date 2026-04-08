@@ -100,6 +100,36 @@
         "health": "green",
         "notes": "All CreateContext usage removed. Build succeeds with 0 errors."
       }
+    },
+    {
+      "id": "e8f9a0b1-c2d3-4567-8901-23456789abcd",
+      "bot": "coder",
+      "timestamp_start": "2026-04-08T00:00:00Z",
+      "timestamp_end": "2026-04-08T00:15:00Z",
+      "intent": "Replace engine.RunSteps() calls with steps.RunAsync() in tests after RunSteps removal from App",
+      "before": {
+        "assumptions": "RunSteps was removed from App.@this. Tests still call it. OBP says steps own their execution.",
+        "risk": "Low - mechanical refactor, same pattern at every call site."
+      },
+      "plan": "Replace _app.RunSteps(steps, context) and engine.RunSteps(new GoalSteps{step}, context) with steps.RunAsync(context) in 3 test files.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/condition/StepsSubStepTests.cs",
+            "PLang.Tests/App/PlangRuntimeTests.cs",
+            "PLang.Tests/App/Core/EngineTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replaced all engine.RunSteps / _app.RunSteps calls with steps.RunAsync(context) to match OBP pattern where GoalSteps owns execution."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "All 14 call sites updated across 3 files. Build succeeds with 0 errors."
+      }
     }
   ]
 }

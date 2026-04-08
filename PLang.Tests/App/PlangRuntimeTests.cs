@@ -59,7 +59,7 @@ public class PlangRuntimeTests : IDisposable
 
         var steps = new GoalSteps { step };
         var context = _app.Context;
-        var result = await _app.RunSteps(steps, context);
+        var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
 

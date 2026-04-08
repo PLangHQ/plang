@@ -219,6 +219,49 @@ public sealed partial class @this : Data.@this<@this>
         }
     }
 
+    /// <summary>
+    /// Runs this goal: lifecycle events → Steps.RunAsync → return handling.
+    /// Context travels as parameter — goals may be cached/shared.
+    /// </summary>
+    public async Task<Data.@this> RunAsync(Actor.Context.@this context)
+    {
+        var previousGoal = context.Goal;
+        context.Goal = this;
+
+        if (context.CancellationToken.IsCancellationRequested)
+            return Data.@this.FromError(new Errors.Error("Operation was cancelled", "Cancelled", 499));
+
+        var lifecycle = context.LifecycleFor(this);
+
+        // BeforeGoal events
+        var beforeResult = await lifecycle.Before.Run(context, global::App.Events.EventType.BeforeGoal);
+        if (!beforeResult.Success) { context.Goal = previousGoal; return beforeResult; }
+        if (beforeResult.Handled) { context.Goal = previousGoal; return beforeResult; }
+
+        try
+        {
+            var result = await Steps.RunAsync(context);
+
+            // Handle return depth
+            if (result.Returned)
+            {
+                result.ReturnDepth--;
+                if (result.ReturnDepth <= 0)
+                    result.Returned = false;
+            }
+
+            // AfterGoal events
+            var afterResult = await lifecycle.After.Run(context, global::App.Events.EventType.AfterGoal);
+            if (!afterResult.Success) return afterResult;
+
+            return result;
+        }
+        finally
+        {
+            context.Goal = previousGoal;
+        }
+    }
+
     public static @this NotFound(string name) => new()
     {
         Name = name,

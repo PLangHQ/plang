@@ -21,6 +21,6 @@ public partial class Call : IContext
         var goalResult = await GoalName.GetGoalAsync(app, execContext);
         if (!goalResult.Success) return goalResult;
 
-        return await app.RunGoalAsync((Goals.Goal.@this)goalResult.Value!, execContext);
+        return await ((Goals.Goal.@this)goalResult.Value!).RunAsync(execContext);
     }
 }

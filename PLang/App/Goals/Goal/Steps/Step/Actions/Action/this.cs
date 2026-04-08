@@ -47,12 +47,36 @@ public sealed partial class @this : Data.@this<@this>
     public List<Data.@this> Examples { get; init; } = new();
 
     /// <summary>
-    /// Runs this action via the app dispatcher.
-    /// Actor switching is handled by the source generator when an Actor property is present.
+    /// Runs this action: lifecycle events → dispatch → return mapping.
+    /// Context travels as parameter — actions are shared objects, not per-request.
     /// </summary>
     public async Task<Data.@this> RunAsync(Actor.Context.@this context)
     {
-        return await context.App!.Run(this, context);
+        var lifecycle = context.LifecycleFor(this);
+
+        // BeforeAction events — can override execution via Handled
+        var beforeResult = await lifecycle.Before.Run(context, App.Events.EventType.BeforeAction);
+        if (!beforeResult.Success) return beforeResult;
+        if (beforeResult.Handled) return beforeResult;
+
+        // Dispatch to handler
+        var result = await context.App!.Run(this, context);
+
+        // Map return variables
+        if (result.Success && Return != null)
+        {
+            foreach (var returnVar in Return)
+            {
+                result.Name = returnVar.Name;
+                context.Variables.Put(result);
+            }
+        }
+
+        // AfterAction events
+        var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterAction);
+        if (!afterResult.Success) return afterResult;
+
+        return result;
     }
 
     /// <summary>
