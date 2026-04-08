@@ -34,22 +34,27 @@ namespace PLang
 				userVars.Set(param.Key, param.Value);
 			}
 
-			// Debug mode
+			// Debug mode — set on system context so run.pr can see %!debug%
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
+			{
 				engine.Debug.Apply(debugValue);
+				engine.System.Context.Variables.Set("!debug", debugValue);
+			}
 
-			// Test mode
+			// Test mode — set on system context so run.pr can see %!test%
 			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
 			{
 				engine.Testing.IsEnabled = true;
+				engine.System.Context.Variables.Set("!test", testValue);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", fileSystem.RootDirectory);
 			}
 
-			// Build mode
+			// Build mode — set on system context so run.pr can see %!build%
 			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
 			{
 				engine.Building.IsEnabled = true;
+				engine.System.Context.Variables.Set("!build", buildValue);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", fileSystem.RootDirectory);
 
