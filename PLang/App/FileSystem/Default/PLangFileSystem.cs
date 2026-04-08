@@ -26,14 +26,14 @@ namespace App.FileSystem.Default
 		{
 			get
 			{
-				return Path.Join(AppContext.BaseDirectory, "system");
+				return System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "system"));
 			}
 		}
 		public string OsDirectory
 		{
 			get
 			{
-				return Path.Join(AppContext.BaseDirectory, "os");
+				return System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "os"));
 			}
 		}
 		public string RootDirectory
