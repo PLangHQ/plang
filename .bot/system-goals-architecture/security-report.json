@@ -1,7 +1,7 @@
 {
   "analyst": "security",
   "branch": "system-goals-architecture",
-  "timestamp": "2026-04-08T21:30:00Z",
+  "timestamp": "2026-04-08T22:00:00Z",
   "phase": "both",
   "attack_surface": [
     {
@@ -86,7 +86,7 @@
       "affected_files": ["PLang/App/Events/Lifecycle/Bindings/Binding/this.cs"],
       "exploit_sketch": "1. Register BeforeAction event that validates permissions. 2. Trigger the event with crafted input that causes handler goal to throw. 3. Binding permanently stuck in 'active' state. 4. All subsequent actions skip the permission check (TryEnterEvent returns false → Ok()).",
       "proposed_fix": "Wrap Handler call in try-finally: `try { result = await Handler(context); } finally { context.ExitEvent(Id); }`",
-      "status": "open"
+      "status": "fixed"
     },
     {
       "id": 2,
@@ -98,7 +98,7 @@
       "affected_files": ["PLang/App/Variables/this.cs", "PLang/App/modules/file/read.cs"],
       "exploit_sketch": "1. Place file with content: 'App path: %!app.AbsolutePath% Goals: %!app.Goals%' 2. PLang step reads file with ResolveVariables=true 3. Variables resolve, leaking internal state to file content 4. If content is then sent externally (output, HTTP response), state is disclosed.",
       "proposed_fix": "Add an 'untrusted' flag to Resolve() that skips %!% (infrastructure) variables. Document that ResolveVariables=true should never be used on untrusted input.",
-      "status": "open"
+      "status": "fixed"
     },
     {
       "id": 3,
@@ -110,7 +110,7 @@
       "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
       "exploit_sketch": "1. Set variable to 'value\\r\\nX-Injected: true' 2. HTTP action uses %var% in header value 3. TryAddWithoutValidation passes it through 4. Extra header injected.",
       "proposed_fix": "Use request.Headers.Add() instead of TryAddWithoutValidation(), or validate header values for CRLF before applying.",
-      "status": "open"
+      "status": "fixed"
     },
     {
       "id": 4,
