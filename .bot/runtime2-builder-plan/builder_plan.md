@@ -292,44 +292,111 @@ Each eval is one `.goal` file testing one builder pattern. The step text column 
 
 **Total: 38 eval cases** covering all current Runtime2 modules, error handling, caching, and multilingual support. The suite grows from failures — every builder bug we find becomes a new eval.
 
-**How it works:**
-1. Write a `.goal` file for a PLang pattern
-2. Build it, manually verify the `.pr` output is correct, save as `.golden`
-3. After any builder change, rebuild and compare field-by-field against `.golden`
-4. Report what matched and what didn't
+### How It Works
 
-**What we compare per step:**
+1. Write a `.goal` file for a PLang pattern
+2. Build it with `plang build`
+3. Manually verify the `.pr` output is correct
+4. Save the verified `.pr` as `.golden` (same file, just renamed/copied)
+5. After any builder change: rebuild, compare against `.golden`, report results
+
+### Implementation: PLang Eval Runner
+
+The eval runner is itself a PLang goal. Everything is PLang — no external scripts.
+
+**New C# needed:** `Data.Compare(Data other)` — method on Data that compares two Data objects. Simplest implementation: serialize both to JSON and compare. Returns a Data with the diff (which fields matched, which didn't, expected vs actual). Can be optimized later.
+
+**Eval runner goals:**
+
+```
+RunEvals
+- list files in 'Tests/Builder/Evals/', filter by *.golden, write to %goldens%
+- set %results% = []
+- foreach %goldens%, call EvalCase item=%golden%
+- save %results% to file 'Tests/Builder/Evals/results/%Now%.json'
+
+EvalCase
+/ derive .pr path from golden path (e.g., foo.golden → .build/foo.pr)
+- [get pr path from %golden%]
+- read file %prPath%, write to %actual%
+- read file %golden%, write to %expected%
+- compare %actual% with %expected%, write to %diff%
+- [add %diff% to %results%]
+```
+
+PLang runtime handles JSON-to-object conversion automatically — no explicit convert step needed.
+
+### Results Tracking
+
+Results are stored per run, one file per date:
+
+```
+Tests/Builder/Evals/results/
+  2026-04-09.json
+  2026-04-15.json
+  2026-04-22.json
+```
+
+Each result file:
+```json
+{
+  "timestamp": "2026-04-09T14:30:00Z",
+  "model": "gpt-4o-2024-08-06",
+  "outputAccuracy": 0.89,
+  "fieldAccuracy": 0.95,
+  "cases": [
+    {
+      "name": "variable-set-string",
+      "pass": true,
+      "fields": { "module": true, "action": true, "params": true }
+    },
+    {
+      "name": "file-read",
+      "pass": false,
+      "fields": { "module": true, "action": true, "params": false },
+      "diff": "param 'path' expected 'test.txt', got 'test'"
+    }
+  ]
+}
+```
+
+**When to run:** After changing builder prompts, before switching LLMs, or when something feels off.
+
+The suite grows over time — every builder failure becomes a new eval case.
+
+### What We Compare Per Step
+
 - Correct module?
 - Correct action?
 - Parameter names match?
 - Parameter values match?
 - `onError` present/correct when expected?
-- `formalized` array makes sense? (once implemented)
+- `cache` present/correct when expected?
+- `formalized` array correct? (once implemented)
 
-**Metrics:**
+### Metrics
+
 - **Output Accuracy**: proportion of golden files where ALL fields correct
 - **Field Accuracy**: proportion of individual fields correct (shows where the builder struggles)
 
-**When to run:** After changing builder prompts, before switching LLMs, or when something feels off.
-
-The suite grows over time — every failure we discover becomes a new golden test case.
-
 ### Future (When We Need It)
 
-These are ideas for later, not now. Documented in detail in `.bot/runtime2-plang-test-gaps/coder/v1/builder-improvement-options.md`.
+Documented in detail in `.bot/runtime2-plang-test-gaps/coder/v1/builder-improvement-options.md`.
 
-- **Structural validation expansion** — Expand `ValidateActions` to check parameter names/types, not just module.action existence
-- **Consistency scoring** — Build the same `.goal` N times, measure how much the output varies. For evaluating new LLMs.
-- **LLM-as-judge** — Second LLM validates the first LLM's output. For semantic checks the golden suite can't cover.
+- **Structural validation expansion** — Expand `ValidateActions` to check parameter names/types
+- **Consistency scoring** — Build same `.goal` N times, measure variation. For evaluating new LLMs.
+- **LLM-as-judge** — Second LLM validates first LLM's output. For semantic checks.
 
 ---
 
 ## Implementation Order
 
 1. **This document** — Get alignment on the vision (done)
-2. **Golden eval suite** — Write ~20-30 `.goal` files, verify `.pr` output, build comparison tool
-3. **Formalization + return removal** — Add formalization phase to builder prompt, remove return from schema
-4. **Pipeline redesign** — Replace needsDetail with level/confidence + grouping
+2. **Data.Compare** — Add Compare method to Data (C#, serialize-to-JSON comparison)
+3. **Golden eval suite** — Write the 38 `.goal` files, build, verify `.pr`, save as `.golden`
+4. **Eval runner** — PLang goal that builds, compares, writes dated results
+5. **Formalization + return removal** — Add formalization phase to builder prompt, remove return from schema
+6. **Pipeline redesign** — Replace needsDetail with level/confidence + grouping
 
 ---
 
