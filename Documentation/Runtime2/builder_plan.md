@@ -38,28 +38,89 @@ Validation happens in `ApplyStep`: `ValidateActions` checks if module.action exi
 
 4. **Validation failures handled one-at-a-time** — A step that fails validation goes back through BuildStep alone. If multiple steps failed for related reasons (e.g., all using the wrong parameter name for the same module), each gets a separate retry with no shared learning.
 
-### New Design: Confidence + Grouped Batching
+### New Design: Formalization → Actions → Self-Assessment
 
-**Pass 1: Whole-Goal (same as today, with confidence)**
+The new pipeline has three distinct phases per step, produced in a single LLM pass:
 
-The LLM returns everything it returns today, plus a `confidence` score (0.0–1.0) per step. The `needsDetail` flag is removed.
+#### Phase 1: Formalization (before actions)
+
+The LLM first translates the natural language step into a **structured pseudo-syntax** that makes modules, data flow, and variable assignments explicit.
+
+```
+Step text:  "read file.txt and write it into %content%"
+Formalized: "file.read file.txt -> variable.set %content%"
+
+Step text:  "if %count% is greater than 5, call HandleOverflow"
+Formalized: "condition.if %count% > 5 -> goal.call HandleOverflow"
+
+Step text:  "get http://api.example.com/users and set %users%"
+Formalized: "http.get http://api.example.com/users -> variable.set %users%"
+```
+
+The `->` indicates module boundaries — when a step involves multiple modules, each becomes explicit. This is **structured chain-of-thought**: the LLM reasons about what the step means before committing to action parameters.
+
+**Why formalization matters:**
+- Forces the LLM to decompose multi-module steps explicitly
+- Creates an evaluatable intermediate representation (we can check formalization independently of actions)
+- Makes data flow visible — where does the output go?
+- Serves as human-readable documentation if stored in the `.pr` file
+
+#### Phase 2: Actions (no more `return`)
+
+Actions are built from the formalization. The key change: **`return` is removed from the action schema.** Setting a variable is just `variable.set` — there's no special "return" mechanism.
+
+Today:
+```json
+{
+  "actions": [{ "module": "file", "action": "read", "parameters": [...] }],
+  "return": [{ "name": "%content%" }]
+}
+```
+
+New:
+```json
+{
+  "actions": [
+    { "module": "file", "action": "read", "parameters": [{ "name": "path", "value": "file.txt" }] },
+    { "module": "variable", "action": "set", "parameters": [{ "name": "name", "value": "%content%" }, { "name": "value", "value": "%prevStepResult%" }] }
+  ]
+}
+```
+
+The formalization already showed this: `file.read file.txt -> variable.set %content%`. Two modules, two actions. No magic `return` property needed.
+
+#### Phase 3: Self-Assessment (after actions)
+
+After producing actions, the LLM assesses its own work with **both** a categorical level and a numeric confidence:
 
 ```json
 {
   "steps": [
     {
       "index": 0,
-      "confidence": 0.95,
-      "actions": [{ "module": "variable", "action": "set", ... }]
+      "formalized": "file.read file.txt -> variable.set %content%",
+      "actions": [...],
+      "level": "high",
+      "confidence": 0.95
     },
     {
       "index": 1,
-      "confidence": 0.6,
-      "actions": [{ "module": "file", "action": "read", ... }]
+      "formalized": "condition.if %count% > 5 -> goal.call HandleOverflow",
+      "actions": [...],
+      "level": "medium",
+      "confidence": 0.7
     }
   ]
 }
 ```
+
+**Why both level and confidence?** LLMs are better at verbalizing assessment than producing calibrated numbers. A `"level": "low"` is a more honest signal than `"confidence": 0.3` — the LLM knows it's uncertain, but can't reliably quantify *how* uncertain. The level is the LLM's real judgment; the confidence number is the machine-readable approximation for thresholding and automation.
+
+| Level | Meaning | Typical action |
+|-------|---------|----------------|
+| **high** | LLM is confident in module, action, and all parameters | Accept (if validation passes) |
+| **medium** | Module/action likely right, but parameters may be incomplete or uncertain | Candidate for pass 2 |
+| **low** | LLM is guessing — unclear which module, ambiguous step | Definitely needs pass 2 |
 
 **Triage**
 
@@ -67,37 +128,39 @@ After pass 1 + validation, steps are categorized:
 
 | Category | Condition | Action |
 |----------|-----------|--------|
-| **Done** | confidence ≥ threshold AND passes validation | Accept as-is |
-| **Low confidence** | confidence < threshold | Send to pass 2 |
-| **Validation failed** | ValidateActions returned error | Send to pass 2 with error context |
-
-The threshold is configurable (start with 0.8, tune based on eval data).
+| **Done** | level=high AND passes validation | Accept as-is |
+| **Needs refinement** | level=medium OR low | Send to pass 2 |
+| **Validation failed** | ValidateActions returned error (any level) | Send to pass 2 with error context |
 
 **Grouping for Pass 2**
 
 Steps that need pass 2 are grouped by module. Each group gets a single LLM call with:
 - Full parameter schema/documentation for that module (and related modules if steps span multiple)
-- All steps in the group
+- All steps in the group (including their formalization — the LLM already knows what it's trying to build)
 - For validation-failed steps: the specific error messages
 
 ```
 Group 1: [step 1, step 4] → both use file module → one LLM call with file module docs
-Group 2: [step 3]         → uses condition module → one LLM call with condition module docs  
+Group 2: [step 3]         → uses condition module → one LLM call with condition module docs
 Group 3: [step 2, step 5] → validation failures → one LLM call with error context + relevant module docs
 ```
 
 **Why this is better:**
-- Fewer LLM calls (batching by module)
-- Better context per call (LLM sees related steps together)
-- Confidence signal feeds into evals (we can track which modules/patterns produce low confidence)
-- Validation errors are grouped — the LLM can learn from one error to fix related ones in the same batch
+- **Formalization as CoT** — the LLM thinks before it acts, producing better actions
+- **No `return`** — one less special case, variable assignment is always explicit
+- **Level + confidence** — honest self-assessment the LLM can actually produce reliably
+- **Fewer LLM calls** — batching by module
+- **Better context per call** — LLM sees related steps together
+- **Confidence feeds evals** — track which modules/patterns produce low confidence
+- **Validation errors grouped** — the LLM can learn from one error to fix related ones
 
 ### Open Questions
 
-- Should confidence be per-step or per-action? (A step can have multiple actions)
+- Should `formalized` be stored in the `.pr` file? (Pro: documentation and eval. Con: extra weight in every .pr)
+- How does `%prevStepResult%` (or equivalent) work for chaining action output to `variable.set`? Is it implicit (last action's Data) or explicit?
 - Should groups that share modules be merged? (e.g., a low-confidence file step and a validation-failed file step)
-- What's the right confidence threshold? (Needs eval data to tune)
 - Should pass 2 failures go to a pass 3, or surface as build errors?
+- Does the formalization syntax need to be standardized, or is it free-form as long as it names modules?
 
 ---
 
@@ -201,9 +264,10 @@ The eval suite is not just a test — it's a learning system.
 1. **This document** — Get alignment on the vision (now)
 2. **Golden eval suite** — Start measuring before we change anything
 3. **Structural validation expansion** — Expand ValidateActions to cover parameters
-4. **Pipeline redesign** — Replace needsDetail with confidence + grouping
-5. **Consistency scoring** — Build the tooling for LLM evaluation
-6. **LLM-as-judge** — Add semantic validation where needed
+4. **Formalization + return removal** — Add formalization phase to builder prompt, remove return from schema
+5. **Pipeline redesign** — Replace needsDetail with level/confidence + grouping
+6. **Consistency scoring** — Build the tooling for LLM evaluation
+7. **LLM-as-judge** — Add semantic validation where needed
 
 ---
 
