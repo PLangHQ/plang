@@ -22,7 +22,7 @@ public partial class Set : IContext
         {
             var existing = Context.Variables.Get(Name);
             if (existing.IsInitialized)
-                return Task.FromResult(Data(existing.Value));
+                return Task.FromResult(Data());
         }
 
         Value.Name = Name;
