@@ -2,6 +2,10 @@ using App.Variables;
 
 namespace App.modules.variable;
 
+/// <summary>
+/// Sets a variable in the current context's variable store.
+/// When AsDefault is true, only sets if the variable doesn't already exist.
+/// </summary>
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
 {

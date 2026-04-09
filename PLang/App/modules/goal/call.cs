@@ -4,6 +4,10 @@ using App.Variables;
 
 namespace App.modules.goal;
 
+/// <summary>
+/// Calls a named goal, optionally on a different actor.
+/// Parameters are injected into the target goal's context by the GoalCall resolver.
+/// </summary>
 [Action("call")]
 public partial class Call : IContext
 {

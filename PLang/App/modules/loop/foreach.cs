@@ -3,6 +3,11 @@ using App.Variables;
 
 namespace App.modules.loop;
 
+/// <summary>
+/// Iterates over a collection, calling a goal for each item.
+/// Supports dictionaries (key/value), lists (index/value), and any IEnumerable.
+/// Respects goal.return (Returned flag) and cancellation.
+/// </summary>
 [Action("foreach")]
 public partial class Foreach : IContext
 {

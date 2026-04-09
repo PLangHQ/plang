@@ -1,4 +1,4 @@
-# PLang Build Process & .pr File Format (v0.3)
+# PLang Build Process & .pr File Format (v0.2)
 
 ## Overview
 
@@ -36,7 +36,7 @@ Input:  "Start\n- call goal WriteOut\n\nWriteOut\n- write out \"hello\""
 Output: Goal { Name="Start", Goals=[Goal { Name="WriteOut" }] }
 ```
 
-## .pr File Format (v0.3)
+## .pr File Format (v0.2)
 
 One `.pr` file per `.goal` file. The root goal is the JSON root, sub-goals are in the `goals` array.
 
@@ -98,7 +98,7 @@ One `.pr` file per `.goal` file. The root goal is the JSON root, sub-goals are i
   "path": "/Test.goal",
   "prPath": "/.build/test.pr",
   "hash": "...",
-  "builderVersion": "0.3",
+  "builderVersion": "0.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
@@ -119,7 +119,7 @@ One `.pr` file per `.goal` file. The root goal is the JSON root, sub-goals are i
 | `path` | string | Relative path to the source .goal file (e.g., `/Test.goal`) |
 | `prPath` | string | Derived path to the .pr file (e.g., `/.build/test.pr`) |
 | `hash` | string | SHA256 of goal name + step texts — used for change detection |
-| `builderVersion` | string | Builder format version (currently `"0.3"`) |
+| `builderVersion` | string | Builder format version (currently `"0.2"`) |
 | `isSetup` | bool | True if goal is named "Setup" or in `setup/` folder |
 | `isEvent` | bool | True if this is an event goal |
 | `isSystem` | bool | True if in `system/` folder |
@@ -186,7 +186,7 @@ BuildGoal.goal
      - LLM sees all steps, returns {module, action, parameters} per step
      - Also returns confidence level: high/medium/low
   5. foreach step result → call ApplyStep
-  6. Set goal.BuilderVersion = "0.3"
+  6. Set goal.BuilderVersion = "0.2"
   7. SaveGoal — serialize to .pr file
 ```
 

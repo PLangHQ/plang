@@ -2,6 +2,10 @@ using System.Text.Json.Serialization;
 using App.Variables;
 namespace App.Goals.Goal.Steps.Step.Actions.Action;
 
+/// <summary>
+/// A single action within a step — the LLM-mapped unit of execution.
+/// Identifies the module and handler to invoke, with typed parameters, return mappings, and defaults.
+/// </summary>
 public sealed partial class @this : Data.@this<@this>
 {
     [JsonIgnore]

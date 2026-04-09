@@ -93,9 +93,7 @@ static Goal NotFound(string name)
 | `Indent` | `int` | Yes | Indentation level |
 | `Comment` | `string?` | Yes | Builder comment |
 | `Actions` | `Actions` | Yes | Action bindings for this step |
-| `OnErrorGoal` | `string?` | Yes | Goal to call on error |
 | `Hash` | `string?` | Yes | Content hash |
-| `PreviousHash` | `string?` | Yes | Previous build hash |
 | `Intent` | `string?` | Yes | LLM-inferred intent |
 | `OnError` | `ErrorHandler?` | Yes | Error handling configuration |
 | `Cache` | `CacheSettings?` | Yes | Caching configuration |

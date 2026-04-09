@@ -3,6 +3,10 @@ using App.modules.file.providers;
 
 namespace App.modules.file;
 
+/// <summary>
+/// Reads a file and returns its content as Data.
+/// When ResolveVariables is true, %var% patterns in the content are resolved (with infrastructure variables blocked for security).
+/// </summary>
 [Example("read file.txt, write to %content%", "Path=file.txt")]
 [Example("read %path%, write to %data%", "Path=%path%")]
 [Example("read file.txt, load vars, write to %content%", "Path=file.txt, ResolveVariables=true")]

@@ -25,6 +25,9 @@ public class Error : IError
     public Dictionary<string, string> Variables { get; set; } = new();
     public virtual ErrorCategory Category => StatusCode < 500 ? ErrorCategory.Application : ErrorCategory.Runtime;
 
+    /// <summary>
+    /// Creates an error with a message. Use for errors not tied to a specific execution context.
+    /// </summary>
     public Error(string message, string key = "Error", int statusCode = 400)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
@@ -34,6 +37,9 @@ public class Error : IError
         CreatedUtc = DateTime.UtcNow;
     }
 
+    /// <summary>
+    /// Creates an error tied to a specific step. Goal is inferred from step.Goal.
+    /// </summary>
     public Error(string message, Step? step, string key = "Error", int statusCode = 400)
         : this(message, key, statusCode)
     {
@@ -41,12 +47,18 @@ public class Error : IError
         Goal = step?.Goal;
     }
 
+    /// <summary>
+    /// Creates an error with a step and explicit call stack snapshot.
+    /// </summary>
     public Error(string message, Step? step, IReadOnlyList<CallFrame> callFrames, string key = "Error", int statusCode = 400)
         : this(message, step, key, statusCode)
     {
         CallFrames = callFrames;
     }
 
+    /// <summary>
+    /// Creates an error from an execution context. Captures step, goal, and call stack automatically.
+    /// </summary>
     public Error(string message, Actor.Context.@this context, string key = "Error", int statusCode = 400)
         : this(message, context.Step, key, statusCode)
     {
@@ -54,6 +66,9 @@ public class Error : IError
         CallFrames = context.CallStack?.GetFrames() ?? (IReadOnlyList<CallFrame>)Array.Empty<CallFrame>();
     }
 
+    /// <summary>
+    /// Wraps a CLR exception as an Error. StatusCode defaults to 500 (runtime error).
+    /// </summary>
     public static Error FromException(Exception ex, string key = "Exception", int statusCode = 500)
     {
         return new Error(ex.Message, key, statusCode)
@@ -62,6 +77,9 @@ public class Error : IError
         };
     }
 
+    /// <summary>
+    /// Wraps a CLR exception as an Error with execution context for step/goal/callstack capture.
+    /// </summary>
     public static Error FromException(Exception ex, Actor.Context.@this context, string key = "Exception", int statusCode = 500)
     {
         return new Error(ex.Message, context, key, statusCode)

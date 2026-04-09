@@ -145,8 +145,8 @@ RunSteps(steps, context)
   for each step:
     for each action in step.Actions:
       Run(action, context)
-        -> Modules.GetCodeGenerated(module, actionName)
-        -> executor.ExecuteAsync(action, app, context)
+        -> Modules.GetCodeGenerated(action)
+        -> handler.ExecuteAsync(action, context)
         -> if action.Return: context.Variables.Put(result)
     
     sub-step control:
