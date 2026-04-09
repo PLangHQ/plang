@@ -1,0 +1,6 @@
+Start
+- set %items% = ["a", "b", "c"]
+- foreach %items%, call ProcessItem item=%item%
+
+ProcessItem
+- write out %item%

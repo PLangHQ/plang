@@ -1,0 +1,8 @@
+Start
+- call DoWork, エラー時に HandleError を呼ぶ
+
+DoWork
+- write out "working"
+
+HandleError
+- write out "error handled"

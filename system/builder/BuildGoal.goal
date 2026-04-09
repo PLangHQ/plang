@@ -36,6 +36,8 @@ BuildGoal
 HandleBuildGoalFailure
 - if %!error.StatusCode% = 402 then
     - throw %!error%
+- if %!error.StatusCode% = 429 then
+    - throw %!error%
 - if %!error.StatusCode% >= 500 then
     - throw %!error%
 - append %!error% to %goal.errors%

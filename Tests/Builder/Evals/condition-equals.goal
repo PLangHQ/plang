@@ -1,0 +1,5 @@
+Start
+- if %x% == 5, call WhenEqual
+
+WhenEqual
+- write out "equal"

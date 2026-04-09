@@ -1,0 +1,5 @@
+Start
+- call ComputeAnswer, write to %answer%
+
+ComputeAnswer
+- set %result% = 42

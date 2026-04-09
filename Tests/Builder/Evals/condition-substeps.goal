@@ -1,0 +1,3 @@
+Start
+- if %ready% is true
+    - write out "ready"

@@ -53,7 +53,7 @@
     },
     {
       "index": 2,
-      "text": "if %!error.StatusCode% >= 500 then",
+      "text": "if %!error.StatusCode% = 429 then",
       "lineNumber": 20,
       "indent": 0,
       "actions": [
@@ -68,12 +68,12 @@
             },
             {
               "name": "Operator",
-              "value": ">=",
+              "value": "==",
               "type": "string"
             },
             {
               "name": "Right",
-              "value": 500,
+              "value": 429,
               "type": "int"
             }
           ]
@@ -103,8 +103,58 @@
     },
     {
       "index": 4,
+      "text": "if %!error.StatusCode% >= 500 then",
+      "lineNumber": 20,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%!error.StatusCode%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": ">=",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 500,
+              "type": "int"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "throw %!error%",
+      "lineNumber": 23,
+      "indent": 1,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "%!error.Message%",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
       "text": "if %!error.retryCount% > 3 then",
-      "lineNumber": 22,
+      "lineNumber": 24,
       "indent": 0,
       "actions": [
         {
@@ -132,9 +182,9 @@
       "waitForExecution": true
     },
     {
-      "index": 5,
+      "index": 7,
       "text": "throw error \"Build step failed after 3 retries\"",
-      "lineNumber": 23,
+      "lineNumber": 25,
       "indent": 1,
       "actions": [
         {
@@ -152,9 +202,9 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 8,
       "text": "write out \"  Retry %!error.retryCount%/3: %!error.Message%\"",
-      "lineNumber": 24,
+      "lineNumber": 26,
       "indent": 0,
       "actions": [
         {
@@ -172,9 +222,9 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 9,
       "text": "call BuildStep",
-      "lineNumber": 25,
+      "lineNumber": 27,
       "indent": 0,
       "actions": [
         {

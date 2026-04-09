@@ -61,7 +61,7 @@
     },
     {
       "index": 2,
-      "text": "if %!error.StatusCode% >= 500 then",
+      "text": "if %!error.StatusCode% = 429 then",
       "lineNumber": 36,
       "indent": 0,
       "actions": [
@@ -76,12 +76,12 @@
             },
             {
               "name": "Operator",
-              "value": ">=",
+              "value": "==",
               "type": "string"
             },
             {
               "name": "Right",
-              "value": 500,
+              "value": 429,
               "type": "int"
             }
           ],
@@ -119,8 +119,66 @@
     },
     {
       "index": 4,
+      "text": "if %!error.StatusCode% >= 500 then",
+      "lineNumber": 36,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%!error.StatusCode%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": ">=",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "throw %!error%",
+      "lineNumber": 39,
+      "indent": 1,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "%!error.Message%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
       "text": "append %!error% to %goal.errors%",
-      "lineNumber": 38,
+      "lineNumber": 40,
       "indent": 0,
       "actions": [
         {
@@ -147,9 +205,9 @@
       "waitForExecution": true
     },
     {
-      "index": 5,
+      "index": 7,
       "text": "if %!error.retryCount% > 3 then",
-      "lineNumber": 39,
+      "lineNumber": 41,
       "indent": 0,
       "actions": [
         {
@@ -181,9 +239,9 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 8,
       "text": "throw %!error%",
-      "lineNumber": 40,
+      "lineNumber": 42,
       "indent": 1,
       "actions": [
         {
@@ -205,9 +263,9 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 9,
       "text": "write out \"  Retry %!error.retryCount%/3: %!error.Message%\"",
-      "lineNumber": 41,
+      "lineNumber": 43,
       "indent": 0,
       "actions": [
         {
@@ -229,9 +287,9 @@
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 10,
       "text": "call BuildGoal",
-      "lineNumber": 42,
+      "lineNumber": 44,
       "indent": 0,
       "actions": [
         {

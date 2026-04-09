@@ -37,6 +37,8 @@ ThrowActionErrors
 HandleBuildStepFailure
 - if %!error.StatusCode% = 402 then
     - throw %!error%
+- if %!error.StatusCode% = 429 then
+    - throw %!error%
 - if %!error.StatusCode% >= 500 then
     - throw %!error%
 - if %!error.retryCount% > 3 then

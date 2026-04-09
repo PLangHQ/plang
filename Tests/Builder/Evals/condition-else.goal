@@ -1,0 +1,8 @@
+Start
+- if %x% > 5, call WhenBig, else call WhenSmall
+
+WhenBig
+- write out "big"
+
+WhenSmall
+- write out "small"

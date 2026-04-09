@@ -13,6 +13,20 @@
       "plan": "",
       "actions": [],
       "after": {}
+    },
+    {
+      "id": "c0d3r001-eval-suite-0001-0001-000000000001",
+      "bot": "coder",
+      "timestamp_start": "2026-04-09T17:00:00Z",
+      "timestamp_end": null,
+      "intent": "Implement Data.Compare, 38 eval .goal files, and eval runner",
+      "before": {
+        "assumptions": "Data class exists at PLang/App/Data/this.cs as partial class. No Compare method exists. 127 module actions registered. .pr format uses Json.CamelCaseIndented with [Store] filtering. Builder works for existing test .goal files.",
+        "risk": "Medium — new method on core Data class, 38 new files. Compare method must handle JSON boxing issues (int/long/double)."
+      },
+      "plan": "1. Add Data.Compare as new partial file (this.Compare.cs) — JSON-level structural diff. 2. C# tests for Compare. 3. Write 38 eval .goal files per architect catalogue. 4. Build, verify .pr output, save as .golden. 5. Write eval runner PLang goal.",
+      "actions": [],
+      "after": {}
     }
   ]
 }

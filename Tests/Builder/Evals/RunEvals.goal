@@ -1,0 +1,21 @@
+RunEvals
+- list files in '.', write to %allFiles%
+- set %goldens% = []
+- set %results% = []
+- foreach %allFiles%, call CheckGolden item=%file%
+- foreach %goldens%, call EvalCase item=%golden%
+- save %results% to file 'results/%Now%.json'
+- write out %results%
+
+CheckGolden
+- if %file% contains ".golden", call AddGolden
+
+AddGolden
+- add %file% to %goldens%
+
+EvalCase
+- set %prPath% = ".build/%golden.replace(".golden", ".pr")%"
+- read file %golden%, write to %expected%
+- read file %prPath%, write to %actual%
+- compare %expected% with %actual%, write to %diff%
+- add %diff% to %results%
