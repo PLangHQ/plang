@@ -166,15 +166,6 @@ Group 3: [step 2, step 5] → validation failures → one LLM call with error co
 
 - **Formalization syntax should be standardized.** Since .pr files are portable bytecode, the formalization syntax needs a defined grammar: `module.action [params] | module.action [params]`. This enables any runtime to parse and understand the formalization, and enables structural validation of the formalization itself.
 
-### PR as Portable Bytecode
-
-The .pr file is PLang's equivalent of bytecode. It is:
-- **Runtime-independent** — any language can implement a PLang runtime that reads these files
-- **Builder-produced** — only the LLM builder generates them, never manual editing
-- **Self-describing** — the formalization tells you what the step means, the actions tell you how to execute it
-
-This means standardization of the format — including the formalization syntax and module/action structure — is a first-class concern, not an afterthought.
-
 ### Remaining Open Questions
 
 - **Formalization grammar**: Will emerge from real LLM output. Run the builder, collect examples, then formalize the grammar bottom-up from what the LLM actually produces. Don't define the spec before we have data.
