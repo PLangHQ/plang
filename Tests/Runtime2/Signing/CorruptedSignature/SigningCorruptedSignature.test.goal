@@ -1,0 +1,12 @@
+Start
+/ Test: corrupt signature field, verify fails
+- archive identity 'testSigner', force, on error ignore
+- create identity testSigner
+- set %data% = { "payload": "corrupt" }
+- sign %data%
+- set %data.Signature.Signature% = "AAAA/corrupted+base64=="
+- verify %data% with contracts ['C0'], on error call HandleCorrupt
+- assert %corrupted% is true, "corrupted signature should fail verification"
+
+HandleCorrupt
+- set %corrupted% = true

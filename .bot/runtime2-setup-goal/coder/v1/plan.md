@@ -6,12 +6,12 @@ Setup goals run once-per-step at app startup. Steps are tracked persistently in 
 
 ## Files to Create
 
-### 1. `PLang/Runtime2/Engine/Goals/Setup/this.cs` — Setup class
+### 1. `PLang/App/Goals/Setup/this.cs` — Setup class
 
 The Setup object. Replaces `IEnumerable<Goal> Setup` on EngineGoals. Uses `engine.System.DataSource` for persistence — no new sqlite code. Each step gets one row in the `setup` table keyed by hash.
 
 ```csharp
-namespace PLang.Runtime2.Engine.Goals.Setup;
+namespace App.Goals.Setup;
 
 public sealed class @this
 {
@@ -75,14 +75,14 @@ public sealed class @this
 
 ## Files to Modify
 
-### 2. `PLang/Runtime2/Engine/Goals/this.cs` (EngineGoals)
+### 2. `PLang/App/Goals/this.cs` (EngineGoals)
 
 - **Line 186**: Change `Setup` from `IEnumerable<Goal.@this>` filter to `Setup.@this` object
 - Remove the old `Setup => _goals.Values.Where(g => g.IsSetup)` property
 - Add: `public Setup.@this Setup { get; }` initialized in constructor
 - Exclude setup goals from regular lookup in `Get()` and `GetAsync()` — a developer cannot accidentally call a setup goal from normal code
 
-### 3. `PLang/Runtime2/Engine/Context/PLangContext.cs`
+### 3. `PLang/App/Context/PLangContext.cs`
 
 - **Add property**: `public Setup.@this? Setup { get; set; }` (nullable, set only during setup execution)
 - **Clone() line 194**: Copy `Setup` to clone
@@ -94,7 +94,7 @@ Actually, re-reading the architect's spec: "Context carries Setup through the pa
 
 But `Clone()` must still copy Setup for completeness.
 
-### 4. `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` (Steps)
+### 4. `PLang/App/Goals/Goal/Steps/this.cs` (Steps)
 
 - **Add `RunAsync`** method that owns the step iteration loop (moved from Goal.Methods.cs)
 - The setup run-once check goes here:
@@ -106,7 +106,7 @@ But `Clone()` must still copy Setup for completeness.
       await context.Setup.Record(step, engine, result.Success ? null : result.Error);
   ```
 
-### 5. `PLang/Runtime2/Engine/Goals/Goal/Methods.cs` (Goal.RunAsync)
+### 5. `PLang/App/Goals/Goal/Methods.cs` (Goal.RunAsync)
 
 - **Lines 57-70**: Replace the step iteration loop with delegation to `Steps.RunAsync(engine, context, cancellationToken)`
 - This follows OBP rule 5: "Collections are smart wrappers... Parents delegate — they never iterate directly"
@@ -122,7 +122,7 @@ The architect notes to verify that Step.Hash is `hash(goalPath + compiledAction)
 
 ## C# Tests
 
-### `PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs`
+### `PLang.Tests/App/Goals/Setup/SetupTests.cs`
 
 1. **Setup_RunAsync_SkipsAlreadyExecutedSteps** — Run setup twice, verify steps only execute once
 2. **Setup_RunAsync_RunsNewStepsOnly** — Run setup, add a step, run again, verify only new step runs
@@ -134,7 +134,7 @@ The architect notes to verify that Step.Hash is `hash(goalPath + compiledAction)
 
 ### PLang Integration Test
 
-`Tests/Runtime2/Setup/Start.test.goal`:
+`Tests/App/Setup/Start.test.goal`:
 ```
 Start
 - set %counter% = 0

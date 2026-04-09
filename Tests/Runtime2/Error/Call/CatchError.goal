@@ -1,0 +1,2 @@
+CatchError
+- set %caughtMessage% = %!error.Message%

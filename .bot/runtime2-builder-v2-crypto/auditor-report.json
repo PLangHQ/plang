@@ -1,0 +1,47 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-builder-v2-crypto",
+  "timestamp": "2026-03-19T16:30:00Z",
+  "reviewed_version": "v1",
+  "summary": "Crypto module is clean, well-structured, and follows PLang conventions. All three prior reviewers did thorough work. I found 1 minor finding (DefaultProvider allocation on every call) and 2 nits. The timing side-channel (security finding 1) remains unfixed — I agree with security's PASS-with-recommendation given PLang's threat model, but flag it as the one thing that should be fixed before the signing module lands. No critical or major cross-file issues. Engine.Providers integrates cleanly. Identity error chain is complete end-to-end.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — thorough per-file analysis. Initial miss on providers-throwing was caught by Ingi, not the bot, which is a gap. v2 re-review was solid.",
+    "tester": "agree — 4 rounds including fresh-eyes caught a real bug (null Hash). Error path coverage is comprehensive. Identity module has full save/remove failure chain tested.",
+    "security": "agree — timing side-channel correctly identified. PASS-with-recommendation is the right call for current scope, but I want to elevate urgency for signing module."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "architectural",
+      "file": "PLang/Runtime2/modules/crypto/hash.cs",
+      "line": 54,
+      "issue": "ResolveProvider() creates `new DefaultProvider()` on every call. Since Hash and Verify are called per-step, this allocates a new object per hash/verify operation. DefaultProvider is stateless so it's functionally correct, but wasteful.",
+      "missed_by": "codeanalyzer",
+      "impact": "GC pressure on hash-heavy workloads. Minor — DefaultProvider is tiny (no fields). Becomes more relevant when providers hold state (e.g., bcrypt work factor, connection pools).",
+      "suggestion": "Cache the default: `private static readonly DefaultProvider _default = new();` then `GetOrDefault<ICryptoProvider>(_default)`. Or register DefaultProvider in Engine constructor. Either works."
+    },
+    {
+      "id": 2,
+      "severity": "nit",
+      "category": "foundation",
+      "file": "PLang/Runtime2/Engine/Providers/this.cs",
+      "line": 14,
+      "issue": "Engine.Providers is not disposed when Engine disposes. If a registered provider implements IDisposable (e.g., a future provider with a connection pool), it will leak. Current providers (DefaultProvider) are stateless so this doesn't bite today.",
+      "missed_by": "codeanalyzer",
+      "impact": "No impact today. Future risk when providers hold resources. Low priority — add disposal when the first stateful provider is introduced.",
+      "suggestion": "When a disposable provider is needed, add `DisposeProviders()` to Engine.DisposeAsync that iterates `_providers.Values` and disposes IDisposable/IAsyncDisposable. Not needed now."
+    },
+    {
+      "id": 3,
+      "severity": "nit",
+      "category": "cross-file",
+      "file": "PLang/Runtime2/modules/crypto/hash.cs",
+      "line": 17,
+      "issue": "Hash.Run() and Verify.Run() are declared `async Task<Data>` but contain no `await` expressions in the handler-written code. The source generator's partial class adds awaits (for lazy param resolution), so the compiler doesn't warn. Not a bug, but it's worth noting that if the generator ever changes, these would produce CS1998 warnings.",
+      "missed_by": "none",
+      "impact": "No impact. Informational only.",
+      "suggestion": "No action needed. The generator handles async correctly."
+    }
+  ]
+}

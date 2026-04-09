@@ -1,0 +1,6 @@
+Start
+/ Test: render template that includes a partial via include tag
+- set %title% = 'Welcome'
+- render file 'page.html', write to %result%
+- assert %result% contains 'Header: Welcome'
+- assert %result% contains 'Body content'

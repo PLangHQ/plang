@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "0 critical, 0 high, 2 medium, 3 low — tool whitelist is correct, JSON deserialization is safe, medium findings are resource limits not exploits" }

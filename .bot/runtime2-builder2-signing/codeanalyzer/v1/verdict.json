@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "IKeyProvider.GenerateKeyPair() returns KeyPair instead of Data — breaks 'providers return Data, never throw' rule. Plus 3 simplification targets and 1 bare catch." }

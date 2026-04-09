@@ -1,0 +1,28 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-builder-module",
+  "timestamp": "2026-03-30T15:00:00Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 2022, "passed": 2018, "failed": 0, "skipped": 4 },
+    "plang": { "total": 6, "passed": 3, "failed": 0, "skipped": 3 }
+  },
+  "coverage": {
+    "changed_files_covered": 10,
+    "changed_files_total": 11,
+    "uncovered_files": [],
+    "details": {
+      "DefaultBuilderProvider.cs": "96.9%",
+      "DefaultBuilderProvider.Goals": "84.3%",
+      "DefaultBuilderProvider.GoalsSave": "100%",
+      "DefaultBuilderProvider.App": "93.1%",
+      "DefaultBuilderProvider.AppSave": "100%",
+      "DefaultBuilderProvider.MergePrData": "100%",
+      "DefaultBuilderProvider.ResolveGoalCallPaths": "97.4%",
+      "DefaultBuilderProvider.Validate": "100%"
+    }
+  },
+  "findings": [],
+  "verdict": "approved",
+  "summary": "All 7 v1 findings resolved. 4 new tests added (CorruptJson, DuplicateStepText, EmptyGoalsList, NoPrPath). 1 production bug fixed (PrPath resolution was broken). Coverage improved: GoalsSave 90→100%, App 79→93%, ResolveGoalCallPaths 90→97%. Goals at 84.3% is the only remaining gap (file-read error path). 2022 tests, 0 failures."
+}

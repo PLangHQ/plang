@@ -1,0 +1,74 @@
+{
+  "tester": "test-designer",
+  "branch": "runtime2-builder-v2-signing",
+  "timestamp": "2026-03-20T14:00:00Z",
+  "piece": "3 — signing module",
+  "status": "stubs-committed",
+  "test_stubs": {
+    "csharp": {
+      "total": 98,
+      "files": [
+        { "file": "PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs", "tests": 19, "status": "stub", "covers": "Engine.Providers named registry — register, get, remove, setDefault, list (typed + all-interfaces), sub-engine inheritance + pool return cleanup + fallback with local overlay" },
+        { "file": "PLang.Tests/Runtime2/Core/CacheTryAddTests.cs", "tests": 5, "status": "stub", "covers": "ICache.TryAddAsync atomic semantics for nonce replay prevention" },
+        { "file": "PLang.Tests/Runtime2/Modules/signing/Ed25519ProviderTests.cs", "tests": 12, "status": "stub", "covers": "Ed25519Provider — key generation, sign, verify at provider level" },
+        { "file": "PLang.Tests/Runtime2/Modules/signing/SignActionTests.cs", "tests": 15, "status": "stub", "covers": "Sign action handler — field population, Created timestamp, contracts, TTL, headers, crypto validity, provider override, errors" },
+        { "file": "PLang.Tests/Runtime2/Modules/signing/VerifyActionTests.cs", "tests": 27, "status": "stub", "covers": "Verify action handler — all 9 error keys + tampered Type, contracts, provider resolution, headers, nonce cache, boundaries, empty contracts, lazy verification (DESIGN-1), different nonce not-false-positive" },
+        { "file": "PLang.Tests/Runtime2/Modules/signing/SigningSerializationTests.cs", "tests": 9, "status": "stub", "covers": "Deterministic JSON serialization — null-signature pattern, camelCase, stable bytes, base64, round-trip, Verified JsonIgnore exclusion, invalid base64 rejection" },
+        { "file": "PLang.Tests/Runtime2/Modules/provider/ProviderModuleTests.cs", "tests": 8, "status": "stub", "covers": "Provider module actions — load, remove, setDefault, list" },
+        { "file": "PLang.Tests/Runtime2/Modules/signing/IdentityKeyProviderTests.cs", "tests": 5, "status": "stub", "covers": "Identity create delegates to IKeyProvider — mock provider, default Ed25519, error paths" }
+      ]
+    },
+    "plang": {
+      "total": 16,
+      "files": [
+        { "file": "Tests/Runtime2/Signing/Roundtrip/SigningRoundtrip.test.goal", "tests": "sign + verify round-trip with contracts" },
+        { "file": "Tests/Runtime2/Signing/CustomContracts/SigningCustomContracts.test.goal", "tests": "sign/verify with custom contracts ['C0','C1']" },
+        { "file": "Tests/Runtime2/Signing/ContractMismatch/SigningContractMismatch.test.goal", "tests": "verify with wrong contracts fails" },
+        { "file": "Tests/Runtime2/Signing/Expired/SigningExpired.test.goal", "tests": "sign with short TTL, wait, verify fails as expired" },
+        { "file": "Tests/Runtime2/Signing/TimedOut/SigningTimedOut.test.goal", "tests": "verify fails when Created older than timeout setting" },
+        { "file": "Tests/Runtime2/Signing/TamperedData/SigningTamperedData.test.goal", "tests": "tamper data after signing, verify fails with hash mismatch" },
+        { "file": "Tests/Runtime2/Signing/CorruptedSignature/SigningCorruptedSignature.test.goal", "tests": "corrupt Signature field, verify fails" },
+        { "file": "Tests/Runtime2/Signing/NonceReplay/SigningNonceReplay.test.goal", "tests": "verify same nonce twice, second fails" },
+        { "file": "Tests/Runtime2/Signing/WithHeaders/SigningWithHeaders.test.goal", "tests": "sign with headers, verify with matching headers" },
+        { "file": "Tests/Runtime2/Signing/HeaderMismatch/SigningHeaderMismatch.test.goal", "tests": "sign with POST header, verify expects GET, fails" },
+        { "file": "Tests/Runtime2/Signing/DotNavigation/SigningDotNavigation.test.goal", "tests": "access SignedData properties via %data.Signature.Algorithm% etc." },
+        { "file": "Tests/Runtime2/Signing/LazyVerification/SigningLazyVerification.test.goal", "tests": "access %data.Signature.Verified% without explicit verify step — DESIGN-1 lazy verification" },
+        { "file": "Tests/Runtime2/Signing/ProviderSwap/SigningProviderSwap.test.goal", "tests": "explicit provider param, default verification, non-existent provider error" },
+        { "file": "Tests/Runtime2/Signing/NoIdentity/SigningNoIdentity.test.goal", "tests": "sign without identity, should error" },
+        { "file": "Tests/Runtime2/Signing/VerifyUnsigned/SigningVerifyUnsigned.test.goal", "tests": "verify data that was never signed, should error" },
+        { "file": "Tests/Runtime2/Signing/EmptyData/SigningEmptyData.test.goal", "tests": "sign and verify empty/minimal data object" }
+      ]
+    }
+  },
+  "design_decisions": [
+    {
+      "id": "DESIGN-1",
+      "title": "Lazy verification on %data.Signature.Verified% access",
+      "priority": "critical",
+      "description": "Accessing %data.Signature.Verified% MUST trigger verification lazily — the PLang developer should NOT need to call an explicit 'verify' step first. The 'verify' action exists for when you need to pass contracts or headers, but bare property access to .Verified must do the verification automatically on first access.",
+      "implementation": "SignedData.Verified needs a lazy resolution pattern (like IdentityData). First access triggers the full verification flow, caches the result, returns it. Extract the verify handler's core logic into a shared method that both the verify action and the lazy .Verified getter can call. The lazy path uses default contracts (['C0']) and no expected headers. The explicit verify action passes developer-specified contracts and headers.",
+      "affects": ["PLang/Runtime2/modules/signing/SignedData.cs", "PLang/Runtime2/modules/signing/verify.cs"]
+    },
+    {
+      "id": "DESIGN-2",
+      "title": "ProviderModuleTests lives under Modules/provider/ not Modules/signing/",
+      "priority": "info",
+      "description": "The provider module (load, remove, setDefault, list) is a separate module from signing per the architect plan. Test file is at PLang.Tests/Runtime2/Modules/provider/ProviderModuleTests.cs — matches the module structure at PLang/Runtime2/modules/provider/."
+    }
+  ],
+  "what_exists": {
+    "description": "All test stubs and PLang test goals are committed on runtime2-builder-v2-signing branch. C# stubs use Assert.Fail('stub — ...') pattern with arrange/act/assert comments. PLang goals are complete — they will work once the module is registered and the builder can parse sign/verify steps.",
+    "patterns_to_follow": "Identity module (piece 1) is the reference. See PLang.Tests/Runtime2/Modules/identity/ for test setup (PLangEngine, Before/After(Test), Ctx property). See PLang/Runtime2/modules/identity/create.cs for handler structure ([Action], IContext, Data.FromError for errors, never throw)."
+  },
+  "what_coder_must_do": [
+    "Implement all files listed in the architect plan (origin/runtime2-builder-v2-signing branch)",
+    "Make all 98 C# test stubs pass — replace Assert.Fail with real assertions once handlers exist",
+    "Make all 16 PLang test goals pass once module is registered",
+    "Handlers must NEVER throw — every exception path returns Data.FromError()",
+    "Implement lazy verification on SignedData.Verified (DESIGN-1 above) — shared logic with verify action",
+    "Verify action's core logic must be reusable by the lazy .Verified getter",
+    "IMPORTANT: Update existing crypto module tests (PLang.Tests/Runtime2/Modules/crypto/) to assert base64 instead of hex for HashedData.Hash — the architect plan changes hash encoding from hex to base64 in crypto/hash.cs and crypto/verify.cs"
+  ],
+  "verdict": "stubs-ready",
+  "summary": "98 C# test stubs + 16 PLang test goals committed for signing module (piece 3). Fresh-eyes review fixed: removed broken Verify_ExplicitTwice test (nonce replay prevents contract re-check), added Verify_TamperedType test (early rejection of wrong Type field), added Sign_Created_IsApproximatelyNow test, added List_AllInterfaces_ReturnsProvidersAcrossTypes test, added coder instruction to update existing crypto tests from hex to base64 assertions. All 9 verify error keys + Type tamper covered. Provider registry (19 tests incl. all-interfaces list + pool-return cleanup + parent fallback). CRITICAL: implement lazy verification on SignedData.Verified. Lazy verification covered by 4 C# tests + 1 PLang test."
+}

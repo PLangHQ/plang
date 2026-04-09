@@ -1,0 +1,4 @@
+Start
+/ Test: Stream response with OnStream callback
+- get https://httpbin.org/stream/3, call ProcessChunk, unsigned
+- write out 'Streaming complete'

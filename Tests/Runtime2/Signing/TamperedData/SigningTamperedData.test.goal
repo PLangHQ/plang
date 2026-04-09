@@ -1,0 +1,12 @@
+Start
+/ Test: tamper data after signing, verify fails with hash mismatch
+- archive identity 'testSigner', force, on error ignore
+- create identity testSigner
+- set %data% = { "amount": 100 }
+- sign %data%
+- set %data.Value% = { "amount": 999 }
+- verify %data% with contracts ['C0'], on error call HandleTampered
+- assert %tampered% is true, "tampered data should fail verification"
+
+HandleTampered
+- set %tampered% = true

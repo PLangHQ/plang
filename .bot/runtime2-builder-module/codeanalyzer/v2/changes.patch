@@ -1,0 +1,2567 @@
+diff --git a/PLang.Tests/Runtime2/Modules/builder/AppTests.cs b/PLang.Tests/Runtime2/Modules/builder/AppTests.cs
+new file mode 100644
+index 00000000..0955f6ce
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/builder/AppTests.cs
+@@ -0,0 +1,101 @@
++using System.Text.Json;
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Utility;
++using PLang.Runtime2.modules.builder;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.builder;
++
++/// <summary>
++/// Tests for builder.getApp and builder.saveApp — load/create and save app.pr metadata.
++/// </summary>
++public class AppTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_builder_app_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++        _engine.Building.IsEnabled = true;
++    }
++
++    [After(Test)]
++    public async Task Cleanup()
++    {
++        try
++        {
++            await _engine.DisposeAsync();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort */ }
++    }
++
++    [Test]
++    public async Task GetApp_LoadsExistingAppPr()
++    {
++        // Create existing app.pr
++        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
++        System.IO.Directory.CreateDirectory(buildDir);
++        var existingApp = new AppData
++        {
++            Id = "test-id-123",
++            Created = DateTime.UtcNow.AddDays(-1),
++            Updated = DateTime.UtcNow.AddDays(-1),
++            Version = "0.2",
++            Name = "TestApp"
++        };
++        var json = JsonSerializer.Serialize(existingApp, new JsonSerializerOptions
++        {
++            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
++        });
++        System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "app.pr"), json);
++
++        var action = new app { Context = _engine.Context, Path = "." };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        var app = result.Value as AppData;
++        await Assert.That(app).IsNotNull();
++        await Assert.That(app!.Id).IsEqualTo("test-id-123");
++        await Assert.That(app.Name).IsEqualTo("TestApp");
++    }
++
++    [Test]
++    public async Task GetApp_ReturnsNullWhenMissing()
++    {
++        var action = new app { Context = _engine.Context, Path = "." };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        // No app.pr exists — returns null, caller decides whether to create
++        await Assert.That(result.Value).IsNull();
++    }
++
++    [Test]
++    public async Task SaveApp_UpdatesTimestamp()
++    {
++        var app = new AppData
++        {
++            Id = "test-id",
++            Created = DateTime.UtcNow.AddDays(-1),
++            Updated = DateTime.UtcNow,
++            Version = "0.2"
++        };
++
++        var action = new appSave { Context = _engine.Context, App = app, Path = ".build/app.pr" };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++
++        // File should exist with the app data
++        var appPrPath = System.IO.Path.Combine(_tempDir, ".build", "app.pr");
++        await Assert.That(System.IO.File.Exists(appPrPath)).IsTrue();
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/builder/BuildingGuardTests.cs b/PLang.Tests/Runtime2/Modules/builder/BuildingGuardTests.cs
+new file mode 100644
+index 00000000..3b4e7cd5
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/builder/BuildingGuardTests.cs
+@@ -0,0 +1,117 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Utility;
++using PLang.Runtime2.modules.builder;
++using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.builder;
++
++/// <summary>
++/// Tests the engine.Building.IsEnabled guard — all builder actions should return
++/// an error when building is not enabled.
++/// </summary>
++public class BuildingGuardTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_builder_guard_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++        // Building is NOT enabled — default state
++    }
++
++    [After(Test)]
++    public async Task Cleanup()
++    {
++        try
++        {
++            await _engine.DisposeAsync();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort */ }
++    }
++
++    [Test]
++    public async Task GetGoals_BuildingDisabled_ReturnsError()
++    {
++        var action = new goals { Context = _engine.Context, Path = "." };
++        var result = await _engine.RunAction(action, _engine.Context);
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Message).Contains("Building is not enabled");
++    }
++
++    [Test]
++    public async Task GetActions_BuildingDisabled_ReturnsError()
++    {
++        var action = new GetActions { Context = _engine.Context };
++        var result = await _engine.RunAction(action, _engine.Context);
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Message).Contains("Building is not enabled");
++    }
++
++    [Test]
++    public async Task ValidateActions_BuildingDisabled_ReturnsError()
++    {
++        var actions = new StepActions { new Action { Module = "file", ActionName = "read" } };
++        var action = new validate { Context = _engine.Context, Actions = actions };
++        var result = await _engine.RunAction(action, _engine.Context);
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Message).Contains("Building is not enabled");
++    }
++
++    [Test]
++    public async Task SaveGoals_BuildingDisabled_ReturnsError()
++    {
++        var goals = new List<Goal> { new Goal { Name = "Test", Path = "/Test.goal" } };
++        var action = new goalsSave { Context = _engine.Context, Goals = goals };
++        var result = await _engine.RunAction(action, _engine.Context);
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Message).Contains("Building is not enabled");
++    }
++
++    [Test]
++    public async Task GetApp_BuildingDisabled_ReturnsError()
++    {
++        var action = new app { Context = _engine.Context, Path = "." };
++        var result = await _engine.RunAction(action, _engine.Context);
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Message).Contains("Building is not enabled");
++    }
++
++    [Test]
++    public async Task SaveApp_BuildingDisabled_ReturnsError()
++    {
++        var app = new AppData { Id = "x", Version = "0.2" };
++        var action = new appSave { Context = _engine.Context, App = app, Path = ".build/app.pr" };
++        var result = await _engine.RunAction(action, _engine.Context);
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Message).Contains("Building is not enabled");
++    }
++
++    [Test]
++    public async Task MergeStep_BuildingDisabled_ReturnsError()
++    {
++        var step = new Step { Text = "step" };
++        var from = new Step { Text = "step" };
++        var action = new merge { Context = _engine.Context, Step = step, StepFromLlm = from };
++        var result = await _engine.RunAction(action, _engine.Context);
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Message).Contains("Building is not enabled");
++    }
++
++    [Test]
++    public async Task GetTypeInfo_BuildingDisabled_ReturnsError()
++    {
++        var action = new types { Context = _engine.Context };
++        var result = await _engine.RunAction(action, _engine.Context);
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Message).Contains("Building is not enabled");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/builder/GetActionsTests.cs b/PLang.Tests/Runtime2/Modules/builder/GetActionsTests.cs
+new file mode 100644
+index 00000000..67623d6d
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/builder/GetActionsTests.cs
+@@ -0,0 +1,114 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.builder;
++
++/// <summary>
++/// Tests for builder.getActions — reflects all registered actions with parameter schemas
++/// for the LLM prompt. Parameter metadata comes from reflecting action type properties.
++/// </summary>
++public class GetActionsTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_builder_actions_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++        _engine.Building.IsEnabled = true;
++    }
++
++    [After(Test)]
++    public async Task Cleanup()
++    {
++        try
++        {
++            await _engine.DisposeAsync();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort */ }
++    }
++
++    [Test]
++    public async Task GetActions_ReturnsAllModulesAndActions()
++    {
++        var action = new GetActions { Context = _engine.Context };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        var actions = result.Value as StepActions;
++        await Assert.That(actions).IsNotNull();
++        await Assert.That(actions!.Count).IsGreaterThan(0);
++    }
++
++    [Test]
++    public async Task GetActions_ParameterTypes_IncludeNullableMarkers()
++    {
++        var action = new GetActions { Context = _engine.Context };
++        var result = await _engine.RunAction(action, _engine.Context);
++        var actions = (StepActions)result.Value!;
++
++        // Find an action with nullable parameters (e.g., file.read has optional properties)
++        var fileRead = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "read");
++        await Assert.That(fileRead).IsNotNull();
++        // At minimum, there should be parameters
++        await Assert.That(fileRead!.Parameters.Count).IsGreaterThan(0);
++    }
++
++    [Test]
++    public async Task GetActions_VariableNameParams_Marked()
++    {
++        var action = new GetActions { Context = _engine.Context };
++        var result = await _engine.RunAction(action, _engine.Context);
++        var actions = (StepActions)result.Value!;
++
++        // variable.set has a Name property with [VariableName]
++        var varSet = actions.FirstOrDefault(a => a.Module == "variable" && a.ActionName == "set");
++        await Assert.That(varSet).IsNotNull();
++        var nameParam = varSet!.Parameters.FirstOrDefault(p =>
++            p.Name.Equals("Name", StringComparison.OrdinalIgnoreCase));
++        await Assert.That(nameParam).IsNotNull();
++        await Assert.That(nameParam!.Value!.ToString()).Contains("@var");
++    }
++
++    [Test]
++    public async Task GetActions_DefaultValues_Included()
++    {
++        var action = new GetActions { Context = _engine.Context };
++        var result = await _engine.RunAction(action, _engine.Context);
++        var actions = (StepActions)result.Value!;
++
++        // file.list has Pattern with [Default("*")]
++        var fileList = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "list");
++        await Assert.That(fileList).IsNotNull();
++        var patternParam = fileList!.Parameters.FirstOrDefault(p =>
++            p.Name.Equals("Pattern", StringComparison.OrdinalIgnoreCase));
++        await Assert.That(patternParam).IsNotNull();
++        await Assert.That(patternParam!.Value!.ToString()).Contains("\"*\"");
++    }
++
++    [Test]
++    public async Task GetActions_CacheableFlag_FromActionAttribute()
++    {
++        var action = new GetActions { Context = _engine.Context };
++        var result = await _engine.RunAction(action, _engine.Context);
++        var actions = (StepActions)result.Value!;
++
++        // file.save has [Action("save", Cacheable = false)]
++        var fileSave = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "save");
++        await Assert.That(fileSave).IsNotNull();
++        await Assert.That(fileSave!.Cacheable).IsFalse();
++
++        // file.read has default Cacheable = true
++        var fileRead = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "read");
++        await Assert.That(fileRead).IsNotNull();
++        await Assert.That(fileRead!.Cacheable).IsTrue();
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/builder/GetGoalsTests.cs b/PLang.Tests/Runtime2/Modules/builder/GetGoalsTests.cs
+new file mode 100644
+index 00000000..fef8c668
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/builder/GetGoalsTests.cs
+@@ -0,0 +1,178 @@
++using System.Text.Json;
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.builder;
++
++/// <summary>
++/// Tests for builder.getGoals — finds .goal files under a path, parses via GoalFile,
++/// filters out system goals, and merges existing .pr data by matching goal names.
++/// </summary>
++public class GetGoalsTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_builder_getgoals_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++        _engine.Building.IsEnabled = true;
++    }
++
++    [After(Test)]
++    public async Task Cleanup()
++    {
++        try
++        {
++            await _engine.DisposeAsync();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort */ }
++    }
++
++    [Test]
++    public async Task GetGoals_ParsesGoalFilesFromFolder()
++    {
++        // Write a .goal file
++        System.IO.File.WriteAllText(
++            System.IO.Path.Combine(_tempDir, "Start.goal"),
++            "Start\n- write out 'hello'\n- set %x% = 1");
++
++        var action = new goals { Context = _engine.Context, Path = "." };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        var goals = result.Value as List<Goal>;
++        await Assert.That(goals).IsNotNull();
++        await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);
++        await Assert.That(goals[0].Name).IsEqualTo("Start");
++        await Assert.That(goals[0].Steps.Count).IsEqualTo(2);
++    }
++
++    [Test]
++    public async Task GetGoals_MarksSystemGoals()
++    {
++        // Write a regular .goal file
++        System.IO.File.WriteAllText(
++            System.IO.Path.Combine(_tempDir, "MyGoal.goal"),
++            "MyGoal\n- step one");
++
++        // Write a system .goal file
++        var systemDir = System.IO.Path.Combine(_tempDir, "system");
++        System.IO.Directory.CreateDirectory(systemDir);
++        System.IO.File.WriteAllText(
++            System.IO.Path.Combine(systemDir, "Build.goal"),
++            "Build\n- build step");
++
++        var action = new goals { Context = _engine.Context, Path = "." };
++        var result = await _engine.RunAction(action, _engine.Context);
++        var goals = result.Value as List<Goal>;
++
++        await Assert.That(goals).IsNotNull();
++        // System goals should be present but marked
++        var systemGoal = goals!.FirstOrDefault(g => g.Name == "Build");
++        await Assert.That(systemGoal).IsNotNull();
++        await Assert.That(systemGoal!.IsSystem).IsTrue();
++        var userGoal = goals.FirstOrDefault(g => g.Name == "MyGoal");
++        await Assert.That(userGoal).IsNotNull();
++        await Assert.That(userGoal!.IsSystem).IsFalse();
++    }
++
++    [Test]
++    public async Task GetGoals_MergesExistingPrData()
++    {
++        // Write a .goal file
++        System.IO.File.WriteAllText(
++            System.IO.Path.Combine(_tempDir, "Start.goal"),
++            "Start\n- write out 'hello'");
++
++        // Write existing .pr data with actions for that step
++        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
++        System.IO.Directory.CreateDirectory(buildDir);
++
++        var prGoal = new Goal
++        {
++            Name = "Start",
++            Path = "/Start.goal",
++            Steps = new GoalSteps
++            {
++                new Step
++                {
++                    Text = "write out 'hello'",
++                    Actions = new StepActions(new[]
++                    {
++                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
++                        {
++                            Module = "output",
++                            ActionName = "write",
++                            Parameters = new List<Data> { new("Message", "hello") }
++                        }
++                    })
++                }
++            }
++        };
++        var prJson = JsonSerializer.Serialize(new List<Goal> { prGoal },
++            new JsonSerializerOptions
++            {
++                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
++                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
++            });
++        System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "start.pr"), prJson);
++
++        var action = new goals { Context = _engine.Context, Path = "." };
++        var result = await _engine.RunAction(action, _engine.Context);
++        var goals = result.Value as List<Goal>;
++
++        await Assert.That(goals).IsNotNull();
++        var startGoal = goals!.FirstOrDefault(g => g.Name == "Start");
++        await Assert.That(startGoal).IsNotNull();
++        // Merged actions from .pr data
++        await Assert.That(startGoal!.Steps[0].Actions.Count).IsEqualTo(1);
++        await Assert.That(startGoal.Steps[0].Actions[0].Module).IsEqualTo("output");
++    }
++
++    [Test]
++    public async Task GetGoals_EmptyFolder_ReturnsEmptyList()
++    {
++        var action = new goals { Context = _engine.Context, Path = "." };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        var goals = result.Value as List<Goal>;
++        await Assert.That(goals).IsNotNull();
++        await Assert.That(goals!.Count).IsEqualTo(0);
++    }
++
++    [Test]
++    public async Task GetGoals_CorruptPrFile_IgnoresAndReparses()
++    {
++        // Write a .goal file
++        System.IO.File.WriteAllText(
++            System.IO.Path.Combine(_tempDir, "Start.goal"),
++            "Start\n- some step");
++
++        // Write corrupt .pr file
++        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
++        System.IO.Directory.CreateDirectory(buildDir);
++        System.IO.File.WriteAllText(
++            System.IO.Path.Combine(buildDir, "start.pr"),
++            "{ invalid json {{{}}}");
++
++        var action = new goals { Context = _engine.Context, Path = "." };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        var goals = result.Value as List<Goal>;
++        await Assert.That(goals).IsNotNull();
++        await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);
++        // Steps should have empty actions (no merge happened)
++        await Assert.That(goals[0].Steps[0].Actions.Count).IsEqualTo(0);
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/builder/GetTypeInfoTests.cs b/PLang.Tests/Runtime2/Modules/builder/GetTypeInfoTests.cs
+new file mode 100644
+index 00000000..d32e6512
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/builder/GetTypeInfoTests.cs
+@@ -0,0 +1,64 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.builder;
++
++/// <summary>
++/// Tests for builder.getTypeInfo — returns PLang type names and complex type JSON schemas
++/// for the LLM prompt. Delegates to TypeMapping.
++/// </summary>
++public class GetTypeInfoTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_builder_typeinfo_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++        _engine.Building.IsEnabled = true;
++    }
++
++    [After(Test)]
++    public async Task Cleanup()
++    {
++        try
++        {
++            await _engine.DisposeAsync();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort */ }
++    }
++
++    [Test]
++    public async Task GetTypeInfo_ReturnsBuilderTypeNames()
++    {
++        var action = new types { Context = _engine.Context };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        var info = result.Value as BuilderTypeInfo;
++        await Assert.That(info).IsNotNull();
++        await Assert.That(info!.TypeNames).Contains("string");
++        await Assert.That(info.TypeNames).Contains("int");
++        await Assert.That(info.TypeNames).Contains("bool");
++    }
++
++    [Test]
++    public async Task GetTypeInfo_ReturnsComplexTypeSchemas()
++    {
++        var action = new types { Context = _engine.Context };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        var info = result.Value as BuilderTypeInfo;
++        await Assert.That(info).IsNotNull();
++        await Assert.That(info!.TypeSchemas).Contains("goal.call");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/builder/GoalFileTests.cs b/PLang.Tests/Runtime2/Modules/builder/GoalFileTests.cs
+new file mode 100644
+index 00000000..c7dc4220
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/builder/GoalFileTests.cs
+@@ -0,0 +1,168 @@
++using PLang.Runtime2.Engine.Goals.Goal;
++
++namespace PLang.Tests.Runtime2.Modules.builder;
++
++/// <summary>
++/// Tests for GoalFile — the .goal file format parser.
++/// GoalFile parses .goal text into Runtime2 Goal and Step objects directly.
++/// This is the one place PLang actually parses text (everything else is LLM-mapped).
++/// </summary>
++public class GoalFileTests
++{
++    [Test]
++    public async Task Parse_SingleGoalWithSteps_ReturnsOneGoal()
++    {
++        var goals = Goal.Parse("MyGoal\n- step one\n- step two", "/MyGoal.goal");
++
++        await Assert.That(goals.Count).IsEqualTo(1);
++        await Assert.That(goals[0].Name).IsEqualTo("MyGoal");
++        await Assert.That(goals[0].Steps.Count).IsEqualTo(2);
++        await Assert.That(goals[0].Steps[0].Text).IsEqualTo("step one");
++        await Assert.That(goals[0].Steps[1].Text).IsEqualTo("step two");
++    }
++
++    [Test]
++    public async Task Parse_MultipleGoals_FirstPublicRestPrivate()
++    {
++        var goals = Goal.Parse("First\n- step a\n\nSecond\n- step b\n\nThird\n- step c", "/Multi.goal");
++
++        await Assert.That(goals.Count).IsEqualTo(3);
++        await Assert.That(goals[0].Visibility).IsEqualTo(Visibility.Public);
++        await Assert.That(goals[1].Visibility).IsEqualTo(Visibility.Private);
++        await Assert.That(goals[2].Visibility).IsEqualTo(Visibility.Private);
++    }
++
++    [Test]
++    public async Task Parse_IndentedSteps_SetsIndentLevel()
++    {
++        var goals = Goal.Parse("MyGoal\n- top level\n    - indent 1\n        - indent 2", "/Indent.goal");
++
++        await Assert.That(goals[0].Steps[0].Indent).IsEqualTo(0);
++        await Assert.That(goals[0].Steps[1].Indent).IsEqualTo(1);
++        await Assert.That(goals[0].Steps[2].Indent).IsEqualTo(2);
++    }
++
++    [Test]
++    public async Task Parse_ContinuationLines_AppendsToStepText()
++    {
++        var goals = Goal.Parse("MyGoal\n- first line\n  continuation line", "/Cont.goal");
++
++        await Assert.That(goals[0].Steps.Count).IsEqualTo(1);
++        await Assert.That(goals[0].Steps[0].Text).IsEqualTo("first line\ncontinuation line");
++    }
++
++    [Test]
++    public async Task Parse_GoalComments_SetsGoalComment()
++    {
++        var goals = Goal.Parse("/ This is a comment\nMyGoal\n- step", "/Comment.goal");
++
++        await Assert.That(goals[0].Comment).IsEqualTo("This is a comment");
++    }
++
++    [Test]
++    public async Task Parse_StepComments_SetsStepComment()
++    {
++        var goals = Goal.Parse("MyGoal\n- step one\n/ step comment\n- step two", "/StepComment.goal");
++
++        await Assert.That(goals[0].Steps[0].Comment).IsNull();
++        await Assert.That(goals[0].Steps[1].Comment).IsEqualTo("step comment");
++    }
++
++    [Test]
++    public async Task Parse_MultiLineComments_HandledCorrectly()
++    {
++        var goals = Goal.Parse("/* multi\nline */\nMyGoal\n- step", "/BlockComment.goal");
++
++        await Assert.That(goals[0].Comment).IsEqualTo("multi\nline");
++    }
++
++    [Test]
++    public async Task Parse_PathComputation_AllGoalsSharePath()
++    {
++        var goals = Goal.Parse("First\n- step\n\nSecond\n- step", "/folder/MyGoal.goal");
++
++        await Assert.That(goals[0].Path).IsEqualTo("/folder/MyGoal.goal");
++        await Assert.That(goals[1].Path).IsEqualTo("/folder/MyGoal.goal");
++    }
++
++    [Test]
++    public async Task Parse_EmptyFile_ReturnsEmptyList()
++    {
++
++        var goals1 = Goal.Parse("", "/Empty.goal");
++        await Assert.That(goals1.Count).IsEqualTo(0);
++
++        var goals2 = Goal.Parse("   \n  \n  ", "/Whitespace.goal");
++        await Assert.That(goals2.Count).IsEqualTo(0);
++    }
++
++    [Test]
++    public async Task Parse_TabsConvertedToSpaces()
++    {
++        // Tab before dash = 4 spaces = indent 1
++        var goals = Goal.Parse("MyGoal\n- top\n\t- indented", "/Tabs.goal");
++
++        await Assert.That(goals[0].Steps[1].Indent).IsEqualTo(1);
++    }
++
++    [Test]
++    public async Task Parse_SubGoalNames_PopulatedOnPublicGoal()
++    {
++        var goals = Goal.Parse("Public\n- step\n\nPrivateA\n- step\n\nPrivateB\n- step", "/Sub.goal");
++
++        await Assert.That(goals[0].SubGoals.Count).IsEqualTo(2);
++        await Assert.That(goals[0].SubGoals[0]).IsEqualTo("PrivateA");
++        await Assert.That(goals[0].SubGoals[1]).IsEqualTo("PrivateB");
++    }
++
++    [Test]
++    public async Task Parse_BlankLinesBetweenGoals_HandledCorrectly()
++    {
++        var goals = Goal.Parse("First\n- step a\n\n\n\nSecond\n- step b", "/Blank.goal");
++
++        await Assert.That(goals.Count).IsEqualTo(2);
++        await Assert.That(goals[0].Steps.Count).IsEqualTo(1);
++        await Assert.That(goals[1].Steps.Count).IsEqualTo(1);
++    }
++
++    [Test]
++    public async Task Parse_StepLineNumbers_MatchSourceLines()
++    {
++        // Line 1: MyGoal, Line 2: - step one, Line 3: - step two
++        var goals = Goal.Parse("MyGoal\n- step one\n- step two", "/Lines.goal");
++
++        await Assert.That(goals[0].Steps[0].LineNumber).IsEqualTo(2);
++        await Assert.That(goals[0].Steps[1].LineNumber).IsEqualTo(3);
++    }
++
++    [Test]
++    public async Task Parse_PrPath_DerivedFromPath()
++    {
++        var goals = Goal.Parse("MyGoal\n- step", "/folder/MyGoal.goal");
++
++        // PrPath is derived from Path — /folder/MyGoal.goal → /folder/.build/mygoal.pr
++        await Assert.That(goals[0].PrPath).IsEqualTo("/folder/.build/mygoal.pr");
++    }
++
++    [Test]
++    public async Task Parse_StepBeforeHeader_CreatesImplicitStartGoal()
++    {
++        // Steps before any goal header → implicit "Start" goal
++        var goals = Goal.Parse("- step one\n- step two", "/NoHeader.goal");
++
++        await Assert.That(goals.Count).IsEqualTo(1);
++        await Assert.That(goals[0].Name).IsEqualTo("Start");
++        await Assert.That(goals[0].Visibility).IsEqualTo(Visibility.Public);
++        await Assert.That(goals[0].Steps.Count).IsEqualTo(2);
++    }
++
++    [Test]
++    public async Task Parse_BareDash_CreatesStepWithEmptyText()
++    {
++        // A bare "-" with no text creates a step with empty Text
++        var goals = Goal.Parse("MyGoal\n-", "/BareDash.goal");
++
++        await Assert.That(goals[0].Steps.Count).IsEqualTo(1);
++        await Assert.That(goals[0].Steps[0].Text).IsEqualTo("");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/builder/MergeStepTests.cs b/PLang.Tests/Runtime2/Modules/builder/MergeStepTests.cs
+new file mode 100644
+index 00000000..66861aac
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/builder/MergeStepTests.cs
+@@ -0,0 +1,64 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder;
++using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.builder;
++
++/// <summary>
++/// Tests for builder.mergeStep action — thin delegation to Step.Merge().
++/// </summary>
++public class MergeStepTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_builder_mergestep_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++        _engine.Building.IsEnabled = true;
++    }
++
++    [After(Test)]
++    public async Task Cleanup()
++    {
++        try
++        {
++            await _engine.DisposeAsync();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort */ }
++    }
++
++    [Test]
++    public async Task MergeStep_DelegatesToStepMerge()
++    {
++        var target = new Step { Text = "do something", Index = 0, LineNumber = 1 };
++        var source = new Step
++        {
++            Text = "do something",
++            Actions = new StepActions(new[]
++            {
++                new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hi") } }
++            })
++        };
++
++        var action = new merge { Context = _engine.Context, Step = target, StepFromLlm = source };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        var merged = result.Value as Step;
++        await Assert.That(merged).IsNotNull();
++        await Assert.That(merged!.Actions.Count).IsEqualTo(1);
++        await Assert.That(merged.Actions[0].Module).IsEqualTo("output");
++        // Structural fields preserved
++        await Assert.That(merged.Text).IsEqualTo("do something");
++        await Assert.That(merged.Index).IsEqualTo(0);
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/builder/MergeTests.cs b/PLang.Tests/Runtime2/Modules/builder/MergeTests.cs
+new file mode 100644
+index 00000000..802c14d0
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/builder/MergeTests.cs
+@@ -0,0 +1,205 @@
++using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Goals.Goal;
++using PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
++using PLang.Runtime2.Engine.Memory;
++using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
++
++namespace PLang.Tests.Runtime2.Modules.builder;
++
++/// <summary>
++/// Tests for Step.Merge() and Goal.MergeFrom() — OBP methods that own
++/// the knowledge of which fields are LLM-derived vs structural.
++/// </summary>
++public class MergeTests
++{
++    #region Step.Merge
++
++    [Test]
++    public async Task StepMerge_CopiesLlmDerivedFields()
++    {
++        var target = new Step { Text = "do something", Index = 0 };
++        var source = new Step
++        {
++            Text = "do something",
++            Actions = new StepActions(new[]
++            {
++                new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hello") } }
++            }),
++            Cache = new CacheSettings { DurationMs = 5000 },
++            OnError = new ErrorHandler { RetryCount = 3 }
++        };
++
++        target.Merge(source);
++
++        await Assert.That(target.Actions.Count).IsEqualTo(1);
++        await Assert.That(target.Actions[0].Module).IsEqualTo("output");
++        await Assert.That(target.Cache).IsNotNull();
++        await Assert.That(target.Cache!.DurationMs).IsEqualTo(5000);
++        await Assert.That(target.OnError).IsNotNull();
++        await Assert.That(target.OnError!.RetryCount).IsEqualTo(3);
++    }
++
++    [Test]
++    public async Task StepMerge_PreservesStructuralFields()
++    {
++        var target = new Step { Text = "original text", Index = 5, Indent = 2, LineNumber = 10 };
++        var source = new Step
++        {
++            Text = "different text",
++            Index = 99,
++            Indent = 0,
++            LineNumber = 1,
++            Actions = new StepActions(new[]
++            {
++                new Action { Module = "file", ActionName = "read" }
++            })
++        };
++
++        target.Merge(source);
++
++        // Structural fields preserved
++        await Assert.That(target.Text).IsEqualTo("original text");
++        await Assert.That(target.Index).IsEqualTo(5);
++        await Assert.That(target.Indent).IsEqualTo(2);
++        await Assert.That(target.LineNumber).IsEqualTo(10);
++        // LLM field copied
++        await Assert.That(target.Actions.Count).IsEqualTo(1);
++    }
++
++    [Test]
++    public async Task StepMerge_EmptySource_LeavesTargetUnchanged()
++    {
++        var originalAction = new Action { Module = "output", ActionName = "write" };
++        var target = new Step
++        {
++            Text = "step",
++            Actions = new StepActions(new[] { originalAction }),
++            Cache = new CacheSettings { DurationMs = 1000 }
++        };
++        var source = new Step { Text = "step" }; // Empty LLM fields
++
++        target.Merge(source);
++
++        // Actions not cleared because source has 0 actions
++        await Assert.That(target.Actions.Count).IsEqualTo(1);
++        await Assert.That(target.Cache!.DurationMs).IsEqualTo(1000);
++    }
++
++    [Test]
++    public async Task StepMerge_ErrorsReplacedOnlyWhenSourceHasEntries()
++    {
++        var target = new Step
++        {
++            Text = "step",
++            Errors = { new Info { Key = "E1", Message = "original error" } }
++        };
++
++        // Source with no errors — target keeps its errors
++        var emptySource = new Step { Text = "step" };
++        target.Merge(emptySource);
++        await Assert.That(target.Errors.Count).IsEqualTo(1);
++        await Assert.That(target.Errors[0].Key).IsEqualTo("E1");
++
++        // Source with errors — target errors replaced
++        var sourceWithErrors = new Step
++        {
++            Text = "step",
++            Errors = { new Info { Key = "E2", Message = "new error" } }
++        };
++        target.Merge(sourceWithErrors);
++        await Assert.That(target.Errors.Count).IsEqualTo(1);
++        await Assert.That(target.Errors[0].Key).IsEqualTo("E2");
++    }
++
++    #endregion
++
++    #region Goal.MergeFrom
++
++    [Test]
++    public async Task GoalMergeFrom_MatchesByText_MergesLlmFields()
++    {
++        var freshGoal = new Goal
++        {
++            Name = "Test",
++            Steps = new GoalSteps
++            {
++                new Step { Text = "do something", Index = 0 },
++                new Step { Text = "do another thing", Index = 1 }
++            }
++        };
++
++        var existingGoal = new Goal
++        {
++            Name = "Test",
++            Steps = new GoalSteps
++            {
++                new Step
++                {
++                    Text = "do something",
++                    Actions = new StepActions(new[]
++                    {
++                        new Action { Module = "output", ActionName = "write" }
++                    })
++                }
++            }
++        };
++
++        freshGoal.MergeFrom(existingGoal);
++
++        // Matched step gets actions
++        await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(1);
++        // Unmatched step keeps empty
++        await Assert.That(freshGoal.Steps[1].Actions.Count).IsEqualTo(0);
++    }
++
++    [Test]
++    public async Task GoalMergeFrom_UnmatchedSteps_KeepEmptyActions()
++    {
++        var freshGoal = new Goal
++        {
++            Name = "Test",
++            Steps = new GoalSteps
++            {
++                new Step { Text = "new step that didn't exist before", Index = 0 }
++            }
++        };
++
++        var existingGoal = new Goal
++        {
++            Name = "Test",
++            Steps = new GoalSteps
++            {
++                new Step
++                {
++                    Text = "old step text",
++                    Actions = new StepActions(new[]
++                    {
++                        new Action { Module = "file", ActionName = "read" }
++                    })
++                }
++            }
++        };
++
++        freshGoal.MergeFrom(existingGoal);
++
++        await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(0);
++    }
++
++    [Test]
++    public async Task GoalMergeFrom_NullExisting_NoOp()
++    {
++        var freshGoal = new Goal
++        {
++            Name = "Test",
++            Steps = new GoalSteps { new Step { Text = "step", Index = 0 } }
++        };
++
++        // Should not throw
++        freshGoal.MergeFrom(null);
++
++        await Assert.That(freshGoal.Steps.Count).IsEqualTo(1);
++        await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(0);
++    }
++
++    #endregion
++}
+diff --git a/PLang.Tests/Runtime2/Modules/builder/SaveGoalsTests.cs b/PLang.Tests/Runtime2/Modules/builder/SaveGoalsTests.cs
+new file mode 100644
+index 00000000..1b238121
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/builder/SaveGoalsTests.cs
+@@ -0,0 +1,113 @@
++using System.Text.Json;
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.builder;
++
++/// <summary>
++/// Tests for builder.saveGoals — serializes goals to a v0.2 .pr file.
++/// One .goal file → one .pr file containing List&lt;Goal&gt;.
++/// </summary>
++public class SaveGoalsTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_builder_savegoals_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++        _engine.Building.IsEnabled = true;
++    }
++
++    [After(Test)]
++    public async Task Cleanup()
++    {
++        try
++        {
++            await _engine.DisposeAsync();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort */ }
++    }
++
++    [Test]
++    public async Task SaveGoals_SerializesToPrPath()
++    {
++        var goals = new List<Goal>
++        {
++            new Goal
++            {
++                Name = "Start",
++                Path = "/Start.goal",
++                Steps = new GoalSteps
++                {
++                    new Step { Text = "write hello", Index = 0 }
++                }
++            }
++        };
++
++        var action = new goalsSave { Context = _engine.Context, Goals = goals };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++
++        // File should exist at the derived PrPath
++        var prPath = System.IO.Path.Combine(_tempDir, ".build", "start.pr");
++        await Assert.That(System.IO.File.Exists(prPath)).IsTrue();
++    }
++
++    [Test]
++    public async Task SaveGoals_CamelCase_NullsIncluded()
++    {
++        var goals = new List<Goal>
++        {
++            new Goal
++            {
++                Name = "Test",
++                Path = "/Test.goal",
++                Description = null // Should be included for determinism
++            }
++        };
++
++        var action = new goalsSave { Context = _engine.Context, Goals = goals };
++        await _engine.RunAction(action, _engine.Context);
++
++        var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
++        var json = System.IO.File.ReadAllText(prPath);
++
++        // Should use camelCase
++        await Assert.That(json).Contains("\"name\"");
++        // Null description should be included (deterministic .pr files)
++        await Assert.That(json).Contains("\"description\"");
++    }
++
++    [Test]
++    public async Task SaveGoals_MultipleGoals_SingleFile()
++    {
++        var goals = new List<Goal>
++        {
++            new Goal { Name = "Public", Path = "/Multi.goal" },
++            new Goal { Name = "Private", Path = "/Multi.goal" }
++        };
++
++        var action = new goalsSave { Context = _engine.Context, Goals = goals };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++
++        var prPath = System.IO.Path.Combine(_tempDir, ".build", "multi.pr");
++        var json = System.IO.File.ReadAllText(prPath);
++        var deserialized = JsonSerializer.Deserialize<List<Goal>>(json,
++            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
++
++        await Assert.That(deserialized).IsNotNull();
++        await Assert.That(deserialized!.Count).IsEqualTo(2);
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/builder/ValidateActionsTests.cs b/PLang.Tests/Runtime2/Modules/builder/ValidateActionsTests.cs
+new file mode 100644
+index 00000000..4feeb14e
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/builder/ValidateActionsTests.cs
+@@ -0,0 +1,175 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder;
++using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.builder;
++
++/// <summary>
++/// Tests for builder.validateActions — validates LLM-returned actions exist in engine.Modules,
++/// resolves GoalCall paths, fills defaults from [Default] attributes.
++/// </summary>
++public class ValidateActionsTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_builder_validate_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++        _engine.Building.IsEnabled = true;
++    }
++
++    [After(Test)]
++    public async Task Cleanup()
++    {
++        try
++        {
++            await _engine.DisposeAsync();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort */ }
++    }
++
++    [Test]
++    public async Task ValidateActions_ValidActions_ReturnsOk()
++    {
++        var actions = new StepActions
++        {
++            new Action { Module = "file", ActionName = "read", Parameters = new List<Data> { new("Path", "test.txt") } }
++        };
++
++        var action = new validate { Context = _engine.Context, Actions = actions };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That((bool)result.Value!).IsTrue();
++    }
++
++    [Test]
++    public async Task ValidateActions_UnknownAction_ReturnsError()
++    {
++        var actions = new StepActions
++        {
++            new Action { Module = "nonexistent", ActionName = "fake" }
++        };
++
++        var action = new validate { Context = _engine.Context, Actions = actions };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Message).Contains("nonexistent.fake");
++    }
++
++    [Test]
++    public async Task ValidateActions_GoalCallPath_Resolved()
++    {
++        // Create a .pr file that the resolver can find
++        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
++        System.IO.Directory.CreateDirectory(buildDir);
++        var prJson = System.Text.Json.JsonSerializer.Serialize(new List<Goal>
++        {
++            new Goal { Name = "DoSomething", Path = "/DoSomething.goal" }
++        }, new System.Text.Json.JsonSerializerOptions
++        {
++            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
++        });
++        System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "dosomething.pr"), prJson);
++
++        var goalCallData = new Data("GoalName", new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "DoSomething" });
++        goalCallData.Type = new PLang.Runtime2.Engine.Memory.Type("goal.call");
++
++        var actions = new StepActions
++        {
++            new Action
++            {
++                Module = "condition",
++                ActionName = "if",
++                Parameters = new List<Data> { goalCallData }
++            }
++        };
++
++        var action = new validate { Context = _engine.Context, Actions = actions };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++    }
++
++    [Test]
++    public async Task ValidateActions_DynamicNames_Skipped()
++    {
++        var goalCallData = new Data("GoalName", new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "%dynamicGoal%" });
++        goalCallData.Type = new PLang.Runtime2.Engine.Memory.Type("goal.call");
++
++        var actions = new StepActions
++        {
++            new Action
++            {
++                Module = "condition",
++                ActionName = "if",
++                Parameters = new List<Data> { goalCallData }
++            }
++        };
++
++        var action = new validate { Context = _engine.Context, Actions = actions };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++    }
++
++    [Test]
++    public async Task ValidateActions_DefaultsFilled()
++    {
++        // file.list has [Default("*")] on Pattern and [Default(false)] on Recursive
++        var actions = new StepActions
++        {
++            new Action
++            {
++                Module = "file",
++                ActionName = "list",
++                Parameters = new List<Data> { new("Path", "docs/") }
++            }
++        };
++
++        var action = new validate { Context = _engine.Context, Actions = actions };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        // Defaults should be filled for missing params
++        var fileList = actions[0];
++        await Assert.That(fileList.Defaults).IsNotNull();
++        await Assert.That(fileList.Defaults!.Count).IsGreaterThan(0);
++        var patternDefault = fileList.Defaults.FirstOrDefault(d =>
++            d.Name.Equals("pattern", StringComparison.OrdinalIgnoreCase));
++        await Assert.That(patternDefault).IsNotNull();
++    }
++
++    [Test]
++    public async Task ValidateActions_ConfigureDefaults_FromIConfigureT()
++    {
++        // http.configure implements IConfigure<Config> — defaults come from Config instance, not [Default]
++        var actions = new StepActions
++        {
++            new Action
++            {
++                Module = "http",
++                ActionName = "configure",
++                Parameters = new List<Data>()
++            }
++        };
++
++        var action = new validate { Context = _engine.Context, Actions = actions };
++        var result = await _engine.RunAction(action, _engine.Context);
++
++        await Assert.That(result.Success).IsTrue();
++        var httpConfigure = actions[0];
++        await Assert.That(httpConfigure.Defaults).IsNotNull();
++        await Assert.That(httpConfigure.Defaults!.Count).IsGreaterThan(0);
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Methods.cs b/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
+index 73dd9ad1..86d9e9d5 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
+@@ -105,7 +105,7 @@ public sealed partial class @this
+ 
+ 	private object BuildFormatData()
+ 	{
+-		var jsonOpts = new JsonSerializerOptions { WriteIndented = false };
++		var jsonOpts = new JsonSerializerOptions();
+ 
+ 		return new
+ 		{
+@@ -141,7 +141,7 @@ public sealed partial class @this
+ 	private string FormatForLlmFallback()
+ 	{
+ 		var sb = new System.Text.StringBuilder();
+-		var jsonOpts = new JsonSerializerOptions { WriteIndented = false };
++		var jsonOpts = new JsonSerializerOptions();
+ 
+ 		if (!string.IsNullOrEmpty(Comment))
+ 			sb.AppendLine($"/ {Comment}");
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs
+index 7fd19cc3..ac7610ce 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs
+@@ -95,5 +95,36 @@ public sealed partial class @this
+         };
+     }
+ 
++    /// <summary>
++    /// Merges LLM-derived fields from another step onto this step.
++    /// Structural fields (Text, Index, Indent, LineNumber) are untouched.
++    /// </summary>
++    public void Merge(Step.@this from)
++    {
++        if (from.Actions.Count > 0)
++        {
++            Actions.Clear();
++            Actions.AddRange(from.Actions);
++        }
++
++        if (from.Cache != null)
++            Cache = from.Cache;
++
++        if (from.OnError != null)
++            OnError = from.OnError;
++
++        if (from.Errors.Count > 0)
++        {
++            Errors.Clear();
++            Errors.AddRange(from.Errors);
++        }
++
++        if (from.Warnings.Count > 0)
++        {
++            Warnings.Clear();
++            Warnings.AddRange(from.Warnings);
++        }
++    }
++
+     public override string ToString() => $"[{Index}] {Text}";
+ }
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/this.cs b/PLang/Runtime2/Engine/Goals/Goal/this.cs
+index 5229158e..1c20775c 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/this.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/this.cs
+@@ -1,3 +1,5 @@
++using System.Security.Cryptography;
++using System.Text;
+ using System.Text.Json.Serialization;
+ using PLang.Attributes;
+ namespace PLang.Runtime2.Engine.Goals.Goal;
+@@ -54,7 +56,25 @@ public sealed partial class @this
+     }
+ 
+     [Store, Debug]
+-    public string? Hash { get; init; }
++    public string? Hash
++    {
++        get
++        {
++            if (_hash != null) return _hash;
++            if (Steps.Count == 0) return null;
++
++            var sb = new StringBuilder();
++            sb.Append(Name);
++            foreach (var step in Steps)
++                sb.Append(step.Text);
++
++            _hash = Convert.ToHexString(
++                SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()))).ToLowerInvariant();
++            return _hash;
++        }
++        init => _hash = value;
++    }
++    private string? _hash;
+ 
+     [Store, Debug, Default]
+     public bool IsSetup { get; init; }
+@@ -62,6 +82,9 @@ public sealed partial class @this
+     [Store, Debug, Default]
+     public bool IsEvent { get; init; }
+ 
++    [Store, Debug, Default]
++    public bool IsSystem { get; init; }
++
+     [Store, Debug, Default]
+     public bool IsTest { get; set; }
+ 
+@@ -137,10 +160,203 @@ public sealed partial class @this
+         return string.Join("\n", lines);
+     }
+ 
++    /// <summary>
++    /// Merges LLM-derived fields from an existing built goal onto this freshly-parsed goal.
++    /// Matches steps by Text, delegates to Step.Merge for each match.
++    /// </summary>
++    public void MergeFrom(@this? existing)
++    {
++        if (existing == null || existing.Steps.Count == 0) return;
++
++        var consumed = new HashSet<int>();
++        foreach (var step in Steps)
++        {
++            for (int i = 0; i < existing.Steps.Count; i++)
++            {
++                if (consumed.Contains(i)) continue;
++                if (existing.Steps[i].Text == step.Text)
++                {
++                    step.Merge(existing.Steps[i]);
++                    consumed.Add(i);
++                    break;
++                }
++            }
++        }
++    }
++
+     public static @this NotFound(string name) => new()
+     {
+         Name = name,
+         Description = "Goal not found"
+     };
+ 
++    /// <summary>
++    /// Parses .goal file text into a list of Goals.
++    /// All goals share the same Path. First goal is Public, rest are Private.
++    /// Inverse of ToText().
++    /// </summary>
++    public static List<@this> Parse(string text, string path)
++    {
++        if (string.IsNullOrWhiteSpace(text))
++            return new List<@this>();
++
++        text = text.Replace("\t", "    ");
++
++        var lines = text.Split('\n');
++        var goals = new List<@this>();
++        var currentGoal = (@this?)null;
++        var currentStep = (Steps.Step.@this?)null;
++        var pendingComment = new StringBuilder();
++        var inBlockComment = false;
++        var stepIndex = 0;
++
++        for (int i = 0; i < lines.Length; i++)
++        {
++            var lineNumber = i + 1;
++            var raw = lines[i].TrimEnd('\r');
++
++            // Block comment continuation
++            if (inBlockComment)
++            {
++                var endIdx = raw.IndexOf("*/");
++                if (endIdx >= 0)
++                {
++                    var closePart = raw[..endIdx].Trim();
++                    if (closePart.Length > 0)
++                    {
++                        if (pendingComment.Length > 0) pendingComment.Append('\n');
++                        pendingComment.Append(closePart);
++                    }
++                    inBlockComment = false;
++                }
++                else
++                {
++                    if (pendingComment.Length > 0) pendingComment.Append('\n');
++                    pendingComment.Append(raw.Trim());
++                }
++                continue;
++            }
++
++            var trimmed = raw.TrimStart();
++
++            // Block comment start
++            if (trimmed.StartsWith("/*"))
++            {
++                var afterOpen = trimmed[2..];
++                var closeIdx = afterOpen.IndexOf("*/");
++                if (closeIdx >= 0)
++                {
++                    if (pendingComment.Length > 0) pendingComment.Append('\n');
++                    pendingComment.Append(afterOpen[..closeIdx].Trim());
++                }
++                else
++                {
++                    inBlockComment = true;
++                    if (pendingComment.Length > 0) pendingComment.Append('\n');
++                    pendingComment.Append(afterOpen.Trim());
++                }
++                continue;
++            }
++
++            // Blank line — comment boundary
++            if (string.IsNullOrWhiteSpace(raw))
++            {
++                pendingComment.Clear();
++                currentStep = null;
++                continue;
++            }
++
++            // Line comment
++            if (trimmed.StartsWith("/") && !trimmed.StartsWith("//"))
++            {
++                var commentText = trimmed[1..].TrimStart();
++                if (pendingComment.Length > 0) pendingComment.Append('\n');
++                pendingComment.Append(commentText);
++                continue;
++            }
++
++            // Step line
++            if (trimmed.StartsWith("- ") || trimmed == "-")
++            {
++                if (currentGoal == null)
++                {
++                    currentGoal = new @this
++                    {
++                        Name = "Start",
++                        Visibility = goals.Count == 0 ? Visibility.Public : Visibility.Private,
++                        Path = path
++                    };
++                    goals.Add(currentGoal);
++                    stepIndex = 0;
++                }
++
++                var leadingSpaces = raw.Length - raw.TrimStart().Length;
++                var indent = leadingSpaces / 4;
++                var stepText = trimmed.Length > 2 ? trimmed[2..] : "";
++                var comment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
++                pendingComment.Clear();
++
++                currentStep = new Steps.Step.@this
++                {
++                    Index = stepIndex,
++                    Text = stepText,
++                    LineNumber = lineNumber,
++                    Indent = indent,
++                    Comment = comment
++                };
++
++                currentGoal.Steps.Add(currentStep);
++                stepIndex++;
++                continue;
++            }
++
++            // Continuation line
++            if (currentStep != null && raw.Length > 0 && (raw[0] == ' ' || raw[0] == '\t'))
++            {
++                currentStep = new Steps.Step.@this
++                {
++                    Index = currentStep.Index,
++                    Text = currentStep.Text + "\n" + trimmed,
++                    LineNumber = currentStep.LineNumber,
++                    Indent = currentStep.Indent,
++                    Comment = currentStep.Comment
++                };
++                currentGoal!.Steps[currentGoal.Steps.Count - 1] = currentStep;
++                continue;
++            }
++
++            // Goal header
++            var goalName = trimmed;
++            var goalComment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
++            pendingComment.Clear();
++
++            var normalizedPath = path?.Replace('\\', '/').TrimStart('/') ?? "";
++            var isSetup = goalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)
++                || normalizedPath.StartsWith("setup/", StringComparison.OrdinalIgnoreCase);
++            var isSystem = normalizedPath.StartsWith("system/", StringComparison.OrdinalIgnoreCase);
++
++            currentGoal = new @this
++            {
++                Name = goalName,
++                Comment = goalComment,
++                Visibility = goals.Count == 0 ? Visibility.Public : Visibility.Private,
++                Path = path,
++                IsSetup = isSetup,
++                IsSystem = isSystem
++            };
++            goals.Add(currentGoal);
++            stepIndex = 0;
++            currentStep = null;
++        }
++
++        // Populate SubGoals on the first (public) goal
++        if (goals.Count > 1)
++        {
++            for (int i = 1; i < goals.Count; i++)
++                goals[0].SubGoals.Add(goals[i].Name);
++        }
++
++        return goals;
++    }
++
+ }
+diff --git a/PLang/Runtime2/Engine/Modules/this.cs b/PLang/Runtime2/Engine/Modules/this.cs
+index 81c62fcb..96d1e6d5 100644
+--- a/PLang/Runtime2/Engine/Modules/this.cs
++++ b/PLang/Runtime2/Engine/Modules/this.cs
+@@ -129,6 +129,122 @@ public sealed class @this
+         => _modules.TryRemove(module, out _);
+ 
+     public void Clear() => _modules.Clear();
++
++    /// <summary>
++    /// Describes all registered actions with parameter metadata for the LLM builder prompt.
++    /// EngineModules owns this because it knows its own types.
++    /// </summary>
++    public Goals.Goal.Steps.Step.Actions.@this Describe()
++    {
++        var result = new Goals.Goal.Steps.Step.Actions.@this();
++        var nCtx = new NullabilityInfoContext();
++
++        foreach (var ns in Names)
++        {
++            foreach (var actionName in GetActions(ns))
++            {
++                var parameterType = GetActionType(ns, actionName);
++                if (parameterType == null) continue;
++
++                var parameters = new List<Memory.Data>();
++
++                foreach (var prop in parameterType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
++                {
++                    if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
++
++                    var typeName = Utility.TypeMapping.GetTypeName(prop.PropertyType);
++
++                    bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
++                    if (!isNullable && !prop.PropertyType.IsValueType)
++                        isNullable = nCtx.Create(prop).WriteState == NullabilityState.Nullable;
++                    if (isNullable && !typeName.EndsWith("?"))
++                        typeName += "?";
++
++                    var validValues = Utility.TypeMapping.GetValidValues(prop.PropertyType);
++                    if (validValues != null)
++                        typeName += $"({string.Join("|", validValues)})";
++
++                    var hasVar = prop.GetCustomAttribute<modules.VariableNameAttribute>() != null;
++                    var defaultAttr = prop.GetCustomAttribute<modules.DefaultAttribute>();
++
++                    var desc = hasVar ? $"@var {typeName}" : typeName;
++                    if (defaultAttr != null)
++                        desc += $" = {FormatDefault(defaultAttr.Value)}";
++
++                    parameters.Add(new Memory.Data(prop.Name, desc));
++                }
++
++                bool cacheable = true;
++                var actionAttr = parameterType.GetCustomAttribute<modules.ActionAttribute>();
++                if (actionAttr != null)
++                    cacheable = actionAttr.Cacheable;
++
++                result.Add(new Goals.Goal.Steps.Step.Actions.Action.@this
++                {
++                    Module = ns,
++                    ActionName = actionName,
++                    ParameterSchema = parameterType,
++                    Parameters = parameters,
++                    Cacheable = cacheable
++                });
++            }
++        }
++
++        return result;
++    }
++
++    /// <summary>
++    /// Returns default values for an action's parameters that aren't already provided.
++    /// Checks IConfigure&lt;TConfig&gt; first, falls back to [Default] attributes.
++    /// </summary>
++    public List<Memory.Data>? GetDefaults(string module, string actionName, HashSet<string> excludeParams)
++    {
++        var actionType = GetActionType(module, actionName);
++        if (actionType == null) return null;
++
++        // IConfigure<TConfig> → instantiate config, read property defaults
++        foreach (var iface in actionType.GetInterfaces())
++        {
++            if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(modules.IConfigure<>))
++            {
++                var configType = iface.GetGenericArguments()[0];
++                object? instance;
++                try { instance = Activator.CreateInstance(configType); }
++                catch { break; } // No parameterless constructor — fall through to [Default] attributes
++                if (instance == null) break;
++
++                var defaults = new List<Memory.Data>();
++                foreach (var prop in configType.GetProperties())
++                {
++                    if (excludeParams.Contains(prop.Name)) continue;
++                    var value = prop.GetValue(instance);
++                    if (value == null) continue;
++                    defaults.Add(new Memory.Data(prop.Name.ToLowerInvariant(), value));
++                }
++                return defaults;
++            }
++        }
++
++        // [Default] attributes
++        var attrDefaults = new List<Memory.Data>();
++        foreach (var prop in actionType.GetProperties())
++        {
++            if (excludeParams.Contains(prop.Name)) continue;
++            var attrs = prop.GetCustomAttributes(typeof(modules.DefaultAttribute), false);
++            if (attrs.Length == 0) continue;
++            attrDefaults.Add(new Memory.Data(prop.Name.ToLowerInvariant(),
++                ((modules.DefaultAttribute)attrs[0]).Value));
++        }
++        return attrDefaults.Count > 0 ? attrDefaults : null;
++    }
++
++    private static string FormatDefault(object? value) => value switch
++    {
++        null => "null",
++        string s => $"\"{s}\"",
++        bool b => b ? "true" : "false",
++        _ => value.ToString() ?? "null"
++    };
+ }
+ 
+ /// <summary>
+diff --git a/PLang/Runtime2/Engine/Providers/this.cs b/PLang/Runtime2/Engine/Providers/this.cs
+index 01495f4c..e42d4189 100644
+--- a/PLang/Runtime2/Engine/Providers/this.cs
++++ b/PLang/Runtime2/Engine/Providers/this.cs
+@@ -200,6 +200,7 @@ public sealed class @this
+             "file" or "ifileprovider" => typeof(modules.file.providers.IFileProvider),
+             "template" or "itemplateprovider" => typeof(ITemplateProvider),
+             "llm" or "illmprovider" => typeof(modules.llm.providers.ILlmProvider),
++            "builder" or "ibuilderprovider" => typeof(modules.builder.providers.IBuilderProvider),
+             null or "" => typeof(ISigningProvider),
+             _ => null
+         };
+@@ -222,5 +223,6 @@ public sealed class @this
+         Register<modules.file.providers.IFileProvider>(new modules.file.providers.DefaultFileProvider());
+         Register<ITemplateProvider>(new FluidProvider());
+         Register<modules.llm.providers.ILlmProvider>(new modules.llm.providers.OpenAiProvider());
++        Register<modules.builder.providers.IBuilderProvider>(new modules.builder.providers.DefaultBuilderProvider());
+     }
+ }
+diff --git a/PLang/Runtime2/Engine/Utility/Json.cs b/PLang/Runtime2/Engine/Utility/Json.cs
+new file mode 100644
+index 00000000..8637c33b
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Utility/Json.cs
+@@ -0,0 +1,29 @@
++using System.Text.Json;
++
++namespace PLang.Runtime2.Engine.Utility;
++
++/// <summary>
++/// Shared JSON serializer options.
++/// Specialized options with custom converters (signing, transport) stay with their owners.
++/// </summary>
++public static class Json
++{
++    /// <summary>
++    /// Case-insensitive property matching for deserialization.
++    /// Use for: .pr files, app.pr, HTTP responses, any JSON read where casing may vary.
++    /// </summary>
++    public static readonly JsonSerializerOptions CaseInsensitiveRead = new()
++    {
++        PropertyNameCaseInsensitive = true
++    };
++
++    /// <summary>
++    /// CamelCase + indented for all PLang JSON output.
++    /// Use for: .pr files, app.pr, any JSON we write.
++    /// </summary>
++    public static readonly JsonSerializerOptions CamelCaseIndented = new()
++    {
++        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
++        WriteIndented = true
++    };
++}
+diff --git a/PLang/Runtime2/Engine/Utility/TypeMapping.cs b/PLang/Runtime2/Engine/Utility/TypeMapping.cs
+index dd024e90..7dc854cc 100644
+--- a/PLang/Runtime2/Engine/Utility/TypeMapping.cs
++++ b/PLang/Runtime2/Engine/Utility/TypeMapping.cs
+@@ -167,6 +167,8 @@ public static class TypeMapping
+             "csv" => "text/csv",
+             "yaml" or "yml" => "text/yaml",
+             "txt" => "text/plain",
++            "goal" => "text/plain",
++            "pr" => "application/json",
+             "png" => "image/png",
+             "jpg" or "jpeg" => "image/jpeg",
+             "gif" => "image/gif",
+@@ -269,6 +271,11 @@ public static class TypeMapping
+             || underlying == typeof(Guid);
+     }
+ 
++    /// <summary>
++    /// Attempts to convert a value to the specified type. Generic convenience overload.
++    /// </summary>
++    public static T? ConvertTo<T>(object? value) => (T?)ConvertTo(value, typeof(T));
++
+     /// <summary>
+     /// Attempts to convert a value to the specified type.
+     /// </summary>
+@@ -307,7 +314,7 @@ public static class TypeMapping
+                 {
+                     return System.Text.Json.JsonSerializer.Deserialize<PLang.Runtime2.Engine.Goals.Goal.GoalCall>(
+                         je.GetRawText(),
+-                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
++                        Json.CaseInsensitiveRead);
+                 }
+                 catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { return null; }
+             }
+@@ -347,7 +354,7 @@ public static class TypeMapping
+             try
+             {
+                 var json = System.Text.Json.JsonSerializer.Serialize(value);
+-                return System.Text.Json.JsonSerializer.Deserialize(json, targetType, _caseInsensitiveOptions);
++                return System.Text.Json.JsonSerializer.Deserialize(json, targetType, Json.CaseInsensitiveRead);
+             }
+             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { return null; }
+         }
+@@ -355,10 +362,6 @@ public static class TypeMapping
+         return value;
+     }
+ 
+-    private static readonly System.Text.Json.JsonSerializerOptions _caseInsensitiveOptions = new()
+-    {
+-        PropertyNameCaseInsensitive = true
+-    };
+ 
+     /// <summary>
+     /// Returns canonical builder type names (excludes aliases like "text"→"string").
+diff --git a/PLang/Runtime2/modules/builder/BuilderTypeInfo.cs b/PLang/Runtime2/modules/builder/BuilderTypeInfo.cs
+new file mode 100644
+index 00000000..9a07f43e
+--- /dev/null
++++ b/PLang/Runtime2/modules/builder/BuilderTypeInfo.cs
+@@ -0,0 +1,3 @@
++namespace PLang.Runtime2.modules.builder;
++
++public record BuilderTypeInfo(string TypeNames, string TypeSchemas);
+diff --git a/PLang/Runtime2/modules/builder/actions.cs b/PLang/Runtime2/modules/builder/actions.cs
+new file mode 100644
+index 00000000..125fcada
+--- /dev/null
++++ b/PLang/Runtime2/modules/builder/actions.cs
+@@ -0,0 +1,13 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder.providers;
++
++namespace PLang.Runtime2.modules.builder;
++
++[Action("actions")]
++public partial class GetActions : IContext
++{
++    [Provider]
++    public partial IBuilderProvider Builder { get; }
++
++    public async Task<Data> Run() => await Builder.Actions(this);
++}
+diff --git a/PLang/Runtime2/modules/builder/app.cs b/PLang/Runtime2/modules/builder/app.cs
+new file mode 100644
+index 00000000..702c600d
+--- /dev/null
++++ b/PLang/Runtime2/modules/builder/app.cs
+@@ -0,0 +1,16 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder.providers;
++
++namespace PLang.Runtime2.modules.builder;
++
++[Action("app")]
++public partial class app : IContext
++{
++    [Default(".")]
++    public partial string Path { get; init; }
++
++    [Provider]
++    public partial IBuilderProvider Builder { get; }
++
++    public async Task<Data> Run() => await Builder.App(this);
++}
+diff --git a/PLang/Runtime2/modules/builder/appSave.cs b/PLang/Runtime2/modules/builder/appSave.cs
+new file mode 100644
+index 00000000..352d0691
+--- /dev/null
++++ b/PLang/Runtime2/modules/builder/appSave.cs
+@@ -0,0 +1,20 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Utility;
++using PLang.Runtime2.modules.builder.providers;
++
++namespace PLang.Runtime2.modules.builder;
++
++[Action("app.save")]
++public partial class appSave : IContext
++{
++    [IsNotNull]
++    public partial AppData App { get; init; }
++
++    [Default(".build/app.pr")]
++    public partial string Path { get; init; }
++
++    [Provider]
++    public partial IBuilderProvider Builder { get; }
++
++    public async Task<Data> Run() => await Builder.AppSave(this);
++}
+diff --git a/PLang/Runtime2/modules/builder/goals.cs b/PLang/Runtime2/modules/builder/goals.cs
+new file mode 100644
+index 00000000..2cb22ffe
+--- /dev/null
++++ b/PLang/Runtime2/modules/builder/goals.cs
+@@ -0,0 +1,15 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder.providers;
++
++namespace PLang.Runtime2.modules.builder;
++
++[Action("goals")]
++public partial class goals : IContext
++{
++    public partial string Path { get; init; }
++
++    [Provider]
++    public partial IBuilderProvider Builder { get; }
++
++    public async Task<Data> Run() => await Builder.Goals(this);
++}
+diff --git a/PLang/Runtime2/modules/builder/goalsSave.cs b/PLang/Runtime2/modules/builder/goalsSave.cs
+new file mode 100644
+index 00000000..8e6786f7
+--- /dev/null
++++ b/PLang/Runtime2/modules/builder/goalsSave.cs
+@@ -0,0 +1,17 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder.providers;
++using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
++
++namespace PLang.Runtime2.modules.builder;
++
++[Action("goals.save")]
++public partial class goalsSave : IContext
++{
++    [IsNotNull]
++    public partial List<Goal> Goals { get; init; }
++
++    [Provider]
++    public partial IBuilderProvider Builder { get; }
++
++    public async Task<Data> Run() => await Builder.GoalsSave(this);
++}
+diff --git a/PLang/Runtime2/modules/builder/merge.cs b/PLang/Runtime2/modules/builder/merge.cs
+new file mode 100644
+index 00000000..e7209d72
+--- /dev/null
++++ b/PLang/Runtime2/modules/builder/merge.cs
+@@ -0,0 +1,19 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder.providers;
++
++namespace PLang.Runtime2.modules.builder;
++
++[Action("steps.merge")]
++public partial class merge : IContext
++{
++    [IsNotNull]
++    public partial Step Step { get; init; }
++
++    [IsNotNull]
++    public partial Step StepFromLlm { get; init; }
++
++    [Provider]
++    public partial IBuilderProvider Builder { get; }
++
++    public Task<Data> Run() => Task.FromResult(Builder.Merge(this));
++}
+diff --git a/PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs b/PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs
+new file mode 100644
+index 00000000..cc9c214b
+--- /dev/null
++++ b/PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs
+@@ -0,0 +1,352 @@
++using System.Text.Json;
++using PLang.Runtime2.Engine.Goals.Goal;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Utility;
++using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
++using Actions = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this;
++
++namespace PLang.Runtime2.modules.builder.providers;
++
++public class DefaultBuilderProvider : IBuilderProvider
++{
++    public string Name => "default";
++    public bool IsDefault { get; set; }
++
++    private static Data? BuildingGuard(IContext action)
++    {
++        if (!action.Context.Engine.Building.IsEnabled)
++            return Data.FromError(new Engine.Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
++        return null;
++    }
++
++    // --- Actions ---
++
++    public Task<Data> Actions(GetActions action)
++    {
++        var guard = BuildingGuard(action);
++        if (guard != null) return Task.FromResult(guard);
++
++        return Task.FromResult(Data.Ok(action.Context.Engine.Modules.Describe()));
++    }
++
++    // --- Types ---
++
++    public Data Types(types action)
++    {
++        var guard = BuildingGuard(action);
++        if (guard != null) return guard;
++
++        var names = TypeMapping.GetBuilderTypeNames();
++        var schemas = TypeMapping.GetComplexTypeSchemas();
++        var schemaLines = schemas.Select(kvp => $"  {kvp.Key}: {kvp.Value}");
++
++        return Data.Ok(new BuilderTypeInfo(
++            string.Join(", ", names),
++            string.Join("\n", schemaLines)));
++    }
++
++    // --- Goals ---
++
++    public async Task<Data> Goals(goals action)
++    {
++        var guard = BuildingGuard(action);
++        if (guard != null) return guard;
++
++        var engine = action.Context.Engine;
++        var context = action.Context;
++        var searchPath = string.IsNullOrWhiteSpace(action.Path) ? "." : action.Path;
++
++        var listAction = new file.List
++        {
++            Context = context,
++            Path = new PLangPath(searchPath, context),
++            Pattern = "*.goal",
++            Recursive = true
++        };
++        var listResult = await engine.RunAction(listAction, context);
++        if (!listResult.Success)
++            return listResult;
++
++        var files = listResult.Value as PLangPath[];
++        if (files == null || files.Length == 0)
++            return Data.Ok(new List<Goal>());
++
++        var allGoals = new List<Goal>();
++        var allErrors = new List<Engine.Info>();
++
++        foreach (var file in files)
++        {
++            var readAction = new file.Read { Context = context, Path = file };
++            var readResult = await engine.RunAction(readAction, context);
++            if (!readResult.Success)
++            {
++                allErrors.Add(new Engine.Info
++                {
++                    Key = "FileReadError",
++                    Message = $"Failed to read {file.Raw}: {readResult.Error?.Message}"
++                });
++                continue;
++            }
++
++            var text = readResult.Value?.ToString();
++            if (string.IsNullOrWhiteSpace(text)) continue;
++
++            var relativePath = file.Relative ?? file.Raw;
++            if (!relativePath.StartsWith('/') && !relativePath.StartsWith('\\'))
++                relativePath = "/" + relativePath;
++
++            var parsedGoals = Goal.Parse(text, relativePath);
++
++            // Merge existing .pr data, collect errors
++            foreach (var goal in parsedGoals)
++            {
++                var mergeErrors = await MergePrData(goal, engine, context);
++                allErrors.AddRange(mergeErrors);
++            }
++
++            allGoals.AddRange(parsedGoals);
++        }
++
++        var result = Data.Ok(allGoals);
++        if (allErrors.Count > 0)
++            result.Warnings = allErrors;
++        return result;
++    }
++
++    public async Task<Data> GoalsSave(goalsSave action)
++    {
++        var guard = BuildingGuard(action);
++        if (guard != null) return guard;
++
++        var engine = action.Context.Engine;
++        var context = action.Context;
++
++        if (action.Goals.Count == 0)
++            return Data.FromError(new Engine.Errors.ActionError("No goals to save", "NoGoals", 400));
++
++        var prPath = action.Goals[0].PrPath;
++        if (string.IsNullOrEmpty(prPath))
++            return Data.FromError(new Engine.Errors.ActionError("Goals have no Path set, cannot derive PrPath", "NoPrPath", 400));
++
++        var json = JsonSerializer.Serialize(action.Goals, Json.CamelCaseIndented);
++
++        var saveAction = new file.Save
++        {
++            Context = context,
++            Path = new PLangPath(prPath, context),
++            Value = new Data("", json)
++        };
++        var saveResult = await engine.RunAction(saveAction, context);
++        return saveResult.Success ? Data.Ok(true) : saveResult;
++    }
++
++    // --- Validate ---
++
++    public async Task<Data> Validate(validate action)
++    {
++        var guard = BuildingGuard(action);
++        if (guard != null) return guard;
++
++        var engine = action.Context.Engine;
++        var context = action.Context;
++        var modules = engine.Modules;
++
++        var notFound = new List<string>();
++        foreach (var a in action.Actions)
++        {
++            if (!modules.Contains(a.Module, a.ActionName))
++                notFound.Add($"{a.Module}.{a.ActionName}");
++        }
++
++        if (notFound.Count > 0)
++            return Data.FromError(new Engine.Errors.ActionError(
++                $"Actions not found: {string.Join(", ", notFound)}", "ActionNotFound", 400));
++
++        await ResolveGoalCallPaths(action.Actions, engine, context);
++
++        foreach (var a in action.Actions)
++        {
++            var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
++            if (a.Parameters != null)
++                foreach (var p in a.Parameters) paramNames.Add(p.Name);
++            a.Defaults = modules.GetDefaults(a.Module, a.ActionName, paramNames);
++        }
++
++        return Data.Ok(true);
++    }
++
++    // --- Merge ---
++
++    public Data Merge(merge action)
++    {
++        var guard = BuildingGuard(action);
++        if (guard != null) return guard;
++
++        action.Step.Merge(action.StepFromLlm);
++        return Data.Ok(action.Step);
++    }
++
++    // --- App ---
++
++    public async Task<Data> App(app action)
++    {
++        var guard = BuildingGuard(action);
++        if (guard != null) return guard;
++
++        var engine = action.Context.Engine;
++        var context = action.Context;
++
++        var basePath = string.IsNullOrWhiteSpace(action.Path) || action.Path == "." ? "" : action.Path;
++        var appPrPath = string.IsNullOrEmpty(basePath)
++            ? ".build/app.pr"
++            : basePath.TrimEnd('/', '\\') + "/.build/app.pr";
++
++        var readAction = new file.Read
++        {
++            Context = context,
++            Path = new PLangPath(appPrPath, context)
++        };
++        var readResult = await engine.RunAction(readAction, context);
++
++        if (readResult.Success && readResult.Value?.ToString() is string json && !string.IsNullOrWhiteSpace(json))
++        {
++            try
++            {
++                var existing = JsonSerializer.Deserialize<AppData>(json, Json.CaseInsensitiveRead);
++                if (existing != null)
++                    return Data.Ok(existing);
++            }
++            catch (JsonException ex)
++            {
++                return Data.FromError(new Engine.Errors.ActionError(
++                    $"Failed to parse app.pr: {ex.Message}", "CorruptAppFile", 400));
++            }
++        }
++
++        return Data.Ok((AppData?)null);
++    }
++
++    public async Task<Data> AppSave(appSave action)
++    {
++        var guard = BuildingGuard(action);
++        if (guard != null) return guard;
++
++        var engine = action.Context.Engine;
++        var context = action.Context;
++
++        var savePath = string.IsNullOrWhiteSpace(action.Path) ? ".build/app.pr" : action.Path;
++        var json = JsonSerializer.Serialize(action.App, Json.CamelCaseIndented);
++
++        var saveAction = new file.Save
++        {
++            Context = context,
++            Path = new PLangPath(savePath, context),
++            Value = new Data("", json)
++        };
++        var saveResult = await engine.RunAction(saveAction, context);
++        return saveResult.Success ? Data.Ok(action.App) : saveResult;
++    }
++
++    // --- Private helpers ---
++
++    /// <summary>
++    /// Merges existing .pr data into a goal. Returns any errors encountered (corrupt .pr files).
++    /// </summary>
++    private static async Task<List<Engine.Info>> MergePrData(Goal goal, Engine.@this engine,
++        Engine.Context.PLangContext context)
++    {
++        var errors = new List<Engine.Info>();
++        var prPath = goal.PrPath;
++        if (string.IsNullOrEmpty(prPath)) return errors;
++
++        var readAction = new file.Read
++        {
++            Context = context,
++            Path = new PLangPath(prPath, context)
++        };
++        var readResult = await engine.RunAction(readAction, context);
++        if (!readResult.Success) return errors;
++
++        var prJson = readResult.Value?.ToString();
++        if (string.IsNullOrWhiteSpace(prJson)) return errors;
++
++        try
++        {
++            var prGoals = JsonSerializer.Deserialize<List<Goal>>(prJson, Json.CaseInsensitiveRead);
++            if (prGoals != null)
++            {
++                var match = prGoals.FirstOrDefault(g =>
++                    g.Name.Equals(goal.Name, StringComparison.OrdinalIgnoreCase));
++                if (match != null)
++                    goal.MergeFrom(match);
++            }
++        }
++        catch (JsonException ex)
++        {
++            errors.Add(new Engine.Info
++            {
++                Key = "CorruptPrFile",
++                Message = $"Failed to parse .pr file at {prPath}: {ex.Message}"
++            });
++        }
++
++        return errors;
++    }
++
++    private static async Task ResolveGoalCallPaths(Actions actions, Engine.@this engine,
++        Engine.Context.PLangContext context)
++    {
++        foreach (var action in actions)
++        {
++            if (action.Parameters == null) continue;
++
++            foreach (var param in action.Parameters)
++            {
++                if (!string.Equals(param.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase))
++                    continue;
++
++                var goalCall = ToGoalCall(param.Value);
++                if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
++                    continue;
++
++                if (goalCall.Name.Contains('%'))
++                {
++                    param.Value = goalCall;
++                    continue;
++                }
++
++                // Derive PrPath using Goal's own convention
++                var goalPath = goalCall.Name;
++                if (!goalPath.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
++                    goalPath += ".goal";
++                if (!goalPath.StartsWith('/') && !goalPath.StartsWith('\\'))
++                    goalPath = "/" + goalPath;
++
++                var tempGoal = new Goal { Path = goalPath };
++                var expectedPrPath = tempGoal.PrPath;
++                if (expectedPrPath != null)
++                {
++                    // Check existence via file.exists — don't read the whole file
++                    var existsAction = new file.Exists
++                    {
++                        Context = context,
++                        Path = new PLangPath(expectedPrPath, context)
++                    };
++                    var existsResult = await engine.RunAction(existsAction, context);
++                    if (existsResult.Success && existsResult.Value is PLangPath pathData && pathData.Exists)
++                    {
++                        goalCall.PrPath = expectedPrPath;
++                    }
++                }
++
++                param.Value = goalCall;
++            }
++        }
++    }
++
++    private static GoalCall? ToGoalCall(object? value)
++    {
++        if (value is GoalCall gc) return gc;
++        return TypeMapping.ConvertTo<GoalCall>(value);
++    }
++}
+diff --git a/PLang/Runtime2/modules/builder/providers/IBuilderProvider.cs b/PLang/Runtime2/modules/builder/providers/IBuilderProvider.cs
+new file mode 100644
+index 00000000..5b2b709a
+--- /dev/null
++++ b/PLang/Runtime2/modules/builder/providers/IBuilderProvider.cs
+@@ -0,0 +1,23 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Providers;
++using PLang.Runtime2.Engine.Utility;
++using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
++using Actions = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this;
++
++namespace PLang.Runtime2.modules.builder.providers;
++
++/// <summary>
++/// Builder provider interface. Owns all builder logic — actions are thin delegation.
++/// Swappable via engine.Providers.
++/// </summary>
++public interface IBuilderProvider : IProvider
++{
++    Task<Data> Actions(GetActions action);
++    Data Types(types action);
++    Task<Data> Goals(goals action);
++    Task<Data> GoalsSave(goalsSave action);
++    Task<Data> Validate(validate action);
++    Data Merge(merge action);
++    Task<Data> App(app action);
++    Task<Data> AppSave(appSave action);
++}
+diff --git a/PLang/Runtime2/modules/builder/types.cs b/PLang/Runtime2/modules/builder/types.cs
+new file mode 100644
+index 00000000..93e7700a
+--- /dev/null
++++ b/PLang/Runtime2/modules/builder/types.cs
+@@ -0,0 +1,13 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder.providers;
++
++namespace PLang.Runtime2.modules.builder;
++
++[Action("types")]
++public partial class types : IContext
++{
++    [Provider]
++    public partial IBuilderProvider Builder { get; }
++
++    public Task<Data> Run() => Task.FromResult(Builder.Types(this));
++}
+diff --git a/PLang/Runtime2/modules/builder/validate.cs b/PLang/Runtime2/modules/builder/validate.cs
+new file mode 100644
+index 00000000..f0be7039
+--- /dev/null
++++ b/PLang/Runtime2/modules/builder/validate.cs
+@@ -0,0 +1,17 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.builder.providers;
++using Actions = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this;
++
++namespace PLang.Runtime2.modules.builder;
++
++[Action("actions.validate")]
++public partial class validate : IContext
++{
++    [IsNotNull]
++    public partial Actions Actions { get; init; }
++
++    [Provider]
++    public partial IBuilderProvider Builder { get; }
++
++    public async Task<Data> Run() => await Builder.Validate(this);
++}
+diff --git a/PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs b/PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs
+index 50125206..24acf111 100644
+--- a/PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs
++++ b/PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs
+@@ -41,10 +41,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
+     /// Transport JSON options: overrides [JsonIgnore] for [In] properties (e.g., Signature).
+     /// Used when deserializing application/plang responses — Data arrives with Signature on the wire.
+     /// </summary>
+-    private static readonly JsonSerializerOptions _jsonOptions = new()
+-    {
+-        PropertyNameCaseInsensitive = true
+-    };
++    private static readonly JsonSerializerOptions _jsonOptions = PLang.Runtime2.Engine.Utility.Json.CaseInsensitiveRead;
+ 
+     private static readonly JsonSerializerOptions _transportInOptions = new()
+     {
+@@ -629,7 +626,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
+             return;
+ 
+         var signedData = JsonSerializer.Deserialize<SignedData>(sigElement.GetRawText(),
+-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
++            PLang.Runtime2.Engine.Utility.Json.CaseInsensitiveRead);
+         if (signedData == null) return;
+ 
+         var legacyData = new Data("");
+diff --git a/Tests/Runtime2/Builder/GetActions/BuilderGetActions.test.goal b/Tests/Runtime2/Builder/GetActions/BuilderGetActions.test.goal
+new file mode 100644
+index 00000000..08bd72da
+--- /dev/null
++++ b/Tests/Runtime2/Builder/GetActions/BuilderGetActions.test.goal
+@@ -0,0 +1,4 @@
++Start
++/ Test that builder.getActions returns a list of all registered module actions
++- get all actions, write to %actions%
++- assert %actions% is not empty, "getActions should return registered module actions"
+diff --git a/Tests/Runtime2/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal b/Tests/Runtime2/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal
+new file mode 100644
+index 00000000..e06190e6
+--- /dev/null
++++ b/Tests/Runtime2/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal
+@@ -0,0 +1,4 @@
++Start
++/ Test that builder.getTypeInfo returns PLang type names and complex type schemas
++- get type info, write to %typeInfo%
++- assert %typeInfo% is not empty, "getTypeInfo should return type mapping data"
+diff --git a/Tests/Runtime2/Builder/MergeStep/BuilderMergeStep.test.goal b/Tests/Runtime2/Builder/MergeStep/BuilderMergeStep.test.goal
+new file mode 100644
+index 00000000..cc89d814
+--- /dev/null
++++ b/Tests/Runtime2/Builder/MergeStep/BuilderMergeStep.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test that builder.mergeStep merges LLM-derived fields from one step onto another
++- throw "not implemented — requires constructing Step objects in PLang, deferred to C# tests"
+diff --git a/Tests/Runtime2/Builder/ParseGoal/BuilderParseGoal.test.goal b/Tests/Runtime2/Builder/ParseGoal/BuilderParseGoal.test.goal
+new file mode 100644
+index 00000000..a2bf8388
+--- /dev/null
++++ b/Tests/Runtime2/Builder/ParseGoal/BuilderParseGoal.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test that builder.getGoals parses a .goal file and returns Runtime2 Goal objects
++- save "TestGoal\n- step one\n- step two" to file 'parse_test/Test.goal'
++- get goals from 'parse_test/', write to %goals%
++- assert %goals% is not empty, "getGoals should return parsed goals from .goal file"
+diff --git a/Tests/Runtime2/Builder/ValidateInvalid/BuilderValidateInvalid.test.goal b/Tests/Runtime2/Builder/ValidateInvalid/BuilderValidateInvalid.test.goal
+new file mode 100644
+index 00000000..07fc230b
+--- /dev/null
++++ b/Tests/Runtime2/Builder/ValidateInvalid/BuilderValidateInvalid.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test that builder.validateActions returns error for unknown module.action pairs
++- throw "not implemented — requires constructing StepActions with bad action name, deferred to C# tests"
+diff --git a/Tests/Runtime2/Builder/ValidateValid/BuilderValidateValid.test.goal b/Tests/Runtime2/Builder/ValidateValid/BuilderValidateValid.test.goal
+new file mode 100644
+index 00000000..b17e1d28
+--- /dev/null
++++ b/Tests/Runtime2/Builder/ValidateValid/BuilderValidateValid.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test that builder.validateActions accepts known valid module.action pairs
++- get all actions, write to %actions%
++- validate actions %actions%, write to %result%
++- assert %result% is true, "validateActions should pass for known actions"

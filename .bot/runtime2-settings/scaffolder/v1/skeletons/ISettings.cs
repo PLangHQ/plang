@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.Engine.Settings;
+namespace App.Settings;
 
 /// <summary>
 /// Marker interface for strongly typed module settings.

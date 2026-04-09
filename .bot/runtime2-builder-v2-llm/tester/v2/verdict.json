@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "4 major findings: false-green ProviderNotRegistered test, unverified MaxToolCalls limit, weak API error assertions, unverified OnToolCall callback invocation" }

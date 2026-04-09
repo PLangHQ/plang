@@ -1,0 +1,70 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error 'something broke', on error call HandleError",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {"name": "Message", "value": "something broke", "type": "string"}
+          ]
+        }
+      ],
+      "onError": {
+        "goal": {"name": "HandleError"}
+      },
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out 'continues after error handled'",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {"name": "Data", "value": "continues after error handled", "type": "string"}
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "HandleError",
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out 'error handled!'",
+          "lineNumber": 6,
+          "indent": 0,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {"name": "Data", "value": "error handled!", "type": "string"}
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Test.goal",
+      "prPath": "/.build/test.pr"
+    }
+  ],
+  "visibility": 1,
+  "path": "/Test.goal",
+  "prPath": "/.build/test.pr"
+}

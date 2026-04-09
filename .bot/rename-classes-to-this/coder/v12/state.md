@@ -1,7 +1,7 @@
 # Session v12 State
 
 ## Status: Starting
-## Task: Restructure Runtime2/Core/ to mirror object graph
+## Task: Restructure App/Core/ to mirror object graph
 
 ### Plan
 Execute 5 groups (A-E) of file moves and namespace updates.

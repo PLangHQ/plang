@@ -16,7 +16,7 @@ EXTERNAL INPUT
      │                                        ├── JsonSerializer.Deserialize ← no depth limit
      │                                        └── RehydrateNestedData ← FINDING 2: no depth limit
      │
-     ├── variable/set action ──────────► MemoryStack.Set (MemoryStack.cs:49)
+     ├── variable/set action ──────────► Variables.Set (Variables.cs:49)
      │                                        │
      │                                        └── No ! prefix guard ← FINDING 4: system var overwrite
      │
@@ -115,10 +115,10 @@ This creates two amplification paths:
 
 ---
 
-### FINDING 4 — System variable overwrite via MemoryStack.Set()
+### FINDING 4 — System variable overwrite via Variables.Set()
 **Severity: HIGH | Category: Injection / System Hijacking**
 
-**Location:** `MemoryStack.cs:49-64`, `variable/set.cs:15`, `PLangContext.cs:120-126`
+**Location:** `Variables.cs:49-64`, `variable/set.cs:15`, `PLangContext.cs:120-126`
 
 System variables are registered with `!` prefix at context initialization:
 ```csharp
@@ -129,9 +129,9 @@ ms.Put(new Data("!memoryStack", ms));
 ms.Put(new Data("!fileSystem", Engine.FileSystem));
 ```
 
-But `MemoryStack.Set()` has **no guard**:
+But `Variables.Set()` has **no guard**:
 ```csharp
-// MemoryStack.cs:49-64
+// Variables.cs:49-64
 public void Set(string name, object? value, Type? type = null)
 {
     name = CleanName(name);    // strips % only, keeps !
@@ -146,12 +146,12 @@ public void Set(string name, object? value, Type? type = null)
 And `variable/set` passes Name directly:
 ```csharp
 // set.cs:15
-Context.MemoryStack.Set(Name, Value, ...);
+Context.Variables.Set(Name, Value, ...);
 ```
 
 **Attack:** A crafted .pr file with `set %!fileSystem% = null` nullifies the filesystem abstraction. All subsequent file operations throw NullReferenceException. Or replace with a malicious implementation for data exfiltration.
 
-**Mitigation should be at MemoryStack.Set() level**, not at the action level, because multiple code paths call Set() (list/set, loop/foreach, etc.).
+**Mitigation should be at Variables.Set() level**, not at the action level, because multiple code paths call Set() (list/set, loop/foreach, etc.).
 
 ---
 
@@ -169,12 +169,12 @@ public object? GetProperty(object value, string key)
 }
 ```
 
-If a Data object's Value is an Engine instance (stored as `!engine` in MemoryStack), navigation exposes:
+If a Data object's Value is an Engine instance (stored as `!engine` in Variables), navigation exposes:
 - `Engine.FileSystem` — full file system access
 - `Engine.Libraries` — handler registry
 - `Engine.Goals` — goal execution
 - `Engine.System` / `Engine.Service` — higher-trust actors
-- `Engine.MemoryStack` — User actor's variable store
+- `Engine.Variables` — User actor's variable store
 
 The `!` prefix prevents enumeration via GetNames/GetAll, but does NOT prevent direct access if the variable name is known. Whether `%!engine.fileSystem%` resolves depends on whether the `!` is stripped by CleanName — it is NOT stripped (CleanName only strips `%`), so `Get("!engine")` returns the system variable.
 
@@ -203,7 +203,7 @@ Every navigation access re-parses the full JSON string. No caching.
 ### FINDING 7 — Variable resolution cycle in bracket paths
 **Severity: MEDIUM | Category: Resource Exhaustion**
 
-**Location:** `MemoryStack.cs:207-215`
+**Location:** `Variables.cs:207-215`
 
 ```csharp
 private string ResolveVariablesInPath(string path)
@@ -287,7 +287,7 @@ public System.Type? Clr(string plangName)
    - GetChild: max 100
    - Clr(): max 20
 
-2. **Guard MemoryStack.Set() against ! prefix**
+2. **Guard Variables.Set() against ! prefix**
    ```csharp
    if (name.StartsWith("!"))
        throw new InvalidOperationException($"System variable '{name}' is read-only");

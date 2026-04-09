@@ -1,0 +1,52 @@
+[
+  {
+    "name": "SetFalse",
+    "description": "SetFalse goal: set %wasFalse% to true.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %wasFalse% = true",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%wasFalse%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/Basic/SetFalse.goal",
+    "prPath": "/Basic/.build/setfalse.pr",
+    "hash": "b48b1e98e5c83353559c4da0d65e5f66bd4a0fc8a1843466208086a965389769",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

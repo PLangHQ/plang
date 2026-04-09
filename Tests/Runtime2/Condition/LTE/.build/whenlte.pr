@@ -1,0 +1,52 @@
+[
+  {
+    "name": "WhenLTE",
+    "description": "Set %result% to the string \u0022lte\u0022 when the condition is LTE (\u003C=) as indicated by the provided snippet.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %result% = \u0022lte\u0022",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%result%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "lte",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/LTE/WhenLTE.goal",
+    "prPath": "/LTE/.build/whenlte.pr",
+    "hash": "6f6d08cdd0d061b9851262b738c479468c504dc7a9f1d895452abcf4f2d3d7c1",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

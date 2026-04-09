@@ -27,8 +27,8 @@ All 8 findings addressed in code. Detailed verification:
 
 ### Finding #1 — CRITICAL: Zip bomb protection is untested
 
-**File**: `PLang/Runtime2/Engine/Memory/Data.Envelope.cs:19,214-230`
-**Test file**: `PLang.Tests/Runtime2/Memory/DataTests.cs`
+**File**: `PLang/App/Memory/Data.Envelope.cs:19,214-230`
+**Test file**: `PLang.Tests/App/Memory/DataTests.cs`
 
 The auditor's finding #8 was a **major safety concern** — zip bomb attacks at the transport boundary. The coder added a 100MB limit with chunked reads. But **no test exists** that verifies this limit works.
 
@@ -43,8 +43,8 @@ The auditor's finding #8 was a **major safety concern** — zip bomb attacks at 
 
 ### Finding #2 — MAJOR: Thread safety fix has no concurrent test
 
-**File**: `PLang/Runtime2/Engine/Types/this.cs:388,553,571,591`
-**Test file**: `PLang.Tests/Runtime2/Types/EngineTypesTests.cs`
+**File**: `PLang/App/Types/this.cs:388,553,571,591`
+**Test file**: `PLang.Tests/App/Types/EngineTypesTests.cs`
 
 The auditor's finding #1 was about thread safety of Engine.Types under concurrent goal execution. The coder switched to `ConcurrentDictionary` and added `_derivedLock` around `_allKinds`. But all 65+ Engine.Types tests are single-threaded.
 
@@ -59,8 +59,8 @@ The auditor's finding #1 was about thread safety of Engine.Types under concurren
 
 ### Finding #3 — MAJOR: Data.Merge() used in production but completely untested
 
-**File**: `PLang/Runtime2/Engine/Memory/Data.Result.cs:40-57`
-**Used at**: `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/this.cs:66`
+**File**: `PLang/App/Memory/Data.Result.cs:40-57`
+**Used at**: `PLang/App/Goals/Goal/Steps/Step/Actions/this.cs:66`
 
 `Merge()` is called in the action execution loop to combine step results. It casts `Value` to `List<Data>` and silently returns an empty list if the cast fails. Zero tests exist for `Data.Merge()` in DataTests.cs.
 
@@ -78,7 +78,7 @@ var merged = a.Merge(b);
 
 ### Finding #4 — MINOR: ServiceError.StatusCode not verified in tests
 
-**File**: `PLang.Tests/Runtime2/Memory/DataTests.cs:914,928,942,967`
+**File**: `PLang.Tests/App/Memory/DataTests.cs:914,928,942,967`
 
 All 4 Decompress error tests now check `Error.Key == "DecompressError"` (auditor finding #7). But none verify `Error.StatusCode == 500`. The coder explicitly passed `500` (infrastructure error, not user input error), but this value is never asserted.
 
@@ -88,7 +88,7 @@ All 4 Decompress error tests now check `Error.Key == "DecompressError"` (auditor
 
 ### Finding #5 — MINOR: Context not propagated to inner Data during RehydrateNestedData
 
-**File**: `PLang/Runtime2/Engine/Memory/Data.Envelope.cs:184-200`
+**File**: `PLang/App/Memory/Data.Envelope.cs:184-200`
 
 After `Decompress()`, the top-level `result` gets `Context = _context` (line 150), but inner Data objects created by `RehydrateNestedData` do NOT get context stamped. If someone accesses `decompressed.Value` directly (casting to `Data`), that inner Data has no context — so `Type.Kind`, `Type.Compressible`, and other context-dependent navigation won't work.
 
@@ -100,7 +100,7 @@ No test verifies context propagation to inner Data after decompression. The mult
 
 ### Finding #6 — MINOR: Numeric type widening through compress/decompress
 
-**File**: `PLang/Runtime2/Engine/Memory/Data.cs:215`
+**File**: `PLang/App/Memory/Data.cs:215`
 
 `UnwrapJsonElement` converts JSON numbers to `long` first, `double` as fallback. This means `int 42` → JSON → `long 42L` after decompression. The Type metadata is preserved (still says "int"), but the actual CLR value is `long`.
 

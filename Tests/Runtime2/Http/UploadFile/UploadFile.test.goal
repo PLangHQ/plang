@@ -1,0 +1,9 @@
+Start
+/ Test: Upload file, verify response
+- save 'test upload content' to 'upload-test.txt'
+- upload upload-test.txt to https://httpbin.org/post, unsigned, write to %response%
+- if %response% is not empty then
+    - write out 'Upload returned response'
+- if %response.StatusCode% equals 200 then
+    - write out 'Status code is 200'
+- delete file 'upload-test.txt'

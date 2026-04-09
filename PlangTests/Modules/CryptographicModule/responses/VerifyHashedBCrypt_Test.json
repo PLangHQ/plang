@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "verify %password% matches %HashedPassword%, write to %isPasswordMatch%",
-    "response": "{\"FunctionName\": \"VerifyHashedValues\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"text\",\n\"Value\": \"%password%\"},\n{\"Type\": \"string\",\n\"Name\": \"hash\",\n\"Value\": \"%HashedPassword%\"},\n{\"Type\": \"string\",\n\"Name\": \"hashAlgorithm\",\n\"Value\": \"bcrypt\"},\n{\"Type\": \"Boolean\",\n\"Name\": \"useSalt\",\n\"Value\": true}],\n\"ReturnValue\": [{\"Type\": \"Boolean\",\n\"VariableName\": \"isPasswordMatch\"}]}",
-    "created": "2024-02-07T12:55:27.9550474+00:00"
-  }
-]

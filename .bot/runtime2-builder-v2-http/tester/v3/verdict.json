@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "3 false greens (auto-detect upload, JSON parsing, upload response) + 0% on form upload. Fix assertions and add form test." }

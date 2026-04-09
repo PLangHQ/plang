@@ -1,0 +1,37 @@
+{
+  "name": "ReadFile",
+  "path": "/ReadFile.goal",
+  "steps": [
+    {
+      "index": 0,
+      "text": "read testdata.txt, write to %content%",
+      "lineNumber": 2,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            { "name": "path", "value": "testdata.txt" }
+          ],
+          "return": [
+            { "name": "content" }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "write out %content%",
+      "lineNumber": 3,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            { "name": "Data", "value": "%content%" }
+          ]
+        }
+      ]
+    }
+  ]
+}

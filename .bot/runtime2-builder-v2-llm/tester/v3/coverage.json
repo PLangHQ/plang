@@ -1,0 +1,16 @@
+{
+  "tool": "cobertura via TUnit --coverage",
+  "timestamp": "2026-03-29T20:45:00Z",
+  "files": {
+    "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs": {
+      "line_rate": 87.6,
+      "branch_rate": 65.1,
+      "improvement_from_v2": { "line": "+4.8%", "branch": "+3.6%" },
+      "still_uncovered": [23, 445, 446, 448, 558, 559, 560, 572, 573, 575, 600, 619, 683, 743, 751, 752, 753, 785, 786, 787, 789, 790, 791, 792, 793, 794, 795, 796, 797, 798, 799, 800, 801, 802, 813, 814, 815],
+      "newly_covered": "ParseToolArguments True/False/Null/fallback (437-440), ResolveImage file path (549-554 partial)"
+    },
+    "PLang/Runtime2/modules/llm/query.cs": { "line_rate": 100, "branch_rate": 100 },
+    "PLang/Runtime2/modules/llm/LlmMessage.cs": { "line_rate": 100, "branch_rate": 100 },
+    "PLang/Runtime2/modules/llm/ToolCall.cs": { "line_rate": 100, "branch_rate": 100 }
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "0 critical, 0 high, 1 medium (SSTI accepted-risk), 4 low findings. Two carry-forward findings resolved. Recommend Fluid MaxSteps as defense-in-depth."
+}

@@ -14,7 +14,7 @@ This should be configurable by the PLang developer:
 - set max gzip size to 20mb
 ```
 
-But there's no settings mechanism in Runtime2. This design introduces one — general-purpose, not gzip-specific.
+But there's no settings mechanism in App. This design introduces one — general-purpose, not gzip-specific.
 
 ## Design
 
@@ -136,7 +136,7 @@ Settings objects need a context reference for scope resolution — same pattern 
 
 ### SettingsScope on PLangContext
 
-Settings need their own scope mechanism on `PLangContext` — separate from `MemoryStack` (which is for user variables). Same push/pop-per-goal behavior:
+Settings need their own scope mechanism on `PLangContext` — separate from `Variables` (which is for user variables). Same push/pop-per-goal behavior:
 
 - Goal runner pushes a settings scope at goal start
 - Goal runner pops at goal end
@@ -172,7 +172,7 @@ Settings need their own scope mechanism on `PLangContext` — separate from `Mem
 
 2. **SettingsScope data structure:** Simple `Dictionary<string, object>` per scope level with stack semantics? Or something more structured? The scope key format (`"archive.max"`) needs a convention.
 
-3. **Push/pop integration:** Where exactly in the goal runner does scope push/pop happen? Same place as MemoryStack push/pop — needs to mirror that lifecycle.
+3. **Push/pop integration:** Where exactly in the goal runner does scope push/pop happen? Same place as Variables push/pop — needs to mirror that lifecycle.
 
 4. **`Default` parameter naming:** `Default` is a C# keyword (in switch). May need `IsDefault` or `Persistent` or similar. Coder to decide based on what works with the source generator.
 

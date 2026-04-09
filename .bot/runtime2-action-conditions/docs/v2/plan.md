@@ -19,9 +19,9 @@ The action-based conditions feature replaces `condition.if`'s single `bool Condi
 
 | File | Update |
 |------|--------|
-| `Documentation/Runtime2/modules.md` | Condition module entry says only "Condition evaluation". Needs update to describe `if` and `compare` actions with their parameters. |
-| `Documentation/Runtime2/README.md` | File tree shows `condition/` but no detail. Add `providers/` subtree. |
-| `Documentation/Runtime2/good_to_know.md` | Add entry about `__condition__` MemoryStack signal pattern and sub-step execution. |
+| `Documentation/App/modules.md` | Condition module entry says only "Condition evaluation". Needs update to describe `if` and `compare` actions with their parameters. |
+| `Documentation/App/README.md` | File tree shows `condition/` but no detail. Add `providers/` subtree. |
+| `Documentation/App/good_to_know.md` | Add entry about `__condition__` Variables signal pattern and sub-step execution. |
 
 ### 3. Error Messages — Already Good
 

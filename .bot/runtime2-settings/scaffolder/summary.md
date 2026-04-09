@@ -6,4 +6,4 @@ Scaffolded the complete type contract for a strongly typed, goal-scoped module s
 
 ## v1 (continued) — Fix 148 Test Compilation Errors
 
-Fixed all 148 pre-existing CS0118 errors across 35 test files. Root cause: `global using Engine = PLang.Runtime2.Engine.@this;` was shadowed by the `PLang.Runtime2.Engine` namespace when test files import sub-namespaces. Fix: replace `Engine` type usages with fully-qualified `PLang.Runtime2.Engine.@this`. Also fixed TUnit `await` assertion errors in Settings test files. Result: 0 errors, 1239 tests pass, 15 fail (all `NotImplementedException` from Settings skeletons — expected red phase).
+Fixed all 148 pre-existing CS0118 errors across 35 test files. Root cause: `global using Engine = App.@this;` was shadowed by the `App.Engine` namespace when test files import sub-namespaces. Fix: replace `Engine` type usages with fully-qualified `App.@this`. Also fixed TUnit `await` assertion errors in Settings test files. Result: 0 errors, 1239 tests pass, 15 fail (all `NotImplementedException` from Settings skeletons — expected red phase).

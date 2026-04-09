@@ -2,7 +2,7 @@
 
 ## What this is
 
-In-memory SQLite datasource support for PLang Runtime2. When `Engine.Testing.IsEnabled` or `Engine.Building.IsEnabled` is true, actors automatically use ephemeral in-memory SQLite databases instead of file-backed ones. This enables clean test isolation and lets the builder validate SQL against real schema without creating files on disk.
+In-memory SQLite datasource support for PLang App. When `Engine.Testing.IsEnabled` or `Engine.Building.IsEnabled` is true, actors automatically use ephemeral in-memory SQLite databases instead of file-backed ones. This enables clean test isolation and lets the builder validate SQL against real schema without creating files on disk.
 
 ## What was done
 
@@ -10,17 +10,17 @@ Implemented the architect's design from `.bot/runtime2-inmemory-datasource/archi
 
 ### Files modified
 
-- **`PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs`** — Added `InMemory(string name)` static factory method, private in-memory constructor with sentinel connection (`_sentinel` field), updated `Dispose()` to close sentinel before clearing pool.
+- **`PLang/App/DataSource/SqliteDataSource.cs`** — Added `InMemory(string name)` static factory method, private in-memory constructor with sentinel connection (`_sentinel` field), updated `Dispose()` to close sentinel before clearing pool.
 
-- **`PLang/Runtime2/Engine/Build/this.cs`** — New file. `Building` object following the Debug/Test pattern (`IsEnabled` property, engine back-reference).
+- **`PLang/App/Build/this.cs`** — New file. `Building` object following the Debug/Test pattern (`IsEnabled` property, engine back-reference).
 
-- **`PLang/Runtime2/Engine/this.cs`** — Added `Building` property (`Build.@this` type) and constructor init.
+- **`PLang/App/this.cs`** — Added `Building` property (`Build.@this` type) and constructor init.
 
-- **`PLang/Runtime2/GlobalUsings.cs`** — Added comment documenting that `Building` can't be a global alias due to v1 `PLang.Building` namespace conflict. Same pattern as Engine and CallStack.
+- **`PLang/App/GlobalUsings.cs`** — Added comment documenting that `Building` can't be a global alias due to v1 `PLang.Building` namespace conflict. Same pattern as Engine and CallStack.
 
-- **`PLang/Runtime2/Engine/Context/Actor.cs`** — Updated `CreateDataSource()` to navigate to `Engine.Testing.IsEnabled || Engine.Building.IsEnabled` and use `SqliteDataSource.InMemory()` when either is true.
+- **`PLang/App/Context/Actor.cs`** — Updated `CreateDataSource()` to navigate to `Engine.Testing.IsEnabled || Engine.Building.IsEnabled` and use `SqliteDataSource.InMemory()` when either is true.
 
-- **`PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs`** — Added 7 new tests.
+- **`PLang.Tests/App/Modules/datasource/DataSourceTests.cs`** — Added 7 new tests.
 
 ### Key decision: no global alias for Building
 

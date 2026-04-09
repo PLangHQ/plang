@@ -1,0 +1,52 @@
+[
+  {
+    "name": "WhenSmall",
+    "description": "Set %result% to the literal string \u0022small\u0022.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %result% = \u0022small\u0022",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%result%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "small",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/ElseBranch/WhenSmall.goal",
+    "prPath": "/ElseBranch/.build/whensmall.pr",
+    "hash": "b78a89b034c5389d7f2ad908f0dcb266f543b5c1700219da912e6bf2a4c4029f",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

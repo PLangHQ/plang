@@ -1,0 +1,4 @@
+InspectError
+- set %errorMessage% = %!error.Message%
+- set %errorKey% = %!error.Key%
+- set %errorStatusCode% = %!error.StatusCode%

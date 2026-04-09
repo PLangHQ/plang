@@ -1,0 +1,225 @@
+{
+  "analyst": "security",
+  "branch": "system-goals-architecture",
+  "timestamp": "2026-04-08T22:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "execution-dispatch",
+      "exposure": "App.Run dispatches GoalCall/Step/Action. Step.RunAsync wraps action execution in try-catch. Lifecycle events (Before/After) fire outside the try-catch.",
+      "trust_boundary": ".pr files are trusted (LLM-generated, user-owned). External data enters via HTTP responses, file reads, LLM tool results.",
+      "mitigations": ["try-catch in Step.RunAsync (line 133)", "CancellationToken propagation", "Timeout support per-step", "CallStack MaxDepth=1000"],
+      "gaps": ["BeforeStep/AfterStep events execute outside try-catch (line 121, 144)", "Binding.Run has no try-finally for ExitEvent (line 34)", "No timeout on event handler execution"]
+    },
+    {
+      "area": "variable-resolution",
+      "exposure": "Variables.Resolve() expands %var% patterns in strings. ResolveDeep() recursively resolves objects. %!app% gives access to entire app object graph via reflection.",
+      "trust_boundary": "External data (HTTP responses, file content with ResolveVariables=true) can contain %variable% patterns that get expanded.",
+      "mitigations": ["Navigation depth limit (MaxNavigationDepth=100)", "Method whitelist in InvokeMethod (7 safe methods)", "Circular reference detection via ThreadStatic HashSet in ResolveVariablesInPath"],
+      "gaps": ["No circular reference detection in ResolveDeep()", "External data can inject %!app.AbsolutePath% etc. to probe app state", "Bracket index regex has minor ReDoS surface"]
+    },
+    {
+      "area": "http-module",
+      "exposure": "HTTP requests to external servers. URL resolution, header injection, response parsing, signed response verification.",
+      "trust_boundary": "HTTP responses are untrusted external data. URLs come from .pr files (trusted) but may contain variables resolved at runtime.",
+      "mitigations": ["ReadLimitedStringAsync/ReadLimitedBytesAsync (100MB limit)", "Signed response verification for application/plang", "BaseUrl configuration validation"],
+      "gaps": ["TryAddWithoutValidation for headers (line 425, 427)", "URL check uses string Contains(\"://\") instead of proper URI parsing (line 456)", "No SSRF hostname validation"]
+    },
+    {
+      "area": "event-system",
+      "exposure": "Before/After lifecycle events for Goal/Step/Action. Event handlers can modify context, skip actions, call arbitrary goals.",
+      "trust_boundary": "Event bindings come from .pr files (trusted). Handler goals are user-defined.",
+      "mitigations": ["Re-entrancy guard per binding via TryEnterEvent/ExitEvent", "skipAction scoped to BeforeAction/AfterAction only", "Per-actor event isolation"],
+      "gaps": ["Binding.Run missing try-finally (exception permanently blocks binding)", "No timeout on event handlers", "No indirect loop detection (A→B→A via separate bindings)", "Regex patterns in bindings use RegexOptions.IgnoreCase but no timeout"]
+    },
+    {
+      "area": "data-envelope",
+      "exposure": "Compress/Decompress pipeline, Signature property, Rehydration of nested Data.",
+      "trust_boundary": "Compressed/signed data arrives from external sources (HTTP, channels).",
+      "mitigations": ["MaxDecompressedSize=100MB with per-chunk enforcement", "MaxRehydrationDepth=128", "MaxJsonDepth=128 for UnwrapJsonElement", "Catches InvalidDataException, JsonException, InvalidOperationException in Decompress"],
+      "gaps": ["Data.Signature has public set (design smell, crypto gates real integrity)", "DeepClone via Force.DeepCloner has no depth limit"]
+    },
+    {
+      "area": "signing-verification",
+      "exposure": "Ed25519 signing/verification pipeline. Nonce replay detection, timeout, contract matching, hash verification.",
+      "trust_boundary": "SignedData arrives from network. Verification is the trust boundary.",
+      "mitigations": ["9-step verification pipeline", "Nonce replay via cache", "Timeout check (default 300s)", "Data hash re-verification", "Narrowed exception catches in Verify()", "internal set on all SignedData properties", "Thread-safe ToSigningBytes (excludes Signature via options, not mutation)"],
+      "gaps": ["Nonce cache is in-memory only (lost on restart)", "Default timeout 300s is long for replay window"]
+    },
+    {
+      "area": "llm-tool-execution",
+      "exposure": "LLM returns tool_calls with arguments. Arguments parsed as JSON, passed as goal parameters.",
+      "trust_boundary": "LLM responses are external data. Tool arguments could contain anything.",
+      "mitigations": ["Strict tool whitelist (action.Tools checked at line 389)", "No variable expansion on tool arguments", "MaxToolCalls=10 default limit", "Cache disabled when tools are present"],
+      "gaps": ["LLM cache key missing actor/context isolation", "Error messages from tool execution sent to LLM (info disclosure)", "No size limit on individual tool argument JSON"]
+    },
+    {
+      "area": "file-operations",
+      "exposure": "File read/write/copy/move/delete via IFileProvider, backed by PLangFileSystem with ValidatePath.",
+      "trust_boundary": "File paths come from .pr files (trusted) but may contain resolved variables. File content is external data when read.",
+      "mitigations": ["ValidatePath normalizes paths via GetFullPath before boundary check", "RootDirectory boundary enforcement", "FileAccessControl for out-of-bounds access"],
+      "gaps": ["Symlinks followed after validation (TOCTOU)", "/system/ fallback path may allow traversal after substring extraction", "file.read ResolveVariables=true expands %var% in file content (injection)", "FileAccessControl has known TODO security hole (acknowledged in code)"]
+    },
+    {
+      "area": "assembly-loading",
+      "exposure": "module.add and provider.load call Assembly.LoadFrom() on user-specified DLL paths.",
+      "trust_boundary": "DLL paths come from .pr files (trusted, user-sovereign).",
+      "mitigations": ["File existence check before load", "Path resolved via FileSystem (ValidatePath)"],
+      "gaps": ["No signature verification on loaded assemblies — accepted risk under user-sovereign model"]
+    },
+    {
+      "area": "callstack",
+      "exposure": "Tracks execution depth. MaxDepth prevents infinite recursion.",
+      "trust_boundary": "Call depth is runtime-controlled, not external.",
+      "mitigations": ["MaxDepth=1000 with CallStackOverflowException (not StackOverflowException)", "When disabled, error frames still created on demand"],
+      "gaps": ["MaxDepth is settable (public set) — but only reachable from trusted code"]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "high",
+      "category": "code-execution",
+      "vector": "Binding.Run (line 34) calls Handler without try-finally. If handler throws, ExitEvent is never called, permanently blocking that binding's re-entrancy guard. The binding becomes permanently dead for the lifetime of the context.",
+      "preconditions": "Event handler goal throws an unhandled exception (runtime error, not caught by goal's own error handler).",
+      "impact": "Permanently disables the event binding. If the binding is a security-relevant BeforeAction guard, all future actions bypass it silently (TryEnterEvent returns false → Ok()).",
+      "affected_files": ["PLang/App/Events/Lifecycle/Bindings/Binding/this.cs"],
+      "exploit_sketch": "1. Register BeforeAction event that validates permissions. 2. Trigger the event with crafted input that causes handler goal to throw. 3. Binding permanently stuck in 'active' state. 4. All subsequent actions skip the permission check (TryEnterEvent returns false → Ok()).",
+      "proposed_fix": "Wrap Handler call in try-finally: `try { result = await Handler(context); } finally { context.ExitEvent(Id); }`",
+      "status": "fixed"
+    },
+    {
+      "id": 2,
+      "severity": "high",
+      "category": "injection",
+      "vector": "Variables.Resolve() expands %variable% patterns in any string passed to it. When file.read uses ResolveVariables=true, or when HTTP response bodies are resolved, external data can inject %!app.AbsolutePath%, %!app.FileSystem%, %!callStack% etc. to probe internal state.",
+      "preconditions": "Developer uses file.read with ResolveVariables=true on untrusted file, or code path calls Variables.Resolve() on HTTP response/external data.",
+      "impact": "Information disclosure — attacker learns app directory structure, actor names, loaded goals, type registry contents. Navigation via %!app.Goals% could enumerate all goal names.",
+      "affected_files": ["PLang/App/Variables/this.cs", "PLang/App/modules/file/read.cs"],
+      "exploit_sketch": "1. Place file with content: 'App path: %!app.AbsolutePath% Goals: %!app.Goals%' 2. PLang step reads file with ResolveVariables=true 3. Variables resolve, leaking internal state to file content 4. If content is then sent externally (output, HTTP response), state is disclosed.",
+      "proposed_fix": "Add an 'untrusted' flag to Resolve() that skips %!% (infrastructure) variables. Document that ResolveVariables=true should never be used on untrusted input.",
+      "status": "fixed"
+    },
+    {
+      "id": 3,
+      "severity": "medium",
+      "category": "injection",
+      "vector": "HTTP headers applied via TryAddWithoutValidation() (DefaultHttpProvider.cs lines 425, 427). If header values contain CRLF sequences, this could cause header injection. Headers come from .pr files (trusted) but values may contain resolved variables from external data.",
+      "preconditions": "Header value contains a resolved variable whose value includes \\r\\n sequences. Or header key/value from config contains CRLF.",
+      "impact": "HTTP response splitting, header injection, potential request smuggling against vulnerable proxies.",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "exploit_sketch": "1. Set variable to 'value\\r\\nX-Injected: true' 2. HTTP action uses %var% in header value 3. TryAddWithoutValidation passes it through 4. Extra header injected.",
+      "proposed_fix": "Use request.Headers.Add() instead of TryAddWithoutValidation(), or validate header values for CRLF before applying.",
+      "status": "fixed"
+    },
+    {
+      "id": 4,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "BeforeStep and AfterStep events (Step.RunAsync lines 121, 144) execute outside the step's try-catch block. A hanging event handler blocks indefinitely — step timeout only applies to action execution (RunActionsWithTimeout), not lifecycle events.",
+      "preconditions": "Event handler goal contains a blocking operation (HTTP request to unreachable server, infinite loop in PLang code).",
+      "impact": "Step execution hangs indefinitely. If on System actor, could block all system-level operations.",
+      "affected_files": ["PLang/App/Goals/Goal/Steps/Step/this.cs"],
+      "exploit_sketch": "1. Register BeforeStep event handler that calls external HTTP endpoint. 2. External endpoint is unreachable or slow. 3. Step hangs at line 121 until HTTP timeout (30s default). 4. Multiple such events compound the delay.",
+      "proposed_fix": "Apply step timeout to the entire RunAsync scope (including lifecycle events), not just RunActions.",
+      "status": "open"
+    },
+    {
+      "id": 5,
+      "severity": "medium",
+      "category": "info-disclosure",
+      "vector": "LLM cache key (OpenAiProvider.cs lines 721-739) includes message text + model + temperature but NOT actor identity or execution context. Two actors with identical queries get the same cached response.",
+      "preconditions": "Multiple actors (System/User) issue identical LLM queries. Cache is enabled (action.Cache=true, action.Tools=null).",
+      "impact": "Cross-actor information leakage. A User-context query could return a cached response from System-context that contains privileged information.",
+      "affected_files": ["PLang/App/modules/llm/providers/OpenAiProvider.cs"],
+      "exploit_sketch": "1. System actor runs LLM query with sensitive context, result cached. 2. User actor runs identical query, gets cached System response. 3. User sees information intended for System context only.",
+      "proposed_fix": "Include actor name/id in cache key computation.",
+      "status": "open"
+    },
+    {
+      "id": 6,
+      "severity": "medium",
+      "category": "path-traversal",
+      "vector": "PLangFileSystem /system/ fallback (lines 189-200) extracts path after '/system/' prefix and resolves against SystemDirectory. If the extracted path contains '..' sequences, GetFullPath normalizes them, potentially escaping SystemDirectory.",
+      "preconditions": "Goal file references a path starting with /system/ that doesn't exist in RootDirectory. Path contains ../ sequences after the /system/ prefix.",
+      "impact": "File read/write outside intended system directory boundary.",
+      "affected_files": ["PLang/App/FileSystem/Default/PLangFileSystem.cs"],
+      "exploit_sketch": "1. Reference path /system/../../../etc/passwd 2. Path doesn't exist in RootDirectory 3. Falls back to SystemDirectory + '../../../etc/passwd' 4. GetFullPath normalizes to /etc/passwd. Note: needs verification that the extracted substring retains '..' — GetFullPath on the FULL path at line 187 may have already normalized it.",
+      "proposed_fix": "After extracting afterPrefix, validate that the resolved path starts with SystemDirectory before using it. Apply the same boundary check as line 219.",
+      "status": "open"
+    },
+    {
+      "id": 7,
+      "severity": "medium",
+      "category": "path-traversal",
+      "vector": "Symlinks are validated when created (PLangFile.cs lines 109-114: both path and target go through ValidatePath) but followed when used for read/write. A symlink created within the root pointing outside the root would be blocked at creation. However, symlinks created outside PLang (e.g., by another process) are followed.",
+      "preconditions": "External process creates symlink within app root pointing to sensitive file outside root. PLang reads/writes through the symlink.",
+      "impact": "File read/write outside app root boundary via externally-created symlinks.",
+      "affected_files": ["PLang/App/FileSystem/Default/PLangFile.cs", "PLang/App/FileSystem/Default/PLangFileSystem.cs"],
+      "exploit_sketch": "1. External process: ln -s /etc/shadow /app/data/shadow 2. PLang step: read file data/shadow 3. ValidatePath passes (/app/data/shadow is within root) 4. Read follows symlink to /etc/shadow.",
+      "proposed_fix": "Resolve symlinks before boundary check, or detect and block symlinks that point outside root.",
+      "status": "open"
+    },
+    {
+      "id": 8,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Indirect event loops: Binding A triggers goal that fires Binding B, which triggers goal that fires Binding A. TryEnterEvent guards per-binding but not cross-binding chains. No depth limit on event chain execution.",
+      "preconditions": "User configures two event handlers that trigger each other (requires malicious or buggy .pr files).",
+      "impact": "Stack exhaustion. CallStack MaxDepth=1000 may catch it if goals are called via GoalCall, but direct event handler dispatch may bypass CallStack tracking.",
+      "affected_files": ["PLang/App/Events/Lifecycle/Bindings/Binding/this.cs", "PLang/App/Actor/Context/this.cs"],
+      "exploit_sketch": "1. Register BeforeAction on 'goal.call' that calls GoalB. 2. GoalB has BeforeAction that calls GoalA. 3. Each binding has different Id, so TryEnterEvent succeeds each time. 4. Stack grows until overflow.",
+      "proposed_fix": "Add event chain depth counter to context. Increment on TryEnterEvent, decrement on ExitEvent. Reject at depth > N (e.g., 50).",
+      "status": "open"
+    },
+    {
+      "id": 9,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "LLM tool execution errors (OpenAiProvider.cs line 415) are serialized and sent back to the external LLM API as tool results: `\"Error: \" + (goalResult.Error?.Message ?? \"Unknown error\")`. Error messages may contain file paths, variable names, or internal state.",
+      "preconditions": "LLM tools are used with an external LLM provider. Goal execution fails with a descriptive error message.",
+      "impact": "Internal error details (file paths, SQL errors, variable state) sent to external API.",
+      "affected_files": ["PLang/App/modules/llm/providers/OpenAiProvider.cs"],
+      "exploit_sketch": "1. LLM calls tool that accesses a file. 2. File operation fails with 'Access denied: /home/user/secret/config.json'. 3. Error message sent to external LLM API. 4. API provider logs or uses the path.",
+      "proposed_fix": "Sanitize error messages before sending to external API. Provide option to redact paths and internal details.",
+      "status": "open"
+    },
+    {
+      "id": 10,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Data.Clone() uses Force.DeepCloner without depth limit. A deeply nested or circular Data structure could cause stack overflow during cloning.",
+      "preconditions": "Deeply nested Data object (>1000 levels) or circular reference in Data.Value.",
+      "impact": "StackOverflowException (unrecoverable).",
+      "affected_files": ["PLang/App/Data/this.cs"],
+      "exploit_sketch": "1. Build circular Data: a.Value = b, b.Value = a. 2. Call a.Clone(). 3. DeepCloner recurses infinitely.",
+      "proposed_fix": "Use custom clone with depth limit, or catch and handle circular references.",
+      "status": "open"
+    },
+    {
+      "id": 11,
+      "severity": "low",
+      "category": "deserialization",
+      "vector": "Nonce replay cache is in-memory (app.Cache = MemoryStepCache). On app restart, all nonces are lost. Previously-used nonces can be replayed within the timeout window after restart.",
+      "preconditions": "App restarts during the signature timeout window (default 300s). Attacker captured a valid signed message before restart.",
+      "impact": "Replay of signed messages after restart. Limited by timeout window.",
+      "affected_files": ["PLang/App/modules/signing/providers/Ed25519Provider.cs"],
+      "exploit_sketch": "1. Capture signed request with nonce X. 2. App restarts. 3. Replay signed request within 300s of original Created timestamp. 4. Nonce cache is empty, nonce check passes.",
+      "proposed_fix": "Persist nonce cache to database/file, or reduce default timeout to 60s.",
+      "status": "open"
+    },
+    {
+      "id": 12,
+      "severity": "low",
+      "category": "injection",
+      "vector": "URL resolution (DefaultHttpProvider.cs line 456-457) uses string check `!url.Contains(\"://\")` and prepends 'https://'. Unusual URL formats could bypass intent (e.g., URLs with auth components, encoded characters).",
+      "preconditions": "URL is constructed from resolved variables and doesn't contain '://'.",
+      "impact": "Unintended HTTPS requests to unexpected hosts. Mitigated by .NET HttpClient's own URL validation.",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "exploit_sketch": "1. URL = 'attacker.com%40legitimate.com:443/path' 2. Contains('://') is false 3. Becomes 'https://attacker.com%40legitimate.com:443/path'. Note: HttpClient may normalize this safely, but edge cases exist across different HTTP client implementations.",
+      "proposed_fix": "Use Uri.TryCreate() for URL validation instead of string checking.",
+      "status": "open"
+    }
+  ],
+  "summary": "The App architecture on system-goals-architecture shows strong security fundamentals: Ed25519 signing with internal-set properties and 9-step verification, CallStack depth limits, decompression size guards, size-limited HTTP reads, and a strict LLM tool whitelist. The two HIGH findings are (1) Binding.Run missing try-finally which can permanently disable event-based security guards, and (2) variable expansion from untrusted sources enabling information disclosure via %!app% navigation. Both are fixable with targeted changes. MEDIUM findings (header injection, event timeout gaps, LLM cache isolation, file path edge cases) are real but require specific preconditions. Assembly loading without signature verification is accepted risk under the user-sovereign threat model. Overall: solid architecture with fixable gaps at the event handler and variable resolution boundaries."
+}

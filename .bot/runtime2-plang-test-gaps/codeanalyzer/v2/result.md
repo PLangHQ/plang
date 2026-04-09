@@ -25,7 +25,7 @@ Clean. The setup-only early return at line 371 reads naturally: "if the user ask
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/Methods.cs
+## PLang/App/Goals/Goal/Methods.cs
 
 ### OBP Violations
 None.
@@ -45,7 +45,7 @@ All callers verified compatible (same analysis as v1 — no new callers added).
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
+## PLang/App/Goals/Goal/Steps/this.cs
 
 ### OBP Violations
 None. Exemplary OBP rule 5 — collection owns its iteration.
@@ -60,7 +60,7 @@ None. Exemplary OBP rule 5 — collection owns its iteration.
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/this.cs
+## PLang/App/Goals/Goal/this.cs
 
 ### OBP Violations
 None.
@@ -85,7 +85,7 @@ Not a finding per se — the property is computed once, the logic is correct, an
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Setup/this.cs
+## PLang/App/Goals/Setup/this.cs
 
 ### OBP Violations
 None. `DiscoverAsync` is correctly private — callers go through `RunAsync`.
@@ -112,7 +112,7 @@ This swallows ALL exceptions including `OutOfMemoryException`. The intent (skip 
 
 ---
 
-## PLang/Runtime2/Engine/Goals/this.cs (EngineGoals)
+## PLang/App/Goals/this.cs (EngineGoals)
 
 ### OBP Violations
 None.
@@ -156,7 +156,7 @@ Correctly filters out setup goals. Tester v2 finding #9 fix verified.
 
 ---
 
-## PLang/Runtime2/Engine/Test/this.cs
+## PLang/App/Test/this.cs
 
 ### OBP Violations
 None.
@@ -170,7 +170,7 @@ None.
 ```csharp
 var testFs = new SafeFileSystem.PLangFileSystem(dir, "");
 ```
-Uses `dir` (the test's own folder) instead of `rootDir` (Tests/Runtime2/). Essential for:
+Uses `dir` (the test's own folder) instead of `rootDir` (Tests/App/). Essential for:
 1. Setup goal discovery works per-test
 2. Helper goals resolve relative to test folder
 3. Full isolation between test suites

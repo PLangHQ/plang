@@ -1,0 +1,473 @@
+{
+  "branch": "runtime2-builder-v2-llm",
+  "sessions": [
+    {
+      "id": "llm-architect-v1",
+      "bot": "architect",
+      "timestamp_start": "2026-03-27T00:00:00Z",
+      "timestamp_end": "2026-03-27T00:00:00Z",
+      "intent": "Design LLM module: C# type definition + PLang goal implementation",
+      "before": {
+        "assumptions": "Pieces 1-6 done. Runtime1 LLM module is OpenAI-shaped, no tool support. Builder uses two-pass LLM approach. HTTP module available for PLang goals.",
+        "risk": "Low — design only."
+      },
+      "plan": "Thin C# action (query.cs, LlmMessage.cs) defines parameters for builder/source generator. Run() calls PLang goal. Provider = setting pointing to goal name (default: OpenAi). Tools are GoalCalls with Description. Tool execution loop in PLang. Future: migrate to pure PLang via define step.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-llm/architect/v1/plan.md", ".bot/runtime2-builder-v2-llm/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect plan for LLM module"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Design approved by Ingi. Ready for implementation.",
+        "notes": "Key decisions: no ILlmProvider C# interface, provider is a goal setting, tools are GoalCalls, GoalCall gets Description. Future: define step enables pure PLang modules (separate workstream)."
+      }
+    },
+    {
+      "id": "llm-test-designer-v1",
+      "bot": "test-designer",
+      "timestamp_start": "2026-03-29T10:15:00Z",
+      "timestamp_end": "2026-03-29T10:45:00Z",
+      "intent": "Design comprehensive test suite for LLM module (query action, provider, tools, caching, streaming, validation)",
+      "before": {
+        "assumptions": "Architect v2 plan is the authoritative design. LLM module doesn't exist yet — tests define the contract. HTTP module tests provide the pattern for provider testing with MockHttpMessageHandler.",
+        "risk": "Medium — large surface area. Need to scope carefully: the architect's test suggestions are a starting point, not exhaustive."
+      },
+      "plan": "70 tests across 10 batches: types (8), basic query (8), format/schema (9), caching (6), tool execution (10), callbacks (8), conversation continuity (5), images (3), edge cases (5), PLang integration (8). PLang tests use real OpenAI API. C# tests use MockHttpMessageHandler.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/llm/LlmTypeTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryFormatTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCacheTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryConversationTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryImageTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "62 C# test stubs across 9 files, covering all LLM module behavior"
+        },
+        {
+          "paths": [
+            "Tests/Runtime2/Llm/LlmQuery.test.goal",
+            "Tests/Runtime2/Llm/LlmSchema.test.goal",
+            "Tests/Runtime2/Llm/LlmFormat.test.goal",
+            "Tests/Runtime2/Llm/LlmContinue.test.goal",
+            "Tests/Runtime2/Llm/LlmProperties.test.goal",
+            "Tests/Runtime2/Llm/LlmToolCall.test.goal",
+            "Tests/Runtime2/Llm/LlmValidation.test.goal",
+            "Tests/Runtime2/Llm/LlmCache.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "8 PLang integration test stubs using real OpenAI API"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 70 test stubs written. Ready for coder to implement LLM module.",
+        "notes": "Added 24 tests beyond architect's 46 suggestions: type serialization, format placement, tool param schemas, validation timing, edge cases. PLang tests will use real OpenAI with future response snapshotting."
+      }
+    },
+    {
+      "id": "llm-coder-v1",
+      "bot": "coder",
+      "timestamp_start": "2026-03-29T14:00:00Z",
+      "timestamp_end": "2026-03-29T15:30:00Z",
+      "intent": "Implement LLM module: types, provider interface, OpenAI provider, make 61 C# tests pass",
+      "before": {
+        "assumptions": "Architect v2 plan is authoritative for design. Test-designer v1 has 62 C# test stubs + 8 PLang stubs. HTTP module and provider registry patterns are established. No LLM module code exists yet.",
+        "risk": "Medium — large surface area (types, provider, tool loop, caching, streaming, conversation continuity, images). Tool execution loop is the most complex piece. Cache persistence and streaming need design decisions."
+      },
+      "plan": "Create types (LlmMessage, ToolCall), update GoalCall (Description, Parallel), create query action + ILlmProvider, register in engine, implement OpenAiProvider with HTTP via engine.RunAction, cache via SQLite SettingsStore, tool loop, conversation continuity, format/schema handling, images. TDD: implement all test stubs.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/modules/llm/LlmMessage.cs", "PLang/Runtime2/modules/llm/ToolCall.cs"],
+          "type": "create", "category": "code", "confidence": "high",
+          "context": "LLM message and tool call types"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs"],
+          "type": "modify", "category": "code", "confidence": "high",
+          "context": "Added Description and Parallel properties for LLM tool definitions"
+        },
+        {
+          "paths": ["PLang/Runtime2/modules/llm/query.cs", "PLang/Runtime2/modules/llm/providers/ILlmProvider.cs"],
+          "type": "create", "category": "code", "confidence": "high",
+          "context": "Action record and provider interface"
+        },
+        {
+          "paths": ["PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs"],
+          "type": "create", "category": "code", "confidence": "high",
+          "context": "Full OpenAI-compatible provider: HTTP, tools, cache, streaming, conversation, format, images"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Providers/this.cs"],
+          "type": "modify", "category": "code", "confidence": "high",
+          "context": "Register ILlmProvider in ResolveType and RegisterDefaults"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/llm/LlmTestHelper.cs",
+            "PLang.Tests/Runtime2/Modules/llm/LlmTypeTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryFormatTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCacheTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryConversationTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryImageTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs"
+          ],
+          "type": "modify", "category": "test", "confidence": "high",
+          "context": "Implemented all 61 test stubs (removed 1 API key test per owner direction)"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 61 LLM tests pass. All 1951 project tests pass. Zero failures.",
+        "notes": "Removed MissingApiKey test per Ingi — providers handle auth differently. Cache uses SQLite since Data.Properties is [JsonIgnore]. Streaming is v1 passthrough."
+      }
+    },
+    {
+      "id": "llm-codeanalyzer-v1",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-29T16:00:00Z",
+      "timestamp_end": "2026-03-29T16:30:00Z",
+      "intent": "5-pass code analysis of LLM module",
+      "before": {
+        "assumptions": "Coder v1 completed, 61 tests pass. Code follows handler → provider delegation pattern.",
+        "risk": "Low — analysis only, no code changes."
+      },
+      "plan": "5-pass analysis: OBP compliance, simplification, readability, behavioral reasoning, deletion test. Focus on OpenAiProvider.cs (874 lines).",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/llm/query.cs",
+            "PLang/Runtime2/modules/llm/LlmMessage.cs",
+            "PLang/Runtime2/modules/llm/ToolCall.cs",
+            "PLang/Runtime2/modules/llm/providers/ILlmProvider.cs",
+            "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full 5-pass analysis of all new/modified files"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "NEEDS WORK — 3 blocking findings in OpenAiProvider.cs, 6/7 files CLEAN",
+        "notes": "Blocking: 2 bare catches (lines 587, 765), 1 sync-over-async (line 734). Coverage gaps: tool arg defaults untested, type mapping untested. Minor: duplicate httpAction, dead BuildStreamProxy, decomposed params."
+      }
+    },
+    {
+      "id": "llm-coder-v2",
+      "bot": "coder",
+      "timestamp_start": "2026-03-29T17:00:00Z",
+      "timestamp_end": "2026-03-29T17:30:00Z",
+      "intent": "Fix all 8 code analyzer findings in OpenAiProvider.cs",
+      "before": {
+        "assumptions": "Code analyzer v1 identified 8 issues. All existing 1951 tests pass. Changes confined to OpenAiProvider.cs + new tests.",
+        "risk": "Low — scoped fixes, no architectural changes."
+      },
+      "plan": "Fix 3 critical (bare catches, sync-over-async), 2 moderate (add tests for default param fill-in and type mappings), 3 minor (consolidate httpAction, remove BuildStreamProxy, fix OBP decomposed params).",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "6 fixes: scoped catches, async ResolveConfig, consolidated httpAction, removed BuildStreamProxy, OBP-compliant ExecuteToolAsync/ToApiMessages/ResolveImage signatures"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "2 new tests: default parameter fill-in and type schema mappings"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1958 tests pass (0 failures). All 8 findings resolved.",
+        "notes": "Removed unused EngineType alias. IPLangFileSystem passed directly to ToApiMessages/ResolveImage instead of full engine."
+      }
+    },
+    {
+      "id": "llm-codeanalyzer-v2",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-29T18:00:00Z",
+      "timestamp_end": "2026-03-29T18:15:00Z",
+      "intent": "Re-review coder v2 fixes for all 8 findings",
+      "before": {
+        "assumptions": "Coder v2 claims all 8 findings resolved. 1958 tests pass.",
+        "risk": "Low — re-review only."
+      },
+      "plan": "Verify each of 8 v1 findings, full 5-pass on fix-introduced code, check for regressions.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Re-review of fix-introduced code in OpenAiProvider.cs and 2 new tests"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all 8 findings resolved, no new issues",
+        "notes": "One trivial simplification noted (redundant null ternary at line 148) — not worth a round-trip. Recommend tester next."
+      }
+    },
+    {
+      "id": "llm-tester-v2",
+      "bot": "tester",
+      "timestamp_start": "2026-03-29T19:00:00Z",
+      "timestamp_end": "2026-03-29T19:30:00Z",
+      "intent": "Test quality analysis of LLM module (coder v2)",
+      "before": {
+        "assumptions": "Coder v2 claims all 1958 tests pass. Code analyzer v2 approved. OpenAiProvider.cs is the main source file (~847 lines).",
+        "risk": "Low — analysis only, no code changes."
+      },
+      "plan": "Run full test suite, collect Cobertura coverage, read all 10 test files + 5 source files, apply false-green hunting techniques (deletion test, weak-assertion scan, mock-level check), write test-report.json.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryFormatTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCacheTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryConversationTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryImageTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/LlmTypeTests.cs",
+            "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "False-green hunting across all LLM test files. Coverage analysis via Cobertura."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — 4 major findings, 4 minor. Tests pass but have blind spots.",
+        "notes": "Major: (1) ProviderNotRegistered tests opposite of name, (2) MaxToolCalls unverified, (3) API error assertions weak, (4) OnToolCall callback unverified. Coverage: OpenAiProvider 82.8% line, 61.5% branch. RestoreFromCache and ResolveImage file paths at 0%."
+      }
+    },
+    {
+      "id": "llm-coder-v3",
+      "bot": "coder",
+      "timestamp_start": "2026-03-29T20:00:00Z",
+      "timestamp_end": "2026-03-29T20:30:00Z",
+      "intent": "Fix all 8 tester findings: strengthen assertions, rename false-greens, add coverage",
+      "before": {
+        "assumptions": "Tester v2 found 4 major and 4 minor test quality issues. All 1958 tests pass but have blind spots.",
+        "risk": "Low — test-only changes, no production code modified."
+      },
+      "plan": "Rename false-green tests, add bound assertions to MaxToolCalls, add Error.Key checks to API error tests, rename OnToolCall test, add mixed-type arg test, add image mime/base64 tests, strengthen cache hit assertions, add parallel result verification.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryImageTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCacheTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "8 findings fixed: 4 major (rename/strengthen), 4 minor (new tests/assertions). 4 new tests added."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1962 tests pass (0 failures). All 8 tester findings resolved.",
+        "notes": "4 new tests: mixed JSON type args, parallel tool results, jpg mime type, base64 passthrough."
+      }
+    },
+    {
+      "id": "llm-tester-v3",
+      "bot": "tester",
+      "timestamp_start": "2026-03-29T20:30:00Z",
+      "timestamp_end": "2026-03-29T20:50:00Z",
+      "intent": "Re-verify coder v3 fixes for all 8 tester v2 findings",
+      "before": {
+        "assumptions": "Coder v3 claims all 8 findings resolved. 1962 tests pass.",
+        "risk": "Low — re-verification only."
+      },
+      "plan": "Run full test suite, run coverage, verify each of 8 findings by reading test code, write test-report.json with verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryImageTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCacheTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified each of 8 findings individually. 7 FIXED, 1 COSMETIC (OnToolCall — documented limitation)."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — 7/8 findings properly fixed, 1 cosmetic, 3 minor non-blocking gaps remain.",
+        "notes": "Coverage improved to 87.6% line / 65.1% branch. RestoreFromCache still 0% (mock-level gap). Recommend security analyst next."
+      }
+    },
+    {
+      "id": "llm-security-v1",
+      "bot": "security",
+      "timestamp_start": "2026-03-29T22:00:00Z",
+      "timestamp_end": "2026-03-29T22:30:00Z",
+      "intent": "Security audit of LLM module — tool call loop, image handling, regex, caching, conversation continuity",
+      "before": {
+        "assumptions": "LLM module is new code: query action, OpenAiProvider, GoalCall additions. Tool call loop is the critical vector. PLang threat model: .pr files are trusted, user is sovereign.",
+        "risk": "Medium — LLM modules inherently bridge trusted (local goals) and untrusted (external API responses) domains."
+      },
+      "plan": "Blue team: map 7 attack surfaces. Red team: exploit sketches for each. Rate against PLang threat model. Key question: can the LLM execute goals not in the declared tool list?",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/Runtime2/modules/llm/query.cs",
+            "PLang/Runtime2/modules/llm/LlmMessage.cs",
+            "PLang/Runtime2/modules/llm/ToolCall.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full security audit. Tool whitelist is correct. 2 medium resource-exhaustion findings, 3 low accepted-risk findings."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — 0 critical, 0 high, 2 medium, 3 low. Tool call whitelist correctly prevents unauthorized goal execution.",
+        "notes": "Medium findings: image ReadAllBytes no size limit (OOM), conversation continuity no length limit. Both are resource limits, not exploits. Recommend auditor next."
+      }
+    },
+    {
+      "id": "llm-auditor-v1",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-29T23:00:00Z",
+      "timestamp_end": "2026-03-29T23:45:00Z",
+      "intent": "Cross-cutting integrity audit of LLM module — focus on gaps between reviewers",
+      "before": {
+        "assumptions": "All three reviewers approved. 1962 tests pass. Code follows established patterns. GoalCall has new properties.",
+        "risk": "Medium — LLM module is new and complex, tool execution loop is the critical path."
+      },
+      "plan": "Read all bot reports, review production code for cross-file contracts, trace MaxToolCalls enforcement, check numeric boxing consistency, assess reviewer verdicts.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/Runtime2/modules/llm/query.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Cross-cutting audit. Found MaxToolCalls batch-overshoot bug and silent empty result on loop exit — both missed by other reviewers."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — 2 major, 2 minor, 1 nit. MaxToolCalls enforcement is wrong, loop exit discards content.",
+        "notes": "Cross-file contracts clean. GoalCall additions properly integrated. Recommend sending back to coder for findings #1 and #2."
+      }
+    },
+    {
+      "id": "llm-coder-v4",
+      "bot": "coder",
+      "timestamp_start": "2026-03-29T23:45:00Z",
+      "timestamp_end": "2026-03-30T00:15:00Z",
+      "intent": "Fix all 6 auditor findings: MaxToolCalls overshoot, empty loop exit, numeric boxing, tests, ternary, error surfacing",
+      "before": {
+        "assumptions": "Auditor found 2 major bugs (overshoot + empty exit), 2 minor (boxing + test assertions), 2 nits.",
+        "risk": "Medium — MaxToolCalls fix changes execution semantics (fewer tools execute)."
+      },
+      "plan": "Slice toolCalls to remaining budget, return lastContent+metadata on loop exit, TryGetInt64 in RestoreFromCache, tighten test assertions, simplify ternary, surface parse errors.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "6 fixes: tool budget slice, meaningful loop exit, numeric boxing, ternary, parse error surfacing"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Tightened MaxToolCalls assertions, added Truncated property checks"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1962 tests pass (0 failures). All 6 auditor findings resolved.",
+        "notes": "MaxToolCalls now enforces hard limit on tool executions, not just message appending."
+      }
+    },
+    {
+      "id": "llm-auditor-v2",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-30T00:15:00Z",
+      "timestamp_end": "2026-03-30T00:45:00Z",
+      "intent": "Recheck coder v4 fixes for all 6 auditor v1 findings",
+      "before": {
+        "assumptions": "Coder v4 claims all 6 findings resolved. 1962 tests pass.",
+        "risk": "Low — recheck only."
+      },
+      "plan": "Verify each fix with fresh-code skepticism. Check conversation consistency after slice, lastContent behavior, error propagation path.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 6 fixes verified correct. Conversation consistency maintained after slice. No new issues."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all 6 findings resolved, no new issues.",
+        "notes": "Recommend docs bot next."
+      }
+    }
+  ]
+}

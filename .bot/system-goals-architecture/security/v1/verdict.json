@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "2 high findings open: Binding.Run missing try-finally (permanently disables event guards on exception), and variable expansion from untrusted sources (%!app% info disclosure). 4 medium, 6 low."
+}

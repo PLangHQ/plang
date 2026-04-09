@@ -1,0 +1,62 @@
+[
+  {
+    "name": "ReadWithKey",
+    "description": "Reads keytest.txt and writes its contents to %keyData%, using a 5-minute cache keyed by \u0027myKeyTest\u0027.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "read file \u0027keytest.txt\u0027, write to %keyData%\ncache for 5 minutes, key \u0027myKeyTest\u0027",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "file",
+            "action": "read",
+            "parameters": [
+              {
+                "name": "Path",
+                "value": "keytest.txt",
+                "type": "path"
+              },
+              {
+                "name": "ResolveVariables",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": [
+              {
+                "name": "keyData",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": {
+          "durationMs": 300000,
+          "sliding": false,
+          "key": "myKeyTest",
+          "location": null
+        },
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ReadWithKey.goal",
+    "prPath": "/.build/readwithkey.pr",
+    "hash": "0c4bc9bc4a1f048eae1406d6c63a3bdfe8fca33e193944a9b5f81f3a87e2356a",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

@@ -1,0 +1,96 @@
+[
+  {
+    "name": "Start",
+    "description": "Calls AlwaysFails with retry-on-error (2 retries) and then calls HandleError if it still fails; finally asserts that %errorHandled% is true.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "call AlwaysFails, on error retry 2 times, then call HandleError",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "retry then error goal, both fail",
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "GoalName",
+                "value": {
+                  "name": "AlwaysFails"
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": {
+            "name": "HandleError",
+            "description": null,
+            "parallel": false,
+            "parameters": null,
+            "prPath": null
+          },
+          "retryCount": 2,
+          "retryOverMs": null,
+          "order": 1,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %errorHandled% equals true",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "Actual",
+                "value": "%errorHandled%",
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ErrorChain.test.goal",
+    "prPath": "/.build/errorchain.test.pr",
+    "hash": "fe394c1e28a212a2da3fad3d2b54cf60555891dbbec803be12826c75c4875960",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

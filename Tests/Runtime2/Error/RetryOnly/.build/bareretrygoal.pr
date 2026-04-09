@@ -1,0 +1,102 @@
+[
+  {
+    "name": "BareRetryGoal",
+    "description": "BareRetryGoal increments %bareRetryAttempts%, writes it back, then throws an error that always fails.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "add 1 to %bareRetryAttempts%, write to %bareRetryAttempts%",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "math",
+            "action": "add",
+            "parameters": [
+              {
+                "name": "A",
+                "value": "%bareRetryAttempts%",
+                "type": "object"
+              },
+              {
+                "name": "B",
+                "value": 1,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "bareRetryAttemptsNext",
+                "value": null
+              }
+            ],
+            "defaults": null
+          },
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%bareRetryAttempts%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "%bareRetryAttemptsNext%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "throw error \u0022always fails\u0022",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "error",
+            "action": "throw",
+            "parameters": [
+              {
+                "name": "Message",
+                "value": "always fails",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/BareRetryGoal.goal",
+    "prPath": "/.build/bareretrygoal.pr",
+    "hash": "a14e6258269311dacfa378adeede9211601390c49ba1730b9d410840b5c59476",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

@@ -1,7 +1,7 @@
 # Tester v8 Review of Coder v6
 
 ## Resolved
-- **v7 Finding #2**: GetChild depth through MemoryStack — test added, verified honest
+- **v7 Finding #2**: GetChild depth through Variables — test added, verified honest
 - **v7 Finding #3**: fromJson deep nesting — tested (hits STJ MaxDepth=64 before our limit=128)
 - All 4 code analyzer cross-concern fixes verified clean
 

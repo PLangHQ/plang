@@ -1,0 +1,6 @@
+Start
+/ Test: Configure default headers, verify they're sent
+- configure http, default headers {'X-Test-Header': 'plang-test'}
+- get https://httpbin.org/headers, unsigned, write to %response%
+- if %response% is not empty then
+    - write out 'Request with default headers returned data'

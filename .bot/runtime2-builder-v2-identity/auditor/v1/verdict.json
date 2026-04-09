@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "One major finding: IdentityData.ResolveDefault() has no try/catch around GetOrCreateDefaultAsync, which throws on save failure. Lazy %MyIdentity% access would crash with unhandled InvalidOperationException." }

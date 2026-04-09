@@ -10,14 +10,14 @@ Delta from `runtime2` base — the in-memory SQLite datasource, Building object,
 - `Engine/DataSource/SqliteDataSource.cs` — InMemory() factory + sentinel connection
 - `Engine/Build/this.cs` — Building mode controller
 - `Engine/Context/Actor.cs` — CreateDataSource() routing
-- `Engine/DataSource/SettingsData.cs` — Lazy settings bridge on MemoryStack
+- `Engine/DataSource/SettingsData.cs` — Lazy settings bridge on Variables
 - `Engine/DataSource/IDataSource.cs` — interface
 - `Engine/Errors/DataSourceError.cs`, `AskError.cs` — error types
 - `actions/settings/get.cs`, `set.cs`, `remove.cs`, `types.cs` — settings handlers
 
 **Modified:**
 - `Engine/this.cs` — Building property added
-- `Engine/Memory/MemoryStack.cs` — SettingsData registration
+- `Engine/Memory/Variables.cs` — SettingsData registration
 - Various test and .pr file additions
 
 ## Phase 1: Blue Team — Attack Surface Analysis

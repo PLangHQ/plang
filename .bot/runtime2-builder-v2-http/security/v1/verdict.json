@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "1 high, 3 medium open findings. HTTP module has no size limits on untrusted external data — response bodies, SSE buffers, error bodies are all unbounded. ToSigningBytes is not thread-safe. Send to coder for fixes."
+}

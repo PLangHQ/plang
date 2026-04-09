@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Code quality high, design correct. 3 actionable findings: Engine.Channels disposal gap, Data.Name public setter risk, and zero test coverage on PlangSerializer/DefaultAssertProvider/DefaultFileProvider (464 lines of untested code)." }

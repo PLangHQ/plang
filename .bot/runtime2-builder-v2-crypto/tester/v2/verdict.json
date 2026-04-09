@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Verify.Run() throws unhandled ArgumentNullException when Hash is null — violates never-throw contract, no test covers this path" }

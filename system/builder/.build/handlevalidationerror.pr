@@ -1,0 +1,75 @@
+{
+  "name": "HandleValidationError",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %goal.Steps[stepResult.index].validationError% = %!error%",
+      "lineNumber": 15,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goal.Steps[stepResult.index].validationError%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%!error%",
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call BuildStep, step=%goal.Steps[stepResult.index]%",
+      "lineNumber": 16,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "BuildStep",
+                "parameters": {
+                  "step": "%goal.Steps[stepResult.index]%"
+                }
+              },
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 0,
+  "path": "/system/builder/ApplyStep.goal",
+  "prPath": "/system/builder/.build/handlevalidationerror.pr",
+  "hash": "",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "HandleValidationError"
+}

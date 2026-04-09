@@ -9,24 +9,24 @@ Analyze all new and modified code on this branch. The branch adds two features:
 ## Files to Analyze
 
 ### New (Setup system)
-- `PLang/Runtime2/Engine/Goals/Setup/this.cs` — Setup coordinator
-- `PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs` — 9 tests
+- `PLang/App/Goals/Setup/this.cs` — Setup coordinator
+- `PLang.Tests/App/Goals/Setup/SetupTests.cs` — 9 tests
 
 ### Modified (Setup system)
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` — Steps.RunAsync with run-once check
-- `PLang/Runtime2/Engine/Goals/Goal/Methods.cs` — Goal.RunAsync delegates to Steps
-- `PLang/Runtime2/Engine/Goals/this.cs` — Setup property, setup exclusion from Get
-- `PLang/Runtime2/Engine/Context/PLangContext.cs` — Setup property, Clone
+- `PLang/App/Goals/Goal/Steps/this.cs` — Steps.RunAsync with run-once check
+- `PLang/App/Goals/Goal/Methods.cs` — Goal.RunAsync delegates to Steps
+- `PLang/App/Goals/this.cs` — Setup property, setup exclusion from Get
+- `PLang/App/Context/PLangContext.cs` — Setup property, Clone
 - `PLang/Executor.cs` — Run2 wiring
 
 ### New (DataSource + Settings — from parent branch, included for completeness)
-- `PLang/Runtime2/Engine/Context/Actor.cs`
-- `PLang/Runtime2/Engine/DataSource/IDataSource.cs`
-- `PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs`
-- `PLang/Runtime2/Engine/DataSource/SettingsData.cs`
-- `PLang/Runtime2/Engine/Errors/AskError.cs`
-- `PLang/Runtime2/Engine/Errors/DataSourceError.cs`
-- `PLang/Runtime2/actions/settings/get.cs, set.cs, remove.cs, types.cs`
+- `PLang/App/Context/Actor.cs`
+- `PLang/App/DataSource/IDataSource.cs`
+- `PLang/App/DataSource/SqliteDataSource.cs`
+- `PLang/App/DataSource/SettingsData.cs`
+- `PLang/App/Errors/AskError.cs`
+- `PLang/App/Errors/DataSourceError.cs`
+- `PLang/App/actions/settings/get.cs, set.cs, remove.cs, types.cs`
 
 ## Analysis Method
 

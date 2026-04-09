@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "2 findings require fixes: (1) ReadLimitedStringAsync error message displays '0MB' for sub-MB limits — bug, not cosmetic. (2) 7 weak test assertions in signing/streaming/form tests — false greens that undermine the safety net. Send to coder for #1, tester for #2."
+}

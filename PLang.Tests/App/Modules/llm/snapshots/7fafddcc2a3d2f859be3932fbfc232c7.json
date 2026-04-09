@@ -1,0 +1,1 @@
+{"id":"snapshot","object":"chat.completion","model":"gpt-4.1-mini","choices":[{"index":0,"message":{"role":"assistant","content":"\u0060\u0060\u0060python\ndef sum_two_numbers(a, b):\n    return a \u002B b\n\u0060\u0060\u0060"},"finish_reason":"stop"}],"usage":{"prompt_tokens":37,"completion_tokens":18,"total_tokens":55}}

@@ -8,63 +8,63 @@ This document maps what's tested vs what's not, organized by concern. The tester
 
 ## Expected Deliverables
 
-**~25 new `.test.goal` files** in `Tests/Runtime2/`, one concern per file:
+**~25 new `.test.goal` files** in `Tests/App/`, one concern per file:
 
 ### Error Handling (6 suites)
 
 | # | Test Suite | Location | Tests |
 |---|-----------|----------|-------|
-| 1 | ErrorCall | `Tests/Runtime2/ErrorCall/` | `on error call GoalName` — standalone, no retry |
-| 2 | ErrorProps | `Tests/Runtime2/ErrorProps/` | `%!error.Message%`, `%!error.Key%`, `%!error.StatusCode%` access in handler |
-| 3 | ErrorOrdering | `Tests/Runtime2/ErrorOrdering/` | RetryFirst vs GoalFirst — does retry or goal fire first? |
-| 4 | ErrorInHandler | `Tests/Runtime2/ErrorInHandler/` | Error thrown inside an error handler — does it propagate? |
-| 5 | ErrorNested | `Tests/Runtime2/ErrorNested/` | Inner goal has its own error handler — both layers work |
-| 6 | ErrorTypes | `Tests/Runtime2/ErrorTypes/` | Different error sources (throw, file not found, http error) — `%!error%` shape for each |
+| 1 | ErrorCall | `Tests/App/ErrorCall/` | `on error call GoalName` — standalone, no retry |
+| 2 | ErrorProps | `Tests/App/ErrorProps/` | `%!error.Message%`, `%!error.Key%`, `%!error.StatusCode%` access in handler |
+| 3 | ErrorOrdering | `Tests/App/ErrorOrdering/` | RetryFirst vs GoalFirst — does retry or goal fire first? |
+| 4 | ErrorInHandler | `Tests/App/ErrorInHandler/` | Error thrown inside an error handler — does it propagate? |
+| 5 | ErrorNested | `Tests/App/ErrorNested/` | Inner goal has its own error handler — both layers work |
+| 6 | ErrorTypes | `Tests/App/ErrorTypes/` | Different error sources (throw, file not found, http error) — `%!error%` shape for each |
 
 ### Events (8 suites)
 
 | # | Test Suite | Location | Tests |
 |---|-----------|----------|-------|
-| 7 | EventBeforeStep | `Tests/Runtime2/EventBeforeStep/` | `before step` fires before each step executes |
-| 8 | EventAfterStep | `Tests/Runtime2/EventAfterStep/` | `after step` fires after each step executes |
-| 9 | EventAfterAction | `Tests/Runtime2/EventAfterAction/` | `after action output.write` captures action parameters |
-| 10 | EventRemove | `Tests/Runtime2/EventRemove/` | Register event, fire once, remove, fire again — count stays at 1 |
-| 11 | EventMultiple | `Tests/Runtime2/EventMultiple/` | Two events on same hook — both fire |
-| 12 | EventPriority | `Tests/Runtime2/EventPriority/` | Higher priority event fires first — assert execution order |
-| 13 | EventWildcard | `Tests/Runtime2/EventWildcard/` | `before action file.*` matches file.read, file.write, etc. |
-| 14 | EventVarChange | `Tests/Runtime2/EventVarChange/` | `OnVariableChange` fires when variable is set |
+| 7 | EventBeforeStep | `Tests/App/EventBeforeStep/` | `before step` fires before each step executes |
+| 8 | EventAfterStep | `Tests/App/EventAfterStep/` | `after step` fires after each step executes |
+| 9 | EventAfterAction | `Tests/App/EventAfterAction/` | `after action output.write` captures action parameters |
+| 10 | EventRemove | `Tests/App/EventRemove/` | Register event, fire once, remove, fire again — count stays at 1 |
+| 11 | EventMultiple | `Tests/App/EventMultiple/` | Two events on same hook — both fire |
+| 12 | EventPriority | `Tests/App/EventPriority/` | Higher priority event fires first — assert execution order |
+| 13 | EventWildcard | `Tests/App/EventWildcard/` | `before action file.*` matches file.read, file.write, etc. |
+| 14 | EventVarChange | `Tests/App/EventVarChange/` | `OnVariableChange` fires when variable is set |
 
 ### Caching (3 suites)
 
 | # | Test Suite | Location | Tests |
 |---|-----------|----------|-------|
-| 15 | CacheSliding | `Tests/Runtime2/CacheSliding/` | Sliding expiration extends window on access |
-| 16 | CacheKey | `Tests/Runtime2/CacheKey/` | Custom cache key — same key hits, different key misses |
-| 17 | CacheDynamicKey | `Tests/Runtime2/CacheDynamicKey/` | Cache key contains `%variable%` — resolves dynamically |
+| 15 | CacheSliding | `Tests/App/CacheSliding/` | Sliding expiration extends window on access |
+| 16 | CacheKey | `Tests/App/CacheKey/` | Custom cache key — same key hits, different key misses |
+| 17 | CacheDynamicKey | `Tests/App/CacheDynamicKey/` | Cache key contains `%variable%` — resolves dynamically |
 
 ### Goal Calls (4 suites)
 
 | # | Test Suite | Location | Tests |
 |---|-----------|----------|-------|
-| 18 | GoalCallDynamic | `Tests/Runtime2/GoalCallDynamic/` | `call %goalName%` — goal name from variable |
-| 19 | GoalCallMissing | `Tests/Runtime2/GoalCallMissing/` | Call non-existent goal — error path, `%!error.Key%` |
-| 20 | GoalCallRelative | `Tests/Runtime2/GoalCallRelative/` | Call goal from subdirectory — relative path resolution |
-| 21 | GoalCallReturn | `Tests/Runtime2/GoalCallReturn/` | Return value via `write to %var%` (not global variable) |
+| 18 | GoalCallDynamic | `Tests/App/GoalCallDynamic/` | `call %goalName%` — goal name from variable |
+| 19 | GoalCallMissing | `Tests/App/GoalCallMissing/` | Call non-existent goal — error path, `%!error.Key%` |
+| 20 | GoalCallRelative | `Tests/App/GoalCallRelative/` | Call goal from subdirectory — relative path resolution |
+| 21 | GoalCallReturn | `Tests/App/GoalCallReturn/` | Return value via `write to %var%` (not global variable) |
 
 ### Actors (3 suites)
 
 | # | Test Suite | Location | Tests |
 |---|-----------|----------|-------|
-| 22 | ActorSwitch | `Tests/Runtime2/ActorSwitch/` | `actor="system"` / `actor="service"` — action runs under specified actor |
-| 23 | ActorDatasource | `Tests/Runtime2/ActorDatasource/` | Per-actor datasource isolation — system data not visible to user |
-| 24 | ActorContext | `Tests/Runtime2/ActorContext/` | Actor-specific context variables accessible |
+| 22 | ActorSwitch | `Tests/App/ActorSwitch/` | `actor="system"` / `actor="service"` — action runs under specified actor |
+| 23 | ActorDatasource | `Tests/App/ActorDatasource/` | Per-actor datasource isolation — system data not visible to user |
+| 24 | ActorContext | `Tests/App/ActorContext/` | Actor-specific context variables accessible |
 
 ### Setup & Library (2 suites)
 
 | # | Test Suite | Location | Tests |
 |---|-----------|----------|-------|
-| 25 | SetupGoal | `Tests/Runtime2/SetupGoal/` | Run-once semantics — may need special test pattern |
-| 26 | LibraryLoad | `Tests/Runtime2/LibraryLoad/` | `library.load` basic usage |
+| 25 | SetupGoal | `Tests/App/SetupGoal/` | Run-once semantics — may need special test pattern |
+| 26 | LibraryLoad | `Tests/App/LibraryLoad/` | `library.load` basic usage |
 
 ### Total: 26 test suites
 

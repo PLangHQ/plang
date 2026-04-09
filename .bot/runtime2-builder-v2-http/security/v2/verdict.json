@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "0 critical, 0 high, 0 medium open findings. All 4 blocking findings from v1 fixed: size-limited reads on all paths, SSE buffer cap, error body truncation, thread-safe ToSigningBytes."
+}

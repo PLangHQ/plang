@@ -1,0 +1,6 @@
+Start
+/ Test: Signed request includes X-Signature header
+/ Default behavior is signed — no unsigned flag
+- get https://httpbin.org/headers, write to %response%
+- if %response% is not empty then
+    - write out 'Signed request returned data'

@@ -1,0 +1,47 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-builder2-signing",
+  "timestamp": "2026-03-21T00:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Signing/crypto/identity/provider modules are well-architected with strong OBP compliance and thorough test coverage. Found 1 critical cross-file contract gap (IdentityData silently swallows errors), 2 nits. The critical finding was missed by all three prior reviewers — exactly the kind of cross-file gap the auditor exists to catch.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — thorough 5-pass analysis caught real issues (IKeyProvider return type, bare catch, duplication). v2 verification was correct.",
+    "tester": "agree — coverage gap analysis was accurate, 28 new tests meaningfully improved quality. Minor: didn't flag the IdentityData error-swallowing contract.",
+    "security": "agree — crypto verification is sound, threat model alignment is correct. Medium findings are genuine but acceptable in user-sovereign model."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "category": "cross-file",
+      "file": "PLang/Runtime2/modules/identity/IdentityData.cs",
+      "line": 54,
+      "issue": "IdentityData.ResolveDefault() silently swallows all errors — returns null on provider failure, DataSource failure, or key generation failure. Callers (Actor.Identity → DynamicData(\"MyIdentity\") → MemoryStack) get null without knowing why. The DynamicData lambda on Actor.cs:79 evaluates engine.System.Identity.Value which hits this path. If the DataSource is corrupted or the key provider fails, %MyIdentity% silently becomes null with no diagnostic trail.",
+      "missed_by": "tester",
+      "impact": "Silent null for %MyIdentity% in production when DataSource has issues. User gets no error message — just null variables in their PLang program. Swallowed errors are the hardest bugs to diagnose. The IdentityData class already extends Data which has an Error property — this should be used.",
+      "suggestion": "When resolution fails, store the error on IdentityData.Error (it already inherits Data.Error) instead of returning null. Callers can then check .Error for diagnostics. Also needs a test that verifies the error is surfaced, not swallowed."
+    },
+    {
+      "id": 2,
+      "severity": "nit",
+      "category": "contract",
+      "file": "PLang/Runtime2/modules/signing/SignedData.cs",
+      "line": 91,
+      "issue": "SignedData.CreateAsync uses action.Context.MemoryStack.GetValue(\"NowUtc\") and casts to DateTimeOffset without null check. Same pattern in DefaultIdentityProvider.GenerateIdentity (line 285). Both assume NowUtc is always registered — true today, but fragile if someone constructs a bare MemoryStack without registering system variables.",
+      "missed_by": "none",
+      "impact": "NullReferenceException if NowUtc is not registered. Currently impossible in normal execution (MemoryStack constructor registers it), but possible in isolated test scenarios or if someone creates a context without the standard setup.",
+      "suggestion": "Acceptable as-is — system variables are always registered by MemoryStack constructor. Document the invariant if not already documented."
+    },
+    {
+      "id": 3,
+      "severity": "nit",
+      "category": "architectural",
+      "file": "PLang/Runtime2/modules/signing/SignedData.cs",
+      "line": 240,
+      "issue": "ToSigningBytes() mutates Signature to null then restores it (save-mutate-restore pattern). This is technically not thread-safe, but PLang's single-threaded execution model makes it safe in practice. Security bot already flagged this as Low (#4).",
+      "missed_by": "none",
+      "impact": "None in current architecture. Would become a real bug if SignedData instances were ever shared across async contexts. Already documented by security review.",
+      "suggestion": "No action needed — already documented. If PLang adds concurrent execution, this should be revisited."
+    }
+  ]
+}

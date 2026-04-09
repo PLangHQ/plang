@@ -6,22 +6,22 @@ Fixes the auditor's FAIL verdict on the action-based conditions implementation. 
 ## What was done
 
 ### Fix 1: If.Run() try/catch (auditor #1 — major)
-**File:** `PLang/Runtime2/modules/condition/if.cs`
+**File:** `PLang/App/modules/condition/if.cs`
 - Wrapped evaluator calls in `try/catch` for `NotSupportedException | ArgumentException | OverflowException`
 - Returns `Data.FromError(ValidationError)` with rich diagnostic message including operator, operand types/values, and fix suggestion
 - Uses `ValidationError` with `Context` parameter — gets step text, file, line, call stack automatically from the error formatter
 
 ### Fix 2: Compare.Run() try/catch (auditor #2 — major)
-**File:** `PLang/Runtime2/modules/condition/compare.cs`
+**File:** `PLang/App/modules/condition/compare.cs`
 - Same try/catch pattern with same rich error
 
 ### Fix 3: WiderNumericType fallback (auditor #3 — minor)
-**File:** `PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs:150-151`
+**File:** `PLang/App/modules/condition/providers/DefaultEvaluator.cs:150-151`
 - Changed fallback from index 0 (byte) to `order.Length - 1` (decimal)
 - Unknown numeric types now widen safely instead of narrowing to byte
 
 ### Fix 4: Non-IComparable throws (security #4)
-**File:** `PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs:62`
+**File:** `PLang/App/modules/condition/providers/DefaultEvaluator.cs:62`
 - Changed `return 0` to `throw new ArgumentException` for non-IComparable types in comparison operators
 - Caught by the try/catch from fix #1/#2, converted to `EvaluationError`
 

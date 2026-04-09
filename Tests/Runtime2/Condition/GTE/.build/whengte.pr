@@ -1,0 +1,52 @@
+[
+  {
+    "name": "WhenGTE",
+    "description": "Set %result% to the string \u0022gte\u0022.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %result% = \u0022gte\u0022",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%result%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "gte",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/GTE/WhenGTE.goal",
+    "prPath": "/GTE/.build/whengte.pr",
+    "hash": "beb3790989e3cd356f51555827b10c86bff35ea07dcd4df208b06eddb0f787aa",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

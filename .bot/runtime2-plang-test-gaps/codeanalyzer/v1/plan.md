@@ -7,11 +7,11 @@
 | File | Change |
 |------|--------|
 | `PLang/Executor.cs` | Removed explicit `DiscoverAsync` call (now internal to `RunAsync`) |
-| `PLang/Runtime2/Engine/Goals/Goal/Methods.cs` | Return `stepsResult` instead of `Data.Ok()` |
-| `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` | Track `lastResult`, return it instead of `Data.Ok()` |
-| `PLang/Runtime2/Engine/Goals/Setup/this.cs` | Convention-based discovery (private), integrated into `RunAsync` |
-| `PLang/Runtime2/Engine/Goals/this.cs` | Key goals by PrPath, add name-based search fallback |
-| `PLang/Runtime2/Engine/Test/this.cs` | Per-test engine root, Data-based result tracking, setup before tests |
+| `PLang/App/Goals/Goal/Methods.cs` | Return `stepsResult` instead of `Data.Ok()` |
+| `PLang/App/Goals/Goal/Steps/this.cs` | Track `lastResult`, return it instead of `Data.Ok()` |
+| `PLang/App/Goals/Setup/this.cs` | Convention-based discovery (private), integrated into `RunAsync` |
+| `PLang/App/Goals/this.cs` | Key goals by PrPath, add name-based search fallback |
+| `PLang/App/Test/this.cs` | Per-test engine root, Data-based result tracking, setup before tests |
 
 Plus 33 new PLang test suites (`.test.goal` + `.goal` + `.pr` files) — tests are out of scope for code analysis but inform behavioral reasoning.
 
@@ -25,9 +25,9 @@ Plus 33 new PLang test suites (`.test.goal` + `.goal` + `.pr` files) — tests a
 
 ## Pre-reading completed
 
-- `Documentation/Runtime2/plang_object_based_pattern.md`
-- `Documentation/Runtime2/README.md`
-- `Documentation/Runtime2/good_to_know.md`
-- `Documentation/Runtime2/modules.md`
+- `Documentation/App/plang_object_based_pattern.md`
+- `Documentation/App/README.md`
+- `Documentation/App/good_to_know.md`
+- `Documentation/App/modules.md`
 - Engine `this.cs` constructor and RunGoalAsync
 - Step `Methods.cs` for full execution flow

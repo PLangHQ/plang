@@ -1,0 +1,512 @@
+{
+  "branch": "runtime2-builder-module",
+  "sessions": [
+    {
+      "id": "td-v1-20260329",
+      "bot": "test-designer",
+      "timestamp_start": "2026-03-29T00:00:00Z",
+      "timestamp_end": "2026-03-29T00:30:00Z",
+      "intent": "Design test suite for Piece 8: Builder Module",
+      "before": {
+        "assumptions": "Architect plan at v1/plan.md defines GoalFile parser, 8 builder actions, Step.Merge, Goal.MergeFrom. No builder module code exists yet — tests define the contract.",
+        "risk": "GoalFile is a new parser (unusual for PLang which is LLM-based) — needs thorough edge case coverage. Actions depend on engine.Modules reflection which may be tricky to test."
+      },
+      "plan": "49 test stubs across 6 batches: GoalFile parser (12), Step.Merge/Goal.MergeFrom (7), getActions/getTypeInfo (7), getGoals/validateActions (9), app/save/merge/guard (8), PLang integration (6). Independent additions: tabs, blank lines, conditional error replacement, cacheable flag, empty folder, building guard.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/builder/GoalFileTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/MergeTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetActionsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetTypeInfoTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetGoalsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/ValidateActionsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/AppTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/SaveGoalsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/MergeStepTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/BuildingGuardTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "43 C# test stubs for builder module — GoalFile, merge, actions, validation, app, save"
+        },
+        {
+          "paths": [
+            "Tests/Runtime2/Builder/GetActions/BuilderGetActions.test.goal",
+            "Tests/Runtime2/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal",
+            "Tests/Runtime2/Builder/ParseGoal/BuilderParseGoal.test.goal",
+            "Tests/Runtime2/Builder/MergeStep/BuilderMergeStep.test.goal",
+            "Tests/Runtime2/Builder/ValidateValid/BuilderValidateValid.test.goal",
+            "Tests/Runtime2/Builder/ValidateInvalid/BuilderValidateInvalid.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "6 PLang integration test stubs for builder module"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "49 test stubs written. Ready for coder bot to implement builder module and make tests pass."
+      }
+    },
+    {
+      "id": "td-v2-20260329",
+      "bot": "test-designer",
+      "timestamp_start": "2026-03-29T21:30:00Z",
+      "timestamp_end": "2026-03-29T22:00:00Z",
+      "intent": "Address gaps found in fresh-eyes review of v1 test stubs",
+      "before": {
+        "assumptions": "v1 has 49 stubs but missing line number tests, PrPath derivation, corrupt .pr resilience, per-action building guards, and PLang stubs are too thin for coder to work from.",
+        "risk": "Low — additive changes only, no existing tests modified."
+      },
+      "plan": "Add 10 C# test stubs (2 GoalFile, 1 GetGoals, 7 net BuildingGuard) and flesh out 4 PLang tests with concrete step shapes. Total 49 → 59.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/builder/GoalFileTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetGoalsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/BuildingGuardTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added 10 C# test stubs: line numbers, PrPath derivation, corrupt .pr resilience, 8 per-action building guards"
+        },
+        {
+          "paths": [
+            "Tests/Runtime2/Builder/GetActions/BuilderGetActions.test.goal",
+            "Tests/Runtime2/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal",
+            "Tests/Runtime2/Builder/ParseGoal/BuilderParseGoal.test.goal",
+            "Tests/Runtime2/Builder/MergeStep/BuilderMergeStep.test.goal",
+            "Tests/Runtime2/Builder/ValidateValid/BuilderValidateValid.test.goal",
+            "Tests/Runtime2/Builder/ValidateInvalid/BuilderValidateInvalid.test.goal"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Fleshed out 4 PLang tests with concrete steps, marked 2 as deferred to C#"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "59 total test stubs (53 C# + 6 PLang). All gaps addressed except engine.RunAction I/O pattern (implementation detail for coder)."
+      }
+    },
+    {
+      "id": "coder-v1-20260329",
+      "bot": "coder",
+      "timestamp_start": "2026-03-29T23:00:00Z",
+      "timestamp_end": null,
+      "intent": "Implement builder module: GoalFile, 8 actions, Step.Merge, Goal.MergeFrom, tests",
+      "before": {
+        "assumptions": "Architect plan defines 8 actions + GoalFile. Test stubs exist (53 C# + 6 PLang). Zero builder module code exists. v1 PlangModule/Program.cs has reference implementations for all actions.",
+        "risk": "GoalFile is the only real parser in PLang — edge cases around blank lines, multi-line comments, continuation lines. Builder actions that use engine.RunAction for file I/O need careful context wiring. Building guard needs to be checked on every action entry."
+      },
+      "plan": "Phase 1: Add Step.Merge() and Goal.MergeFrom() to entity classes. Phase 2: GoalFile parser (.goal text → List<Goal>). Phase 3: 8 builder actions (getActions, getTypeInfo, getGoals, validateActions, mergeStep, getApp, saveApp, saveGoals). Phase 4: Implement 53 C# test stubs.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Step.Merge() and Goal.MergeFrom() methods — OBP ownership of merge logic"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/Runtime2/modules/builder/providers/IBuilderProvider.cs",
+            "PLang/Runtime2/modules/builder/actions.cs",
+            "PLang/Runtime2/modules/builder/app.cs",
+            "PLang/Runtime2/modules/builder/appSave.cs",
+            "PLang/Runtime2/modules/builder/goals.cs",
+            "PLang/Runtime2/modules/builder/goalsSave.cs",
+            "PLang/Runtime2/modules/builder/merge.cs",
+            "PLang/Runtime2/modules/builder/validate.cs",
+            "PLang/Runtime2/modules/builder/types.cs",
+            "PLang/Runtime2/modules/builder/BuilderTypeInfo.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "11 new files: builder provider + 8 builder actions + type record. Standard handler→provider delegation pattern."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/builder/GoalFileTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/MergeTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetActionsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetTypeInfoTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetGoalsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/ValidateActionsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/MergeStepTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/AppTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/SaveGoalsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/BuildingGuardTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Implemented all 53 C# test stubs. Fixed alias conflicts with global usings."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "All 2015 tests pass (0 failures). 9 new source files, 2 modified entity files, 10 test files implemented. Ready for codeanalyzer review."
+      }
+    },
+    {
+      "id": "ca-v1-20260330",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-30T00:00:00Z",
+      "timestamp_end": null,
+      "intent": "5-pass code analysis of builder module (Piece 8)",
+      "before": {
+        "assumptions": "Builder module implements handler→provider delegation. Goal.Parse() is the only real text parser in PLang. Code uses engine.RunAction for file I/O. All tests reportedly pass.",
+        "risk": "Goal.Parse() is ~150 lines of text parsing — unusual for PLang, needs careful scrutiny. DefaultBuilderProvider at 344 lines is the largest single provider. Error handling patterns need audit."
+      },
+      "plan": "5-pass analysis: OBP compliance, simplification, readability, behavioral reasoning, deletion test. Focus on DefaultBuilderProvider.cs (core logic), Goal.Parse() (parser), engine modifications (Modules.Describe, TypeMapping additions).",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/codeanalyzer/v1/plan.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v1/result.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v1/summary.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v1/verdict.json",
+            ".bot/runtime2-builder-module/codeanalyzer/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "5-pass analysis of 15 production files + 10 test files. Verdict: NEEDS WORK — 5 minor findings, 0 major."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow",
+        "notes": "NEEDS WORK — 5 minor findings: 2 untested Parse() paths, unguarded Activator.CreateInstance, untested IConfigure<T> defaults, Runtime1 type in FormatForLlm. Send to coder for fixes."
+      },
+      "timestamp_end": "2026-03-30T01:00:00Z"
+    },
+    {
+      "id": "ca-v2-20260330",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-30T02:00:00Z",
+      "timestamp_end": "2026-03-30T02:30:00Z",
+      "intent": "Re-review coder fixes for v1 findings",
+      "before": {
+        "assumptions": "Coder addressed 4 of 5 findings in one commit. 3 new tests, 2 small production code changes.",
+        "risk": "Low — fixes are small and targeted."
+      },
+      "plan": "Verify each fix against the original finding. Full review of fix-introduced code (3 new tests, try/catch guard, file read error reporting).",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/codeanalyzer/v2/v1_review_summary.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v2/result.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v2/summary.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v2/verdict.json",
+            ".bot/runtime2-builder-module/codeanalyzer/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Re-review: 4/5 findings resolved, fix-introduced code clean. PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — all findings resolved (1 deferred as pre-existing). Recommend tester next."
+      }
+    },
+    {
+      "id": "ca-v3-20260330",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-30T10:00:00Z",
+      "timestamp_end": "2026-03-30T10:30:00Z",
+      "intent": "Fresh-eyes re-analysis of builder module — find what v1/v2 missed",
+      "before": {
+        "assumptions": "v1/v2 found and resolved 5 minor findings. Coder fixes verified. User wants fresh eyes to catch anything missed.",
+        "risk": "Medium — the first review may have anchored on specific areas and missed broader patterns."
+      },
+      "plan": "Re-read all production code from scratch. Apply all 5 passes without anchoring on v1 findings. Focus on clone family audit, Describe() reflection gaps, dead code paths.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/codeanalyzer/v3/plan.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v3/result.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v3/summary.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v3/verdict.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Fresh-eyes analysis found 2 missed findings: Describe() leaks [Provider] properties (medium), Step.Clone() drops Action fields (minor). Verdict: NEEDS WORK."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow",
+        "notes": "NEEDS WORK — 2 new findings: Describe() leaks [Provider] properties (affects all modules), Step.Clone() drops Action fields. Send to coder."
+      }
+    },
+    {
+      "id": "ca-v4-20260330",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-30T11:00:00Z",
+      "timestamp_end": "2026-03-30T11:15:00Z",
+      "intent": "Verify coder fixes for v3 findings",
+      "before": {
+        "assumptions": "Coder addressed all 3 v3 findings in one commit.",
+        "risk": "Low — fixes are minimal and mechanical."
+      },
+      "plan": "Verify each fix against the original finding. Review fix-introduced code.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/codeanalyzer/v4/result.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v4/summary.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v4/verdict.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "All 3 fixes verified. PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — all v3 findings resolved. Recommend tester next."
+      }
+    },
+    {
+      "id": "tester-v1-20260330",
+      "bot": "tester",
+      "timestamp_start": "2026-03-30T14:00:00Z",
+      "timestamp_end": "2026-03-30T14:30:00Z",
+      "intent": "Test quality analysis of builder module (coder v1)",
+      "before": {
+        "assumptions": "53 C# tests all pass. Codeanalyzer v4 passed. Coverage should be high for builder module.",
+        "risk": "Builder module is new code with new test files — highest risk for false-greens."
+      },
+      "plan": "Run C# tests, collect coverage, read all 10 test files + production code for false-green hunting, check PLang test quality, write test-report.json.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/test-report.json",
+            ".bot/runtime2-builder-module/tester/v1/plan.md",
+            ".bot/runtime2-builder-module/tester/v1/summary.md",
+            ".bot/runtime2-builder-module/tester/v1/verdict.json",
+            ".bot/runtime2-builder-module/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Test quality analysis: 2018 pass, 0 fail. Found 3 major false-greens (existence-not-correctness pattern), 4 minor findings. Verdict: NEEDS FIXES."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow",
+        "notes": "NEEDS FIXES — 3 major false-greens in ValidateActions, SaveApp, SaveGoals tests. Send back to coder."
+      }
+    },
+    {
+      "id": "tester-v2-20260330",
+      "bot": "tester",
+      "timestamp_start": "2026-03-30T15:00:00Z",
+      "timestamp_end": "2026-03-30T15:20:00Z",
+      "intent": "Re-verify builder module tests after coder fixes",
+      "before": {
+        "assumptions": "Coder fixed all 7 findings + 1 production bug. Need to verify fixes are honest.",
+        "risk": "Low — targeted fixes, not a rewrite."
+      },
+      "plan": "Run tests, run coverage, verify each fix addresses the original finding, fresh-eyes pass for anything missed.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/test-report.json",
+            ".bot/runtime2-builder-module/tester/v2/v1_review_summary.md",
+            ".bot/runtime2-builder-module/tester/v2/summary.md",
+            ".bot/runtime2-builder-module/tester/v2/verdict.json",
+            ".bot/runtime2-builder-module/tester/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "All 7 findings resolved + 1 production bug fixed. Coverage improved. Verdict: PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — all findings resolved, 2022 tests pass, coverage strong. Recommend security analyst next."
+      }
+    },
+    {
+      "id": "sec-v1-20260330",
+      "bot": "security",
+      "timestamp_start": "2026-03-30T16:00:00Z",
+      "timestamp_end": "2026-03-30T16:30:00Z",
+      "intent": "Security audit of builder module (Piece 8)",
+      "before": {
+        "assumptions": "Builder module is new code with 8 actions, Goal.Parse() text parser, provider/module registry changes. All tests pass, codeanalyzer and tester both passed.",
+        "risk": "Goal.Parse() is a text parser — unusual for PLang. Provider registry has type resolution logic. Assembly loading paths exist."
+      },
+      "plan": "Blue team: map 7 attack surface areas (goal-parser, pr-deser, action-registry, provider-registry, assembly-loading, builder-auth, merge-pipeline). Red team: assess each vector for exploitability under PLang threat model. Write security-report.json and verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs",
+            "PLang/Runtime2/Engine/Modules/this.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/modules/module/add.cs",
+            "PLang/Runtime2/modules/provider/load.cs",
+            "PLang/Runtime2/modules/builder/actions.cs",
+            "PLang/Runtime2/modules/builder/goals.cs",
+            "PLang/Runtime2/modules/builder/validate.cs",
+            "PLang/Runtime2/modules/builder/merge.cs",
+            "PLang/Runtime2/modules/builder/app.cs",
+            "PLang/Runtime2/modules/builder/appSave.cs",
+            "PLang/Runtime2/modules/builder/goalsSave.cs",
+            "PLang/Runtime2/modules/builder/types.cs",
+            "PLang/Runtime2/modules/Attributes.cs",
+            "PLang/Runtime2/modules/IConfigure.cs",
+            "PLang/Runtime2/modules/provider/remove.cs",
+            "PLang/Runtime2/modules/provider/setDefault.cs",
+            "PLang/Runtime2/modules/provider/list.cs",
+            "PLang/Runtime2/modules/module/remove.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full security review of 21 source files. 7 attack surface areas mapped. 5 findings: 0 critical, 0 high, 2 medium, 3 low."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/security-report.json",
+            ".bot/runtime2-builder-module/security/v1/plan.md",
+            ".bot/runtime2-builder-module/security/v1/summary.md",
+            ".bot/runtime2-builder-module/security/v1/verdict.json",
+            ".bot/runtime2-builder-module/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security report, plan, summary, verdict. PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — 0 critical, 0 high, 2 medium, 3 low. Builder module follows PLang threat model correctly. Recommend auditor next."
+      }
+    },
+    {
+      "id": "auditor-v1-20260330",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-30T18:00:00Z",
+      "timestamp_end": "2026-03-30T18:30:00Z",
+      "intent": "Cross-cutting integrity review of builder module (Piece 8)",
+      "before": {
+        "assumptions": "All three previous reviewers passed (codeanalyzer v4, tester v2, security v1). 2022 tests pass. Builder module is 11 production files + entity modifications.",
+        "risk": "Low — all reviewers passed, but auditor's job is to find what they missed in the gaps between reviews."
+      },
+      "plan": "Read all production code, all tests, all prior reports. Check cross-file contracts, review gaps, architectural fit, test adequacy, foundation ripple.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/auditor-report.json",
+            ".bot/runtime2-builder-module/auditor/v1/plan.md",
+            ".bot/runtime2-builder-module/auditor/v1/summary.md",
+            ".bot/runtime2-builder-module/auditor/v1/verdict.json",
+            ".bot/runtime2-builder-module/auditor/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full cross-cutting review. 3 findings: 2 minor (untested Describe filter, per-call JsonOptions), 1 nit. Verdict: PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — no critical/major findings. Builder module is solid. Recommend docs bot next."
+      }
+    },
+    {
+      "id": "ca-v5-20260330",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-30T19:00:00Z",
+      "timestamp_end": "2026-03-30T19:20:00Z",
+      "intent": "Review production code changes from tester/security/auditor cycle",
+      "before": {
+        "assumptions": "Tester, security, and auditor all passed. 4 production code changes plus 11 test improvements.",
+        "risk": "Low — changes are targeted fixes and one small feature (backslash escape)."
+      },
+      "plan": "Full 5-pass on changed code. Behavioral reasoning on backslash escape. Cross-check auditor findings.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/codeanalyzer/v5/result.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v5/summary.md",
+            ".bot/runtime2-builder-module/codeanalyzer/v5/verdict.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "All 4 production changes clean. Backslash escape well-designed. Auditor findings resolved. PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — all changes clean. Recommend docs next."
+      }
+    },
+    {
+      "id": "auditor-v2-20260330",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-30T20:00:00Z",
+      "timestamp_end": "2026-03-30T20:30:00Z",
+      "intent": "Verify v1 fixes + fresh-eyes review of Parse() changes",
+      "before": {
+        "assumptions": "Coder fixed all 3 v1 findings. Codeanalyzer v5 passed. 4 production changes + 3 new tests.",
+        "risk": "Low for fix verification. Medium for fresh-eyes — Parse changes added new feature (backslash escape) that could have cross-file implications."
+      },
+      "plan": "Verify 3 fixes. Fresh-eyes on Parse↔ToText contract, FormatForLlm template, builder prompt, existing .goal files.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-module/auditor-report.json",
+            ".bot/runtime2-builder-module/auditor/v2/plan.md",
+            ".bot/runtime2-builder-module/auditor/v2/v1_review_summary.md",
+            ".bot/runtime2-builder-module/auditor/v2/summary.md",
+            ".bot/runtime2-builder-module/auditor/v2/verdict.json",
+            ".bot/runtime2-builder-module/auditor/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "All v1 findings resolved. 1 new minor: ToText/Parse contract mismatch. PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — all v1 findings resolved. 1 new minor (ToText docstring). Recommend docs bot next."
+      }
+    }
+  ]
+}

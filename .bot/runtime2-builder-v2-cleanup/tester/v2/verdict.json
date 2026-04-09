@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "3 new actions (module.remove, list.set, event.skipAction) have zero tests — needs coverage before merge" }

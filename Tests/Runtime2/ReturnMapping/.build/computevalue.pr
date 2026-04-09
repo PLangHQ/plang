@@ -1,45 +1,58 @@
-{
-  "name": "ComputeValue",
-  "steps": [
-    {
-      "index": 0,
-      "text": "set %answer% = 42",
-      "lineNumber": 2,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%answer%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": 42,
-              "type": "int"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    }
-  ],
-  "subGoals": [],
-  "visibility": 1,
-  "path": "/ComputeValue.goal",
-  "prPath": "/.build/computevalue.pr",
-  "hash": "c5564732b172f7e7cf7d12cc42053cf1037fed356a46354f393b4c33b389b033",
-  "isSetup": false,
-  "isEvent": false,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "ComputeValue"
-}
+[
+  {
+    "name": "ComputeValue",
+    "description": "Sets the %answer% variable to 42 in the ComputeValue goal.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %answer% = 42",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%answer%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 42,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/ComputeValue.goal",
+    "prPath": "/.build/computevalue.pr",
+    "hash": "69ab581ca8309df99afd9d72cbe4b93526cec25221fecaecc8095955c3450d9b",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

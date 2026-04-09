@@ -1,0 +1,5 @@
+Start
+/ Test: hash string with explicit sha256 algorithm
+- set %data% = "hello world"
+- hash %data% using sha256, write to %hash%
+- assert %hash% is not empty, "sha256 hash should produce non-empty result"

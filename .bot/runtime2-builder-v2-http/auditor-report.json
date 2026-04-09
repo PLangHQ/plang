@@ -1,0 +1,58 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-builder-v2-http",
+  "timestamp": "2026-03-23T19:15:00Z",
+  "reviewed_version": "v1",
+  "summary": "Cross-cutting audit of the HTTP module. Signing cross-file contract is tight. Config scope chain verified. Disposal lifecycle complete. However: 2 findings require fixes before approval. (1) ReadLimitedStringAsync produces '0MB' in error messages for sub-MB limits — a bug. (2) 7 weak test assertions in signing/streaming/form tests are false greens that undermine the safety net the tester was supposed to build.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — thorough file-level OBP analysis, correctly identified and verified all 7 findings",
+    "tester": "disagree — approved with 7 false-green assertions. Coverage numbers look good (95.9%) but assertions don't verify the right things. The tester noted 1 weak assertion as 'acceptable' but missed 6 more.",
+    "security": "agree — correct severity ratings, all 4 blocking findings fixed with good tests, 5 low risks appropriately accepted"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "foundation",
+      "file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "line": 302,
+      "issue": "ReadLimitedStringAsync/ReadLimitedBytesAsync error message uses integer division: maxBytes / (1024 * 1024). When called with MaxErrorBodySize (4KB), this produces 'exceeds maximum size of 0MB'. Same bug on line 328. This is a bug — wrong output shown to the user.",
+      "missed_by": "codeanalyzer",
+      "impact": "User sees nonsensical error message 'exceeds maximum size of 0MB' when error body exceeds 4KB limit. Makes debugging harder.",
+      "suggestion": "Format intelligently: maxBytes < 1024*1024 ? $\"{maxBytes/1024}KB\" : $\"{maxBytes/(1024*1024)}MB\". Or just show the byte count."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "cross-file",
+      "file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "line": 341,
+      "issue": "_client ??= CreateClient(config) is not thread-safe. While Engine's threading model (sequential async) prevents real concurrency in normal operation, Dispose() also lacks synchronization — if Engine.DisposeAsync runs during an active streaming response, _client could be nulled mid-use.",
+      "missed_by": "security",
+      "impact": "Theoretical: resource leak from double-create, or NullReferenceException during shutdown race. Not exploitable in current architecture because streaming callbacks are sequential via await.",
+      "suggestion": "Defensive fix: use Lazy<HttpClient> or Interlocked.CompareExchange for initialization. For Dispose(), set _client to null only after awaiting active operations."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "category": "review-gap",
+      "file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "line": 866,
+      "issue": "7 test assertions are false greens — they pass regardless of code correctness. (1) Get_PlangResponseInvalidSignature_ReturnsError: only asserts Success==false, no Error.Key. (2) Get_Signed_HasXSignatureHeader: checks header presence, not content. (3) Get_SignedPlangResponse_SetsServiceIdentity: doesn't verify actual identity value matches Ed25519 public key. (4) Stream_Plang_VerifiesSignatureAndSetsIdentity: same. (5) Stream_Plang_InvalidSignature: doesn't verify error content. (6) Stream_Bytes: doesn't verify byte content. (7) Upload_DictAutoDetect + Upload_FormExplicit: check content type only, not field structure.",
+      "missed_by": "tester",
+      "impact": "7 tests that pass even if the code has bugs in signature verification, identity extraction, byte streaming, or form encoding. This is the difference between 'tests exist' and 'tests protect'. Someone could silently break these code paths with no test failure.",
+      "suggestion": "Strengthen each: (1) assert Error.Key, (2) assert header deserializes to valid SignedData, (3-4) assert identity equals the Ed25519 public key, (5) assert error Data has Signature-related key, (6) assert byte content matches, (7) assert field names and values in multipart. Send to coder for fixes."
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "architectural",
+      "file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "line": 460,
+      "issue": "ResolveUrl silently prepends 'https://' when URL has no scheme. Reasonable security default but undocumented.",
+      "missed_by": "none",
+      "impact": "Local development friction — 'localhost:8080' silently becomes 'https://localhost:8080'. User can work around by including the scheme.",
+      "suggestion": "Add a comment explaining the design choice."
+    }
+  ]
+}

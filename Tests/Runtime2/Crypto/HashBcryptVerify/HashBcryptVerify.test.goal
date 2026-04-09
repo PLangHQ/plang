@@ -1,0 +1,6 @@
+Start
+/ Test: hash password with bcrypt, then verify round-trip
+- set %password% = "mysecretpassword"
+- hash %password% using bcrypt, write to %hashed%
+- verify hash of %password% against %hashed%, write to %isValid%
+- assert %isValid% is true, "bcrypt verify should return true for correct password"

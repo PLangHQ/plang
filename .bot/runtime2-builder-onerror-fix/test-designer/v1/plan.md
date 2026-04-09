@@ -8,12 +8,12 @@ The architect's plan specifies 6 PLang test suites + a BuildGoal.llm prompt impr
 
 | Architect's Test | Existing Coverage | Status |
 |---|---|---|
-| ErrorCall (on error call GoalName) | `Tests/Runtime2/ErrorCall/` — verifies error message reaches handler | COVERED |
-| ErrorChain (error propagation through chain) | `Tests/Runtime2/ErrorNested/` + `ErrorChain/` — nested goals + retry chain | COVERED |
-| ErrorProps (error variables in handler) | `Tests/Runtime2/ErrorProps/` — message, key, statusCode | COVERED |
+| ErrorCall (on error call GoalName) | `Tests/App/ErrorCall/` — verifies error message reaches handler | COVERED |
+| ErrorChain (error propagation through chain) | `Tests/App/ErrorNested/` + `ErrorChain/` — nested goals + retry chain | COVERED |
+| ErrorProps (error variables in handler) | `Tests/App/ErrorProps/` — message, key, statusCode | COVERED |
 | ErrorTypes (ignore + call + retry combos) | `ErrorHandling/` (ignore) + `ErrorTypes/` (throw shape) + `Retry/` (retry+ignore, retry+call) | COVERED |
-| ErrorInHandler (handler itself throws) | `Tests/Runtime2/ErrorInHandler/` — outer handler catches propagated error | COVERED |
-| CacheDynamicKey (cache returns stale data) | `Tests/Runtime2/CacheDynamicKey/` — stale value via unresolved cache key | COVERED |
+| ErrorInHandler (handler itself throws) | `Tests/App/ErrorInHandler/` — outer handler catches propagated error | COVERED |
+| CacheDynamicKey (cache returns stale data) | `Tests/App/CacheDynamicKey/` — stale value via unresolved cache key | COVERED |
 
 ## Additional existing coverage beyond architect's spec
 

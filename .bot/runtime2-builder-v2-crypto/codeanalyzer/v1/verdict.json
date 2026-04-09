@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "DefaultProvider.Verify duplicates algorithm validation from Hash() — will diverge when algorithms are added. Minor: static allocation, Data property name shadowing." }

@@ -1,0 +1,5 @@
+Start
+/ Test: Unsigned request, no X-Signature
+- get https://httpbin.org/headers, unsigned, write to %response%
+- if %response% is not empty then
+    - write out 'Unsigned request returned data'

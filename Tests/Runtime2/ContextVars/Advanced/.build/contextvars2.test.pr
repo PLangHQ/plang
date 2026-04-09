@@ -1,0 +1,185 @@
+[
+  {
+    "name": "Start",
+    "description": "Asserts that goal metadata and runtime context objects (%!goal.Name%, %!step%, %!context%, %!fileSystem%, %!callStack%) are accessible and not null (or equal to \u0027Start\u0027).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "assert %!goal.Name% equals \u0022Start\u0022",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: goal name is accessible",
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "Start",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%!goal.Name%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected goal name to equal \u0027Start\u0027.",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %!step% is not null",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": "Test: step is accessible",
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%!step%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Step is accessible",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %!context% is not null",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": "Test: context is accessible",
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%!context%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %!context% to be not null.",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "assert %!fileSystem% is not null",
+        "lineNumber": 9,
+        "indent": 0,
+        "comment": "Test: fileSystem is accessible",
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%!fileSystem%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "fileSystem must not be null",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "assert %!callStack% is not null",
+        "lineNumber": 11,
+        "indent": 0,
+        "comment": "Test: callStack is accessible",
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%!callStack%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "callStack must not be null",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/Advanced/ContextVars2.test.goal",
+    "prPath": "/Advanced/.build/contextvars2.test.pr",
+    "hash": "85619f863448eb43ec701fc1850de420df2fea3a522ce131303290d8f6ae53de",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

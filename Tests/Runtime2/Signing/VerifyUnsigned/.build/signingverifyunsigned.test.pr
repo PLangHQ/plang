@@ -1,0 +1,52 @@
+[
+  {
+    "name": "HandleNoSig",
+    "description": "Sets the %noSig% flag to true (with pr set to null as provided).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %noSig% = true",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%noSig%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 0,
+    "path": "/SigningVerifyUnsigned.test.goal",
+    "prPath": "/.build/signingverifyunsigned.test.pr",
+    "hash": "1ec51f17dad756518684dd77191f698253104090941c18b8159abae87a2310fb",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

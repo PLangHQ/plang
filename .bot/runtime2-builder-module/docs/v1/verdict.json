@@ -1,0 +1,13 @@
+{
+  "verdict": "PASS",
+  "testsTotal": 2025,
+  "testsFailed": 0,
+  "testsSkipped": 4,
+  "filesCreated": ["docs/modules/builder.md"],
+  "filesModified": [
+    "docs/modules/index.md",
+    "Documentation/Runtime2/modules.md",
+    "Documentation/Runtime2/good_to_know.md"
+  ],
+  "notes": "Builder module is internal — docs clearly marked as build-system only, not for application .goal files."
+}

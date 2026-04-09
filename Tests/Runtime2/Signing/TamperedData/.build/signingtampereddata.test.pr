@@ -1,0 +1,52 @@
+[
+  {
+    "name": "HandleTampered",
+    "description": "Sets the %tampered% flag to true (with a null/empty PR context as indicated).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %tampered% = true",
+        "lineNumber": 12,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%tampered%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 0,
+    "path": "/SigningTamperedData.test.goal",
+    "prPath": "/.build/signingtampereddata.test.pr",
+    "hash": "b1ce447e70587fbd9877bd544046cb58a82c3217c9d870f68c65adf341b1aae1",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

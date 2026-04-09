@@ -1,0 +1,190 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-builder2-signing",
+  "timestamp": "2026-03-21T12:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "signed-data-envelope",
+      "exposure": "SignedData class owns signing and verification. All fields have internal set. Data.Signature is public set.",
+      "trust_boundary": "External Data arriving via channels — Data.Signature could carry attacker-controlled SignedData",
+      "mitigations": [
+        "9-step verification pipeline in VerifyAsync",
+        "Nonce replay via cache TryAdd",
+        "Cryptographic signature check via Ed25519",
+        "Data hash re-verification",
+        "Contract and header matching"
+      ],
+      "gaps": [
+        "Data.Signature is { get; set; } — any code path can attach a SignedData object to any Data",
+        "ToSigningBytes() temporarily nulls Signature field (not thread-safe)",
+        "No algorithm whitelist — provider registry is the only gate"
+      ]
+    },
+    {
+      "area": "nonce-replay-protection",
+      "exposure": "Nonce uniqueness enforced via in-memory MemoryStepCache.TryAddAsync",
+      "trust_boundary": "External signed messages arriving at verify action",
+      "mitigations": [
+        "Atomic TryAdd prevents same-process replay",
+        "Cache TTL matches signature timeout (default 300s)"
+      ],
+      "gaps": [
+        "In-memory only — no cross-process protection",
+        "No nonce format validation (empty string accepted)"
+      ]
+    },
+    {
+      "area": "identity-persistence",
+      "exposure": "Private keys stored in System DataSource (SQLite), marked [Sensitive]",
+      "trust_boundary": "SQLite file on disk, DataSource API",
+      "mitigations": [
+        "[Sensitive] attribute filters private keys from JsonStreamSerializer output",
+        "Keys stored under System actor's DataSource (not User/Service)"
+      ],
+      "gaps": [
+        "SQLite is unencrypted — disk access = key access",
+        "[Sensitive] only filters serialization output, not dot navigation or raw JsonSerializer",
+        "ExportAsync returns raw private key string — by design (user-sovereign)"
+      ]
+    },
+    {
+      "area": "provider-loading",
+      "exposure": "Assembly.LoadFrom loads arbitrary DLLs, discovers IProvider implementations via reflection",
+      "trust_boundary": ".pr file parameters (path comes from builder output)",
+      "mitigations": [
+        "Path resolved via FileSystem.Path.GetFullPath (relative to engine root)",
+        "Only IProvider implementations are instantiated",
+        "Only parameterless constructors are invoked"
+      ],
+      "gaps": [
+        "No signature verification on loaded DLLs",
+        "Assembly.LoadFrom is full RCE — constructor can run arbitrary code",
+        "Path traversal mitigated by GetFullPath but no sandbox enforcement"
+      ]
+    },
+    {
+      "area": "crypto-hashing",
+      "exposure": "Hash and verify actions with pluggable crypto providers",
+      "trust_boundary": "Provider registry — only registered providers can hash",
+      "mitigations": [
+        "DefaultCryptoProvider supports only keccak256 and sha256",
+        "Verify uses SequenceEqual (constant-time for equal-length byte arrays)",
+        "All methods return Data, never throw"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "data-envelope-transport",
+      "exposure": "Data.Envelope handles compression/decompression at transport boundary",
+      "trust_boundary": "Inbound compressed payloads from external sources",
+      "mitigations": [
+        "MaxDecompressedSize = 100MB prevents zip bombs",
+        "MaxRehydrationDepth = 128 prevents recursive nesting attacks",
+        "InvalidDataException caught in Decompress"
+      ],
+      "gaps": [
+        "Carry-forward: InvalidOperationException from RehydrateNestedData not caught (if Type parsing fails)"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "deserialization",
+      "vector": "Data.Signature has public setter ({ get; set; }). External Data arriving via channels could have an attacker-crafted SignedData attached. However, VerifyAsync validates the cryptographic signature against the Identity (public key), so a forged SignedData without valid crypto will fail step 9.",
+      "preconditions": "Attacker controls Data object arriving at a verify action. Attacker must also have a valid signing key to forge signatures.",
+      "impact": "Without a valid private key, forged SignedData fails crypto verification. The public setter is a design smell but not exploitable without key compromise.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Data.Envelope.cs"],
+      "exploit_sketch": "Attacker sets Data.Signature to a crafted SignedData with modified contracts/headers but the same crypto signature → fails because ToSigningBytes() includes all fields in the signature, so any field change invalidates the signature.",
+      "proposed_fix": "Consider making Signature { get; internal set; } to limit write access to the signing pipeline. Not blocking because crypto verification is the real gate.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "medium",
+      "category": "replay-attack",
+      "vector": "Nonce replay protection uses in-memory MemoryStepCache. In multi-process deployments, each process has independent cache — replay succeeds across processes.",
+      "preconditions": "Multiple PLang engine instances processing signed messages. Attacker captures a valid signed message and replays to a different instance.",
+      "impact": "Replay attack succeeds on a different instance. Single-process deployments are safe.",
+      "affected_files": ["PLang/Runtime2/modules/signing/SignedData.cs", "PLang/Runtime2/Engine/Cache/MemoryStepCache.cs"],
+      "exploit_sketch": "Instance A verifies message (nonce cached). Attacker sends same message to Instance B (no cache entry) → passes all checks including nonce.",
+      "proposed_fix": "Document that distributed deployments require a shared cache implementation (Redis). ICache is already pluggable. Add a comment to SignedData.VerifyAsync noting this limitation.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "code-execution",
+      "vector": "provider.load uses Assembly.LoadFrom to load arbitrary DLLs. A .pr file specifying a malicious DLL path gets full RCE via constructor execution.",
+      "preconditions": "Attacker must control .pr file content (requires compromising the builder or manually placing a .pr file). The malicious DLL must be on the filesystem.",
+      "impact": "Full RCE. But this is user-sovereign: .pr files are trusted, and the user chose to load the DLL. Same trust level as any C# assembly load.",
+      "affected_files": ["PLang/Runtime2/modules/provider/load.cs"],
+      "exploit_sketch": "PLang step: 'load provider ../../../malicious.dll' → builder writes to .pr → runtime calls Assembly.LoadFrom → RCE",
+      "proposed_fix": "No fix needed — this is by design. The user owns their .pr files. Document that provider.load is equivalent to Assembly.LoadFrom and carries full trust.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "race-condition",
+      "vector": "ToSigningBytes() temporarily nulls the Signature field, serializes, then restores it. Not thread-safe if SignedData is shared across threads.",
+      "preconditions": "SignedData instance accessed concurrently from multiple threads — one calling ToSigningBytes while another reads Signature.",
+      "impact": "Reader sees null Signature momentarily. PLang executes steps sequentially per context, so this is theoretical.",
+      "affected_files": ["PLang/Runtime2/modules/signing/SignedData.cs"],
+      "exploit_sketch": "Thread A: Signature=null → serialize → Signature=saved. Thread B reads Signature between null and restore → sees null.",
+      "proposed_fix": "Use a copy instead of mutation: serialize a temporary object with Signature=null rather than mutating this. Low priority — PLang is single-threaded per context.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 5,
+      "severity": "low",
+      "category": "input-validation",
+      "vector": "Nonce sourced from MemoryStack GUID. No validation that nonce is non-empty or has minimum entropy. Empty nonce maps to cache key 'nonce:' — all empty-nonce messages share the same cache key.",
+      "preconditions": "MemoryStack GUID returns empty or very short string (unlikely but not validated).",
+      "impact": "First empty-nonce message passes, all subsequent fail (fail-secure). Attacker can't exploit this — it's self-denying.",
+      "affected_files": ["PLang/Runtime2/modules/signing/SignedData.cs"],
+      "exploit_sketch": "If GUID somehow returns empty: first sign+verify works, second verify returns NonceReplay error. Self-denying, not exploitable.",
+      "proposed_fix": "Add guard: if (string.IsNullOrEmpty(nonce)) return error. Defense-in-depth, not blocking.",
+      "status": "open"
+    },
+    {
+      "id": 6,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "[Sensitive] attribute on IdentityVariable.PrivateKey only filters JsonStreamSerializer output. Raw JsonSerializer (DataSource persistence), dot navigation (%MyIdentity.PrivateKey%), and Data.Envelope serialization are not filtered.",
+      "preconditions": "User-sovereign: the user owns their keys. Dot navigation access is by design.",
+      "impact": "Private keys readable via dot navigation and stored in plaintext SQLite. This is the intended model — keys belong to the user.",
+      "affected_files": ["PLang/Runtime2/modules/identity/types.cs", "PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs"],
+      "exploit_sketch": "PLang step: 'write out %MyIdentity.PrivateKey%' → outputs private key. This is the user's prerogative.",
+      "proposed_fix": "No fix — user-sovereign design. Document that [Sensitive] is serialization-output only, not an access control mechanism.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 7,
+      "severity": "low",
+      "category": "deserialization",
+      "vector": "Header values compared via ToString(). Type confusion: int(1) matches string('1'). Attacker could substitute header value types if they control the verify action's Headers parameter.",
+      "preconditions": "Attacker controls the verify action's Headers dictionary (comes from .pr file parameters — trusted).",
+      "impact": "Minimal — both sides go through LLM builder, which produces consistent types. Cross-type matching is a loose comparison, not an exploit vector.",
+      "affected_files": ["PLang/Runtime2/modules/signing/SignedData.cs"],
+      "exploit_sketch": "Sign with Headers={count: 1 (int)}. Verify with Headers={count: '1' (string)}. ToString comparison matches. Not exploitable because attacker doesn't control both sides independently.",
+      "proposed_fix": "Consider JSON-based comparison instead of ToString. Low priority — not exploitable in practice.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 8,
+      "severity": "medium",
+      "category": "deserialization",
+      "vector": "Carry-forward from data-envelope-architecture: InvalidOperationException from RehydrateNestedData (if Type parsing fails in Decompress) not caught. Only JsonException and InvalidDataException are caught.",
+      "preconditions": "Malformed compressed payload at transport boundary where inner Data has an unparseable type field.",
+      "impact": "Unhandled exception escapes Decompress → caught by Step-level catch(Exception) safety net. Returns generic StepError instead of typed DecompressError.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Data.Envelope.cs"],
+      "exploit_sketch": "Send compressed Data with type field that triggers InvalidOperationException during rehydration → Decompress doesn't return Data.FromError, throws instead → Step catch handles it generically.",
+      "proposed_fix": "Add catch (InvalidOperationException ex) to Decompress pipeline alongside InvalidDataException.",
+      "status": "open"
+    }
+  ],
+  "summary": "The signing module is well-designed with a solid 9-step verification pipeline. The cryptographic foundation (Ed25519 via NSec) is sound. Key findings: (1) Data.Signature public setter is a design smell but not exploitable without key compromise — crypto verification is the real gate. (2) Nonce replay protection is single-process only — documented limitation, ICache is pluggable. (3) Provider.load is full RCE by design (user-sovereign). (4) Carry-forward InvalidOperationException gap in Data.Envelope.cs Decompress. No critical or high severity findings. Overall security posture: GOOD for the intended user-sovereign threat model."
+}

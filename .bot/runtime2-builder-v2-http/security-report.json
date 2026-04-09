@@ -1,0 +1,220 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-builder-v2-http",
+  "timestamp": "2026-03-23T22:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "http-response-parsing",
+      "exposure": "DefaultHttpProvider parses untrusted HTTP responses: JSON, XML, text, binary, application/plang. ReadAsStringAsync/ReadAsByteArrayAsync load entire response into memory. Streaming paths (SSE, NDJSON, bytes, plang) process chunks but accumulate SSE data buffers.",
+      "trust_boundary": "Network boundary \u2014 all response data is untrusted until signature verification (application/plang) or never trusted (other content types)",
+      "mitigations": [
+        "System.Text.Json used for JSON deserialization (no polymorphic gadget attacks)",
+        "application/plang responses require signature verification before trust",
+        "Unsigned requests are blocked from accepting application/plang responses (L432, L661)",
+        "Streaming plang lines are individually verified (L832-843)",
+        "ExecuteHttpAsync catches HttpRequestException, TaskCanceledException, IOException, FormatException (L258-270)",
+        "Timeout enforcement via CancellationTokenSource (L113-114)"
+      ],
+      "gaps": [
+        "No response body size limit \u2014 ReadAsStringAsync/ReadAsByteArrayAsync can OOM on large responses",
+        "Error messages include raw error body (L592) \u2014 large bodies create large error strings",
+        "SSE data buffer (StringBuilder at L759) has no size limit"
+      ]
+    },
+    {
+      "area": "signing-verification-pipeline",
+      "exposure": "SignedData.VerifyAsync is the 9-step trust gate for application/plang responses. Deserialized from untrusted wire data via [In] transport filter.",
+      "trust_boundary": "Ed25519 cryptographic signature is the gate \u2014 all fields before Signature are covered by the hash",
+      "mitigations": [
+        "9-step verification: type check, provider resolution, timeout, expiry, nonce replay, contracts, headers, data hash, Ed25519 signature",
+        "Nonce replay protection via engine cache with TTL matching timeout",
+        "Deterministic serialization via JsonPropertyOrder for signing bytes",
+        "ToSigningBytes excludes Signature field for deterministic hashing",
+        "Ed25519Provider catches FormatException, ArgumentException, CryptographicException, InvalidOperationException"
+      ],
+      "gaps": [
+        "ToSigningBytes is not thread-safe \u2014 nulls Signature temporarily during serialization",
+        "SignedData properties use internal set (not private set) \u2014 any PLang assembly code can modify after deserialization"
+      ]
+    },
+    {
+      "area": "provider-registry",
+      "exposure": "Type-keyed provider registry with DLL loading via Assembly.LoadFrom. Providers implement IProvider interfaces for signing, crypto, identity, HTTP.",
+      "trust_boundary": "User-sovereign: the user explicitly loads DLLs from their own filesystem via .pr instructions",
+      "mitigations": [
+        "ConcurrentDictionary for thread-safe registration",
+        "Duplicate name registration returns error (not silent replacement)",
+        "Cannot remove the default provider without setting a new default first",
+        "Provider type resolution via ResolveType is exhaustive switch, unknown returns null \u2192 error"
+      ],
+      "gaps": [
+        "SetDefault has a brief race window where two providers are marked as default (functional, not exploitable)"
+      ]
+    },
+    {
+      "area": "config-scope-chain",
+      "exposure": "Engine.Config resolves settings via scope chain: context \u2192 parent \u2192 engine defaults. Apply<TConfig> uses reflection to copy properties.",
+      "trust_boundary": "Config values come from .pr files (trusted) and runtime state",
+      "mitigations": [
+        "Apply<TConfig> only copies properties whose names exist in TConfig \u2014 cannot write arbitrary keys",
+        "Cast<T> catches InvalidCast, FormatException, OverflowException, ArgumentException \u2014 falls back to default",
+        "Scope chain walk is null-safe"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "transport-serialization",
+      "exposure": "TransportPropertyFilter re-includes [JsonIgnore]d properties for application/plang wire format. SensitivePropertyFilter strips [Sensitive] from output.",
+      "trust_boundary": "TransportPropertyFilter.ForInbound is only used for application/plang deserialization (_transportInOptions)",
+      "mitigations": [
+        "ForInbound only applied to _transportInOptions used in ParsePlangResponseAsync and StreamPlangAsync",
+        "SensitivePropertyFilter applied to JsonStreamSerializer for all output",
+        "[Sensitive] does not block code-level access (by-design: user can read %MyIdentity.PrivateKey%)"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "crypto-module",
+      "exposure": "Hash (keccak256, sha256) and verify operations on user-provided data",
+      "trust_boundary": "Input comes from action parameters (trusted .pr data) or from signing pipeline (internal)",
+      "mitigations": [
+        "Null input validation in hash.cs and verify.cs",
+        "Unsupported algorithm returns error, never throws",
+        "Base64 decode errors caught as FormatException in verify.cs",
+        "System.Security.Cryptography.SHA256 for sha256, Nethereum for keccak256"
+      ],
+      "gaps": []
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "high",
+      "category": "resource-exhaustion",
+      "vector": "A malicious HTTP server responds with an unbounded body (e.g., Content-Length: 10GB or chunked transfer with no end). DefaultHttpProvider.ParseResponseAsync calls ReadAsStringAsync() or ReadAsByteArrayAsync() which load the entire response into memory. Slow-drip attacks (1 byte/sec) bypass timeout protection.",
+      "preconditions": "PLang app makes an HTTP request to a server controlled by the attacker (or a compromised server)",
+      "impact": "OutOfMemoryException crashes the PLang runtime. Denial of service. The HTTP module's core job is safe external data handling \u2014 this is a gap in its primary responsibility.",
+      "affected_files": [
+        "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
+      ],
+      "exploit_sketch": "1. PLang step: 'get https://evil.example.com/api/data'\n2. Server responds with 200 OK, Content-Type: application/json, and slow-drips data at 1 byte/sec\n3. Timeout doesn't fire (connection is active). ReadAsStringAsync at L447 grows unboundedly \u2192 OOM",
+      "proposed_fix": "Add MaxResponseSize to Config (default 100MB). Create a size-limited ReadAsStringAsync wrapper that counts bytes and throws if exceeded. Apply to all ReadAsStringAsync/ReadAsByteArrayAsync call sites: L447 (JSON), L465 (XML), L474 (text), L481 (binary), L497 (plang), L589 (error body). The wrapper should use HttpCompletionOption.ResponseHeadersRead + stream copying with a byte counter.",
+      "status": "fixed"
+    },
+    {
+      "id": 2,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "SignedData.ToSigningBytes() at L243-252 temporarily sets Signature to null, serializes, then restores. If two threads call VerifyAsync on the same SignedData instance concurrently, one thread may serialize while Signature is null (correct) but the other may serialize while Signature is restored (incorrect, changes the signing bytes).",
+      "preconditions": "Same SignedData instance verified concurrently from two threads. Unlikely in normal single-request flow, but possible if a streaming response shares SignedData or if application/plang response is verified in parallel.",
+      "impact": "Signature verification could produce inconsistent results \u2014 false positive or false negative verification.",
+      "affected_files": [
+        "PLang/Runtime2/modules/signing/SignedData.cs"
+      ],
+      "exploit_sketch": "Theoretical: two concurrent verification paths on same SignedData. Thread A nulls Signature, Thread B reads non-null Signature into its signing bytes, Thread B's verification fails (false negative) or Thread A reads B's restored Signature (false positive).",
+      "proposed_fix": "Use a local copy instead of mutating the shared instance:\n```csharp\ninternal byte[] ToSigningBytes()\n{\n    // Serialize all properties except Signature using a custom converter or\n    // create a shallow copy with Signature = null\n    var copy = this with { Signature = null }; // if converted to record\n    return JsonSerializer.SerializeToUtf8Bytes(copy, SigningOptions);\n}\n```\nOr since SignedData is a class (not record), use a lock or serialize to a JsonDocument and remove the Signature property.",
+      "status": "fixed"
+    },
+    {
+      "id": 3,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "SSE streaming in StreamSSEAsync uses a StringBuilder (L759) that accumulates data: lines until a blank line boundary. A malicious server could send a continuous stream of 'data:' lines without ever sending a blank line, growing the StringBuilder unboundedly. Same class of issue as #1 \u2014 no size limits on untrusted external data.",
+      "preconditions": "PLang app streams SSE from an attacker-controlled server",
+      "impact": "Memory exhaustion. Mitigated by timeout (CancellationToken), but slow-drip can evade timeout.",
+      "affected_files": [
+        "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
+      ],
+      "exploit_sketch": "Server sends: data: chunk1\\ndata: chunk2\\ndata: chunk3\\n... (never sends blank line). StringBuilder grows until OOM.",
+      "proposed_fix": "Add a MaxSSEMessageSize constant or config value (e.g., 10MB). In StreamSSEAsync, check dataBuffer.Length before appending. If exceeded, emit error Data to callback via StdErr and break the stream.",
+      "status": "fixed"
+    },
+    {
+      "id": 4,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "ReadErrorResponseAsync at L589 calls ReadAsStringAsync on error responses with no size limit, then at L592 concatenates the raw error body into the error message. Same class of issue as #1 \u2014 the error path is also unbounded. A malicious server returning a 500 with a 10GB body will OOM on ReadAsStringAsync before truncation even matters.",
+      "preconditions": "Server returns a large error body (4xx/5xx with large response)",
+      "impact": "OutOfMemoryException on error path. The error body read is unbounded even though it's only used for an error message.",
+      "affected_files": [
+        "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
+      ],
+      "exploit_sketch": "Server responds 500 with chunked transfer, slow-drips 10GB. ReadAsStringAsync at L589 grows unboundedly \u2192 OOM.",
+      "proposed_fix": "Use the same size-limited read wrapper from finding #1 on error responses too. Additionally, truncate the error body to 4KB before embedding in the error message string.",
+      "status": "fixed"
+    },
+    {
+      "id": 5,
+      "severity": "low",
+      "category": "deserialization",
+      "vector": "JSON deserialization of untrusted responses uses JsonSerializer.Deserialize<object> at L451. System.Text.Json is safe against polymorphic type confusion, but deeply nested JSON structures (e.g., 1000-level nesting) can cause StackOverflowException during deserialization.",
+      "preconditions": "Server returns deeply nested JSON",
+      "impact": "StackOverflowException is unrecoverable in .NET \u2014 crashes the process.",
+      "affected_files": [
+        "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
+      ],
+      "exploit_sketch": "Server returns: {\"a\":{\"a\":{\"a\":...}}} nested 1000+ levels. System.Text.Json recursive descent overflows the stack.",
+      "proposed_fix": "Set JsonSerializerOptions.MaxDepth (default is 64, which is already set by System.Text.Json). Verify the default is sufficient \u2014 it is. This is actually already mitigated by System.Text.Json's default MaxDepth=64. Downgrade to informational.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 6,
+      "severity": "low",
+      "category": "deserialization",
+      "vector": "SignedData properties use 'internal set' instead of 'private set'. Any code within the PLang assembly can modify fields like Type, Algorithm, Identity, Signature after deserialization but before verification.",
+      "preconditions": "A code path within the PLang assembly (e.g., a different module or event handler) modifies SignedData between deserialization and VerifyAsync",
+      "impact": "Could bypass verification. However: (a) no such code path exists today, (b) the crypto check validates the complete envelope, so modifications would cause verification failure, not bypass.",
+      "affected_files": [
+        "PLang/Runtime2/modules/signing/SignedData.cs"
+      ],
+      "exploit_sketch": "Not exploitable with current code. Would require a new module or event handler that intentionally modifies SignedData.",
+      "proposed_fix": "Change to 'private set' with [JsonInclude] to restrict modification scope. Non-blocking \u2014 crypto is the real gate.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 7,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Nonce replay cache (MemoryStepCache) is per-engine instance. In a multi-engine deployment (e.g., load-balanced PLang services), a nonce used on engine A is not detected on engine B.",
+      "preconditions": "Multiple PLang engine instances behind a load balancer, attacker can replay signed requests to a different instance",
+      "impact": "Nonce replay attack across engine boundaries. Mitigated by timeout (signatures expire), but within the timeout window, replay is possible.",
+      "affected_files": [
+        "PLang/Runtime2/modules/signing/SignedData.cs",
+        "PLang/Runtime2/Engine/Cache/MemoryStepCache.cs"
+      ],
+      "exploit_sketch": "1. Attacker intercepts signed request with nonce N to engine A\n2. Replays identical request to engine B within timeout window\n3. Engine B's cache doesn't have nonce N \u2192 verification passes",
+      "proposed_fix": "Document that distributed deployments should use a shared cache provider (e.g., Redis) via the pluggable ICache interface. This is a deployment concern, not a code bug.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 8,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "SetDefault in provider registry (L174-180) sets the new default's IsDefault=true, then iterates to clear other defaults. During the loop, multiple providers may have IsDefault=true simultaneously.",
+      "preconditions": "Concurrent Get<T>() call during SetDefault execution",
+      "impact": "Get<T>() could return a different provider than expected during the brief window. Functional issue, not security-exploitable.",
+      "affected_files": [
+        "PLang/Runtime2/Engine/Providers/this.cs"
+      ],
+      "exploit_sketch": "Thread A calls SetDefault('custom'). Thread B calls Get<ISigningProvider>() during the loop. Thread B sees the old default still marked as default \u2192 gets old provider. Not exploitable for signature bypass since the old provider is still a valid registered provider.",
+      "proposed_fix": "Acceptable as-is. The race returns a valid provider, just potentially the old one for a microsecond.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 9,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "TryExtractSignedErrorIdentity at L551-552 has a bare catch that swallows all exceptions from deserializing untrusted error response bodies. While acceptable for best-effort behavior, it masks deserialization errors that could indicate an attack.",
+      "preconditions": "Server returns malformed JSON in error response body",
+      "impact": "Silent failure \u2014 no logging of potentially malicious content. The error response itself is still returned correctly.",
+      "affected_files": [
+        "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
+      ],
+      "exploit_sketch": "Not directly exploitable. The catch prevents crash but also prevents detection of malformed responses.",
+      "proposed_fix": "Non-blocking. Could log to StdErr on catch for observability, but the method is already best-effort by design.",
+      "status": "accepted-risk"
+    }
+  ],
+  "summary": "Security posture: PASS. All blocking findings from v1 fixed. Size-limited reads on all response paths (MaxResponseSize 100MB, MaxErrorBodySize 4KB), SSE buffer cap (MaxSSEBufferSize 10MB), thread-safe ToSigningBytes via TypeInfoResolver modifier. The signing pipeline and trust boundary are solid. 5 low findings remain as accepted risk."
+}

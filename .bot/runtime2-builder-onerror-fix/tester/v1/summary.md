@@ -39,6 +39,6 @@ The same PLang step `set %var% = %var% + 1` produced **3 different .pr structure
 3. Revert ConditionCompound `.build/` to runtime2 baseline
 
 ## Files
-- `Tests/Runtime2/ErrorRetryOnly/.build/timedretrygoal.pr` — broken .pr structure
-- `Tests/Runtime2/ErrorGoalFirst/.build/alwaysfails.pr` — 3-action pattern for increment
-- `Tests/Runtime2/ConditionCompound/.build/` — unintentional rebuild
+- `Tests/App/ErrorRetryOnly/.build/timedretrygoal.pr` — broken .pr structure
+- `Tests/App/ErrorGoalFirst/.build/alwaysfails.pr` — 3-action pattern for increment
+- `Tests/App/ConditionCompound/.build/` — unintentional rebuild

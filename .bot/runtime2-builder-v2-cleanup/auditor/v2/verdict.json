@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "FAIL — MemoryStack.Clone() fix introduces type-slicing regression for PathData and IdentityData. Neither overrides virtual Clone(), so they get cloned into plain Data, losing all subclass properties."
+}

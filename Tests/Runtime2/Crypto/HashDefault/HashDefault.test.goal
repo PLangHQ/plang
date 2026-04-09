@@ -1,0 +1,5 @@
+Start
+/ Test: hash string with default algorithm (keccak256), verify hash is non-empty
+- set %data% = "hello world"
+- hash %data%, write to %hash%
+- assert %hash% is not empty, "hash should produce non-empty result"

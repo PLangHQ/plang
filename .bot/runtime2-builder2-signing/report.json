@@ -1,0 +1,457 @@
+{
+  "branch": "runtime2-builder2-signing",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-obp-fix-session",
+      "bot": "coder",
+      "timestamp_start": "2026-03-20T21:00:00Z",
+      "timestamp_end": "2026-03-20T22:00:00Z",
+      "intent": "Fix 7 OBP violations + rename identity.getAll to identity.list",
+      "before": {
+        "assumptions": "All 7 violations identified in prior analysis are real and fixable without breaking existing tests.",
+        "risk": "Interface changes cascade to all implementations."
+      },
+      "plan": "Fix 7 OBP violations + rename identity.getAll \u2192 identity.list",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/modules/provider/load.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Non-generic Register to avoid reflection"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Providers/IIdentityProvider.cs",
+            "PLang/Runtime2/modules/identity/IdentityData.cs",
+            "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "GetOrCreateDefaultAsync on interface, extracted GenerateIdentity"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/modules/signing/SignedData.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Sign takes IdentityVariable, extracted ContractsMatch"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/modules/crypto/types.cs",
+            "PLang/Runtime2/modules/crypto/hash.cs",
+            "PLang/Runtime2/modules/crypto/verify.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "SerializeData/FormatHash moved to HashedData"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1795 tests pass",
+        "notes": "7 OBP fixes + 1 rename"
+      }
+    },
+    {
+      "id": "b2c3d4e5-code-analysis-v1",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-20T22:30:00Z",
+      "timestamp_end": "2026-03-20T23:15:00Z",
+      "intent": "Full 5-pass code analysis of signing/crypto/identity/provider modules",
+      "before": {
+        "assumptions": "Coder fixed 7 OBP violations. Analyzing full module set.",
+        "risk": "Large surface area, previous branches had provider return type issues."
+      },
+      "plan": "5-pass analysis: OBP, simplification, readability, behavioral reasoning, deletion test",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Providers/IKeyProvider.cs",
+            "PLang/Runtime2/Engine/Providers/Ed25519Provider.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "8 findings: IKeyProvider throws (high), duplication (medium), bare catch (medium)"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "NEEDS WORK \u2014 2 high, 2 medium, 4 low",
+        "notes": "Verdict: fail. Send back to coder."
+      }
+    },
+    {
+      "id": "c3d4e5f6-code-analysis-v2",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-20T23:30:00Z",
+      "timestamp_end": "2026-03-20T23:45:00Z",
+      "intent": "Re-review coder's fixes for v1 findings",
+      "before": {
+        "assumptions": "Coder addressed top 4 findings. Re-reviewing fix-introduced code for correctness and new issues.",
+        "risk": "Interface change (IKeyProvider) cascades to Ed25519Provider, DefaultIdentityProvider, and 7 test files."
+      },
+      "plan": "Verify each fix against original finding. Behavioral reasoning and deletion test on fix-introduced code only.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Providers/IKeyProvider.cs",
+            "PLang/Runtime2/Engine/Providers/Ed25519Provider.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 4 fixes verified: Data<KeyPair>, generic delegation, ResolveIdentityAsync, narrowed catch. No new issues."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS \u2014 all findings resolved",
+        "notes": "Verdict: pass. Ready for tester."
+      }
+    },
+    {
+      "id": "e5f6g7h8-tester-v1",
+      "bot": "tester",
+      "timestamp_start": "2026-03-21T09:45:00Z",
+      "timestamp_end": "2026-03-21T10:15:00Z",
+      "intent": "Test quality analysis of signing/provider/identity/crypto changes",
+      "before": {
+        "assumptions": "Codeanalyzer v2 passed. 1795 tests already green. Investigating test quality and coverage gaps.",
+        "risk": "New modules (signing, provider) may have tests that look green but miss critical paths."
+      },
+      "plan": "Run tests, collect coverage, analyze test quality: deletion test, weak assertions, missing error-path coverage, PLang test existence",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/signing/",
+            "PLang.Tests/Runtime2/Modules/provider/",
+            "PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Analyzed 97 test methods across 7 test files. Found 6 major coverage gaps and 3 weak assertions."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder2-signing/test-report.json",
+            ".bot/runtime2-builder2-signing/tester/v1/"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote test-report.json with 13 findings and coverage data"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL \u2014 6 major gaps, 3 weak assertions",
+        "notes": "Verdict: needs-fixes. Send back to coder for error-path tests."
+      }
+    },
+    {
+      "id": "f6g7h8i9-coder-v2",
+      "bot": "coder",
+      "timestamp_start": "2026-03-21T10:30:00Z",
+      "timestamp_end": "2026-03-21T11:00:00Z",
+      "intent": "Fix 11 of 13 tester findings: add error-path tests, strengthen assertions, cover untested code",
+      "before": {
+        "assumptions": "Tester found 13 issues. 11 are fixable via new tests. 2 skipped (load.cs needs real DLL, PLang tests need builder).",
+        "risk": "Low \u2014 only adding tests, no production code changes."
+      },
+      "plan": "Add 28 new tests: provider/list action coverage, UnknownType error paths, Ed25519 catch blocks, SignedData.Verify guards, ResolveType all branches, null-name guards, GetOrDefault/Has, SigningSettings defaults. Strengthen 3 weak assertions.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/provider/ProviderModuleTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "6 new tests: 3 list action, 1 remove UnknownType, 1 setDefault UnknownType"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/signing/Ed25519ProviderTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "4 new tests: invalid base64 sign/verify, SigningSettings defaults"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/signing/SignActionTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Strengthened 2 weak assertions with Error.Key checks"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/signing/VerifyActionTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "4 new SignedData.Verify tests, 1 strengthened assertion"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "16 new tests: 8 ResolveType, 4 null-name guards, 4 GetOrDefault/Has"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1831 tests pass (0 fail, 8 skipped)",
+        "notes": "28 new tests added. Skipped findings #10 (load.cs) and #12 (PLang tests)."
+      }
+    },
+    {
+      "id": "g7h8i9j0-tester-v2",
+      "bot": "tester",
+      "timestamp_start": "2026-03-21T10:45:00Z",
+      "timestamp_end": "2026-03-21T11:15:00Z",
+      "intent": "Re-validate after coder v2 addressed 11/13 tester findings",
+      "before": {
+        "assumptions": "Coder added 28 new tests. Need to verify they pass, coverage improved, and test quality is good.",
+        "risk": "Low \u2014 reviewing test-only changes."
+      },
+      "plan": "Run full suite, collect coverage, compare against v1 baseline, review new test quality",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/signing/",
+            "PLang.Tests/Runtime2/Modules/provider/",
+            "PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "28 new tests verified: all pass, coverage gaps closed, assertions check Error.Key"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder2-signing/test-report.json",
+            ".bot/runtime2-builder2-signing/tester/v2/"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated test-report.json: approved. 2 minor remaining."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS \u2014 1827 tests pass, coverage gaps resolved",
+        "notes": "Verdict: approved. Suggest security analyst next."
+      }
+    },
+    {
+      "id": "h8i9j0k1-security-v1",
+      "bot": "security",
+      "timestamp_start": "2026-03-21T11:30:00Z",
+      "timestamp_end": "2026-03-21T12:00:00Z",
+      "intent": "Full security audit of signing/crypto/identity/provider modules",
+      "before": {
+        "assumptions": "Code analyzer passed v2, tester passed v2 with 1827 tests. Analyzing security posture under PLang's user-sovereign threat model.",
+        "risk": "Crypto modules are security-critical. Incorrect severity ratings could either block good code or pass vulnerable code."
+      },
+      "plan": "Blue team: map 6 attack surfaces. Red team: 8 findings with exploit sketches. Align all findings to user-sovereign threat model. Carry-forward check against previous branches.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/signing/SignedData.cs",
+            "PLang/Runtime2/modules/signing/sign.cs",
+            "PLang/Runtime2/modules/signing/verify.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "9-step verification pipeline, ToSigningBytes mutation pattern, nonce replay, contract matching"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Providers/Ed25519Provider.cs",
+            "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Crypto implementation, identity persistence, provider registry thread safety"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/modules/provider/load.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Assembly.LoadFrom RCE assessment \u2014 by design under user-sovereign model"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Cache/MemoryStepCache.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Signature property setter, nonce cache, carry-forward Decompress exception gap"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder2-signing/security-report.json",
+            ".bot/runtime2-builder2-signing/security/v1/"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "8 findings: 0 critical, 0 high, 3 medium, 5 low. Verdict: PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS \u2014 no critical/high open findings",
+        "notes": "Signing pipeline cryptographically sound. Recommend auditor next."
+      }
+    },
+    {
+      "id": "4ae5995d-82ed-465c-9646-2c4998c83ed4",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-21T13:00:00Z",
+      "timestamp_end": "2026-03-21T13:45:00Z",
+      "intent": "Cross-cutting audit of signing/crypto/identity/provider modules",
+      "before": {
+        "assumptions": "All three prior reviewers (codeanalyzer, tester, security) gave PASS. Looking for cross-file contract gaps and review quality issues.",
+        "risk": "Large module surface (30+ files, 4 module families) \u2014 cross-file contracts are where bugs hide."
+      },
+      "plan": "Read all production code, trace cross-file contracts (IdentityData chain, SignedData pipeline, provider registration, ICache.TryAddAsync), assess review quality, run tests.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/signing/SignedData.cs",
+            "PLang/Runtime2/modules/signing/sign.cs",
+            "PLang/Runtime2/modules/signing/verify.cs",
+            "PLang/Runtime2/modules/identity/IdentityData.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Cross-file contract tracing: SignedData pipeline, IdentityData lazy resolution, Actor.Identity chain"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs",
+            "PLang/Runtime2/Engine/Providers/Ed25519Provider.cs",
+            "PLang/Runtime2/modules/provider/load.cs",
+            "PLang/Runtime2/modules/provider/remove.cs",
+            "PLang/Runtime2/modules/provider/setDefault.cs",
+            "PLang/Runtime2/modules/provider/list.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Provider registry contract: registration, resolution, type mapping consistency"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Cache/this.cs",
+            "PLang/Runtime2/Engine/Cache/MemoryStepCache.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Foundation changes: ICache.TryAddAsync, Signature property, SensitivePropertyFilter in envelope options"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder2-signing/auditor-report.json",
+            ".bot/runtime2-builder2-signing/auditor/v1/"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Audit report: 1 minor, 2 nits. Verdict: PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS \u2014 1 minor, 2 nits",
+        "notes": "All prior reviewers agreed with. No critical/major cross-file issues. Suggest docs bot next."
+      }
+    },
+    {
+      "id": "d1e2f3a4-docs-v1",
+      "bot": "docs",
+      "timestamp_start": "2026-03-21T16:00:00Z",
+      "timestamp_end": "2026-03-21T16:45:00Z",
+      "intent": "Document signing module, provider module, and supporting infrastructure",
+      "before": {
+        "assumptions": "All reviewers passed (auditor v2, tester v2, security v1). Code is stable. Documentation gaps exist for new signing/provider modules.",
+        "risk": "Low — documentation-only changes. Risk is stale docs if code changes again."
+      },
+      "plan": "Add XML docs to 12 files (23 gaps), add signing + provider sections to modules.md, add signing architecture to good_to_know.md, fix identity.getAll → identity.list in modules.md and README.md, write CHANGELOG.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/identity/types.cs",
+            "PLang/Runtime2/Engine/Providers/ISigningProvider.cs",
+            "PLang/Runtime2/Engine/Providers/IIdentityProvider.cs",
+            "PLang/Runtime2/Engine/Providers/Ed25519Provider.cs",
+            "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs",
+            "PLang/Runtime2/modules/provider/load.cs",
+            "PLang/Runtime2/modules/provider/remove.cs",
+            "PLang/Runtime2/modules/provider/setDefault.cs",
+            "PLang/Runtime2/modules/provider/list.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added 23 XML doc comments across 9 source files"
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/modules.md",
+            "Documentation/Runtime2/good_to_know.md",
+            "Documentation/Runtime2/README.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added signing + provider module sections, signing architecture, fixed identity.getAll → identity.list, updated file tree"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all 23 gaps filled, 2 minor flagged for tester (PLang examples)",
+        "notes": "Verdict: PASS. Code is ready to merge."
+      }
+    }
+  ]
+}

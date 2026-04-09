@@ -4,8 +4,14 @@ You are the PLang builder. The main build pass could not fully build this step. 
 
 ## Action Detail
 
-%step.actions.details.md%
+%actionDetails%
+{% if groupContext != "" %}
+## Group Context
 
+This step is part of a group of related steps. Understanding the flow helps build accurate parameters.
+
+%groupContext%
+{% endif %}
 ## Instructions
 
 1. Read the step and any previous validation errors
@@ -30,6 +36,7 @@ Action level:
 
 - Warning: you built it but want to flag something
 - Error: you could not build it
+- `missingVariable` is ALWAYS a warning, never an error. Variables can be set by called goals — you cannot see into sub-goals. Build the step and flag as a warning.
 
 ## Example
 
@@ -51,11 +58,57 @@ Response:
 }
 ```
 
+## Compound Conditions (and / or)
+
+When a step has a compound condition (e.g., `if %a% > 1 and %b% < 10`), split it into multiple actions within the same step:
+
+Step:
+```plang
+- if \%a\% > 1 and \%b\% < 10, call DoThing
+  <= actions: [{module: "condition", action: "if"}]
+```
+
+Response:
+```json
+{
+  "errors": [],
+  "warnings": [],
+  "actions": [
+    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%a\%"}, {"name": "Operator", "value": ">"}, {"name": "Right", "value": 1}], "return": [{"name": "__conditionReturn1__"}]},
+    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%b\%"}, {"name": "Operator", "value": "<"}, {"name": "Right", "value": 10}], "return": [{"name": "__conditionReturn2__"}]},
+    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%__conditionReturn1__\%"}, {"name": "Operator", "value": "and"}, {"name": "Right", "value": "\%__conditionReturn2__\%"}, {"name": "GoalIfTrue", "value": {"name": "DoThing"}, "type": "goal.call"}]}
+  ]
+}
+```
+
+Each sub-condition stores its bool result in `__conditionReturn1__`, `__conditionReturn2__`, etc. The final action combines them with `and`/`or` and carries the GoalIfTrue/GoalIfFalse.
+
+When splitting into multiple actions:
+- Sub-condition actions must NOT include GoalIfTrue or GoalIfFalse parameters — omit them entirely
+- Only the final combining action carries GoalIfTrue/GoalIfFalse
+- The original suggestion may have empty GoalIfTrue/GoalIfFalse — ignore those, the goal call moves to the final action
+- Do not report this as an error
+
+## Multi-action steps with return types
+
+When an action's return type has properties (shown as `returns: { ... }` in the action summary), use dot-path to access them. Always use `__conditionReturn__` as the temp variable name for intermediate results.
+
+Example: `if testfile.txt exists, call ProcessFile`
+```json
+{
+  "actions": [
+    {"module": "file", "action": "exists", "parameters": [{"name": "Path", "value": "testfile.txt", "type": "path"}], "return": [{"name": "__conditionReturn__"}]},
+    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%__conditionReturn__.Exists\%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": true, "type": "bool"}, {"name": "GoalIfTrue", "value": {"name": "ProcessFile"}, "type": "goal.call"}]}
+  ]
+}
+```
+
 ## Rules
 
 - Variables use \%name\% syntax — preserve them literally in all values including return
 - return includes the \% signs (e.g. "\%signature\%"), omit if none
+- When a step produces intermediate results (file checks, conditions), always use `__conditionReturn__` (or `__conditionReturn1__`, `__conditionReturn2__` for multiple) as the temp variable name — never invent custom names
 - Build data objects matching the DTO definitions exactly
 - If you cannot build a valid result, omit the data field and add an error
 - Actions within a step execute in order. A later action can reference the return variable of an earlier action in the same step.
-- Valid type names: string, int, long, float, double, decimal, bool, datetime, guid, json (for JSON objects/structures), json[] (for JSON arrays), list, dict, actor, goal.call. @var params expect \%variable\% values. Params with defaults are optional. For goal.call type, value is `{"name": "GoalName"}`. The system resolves PrPath post-build.
+- Valid type names: string, int, long, float, double, decimal, bool, datetime, guid, json (for JSON objects/structures), json[] (for JSON arrays), list, dict, actor, goal.call. %var% params expect \%variable\% values (e.g., "\%myVar\%"). Params with defaults are optional. For goal.call type, value is `{"name": "GoalName"}`. The system resolves PrPath post-build.

@@ -1,40 +1,47 @@
-{
-  "name": "HandleMockPost",
-  "steps": [
-    {
-      "index": 0,
-      "text": "event skip action with value \u0022post handled\u0022",
-      "lineNumber": 2,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "event",
-          "action": "skipAction",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "post handled",
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    }
-  ],
-  "subGoals": [],
-  "visibility": 1,
-  "path": "/HandleMockPost.goal",
-  "prPath": "/.build/handlemockpost.pr",
-  "hash": "36bb49288f9713270919dc7fe006fb62cfc983d3f132e4af41c6e850249cd44d",
-  "isSetup": false,
-  "isEvent": false,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "HandleMockPost"
-}
+[
+  {
+    "name": "HandleMockPost",
+    "description": "Skips the current action in response to the event, setting the skip value to \u0027post handled\u0027.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "event skip action with value \u0022post handled\u0022",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "event",
+            "action": "skipAction",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "post handled",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/HandleMockPost.goal",
+    "prPath": "/.build/handlemockpost.pr",
+    "hash": "d6c74eaca521f70aff90f198c9f46034e43d7bf98ecdf1feb9ae3475701d6fd3",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

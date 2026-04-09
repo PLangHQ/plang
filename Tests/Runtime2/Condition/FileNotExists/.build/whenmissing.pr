@@ -1,0 +1,52 @@
+[
+  {
+    "name": "WhenMissing",
+    "description": "WhenMissing goal: sets %result% to the literal string \u0022missing\u0022.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %result% = \u0022missing\u0022",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%result%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "missing",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/FileNotExists/WhenMissing.goal",
+    "prPath": "/FileNotExists/.build/whenmissing.pr",
+    "hash": "7d583ce279569ddf336cbb7c7453473420e4935986969420c7206fd300c1c73c",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

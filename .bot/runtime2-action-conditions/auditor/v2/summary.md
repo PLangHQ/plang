@@ -12,7 +12,7 @@ Verified all 4 v1 findings are resolved:
 
 3. **Finding #3 (minor) — WiderNumericType fallback**: RESOLVED. `DefaultEvaluator.cs:150-151` now uses `order.Length - 1` (decimal) for unknown numeric types. Test: `Evaluate_UnknownNumericType_DoesNotThrow` verifies ushort (not in NumericOrder) doesn't crash.
 
-4. **Finding #4 (nit) — Missing negative test**: RESOLVED. `CompareHandlerTests.Run_DoesNotSetConditionSignal` asserts `MemoryStack.Get("__condition__")` is null after Compare.Run().
+4. **Finding #4 (nit) — Missing negative test**: RESOLVED. `CompareHandlerTests.Run_DoesNotSetConditionSignal` asserts `Variables.Get("__condition__")` is null after Compare.Run().
 
 ### New Code Path Checklist (all pass)
 | New path | Test | Assertion | Could miss a bug? |

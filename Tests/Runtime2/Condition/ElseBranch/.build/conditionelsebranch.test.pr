@@ -1,0 +1,140 @@
+[
+  {
+    "name": "Start",
+    "description": "Sets %x% to 2, checks if %x% \u003E 100; if false calls WhenSmall, then asserts %result% equals \u0027small\u0027.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %x% = 2",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: else branch \u2014 false condition calls GoalIfFalse",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%x%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 2,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "if %x% \u003E 100, call WhenBig, else call WhenSmall",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "condition",
+            "action": "if",
+            "parameters": [
+              {
+                "name": "Left",
+                "value": "%x%",
+                "type": "data"
+              },
+              {
+                "name": "Operator",
+                "value": "\u003E",
+                "type": "string"
+              },
+              {
+                "name": "Right",
+                "value": 100,
+                "type": "int"
+              },
+              {
+                "name": "GoalIfTrue",
+                "value": {
+                  "name": "WhenBig"
+                },
+                "type": "goal.call"
+              },
+              {
+                "name": "GoalIfFalse",
+                "value": {
+                  "name": "WhenSmall"
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %result% equals \u0022small\u0022, \u0022else branch should execute when condition is false\u0022",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "small",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%result%",
+                "type": "data"
+              },
+              {
+                "name": "Message",
+                "value": "else branch should execute when condition is false",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/ElseBranch/ConditionElseBranch.test.goal",
+    "prPath": "/ElseBranch/.build/conditionelsebranch.test.pr",
+    "hash": "1e47a3ea8ece27ced425e78c62abeb15ec688a4e4e4b3cef98ab293a43b3efa7",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

@@ -1,0 +1,84 @@
+using global::App.modules.app;
+using global::App.Goals.Goal;
+
+namespace PLang.Tests.App.Modules.app;
+
+public class AppRunTests
+{
+    private global::App.@this _app = null!;
+
+    [Before(Test)]
+    public void Setup()
+    {
+        _app = new global::App.@this("/app");
+        _app.Goals.Add(new global::App.Goals.Goal.@this
+        {
+            Name = "RunTarget",
+            Path = "/RunTarget.goal"
+        });
+    }
+
+    [After(Test)]
+    public async Task Cleanup() => await _app.DisposeAsync();
+
+    [Test]
+    public async Task Run_GoalCall_ResolvesAndRuns()
+    {
+        var action = new run
+        {
+            Context = _app.Context,
+            GoalName = new GoalCall { Name = "RunTarget" }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+    }
+
+    [Test]
+    public async Task Run_MissingGoal_ReturnsError()
+    {
+        var action = new run
+        {
+            Context = _app.Context,
+            GoalName = new GoalCall { Name = "DoesNotExist" }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+    }
+
+    [Test]
+    public async Task Run_Step_ExecutesStep()
+    {
+        var step = new global::App.Goals.Goal.Steps.Step.@this
+        {
+            Text = "test step",
+            Index = 0
+        };
+        var action = new run
+        {
+            Context = _app.Context,
+            Step = step
+        };
+        var result = await action.Run();
+
+        // Step with no actions returns Ok
+        await Assert.That(result.Success).IsTrue();
+    }
+
+    [Test]
+    public async Task Run_NoInput_ReturnsError()
+    {
+        var action = new run
+        {
+            Context = _app.Context,
+            GoalName = null,
+            Step = null,
+            Action = null
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("MissingInput");
+    }
+}

@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "1 medium (timing side-channel in Verify — recommended fix), 3 low (accepted-risk). No critical/high findings." }

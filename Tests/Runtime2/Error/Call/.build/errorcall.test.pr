@@ -1,0 +1,65 @@
+[
+  {
+    "name": "Start",
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %caughtMessage% = \"\"",
+        "lineNumber": 3,
+        "indent": 0,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {"name": "Name", "value": "%caughtMessage%", "type": "string"},
+              {"name": "Value", "value": "", "type": "string"}
+            ]
+          }
+        ],
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "call ThrowTestError, on error call CatchError",
+        "lineNumber": 4,
+        "indent": 0,
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {"name": "GoalName", "value": {"name": "ThrowTestError"}, "type": "goal.call"}
+            ]
+          }
+        ],
+        "onError": {
+          "goal": {"name": "CatchError"}
+        },
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %caughtMessage% equals \"test error\"",
+        "lineNumber": 5,
+        "indent": 0,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {"name": "Expected", "value": "test error", "type": "string"},
+              {"name": "Actual", "value": "%caughtMessage%", "type": "string"}
+            ]
+          }
+        ],
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/ErrorCall.test.goal",
+    "prPath": "/.build/errorcall.test.pr",
+    "isSystem": false
+  }
+]

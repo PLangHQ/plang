@@ -1,0 +1,7 @@
+Start
+/ Test: export identity and verify non-empty result
+- archive identity 'TestExportId', force, on error ignore, force
+- create identity 'TestExportId', set as default
+- export identity 'TestExportId', write to %exported%
+- assert %exported% is not null
+- archive identity 'TestExportId', force

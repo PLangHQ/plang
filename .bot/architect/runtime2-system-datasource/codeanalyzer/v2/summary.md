@@ -8,8 +8,8 @@ Review of coder's fixes (commit `5e7797f0`) addressing all 8 findings from the v
 
 Verified each v1 finding against the coder's changes:
 
-- **All high-severity findings resolved**: SanitizeTableName now has adversarial-input tests (SQL injection, empty names, case normalization). Error propagation from SettingsData through MemoryStack tested with 2 integration tests.
-- **Clone() type-loss fixed**: MemoryStack.Clone() now preserves Data subclasses by reference via `GetType() != typeof(Data)` check. Safe because SettingsData is stateless.
+- **All high-severity findings resolved**: SanitizeTableName now has adversarial-input tests (SQL injection, empty names, case normalization). Error propagation from SettingsData through Variables tested with 2 integration tests.
+- **Clone() type-loss fixed**: Variables.Clone() now preserves Data subclasses by reference via `GetType() != typeof(Data)` check. Safe because SettingsData is stateless.
 - **Bare catches narrowed**: `catch` → `catch (JsonException)` in DeserializeValue, `catch` → `catch (SqliteException)` in EnableWalMode.
 - **Thread safety fixed**: `??=` → `Lazy<IDataSource>` with `IsValueCreated` guard in Dispose.
 - **14 new tests added** covering all previously untested paths.

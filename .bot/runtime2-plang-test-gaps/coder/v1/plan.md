@@ -2,7 +2,7 @@
 
 ## Goal
 
-Write 38 PLang `.test.goal` integration test suites in `Tests/Runtime2/` to close the gaps between what the runtime supports and what's actually tested. Each suite validates end-to-end behavior: `.goal` → builder → `.pr` → runtime execution.
+Write 38 PLang `.test.goal` integration test suites in `Tests/App/` to close the gaps between what the runtime supports and what's actually tested. Each suite validates end-to-end behavior: `.goal` → builder → `.pr` → runtime execution.
 
 ## Approach
 
@@ -19,12 +19,12 @@ Write 38 PLang `.test.goal` integration test suites in `Tests/Runtime2/` to clos
 
 | # | Suite | Location | What it tests |
 |---|-------|----------|---------------|
-| 1 | ErrorCall | `Tests/Runtime2/ErrorCall/` | `on error call GoalName` — standalone, no retry |
-| 2 | ErrorProps | `Tests/Runtime2/ErrorProps/` | `%__error__%`, `%__errorKey__%`, `%__errorStatusCode__%` access in error handler goal |
-| 3 | ErrorOrdering | `Tests/Runtime2/ErrorOrdering/` | RetryFirst vs GoalFirst — does retry or goal fire first? |
-| 4 | ErrorInHandler | `Tests/Runtime2/ErrorInHandler/` | Error thrown inside an error handler — does it propagate? |
-| 5 | ErrorNested | `Tests/Runtime2/ErrorNested/` | Inner goal has its own error handler — both layers work |
-| 6 | ErrorTypes | `Tests/Runtime2/ErrorTypes/` | Different error sources (throw, file not found) — error shape for each |
+| 1 | ErrorCall | `Tests/App/ErrorCall/` | `on error call GoalName` — standalone, no retry |
+| 2 | ErrorProps | `Tests/App/ErrorProps/` | `%__error__%`, `%__errorKey__%`, `%__errorStatusCode__%` access in error handler goal |
+| 3 | ErrorOrdering | `Tests/App/ErrorOrdering/` | RetryFirst vs GoalFirst — does retry or goal fire first? |
+| 4 | ErrorInHandler | `Tests/App/ErrorInHandler/` | Error thrown inside an error handler — does it propagate? |
+| 5 | ErrorNested | `Tests/App/ErrorNested/` | Inner goal has its own error handler — both layers work |
+| 6 | ErrorTypes | `Tests/App/ErrorTypes/` | Different error sources (throw, file not found) — error shape for each |
 
 **Note:** The builder has known limitations with `onError` step properties. If the builder can't generate correct `.pr`, we document the blocker and skip.
 
@@ -32,68 +32,68 @@ Write 38 PLang `.test.goal` integration test suites in `Tests/Runtime2/` to clos
 
 | # | Suite | Location | What it tests |
 |---|-------|----------|---------------|
-| 7 | ConditionCompound | `Tests/Runtime2/ConditionCompound/` | `if %x% > 5`, `if %name% contains "foo"`, compound `and`/`or` |
-| 8 | ForeachDictionary | `Tests/Runtime2/ForeachDictionary/` | Foreach over dictionary with `%key%` and `%value%` binding |
-| 9 | ForeachEmpty | `Tests/Runtime2/ForeachEmpty/` | Foreach over empty list — returns `itemCount: 0`, `completed: true` |
-| 10 | RecursionDepthLimit | `Tests/Runtime2/RecursionDepthLimit/` | Goal calls itself — should hit MaxDepth and error cleanly |
-| 11 | VariableScoping | `Tests/Runtime2/VariableScoping/` | Nested goal sets variable → caller sees it. Foreach item variable visible in called goal. |
-| 12 | ReturnMapping | `Tests/Runtime2/ReturnMapping/` | Action.Return maps result to named variable (not global side-effect) |
-| 13 | StepResult | `Tests/Runtime2/StepResult/` | `%__stepResult%` accessible after a step completes |
+| 7 | ConditionCompound | `Tests/App/ConditionCompound/` | `if %x% > 5`, `if %name% contains "foo"`, compound `and`/`or` |
+| 8 | ForeachDictionary | `Tests/App/ForeachDictionary/` | Foreach over dictionary with `%key%` and `%value%` binding |
+| 9 | ForeachEmpty | `Tests/App/ForeachEmpty/` | Foreach over empty list — returns `itemCount: 0`, `completed: true` |
+| 10 | RecursionDepthLimit | `Tests/App/RecursionDepthLimit/` | Goal calls itself — should hit MaxDepth and error cleanly |
+| 11 | VariableScoping | `Tests/App/VariableScoping/` | Nested goal sets variable → caller sees it. Foreach item variable visible in called goal. |
+| 12 | ReturnMapping | `Tests/App/ReturnMapping/` | Action.Return maps result to named variable (not global side-effect) |
+| 13 | StepResult | `Tests/App/StepResult/` | `%__stepResult%` accessible after a step completes |
 
 ### Batch 3 — Events (8 suites)
 
 | # | Suite | Location | What it tests |
 |---|-------|----------|---------------|
-| 14 | EventBeforeStep | `Tests/Runtime2/EventBeforeStep/` | `before step` fires before each step executes |
-| 15 | EventAfterStep | `Tests/Runtime2/EventAfterStep/` | `after step` fires after each step executes |
-| 16 | EventAfterAction | `Tests/Runtime2/EventAfterAction/` | `after action output.write` captures action parameters |
-| 17 | EventRemove | `Tests/Runtime2/EventRemove/` | Register event, fire once, remove, fire again — count stays at 1 |
-| 18 | EventMultiple | `Tests/Runtime2/EventMultiple/` | Two events on same hook — both fire |
-| 19 | EventPriority | `Tests/Runtime2/EventPriority/` | Higher priority event fires first — assert execution order |
-| 20 | EventWildcard | `Tests/Runtime2/EventWildcard/` | `before action file.*` matches file.read, file.write, etc. |
-| 21 | EventVarChange | `Tests/Runtime2/EventVarChange/` | `OnVariableChange` fires when variable is set (if supported) |
+| 14 | EventBeforeStep | `Tests/App/EventBeforeStep/` | `before step` fires before each step executes |
+| 15 | EventAfterStep | `Tests/App/EventAfterStep/` | `after step` fires after each step executes |
+| 16 | EventAfterAction | `Tests/App/EventAfterAction/` | `after action output.write` captures action parameters |
+| 17 | EventRemove | `Tests/App/EventRemove/` | Register event, fire once, remove, fire again — count stays at 1 |
+| 18 | EventMultiple | `Tests/App/EventMultiple/` | Two events on same hook — both fire |
+| 19 | EventPriority | `Tests/App/EventPriority/` | Higher priority event fires first — assert execution order |
+| 20 | EventWildcard | `Tests/App/EventWildcard/` | `before action file.*` matches file.read, file.write, etc. |
+| 21 | EventVarChange | `Tests/App/EventVarChange/` | `OnVariableChange` fires when variable is set (if supported) |
 
 ### Batch 4 — Robustness (5 suites) *(new — not in architect's plan)*
 
 | # | Suite | Location | What it tests |
 |---|-------|----------|---------------|
-| 22 | ConvertErrors | `Tests/Runtime2/ConvertErrors/` | Convert "abc" to int, null to DateTime — error shape |
-| 23 | AssertComplete | `Tests/Runtime2/AssertComplete/` | `equals`, `isTrue`, `isNotNull`, `contains` — the missing half |
-| 24 | SystemVariables | `Tests/Runtime2/SystemVariables/` | `%Now%`, `%NowUtc%`, `%GUID%` — dynamic, non-null, different per access |
-| 25 | ErrorChain | `Tests/Runtime2/ErrorChain/` | Retry fails → error goal fails → chain has both errors |
-| 26 | ForeachCancel | `Tests/Runtime2/ForeachCancel/` | Cancellation mid-iteration (may need special pattern) |
+| 22 | ConvertErrors | `Tests/App/ConvertErrors/` | Convert "abc" to int, null to DateTime — error shape |
+| 23 | AssertComplete | `Tests/App/AssertComplete/` | `equals`, `isTrue`, `isNotNull`, `contains` — the missing half |
+| 24 | SystemVariables | `Tests/App/SystemVariables/` | `%Now%`, `%NowUtc%`, `%GUID%` — dynamic, non-null, different per access |
+| 25 | ErrorChain | `Tests/App/ErrorChain/` | Retry fails → error goal fails → chain has both errors |
+| 26 | ForeachCancel | `Tests/App/ForeachCancel/` | Cancellation mid-iteration (may need special pattern) |
 
 ### Batch 5 — Caching (3 suites)
 
 | # | Suite | Location | What it tests |
 |---|-------|----------|---------------|
-| 27 | CacheSliding | `Tests/Runtime2/CacheSliding/` | Sliding expiration extends window on access |
-| 28 | CacheKey | `Tests/Runtime2/CacheKey/` | Custom cache key — same key hits, different key misses |
-| 29 | CacheDynamicKey | `Tests/Runtime2/CacheDynamicKey/` | Cache key contains `%variable%` — resolves dynamically |
+| 27 | CacheSliding | `Tests/App/CacheSliding/` | Sliding expiration extends window on access |
+| 28 | CacheKey | `Tests/App/CacheKey/` | Custom cache key — same key hits, different key misses |
+| 29 | CacheDynamicKey | `Tests/App/CacheDynamicKey/` | Cache key contains `%variable%` — resolves dynamically |
 
 ### Batch 6 — Goal Calls (4 suites)
 
 | # | Suite | Location | What it tests |
 |---|-------|----------|---------------|
-| 30 | GoalCallDynamic | `Tests/Runtime2/GoalCallDynamic/` | `call %goalName%` — goal name from variable |
-| 31 | GoalCallMissing | `Tests/Runtime2/GoalCallMissing/` | Call non-existent goal — error path, error key |
-| 32 | GoalCallRelative | `Tests/Runtime2/GoalCallRelative/` | Call goal from subdirectory — relative path resolution |
-| 33 | GoalCallReturn | `Tests/Runtime2/GoalCallReturn/` | Return value via `write to %var%` pattern |
+| 30 | GoalCallDynamic | `Tests/App/GoalCallDynamic/` | `call %goalName%` — goal name from variable |
+| 31 | GoalCallMissing | `Tests/App/GoalCallMissing/` | Call non-existent goal — error path, error key |
+| 32 | GoalCallRelative | `Tests/App/GoalCallRelative/` | Call goal from subdirectory — relative path resolution |
+| 33 | GoalCallReturn | `Tests/App/GoalCallReturn/` | Return value via `write to %var%` pattern |
 
 ### Batch 7 — Actors (3 suites)
 
 | # | Suite | Location | What it tests |
 |---|-------|----------|---------------|
-| 34 | ActorSwitch | `Tests/Runtime2/ActorSwitch/` | `actor="system"` / `actor="service"` — action runs under specified actor |
-| 35 | ActorDatasource | `Tests/Runtime2/ActorDatasource/` | Per-actor datasource isolation |
-| 36 | ActorContext | `Tests/Runtime2/ActorContext/` | Actor-specific context variables |
+| 34 | ActorSwitch | `Tests/App/ActorSwitch/` | `actor="system"` / `actor="service"` — action runs under specified actor |
+| 35 | ActorDatasource | `Tests/App/ActorDatasource/` | Per-actor datasource isolation |
+| 36 | ActorContext | `Tests/App/ActorContext/` | Actor-specific context variables |
 
 ### Batch 8 — Setup & Library (2 suites)
 
 | # | Suite | Location | What it tests |
 |---|-------|----------|---------------|
-| 37 | SetupGoal | `Tests/Runtime2/SetupGoal/` | Run-once semantics — may need special test pattern |
-| 38 | LibraryLoad | `Tests/Runtime2/LibraryLoad/` | `library.load` basic usage |
+| 37 | SetupGoal | `Tests/App/SetupGoal/` | Run-once semantics — may need special test pattern |
+| 38 | LibraryLoad | `Tests/App/LibraryLoad/` | `library.load` basic usage |
 
 ## Execution Strategy
 

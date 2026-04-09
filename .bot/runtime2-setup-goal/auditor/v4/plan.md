@@ -11,18 +11,18 @@ Coder v4 / Tester v4 PASS. This is the first auditor review of the `runtime2-set
 ## Files to review
 
 **New code:**
-- `PLang/Runtime2/Engine/Goals/Setup/this.cs` — Setup object
-- `PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs` — 18 setup tests
+- `PLang/App/Goals/Setup/this.cs` — Setup object
+- `PLang.Tests/App/Goals/Setup/SetupTests.cs` — 18 setup tests
 
 **Modified code:**
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` — Steps.RunAsync with run-once check
-- `PLang/Runtime2/Engine/Goals/Goal/Methods.cs` — Delegation to Steps.RunAsync
-- `PLang/Runtime2/Engine/Goals/this.cs` — EngineGoals.Setup property, AllIncludingSetup, filtering
-- `PLang/Runtime2/Engine/Context/PLangContext.cs` — Setup property, Clone
-- `PLang/Runtime2/Engine/Context/Actor.cs` — SettingsData shared registration
-- `PLang/Runtime2/Engine/this.cs` — SettingsVariable
+- `PLang/App/Goals/Goal/Steps/this.cs` — Steps.RunAsync with run-once check
+- `PLang/App/Goals/Goal/Methods.cs` — Delegation to Steps.RunAsync
+- `PLang/App/Goals/this.cs` — EngineGoals.Setup property, AllIncludingSetup, filtering
+- `PLang/App/Context/PLangContext.cs` — Setup property, Clone
+- `PLang/App/Context/Actor.cs` — SettingsData shared registration
+- `PLang/App/this.cs` — SettingsVariable
 - `PLang/Executor.cs` — Run2 setup call
-- `PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs` — Updated to User context
+- `PLang.Tests/App/Modules/settings/SettingsDataTests.cs` — Updated to User context
 
 ## Review checklist
 

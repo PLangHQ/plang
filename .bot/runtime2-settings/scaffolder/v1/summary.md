@@ -2,7 +2,7 @@
 
 ## What this is
 
-Type skeletons and failing tests for a strongly typed, goal-scoped module settings system in PLang Runtime2. The architect designed a system where modules declare `ISettings` classes and the source generator handles scope-aware resolution. This scaffolding defines the exact types, signatures, and file placements — the contract the coder works against.
+Type skeletons and failing tests for a strongly typed, goal-scoped module settings system in PLang App. The architect designed a system where modules declare `ISettings` classes and the source generator handles scope-aware resolution. This scaffolding defines the exact types, signatures, and file placements — the contract the coder works against.
 
 ## What was done
 
@@ -10,12 +10,12 @@ Type skeletons and failing tests for a strongly typed, goal-scoped module settin
 
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/Engine/Settings/ISettings.cs` | Marker interface for source generator detection |
-| `PLang/Runtime2/Engine/Settings/this.cs` | `@this` — registry, resolution logic, `For<T>()`, `Resolve<T>()`, `Set()` |
-| `PLang/Runtime2/Engine/Settings/Scope.cs` | Key-value store for one goal level (`Get`, `Set`, `Contains`) |
-| `PLang/Runtime2/Engine/Settings/ModuleView.cs` | `ModuleView<T>` — context-bound view with `Resolve<TValue>()` |
-| `PLang/Runtime2/actions/archive/Settings.cs` | First use case: `archive.Settings : ISettings` with `Max` (100MB), `Level` (Optimal) |
-| `PLang/Runtime2/actions/archive/types.cs` | Result type `settingsResult` |
+| `PLang/App/Settings/ISettings.cs` | Marker interface for source generator detection |
+| `PLang/App/Settings/this.cs` | `@this` — registry, resolution logic, `For<T>()`, `Resolve<T>()`, `Set()` |
+| `PLang/App/Settings/Scope.cs` | Key-value store for one goal level (`Get`, `Set`, `Contains`) |
+| `PLang/App/Settings/ModuleView.cs` | `ModuleView<T>` — context-bound view with `Resolve<TValue>()` |
+| `PLang/App/actions/archive/Settings.cs` | First use case: `archive.Settings : ISettings` with `Max` (100MB), `Level` (Optimal) |
+| `PLang/App/actions/archive/types.cs` | Result type `settingsResult` |
 
 **Note:** The `[Action("settings")]` handler was removed from source — it will be produced by the source generator from `archive.Settings`.
 
@@ -23,19 +23,19 @@ Type skeletons and failing tests for a strongly typed, goal-scoped module settin
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/this.cs` | Added `Settings` property + initialization in constructor |
-| `PLang/Runtime2/Engine/Context/PLangContext.cs` | Added `SettingsScope` property (nullable `Scope`) |
-| `PLang/Runtime2/Engine/Goals/Goal/Methods.cs` | Save/restore `SettingsScope` in `RunAsync` try/finally |
-| `PLang/Runtime2/GlobalUsings.cs` | Added `EngineSettings` and `SettingsScope` aliases |
+| `PLang/App/this.cs` | Added `Settings` property + initialization in constructor |
+| `PLang/App/Context/PLangContext.cs` | Added `SettingsScope` property (nullable `Scope`) |
+| `PLang/App/Goals/Goal/Methods.cs` | Save/restore `SettingsScope` in `RunAsync` try/finally |
+| `PLang/App/GlobalUsings.cs` | Added `EngineSettings` and `SettingsScope` aliases |
 
 ### Failing tests created
 
 | File | Tests |
 |------|-------|
-| `PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs` | 5 tests: set/get, null when missing, contains, case-insensitive |
-| `PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs` | 6 tests: class default, goal scope, parent inheritance, engine default, priority, child override |
-| `PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs` | 4 tests: returns view, class default, goal scope, thread safety |
-| `Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal` | PLang integration test |
+| `PLang.Tests/App/Settings/ScopeTests.cs` | 5 tests: set/get, null when missing, contains, case-insensitive |
+| `PLang.Tests/App/Settings/SettingsTests.cs` | 6 tests: class default, goal scope, parent inheritance, engine default, priority, child override |
+| `PLang.Tests/App/Settings/ModuleViewTests.cs` | 4 tests: returns view, class default, goal scope, thread safety |
+| `Tests/App/Settings/SetMaxGzipSize/Start.test.goal` | PLang integration test |
 
 ## Key design decisions (departures from architect)
 

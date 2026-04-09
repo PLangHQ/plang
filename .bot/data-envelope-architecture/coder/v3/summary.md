@@ -12,21 +12,21 @@ Data.cs was a monolithic 432-line file mixing four concerns: core data model, re
 
 | File | Concern | What moved |
 |------|---------|-----------|
-| `PLang/Runtime2/Engine/Memory/Data.cs` | Core | Name, Value, Type, Path, Parent, Context, Properties, constructor, GetValue, IsEmpty, Null, ToString, UnwrapJsonElement helpers, CleanName, BuildPath. Type class, Data\<T\>, DynamicData stay here. |
-| `PLang/Runtime2/Engine/Memory/Data.Result.cs` | Result/Error | Handled, Error, Warnings, Success, implicit bool, Ok(), FromError(), Merge() |
-| `PLang/Runtime2/Engine/Memory/Data.Navigation.cs` | Navigation | GetChild(), GetChildValue() |
-| `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` | Envelope | Signature (byte[]?), Verified (bool?), Phase 4 pipeline stubs |
+| `PLang/App/Memory/Data.cs` | Core | Name, Value, Type, Path, Parent, Context, Properties, constructor, GetValue, IsEmpty, Null, ToString, UnwrapJsonElement helpers, CleanName, BuildPath. Type class, Data\<T\>, DynamicData stay here. |
+| `PLang/App/Memory/Data.Result.cs` | Result/Error | Handled, Error, Warnings, Success, implicit bool, Ok(), FromError(), Merge() |
+| `PLang/App/Memory/Data.Navigation.cs` | Navigation | GetChild(), GetChildValue() |
+| `PLang/App/Memory/Data.Envelope.cs` | Envelope | Signature (byte[]?), Verified (bool?), Phase 4 pipeline stubs |
 
 ### Out view
 
-- Added `Out` to `View` enum in `PLang/Runtime2/Engine/View.cs`
+- Added `Out` to `View` enum in `PLang/App/View.cs`
 - Added `[Out]` attribute (same pattern as `[Store]`, `[LlmBuilder]`, `[Debug]`)
 - Tagged `Data.Properties` with `[Out]` — only serialized when Data leaves the system
 - Tagged `Data.Signature` with `[Out]` — only relevant on the wire
 
 ### Tests
 
-8 new tests in `PLang.Tests/Runtime2/Memory/DataTests.cs`:
+8 new tests in `PLang.Tests/App/Memory/DataTests.cs`:
 - Signature defaults to null, can be set
 - Verified defaults to null, can be set true/false
 - Signature has [Out] attribute
@@ -70,9 +70,9 @@ public partial class Data
 
 ## Files modified
 
-- `PLang/Runtime2/Engine/Memory/Data.cs` — trimmed to core, marked `partial`
-- `PLang/Runtime2/Engine/Memory/Data.Result.cs` — new
-- `PLang/Runtime2/Engine/Memory/Data.Navigation.cs` — new
-- `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` — new
-- `PLang/Runtime2/Engine/View.cs` — added `Out` enum value + `[Out]` attribute
-- `PLang.Tests/Runtime2/Memory/DataTests.cs` — 8 new tests
+- `PLang/App/Memory/Data.cs` — trimmed to core, marked `partial`
+- `PLang/App/Memory/Data.Result.cs` — new
+- `PLang/App/Memory/Data.Navigation.cs` — new
+- `PLang/App/Memory/Data.Envelope.cs` — new
+- `PLang/App/View.cs` — added `Out` enum value + `[Out]` attribute
+- `PLang.Tests/App/Memory/DataTests.cs` — 8 new tests

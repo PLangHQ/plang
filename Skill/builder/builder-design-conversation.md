@@ -11,7 +11,7 @@ The builder sits on top of the PLang Runtime, which uses an object-based archite
 - Modules expose a single entry point: `Execute(string method, object? data)`
 - Every module method accepts **one object** — two parameters are not allowed
 - The `data` parameter is typed: `{ type: "db.selectData", data: { ... } }`
-- The Runtime resolves `%variable%` syntax from MemoryStack at execution time
+- The Runtime resolves `%variable%` syntax from Variables at execution time
 - PLang handles type conversion automatically — no manual serialization
 - `.pr` files are the compiled JSON format that the Runtime executes
 

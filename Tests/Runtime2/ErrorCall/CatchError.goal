@@ -1,2 +1,0 @@
-CatchError
-- set %caughtMessage% = %__error__%

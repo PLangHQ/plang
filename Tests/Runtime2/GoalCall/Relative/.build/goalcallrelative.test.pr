@@ -1,0 +1,85 @@
+[
+  {
+    "name": "Start",
+    "description": "Calls sub/SubGoal from a subdirectory, then asserts that %subResult% equals the string \u0022from sub\u0022.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "call sub/SubGoal",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "call goal from subdirectory",
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "GoalName",
+                "value": {
+                  "name": "sub/SubGoal",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": "/sub/.build/subgoal.pr"
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %subResult% equals \u0022from sub\u0022",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "from sub",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%subResult%",
+                "type": "data"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/GoalCallRelative.test.goal",
+    "prPath": "/.build/goalcallrelative.test.pr",
+    "hash": "cb01eef210fee7de682ba2b2518a19d73b1aea2dc6f39fb6b7de168b0414c8b0",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

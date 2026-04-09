@@ -18,6 +18,6 @@ Add PLang integration tests for untested module actions and engine behaviors.
 - **ErrorHandling2** — LLM builder unreliably generates `onError` property; can't produce stable .pr files for error handling tests
 
 ## Verification
-- Build from `Tests/Runtime2/` root (critical: cwd = rootDirectory)
+- Build from `Tests/App/` root (critical: cwd = rootDirectory)
 - Read .pr files to verify step text matches action/module/parameters
 - Run `plang p !test` and verify all pass

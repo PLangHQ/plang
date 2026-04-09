@@ -1,0 +1,359 @@
+{
+  "branch": "runtime2-builder-v2-cleanup",
+  "sessions": [
+    {
+      "id": "cleanup-init",
+      "bot": "architect",
+      "timestamp_start": "2026-03-23T00:00:00Z",
+      "timestamp_end": "2026-03-23T00:00:00Z",
+      "intent": "Piece 5: Ingi-led code review and cleanup of pieces 1-4",
+      "before": {
+        "assumptions": "Pieces 1-4 (identity, crypto, signing, http) are complete and audited.",
+        "risk": "Low — cleanup and polish, no new functionality."
+      },
+      "plan": "Ingi reviews the code personally and directs cleanup via coder.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-cleanup/"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Branch and report setup for piece 5"
+        }
+      ],
+      "after": {
+        "status": "in-progress",
+        "health": "Branch created. Ingi driving review, coder executing changes.",
+        "notes": "Scope: pieces 1-4 plus engine/infra changes."
+      }
+    },
+    {
+      "id": "coder-v1-cleanup",
+      "bot": "coder",
+      "timestamp_start": "2026-03-24T00:00:00Z",
+      "timestamp_end": "2026-03-24T00:30:00Z",
+      "intent": "Engine folder cleanup: Errors rename, TypeMapping/Types consolidation, dead code removal",
+      "before": {
+        "assumptions": "Reviewed Engine folders. Found 3 issues.",
+        "risk": "Low — rename, deduplication, dead code deletion."
+      },
+      "plan": "1. Rename DataSourceError→SettingsError. 2. Consolidate TypeMapping/Types. 3. Delete unused PrParser.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Errors/SettingsError.cs", "PLang/Runtime2/Engine/Settings/SqliteSettingsStore.cs"],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "DataSourceError→SettingsError"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Types/this.cs", "PLang/Runtime2/Engine/Utility/TypeMapping.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Types delegates to TypeMapping"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Utility/PrParser.cs"],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "Zero references, dead code"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Both projects build with 0 errors.",
+        "notes": "TypeMapping remains static for source generator. Types is the OBP instance API."
+      }
+    },
+    {
+      "id": "codeanalyzer-v1",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-27T00:00:00Z",
+      "timestamp_end": "2026-03-27T01:00:00Z",
+      "intent": "Full 5-pass code analysis of cleanup branch changes",
+      "before": {
+        "assumptions": "~244 files changed. Major patterns: [Provider] attribute, Data-typed params, event consolidation, convert deletion, dead code removal.",
+        "risk": "Medium — large surface area, behavioral changes in identity/signing/http."
+      },
+      "plan": "5-pass analysis: OBP compliance, simplification, readability, behavioral reasoning, deletion test.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/CallStack/CallFrame.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/modules/assert/providers/DefaultAssertProvider.cs",
+            "PLang/Runtime2/modules/file/providers/DefaultFileProvider.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/Serializer/PlangSerializer.cs",
+            "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
+            "PLang/Runtime2/modules/identity/providers/DefaultIdentityProvider.cs",
+            "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full 5-pass analysis of all changed engine and module files"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "NEEDS WORK — 3 actionable findings, no OBP violations",
+        "notes": "Channels disposal gap, Data.Name setter, 464 lines of untested code (PlangSerializer, DefaultAssertProvider, DefaultFileProvider)"
+      }
+    },
+    {
+      "id": "codeanalyzer-v2",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-27T01:30:00Z",
+      "timestamp_end": "2026-03-27T01:35:00Z",
+      "intent": "Re-review coder fix for Channels disposal",
+      "before": {
+        "assumptions": "Coder fixed finding 1 (Channels disposal). Findings 2-3 not addressed.",
+        "risk": "Low — single line fix."
+      },
+      "plan": "Verify Channels disposal fix. Assess remaining findings.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified Channels.DisposeAsync() added at correct position"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — fix correct, remaining findings are tester scope or low-priority",
+        "notes": "Recommend tester next for coverage on PlangSerializer, DefaultAssertProvider, DefaultFileProvider"
+      }
+    },
+    {
+      "id": "tester-v2",
+      "bot": "tester",
+      "timestamp_start": "2026-03-27T10:00:00Z",
+      "timestamp_end": "2026-03-27T10:15:00Z",
+      "intent": "Test quality analysis of cleanup branch — coverage, false greens, missing tests",
+      "before": {
+        "assumptions": "Codeanalyzer flagged coverage gaps in PlangSerializer, DefaultAssertProvider, DefaultFileProvider. ~160 changed production files.",
+        "risk": "Medium — large cleanup with new actions, type changes, and behavioral changes."
+      },
+      "plan": "Run tests, collect coverage, hunt false greens in key modules, check new actions for coverage, verify step runner condition fix.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-cleanup/test-report.json"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Full test quality report with 8 findings"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — 3 new actions (module.remove, list.set, event.skipAction) have zero tests",
+        "notes": "1839 C# tests pass. Signing/identity tests excellent. DefaultFileProvider 100% (codeanalyzer concern resolved)."
+      }
+    },
+    {
+      "id": "security-v1",
+      "bot": "security",
+      "timestamp_start": "2026-03-27T12:00:00Z",
+      "timestamp_end": "2026-03-27T12:30:00Z",
+      "intent": "Full blue+red team security audit of cleanup branch",
+      "before": {
+        "assumptions": "642 files changed across signing, HTTP, identity, engine core, events, conditions, file, variable, list modules.",
+        "risk": "Medium — large surface area, crypto changes, new module patterns."
+      },
+      "plan": "Phase 1 (Blue): Map attack surface. Phase 2 (Red): Exploit sketches. Phase 3: Reports.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-cleanup/security-report.json"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full security audit"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — 0 critical, 0 high, 3 medium, 2 low",
+        "notes": "Two medium findings are contract violations. Third medium is accepted-risk nonce replay."
+      }
+    },
+    {
+      "id": "auditor-v1",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-27T13:00:00Z",
+      "timestamp_end": null,
+      "intent": "Cross-cutting integrity audit of cleanup branch",
+      "before": {
+        "assumptions": "Codeanalyzer (PASS), tester (PASS after fix), security (PASS) all completed. Large branch with ~30K lines changed across engine core, modules, and tests.",
+        "risk": "Medium — cross-file contracts in a large cleanup could have hidden gaps."
+      },
+      "plan": "Read all bot reports. Audit 4 cross-file areas (Settings→Config, Data hierarchy+clone, Library→Module, Provider pattern). Verify open security findings. Run tests. Write verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
+            "PLang/Runtime2/Engine/Memory/Properties.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Cross-file clone family audit, security finding verification"
+        },
+        {
+          "paths": [".bot/runtime2-builder-v2-cleanup/auditor-report.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor report with 5 findings"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — 1 major (DataList clone gap), 3 minor (security items), 1 nit (docs)",
+        "notes": "New cross-file finding: DataList<T> shared by reference in MemoryStack.Clone(). Recommend coder fixes before merge."
+      }
+    },
+    {
+      "id": "auditor-v2",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-27T14:00:00Z",
+      "timestamp_end": "2026-03-27T14:15:00Z",
+      "intent": "Re-review coder fixes for 5 auditor findings",
+      "before": {
+        "assumptions": "Coder fixed all 5 findings in 2 commits. Need to verify fixes don't introduce regressions.",
+        "risk": "Medium — clone family changes have high cross-file blast radius."
+      },
+      "plan": "Review each fix as fresh code. Check MemoryStack.Clone() change against all Data subclasses.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/FileSystem/PathData.cs",
+            "PLang/Runtime2/modules/identity/types.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Clone family regression check — PathData and IdentityData don't override Clone()"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — MemoryStack.Clone() fix introduces type-slicing regression for PathData and IdentityData",
+        "notes": "Fix: add Clone() overrides to PathData and IdentityData. Send back to coder."
+      }
+    },
+    {
+      "id": "auditor-v3",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-27T14:20:00Z",
+      "timestamp_end": "2026-03-27T14:30:00Z",
+      "intent": "Re-review PathData and IdentityData Clone() overrides",
+      "before": {
+        "assumptions": "Coder added Clone() overrides to both types.",
+        "risk": "Low — targeted additions, same pattern as DataList<T>."
+      },
+      "plan": "Verify Clone() overrides preserve all subclass properties. Check for missing base fields.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/FileSystem/PathData.cs",
+            "PLang/Runtime2/modules/identity/types.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Clone override completeness check"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — Clone family complete, 1 nit (missing base Error/Warnings/Signature)",
+        "notes": "All findings resolved. Recommend docs bot next."
+      }
+    },
+    {
+      "id": "docs-v1",
+      "bot": "docs",
+      "timestamp_start": "2026-03-27T15:30:00Z",
+      "timestamp_end": "2026-03-27T16:00:00Z",
+      "intent": "Full documentation pass for cleanup branch — XML docs, architecture docs, user-facing module docs",
+      "before": {
+        "assumptions": "All bots approved (auditor PASS, tester PASS, security PASS). 241 files changed with renames, new types, and new modules needing docs.",
+        "risk": "Low — documentation only, no code behavior changes."
+      },
+      "plan": "1. XML docs on new public types. 2. Update architecture docs (modules.md, good_to_know.md, README.md). 3. Write 6 new user-facing module docs. 4. Rewrite event.md. 5. Update index.md.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/module/remove.cs",
+            "PLang/Runtime2/modules/event/skipAction.cs",
+            "PLang/Runtime2/modules/event/on.cs",
+            "PLang/Runtime2/modules/Attributes.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "XML doc comments on new public types"
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/modules.md",
+            "Documentation/Runtime2/good_to_know.md",
+            "Documentation/Runtime2/README.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architecture docs: stale references (IdentityVariable, library, signing, Path, condition)"
+        },
+        {
+          "paths": [
+            "docs/modules/crypto.md",
+            "docs/modules/http.md",
+            "docs/modules/identity.md",
+            "docs/modules/signing.md",
+            "docs/modules/provider.md",
+            "docs/modules/module.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New user-facing module documentation"
+        },
+        {
+          "paths": [
+            "docs/modules/event.md",
+            "docs/modules/index.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rewrote event.md for consolidated pattern, updated index"
+        },
+        {
+          "paths": ["docs/modules/library.md"],
+          "type": "delete",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Replaced by module.md"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all documentation gaps filled",
+        "notes": "18 gaps found and filled. Build succeeds. Ready to merge."
+      }
+    }
+  ]
+}

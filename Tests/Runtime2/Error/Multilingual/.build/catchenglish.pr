@@ -1,0 +1,63 @@
+[
+  {
+    "name": "CatchEnglish",
+    "description": "Sets the %caughtEnglish% variable to true (with null/empty value as provided).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %caughtEnglish% = true",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%caughtEnglish%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "Type",
+                "value": "bool",
+                "type": "string"
+              }
+            ],
+            "return": [],
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/Multilingual/CatchEnglish.goal",
+    "prPath": "/Multilingual/.build/catchenglish.pr",
+    "hash": "c11b8da5be85fd1d87b8d4c084a19289aaded54eee8dfb3fe09760ef963b462c",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

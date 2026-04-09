@@ -1,0 +1,6 @@
+Start
+/ Test: render template with explicit parameters
+- set %title% = 'My Page'
+- render file 'page.html' with author='Ingi', write to %result%
+- assert %result% contains 'Title: My Page'
+- assert %result% contains 'Author: Ingi'

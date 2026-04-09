@@ -1,6 +1,6 @@
-using PLang.Runtime2.Engine.Context;
+using App.Context;
 
-namespace PLang.Runtime2.Engine.Settings;
+namespace App.Settings;
 
 /// <summary>
 /// Context-bound view of a module's settings. Returned by engine.Settings.For&lt;T&gt;(context).

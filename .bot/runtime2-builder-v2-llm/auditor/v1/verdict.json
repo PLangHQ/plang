@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "MaxToolCalls enforcement has batch-overshoot bug (tools execute past limit) and silent empty result on loop exit. 2 major, 2 minor, 1 nit."
+}

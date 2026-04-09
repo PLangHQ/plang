@@ -6,42 +6,42 @@ Address all findings from the code analyzer's v1 review. Fix code quality issues
 ## Changes
 
 ### 1. Fix bare `catch` in `SqliteDataSource.DeserializeValue` (Medium)
-**File:** `PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs`
+**File:** `PLang/App/DataSource/SqliteDataSource.cs`
 - Change `catch` → `catch (JsonException)` in `DeserializeValue()` (line 266)
 - Also change bare `catch` → `catch (SqliteException)` in `EnableWalMode()` (line 51) for consistency
 
-### 2. Fix MemoryStack.Clone() to preserve SettingsData type (Medium-High)
-**File:** `PLang/Runtime2/Engine/Memory/MemoryStack.cs`
+### 2. Fix Variables.Clone() to preserve SettingsData type (Medium-High)
+**File:** `PLang/App/Memory/Variables.cs`
 - In `Clone()`, detect `SettingsData` (and `DynamicData`) instances and preserve them by reference instead of creating plain `Data`.
 - SettingsData is stateless (it loads from DB each time) so sharing by reference is safe.
 - DynamicData is already a factory-style type, so same treatment.
 
 ### 3. Fix Actor.DataSource thread safety (Low)
-**File:** `PLang/Runtime2/Engine/Context/Actor.cs`
+**File:** `PLang/App/Context/Actor.cs`
 - Replace `??=` with `Lazy<IDataSource>` for thread-safe lazy initialization.
 
 ### 4. Add SanitizeTableName tests (High)
-**File:** `PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs`
+**File:** `PLang.Tests/App/Modules/datasource/DataSourceTests.cs`
 - Test that special characters are stripped from table names
 - Test that empty input falls back to "default_table"
 - Test SQL injection attempt (e.g., `"settings; DROP TABLE settings"`)
 
 ### 5. Add ClassifyException tests (Medium)
-**File:** `PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs`
+**File:** `PLang.Tests/App/Modules/datasource/DataSourceTests.cs`
 - Test each classification branch: locked, disk error, corrupt, permission, default
 
 ### 6. Add nested settings path test (Low)
-**File:** `PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs`
+**File:** `PLang.Tests/App/Modules/settings/SettingsDataTests.cs`
 - Test `Settings.Config.SubKey` pattern with JSON object value
 
-### 7. Add MemoryStack.Clone() preserves SettingsData test (Medium-High)
-**File:** `PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs`
-- Clone the System actor's MemoryStack, verify Settings still works in the clone
+### 7. Add Variables.Clone() preserves SettingsData test (Medium-High)
+**File:** `PLang.Tests/App/Modules/settings/SettingsDataTests.cs`
+- Clone the System actor's Variables, verify Settings still works in the clone
 
 ### 8. Add LazyParamsGenerator error propagation integration test (High)
-**File:** `PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs`
-- Simulate the generated code path: create parameters with `%Settings.MissingKey%`, resolve through MemoryStack, verify error propagation.
-- Note: We can't easily test the actual source-generated code in a unit test, but we CAN test the MemoryStack.Get() → SettingsData.GetChild() → AskError chain that the generated code calls.
+**File:** `PLang.Tests/App/Modules/settings/SettingsDataTests.cs`
+- Simulate the generated code path: create parameters with `%Settings.MissingKey%`, resolve through Variables, verify error propagation.
+- Note: We can't easily test the actual source-generated code in a unit test, but we CAN test the Variables.Get() → SettingsData.GetChild() → AskError chain that the generated code calls.
 
 ### 9. Update report.json
 Add a new session entry for v2.

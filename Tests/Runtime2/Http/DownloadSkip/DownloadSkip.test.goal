@@ -1,0 +1,8 @@
+Start
+/ Test: Download with IfExists=Skip, verify no re-download
+- save 'existing content' to 'skip-test.txt'
+- download https://httpbin.org/bytes/100, save to skip-test.txt, skip if exists, unsigned
+- read 'skip-test.txt', write to %content%
+- if %content% equals 'existing content' then
+    - write out 'File was not re-downloaded (skip worked)'
+- delete file 'skip-test.txt'

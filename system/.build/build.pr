@@ -1,0 +1,44 @@
+{
+  "name": "Build",
+  "steps": [
+    {
+      "index": 0,
+      "text": "call goal /system/builder/Build",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "Build",
+                "prPath": "/system/builder/.build/build.pr"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/system/Build.goal",
+  "prPath": "/system/.build/build.pr",
+  "hash": "",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Build"
+}

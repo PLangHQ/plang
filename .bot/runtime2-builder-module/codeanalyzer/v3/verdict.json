@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Describe() leaks [Provider] properties into LLM prompt (all modules); Step.Clone() drops Action fields" }

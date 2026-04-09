@@ -1,0 +1,109 @@
+[
+  {
+    "name": "AlwaysFails",
+    "description": "AlwaysFails adds 1 to %goalFirstAttempts% (writing back to the same variable) and then throws an error with message \u0022always fails\u0022.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "add 1 to %goalFirstAttempts%, write to %goalFirstAttempts%",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "list",
+            "action": "add",
+            "parameters": [
+              {
+                "name": "ListName",
+                "value": "%goalFirstAttempts%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 1,
+                "type": "long"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "atindex",
+                "value": -1,
+                "type": "int"
+              }
+            ]
+          },
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%goalFirstAttempts%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "%goalFirstAttempts%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "throw error \u0022always fails\u0022",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "error",
+            "action": "throw",
+            "parameters": [
+              {
+                "name": "Message",
+                "value": "always fails",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/AlwaysFails.goal",
+    "prPath": "/.build/alwaysfails.pr",
+    "hash": "20452d6d06df8961ba441d4dc18fc37c2e6dd04b2658568f70fb8b95f341268d",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

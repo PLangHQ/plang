@@ -11,7 +11,7 @@ Independently searched all .cs files for stale references across all 6 rename su
 
 | Surface | Stale refs | Status |
 |---------|-----------|--------|
-| `PLang.Runtime2.actions` namespace | 0 | Clean |
+| `App.actions` namespace | 0 | Clean |
 | `IClass` interface name | 0 | Clean |
 | `_handlers` field name | 0 | Clean |
 | `"HandlerError"` string literal | 0 | Clean |
@@ -21,7 +21,7 @@ Independently searched all .cs files for stale references across all 6 rename su
 ### Code quality check
 - `IAction.cs` (new, at `modules/IAction.cs`) — clean interface, correct namespace
 - `Libraries/this.cs` — `GetCodeGenerated` returns `(ICodeGenerated? Action, IError? Error)` consistently, error key is `"ActionError"`
-- `Library/this.cs` — `_actions` field, `Discover()` uses `"PLang.Runtime2.modules"` base namespace
+- `Library/this.cs` — `_actions` field, `Discover()` uses `"App.modules"` base namespace
 - `Action/Methods.cs` — tuple destructured as `var (action, error)`, no `.Handler` access
 - `ActionError.cs` — default key is `"ActionError"`, constructors consistent
 - `GlobalUsings.cs` — stale `IAction` entity alias removed from both PLang and PLang.Tests

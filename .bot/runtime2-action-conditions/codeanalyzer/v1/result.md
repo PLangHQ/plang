@@ -1,6 +1,6 @@
 # Code Analysis — Action-Based Conditions (Coder v1)
 
-## PLang/Runtime2/modules/condition/providers/IEvaluator.cs
+## PLang/App/modules/condition/providers/IEvaluator.cs
 
 ### OBP Violations
 None.
@@ -16,7 +16,7 @@ Minimal interface, correct abstraction.
 
 ---
 
-## PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs
+## PLang/App/modules/condition/providers/DefaultEvaluator.cs
 
 ### OBP Violations
 None. DefaultEvaluator is a pure logic class with no dependency on the object graph.
@@ -57,10 +57,10 @@ Two simplifications (seal the class, static readonly array). One medium-risk beh
 
 ---
 
-## PLang/Runtime2/modules/condition/if.cs
+## PLang/App/modules/condition/if.cs
 
 ### OBP Violations
-None. Navigation through `Context.Engine!`, `Context.MemoryStack` is correct. GoalCall is passed as-is to RunGoalAsync (navigate, don't pass).
+None. Navigation through `Context.Engine!`, `Context.Variables` is correct. GoalCall is passed as-is to RunGoalAsync (navigate, don't pass).
 
 ### Simplifications
 
@@ -84,7 +84,7 @@ Clean. 38 lines, clear flow: evaluate → signal → branch → return.
 
 2. **Line 26: `__condition__` signal timing** — Set *before* GoalIfTrue/GoalIfFalse runs. If the goal itself contains conditions with sub-steps, those would operate on a child context (via RunGoalAsync), so the parent's `__condition__` survives untouched. **Thread-safe.** The signal lifecycle is: If.Run sets → Actions.RunAsync returns merged result → Steps.RunAsync reads and removes. This is sequential within a single context.
 
-3. **Line 36: `Data.Ok(result)` where result is bool** — The coder documented that `Data.Merge` loses this bool (casts Value to `List<Data>`). The `__condition__` MemoryStack signal bypasses Merge entirely. The returned `Data.Ok(true)` is still useful for callers who don't go through Merge (e.g., direct `await action.RunAsync()`). Correct design.
+3. **Line 36: `Data.Ok(result)` where result is bool** — The coder documented that `Data.Merge` loses this bool (casts Value to `List<Data>`). The `__condition__` Variables signal bypasses Merge entirely. The returned `Data.Ok(true)` is still useful for callers who don't go through Merge (e.g., direct `await action.RunAsync()`). Correct design.
 
 ### Deletion Test
 All 8 IfHandlerTests cover the paths here. No untested code paths visible.
@@ -94,7 +94,7 @@ One simplification note (static evaluator), but it's a known placeholder per arc
 
 ---
 
-## PLang/Runtime2/modules/condition/compare.cs
+## PLang/App/modules/condition/compare.cs
 
 ### OBP Violations
 None.
@@ -117,7 +117,7 @@ Clean. 19 lines, single-purpose.
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
+## PLang/App/Goals/Goal/Steps/this.cs
 
 ### OBP Violations
 None. Steps owns its iteration loop (OBP rule 5). Sub-step logic lives where the loop is — correct placement.
@@ -136,7 +136,7 @@ None. Steps owns its iteration loop (OBP rule 5). Sub-step logic lives where the
 
 1. **Lines 67-76: `__condition__` consumption order** — The signal is checked *after* `step.RunAsync` completes and only when `HasIndentedChildren(i)` is true. If a non-condition step happens to set `__condition__` (a future bug or a plugin that writes to the same key), it would be consumed here and affect sub-step flow. **Mitigation:** The key name `__condition__` is internal convention. The double-underscore prefix signals "reserved." Low risk.
 
-2. **Line 69: `context.MemoryStack.Get("__condition__")` returns `Data?`** — The Get method returns a `Data` object. `conditionSignal.Value` extracts the inner value. If someone stored `Data.Ok(true)` instead of raw `true`, the Value would be `true`. But `If.Run()` stores via `MemoryStack.Set("__condition__", result)` where result is `bool`. The MemoryStack wraps it in `Data` internally. So `conditionSignal.Value` is the raw `bool`. Correct.
+2. **Line 69: `context.Variables.Get("__condition__")` returns `Data?`** — The Get method returns a `Data` object. `conditionSignal.Value` extracts the inner value. If someone stored `Data.Ok(true)` instead of raw `true`, the Value would be `true`. But `If.Run()` stores via `Variables.Set("__condition__", result)` where result is `bool`. The Variables wraps it in `Data` internally. So `conditionSignal.Value` is the raw `bool`. Correct.
 
 3. **Line 51: `step.Indent > skipBelowIndent`** — Uses strict greater-than. If two consecutive conditions are at the same indent level, the second one correctly resets `skipBelowIndent = null` (line 54) because its indent is NOT greater. This handles consecutive if-blocks at the same level correctly.
 

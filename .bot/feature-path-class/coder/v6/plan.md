@@ -23,7 +23,7 @@ Add `ArgumentNullException.ThrowIfNull()` for rawPath and engine.
 If source is a file and destination is an existing directory, append source filename to destination.
 
 ### #9 Nit — Test namespace
-Change `PLang.Tests.Runtime2.Memory` → `PLang.Tests.Runtime2.Modules.Path`.
+Change `PLang.Tests.App.Memory` → `PLang.Tests.App.Modules.Path`.
 
 ### #10 Nit — Explicit Pattern in List tests
 Set `Pattern = "*"` explicitly in all List test action records.
@@ -33,8 +33,8 @@ Set `Pattern = "*"` explicitly in all List test action records.
 - **#6** (operator ==) — Path is not used in collections/LINQ yet. Low risk. Can add later.
 
 ## Files to modify
-- `PLang/Runtime2/Engine/Memory/Path.cs` — all code fixes
-- `PLang.Tests/Runtime2/Modules/Path/PathTests.cs` — namespace, Pattern defaults, new tests for edge cases
+- `PLang/App/Memory/Path.cs` — all code fixes
+- `PLang.Tests/App/Modules/Path/PathTests.cs` — namespace, Pattern defaults, new tests for edge cases
 
 ## Verification
 1. `dotnet build` — 0 errors

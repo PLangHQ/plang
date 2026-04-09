@@ -21,7 +21,7 @@ This method:
 - Discards non-setup goals (they remain lazy-loadable via `GetAsync`)
 - Returns `Data.Ok()` or `Data.FromError()` on failure
 
-**Files**: `PLang/Runtime2/Engine/Goals/Setup/this.cs`
+**Files**: `PLang/App/Goals/Setup/this.cs`
 
 ### 2. Replace `LoadFromDirectoryAsync` with `DiscoverAsync` in Executor.Run2
 
@@ -41,7 +41,7 @@ await engine.Goals.Setup.DiscoverAsync(engine, cancellationToken);
 - Add `DiscoverAsync_NonSetupGoalsRemainLazyLoadable` — verifies non-setup goals can still be loaded via `GetAsync`
 - Update existing test if needed
 
-**Files**: `PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs`
+**Files**: `PLang.Tests/App/Goals/Setup/SetupTests.cs`
 
 ## Verification
 

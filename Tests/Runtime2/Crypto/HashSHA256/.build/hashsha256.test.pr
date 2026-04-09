@@ -1,0 +1,127 @@
+[
+  {
+    "name": "Start",
+    "description": "Sets %data% to \u0027hello world\u0027, hashes it using explicit sha256 into %hash%, then asserts the resulting hash is not empty.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %data% = \u0022hello world\u0022",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: hash string with explicit sha256 algorithm",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "hello world",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "hash %data% using sha256, write to %hash%",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "crypto",
+            "action": "hash",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%data%",
+                "type": "string"
+              },
+              {
+                "name": "Algorithm",
+                "value": "sha256",
+                "type": "string"
+              }
+            ],
+            "return": [
+              {
+                "name": "hash",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %hash% is not empty, \u0022sha256 hash should produce non-empty result\u0022",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%hash%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "sha256 hash should produce non-empty result",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/HashSHA256/HashSHA256.test.goal",
+    "prPath": "/HashSHA256/.build/hashsha256.test.pr",
+    "hash": "e83eb8a0c38286de08c91dcc6f3dfc3f86bfa97079e4fcec5880969447188917",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "PASS — critical finding resolved. IdentityData now throws on resolution failure instead of silent null. Test covers the throw path." }

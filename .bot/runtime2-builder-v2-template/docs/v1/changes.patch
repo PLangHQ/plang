@@ -1,0 +1,1657 @@
+diff --git a/Documentation/Runtime2/good_to_know.md b/Documentation/Runtime2/good_to_know.md
+index b6db0462..dd9cadc2 100644
+--- a/Documentation/Runtime2/good_to_know.md
++++ b/Documentation/Runtime2/good_to_know.md
+@@ -330,8 +330,9 @@ Add `IHttpProvider` to the provider interfaces list:
+ - `ICryptoProvider : IProvider`
+ - `IIdentityProvider : IProvider`
+ - `IHttpProvider : IProvider, IDisposable` — HTTP transport, disposable because it owns `HttpClient`
++- `ITemplateProvider : IProvider` — template rendering (default: `FluidProvider` using Liquid syntax)
+ 
+-PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`.
++PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"template"` / `"itemplateprovider"` → `ITemplateProvider`.
+ 
+ ---
+ 
+diff --git a/Documentation/Runtime2/modules.md b/Documentation/Runtime2/modules.md
+index 896a6e80..4bfc32fa 100644
+--- a/Documentation/Runtime2/modules.md
++++ b/Documentation/Runtime2/modules.md
+@@ -251,6 +251,7 @@ public static class TypeMapping
+ | `signing` | `sign`, `verify` | Data signing and signature verification |
+ | `provider` | `load`, `remove`, `setDefault`, `list` | Pluggable provider management |
+ | `http` | `request`, `download`, `upload`, `configure` | HTTP requests, file transfer, streaming, signing |
++| `ui` | `render` | Liquid template rendering (inline/file, includes, callGoal) |
+ | `module` | `add`, `remove` | Load/unload external handler libraries |
+ 
+ ### condition module — Details
+diff --git a/PLang.Tests/Runtime2/Modules/ui/RenderTests.cs b/PLang.Tests/Runtime2/Modules/ui/RenderTests.cs
+new file mode 100644
+index 00000000..79fbfe6b
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/ui/RenderTests.cs
+@@ -0,0 +1,727 @@
++using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.ui;
++using PLang.Runtime2.modules.ui.providers;
++
++namespace PLang.Tests.Runtime2.Modules.ui;
++
++public class RenderTests : IDisposable
++{
++    private readonly string _tempDir;
++    private readonly PLang.Runtime2.Engine.@this _engine;
++    private readonly FluidProvider _provider;
++
++    public RenderTests()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_ui_test_" + Guid.NewGuid().ToString("N"));
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLang.Runtime2.Engine.@this(_tempDir);
++        _provider = new FluidProvider();
++    }
++
++    public void Dispose()
++    {
++        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++        if (System.IO.Directory.Exists(_tempDir))
++            System.IO.Directory.Delete(_tempDir, true);
++    }
++
++    private PLangContext CreateContext()
++    {
++        return _engine.CreateContext();
++    }
++
++    private void WriteTemplateFile(string relativePath, string content)
++    {
++        var fullPath = System.IO.Path.Combine(_tempDir, relativePath);
++        var dir = System.IO.Path.GetDirectoryName(fullPath);
++        if (dir != null) System.IO.Directory.CreateDirectory(dir);
++        System.IO.File.WriteAllText(fullPath, content);
++    }
++
++    // --- Batch 1: Core Render Behavior ---
++
++    [Test]
++    public async Task Render_InlineTemplate_SubstitutesVariables()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "World"));
++        var action = new Render { Context = ctx, Template = "Hello {{ name }}", IsFile = false };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello World");
++    }
++
++    [Test]
++    public async Task Render_FileTemplate_ReadsAndRenders()
++    {
++        WriteTemplateFile("greeting.html", "Hello {{ name }}!");
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "PLang"));
++        var action = new Render { Context = ctx, Template = "greeting.html", IsFile = true };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello PLang!");
++    }
++
++    [Test]
++    public async Task Render_MissingFile_ReturnsError()
++    {
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = "nonexistent.html", IsFile = true };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++    }
++
++    [Test]
++    public async Task Render_NullTemplate_ReturnsValidationError()
++    {
++        // [IsNotNull] is enforced by the source generator before Run() is called.
++        // At the provider level, null would cause issues — test that the provider
++        // handles it gracefully if somehow invoked with null.
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = null!, IsFile = false };
++
++        var result = await _provider.Render(action);
++
++        // Provider should still return an error, not throw
++        await Assert.That(result.Success).IsFalse();
++    }
++
++    [Test]
++    public async Task Render_EmptyTemplate_ReturnsEmptyString()
++    {
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = "", IsFile = false };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("");
++    }
++
++    [Test]
++    public async Task Render_LiquidSyntaxError_ReturnsErrorWithPosition()
++    {
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = "Hello {{ ", IsFile = false };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("TemplateError");
++    }
++
++    // --- Batch 2: Variable Resolution ---
++
++    [Test]
++    public async Task Render_MemoryStackVariables_AccessibleInTemplate()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("greeting", "Hello"));
++        ctx.MemoryStack.Put(new Data("target", "World"));
++        var action = new Render { Context = ctx, Template = "{{ greeting }} {{ target }}", IsFile = false };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello World");
++    }
++
++    [Test]
++    public async Task Render_ExplicitParams_OverrideMemoryStack()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "MemoryValue"));
++        var overrideParam = new Data("name", "ParamValue");
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Hello {{ name }}",
++            IsFile = false,
++            Parameters = new List<Data> { overrideParam }
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello ParamValue");
++    }
++
++    [Test]
++    public async Task Render_ExplicitParams_CreateAliases()
++    {
++        var ctx = CreateContext();
++        var aliasParam = new Data("title", "My Page");
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Title: {{ title }}",
++            IsFile = false,
++            Parameters = new List<Data> { aliasParam }
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Title: My Page");
++    }
++
++    [Test]
++    public async Task Render_ScopedVars_SkippedFromMemoryStack()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("visible", "yes"));
++        ctx.MemoryStack.Put(new Data("!hidden", "secret"));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "visible={{ visible }} hidden={{ hidden }}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        // !hidden should not be accessible as "hidden" in the template
++        await Assert.That(result.Value?.ToString()).IsEqualTo("visible=yes hidden=");
++    }
++
++    // --- Batch 3: Custom Tags & Partials ---
++
++    [Test]
++    public async Task Render_CallGoal_ExecutesGoalAndInsertsResult()
++    {
++        // Create a real goal that sets a variable — the goal result is the last step's Data
++        var goal = new Goal
++        {
++            Name = "Greeter",
++            Path = "/Greeter.goal",
++            Steps = new GoalSteps
++            {
++                MakeStep("variable", "set",
++                    new Dictionary<string, object?> { { "name", "greeting" }, { "value", "Hello from goal" } },
++                    index: 0, text: "set greeting")
++            }
++        };
++        _engine.Goals.Add(goal);
++
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Result: {% callGoal 'Greeter' %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        // The goal sets a variable — its last step result is Data.Ok with the set value
++        // callGoal writes Data.Value?.ToString() to output
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).DoesNotContain("[Error:");
++    }
++
++    [Test]
++    public async Task Render_CallGoal_GoalNotFound_ShowsErrorInOutput()
++    {
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Before {% callGoal 'Missing' %} After",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        // Goal not found: either inline error text or Data error
++        if (result.Success)
++        {
++            var output = result.Value?.ToString() ?? "";
++            await Assert.That(output).Contains("[Error:");
++        }
++        else
++        {
++            await Assert.That(result.Error).IsNotNull();
++        }
++    }
++
++    [Test]
++    public async Task Render_Include_RendersPartialInline()
++    {
++        WriteTemplateFile("partial.html", "I am a partial");
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Before {% include 'partial.html' %} After",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).Contains("I am a partial");
++    }
++
++    [Test]
++    public async Task Render_Include_InheritsVariables()
++    {
++        WriteTemplateFile("greet.html", "Hello {{ name }}");
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "World"));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% include 'greet.html' %}!",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).Contains("Hello World");
++    }
++
++    // --- Batch 4: Provider & Path Resolution ---
++
++    [Test]
++    public async Task Render_CustomProvider_IsUsed()
++    {
++        var customProvider = new StubTemplateProvider();
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = "anything", IsFile = false };
++
++        var result = await customProvider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("stub-rendered");
++    }
++
++    [Test]
++    public async Task Render_FilePathRelativeToGoalDir()
++    {
++        // Create a template in a subdirectory
++        WriteTemplateFile("goals/templates/page.html", "Page content");
++        var ctx = CreateContext();
++        // Simulate a goal at goals/MyGoal.goal by setting Goal.Path
++        // PathData resolves relative to goal's directory
++        var action = new Render { Context = ctx, Template = "goals/templates/page.html", IsFile = true };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Page content");
++    }
++
++    [Test]
++    public async Task Render_FilePathAbsolute_ResolvesFromRoot()
++    {
++        WriteTemplateFile("templates/abs.html", "Absolute content");
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = "/templates/abs.html", IsFile = true };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Absolute content");
++    }
++
++    // --- Batch 5: Complex Data Types in Templates ---
++
++    [Test]
++    public async Task Render_DotNavigation_AccessesObjectProperties()
++    {
++        var ctx = CreateContext();
++        var user = new { name = "Alice", age = 30 };
++        ctx.MemoryStack.Put(new Data("user", user));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{{ user.name }} is {{ user.age }}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Alice is 30");
++    }
++
++    [Test]
++    public async Task Render_ListIteration_WorksInForLoop()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("items", new List<string> { "a", "b", "c" }));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% for item in items %}{{ item }}{% endfor %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("abc");
++    }
++
++    [Test]
++    public async Task Render_NullVariable_RendersEmpty()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", null));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Hello {{ name }}!",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello !");
++    }
++
++    [Test]
++    public async Task Render_UndefinedVariable_RendersEmpty()
++    {
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Hello {{ missing }}!",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello !");
++    }
++
++    [Test]
++    public async Task Render_DataObject_ExposesValueNotWrapper()
++    {
++        var ctx = CreateContext();
++        // Data wraps a complex object — template should navigate the inner object, not Data properties
++        var user = new { name = "Alice", age = 30 };
++        ctx.MemoryStack.Put(new Data("user", user));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{{ user.name }} is {{ user.age }}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        // Should see inner object properties, not Data.Name/Data.Value/Data.Error etc.
++        await Assert.That(output).IsEqualTo("Alice is 30");
++    }
++
++    [Test]
++    public async Task Render_NullDotNavigation_NoException()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("user", null));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Hello {{ user.name }}!",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        // Should not throw — renders empty for null navigation
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello !");
++    }
++
++    // --- Batch 6: callGoal Edge Cases ---
++
++    [Test]
++    public async Task Render_CallGoal_EmptyGoalReturnsEmptyOutput()
++    {
++        // An empty goal (no steps) returns Data.Ok() — callGoal writes "" to output
++        var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
++        _engine.Goals.Add(goal);
++
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Before{% callGoal 'EmptyGoal' %}After",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        // Empty goal produces no output — "BeforeAfter"
++        await Assert.That(output).DoesNotContain("[Error:");
++    }
++
++    [Test]
++    public async Task Render_CallGoal_GoalNameFromVariable()
++    {
++        // callGoal can use a Liquid variable for the goal name
++        var goal = new Goal { Name = "DynamicGoal", Path = "/DynamicGoal.goal" };
++        _engine.Goals.Add(goal);
++
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("goalName", "DynamicGoal"));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% callGoal goalName %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).DoesNotContain("[Error:");
++    }
++
++    [Test]
++    public async Task Render_CallGoal_SuccessWritesValueToOutput()
++    {
++        // Goal that sets a variable — verify the result value appears in template output
++        var goal = new Goal
++        {
++            Name = "GetNumber",
++            Path = "/GetNumber.goal",
++            Steps = new GoalSteps
++            {
++                MakeStep("variable", "set",
++                    new Dictionary<string, object?> { { "name", "num" }, { "value", 42 } },
++                    index: 0, text: "set num")
++            }
++        };
++        _engine.Goals.Add(goal);
++
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Number: {% callGoal 'GetNumber' %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).DoesNotContain("[Error:");
++        await Assert.That(output).Contains("42");
++    }
++
++    // --- Batch 7: Include Edge Cases ---
++
++    [Test]
++    public async Task Render_Include_MissingPartial_ReturnsError()
++    {
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% include 'nonexistent.html' %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        // Fluid throws FileNotFoundException for missing includes — caught as RenderError
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("RenderError");
++    }
++
++    [Test]
++    public async Task Render_Include_NestedPathResolvesRelativeToPartial()
++    {
++        // Fluid resolves includes from the FileProvider root, not relative to the partial
++        WriteTemplateFile("sub/a.html", "A{% include 'sub/b.html' %}");
++        WriteTemplateFile("sub/b.html", "B");
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% include 'sub/a.html' %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).Contains("A");
++        await Assert.That(output).Contains("B");
++    }
++
++    // --- Batch 8: Security & Encoding ---
++
++    [Test]
++    public async Task Render_HtmlInVariable_IsEscapedByDefault()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "<script>alert(1)</script>"));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{{ name }}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        // Should be HTML-escaped
++        await Assert.That(output).DoesNotContain("<script>");
++        await Assert.That(output).Contains("&lt;script&gt;");
++    }
++
++    // --- Batch 9: Auto-detect (LooksLikeFilePath coverage) ---
++
++    [Test]
++    public async Task Render_IsFileNull_InlineWithLiquidSyntax_TreatedAsInline()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "World"));
++        // IsFile=null + template contains {{ — auto-detect should treat as inline
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Hello {{ name }}!"
++            // IsFile not set — defaults to null
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello World!");
++    }
++
++    [Test]
++    public async Task Render_IsFileNull_FilePathAutoDetected()
++    {
++        WriteTemplateFile("auto.html", "Auto-detected {{ greeting }}");
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("greeting", "Hi"));
++        // IsFile=null + template looks like a file path (has extension, no Liquid syntax)
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "auto.html"
++            // IsFile not set — auto-detect should find the file
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Auto-detected Hi");
++    }
++
++    [Test]
++    public async Task Render_IsFileNull_NoExtension_TreatedAsInline()
++    {
++        var ctx = CreateContext();
++        // IsFile=null + no file extension — auto-detect should treat as inline content
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "just plain text with no extension"
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("just plain text with no extension");
++    }
++
++    // --- Batch 10: Goal-relative include resolution (GetTemplateBaseDir coverage) ---
++
++    [Test]
++    public async Task Render_IncludeResolvesFromGoalDirectory()
++    {
++        // Create a goal in a subdirectory and a partial next to it
++        WriteTemplateFile("goals/templates/footer.html", "Footer content");
++        var goal = new Goal
++        {
++            Name = "SubGoal",
++            Path = "goals/SubGoal.goal"
++        };
++        _engine.Goals.Add(goal);
++
++        var ctx = CreateContext();
++        ctx.Goal = goal;
++        // The include should resolve relative to the goal's directory (goals/)
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% include 'templates/footer.html' %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).Contains("Footer content");
++    }
++
++    // --- Helper for creating steps (from EngineTests pattern) ---
++
++    private static Step MakeStep(string actionClass, string method, object? parameters = null, int index = 0, string text = "")
++    {
++        return new Step
++        {
++            Index = index,
++            Text = text,
++            Actions = new StepActions
++            {
++                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
++                {
++                    Module = actionClass,
++                    ActionName = method,
++                    Parameters = parameters is IDictionary<string, object?> dict
++                        ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
++                        : new List<Data>(),
++                    Return = null
++                }
++            }
++        };
++    }
++
++    // --- Stub provider for swap test ---
++
++    private class StubTemplateProvider : ITemplateProvider
++    {
++        public string Name => "stub";
++        public bool IsDefault { get; set; }
++
++        public Task<Data> Render(Render action)
++        {
++            return Task.FromResult(Data.Ok((object)"stub-rendered"));
++        }
++    }
++}
+diff --git a/PLang/PLang.csproj b/PLang/PLang.csproj
+index f2748c0a..edd3e2ac 100644
+--- a/PLang/PLang.csproj
++++ b/PLang/PLang.csproj
+@@ -66,6 +66,7 @@
+     <PackageReference Include="DeepCloner" Version="0.10.4" />
+     <PackageReference Include="Epiforge.Extensions.Components" Version="2.0.0" />
+     <PackageReference Include="Fizzler.Systems.HtmlAgilityPack" Version="1.2.1" />
++    <PackageReference Include="Fluid.Core" Version="2.31.0" />
+     <PackageReference Include="HtmlSanitizer" Version="9.0.884" />
+     <PackageReference Include="IdGen" Version="3.0.7" />
+     <PackageReference Include="IDisposableAnalyzers" Version="4.0.8">
+diff --git a/PLang/Runtime2/Engine/FileSystem/PathData.cs b/PLang/Runtime2/Engine/FileSystem/PathData.cs
+index a70f6796..01611e5a 100644
+--- a/PLang/Runtime2/Engine/FileSystem/PathData.cs
++++ b/PLang/Runtime2/Engine/FileSystem/PathData.cs
+@@ -134,9 +134,18 @@ public class PathData : Data
+ 
+     public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(_absolutePath);
+ 
+-    public override Data Clone() => new PathData(_absolutePath, _fs, Value, Source)
++    public override Data Clone()
+     {
+-        Name = Name,
+-        Properties = Properties.Clone()
+-    };
++        var clone = new PathData(_absolutePath, _fs, Value, Source)
++        {
++            Name = Name,
++            Properties = Properties.Clone()
++        };
++        clone.Error = Error;
++        clone.Handled = Handled;
++        clone.Warnings = Warnings != null ? new List<Engine.Info>(Warnings) : null;
++        clone.Signature = Signature;
++        clone.Context = Context;
++        return clone;
++    }
+ }
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs
+index 55776c11..6b37ed51 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs
+@@ -159,7 +159,7 @@ public sealed partial class @this
+                 var result = await ExecuteActionsAsync(engine, context, cancellationToken);
+                 if (result.Success) return result;
+             }
+-            catch
++            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+             {
+                 // Retry on exception
+             }
+diff --git a/PLang/Runtime2/Engine/Goals/Setup/this.cs b/PLang/Runtime2/Engine/Goals/Setup/this.cs
+index f12b2bfc..062c617c 100644
+--- a/PLang/Runtime2/Engine/Goals/Setup/this.cs
++++ b/PLang/Runtime2/Engine/Goals/Setup/this.cs
+@@ -59,7 +59,7 @@ public sealed class @this
+ 
+                 _goals.Add(goal);
+             }
+-            catch
++            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+             {
+                 // Skip unparseable files — they'll fail when lazy-loaded later
+             }
+diff --git a/PLang/Runtime2/Engine/Memory/Data.cs b/PLang/Runtime2/Engine/Memory/Data.cs
+index 62fbf8b6..6043354e 100644
+--- a/PLang/Runtime2/Engine/Memory/Data.cs
++++ b/PLang/Runtime2/Engine/Memory/Data.cs
+@@ -405,6 +405,11 @@ public class DataList<T> : Data, IList<T>
+         foreach (var item in _items)
+             clone._items.Add(item);
+         clone.Error = Error;
++        clone.Handled = Handled;
++        clone.Warnings = Warnings != null ? new List<Info>(Warnings) : null;
++        clone.Signature = Signature;
++        clone.Properties = Properties.Clone();
++        clone.Context = Context;
+         return clone;
+     }
+ }
+diff --git a/PLang/Runtime2/Engine/Providers/this.cs b/PLang/Runtime2/Engine/Providers/this.cs
+index fc8967cc..a6e88be5 100644
+--- a/PLang/Runtime2/Engine/Providers/this.cs
++++ b/PLang/Runtime2/Engine/Providers/this.cs
+@@ -4,6 +4,7 @@ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.modules.crypto.providers;
+ using PLang.Runtime2.modules.identity.providers;
+ using PLang.Runtime2.modules.signing.providers;
++using PLang.Runtime2.modules.ui.providers;
+ 
+ namespace PLang.Runtime2.Engine.Providers;
+ 
+@@ -197,6 +198,7 @@ public sealed class @this
+             "evaluator" or "ievaluator" => typeof(modules.condition.providers.IEvaluator),
+             "assert" or "iassertprovider" => typeof(modules.assert.providers.IAssertProvider),
+             "file" or "ifileprovider" => typeof(modules.file.providers.IFileProvider),
++            "template" or "itemplateprovider" => typeof(ITemplateProvider),
+             null or "" => typeof(ISigningProvider),
+             _ => null
+         };
+@@ -217,5 +219,6 @@ public sealed class @this
+         Register<modules.condition.providers.IEvaluator>(new modules.condition.providers.DefaultEvaluator());
+         Register<modules.assert.providers.IAssertProvider>(new modules.assert.providers.DefaultAssertProvider());
+         Register<modules.file.providers.IFileProvider>(new modules.file.providers.DefaultFileProvider());
++        Register<ITemplateProvider>(new FluidProvider());
+     }
+ }
+diff --git a/PLang/Runtime2/Engine/Utility/TypeMapping.cs b/PLang/Runtime2/Engine/Utility/TypeMapping.cs
+index d422490a..dd024e90 100644
+--- a/PLang/Runtime2/Engine/Utility/TypeMapping.cs
++++ b/PLang/Runtime2/Engine/Utility/TypeMapping.cs
+@@ -309,7 +309,7 @@ public static class TypeMapping
+                         je.GetRawText(),
+                         new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                 }
+-                catch { return null; }
++                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { return null; }
+             }
+             if (value is IDictionary<string, object?> dict)
+             {
+@@ -335,7 +335,7 @@ public static class TypeMapping
+             {
+                 return Convert.ChangeType(value, targetType);
+             }
+-            catch
++            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+             {
+                 return null;
+             }
+@@ -349,7 +349,7 @@ public static class TypeMapping
+                 var json = System.Text.Json.JsonSerializer.Serialize(value);
+                 return System.Text.Json.JsonSerializer.Deserialize(json, targetType, _caseInsensitiveOptions);
+             }
+-            catch { return null; }
++            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { return null; }
+         }
+ 
+         return value;
+diff --git a/PLang/Runtime2/Engine/this.cs b/PLang/Runtime2/Engine/this.cs
+index 5e1d550d..75cf4e7b 100644
+--- a/PLang/Runtime2/Engine/this.cs
++++ b/PLang/Runtime2/Engine/this.cs
+@@ -319,7 +319,7 @@ public sealed class @this : IAsyncDisposable
+             var fullPath = global::System.IO.Path.GetFullPath(rootPath);
+             return new SafeFileSystem.PLangFileSystem(fullPath, "");
+         }
+-        catch
++        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+         {
+             // If rootPath is not a valid filesystem path (e.g., "/app" in tests),
+             // fall back to PLangFileSystem with current directory
+diff --git a/PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs b/PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs
+index b346299a..50125206 100644
+--- a/PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs
++++ b/PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs
+@@ -482,7 +482,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
+             if (!unsigned && !string.IsNullOrEmpty(errorBody))
+             {
+                 try { await TryExtractSignedErrorIdentity(errorBody, engine, context); }
+-                catch { /* best effort — don't mask the original error */ }
++                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — don't mask the original error */ }
+             }
+ 
+             return errorData;
+@@ -612,7 +612,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
+         // Try deserializing as Data with transport options (may have Signature via [In])
+         Data? data = null;
+         try { data = JsonSerializer.Deserialize<Data>(errorBody, _transportInOptions); }
+-        catch { /* not valid Data JSON — try legacy format below */ }
++        catch (JsonException) { /* not valid Data JSON — try legacy format below */ }
+ 
+         if (data?.Signature != null)
+         {
+@@ -650,7 +650,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
+     {
+         var errorBody = "";
+         try { errorBody = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, ct); }
+-        catch { /* best effort — body too large or read failed, proceed with empty */ }
++        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — body too large or read failed, proceed with empty */ }
+         var err = Data.FromError(new ServiceError(
+             $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
+             "HttpError", (int)response.StatusCode));
+diff --git a/PLang/Runtime2/modules/identity/types.cs b/PLang/Runtime2/modules/identity/types.cs
+index e9581fac..86ccee63 100644
+--- a/PLang/Runtime2/modules/identity/types.cs
++++ b/PLang/Runtime2/modules/identity/types.cs
+@@ -34,13 +34,22 @@ public sealed class IdentityData : Data
+     /// </summary>
+     public override string ToString() => PublicKey;
+ 
+-    public override Data Clone() => new IdentityData(Name)
++    public override Data Clone()
+     {
+-        PublicKey = PublicKey,
+-        PrivateKey = PrivateKey,
+-        IsDefault = IsDefault,
+-        IsArchived = IsArchived,
+-        Created = Created,
+-        Properties = Properties.Clone()
+-    };
++        var clone = new IdentityData(Name)
++        {
++            PublicKey = PublicKey,
++            PrivateKey = PrivateKey,
++            IsDefault = IsDefault,
++            IsArchived = IsArchived,
++            Created = Created,
++            Properties = Properties.Clone()
++        };
++        clone.Error = Error;
++        clone.Handled = Handled;
++        clone.Warnings = Warnings != null ? new List<Engine.Info>(Warnings) : null;
++        clone.Signature = Signature;
++        clone.Context = Context;
++        return clone;
++    }
+ }
+diff --git a/PLang/Runtime2/modules/signing/SignedData.cs b/PLang/Runtime2/modules/signing/SignedData.cs
+index 5e3cdb88..7c8cff3a 100644
+--- a/PLang/Runtime2/modules/signing/SignedData.cs
++++ b/PLang/Runtime2/modules/signing/SignedData.cs
+@@ -57,7 +57,7 @@ public class SignedData
+             }
+             var typeObj = string.IsNullOrEmpty(type) ? null : Engine.Memory.Type.FromName(type);
+             byte[] bytes;
+-            try { bytes = Convert.FromBase64String(value); } catch { bytes = Array.Empty<byte>(); }
++            try { bytes = Convert.FromBase64String(value); } catch (FormatException) { bytes = Array.Empty<byte>(); }
+             return Data.Ok(bytes, typeObj);
+         }
+ 
+diff --git a/PLang/Runtime2/modules/ui/providers/FluidProvider.cs b/PLang/Runtime2/modules/ui/providers/FluidProvider.cs
+new file mode 100644
+index 00000000..136db7a6
+--- /dev/null
++++ b/PLang/Runtime2/modules/ui/providers/FluidProvider.cs
+@@ -0,0 +1,298 @@
++using System.IO;
++using Fluid;
++using Fluid.Ast;
++using Fluid.Values;
++using Microsoft.Extensions.FileProviders;
++using Microsoft.Extensions.Primitives;
++using PLang.Interfaces;
++using PLang.Runtime2.Engine.Errors;
++using PLangContext = PLang.Runtime2.Engine.Context.PLangContext;
++using PLang.Runtime2.Engine.FileSystem;
++using PLang.Runtime2.Engine.Goals.Goal;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.ui.providers;
++
++public class FluidProvider : ITemplateProvider
++{
++    public string Name => "default";
++    public bool IsDefault { get; set; }
++
++    private FluidParser CreateParser()
++    {
++        var parser = new FluidParser();
++        parser.RegisterExpressionTag("callGoal", CallGoalTagAsync);
++        return parser;
++    }
++
++    public async Task<Data> Render(Render action)
++    {
++        var templateContent = action.Template;
++        var isFile = action.IsFile;
++        string? sourceFile = null;
++
++        // Resolve template content: file or inline
++        if (isFile == true || (isFile == null && LooksLikeFilePath(templateContent)))
++        {
++            var pathData = new PathData(templateContent, action.Context);
++            if (!pathData.Exists)
++                return Data.FromError(new ServiceError(
++                    $"Template file not found: {templateContent}", "NotFound", 404));
++
++            sourceFile = pathData.Relative;
++            try
++            {
++                var fs = action.Context.Engine.FileSystem;
++                templateContent = fs.File.ReadAllText(pathData.Absolute);
++            }
++            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
++            {
++                return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
++            }
++        }
++
++        // Parse
++        var parser = CreateParser();
++        if (!parser.TryParse(templateContent, out var fluidTemplate, out var parseError))
++        {
++            var location = sourceFile != null ? $" in '{sourceFile}'" : "";
++            return Data.FromError(new ServiceError(
++                $"Template syntax error{location}: {parseError}", "TemplateError", 400));
++        }
++
++        // Build context
++        var options = new TemplateOptions();
++        options.MaxSteps = 100_000; // Defense-in-depth: prevent pathological templates from running indefinitely
++        options.MaxRecursion = 100; // Prevent deeply recursive includes
++        options.MemberAccessStrategy.IgnoreCasing = true;
++        options.MemberAccessStrategy.MemberNameStrategy = MemberNameStrategies.Default;
++
++        // Configure file provider for {% include %} / {% render %} tags
++        var fs2 = action.Context.Engine.FileSystem;
++        var basePath = GetTemplateBaseDir(action);
++        options.FileProvider = new PlangFileProvider(fs2, basePath);
++
++        var fluidContext = new TemplateContext(options);
++
++        // Store engine + PLangContext for callGoal tag access
++        fluidContext.AmbientValues["engine"] = action.Context.Engine;
++        fluidContext.AmbientValues["context"] = action.Context;
++
++        // Load memory stack variables (GetAll already excludes !-prefixed)
++        foreach (var data in action.Context.MemoryStack.GetAll())
++        {
++            var value = data.Value;
++            RegisterTypeIfNeeded(options, value);
++            fluidContext.SetValue(data.Name, FluidValue.Create(value, options));
++        }
++
++        // Override with explicit parameters
++        if (action.Parameters != null)
++        {
++            foreach (var param in action.Parameters)
++            {
++                RegisterTypeIfNeeded(options, param.Value);
++                fluidContext.SetValue(param.Name, FluidValue.Create(param.Value, options));
++            }
++        }
++
++        // Render with HTML encoding for security (XSS prevention)
++        try
++        {
++            var writer = new StringWriter();
++            await fluidTemplate.RenderAsync(writer, System.Text.Encodings.Web.HtmlEncoder.Default, fluidContext);
++            return Data.Ok(writer.ToString());
++        }
++        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
++        {
++            var location = sourceFile != null ? $" in '{sourceFile}'" : "";
++            return Data.FromError(new ServiceError(
++                $"Template render error{location}: {ex.Message}", "RenderError", 500));
++        }
++    }
++
++    /// <summary>
++    /// Registers a type with Fluid's MemberAccessStrategy so its properties are accessible.
++    /// Skips primitives, strings, and collections that Fluid already handles natively.
++    /// </summary>
++    private static void RegisterTypeIfNeeded(TemplateOptions options, object? value)
++    {
++        if (value == null) return;
++        var type = value.GetType();
++        if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal)
++            || type == typeof(DateTime) || type == typeof(DateTimeOffset)
++            || type == typeof(Guid) || type.IsEnum)
++            return;
++        // Skip generic collections — Fluid handles IEnumerable natively
++        if (type.IsArray) return;
++        if (type.IsGenericType)
++        {
++            var genDef = type.GetGenericTypeDefinition();
++            if (genDef == typeof(List<>) || genDef == typeof(Dictionary<,>)
++                || genDef == typeof(HashSet<>))
++                return;
++        }
++        options.MemberAccessStrategy.Register(type);
++    }
++
++    /// <summary>
++    /// Heuristic: a string looks like a file path if it contains a dot-extension
++    /// and no Liquid syntax markers. Used only when IsFile is null (auto-detect).
++    /// </summary>
++    private static bool LooksLikeFilePath(string template)
++    {
++        if (string.IsNullOrWhiteSpace(template)) return false;
++        // If it contains Liquid delimiters, it's inline content
++        if (template.Contains("{{") || template.Contains("{%")) return false;
++        // If it has a file extension pattern, likely a path
++        var lastDot = template.LastIndexOf('.');
++        if (lastDot <= 0) return false;
++        var ext = template[lastDot..];
++        return ext.Length >= 2 && ext.Length <= 6 && !ext.Contains(' ');
++    }
++
++    /// <summary>
++    /// Gets the base directory for template file resolution (includes).
++    /// Resolves from the calling goal's directory, or engine root as fallback.
++    /// </summary>
++    private static string GetTemplateBaseDir(Render action)
++    {
++        var engine = action.Context.Engine;
++        var goalPath = action.Context.Goal?.Path;
++        if (!string.IsNullOrEmpty(goalPath))
++        {
++            var fs = engine.FileSystem;
++            var goalDir = fs.Path.GetDirectoryName(goalPath);
++            if (!string.IsNullOrEmpty(goalDir))
++                return fs.ValidatePath(goalDir);
++        }
++        return engine.AbsolutePath;
++    }
++
++    /// <summary>
++    /// Custom Fluid tag handler for {% callGoal 'GoalName' %} or {% callGoal GoalName %}.
++    /// Invokes a PLang goal and writes the result into template output.
++    /// </summary>
++    private static async ValueTask<Completion> CallGoalTagAsync(
++        Fluid.Ast.Expression expression, TextWriter writer, System.Text.Encodings.Web.TextEncoder encoder,
++        TemplateContext context)
++    {
++        var engine = (Engine.@this)context.AmbientValues["engine"];
++        var plangContext = (PLangContext)context.AmbientValues["context"];
++
++        try
++        {
++            var goalNameValue = await expression.EvaluateAsync(context);
++            var goalName = goalNameValue?.ToStringValue() ?? "";
++            if (string.IsNullOrEmpty(goalName))
++            {
++                await writer.WriteAsync("[Error: callGoal requires a goal name]");
++                return Completion.Normal;
++            }
++
++            var goalCall = new GoalCall { Name = goalName };
++            var result = await engine.RunGoalAsync(goalCall, plangContext);
++
++            if (result.Success)
++            {
++                var output = result.Value?.ToString() ?? "";
++                await writer.WriteAsync(output);
++            }
++            else
++            {
++                // Show error message in template output per Ingi's requirement
++                var errorMessage = result.Error?.Message ?? "Unknown error";
++                await writer.WriteAsync($"[Error: {errorMessage}]");
++            }
++        }
++        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
++        {
++            await writer.WriteAsync($"[Error: {ex.Message}]");
++        }
++
++        return Completion.Normal;
++    }
++
++    // --- Microsoft.Extensions.FileProviders adapter for Fluid's include/render tags ---
++
++    private sealed class PlangFileProvider : IFileProvider
++    {
++        private readonly IPLangFileSystem _fs;
++        private readonly string _basePath;
++
++        public PlangFileProvider(IPLangFileSystem fs, string basePath)
++        {
++            _fs = fs;
++            _basePath = basePath;
++        }
++
++        public IFileInfo GetFileInfo(string subpath)
++        {
++            // Fluid appends ".liquid" to include paths — try both with and without
++            var candidates = new[] { subpath, StripLiquidExtension(subpath) };
++            foreach (var candidate in candidates)
++            {
++                if (string.IsNullOrEmpty(candidate)) continue;
++                var fullPath = TryResolvePath(candidate);
++                if (fullPath != null && _fs.File.Exists(fullPath))
++                    return new PlangFileInfo(_fs, fullPath, candidate);
++            }
++            return new NotFoundFileInfo(subpath);
++        }
++
++        private string? TryResolvePath(string candidate)
++        {
++            try
++            {
++                return _fs.ValidatePath(_fs.Path.Combine(_basePath, candidate));
++            }
++            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
++            {
++                // Path validation failed (sandbox violation, invalid path, etc.)
++                // Return null → GetFileInfo returns NotFoundFileInfo → Fluid reports "file not found"
++                System.Diagnostics.Debug.WriteLine($"Template include path validation failed for '{candidate}': {ex.Message}");
++                return null;
++            }
++        }
++
++        private static string StripLiquidExtension(string path)
++        {
++            const string ext = ".liquid";
++            return path.EndsWith(ext, StringComparison.OrdinalIgnoreCase)
++                ? path[..^ext.Length]
++                : path;
++        }
++
++        public IDirectoryContents GetDirectoryContents(string subpath)
++            => new NotFoundDirectoryContents();
++
++        public IChangeToken Watch(string filter)
++            => NullChangeToken.Singleton;
++    }
++
++    private sealed class PlangFileInfo : IFileInfo
++    {
++        private readonly IPLangFileSystem _fs;
++        private readonly string _fullPath;
++
++        public PlangFileInfo(IPLangFileSystem fs, string fullPath, string name)
++        {
++            _fs = fs;
++            _fullPath = fullPath;
++            Name = name;
++        }
++
++        public bool Exists => true;
++        public long Length => _fs.FileInfo.New(_fullPath).Length;
++        public string? PhysicalPath => _fullPath;
++        public string Name { get; }
++        public DateTimeOffset LastModified => DateTimeOffset.UtcNow;
++        public bool IsDirectory => false;
++
++        public Stream CreateReadStream()
++        {
++            var content = _fs.File.ReadAllText(_fullPath);
++            return new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
++        }
++    }
++}
+diff --git a/PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs b/PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs
+new file mode 100644
+index 00000000..9f849449
+--- /dev/null
++++ b/PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs
+@@ -0,0 +1,14 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Providers;
++
++namespace PLang.Runtime2.modules.ui.providers;
++
++/// <summary>
++/// Template rendering provider. Swappable via engine.Providers.
++/// Default implementation uses Fluid (Liquid syntax).
++/// </summary>
++public interface ITemplateProvider : IProvider
++{
++    /// <summary>Renders the template described by the action and returns the output string as Data.</summary>
++    Task<Data> Render(Render action);
++}
+diff --git a/PLang/Runtime2/modules/ui/render.cs b/PLang/Runtime2/modules/ui/render.cs
+new file mode 100644
+index 00000000..fd3820e1
+--- /dev/null
++++ b/PLang/Runtime2/modules/ui/render.cs
+@@ -0,0 +1,32 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.ui.providers;
++
++namespace PLang.Runtime2.modules.ui;
++
++[Example("render 'email.html', write to %body%", "Template=email.html")]
++[Example("render 'page.html' with title=%pageTitle%, write to %html%", "Template=page.html, Parameters={title: %pageTitle%}")]
++[Example("render %templateContent%, write to %result%", "Template=%templateContent%")]
++[Example("render file 'report.html', write to %output%", "Template=report.html, IsFile=true")]
++[Action("render")]
++public partial class Render : IContext
++{
++    /// <summary>Template content (inline Liquid) or file path. Determined by IsFile.</summary>
++    [IsNotNull]
++    public partial string Template { get; init; }
++
++    /// <summary>Explicit parameters that override memory stack variables in the template.</summary>
++    public partial List<Data>? Parameters { get; init; }
++
++    /// <summary>
++    /// Force file/inline interpretation.
++    /// true = treat Template as a file path (error if not found).
++    /// false = treat Template as inline content.
++    /// null (default) = auto-detect via file existence check.
++    /// </summary>
++    public partial bool? IsFile { get; init; }
++
++    [Provider]
++    public partial ITemplateProvider Provider { get; }
++
++    public async Task<Data> Run() => await Provider.Render(this);
++}
+diff --git a/Tests/Runtime2/Ui/RenderCallGoal/RenderCallGoal.test.goal b/Tests/Runtime2/Ui/RenderCallGoal/RenderCallGoal.test.goal
+new file mode 100644
+index 00000000..f575c94f
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderCallGoal/RenderCallGoal.test.goal
+@@ -0,0 +1,7 @@
++Start
++/ Test: render template that uses callGoal to invoke a PLang goal
++/ Note: callGoal requires a loaded goal - this tests that the tag works without crashing
++- set %template% = 'Result: {% callGoal "GetGreeting" %}'
++- render %template%, write to %result%
++/ The goal doesn't exist, so expect error text in output
++- assert %result% contains 'Error'
+diff --git a/Tests/Runtime2/Ui/RenderFile/RenderFile.test.goal b/Tests/Runtime2/Ui/RenderFile/RenderFile.test.goal
+new file mode 100644
+index 00000000..ac2aaa5d
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderFile/RenderFile.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: render a file template with variables from memory stack
++- set %name% = 'PLang'
++- render file 'template.html', write to %result%
++- assert %result% equals 'Hello PLang!'
+diff --git a/Tests/Runtime2/Ui/RenderFile/template.html b/Tests/Runtime2/Ui/RenderFile/template.html
+new file mode 100644
+index 00000000..c7a43bc1
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderFile/template.html
+@@ -0,0 +1 @@
++Hello {{ name }}!
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Ui/RenderInclude/RenderInclude.test.goal b/Tests/Runtime2/Ui/RenderInclude/RenderInclude.test.goal
+new file mode 100644
+index 00000000..7a7cb50f
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderInclude/RenderInclude.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: render template that includes a partial via include tag
++- set %title% = 'Welcome'
++- render file 'page.html', write to %result%
++- assert %result% contains 'Header: Welcome'
++- assert %result% contains 'Body content'
+diff --git a/Tests/Runtime2/Ui/RenderInclude/header.html b/Tests/Runtime2/Ui/RenderInclude/header.html
+new file mode 100644
+index 00000000..69d06021
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderInclude/header.html
+@@ -0,0 +1 @@
++Header: {{ title }}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Ui/RenderInclude/page.html b/Tests/Runtime2/Ui/RenderInclude/page.html
+new file mode 100644
+index 00000000..734ae2f8
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderInclude/page.html
+@@ -0,0 +1,2 @@
++{% include 'header.html' %}
++Body content
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Ui/RenderInline/RenderInline.test.goal b/Tests/Runtime2/Ui/RenderInline/RenderInline.test.goal
+new file mode 100644
+index 00000000..5158d5bc
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderInline/RenderInline.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: render inline template content with variable substitution
++- set %name% = 'World'
++- render 'Hello {{ name }}!', write to %result%
++- assert %result% equals 'Hello World!'
+diff --git a/Tests/Runtime2/Ui/RenderWithParams/RenderWithParams.test.goal b/Tests/Runtime2/Ui/RenderWithParams/RenderWithParams.test.goal
+new file mode 100644
+index 00000000..f8fd1dcb
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderWithParams/RenderWithParams.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: render template with explicit parameters
++- set %title% = 'My Page'
++- render file 'page.html' with author='Ingi', write to %result%
++- assert %result% contains 'Title: My Page'
++- assert %result% contains 'Author: Ingi'
+diff --git a/Tests/Runtime2/Ui/RenderWithParams/page.html b/Tests/Runtime2/Ui/RenderWithParams/page.html
+new file mode 100644
+index 00000000..b6d9cb28
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderWithParams/page.html
+@@ -0,0 +1 @@
++Title: {{ title }}, Author: {{ author }}
+\ No newline at end of file
+diff --git a/docs/modules/index.md b/docs/modules/index.md
+index f57d2ef8..8a1bb6a7 100644
+--- a/docs/modules/index.md
++++ b/docs/modules/index.md
+@@ -44,6 +44,7 @@ You don't need to know the module name — just write what you want and the LLM
+ |--------|-------------|---------|
+ | [file](file.md) | Read, write, copy, move, delete files | read, save, copy, move, delete, exists, list |
+ | [http](http.md) | HTTP requests, downloads, uploads, streaming | request, download, upload, configure |
++| [ui](ui.md) | Render Liquid templates with variables, includes, goal calls | render |
+ | [settings](settings.md) | Persistent key-value settings | get, set, remove |
+ 
+ ### Security & Identity
+diff --git a/docs/modules/ui.md b/docs/modules/ui.md
+new file mode 100644
+index 00000000..5dcd5a04
+--- /dev/null
++++ b/docs/modules/ui.md
+@@ -0,0 +1,194 @@
++# UI Module
++
++Render Liquid templates with variable interpolation, includes, and goal execution. Uses the [Fluid](https://github.com/sebastienros/fluid) template engine.
++
++## Actions
++
++### render
++
++Render a Liquid template — inline content or a file.
++
++```plang
++/ Render a template file
++- render 'email.html', write to %body%
++
++/ Render with explicit parameters
++- render 'page.html' with title=%pageTitle%, write to %html%
++
++/ Render inline content
++- render %templateContent%, write to %result%
++
++/ Force file mode (error if not found)
++- render file 'report.html', write to %output%
++```
++
++**Parameters:**
++
++| Name | Type | Required | Default | Description |
++|------|------|----------|---------|-------------|
++| Template | string | yes | — | Liquid template content (inline) or file path |
++| Parameters | list | no | — | Explicit variables that override memory stack values in the template |
++| IsFile | bool | no | null | `true` = file path, `false` = inline content, `null` = auto-detect |
++
++**Returns:** The rendered string.
++
++## Template Syntax
++
++PLang uses [Liquid syntax](https://shopify.github.io/liquid/). Variables from your PLang memory stack are available automatically.
++
++### Variables
++
++```plang
++- set %name% = 'World'
++- set %count% = 42
++- render 'Hello {{ name }}! You have {{ count }} items.', write to %result%
++/ Result: "Hello World! You have 42 items."
++```
++
++### Explicit Parameters
++
++Override memory stack variables or add template-specific values:
++
++```plang
++- set %name% = 'Default'
++- render 'page.html' with name='Override', year=2026, write to %html%
++/ In the template, {{ name }} is "Override", not "Default"
++```
++
++### Conditionals and Loops
++
++```liquid
++{% if items.size > 0 %}
++<ul>
++  {% for item in items %}
++    <li>{{ item.name }} — {{ item.price }}</li>
++  {% endfor %}
++</ul>
++{% else %}
++  <p>No items found.</p>
++{% endif %}
++```
++
++### Includes
++
++Split templates into reusable partials with `{% include %}`:
++
++```liquid
++{% include 'header.html' %}
++<main>{{ content }}</main>
++{% include 'footer.html' %}
++```
++
++Include paths resolve relative to the calling goal's directory. The file must exist within the PLang sandbox.
++
++### Calling Goals
++
++Execute a PLang goal from within a template:
++
++```liquid
++<p>Latest data: {% callGoal 'GetLatestStats' %}</p>
++```
++
++The goal runs and its return value is inserted into the template output. If the goal fails, an `[Error: ...]` message appears inline.
++
++## File vs Inline Detection
++
++When `IsFile` is not set (null), the module auto-detects:
++
++- Contains `{{` or `{%` → treated as inline Liquid content
++- Has a file extension (e.g., `.html`, `.liquid`) → treated as a file path
++- Otherwise → treated as inline content
++
++Set `IsFile` explicitly to override:
++
++```plang
++/ Force file mode — errors if file not found
++- render file 'template.html', write to %html%
++
++/ Force inline mode — even if it looks like a file path
++- render 'some.text' as inline, write to %result%
++```
++
++## HTML Encoding
++
++Output is HTML-encoded by default for XSS prevention. `{{ name }}` where name is `<script>alert(1)</script>` renders as `&lt;script&gt;alert(1)&lt;/script&gt;`.
++
++Use the Liquid `raw` filter if you need unescaped HTML from a trusted source.
++
++## Security
++
++**Never pass untrusted user input as the Template parameter.** Because templates can execute goals via `{% callGoal %}`, passing user-controlled content as the template string is a server-side template injection (SSTI) vulnerability.
++
++Safe:
++```plang
++/ Template is a file you control
++- render 'email.html' with message=%userInput%, write to %body%
++```
++
++Unsafe:
++```plang
++/ DANGEROUS — user controls the template itself
++- render %userInput%, write to %body%
++```
++
++If you need to render user-provided markup, treat it as a variable *inside* a template you control — never as the template itself.
++
++## Custom Provider
++
++The template engine is swappable. Load a DLL that implements `ITemplateProvider` to replace Fluid with another engine:
++
++```plang
++- load provider 'my-template-engine.dll'
++```
++
++## Examples
++
++### Render an Email
++
++```plang
++Start
++- set %user% = {name: "Alice", plan: "Pro"}
++- render 'templates/welcome.html' with user=%user%, write to %emailBody%
++- write out %emailBody%
++```
++
++`templates/welcome.html`:
++```liquid
++<h1>Welcome, {{ user.name }}!</h1>
++<p>Your plan: {{ user.plan }}</p>
++```
++
++### Render with Includes
++
++```plang
++Start
++- set %title% = 'Dashboard'
++- render 'pages/dashboard.html', write to %html%
++- write out %html%
++```
++
++`pages/dashboard.html`:
++```liquid
++{% include 'layout/header.html' %}
++<h1>{{ title }}</h1>
++{% include 'layout/sidebar.html' %}
++{% include 'layout/footer.html' %}
++```
++
++### Dynamic Content via Goal
++
++```plang
++Start
++- render 'status-page.html', write to %html%
++
++GetServerStatus
++- http request 'https://api.example.com/status', write to %status%
++- return %status.message%
++```
++
++`status-page.html`:
++```liquid
++<div class="status">
++  {% callGoal 'GetServerStatus' %}
++</div>
++```

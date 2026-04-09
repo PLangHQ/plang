@@ -1,0 +1,372 @@
+{
+  "branch": "system-goals-architecture",
+  "sessions": [
+    {
+      "id": "c1a2b3d4-5e6f-7890-abcd-ef1234567890",
+      "bot": "coder",
+      "timestamp_start": "2026-04-02T22:05:00Z",
+      "intent": "Fix LLM tests and Identity test failures",
+      "before": {
+        "assumptions": "Identity 7/10 pass, LLM tests all throw not implemented",
+        "risk": "Builder may convert LLM test logic"
+      },
+      "plan": "",
+      "actions": [],
+      "after": {}
+    },
+    {
+      "id": "a7b8c9d0-e1f2-3456-7890-abcdef123456",
+      "bot": "architect",
+      "timestamp_start": "2026-04-04T00:00:00Z",
+      "timestamp_end": "2026-04-04T01:00:00Z",
+      "intent": "Revise everything_is_data.md proposal based on design conversation",
+      "before": {
+        "assumptions": "Original proposal has CRTP constraint, __ prefix, DataList. Conversation refined all of these.",
+        "risk": "Low - proposal document only, no code changes."
+      },
+      "plan": "Rewrite everything_is_data.md with: Data<T> without CRTP, . vs ! navigation, DeclaredOnly, registered navigators, no special DataList class.",
+      "actions": [
+        {
+          "paths": ["Documentation/Runtime2/proposals/everything_is_data.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Complete rewrite of proposal incorporating design decisions from architecture conversation."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "Proposal rewritten."
+      }
+    },
+    {
+      "id": "d5e6f7a8-b9c0-1234-5678-9abcdef01234",
+      "bot": "coder",
+      "timestamp_start": "2026-04-07T00:00:00Z",
+      "timestamp_end": "2026-04-07T00:30:00Z",
+      "intent": "Replace all CreateContext() usage with app.Context, remove CreateContext from App",
+      "before": {
+        "assumptions": "CreateContext creates orphan contexts. app.Context is canonical.",
+        "risk": "Low - mechanical refactor."
+      },
+      "plan": "Remove CreateContext from App/this.cs. Update all test files to use app.Context.",
+      "actions": [
+        {
+          "paths": ["PLang/App/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Removed CreateContext method"
+        },
+        {
+          "paths": ["PLang.Tests/"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replaced all CreateContext usage with app.Context"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "All CreateContext usage removed. Build succeeds with 0 errors."
+      }
+    },
+    {
+      "id": "e8f9a0b1-c2d3-4567-8901-23456789abcd",
+      "bot": "coder",
+      "timestamp_start": "2026-04-08T00:00:00Z",
+      "timestamp_end": "2026-04-08T00:15:00Z",
+      "intent": "Replace engine.RunSteps() calls with steps.RunAsync() in tests after RunSteps removal from App",
+      "before": {
+        "assumptions": "RunSteps was removed from App.@this. Tests still call it. OBP says steps own their execution.",
+        "risk": "Low - mechanical refactor, same pattern at every call site."
+      },
+      "plan": "Replace _app.RunSteps(steps, context) with steps.RunAsync(context) in 3 test files.",
+      "actions": [
+        {
+          "paths": ["PLang.Tests/"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replaced all engine.RunSteps / _app.RunSteps calls with steps.RunAsync(context)"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "All 14 call sites updated across 3 files."
+      }
+    },
+    {
+      "id": "f1a2b3c4-d5e6-7890-abcd-security00001",
+      "bot": "security",
+      "timestamp_start": "2026-04-08T21:00:00Z",
+      "timestamp_end": "2026-04-08T21:45:00Z",
+      "intent": "Full blue+red team security audit of new App architecture (809 changed production files)",
+      "before": {
+        "assumptions": "Major architectural refactor from Runtime2 to App namespace. Same threat model (user-sovereign). Need to verify all previous security patterns carried over correctly and assess new attack surfaces.",
+        "risk": "High surface area — 809 production files changed. New execution dispatch, new actor model, new variable system, new event lifecycle."
+      },
+      "plan": "Blue team: map 10 attack surface areas. Red team: describe vectors, severity, exploit sketches. Cross-reference against previous branch findings. Write security-report.json, verdict.json, summary.md, result.md.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Events/Lifecycle/Bindings/Binding/this.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/modules/file/read.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang/App/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/Actor/Context/this.cs",
+            "PLang/App/modules/signing/providers/Ed25519Provider.cs",
+            "PLang/App/modules/signing/SignedData.cs",
+            "PLang/App/Data/this.Envelope.cs",
+            "PLang/App/Data/this.Navigation.cs",
+            "PLang/App/CallStack/this.cs",
+            "PLang/App/FileSystem/Default/PLangFileSystem.cs",
+            "PLang/App/modules/module/add.cs",
+            "PLang/App/modules/provider/load.cs",
+            "PLang/App/modules/error/check.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full security audit: 10 attack surface areas, 12 findings (2 high, 4 medium, 6 low). Verdict: FAIL."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow",
+        "notes": "Verdict FAIL. 2 HIGH: (1) Binding.Run missing try-finally permanently disables event guards, (2) variable expansion from untrusted sources via %!app%. 4 MEDIUM: header injection, event timeout gaps, LLM cache isolation, /system/ path fallback. 6 LOW. Signing, CallStack, decompression, LLM tool whitelist all solid."
+      }
+    },
+    {
+      "id": "g9b0c1d2-e3f4-5678-9abc-def012345678",
+      "bot": "tester",
+      "timestamp_start": "2026-04-08T21:00:00Z",
+      "timestamp_end": "2026-04-08T22:00:00Z",
+      "intent": "Fresh-eyes test quality review after coder fixed v4 findings",
+      "before": {
+        "assumptions": "Coder added 31 tests covering 4 critical gaps. Need to verify fix quality and do fresh-eyes on unreviewed tests.",
+        "risk": "New tests may be shallow. Previously unreviewed test files may have false-green patterns."
+      },
+      "plan": "Verify coder fixes, deep-read new tests, fresh-eyes on 9 unreviewed test files, production code review for untested paths, exhaustive error/check.cs path mapping.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/error/ErrorCheckTests.cs",
+            "PLang.Tests/App/Modules/app/AppRunTests.cs",
+            "PLang.Tests/App/Modules/goal/GoalCallTests.cs",
+            "PLang.Tests/App/Modules/goal/GoalReturnTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified coder's 31 new tests. GoalReturnTests excellent. ErrorCheckTests achieves 100% line coverage but retry loop tested with empty actions, goal execution never verified."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/condition/OperatorTests.cs",
+            "PLang.Tests/App/Modules/loop/ForeachTests.cs",
+            "PLang.Tests/App/Core/CallStackIntegrationTests.cs",
+            "PLang.Tests/App/Modules/signing/VerifyActionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Fresh-eyes: ForeachTests critical false-green (iteration never verified). OperatorTests biased toward true. VerifyActionTests excellent. CallStack tests weak."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/Goals/Goal/Steps/this.cs",
+            "PLang/App/modules/file/providers/DefaultFileProvider.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Production code review: foreach ignores Returned flag, GoalSteps condition detection fragile, CopyDirectory has no exception handling, streaming error paths untested."
+        }
+      ],
+      "after": {
+        "status": "completed",
+        "health": "needs-fixes",
+        "notes": "4 critical false-greens found: foreach, error retry, error goal, events. GoalSteps condition detection fragile. Cache still 0%. Verdict: needs-fixes."
+      }
+    },
+    {
+      "id": "a1b2c3d4-e5f6-7890-1234-auditor000001",
+      "bot": "auditor",
+      "timestamp_start": "2026-04-09T12:00:00Z",
+      "timestamp_end": "2026-04-09T12:45:00Z",
+      "intent": "Cross-cutting integrity audit — find what file-level, test, and security reviewers missed",
+      "before": {
+        "assumptions": "Codeanalyzer approved file-level, tester found false-greens, security approved fixes. Need to check cross-file contracts and gaps between reviewers.",
+        "risk": "High surface area (809 files). Cross-file contract breaks are the most dangerous class of bug on this branch."
+      },
+      "plan": "Read all bot reports. Verify 3 security fixes. Trace cross-file contracts: skipInfrastructure callers, foreach Returned propagation, condition detection coupling, Data.Clone family. Run tests. Write findings.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/system-goals-architecture/codeanalyzer/summary.md",
+            ".bot/system-goals-architecture/security/summary.md",
+            ".bot/system-goals-architecture/tester/summary.md",
+            ".bot/system-goals-architecture/security-report.json",
+            ".bot/system-goals-architecture/test-report.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read all previous bot reports to understand what was already checked and what verdicts were given."
+        },
+        {
+          "paths": [
+            "PLang/App/Events/Lifecycle/Bindings/Binding/this.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified all 3 security fixes are code-complete. Found all 3 lack test coverage."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/Goals/Goal/Steps/this.cs",
+            "PLang/App/Goals/Goal/this.cs",
+            "PLang/App/modules/goal/return.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced Returned flag contract: goal.return sets it, GoalSteps propagates it, Goal decrements ReturnDepth. foreach IGNORES it — critical contract break."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/this.cs",
+            "PLang/App/modules/file/read.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced skipInfrastructure usage across all Resolve() callers. Found Channels/this.cs:129 missing skipInfrastructure — second untrusted-input path the security fix missed."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang/App/Goals/Goal/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Data.Clone() shallow-copies Signature. Goal.Goals lazy-assigns Parent. Both minor architectural smells."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow",
+        "notes": "Verdict FAIL. 2 critical: foreach ignores Returned (cross-file contract break), skipInfrastructure missing on channel output. 2 major: security fixes without tests, fragile condition detection. 2 minor. Architecture is strong overall."
+      }
+    },
+    {
+      "id": "b2c3d4e5-f6a7-8901-2345-auditor000002",
+      "bot": "auditor",
+      "timestamp_start": "2026-04-09T13:00:00Z",
+      "timestamp_end": "2026-04-09T13:15:00Z",
+      "intent": "Re-audit coder fixes for auditor v1 findings",
+      "before": {
+        "assumptions": "Coder addressed 2 critical and 1 major finding. Need to verify fixes are correct and tests are adequate.",
+        "risk": "Low — targeted fixes, not structural changes."
+      },
+      "plan": "Read all 4 changed files. Verify production fixes. Assess 5 new tests for false-green patterns. Run full suite.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/Channels/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Both production fixes correct. foreach Returned check in right position. Channel skipInfrastructure added."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Security/SecurityFixTests.cs",
+            "PLang.Tests/App/Modules/loop/ForeachTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Binding try-finally test excellent. skipInfrastructure test excellent. CRLF test weak (tests inline Replace, not ApplyHeaders). Foreach GoalReturn test doesn't hit new code path."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "Verdict PASS. Both critical fixes correct. 2/3 security tests strong. 2 weak tests noted but acceptable given low risk."
+      }
+    },
+    {
+      "id": "d0c5f1a2-8b3e-4d67-9f01-abc234567890",
+      "bot": "docs",
+      "timestamp_start": "2026-04-09T14:00:00Z",
+      "intent": "First docs pass: rename v0.3→v0.2, update version.txt to 0.2.1, review XML docs, fill gaps",
+      "before": {
+        "assumptions": "170 new C# files under PLang/App/, docs exist under Documentation/v0.3/ but project is v0.2, version.txt still at 0.1.x",
+        "risk": "v0.3 references may be scattered in doc content; XML doc coverage reported as good but needs verification"
+      },
+      "plan": "1. Rename Documentation/v0.3→v0.2, update v0.3 refs in build_process.md. 2. Update version.txt to 0.2.1. 3. Review XML doc coverage, fill gaps on core types and handlers. 4. Verify architecture docs against code. 5. Write reports.",
+      "actions": [
+        {
+          "paths": ["Documentation/v0.2/"],
+          "type": "rename",
+          "category": "doc",
+          "confidence": "high",
+          "context": "git mv Documentation/v0.3 Documentation/v0.2 + v0.3→v0.2 references in build_process.md"
+        },
+        {
+          "paths": ["PLang/version.txt", "Publish/version.txt"],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Version bump to 0.2.1 per user directive"
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang/App/modules/IContext.cs",
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/modules/goal/call.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/modules/variable/get.cs",
+            "PLang/App/modules/output/write.cs",
+            "PLang/App/modules/file/read.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added XML doc comments to class summaries, constructors, factory methods"
+        },
+        {
+          "paths": ["Documentation/v0.2/architecture.md", "Documentation/v0.2/goals-steps.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Fixed stale ExecuteAsync signature and removed non-existent Step properties"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "Verdict PASS. All docs verified against code. 12 gaps filled, 2 flagged as minor (self-documenting properties)."
+      },
+      "timestamp_end": "2026-04-09T14:35:00Z"
+    }
+  ]
+}

@@ -2,17 +2,17 @@
 
 ## What this is
 
-PLang .goal tests for Runtime2 action modules that previously had zero or partial coverage. These tests validate the full pipeline: LLM builder -> .pr generation -> GoalMapper -> runtime execution.
+PLang .goal tests for App action modules that previously had zero or partial coverage. These tests validate the full pipeline: LLM builder -> .pr generation -> GoalMapper -> runtime execution.
 
 ## What was done
 
 Created 4 new test suites and extended 3 existing ones:
 
 ### New (all pass except Condition)
-- **File** (`Tests/Runtime2/File/File.test.goal`) — save, read, exists, copy, move, list, delete
-- **Output** (`Tests/Runtime2/Output/Output.test.goal`) — write smoke test
-- **Assert** (`Tests/Runtime2/Assert/Assert.test.goal`) — notEquals, isFalse, isNull, greaterThan, lessThan
-- **Condition** (`Tests/Runtime2/Condition/`) — if/else with goal calls + 3 helper goals. **FAILS** due to builder issue.
+- **File** (`Tests/App/File/File.test.goal`) — save, read, exists, copy, move, list, delete
+- **Output** (`Tests/App/Output/Output.test.goal`) — write smoke test
+- **Assert** (`Tests/App/Assert/Assert.test.goal`) — notEquals, isFalse, isNull, greaterThan, lessThan
+- **Condition** (`Tests/App/Condition/`) — if/else with goal calls + 3 helper goals. **FAILS** due to builder issue.
 
 ### Extended (all pass, but ListOps has false green)
 - **Math** — power, sqrt, floor, ceiling, modulo (all correct)

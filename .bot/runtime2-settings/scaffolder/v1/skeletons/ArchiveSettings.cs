@@ -1,7 +1,7 @@
 using System.IO.Compression;
-using PLang.Runtime2.Engine.Settings;
+using App.Settings;
 
-namespace PLang.Runtime2.actions.archive;
+namespace App.actions.archive;
 
 /// <summary>
 /// Archive module settings. First use case for ISettings.

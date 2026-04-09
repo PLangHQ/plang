@@ -1,174 +1,230 @@
-{
-  "name": "Start",
-  "steps": [
-    {
-      "index": 0,
-      "text": "set %deep% = {a:{b:{c:{d:{e:\u0022found\u0022}}}}}",
-      "lineNumber": 2,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "name",
-              "value": "%deep%",
-              "type": "string"
-            },
-            {
-              "name": "value",
-              "value": {
-                "a": {
-                  "b": {
-                    "c": {
-                      "d": {
-                        "e": "found"
+[
+  {
+    "name": "Start",
+    "description": "Sets nested object %deep%, writes a deep property, sets %list% to an array of objects, then writes two indexed nested values from the list.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %deep% = {a:{b:{c:{d:{e:\u0022found\u0022}}}}}",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%deep%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": {
+                  "a": {
+                    "b": {
+                      "c": {
+                        "d": {
+                          "e": "found"
+                        }
                       }
                     }
                   }
-                }
-              },
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 1,
-      "text": "write out %deep.a.b.c.d.e%",
-      "lineNumber": 3,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {
-              "name": "content",
-              "value": "%deep.a.b.c.d.e%",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 2,
-      "text": "set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]",
-      "lineNumber": 4,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "name",
-              "value": "%list%",
-              "type": "string"
-            },
-            {
-              "name": "value",
-              "value": [
-                {
-                  "items": [
-                    {
-                      "val": 1
-                    },
-                    {
-                      "val": 2
-                    }
-                  ]
                 },
-                {
-                  "items": [
-                    {
-                      "val": 3
-                    }
-                  ]
-                }
-              ],
-              "type": "array"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "write out %list[0].items[1].val%",
-      "lineNumber": 5,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {
-              "name": "content",
-              "value": "%list[0].items[1].val%",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 4,
-      "text": "write out %list[1].items[0].val%",
-      "lineNumber": 6,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {
-              "name": "content",
-              "value": "%list[1].items[0].val%",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    }
-  ],
-  "subGoals": [],
-  "visibility": 1,
-  "path": "/Start.goal",
-  "prPath": "/.build/start.pr",
-  "hash": "9bcc377d4b3c7d2aca4752fd36f7543311fded743d747a325a9fb0659c0a7d35",
-  "isSetup": false,
-  "isEvent": false,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "Start"
-}
+                "type": "json"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "write out %deep.a.b.c.d.e%",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%deep.a.b.c.d.e%",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%list%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": [
+                  {
+                    "items": [
+                      {
+                        "val": 1
+                      },
+                      {
+                        "val": 2
+                      }
+                    ]
+                  },
+                  {
+                    "items": [
+                      {
+                        "val": 3
+                      }
+                    ]
+                  }
+                ],
+                "type": "json"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "write out %list[0].items[1].val%",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%list[0].items[1].val%",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
+              }
+            ],
+            "return": [
+              {
+                "name": "pr",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "write out %list[1].items[0].val%",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "%list[1].items[0].val%",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
+              }
+            ],
+            "return": [
+              {
+                "name": "pr",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/Start.goal",
+    "prPath": "/.build/start.pr",
+    "hash": "1644ef9b76a8754de5c93c9e0d607d7c1810d5f5fd2c3048f58495fb0c2a560b",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

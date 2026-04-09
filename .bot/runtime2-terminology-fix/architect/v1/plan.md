@@ -6,7 +6,7 @@ Align the codebase to consistent terminology: **Module** (grouping) and **Action
 
 ## What's Already Done
 
-The Action entity (`PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/this.cs`) is **already correct**:
+The Action entity (`PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs`) is **already correct**:
 - `Module` property with `[JsonPropertyName("module")]`
 - `ActionName` property with `[JsonPropertyName("action")]`
 - No `Class`/`Method` properties on the entity
@@ -15,42 +15,42 @@ The Action entity (`PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/t
 
 ### 1. Delete stale entity IAction interface
 
-**File:** `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/IAction.cs`
+**File:** `PLang/App/Goals/Goal/Steps/Step/Actions/Action/IAction.cs`
 
 This interface has old `Class`/`Method` properties and is **never referenced** anywhere. Delete it.
 
-Also remove the global using alias in `PLang/Runtime2/GlobalUsings.cs`:
+Also remove the global using alias in `PLang/App/GlobalUsings.cs`:
 ```csharp
 // DELETE THIS LINE:
-global using IAction = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.IAction;
+global using IAction = App.Goals.Goal.Steps.Step.Actions.Action.IAction;
 ```
 
 And in `PLang.Tests/GlobalUsings.cs`:
 ```csharp
 // DELETE THIS LINE:
-global using IAction = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.IAction;
+global using IAction = App.Goals.Goal.Steps.Step.Actions.Action.IAction;
 ```
 
 ### 2. Rename folder `actions/` → `modules/`
 
-**Move:** `PLang/Runtime2/actions/` → `PLang/Runtime2/modules/`
+**Move:** `PLang/App/actions/` → `PLang/App/modules/`
 
 This changes the namespace in **every file** inside that folder. There are ~98 files.
 
 Every file changes from:
 ```csharp
-namespace PLang.Runtime2.actions.variable;
+namespace App.actions.variable;
 ```
 to:
 ```csharp
-namespace PLang.Runtime2.modules.variable;
+namespace App.modules.variable;
 ```
 
-Use `git mv PLang/Runtime2/actions PLang/Runtime2/modules` for the folder move, then find-and-replace the namespace.
+Use `git mv PLang/App/actions PLang/App/modules` for the folder move, then find-and-replace the namespace.
 
 ### 3. Rename `IClass` → `IAction`
 
-**File:** `PLang/Runtime2/modules/IClass.cs` → `PLang/Runtime2/modules/IAction.cs` (after folder move)
+**File:** `PLang/App/modules/IClass.cs` → `PLang/App/modules/IAction.cs` (after folder move)
 
 ```csharp
 // Before
@@ -75,13 +75,13 @@ public interface IAction
 ```
 
 References to update:
-- `PLang/Runtime2/Engine/Libraries/Library/this.cs` — field type `IClass` → `IAction`, method signatures
-- `PLang/Runtime2/Engine/Libraries/this.cs` — method signatures
+- `PLang/App/Libraries/Library/this.cs` — field type `IClass` → `IAction`, method signatures
+- `PLang/App/Libraries/this.cs` — method signatures
 - All test files that reference `IClass` (25 files in PLang.Tests)
 
 ### 4. Library/Libraries — rename internal variables
 
-**File:** `PLang/Runtime2/Engine/Libraries/Library/this.cs`
+**File:** `PLang/App/Libraries/Library/this.cs`
 
 | Before | After |
 |--------|-------|
@@ -89,7 +89,7 @@ References to update:
 | `handler` (variables/parameters) | `action` |
 | Comments: "handler" | "action" |
 
-**File:** `PLang/Runtime2/Engine/Libraries/this.cs`
+**File:** `PLang/App/Libraries/this.cs`
 
 | Before | After |
 |--------|-------|
@@ -107,53 +107,53 @@ References to update:
 Three string literals reference the old namespace:
 ```csharp
 // Line 65: attribute namespace check
-"PLang.Runtime2.actions"  →  "PLang.Runtime2.modules"
+"App.actions"  →  "App.modules"
 
 // Line 71: IContext namespace check
-"PLang.Runtime2.actions"  →  "PLang.Runtime2.modules"
+"App.actions"  →  "App.modules"
 
 // Line 140: generated code implements
-"PLang.Runtime2.actions.ICodeGenerated"  →  "PLang.Runtime2.modules.ICodeGenerated"
+"App.actions.ICodeGenerated"  →  "App.modules.ICodeGenerated"
 ```
 
 ### 6. GlobalUsings updates
 
-**`PLang/Runtime2/GlobalUsings.cs`:**
+**`PLang/App/GlobalUsings.cs`:**
 - Delete the `IAction` line (step 1)
-- No new alias needed — `IAction` lives in `PLang.Runtime2.modules` which action files already import via their own namespace
+- No new alias needed — `IAction` lives in `App.modules` which action files already import via their own namespace
 
 **`PLang.Tests/GlobalUsings.cs`:**
 - Delete the `IAction` line (step 1)
 
 ### 7. Test files — namespace updates
 
-25 test files reference `PLang.Runtime2.actions` namespace. Update to `PLang.Runtime2.modules`:
+25 test files reference `App.actions` namespace. Update to `App.modules`:
 ```csharp
 // Before
-using PLang.Runtime2.actions;
+using App.actions;
 
 // After
-using PLang.Runtime2.modules;
+using App.modules;
 ```
 
 Some test files have inner classes implementing `IClass` — update to `IAction`.
 
 ### 8. Other references to old namespace outside actions/
 
-These files import `PLang.Runtime2.actions` but live outside the actions folder:
-- `PLang/Runtime2/Engine/this.cs` — Discover namespace string
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`
-- `PLang/Runtime2/Engine/Libraries/Library/this.cs`
-- `PLang/Runtime2/Engine/Libraries/this.cs`
-- `PLang/Runtime2/Engine/Settings/this.cs`
+These files import `App.actions` but live outside the actions folder:
+- `PLang/App/this.cs` — Discover namespace string
+- `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`
+- `PLang/App/Libraries/Library/this.cs`
+- `PLang/App/Libraries/this.cs`
+- `PLang/App/Settings/this.cs`
 
-Search pattern: `grep -rn "PLang.Runtime2.actions" --include="*.cs"` and update all.
+Search pattern: `grep -rn "App.actions" --include="*.cs"` and update all.
 
 ## Execution Order
 
 1. Delete `IAction.cs` entity interface + remove GlobalUsing aliases
-2. `git mv PLang/Runtime2/actions PLang/Runtime2/modules`
-3. Find-and-replace namespace: `PLang.Runtime2.actions` → `PLang.Runtime2.modules` (all .cs files)
+2. `git mv PLang/App/actions PLang/App/modules`
+3. Find-and-replace namespace: `App.actions` → `App.modules` (all .cs files)
 4. Rename `IClass.cs` → `IAction.cs`, `IClass` → `IAction` in interface and all references
 5. Rename Library variables: `_handlers` → `_actions`, `handler` → `action`, tuple `Handler` → `Action`
 6. Update source generator namespace strings
@@ -173,8 +173,8 @@ Search pattern: `grep -rn "PLang.Runtime2.actions" --include="*.cs"` and update 
 ```bash
 # Should find ZERO references after:
 grep -rn "IClass" --include="*.cs" PLang/ PLang.Tests/ PLang.Generators/
-grep -rn "PLang\.Runtime2\.actions" --include="*.cs" PLang/ PLang.Tests/ PLang.Generators/
-grep -rn "_handlers" --include="*.cs" PLang/Runtime2/Engine/Libraries/
+grep -rn "PLang\.App\.actions" --include="*.cs" PLang/ PLang.Tests/ PLang.Generators/
+grep -rn "_handlers" --include="*.cs" PLang/App/Libraries/
 
 # Build
 dotnet build PLang/PLang.csproj

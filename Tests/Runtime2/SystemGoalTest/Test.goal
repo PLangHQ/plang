@@ -1,0 +1,5 @@
+Start
+- call goal WriteOut
+
+WriteOut
+- write out "hello plang world"

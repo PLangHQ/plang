@@ -1,0 +1,174 @@
+{
+  "tester": "tester",
+  "branch": "system-goals-architecture",
+  "timestamp": "2026-04-08T21:00:00Z",
+  "tested_version": "v5",
+  "test_run": {
+    "csharp": { "total": 2017, "passed": 2017, "failed": 0, "skipped": 0 },
+    "plang": { "total": 0, "passed": 0, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 142,
+    "changed_files_total": 170,
+    "uncovered_files": [
+      "PLang/App/modules/cache/check.cs",
+      "PLang/App/modules/cache/store.cs",
+      "PLang/App/modules/http/types.cs",
+      "PLang/App/modules/ui/render.cs"
+    ]
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/loop/ForeachTests.cs",
+      "code_file": "PLang/App/modules/loop/foreach.cs",
+      "issue": "4 foreach tests only check output counts (itemCount) and final variable state. No test verifies iteration actually happens — if the loop body never ran but itemCount was hardcoded, all tests pass. Additionally, Returned=true mid-iteration is silently ignored (line 37 checks Success+Handled but not Returned), meaning a goal.return inside a foreach continues iterating.",
+      "impact": "Loop could be entirely disabled and tests pass. Return-from-loop is broken by design and untested.",
+      "suggestion": "Add a test that registers a goal with side effects (e.g., appends to a list variable), runs foreach, and verifies the list has N entries. Add a test for goal.return inside foreach — verify loop stops early."
+    },
+    {
+      "id": 2,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/error/ErrorCheckTests.cs",
+      "code_file": "PLang/App/modules/error/check.cs",
+      "issue": "Retry loop mechanics are inadequately tested. Check_RetryWithNoActions_Succeeds passes RetryCount=2 but there are no actions, so the loop immediately succeeds without actually retrying anything. Delay calculation (RetryOverMs / RetryCount), step action re-execution (app.Run), retry exhaustion (all attempts fail), and break-on-action-failure are all untested.",
+      "impact": "Retry logic could be completely broken — wrong delay, wrong count, wrong action re-execution — and tests would pass.",
+      "suggestion": "Create a test with a Step that has an Action: first retry fails, second succeeds. Verify the action ran twice. Add a test for retry exhaustion (all attempts fail → returns null → fallthrough). Test delay with a fast timer check."
+    },
+    {
+      "id": 3,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/error/ErrorCheckTests.cs",
+      "code_file": "PLang/App/modules/error/check.cs",
+      "issue": "ErrorGoal execution is NOT verified. Tests register a stub goal via _app.Goals.Add() but never verify it actually runs. If app.RunGoalAsync() silently failed or threw, the test would still pass because it only checks the final return value (Ok). The GoalFirst vs RetryFirst ordering tests don't demonstrate a scenario where order actually changes the outcome.",
+      "impact": "Error goal could be dead code. Ordering logic could be wrong. Parameter passing (error message, key, statusCode) to error goal is untested.",
+      "suggestion": "Use a goal that sets a variable when it runs. After error handling, assert the variable was set. For ordering tests, create a scenario where the goal modifies state that affects retry behavior."
+    },
+    {
+      "id": 4,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/event/EventHandlerTests.cs",
+      "code_file": "PLang/App/modules/event/on.cs",
+      "issue": "6 of 11 event tests only verify registration count. None verify callbacks actually fire. This was flagged in v4 and remains unfixed.",
+      "impact": "Event-driven behavior could silently break.",
+      "suggestion": "Add integration tests that register, trigger, and verify callback execution."
+    },
+    {
+      "id": 5,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Core/EngineTests.cs",
+      "code_file": "PLang/App/this.cs",
+      "issue": "DisposeAsync tests assert true==true (tautological). Flagged in v4, remains unfixed.",
+      "impact": "Resource leaks from broken disposal undetected.",
+      "suggestion": "Verify actors are unusable after disposal."
+    },
+    {
+      "id": 6,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/condition/OperatorTests.cs",
+      "code_file": "PLang/App/modules/condition/Operator.cs",
+      "issue": "37 operator tests are biased toward true cases. Several operators lack negative tests (verify false when expected). If Evaluate returned hardcoded true, many tests would still pass.",
+      "impact": "Operator comparisons could be one-sided — always returning true for certain operators.",
+      "suggestion": "For every operator test that asserts true, add a complementary test with different values that should return false."
+    },
+    {
+      "id": 7,
+      "severity": "major",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/App/Modules/condition/IfHandlerTests.cs",
+      "code_file": "PLang/App/Goals/Goal/Steps/this.cs",
+      "issue": "GoalSteps.RunAsync condition detection (lines 103-109) is fragile: any module returning bool=false will trigger sub-step skipping if the module name happens to be 'condition'. No test for false-positive condition detection. Additionally, Returned=true propagation through GoalSteps is untested.",
+      "impact": "Non-condition modules returning bool=false could silently skip sub-steps. Goal return from mid-execution untested.",
+      "suggestion": "Add a test with a non-condition module that returns bool=false, verify sub-steps still execute. Add a test for goal.return propagation through GoalSteps."
+    },
+    {
+      "id": 8,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/cache/check.cs",
+      "issue": "Cache hit detection still at 0% coverage. Flagged in v4, remains unfixed.",
+      "impact": "Cache system completely untested.",
+      "suggestion": "Create CacheCheckTests.cs."
+    },
+    {
+      "id": 9,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/cache/store.cs",
+      "issue": "Cache storage still at 0% coverage. Flagged in v4, remains unfixed.",
+      "impact": "Cache system completely untested.",
+      "suggestion": "Create CacheStoreTests.cs."
+    },
+    {
+      "id": 10,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Core/CallStackIntegrationTests.cs",
+      "code_file": "PLang/App/CallStack/this.cs",
+      "issue": "4 integration tests only check high-level depth and goal name presence. No test verifies actual CallFrame objects in the stack, PopAsync LIFO behavior, or that failed steps record errors in frames.",
+      "impact": "Call stack could return wrong frames, wrong order, or lose error information.",
+      "suggestion": "After push, inspect the actual frame objects. After pop, verify correct frame was removed. After failure, verify frame.Errors contains the error."
+    },
+    {
+      "id": 11,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Core/CallFrameTests.cs",
+      "code_file": "PLang/App/CallStack/this.cs",
+      "issue": "CallFrame SnapshotVariables and disposable management (AddDisposable, TransferDisposable) have zero tests despite being 25-test file.",
+      "impact": "Variable snapshots could be broken. Disposable tracking could leak resources.",
+      "suggestion": "Add tests for SnapshotVariables capturing correct variable state, and AddDisposable/TransferDisposable lifecycle."
+    },
+    {
+      "id": 12,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Modules/file/FileHandlerTests.cs",
+      "code_file": "PLang/App/modules/file/providers/DefaultFileProvider.cs",
+      "issue": "Exception paths in DefaultFileProvider are untested: IOException during read/save/delete, recursive CopyDirectory has NO exception handling (partial copies on failure, no rollback), serialization errors during save.",
+      "impact": "File operations could leave partial state on IO errors. CopyDirectory could leave half-copied directory trees.",
+      "suggestion": "Test IOException paths with chmod on Linux. Test recursive copy failure mid-tree. Test serialization error during save."
+    },
+    {
+      "id": 13,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/App/Modules/variable/settests.cs",
+      "code_file": "PLang/App/modules/variable/set.cs",
+      "issue": "AsDefault=true behavior still untested (flagged v4). Only 4 tests at 54.5% coverage.",
+      "impact": "Default variable initialization could overwrite existing values.",
+      "suggestion": "Add AsDefault=true tests."
+    },
+    {
+      "id": 14,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/Data/Providers/DefaultGrepProvider.cs",
+      "issue": "Still at 3.2% coverage. Flagged v4.",
+      "impact": "Grep expressions could silently produce wrong results.",
+      "suggestion": "Create GrepProviderTests.cs."
+    },
+    {
+      "id": 15,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": null,
+      "code_file": null,
+      "issue": "Still no PLang .goal integration tests. Flagged v4.",
+      "impact": "Builder-to-runtime pipeline untested for new App namespace.",
+      "suggestion": "Create basic PLang .goal tests."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "All 2017 C# tests pass after coder fixed streaming failures and added 31 tests for critical coverage gaps. However, fresh-eyes analysis reveals deeper issues: foreach tests are false greens (iteration never verified), error/check retry loop is tested with empty actions (no real retry), error goal execution is never verified to actually run, event callback tests still only check registration. GoalSteps condition detection is fragile (any bool=false from a 'condition' module skips sub-steps). Cache modules still at 0%. No PLang integration tests."
+}

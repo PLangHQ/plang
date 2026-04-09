@@ -1,0 +1,62 @@
+[
+  {
+    "name": "ReadCachedFile",
+    "description": "Reads a cached file \u0027cachekey.txt\u0027 with a 60-second cache duration and writes its contents to %cachedContent%.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "read file \u0027cachekey.txt\u0027, cache for 60 seconds, write to %cachedContent%",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "file",
+            "action": "read",
+            "parameters": [
+              {
+                "name": "Path",
+                "value": "cachekey.txt",
+                "type": "path"
+              },
+              {
+                "name": "ResolveVariables",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": [
+              {
+                "name": "cachedContent",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": {
+          "durationMs": 60000,
+          "sliding": false,
+          "key": null,
+          "location": null
+        },
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ReadCachedFile.goal",
+    "prPath": "/.build/readcachedfile.pr",
+    "hash": "01394b21d4d0e9412ff0456706bbf0e4d71a0a39058be63c291369debec73052",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

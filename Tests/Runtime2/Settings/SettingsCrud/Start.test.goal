@@ -1,4 +1,6 @@
+/ Tests basic CRUD operations on settings: set, get, update, remove
 Start
+/ Set initial value
 - set settings 'TestApiKey' = 'sk-test-12345'
 - get settings 'TestApiKey', write to %apiKey%
 - assert %apiKey% equals "sk-test-12345"

@@ -11,7 +11,7 @@ Responding to security audit (12 findings), auditor v4 (findings #9-10), and tes
    - `fromJson.cs` duplicate — delete it, call shared `Data.UnwrapJsonElement` instead (needs to become `internal static`)
    - `RehydrateNestedData` (Data.Envelope.cs) — add `int depth = 0`, max 128
    - `GetChild` (Data.Navigation.cs) — add `int depth = 0`, max 100
-   - `ResolveVariablesInPath` (MemoryStack.cs) — add `HashSet<string>` cycle detection
+   - `ResolveVariablesInPath` (Variables.cs) — add `HashSet<string>` cycle detection
    - `Clr()` (Types/this.cs) — add `int depth = 0`, max 20
 
 2. **Make Verified not freely settable** (Security #9)
@@ -46,13 +46,13 @@ Responding to security audit (12 findings), auditor v4 (findings #9-10), and tes
 
 | File | Changes |
 |------|---------|
-| `PLang/Runtime2/Engine/Memory/Data.cs` | Depth param on UnwrapJsonElement/Object/Array, make internal static |
-| `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` | Depth param on RehydrateNestedData, Verified → private set |
-| `PLang/Runtime2/Engine/Memory/Data.Navigation.cs` | Depth param on GetChild |
-| `PLang/Runtime2/Engine/Memory/MemoryStack.cs` | Cycle detection on ResolveVariablesInPath |
-| `PLang/Runtime2/Engine/Types/this.cs` | Depth param on Clr() |
-| `PLang/Runtime2/actions/convert/fromJson.cs` | Delete duplicate UnwrapJsonElement, call Data's version |
-| `PLang.Tests/Runtime2/Memory/DataTests.cs` | Zip bomb test, Merge tests, StatusCode assertions, recursion depth tests |
+| `PLang/App/Memory/Data.cs` | Depth param on UnwrapJsonElement/Object/Array, make internal static |
+| `PLang/App/Memory/Data.Envelope.cs` | Depth param on RehydrateNestedData, Verified → private set |
+| `PLang/App/Memory/Data.Navigation.cs` | Depth param on GetChild |
+| `PLang/App/Memory/Variables.cs` | Cycle detection on ResolveVariablesInPath |
+| `PLang/App/Types/this.cs` | Depth param on Clr() |
+| `PLang/App/actions/convert/fromJson.cs` | Delete duplicate UnwrapJsonElement, call Data's version |
+| `PLang.Tests/App/Memory/DataTests.cs` | Zip bomb test, Merge tests, StatusCode assertions, recursion depth tests |
 
 ## Order of implementation
 

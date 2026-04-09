@@ -8,7 +8,7 @@ Coder v5 added security hardening: depth limits on 5 recursive methods, cycle de
 
 1. All 1384 tests pass — no regressions
 2. Each depth limit has adequate test coverage (boundary cases, integration paths)
-3. Cycle detection in MemoryStack is tested
+3. Cycle detection in Variables is tested
 4. fromJson dedup works through the action, not just at Data level
 5. Verified private set is enforced
 6. GetChild behavior change (null → Data.FromError) doesn't break callers

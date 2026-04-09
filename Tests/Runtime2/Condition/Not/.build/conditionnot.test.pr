@@ -1,0 +1,142 @@
+[
+  {
+    "name": "Start",
+    "description": "Sets %flag% to false, then uses a negated condition to call WhenFalse when the NOT flag is true, and finally asserts %result% equals \u0027negated\u0027.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %flag% = false",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: NOT negation \u2014 false flag negated to true calls goal",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%flag%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "if not %flag%, call WhenFalse",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "condition",
+            "action": "if",
+            "parameters": [
+              {
+                "name": "Left",
+                "value": "%flag%",
+                "type": "bool"
+              },
+              {
+                "name": "Operator",
+                "value": "==",
+                "type": "string"
+              },
+              {
+                "name": "Right",
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "GoalIfTrue",
+                "value": {
+                  "name": "WhenFalse",
+                  "description": null,
+                  "parallel": false,
+                  "parameters": null,
+                  "prPath": null
+                },
+                "type": "goal.call"
+              },
+              {
+                "name": "Negate",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %result% equals \u0022negated\u0022, \u0022NOT should negate falsy to truthy\u0022",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "negated",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%result%",
+                "type": "data"
+              },
+              {
+                "name": "Message",
+                "value": "NOT should negate falsy to truthy",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/Not/ConditionNot.test.goal",
+    "prPath": "/Not/.build/conditionnot.test.pr",
+    "hash": "a7710ec1237c989fb1f6596ef87bf1e0552553ce70930fc5fa07832bf42e060a",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

@@ -2,7 +2,7 @@
 
 ## Scope
 
-This branch adds a Settings infrastructure to Runtime2: ~200 LOC of new production code across 6 files, plus 377 LOC of tests. The feature provides strongly-typed, goal-scoped module configuration with a resolution chain: context scope -> parent scope -> engine defaults -> class defaults.
+This branch adds a Settings infrastructure to App: ~200 LOC of new production code across 6 files, plus 377 LOC of tests. The feature provides strongly-typed, goal-scoped module configuration with a resolution chain: context scope -> parent scope -> engine defaults -> class defaults.
 
 ## New Files
 - `Engine/Settings/this.cs` (87 LOC) — Settings registry, Resolve<T>, Set, Cast<T>, For<T>

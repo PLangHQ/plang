@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Start",
+    "description": "Test asserts that %MyIdentity% is auto-created (default identity) when no identities exist, and that its Name is not null.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "assert %MyIdentity% is not null",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: access %MyIdentity% when no identities exist, verify auto-created default identity",
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%MyIdentity%",
+                "type": "identitydata"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %MyIdentity.Name% is not null",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%MyIdentity.Name%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/IdentityAutoCreate.test.goal",
+    "prPath": "/.build/identityautocreate.test.pr",
+    "hash": "153fa75d2609153132a67b1d80f090a0b6f9ced940f1a62e514bf3835b590fe1",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

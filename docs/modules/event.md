@@ -4,82 +4,42 @@ Hook into the PLang execution lifecycle. Register handlers that run before or af
 
 ## Actions
 
-### beforeGoal
+### on
 
-Run a goal before any matching goal starts.
+Register an event binding. All event types use this single action with a `Type` parameter.
 
 ```plang
 - before each goal call !LogStart
-- before goal 'ProcessData' call !ValidateInput
+- after goal, call Cleanup
+- before step, call LogStep, on goal pattern 'Api/*'
+- before action, call MockHttp, on action pattern 'http.*'
+- on before goal, call AuthCheck, on goal pattern '^Admin', is regex
 ```
 
 **Parameters:**
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| GoalToCall | goal | yes | — | Goal to execute on event |
-| GoalPattern | string | no | — | Goal name pattern to match (null = all goals) |
-| IsRegex | bool | no | false | Treat pattern as regex |
+| Type | string | yes | — | Event type (see below) |
+| GoalToCall | goal | yes | — | Goal to execute when event fires |
+| GoalPattern | string | no | — | Glob or regex pattern to match goal names (null = all goals) |
+| StepPattern | string | no | — | Glob or regex pattern to match step text (step-level events only) |
+| ActionPattern | string | no | — | Glob or regex pattern to match action names, e.g., `http.*` (action-level events only) |
+| IsRegex | bool | no | false | Treat patterns as regular expressions |
 | Priority | int | no | 0 | Execution priority (higher = runs first) |
 
-### afterGoal
+**Event types:**
 
-Run a goal after any matching goal completes.
+| Type | When it fires |
+|------|--------------|
+| `BeforeGoal` | Before a goal starts |
+| `AfterGoal` | After a goal completes |
+| `BeforeStep` | Before a step executes |
+| `AfterStep` | After a step completes |
+| `BeforeAction` | Before a specific action type executes |
+| `AfterAction` | After a specific action type completes |
 
-```plang
-- after each goal call !LogEnd
-- after goal 'ProcessData' call !NotifyComplete
-```
-
-Same parameters as `beforeGoal`.
-
-### beforeStep
-
-Run a goal before any matching step executes.
-
-```plang
-- before each step call !LogStep
-- before step matching 'write*' call !CaptureOutput
-```
-
-**Parameters:**
-
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| GoalToCall | goal | yes | — | Goal to execute on event |
-| GoalPattern | string | no | — | Goal name pattern |
-| StepPattern | string | no | — | Step text pattern |
-| IsRegex | bool | no | false | Treat patterns as regex |
-| Priority | int | no | 0 | Execution priority |
-
-### afterStep
-
-Run a goal after any matching step completes. Same parameters as `beforeStep`.
-
-```plang
-- after each step call !AuditStep
-```
-
-### beforeAction
-
-Run a goal before a specific action type executes.
-
-```plang
-- before action 'file/save' call !BackupFirst
-```
-
-**Parameters:**
-
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| GoalToCall | goal | yes | — | Goal to execute on event |
-| ActionPattern | string | no | — | Action pattern to match |
-| IsRegex | bool | no | false | Treat pattern as regex |
-| Priority | int | no | 0 | Execution priority |
-
-### afterAction
-
-Run a goal after a specific action type completes. Same parameters as `beforeAction`.
+**Returns:** The binding ID (use with `remove`).
 
 ### remove
 
@@ -97,28 +57,18 @@ Remove a registered event binding by ID.
 
 ### skipAction
 
-Skip the current action and return a custom value instead. Use this in a `beforeAction` handler to prevent the action from running.
+Skip the current action and return a custom value instead. Use this inside a `BeforeAction` event handler to prevent the real action from running.
 
 ```plang
 - skip action with value 'mocked result'
+- skip action, value = %mockResponse%
 ```
 
 **Parameters:**
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| Value | object | no | Value to return instead of the action's result |
-
-## Event Registration Returns
-
-When you register an event, the handler returns an event object with:
-
-| Property | Description |
-|----------|-------------|
-| `id` | Unique binding ID (use with `remove`) |
-| `type` | Event type (beforeGoal, afterStep, etc.) |
-| `goalToCall` | The goal that will be called |
-| `pattern` | The matching pattern |
+| Value | object | no | Value to return instead of the action's real result |
 
 ## Examples
 
@@ -135,17 +85,37 @@ LogBefore
 
 LogAfter
 - write out 'Goal complete.'
+```
 
-DoWork
-- write out 'Doing work'
+### Intercepting Actions
+
+```plang
+Start
+- before action, call MockHttp, on action pattern 'http.*'
+- get 'https://api.example.com/data', write to %result%
+- write out %result%
+
+MockHttp
+- skip action with value { "mocked": true }
 ```
 
 ### Event Cleanup
 
 ```plang
 Start
-- before each step call !Monitor, write to %monitorEvent%
+- before each step call !Monitor, write to %monitorId%
 - call !DoWork
-- remove event %monitorEvent.id%
+- remove event %monitorId%
 / Monitor is no longer active
+```
+
+### Pattern Matching with Regex
+
+```plang
+Start
+- before goal, call AuthCheck, on goal pattern '^Admin', is regex
+- call !AdminDashboard
+
+AuthCheck
+- write out 'Checking auth...'
 ```

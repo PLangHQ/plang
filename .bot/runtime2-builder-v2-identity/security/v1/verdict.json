@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "No critical/high findings. One medium (Data.Envelope.Compress missing SensitivePropertyFilter — zero call sites, theoretical). Three low accepted-risk findings for managed heap key material lifetime." }

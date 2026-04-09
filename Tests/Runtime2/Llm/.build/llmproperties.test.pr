@@ -1,0 +1,103 @@
+[
+  {
+    "name": "Start",
+    "description": "Runs an LLM query to say hello, writes the response to %result%, then asserts the result is not null (so response properties like %result!TotalTokens% and %result!Model% are expected to be accessible).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "[llm] system: \u0027You are a helpful assistant\u0027\nuser: \u0027Say hello\u0027\ntemperature: 0.5\nmaxTokens: 50\nwrite to %result%",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Verify response properties accessible via %result!TotalTokens%, %result!Model%, etc.",
+        "actions": [
+          {
+            "module": "llm",
+            "action": "query",
+            "parameters": [
+              {
+                "name": "Messages",
+                "value": [
+                  {
+                    "Role": "system",
+                    "Text": "You are a helpful assistant"
+                  },
+                  {
+                    "Role": "user",
+                    "Text": "Say hello"
+                  }
+                ],
+                "type": "list"
+              },
+              {
+                "name": "Temperature",
+                "value": 0.5,
+                "type": "double"
+              },
+              {
+                "name": "MaxTokens",
+                "value": 50,
+                "type": "int"
+              },
+              {
+                "name": "Cache",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": [
+              {
+                "name": "result",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %result% is not null",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%result%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/LlmProperties.test.goal",
+    "prPath": "/.build/llmproperties.test.pr",
+    "hash": "140e13322004adb05add061a579030e7ac8b0670b68cea3a8299456dd857c237",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

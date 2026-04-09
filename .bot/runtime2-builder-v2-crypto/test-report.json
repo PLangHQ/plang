@@ -1,0 +1,81 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-builder-v2-crypto",
+  "timestamp": "2026-03-19T12:00:00Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 1688, "passed": 1684, "failed": 0, "skipped": 4 },
+    "plang": { "total": 6, "passed": 0, "failed": 0, "skipped": 6 }
+  },
+  "coverage": {
+    "changed_files_covered": 17,
+    "changed_files_total": 19,
+    "not_applicable": ["ICryptoProvider.cs (interface)", "GlobalUsings.cs (aliases)", "View.cs (attribute only)"],
+    "file_coverage": {
+      "modules/crypto/hash.cs": "100%",
+      "modules/crypto/verify.cs": "100% (line coverage — but null Hash branch uncovered, see finding 1)",
+      "modules/crypto/types.cs": "75% (ToString untested)",
+      "modules/crypto/providers/DefaultProvider.cs": "100%",
+      "Engine/Providers/this.cs": "100%",
+      "Engine/Context/Actor.cs": "100%",
+      "Engine/Memory/Data.Envelope.cs": "98.2%",
+      "Engine/Channels/Serializers/SensitivePropertyFilter.cs": "100%",
+      "Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs": "100% (DeserializeAsync<T>), 80% (DeserializeAsync)",
+      "modules/identity/IdentityData.cs": "88.5% — ResolveDefault() catch block never hit",
+      "modules/identity/KeyGenerator.cs": "100%",
+      "modules/identity/archive.cs": "100%",
+      "modules/identity/create.cs": "100%",
+      "modules/identity/export.cs": "82.4% — InvalidOperationException catch never hit",
+      "modules/identity/get.cs": "81.2% — InvalidOperationException catch never hit",
+      "modules/identity/getAll.cs": "100%",
+      "modules/identity/rename.cs": "100%",
+      "modules/identity/setDefault.cs": "100%",
+      "modules/identity/types.cs": "92% — Deserialize direct-cast path + null fallback never hit; GetOrCreateDefaultAsync save-failure paths never hit; LoadAllAsync error path never hit",
+      "modules/identity/unarchive.cs": "100%"
+    }
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/crypto/verify.cs",
+      "issue": "Verify.Run() catches FormatException from Convert.FromHexString(Hash) but Hash=null throws ArgumentNullException, which is unhandled. Line coverage shows 100% because the line IS hit — but the null exception branch is invisible to line coverage. This is a code bug, not just a test gap.",
+      "impact": "If a .pr file or source generator passes null Hash, Verify throws instead of returning Data.FromError(). Violates 'behavior methods never throw' contract.",
+      "suggestion": "Add null guard for Hash (same as the Data null check on line 18-19). Add test with Hash = null!."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs",
+      "code_file": "PLang/Runtime2/modules/identity/types.cs",
+      "issue": "GetOrCreateDefaultAsync has two throw paths (lines 84, 101) for save failures that are never exercised. These are defensive throws that propagate up to catch blocks in export.cs:32, get.cs:33, and IdentityData.cs:56 — all also untested.",
+      "impact": "If DataSource.Save fails during auto-create or promotion, the entire exception chain is untested: types.cs throws → export/get catch → return ServiceError. A bug in any of these would go undetected.",
+      "suggestion": "Mock DataSource to return a failed save result and verify the full chain: throw in types.cs → catch in handler → Data.FromError with 'SaveError' key"
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs",
+      "code_file": "PLang/Runtime2/modules/identity/types.cs",
+      "issue": "LoadAllAsync error path (line 55) and Deserialize null fallback (line 143) never hit. LoadAllAsync returns empty list when DataSource fails; Deserialize returns null for non-dictionary/non-IdentityVariable values.",
+      "impact": "Low — defensive code for unlikely DataSource corruption",
+      "suggestion": "Informational. These are edge cases for data corruption scenarios."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": "Tests/Runtime2/Crypto/",
+      "code_file": "PLang/Runtime2/modules/crypto/hash.cs",
+      "issue": "6 PLang .goal tests exist but cannot be built or run — crypto module not registered with builder yet",
+      "impact": "Full pipeline validation deferred until builder integration",
+      "suggestion": "Build and run PLang tests after crypto module is registered with the builder"
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "Coverage is now properly measured (previous crash was due to wrong output path). Crypto source files are 100% line coverage — but line coverage is misleading on verify.cs where 100% hides an unhandled null branch (ArgumentNullException vs FormatException). Identity module has untested save-failure chains at 82-92% coverage. 1 major finding (verify null Hash bug), 3 minor. All v1 findings resolved."
+}

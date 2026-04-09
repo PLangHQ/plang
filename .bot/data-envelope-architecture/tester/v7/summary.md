@@ -23,8 +23,8 @@ Test quality analysis of coder v5: depth limits on 5 recursive methods, cycle de
 
 ### Finding #1 — MAJOR: ResolveVariablesInPath cycle detection completely untested
 
-**File**: `PLang/Runtime2/Engine/Memory/MemoryStack.cs:203-237`
-**Test file**: `PLang.Tests/Runtime2/Memory/MemoryStackTests.cs`
+**File**: `PLang/App/Memory/Variables.cs:203-237`
+**Test file**: `PLang.Tests/App/Memory/VariablesTests.cs`
 
 The cycle detection logic uses a `[ThreadStatic] HashSet<string>` to detect circular variable references in bracket-index paths (e.g., `array[x]` where `x` resolves to `y` and `y` resolves to `x`). Zero tests exist for this feature.
 
@@ -40,23 +40,23 @@ The cycle detection logic uses a `[ThreadStatic] HashSet<string>` to detect circ
 - (b) Self-reference: variable whose resolution path references itself
 - (c) After cycle detection, verify normal variable resolution still works (no HashSet leak)
 
-### Finding #2 — MAJOR: GetChild depth error not tested through MemoryStack integration
+### Finding #2 — MAJOR: GetChild depth error not tested through Variables integration
 
-**File**: `PLang/Runtime2/Engine/Memory/MemoryStack.cs:90`
-**Test file**: `PLang.Tests/Runtime2/Memory/MemoryStackTests.cs`
+**File**: `PLang/App/Memory/Variables.cs:90`
+**Test file**: `PLang.Tests/App/Memory/VariablesTests.cs`
 
-`MemoryStack.Get()` at line 90 calls `root.GetChild(remaining)` and returns the result directly. GetChild now returns `Data.FromError(ServiceError("NavigationDepthExceeded"))` when depth exceeds 100. But `MemoryStack.Get()` returns `Data?` — callers expect null for "not found" and a valid Data for "found."
+`Variables.Get()` at line 90 calls `root.GetChild(remaining)` and returns the result directly. GetChild now returns `Data.FromError(ServiceError("NavigationDepthExceeded"))` when depth exceeds 100. But `Variables.Get()` returns `Data?` — callers expect null for "not found" and a valid Data for "found."
 
-**The integration gap**: A caller doing `stack.Get("a.b.c...(101 dots)")` gets a non-null Data with `Success == false`. If they check `result != null` (standard pattern), they proceed and access `.Value` on an error Data — getting null or garbage instead of the expected value. No test exercises this path through MemoryStack.
+**The integration gap**: A caller doing `stack.Get("a.b.c...(101 dots)")` gets a non-null Data with `Success == false`. If they check `result != null` (standard pattern), they proceed and access `.Value` on an error Data — getting null or garbage instead of the expected value. No test exercises this path through Variables.
 
-**Why this matters**: The depth limit is tested in isolation (DataTests.cs line 1052) but never through the integration point where users actually hit it. The Data-level test proves GetChild returns an error; no test proves MemoryStack callers handle that error correctly.
+**Why this matters**: The depth limit is tested in isolation (DataTests.cs line 1052) but never through the integration point where users actually hit it. The Data-level test proves GetChild returns an error; no test proves Variables callers handle that error correctly.
 
-**Suggestion**: Add `MemoryStackTests.Get_DeeplyNestedPath_ReturnsErrorData()` — 101+ dot path, assert `result!.Success == false` and `result.Error!.Key == "NavigationDepthExceeded"`. This documents the contract: MemoryStack.Get can return error Data, not just values or null.
+**Suggestion**: Add `VariablesTests.Get_DeeplyNestedPath_ReturnsErrorData()` — 101+ dot path, assert `result!.Success == false` and `result.Error!.Key == "NavigationDepthExceeded"`. This documents the contract: Variables.Get can return error Data, not just values or null.
 
 ### Finding #3 — MINOR: FromJson not tested with deep nesting
 
-**File**: `PLang/Runtime2/actions/convert/fromJson.cs:12-24`
-**Test file**: `PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs`
+**File**: `PLang/App/actions/convert/fromJson.cs:12-24`
+**Test file**: `PLang.Tests/App/Modules/convert/ConvertTests.cs`
 
 `fromJson.Run()` calls `Data.UnwrapJsonElement()` which throws `InvalidOperationException` at depth 128. The action's `catch (Exception ex)` wraps this as `ValidationError("Invalid JSON: ...")`. But ConvertTests only tests simple JSON (1-level object) and invalid JSON. No test exercises the depth limit through the action.
 
@@ -66,8 +66,8 @@ The cycle detection logic uses a `[ThreadStatic] HashSet<string>` to detect circ
 
 ### Finding #4 — MINOR: Clr() depth limit not boundary-tested
 
-**File**: `PLang/Runtime2/Engine/Types/this.cs`
-**Test file**: `PLang.Tests/Runtime2/Types/EngineTypesTests.cs:634`
+**File**: `PLang/App/Types/this.cs`
+**Test file**: `PLang.Tests/App/Types/EngineTypesTests.cs:634`
 
 The test uses 25 levels (exceeds MaxGenericDepth=20) and asserts null. No test for exactly 20 (should succeed) or 21 (should fail). Off-by-one bugs in `depth > MaxGenericDepth` vs `depth >= MaxGenericDepth` would go undetected.
 
@@ -85,4 +85,4 @@ The test uses 25 levels (exceeds MaxGenericDepth=20) and asserts null. No test f
 
 ## Verdict: needs-fixes
 
-The security hardening code is correct and well-structured. The depth limit pattern is consistent across all 5 locations. The new tests cover the critical paths (zip bomb, depth limits, Merge). But two security features have zero test coverage: cycle detection in variable resolution (entirely untested) and the GetChild→MemoryStack integration path (depth error not tested through the caller). For a security hardening release, the security features should be the most thoroughly tested code.
+The security hardening code is correct and well-structured. The depth limit pattern is consistent across all 5 locations. The new tests cover the critical paths (zip bomb, depth limits, Merge). But two security features have zero test coverage: cycle detection in variable resolution (entirely untested) and the GetChild→Variables integration path (depth error not tested through the caller). For a security hardening release, the security features should be the most thoroughly tested code.

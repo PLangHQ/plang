@@ -1,105 +1,129 @@
-{
-  "name": "Start",
-  "steps": [
-    {
-      "index": 0,
-      "text": "set %depth% = 0",
-      "lineNumber": 3,
-      "indent": 0,
-      "comment": "recursion should error cleanly",
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%depth%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": 0,
-              "type": "int"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 1,
-      "text": "call Recurse, on error call HandleRecursionError",
-      "lineNumber": 4,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "name": "GoalName",
-              "value": "Recurse",
-              "type": "goal.call"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "onError": {
-        "goal": {
-          "name": "HandleRecursionError"
-        },
-        "ignoreError": false
+[
+  {
+    "name": "Start",
+    "description": "Sets recursion depth to 0, calls Recurse with error handling that routes to HandleRecursionError, then asserts that recursionErrorCaught is true.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %depth% = 0",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "recursion should error cleanly",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%depth%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 0,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
       },
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 2,
-      "text": "assert %recursionErrorCaught% equals true",
-      "lineNumber": 5,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": true,
-              "type": "bool"
-            },
-            {
-              "name": "Actual",
-              "value": "%recursionErrorCaught%",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    }
-  ],
-  "subGoals": [],
-  "visibility": 1,
-  "path": "/RecursionDepthLimit.test.goal",
-  "prPath": "/.build/recursiondepthlimit.test.pr",
-  "hash": "c203ae142bb75d0e0723f5f4f53cbc1149d157b73e4be07bc3ebc62614375d1f",
-  "isSetup": false,
-  "isEvent": false,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "Start"
-}
+      {
+        "index": 1,
+        "text": "call Recurse, on error call HandleRecursionError",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "GoalName",
+                "value": {
+                  "name": "Recurse",
+                  "parameters": []
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": {
+            "name": "HandleRecursionError",
+            "description": null,
+            "parallel": false,
+            "parameters": null,
+            "prPath": null
+          },
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %recursionErrorCaught% equals true",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": true,
+                "type": "bool"
+              },
+              {
+                "name": "Actual",
+                "value": "%recursionErrorCaught%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/RecursionDepthLimit.test.goal",
+    "prPath": "/.build/recursiondepthlimit.test.pr",
+    "hash": "58ad7438d7c3f2c48a399f77ebbf2a7b737b05f1f9e5752cc883e9cac9f41253",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

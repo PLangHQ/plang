@@ -5,8 +5,8 @@ Follow architect's 9-step execution order. Purely mechanical rename, no behavior
 ## Steps
 
 1. **Delete stale `IAction.cs`** entity interface + remove GlobalUsing aliases for it
-2. **`git mv PLang/Runtime2/actions PLang/Runtime2/modules`** — folder rename
-3. **Namespace replace**: `PLang.Runtime2.actions` → `PLang.Runtime2.modules` in all .cs files
+2. **`git mv PLang/App/actions PLang/App/modules`** — folder rename
+3. **Namespace replace**: `App.actions` → `App.modules` in all .cs files
 4. **Rename `IClass` → `IAction`**: interface name, file name, all references
 5. **Library internals**: `_handlers` → `_actions`, `handler` → `action`, tuple `Handler` → `Action`, `"HandlerError"` → `"ActionError"`
 6. **Source generator**: update 3 namespace string literals in `LazyParamsGenerator.cs`

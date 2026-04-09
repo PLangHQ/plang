@@ -12,13 +12,13 @@ Following `@this` and OBP conventions:
 
 | Type | Path | Namespace |
 |------|------|-----------|
-| `ISettings` marker interface | `PLang/Runtime2/Engine/Settings/ISettings.cs` | `PLang.Runtime2.Engine.Settings` |
-| `SettingsScope` (scope stack) | `PLang/Runtime2/Engine/Settings/Scope.cs` | `PLang.Runtime2.Engine.Settings` |
-| `Settings` (@this, engine-level registry) | `PLang/Runtime2/Engine/Settings/this.cs` | `PLang.Runtime2.Engine.Settings` |
-| `ModuleView<T>` (context-bound view) | `PLang/Runtime2/Engine/Settings/ModuleView.cs` | `PLang.Runtime2.Engine.Settings` |
-| `ArchiveSettings` (first use case) | `PLang/Runtime2/actions/archive/Settings.cs` | `PLang.Runtime2.actions.archive` |
-| `settings` action handler | `PLang/Runtime2/actions/archive/settings.cs` | `PLang.Runtime2.actions.archive` |
-| `types` for archive | `PLang/Runtime2/actions/archive/types.cs` | `PLang.Runtime2.actions.archive` |
+| `ISettings` marker interface | `PLang/App/Settings/ISettings.cs` | `App.Settings` |
+| `SettingsScope` (scope stack) | `PLang/App/Settings/Scope.cs` | `App.Settings` |
+| `Settings` (@this, engine-level registry) | `PLang/App/Settings/this.cs` | `App.Settings` |
+| `ModuleView<T>` (context-bound view) | `PLang/App/Settings/ModuleView.cs` | `App.Settings` |
+| `ArchiveSettings` (first use case) | `PLang/App/actions/archive/Settings.cs` | `App.actions.archive` |
+| `settings` action handler | `PLang/App/actions/archive/settings.cs` | `App.actions.archive` |
+| `types` for archive | `PLang/App/actions/archive/types.cs` | `App.actions.archive` |
 
 ### 2. OBP Decisions
 
@@ -26,7 +26,7 @@ Following `@this` and OBP conventions:
 - **Navigate, don't pass** — handlers reach settings via `Context.Engine.Settings`. No settings passed as parameters.
 - **`Scope` (not SettingsScope)** — OBP one-word noun. The scope stack is a property of `Settings`, not a standalone class on PLangContext. The architect wanted it on PLangContext but OBP says scope behavior belongs to the settings owner. **Compromise**: PLangContext gets a `Settings` dictionary (just storage), and `Engine.Settings` owns the resolution logic that walks context → parent → engine default → class default.
 - **`ModuleView<T>`** — context-bound view returned by `engine.Settings.For<T>(context)`. Lightweight class (not struct — we need reference semantics for property resolution). This is the architect's `Module<T>()` concept, scoped to settings.
-- **No `Module<T>()` on Engine** — The architect proposed `engine.Module<Archive>().Settings.Max` but there's no Module concept in Runtime2 yet, and creating one just for settings would be premature. Instead: `engine.Settings.For<ArchiveSettings>(context).Max`. When a proper Module system arrives, it can delegate to this.
+- **No `Module<T>()` on Engine** — The architect proposed `engine.Module<Archive>().Settings.Max` but there's no Module concept in App yet, and creating one just for settings would be premature. Instead: `engine.Settings.For<ArchiveSettings>(context).Max`. When a proper Module system arrives, it can delegate to this.
 
 ### 3. Scope Mechanics
 
@@ -46,29 +46,29 @@ The source generator changes are **Phase 2** — I scaffold the interface (`ISet
 
 ### Skeletons (compilable, empty)
 
-1. **`PLang/Runtime2/Engine/Settings/ISettings.cs`** — marker interface
-2. **`PLang/Runtime2/Engine/Settings/this.cs`** — `@this` class: registry + resolution logic
-3. **`PLang/Runtime2/Engine/Settings/Scope.cs`** — scope level (key-value store for one goal level)
-4. **`PLang/Runtime2/Engine/Settings/ModuleView.cs`** — context-bound view `ModuleView<T>`
+1. **`PLang/App/Settings/ISettings.cs`** — marker interface
+2. **`PLang/App/Settings/this.cs`** — `@this` class: registry + resolution logic
+3. **`PLang/App/Settings/Scope.cs`** — scope level (key-value store for one goal level)
+4. **`PLang/App/Settings/ModuleView.cs`** — context-bound view `ModuleView<T>`
 
 ### Modifications to existing files
 
-5. **`PLang/Runtime2/Engine/this.cs`** — add `Settings` property to Engine
-6. **`PLang/Runtime2/Engine/Context/PLangContext.cs`** — add `SettingsValues` dictionary
-7. **`PLang/Runtime2/Engine/Goals/Goal/Methods.cs`** — push/pop settings scope in RunAsync
-8. **`PLang/Runtime2/GlobalUsings.cs`** — add alias for Settings @this
+5. **`PLang/App/this.cs`** — add `Settings` property to Engine
+6. **`PLang/App/Context/PLangContext.cs`** — add `SettingsValues` dictionary
+7. **`PLang/App/Goals/Goal/Methods.cs`** — push/pop settings scope in RunAsync
+8. **`PLang/App/GlobalUsings.cs`** — add alias for Settings @this
 
 ### First use case skeletons
 
-9. **`PLang/Runtime2/actions/archive/Settings.cs`** — `ArchiveSettings : ISettings`
-10. **`PLang/Runtime2/actions/archive/settings.cs`** — `[Action("settings")]` handler
-11. **`PLang/Runtime2/actions/archive/types.cs`** — result types
+9. **`PLang/App/actions/archive/Settings.cs`** — `ArchiveSettings : ISettings`
+10. **`PLang/App/actions/archive/settings.cs`** — `[Action("settings")]` handler
+11. **`PLang/App/actions/archive/types.cs`** — result types
 
 ### Failing Tests
 
-12. **`PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs`** — C# tests for scope resolution, push/pop, defaults
-13. **`PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs`** — C# tests for context-bound view
-14. **`Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal`** — PLang test: set setting → verify it took effect
+12. **`PLang.Tests/App/Settings/SettingsTests.cs`** — C# tests for scope resolution, push/pop, defaults
+13. **`PLang.Tests/App/Settings/ModuleViewTests.cs`** — C# tests for context-bound view
+14. **`Tests/App/Settings/SetMaxGzipSize/Start.test.goal`** — PLang test: set setting → verify it took effect
 
 ## Test Strategy
 

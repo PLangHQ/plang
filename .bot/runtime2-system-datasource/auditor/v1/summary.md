@@ -4,8 +4,8 @@
 Code review of the DataSource + Settings Bridge feature — a SQLite-backed persistent key-value storage layer that enables `%Settings.ApiKey%` variable resolution in PLang, with settings handlers (`settings/get`, `settings/set`, `settings/remove`) and lazy error propagation through the source generator.
 
 ## What was reviewed
-- **14 source files** across DataSource, SettingsData, Actor, error types, settings handlers, MemoryStack, LazyParamsGenerator, Step/Methods, list/unique
-- **40+ new tests** (22 DataSource, 18 SettingsData, 4 MemoryStack navigation)
+- **14 source files** across DataSource, SettingsData, Actor, error types, settings handlers, Variables, LazyParamsGenerator, Step/Methods, list/unique
+- **40+ new tests** (22 DataSource, 18 SettingsData, 4 Variables navigation)
 - Cross-referenced with tester report (v3: PASS) and security report (v1: PASS)
 - Verified all 1465 C# tests pass
 

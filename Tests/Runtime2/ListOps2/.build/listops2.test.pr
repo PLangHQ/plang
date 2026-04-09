@@ -1,298 +1,331 @@
-{
-  "name": "Start",
-  "steps": [
-    {
-      "index": 0,
-      "text": "generate range from 1 to 5, write to %rangeResult%",
-      "lineNumber": 3,
-      "indent": 0,
-      "comment": "Test: list.range generates a sequence",
-      "actions": [
-        {
-          "module": "list",
-          "action": "range",
-          "parameters": [
-            {
-              "name": "Start",
-              "value": 1,
-              "type": "int"
-            },
-            {
-              "name": "End",
-              "value": 5,
-              "type": "int"
-            }
-          ],
-          "return": [
-            {
-              "name": "rangeResult"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 1,
-      "text": "assert %rangeResult% is not null",
-      "lineNumber": 4,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "isNotNull",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "%rangeResult%",
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 2,
-      "text": "set %myList% = [10, 20, 30]",
-      "lineNumber": 6,
-      "indent": 0,
-      "comment": "Test: list.set mutates by index",
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%myList%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": [
-                10,
-                20,
-                30
-              ],
-              "type": "list"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "set item at index 1 in %myList% to 99",
-      "lineNumber": 7,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "list",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%myList%",
-              "type": "string"
-            },
-            {
-              "name": "Index",
-              "value": 1,
-              "type": "int"
-            },
-            {
-              "name": "Value",
-              "value": 99,
-              "type": "int"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 4,
-      "text": "get item at index 1 from %myList%, write to %updated%",
-      "lineNumber": 8,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "list",
-          "action": "get",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%myList%",
-              "type": "string"
-            },
-            {
-              "name": "Index",
-              "value": 1,
-              "type": "int"
-            }
-          ],
-          "return": [
-            {
-              "name": "updated"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 5,
-      "text": "assert %updated% equals 99",
-      "lineNumber": 9,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 99,
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%updated%",
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 6,
-      "text": "set %nested% = [[1, 2], [3, 4]]",
-      "lineNumber": 11,
-      "indent": 0,
-      "comment": "Test: list.flatten",
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%nested%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": [
-                [
-                  1,
-                  2
+[
+  {
+    "name": "Start",
+    "description": "Compiles the provided tests into engine actions: generates a range, mutates a list by index, and flattens a nested list, with assertions that results are not null / match expected values.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "generate range from 1 to 5, write to %rangeResult%",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: list.range generates a sequence",
+        "actions": [
+          {
+            "module": "list",
+            "action": "range",
+            "parameters": [
+              {
+                "name": "Start",
+                "value": 1,
+                "type": "int"
+              },
+              {
+                "name": "End",
+                "value": 5,
+                "type": "int"
+              },
+              {
+                "name": "Step",
+                "value": 1,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "rangeResult",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %rangeResult% is not null",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%rangeResult%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "set %myList% = [10, 20, 30]",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": "Test: list.set mutates by index",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%myList%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": [
+                  10,
+                  20,
+                  30
                 ],
-                [
-                  3,
-                  4
-                ]
-              ],
-              "type": "list"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 7,
-      "text": "flatten %nested%, write to %flatResult%",
-      "lineNumber": 12,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "list",
-          "action": "flatten",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%nested%",
-              "type": "string"
-            }
-          ],
-          "return": [
-            {
-              "name": "flatResult"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 8,
-      "text": "assert %flatResult% is not null",
-      "lineNumber": 13,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "isNotNull",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "%flatResult%",
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    }
-  ],
-  "subGoals": [],
-  "visibility": 1,
-  "path": "/ListOps2.test.goal",
-  "prPath": "/.build/listops2.test.pr",
-  "hash": "4e933074b7ba290e3ae118eddb8a7c8b621a7de1359cb1ca6754a87ebf5238a9",
-  "isSetup": false,
-  "isEvent": false,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "Start"
-}
+                "type": "list"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "set item at index 1 in %myList% to 99",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "list",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "ListName",
+                "value": "%myList%",
+                "type": "string"
+              },
+              {
+                "name": "Index",
+                "value": 1,
+                "type": "int"
+              },
+              {
+                "name": "Value",
+                "value": 99,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "get item at index 1 from %myList%, write to %updated%",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "list",
+            "action": "get",
+            "parameters": [
+              {
+                "name": "ListName",
+                "value": "%myList%",
+                "type": "string"
+              },
+              {
+                "name": "Index",
+                "value": 1,
+                "type": "int"
+              }
+            ],
+            "return": [
+              {
+                "name": "updated",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "assert %updated% equals 99",
+        "lineNumber": 9,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": 99,
+                "type": "int"
+              },
+              {
+                "name": "Actual",
+                "value": "%updated%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 6,
+        "text": "set %nested% = [[1, 2], [3, 4]]",
+        "lineNumber": 11,
+        "indent": 0,
+        "comment": "Test: list.flatten",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%nested%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": [
+                  [
+                    1,
+                    2
+                  ],
+                  [
+                    3,
+                    4
+                  ]
+                ],
+                "type": "list"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 7,
+        "text": "flatten %nested%, write to %flatResult%",
+        "lineNumber": 12,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "list",
+            "action": "flatten",
+            "parameters": [
+              {
+                "name": "ListName",
+                "value": "%nested%",
+                "type": "string"
+              }
+            ],
+            "return": [
+              {
+                "name": "flatResult",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 8,
+        "text": "assert %flatResult% is not null",
+        "lineNumber": 13,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%flatResult%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ListOps2.test.goal",
+    "prPath": "/.build/listops2.test.pr",
+    "hash": "effabce62b55fc0d7aae9e54cfa0577166483ccd7be748d8cdbbc52071ab10a2",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "name": "CaptureWrite",
+    "description": "Sets the %actionFired% variable to true (with a null-like value provided in the step).",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %actionFired% = true",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%actionFired%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/CaptureWrite.goal",
+    "prPath": "/.build/capturewrite.pr",
+    "hash": "65bdcc8b0a165ed6de5773283a379dd4b76b0e06c28829e8d91d5efe8c3b2580",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

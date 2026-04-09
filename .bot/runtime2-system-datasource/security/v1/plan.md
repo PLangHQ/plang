@@ -10,7 +10,7 @@ This branch introduces:
 5. **LazyParamsGenerator changes** — `__resolutionError` propagation for AskError on missing settings
 6. **AskError / DataSourceError** — new error types
 7. **SqliteSettingsRepository table rename** — v1 table collision fix (Settings → SettingsV1)
-8. **MemoryStack.Clone changes** — preserve SettingsData by reference in cloned stacks
+8. **Variables.Clone changes** — preserve SettingsData by reference in cloned stacks
 
 ## Phase 1: Blue Team (Attack Surface Mapping)
 
@@ -46,7 +46,7 @@ From data-envelope-architecture security report:
 - Finding #1 (UnwrapJsonElement depth limit) — verify it protects DeserializeValue path
 - Finding #8 (Newtonsoft shim) — still open, low priority
 - Finding #11 (Data.Merge unbounded) — still open, low priority
-- Finding #12 (MemoryStack.Clone) — changes in this branch, verify
+- Finding #12 (Variables.Clone) — changes in this branch, verify
 
 From runtime2-settings security report:
 - Finding #1 (unbounded scope dictionary) — accepted risk

@@ -1,0 +1,184 @@
+[
+  {
+    "name": "Start",
+    "description": "Archives an identity, recreates it as default, asserts its name and public key, then archives it again. Includes on-error ignore for the first archive.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "archive identity \u0027TestGetByName\u0027, force, on error ignore, force",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: create a named identity as default, verify %MyIdentity.Name% equals the name",
+        "actions": [
+          {
+            "module": "identity",
+            "action": "archive",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestGetByName",
+                "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "create identity \u0027TestGetByName\u0027, set as default",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "create",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestGetByName",
+                "type": "string"
+              },
+              {
+                "name": "SetAsDefault",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %MyIdentity.Name% equals \u0027TestGetByName\u0027",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "TestGetByName",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%MyIdentity.Name%",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "assert %MyIdentity.PublicKey% is not null",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%MyIdentity.PublicKey%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "archive identity \u0027TestGetByName\u0027, force",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "archive",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestGetByName",
+                "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/IdentityGetByName.test.goal",
+    "prPath": "/.build/identitygetbyname.test.pr",
+    "hash": "3a52cacb10b52640c3baf3853e282e78aa53f36096be52879bb8e1c267de6a45",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

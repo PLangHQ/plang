@@ -1,0 +1,49 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-builder2-signing",
+  "timestamp": "2026-03-21T11:00:00Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 1835, "passed": 1827, "failed": 0, "skipped": 8 },
+    "plang": { "total": 15, "passed": "not_run", "failed": "not_run", "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 16,
+    "changed_files_total": 16,
+    "uncovered_files": [],
+    "highlights": {
+      "SignedData.cs": "100% line / 100% branch (was 96%/92%)",
+      "Ed25519Provider.cs": "93% line (was 80%) — GenerateKeyPair catch still uncovered, acceptable",
+      "Providers/this.cs": "95% line / 81% branch (was 83%/50%)",
+      "provider/list.cs": "100% line / 100% branch (was 0%/0%)",
+      "provider/load.cs": "100% line / 94% branch (was 28%/6%)",
+      "provider/remove.cs": "100% line / 100% branch (was 83%/50%)",
+      "provider/setDefault.cs": "100% line / 100% branch (was 83%/50%)",
+      "Settings.cs": "100% line (was 0%)"
+    }
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/signing/Ed25519ProviderTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Providers/Ed25519Provider.cs",
+      "issue": "GenerateKeyPair catch block (lines 34-36) still uncovered. Hard to trigger — NSec key generation rarely fails.",
+      "impact": "Acceptable risk. The Sign and Verify catch blocks are now covered, which are the user-facing paths.",
+      "suggestion": "Not blocking. Could mock NSec internals but cost exceeds value."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": "N/A",
+      "code_file": "PLang/Runtime2/modules/provider/",
+      "issue": "No PLang .goal tests for provider module. Needs builder/LLM to create.",
+      "impact": "Full pipeline (builder → .pr → runtime) not validated for provider actions. Acceptable for now — C# tests cover the runtime layer.",
+      "suggestion": "Not blocking. Add when builder is available."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "All 1827 C# tests pass (8 skipped). Coder v2 resolved 11 of 13 findings with 28 new tests. Coverage dramatically improved: provider/list 0%→100%, load 28%→100%, SignedData.Verify guards now covered, all ResolveType branches tested, weak assertions strengthened. 2 minor remaining: Ed25519 GenerateKeyPair catch untestable, PLang provider tests deferred. Test quality is strong — assertions check Error.Key on all error paths, tests verify intent not just implementation."
+}

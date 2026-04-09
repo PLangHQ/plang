@@ -1,0 +1,52 @@
+[
+  {
+    "name": "TargetGoal",
+    "description": "Sets %dynamicResult% to the literal string \u0022reached\u0022. The provided \u003C= pr: null note is not mapped to any engine action because no corresponding action/modifier exists for it in the given step.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %dynamicResult% = \u0022reached\u0022",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%dynamicResult%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "reached",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/TargetGoal.goal",
+    "prPath": "/.build/targetgoal.pr",
+    "hash": "2ec9c541c0798889c270f82e43e32097396653042f614f189331cbc6904717c0",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

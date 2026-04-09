@@ -1,0 +1,2732 @@
+diff --git a/Documentation/Runtime2/README.md b/Documentation/Runtime2/README.md
+index 2df797e7..e3536a52 100644
+--- a/Documentation/Runtime2/README.md
++++ b/Documentation/Runtime2/README.md
+@@ -270,10 +270,9 @@ PLang/Runtime2/
+     │   └── providers/
+     │       ├── IEvaluator.cs         Pluggable comparison engine interface
+     │       └── DefaultEvaluator.cs   Default: all operators, type normalization, IsTruthy
+-    ├── goal/   loop/   list/   math/   convert/
++    ├── goal/   loop/   list/   math/   module/
+     ├── identity/
+-    │   ├── types.cs       IdentityVariable — Ed25519 key pair entity
+-    │   ├── IdentityData.cs Lazy-resolving Data subclass on Actor.Identity
++    │   ├── types.cs       IdentityData : Data — Ed25519 key pair entity
+     │   ├── create.cs      identity.create — new identity with key pair
+     │   ├── get.cs         identity.get — by name or default (auto-create)
+     │   ├── list.cs        identity.list — list non-archived
+diff --git a/Documentation/Runtime2/good_to_know.md b/Documentation/Runtime2/good_to_know.md
+index ea4415fc..b6db0462 100644
+--- a/Documentation/Runtime2/good_to_know.md
++++ b/Documentation/Runtime2/good_to_know.md
+@@ -137,15 +137,13 @@ Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun.
+ 
+ ## Libraries Replaces ActionRegistry
+ 
+-`ActionRegistry` was replaced by `Library` + `Libraries`. The key changes:
++`ActionRegistry` was replaced by `engine.Modules` (flat action registry). The key changes:
+ 
+-- **`engine.Libraries`** replaces `engine.Actions` — uniform handler resolution
+-- **`Library`** represents a single assembly's handlers (name + assembly + discovered actions)
+-- **`Libraries`** is a smart collection: built-in handlers are `Libraries[0]`, external DLLs can be added as additional libraries
+-- **Resolution**: `Libraries.GetCodeGenerated(module, action, context)` walks all libraries — first match wins
+-- **External DLL loading**: `library.load` handler lets PLang code load external DLLs at runtime (`use library 'mylib.dll'`)
+-- **Two registration modes**: `Register(instance)` for shared/stateful handlers, `RegisterCodeGenerated(type)` for per-call instantiation (thread-safe)
+-- Handler discovery via `Library.Discover(namespace)` scans for `[Action]`-attributed types (source generator adds `ICodeGenerated` — handlers don't implement it directly)
++- **`engine.Modules`** — flat registry of all action handlers (module → action → type)
++- **Resolution**: `Modules.GetCodeGenerated(module, action, context)` — case-insensitive lookup
++- **External DLL loading**: `module.add` action lets PLang code load external DLLs at runtime (`add module mymodule.dll`). `module.remove` unregisters a module.
++- **Two registration modes**: `Register(instance)` for shared/stateful handlers, `RegisterType(type)` for per-call instantiation (thread-safe)
++- Handler discovery via `Modules.Discover(assembly, namespace)` scans for `[Action]`-attributed types (source generator adds `ICodeGenerated` — handlers don't implement it directly)
+ 
+ ---
+ 
+@@ -176,20 +174,17 @@ See `Step/Methods.cs:HandleErrorAsync()` for the implementation.
+ 
+ ---
+ 
+-## Sub-Step Execution — The `__condition__` Signal
++## Sub-Step Execution — Condition-Gated Skipping
+ 
+ Indented steps (sub-steps) default to NOT executing. They must be "proven true" by a parent condition step. The mechanism:
+ 
+-1. `condition.if` evaluates its condition and stores the result as `__condition__` in MemoryStack.
+-2. `Steps.RunAsync` checks for `__condition__` after each step that has indented children.
+-3. If `__condition__` exists and is not `true`, `skipBelowIndent` is set to the step's indent level — all deeper steps are skipped.
+-4. The signal is consumed (removed) immediately after reading to prevent stale signals from affecting later steps.
+-
+-**Why MemoryStack instead of Data.Value?** `Actions.RunAsync` merges action results via `Data.Merge`, which casts Value to `List<Data>`. A bool Value gets lost in the merge. The MemoryStack signal bypasses this.
++1. `condition.if` evaluates its condition and returns `Data.Ok(bool)` as the step result.
++2. `Steps.RunAsync` checks each step that has indented children: if `IsConditionStep(step)` and `stepResult.Value is bool condition && !condition`, it sets `skipBelowIndent` to the step's indent level — all deeper steps are skipped.
++3. No MemoryStack signal is used. The result flows directly through the step's return value.
+ 
+ **Thread safety:** `skipBelowIndent` is a local variable in `Steps.RunAsync` — each concurrent request gets its own copy. Step objects are never mutated.
+ 
+-**Non-condition steps with indented children:** Only steps that set `__condition__` can trigger sub-step skipping. If a step has indented children but didn't set `__condition__`, the children always execute. This prevents non-condition steps from accidentally blocking their children.
++**Non-condition steps with indented children:** Only steps using the `condition` module (i.e., `condition.if`) can trigger sub-step skipping. A `variable.set` step returning Data with `Value=false` does NOT skip its children. The runner checks `IsConditionStep()` to enforce this — it verifies the step's first action has `Module == "condition"` (case-insensitive).
+ 
+ **Nesting:** Works at arbitrary depth. When an inner `if` returns false, only its immediate indented children are skipped. The outer condition's children at the parent indent level continue executing normally.
+ 
+@@ -197,7 +192,7 @@ Indented steps (sub-steps) default to NOT executing. They must be "proven true"
+ 
+ ## [Sensitive] Attribute — Two-Mode Serialization
+ 
+-The `[Sensitive]` attribute (defined in `Engine/View.cs`) marks properties that contain secret data (e.g., `IdentityVariable.PrivateKey`). It controls a two-mode serialization split:
++The `[Sensitive]` attribute (defined in `Engine/View.cs`) marks properties that contain secret data (e.g., `IdentityData.PrivateKey`). It controls a two-mode serialization split:
+ 
+ - **Output serialization** (JsonStreamSerializer, Data.Envelope Compress): `SensitivePropertyFilter` strips `[Sensitive]` properties. Private keys never leak through channels, API responses, or compressed payloads.
+ - **Storage serialization** (raw JsonSerializer via DataSource): Filter is NOT applied. Private keys persist in SQLite.
+@@ -207,17 +202,13 @@ The filter is always-on — it's wired into both `JsonStreamSerializer`'s defaul
+ 
+ ---
+ 
+-## IdentityData — Lazy Resolution with Sync-Over-Async
+-
+-`IdentityData` (on `Actor.Identity`) lazily resolves the default identity on first property access. It uses sync-over-async (`GetAwaiter().GetResult()`) in the `Value` getter because:
++## IdentityData — Data Subclass
+ 
+-1. C# properties can't be `async`
+-2. PLang runs sequentially per context with no `SynchronizationContext`
+-3. SQLite I/O (via DataSource) is synchronous underneath
++`IdentityData` extends `Data` directly — a pure data record with typed properties (`PublicKey`, `PrivateKey`, `IsDefault`, `IsArchived`, `Created`). It lives on `Actor.Identity` as a property. No lazy resolution, no sync-over-async.
+ 
+-The resolution chain: check for existing default → promote any non-archived identity → auto-create "default" with new Ed25519 keys. All through `IdentityVariable.GetOrCreateDefaultAsync()`, the single source of truth.
++Handlers update `Actor.Identity` directly after mutations (e.g., `setDefault`, `rename`). The `DefaultIdentityProvider.Get()` refreshes `engine.System.Identity` when resolving the default identity. `IdentityData.ToString()` returns the public key, so `%MyIdentity%` in a string context gives the public key.
+ 
+-Handlers call `Identity.Update(newDefault)` after changing the default to refresh the cached value. The `ResolveDefault()` method catches `InvalidOperationException` (save failure) and returns null — IdentityData handles null gracefully.
++See `PLang/Runtime2/modules/identity/types.cs` for the class definition.
+ 
+ ---
+ 
+@@ -226,14 +217,20 @@ Handlers call `Identity.Update(newDefault)` after changing the default to refres
+ `%MyIdentity%` is registered on every actor's MemoryStack as a `DynamicData`:
+ 
+ ```csharp
+-Context.MemoryStack.Put(new DynamicData("MyIdentity", () => engine.System.Identity.Value));
++Context.MemoryStack.Put(new DynamicData("MyIdentity", () =>
++{
++    var provider = engine.Providers.Get<IIdentityProvider>();
++    if (!provider.Success) return null;
++    var identity = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = engine.Context }).GetAwaiter().GetResult();
++    return identity.Success ? identity : null;
++}));
+ ```
+ 
+ This means:
+ - It always points to the **System** actor's default identity (not the current actor's)
+ - It re-evaluates on every access (DynamicData calls the lambda each time)
+ - Changes via `setDefault`, `rename`, or auto-create are reflected immediately
+-- `%MyIdentity%` in string context gives the public key (`IdentityVariable.ToString()`)
++- `%MyIdentity%` in string context gives the public key (`IdentityData.ToString()`)
+ - `%MyIdentity.PrivateKey%` navigates via dot-notation to the private key
+ - `%MyIdentity.Name%`, `%MyIdentity.IsDefault%`, etc. all work via standard MemoryStack navigation
+ 
+@@ -378,6 +375,10 @@ This separates the configure action's nullable properties (only non-null values
+ 
+ ---
+ 
+-## Path Moved to Engine/FileSystem/
++## PathData — Data Subclass in Engine/FileSystem/
++
++`PathData` extends `Data` — a path IS a Data. It was moved from `Engine/Memory/` to `Engine/FileSystem/` because it's a file system concept, not a memory concept. `Value` holds file content when set by a file provider (e.g., after `file.read`). Path properties (`Extension`, `FileName`, `FileNameWithoutExtension`, `Directory`, `Relative`) are on `PathData` directly, not on `Value`.
++
++The class resolves raw path strings into absolute paths. Relative paths resolve against the goal's folder, not the engine root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.
+ 
+-`Path` was moved from `Engine/Memory/` to `Engine/FileSystem/` — it's a file system concept, not a memory concept. The class resolves raw path strings into absolute paths with navigable properties (`Extension`, `FileName`, `Directory`, etc.). Relative paths resolve against the goal's folder, not the engine root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.
++See `PLang/Runtime2/Engine/FileSystem/PathData.cs` for the class definition.
+diff --git a/Documentation/Runtime2/modules.md b/Documentation/Runtime2/modules.md
+index 6b727599..896a6e80 100644
+--- a/Documentation/Runtime2/modules.md
++++ b/Documentation/Runtime2/modules.md
+@@ -137,7 +137,7 @@ public sealed class Libraries
+ - Explicit instances (`Register`) take priority over type-registered handlers (`RegisterCodeGenerated`)
+ - Type-registered handlers create a new instance per call (thread-safe)
+ - Lookup is case-insensitive
+-- External libraries can be added at runtime via `Libraries.Add(library)` or the `library.load` handler
++- External modules can be added/removed at runtime via `module.add` and `module.remove` actions
+ 
+ ## Creating an Action Handler
+ 
+@@ -251,7 +251,7 @@ public static class TypeMapping
+ | `signing` | `sign`, `verify` | Data signing and signature verification |
+ | `provider` | `load`, `remove`, `setDefault`, `list` | Pluggable provider management |
+ | `http` | `request`, `download`, `upload`, `configure` | HTTP requests, file transfer, streaming, signing |
+-| `library` | `load` | Load external DLL libraries |
++| `module` | `add`, `remove` | Load/unload external handler libraries |
+ 
+ ### condition module — Details
+ 
+@@ -271,9 +271,9 @@ When `Operator` is null, performs a truthy check on `Left`. When set, evaluates
+ 
+ The identity module manages Ed25519 key pairs stored in the System actor's DataSource (`identity` table). Each identity has a name, public/private key pair, default flag, and archive flag.
+ 
+-**Core type — `IdentityVariable`**: OBP-compliant entity that owns its persistence (`LoadAsync`, `SaveAsync`, `RemoveAsync` navigate to `engine.System.DataSource`). The `PrivateKey` property is marked `[Sensitive]` — excluded from output serialization but persisted in storage and accessible via `%MyIdentity.PrivateKey%` in PLang code. `ToString()` returns the public key, so `%MyIdentity%` in string context gives the public key.
++**Core type — `IdentityData : Data`**: A `Data` subclass that extends `Data` directly. Properties include `PublicKey`, `PrivateKey`, `IsDefault`, `IsArchived`, and `Created`. The `PrivateKey` property is marked `[Sensitive]` — excluded from output serialization but persisted in storage and accessible via `%MyIdentity.PrivateKey%` in PLang code. `ToString()` returns the public key, so `%MyIdentity%` in string context gives the public key.
+ 
+-**Lazy resolution — `IdentityData`**: A `Data` subclass on `Actor.Identity` that lazily resolves the default identity on first access. Auto-creates a "default" identity if none exist. Uses sync-over-async (safe in PLang's sequential execution model with no SynchronizationContext). Handlers call `Update()` after changing the default.
++**`IdentityData`** is stored directly in `Actor.Identity` as a pure data record — no lazy resolution wrapper. Handlers set it directly. Auto-creates a "default" identity if none exist.
+ 
+ **`%MyIdentity%`**: Registered on every actor's MemoryStack as `DynamicData` pointing to `engine.System.Identity.Value`. Re-evaluates on each access, so changes via `setDefault` or `rename` are reflected immediately.
+ 
+@@ -288,7 +288,7 @@ The identity module manages Ed25519 key pairs stored in the System actor's DataS
+ | `unarchive` | `Name` | Restores archived identity. Idempotent. |
+ | `rename` | `Name`, `NewName` | Atomic rename: save-new-first, then remove-old (no data loss on failure). Updates `%MyIdentity%` if default. |
+ | `setDefault` | `Name` | Switches default. Cannot set archived identity. Clears all existing defaults. Idempotent. |
+-| `export` | `Name` (optional) | Returns raw private key string. By name or default (auto-creates if needed). |
++| `export` | `Name` (optional) | Returns full `IdentityData`. By name or default (auto-creates if needed). |
+ 
+ All mutating actions are `Cacheable = false`. All return `Data` — errors use `ActionError` (validation) or `ServiceError` (save failures).
+ 
+@@ -315,11 +315,11 @@ Both actions are `Cacheable = false`. Both return `Data` — errors use `ActionE
+ 
+ ### signing module — Details
+ 
+-The signing module creates and verifies signed data envelopes using Ed25519 (or any pluggable `ISigningProvider`). The core logic lives in `SignedData` — handlers are thin delegates.
++The signing module creates and verifies signed data envelopes using Ed25519 (or any pluggable `ISigningProvider`). Providers own the signing/verification pipeline — `SignedData` is pure data.
+ 
+-**Core type — `SignedData`**: The signed envelope with deterministic JSON serialization (`JsonPropertyOrder` on every field). Contains: Type, Algorithm, Nonce, Created, Expires, Identity (signer's public key), Contracts, Headers, HashedData, and Signature (base64). Owns both `Sign()` and `VerifyAsync()`.
++**Core type — `SignedData`**: The signed envelope with deterministic JSON serialization (`JsonPropertyOrder` on every field). Contains: Type, Algorithm, Nonce, Created, Expires, Identity (signer's public key), Contracts, Headers, HashedData, and Signature (base64). Pure data record — no `Sign()` or `VerifyAsync()` methods. Provides `ToSigningBytes()` for deterministic serialization used by providers.
+ 
+-**Signing pipeline** (`SignedData.CreateAsync`):
++**Signing pipeline** (`ISigningProvider` — e.g., `Ed25519Provider.SignAsync`):
+ 1. Resolve signing provider: action parameter → `SigningSettings.Provider` → registry default
+ 2. Get the signer's identity via `engine.RunAction<identity.Get>`
+ 3. Hash the data via `engine.RunAction<Hash>` (keccak256)
+@@ -327,7 +327,7 @@ The signing module creates and verifies signed data envelopes using Ed25519 (or
+ 5. Sign the envelope bytes via provider
+ 6. Attach `SignedData` to the result `Data.Signature`
+ 
+-**Verification pipeline** (`SignedData.VerifyAsync`) — 9-step check:
++**Verification pipeline** (`ISigningProvider` — e.g., `Ed25519Provider.VerifyAsync`) — 9-step check:
+ 1. Type check ("signature")
+ 2. Provider resolution from Algorithm field
+ 3. Timeout check (age > configured timeout)
+diff --git a/PLang.Tests/Runtime2/Modules/ui/RenderTests.cs b/PLang.Tests/Runtime2/Modules/ui/RenderTests.cs
+new file mode 100644
+index 00000000..c650525b
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/ui/RenderTests.cs
+@@ -0,0 +1,726 @@
++using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.ui;
++using PLang.Runtime2.modules.ui.providers;
++
++namespace PLang.Tests.Runtime2.Modules.ui;
++
++public class RenderTests : IDisposable
++{
++    private readonly string _tempDir;
++    private readonly PLang.Runtime2.Engine.@this _engine;
++    private readonly FluidProvider _provider;
++
++    public RenderTests()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_ui_test_" + Guid.NewGuid().ToString("N"));
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLang.Runtime2.Engine.@this(_tempDir);
++        _provider = new FluidProvider();
++    }
++
++    public void Dispose()
++    {
++        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++        if (System.IO.Directory.Exists(_tempDir))
++            System.IO.Directory.Delete(_tempDir, true);
++    }
++
++    private PLangContext CreateContext()
++    {
++        return _engine.CreateContext();
++    }
++
++    private void WriteTemplateFile(string relativePath, string content)
++    {
++        var fullPath = System.IO.Path.Combine(_tempDir, relativePath);
++        var dir = System.IO.Path.GetDirectoryName(fullPath);
++        if (dir != null) System.IO.Directory.CreateDirectory(dir);
++        System.IO.File.WriteAllText(fullPath, content);
++    }
++
++    // --- Batch 1: Core Render Behavior ---
++
++    [Test]
++    public async Task Render_InlineTemplate_SubstitutesVariables()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "World"));
++        var action = new Render { Context = ctx, Template = "Hello {{ name }}", IsFile = false };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello World");
++    }
++
++    [Test]
++    public async Task Render_FileTemplate_ReadsAndRenders()
++    {
++        WriteTemplateFile("greeting.html", "Hello {{ name }}!");
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "PLang"));
++        var action = new Render { Context = ctx, Template = "greeting.html", IsFile = true };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello PLang!");
++    }
++
++    [Test]
++    public async Task Render_MissingFile_ReturnsError()
++    {
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = "nonexistent.html", IsFile = true };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++    }
++
++    [Test]
++    public async Task Render_NullTemplate_ReturnsValidationError()
++    {
++        // [IsNotNull] is enforced by the source generator before Run() is called.
++        // At the provider level, null would cause issues — test that the provider
++        // handles it gracefully if somehow invoked with null.
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = null!, IsFile = false };
++
++        var result = await _provider.Render(action);
++
++        // Provider should still return an error, not throw
++        await Assert.That(result.Success).IsFalse();
++    }
++
++    [Test]
++    public async Task Render_EmptyTemplate_ReturnsEmptyString()
++    {
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = "", IsFile = false };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("");
++    }
++
++    [Test]
++    public async Task Render_LiquidSyntaxError_ReturnsErrorWithPosition()
++    {
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = "Hello {{ ", IsFile = false };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("TemplateError");
++    }
++
++    // --- Batch 2: Variable Resolution ---
++
++    [Test]
++    public async Task Render_MemoryStackVariables_AccessibleInTemplate()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("greeting", "Hello"));
++        ctx.MemoryStack.Put(new Data("target", "World"));
++        var action = new Render { Context = ctx, Template = "{{ greeting }} {{ target }}", IsFile = false };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello World");
++    }
++
++    [Test]
++    public async Task Render_ExplicitParams_OverrideMemoryStack()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "MemoryValue"));
++        var overrideParam = new Data("name", "ParamValue");
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Hello {{ name }}",
++            IsFile = false,
++            Parameters = new List<Data> { overrideParam }
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello ParamValue");
++    }
++
++    [Test]
++    public async Task Render_ExplicitParams_CreateAliases()
++    {
++        var ctx = CreateContext();
++        var aliasParam = new Data("title", "My Page");
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Title: {{ title }}",
++            IsFile = false,
++            Parameters = new List<Data> { aliasParam }
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Title: My Page");
++    }
++
++    [Test]
++    public async Task Render_ScopedVars_SkippedFromMemoryStack()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("visible", "yes"));
++        ctx.MemoryStack.Put(new Data("!hidden", "secret"));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "visible={{ visible }} hidden={{ hidden }}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        // !hidden should not be accessible as "hidden" in the template
++        await Assert.That(result.Value?.ToString()).IsEqualTo("visible=yes hidden=");
++    }
++
++    // --- Batch 3: Custom Tags & Partials ---
++
++    [Test]
++    public async Task Render_CallGoal_ExecutesGoalAndInsertsResult()
++    {
++        // Create a real goal that sets a variable — the goal result is the last step's Data
++        var goal = new Goal
++        {
++            Name = "Greeter",
++            Path = "/Greeter.goal",
++            Steps = new GoalSteps
++            {
++                MakeStep("variable", "set",
++                    new Dictionary<string, object?> { { "name", "greeting" }, { "value", "Hello from goal" } },
++                    index: 0, text: "set greeting")
++            }
++        };
++        _engine.Goals.Add(goal);
++
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Result: {% callGoal 'Greeter' %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        // The goal sets a variable — its last step result is Data.Ok with the set value
++        // callGoal writes Data.Value?.ToString() to output
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).DoesNotContain("[Error:");
++    }
++
++    [Test]
++    public async Task Render_CallGoal_GoalNotFound_ShowsErrorInOutput()
++    {
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Before {% callGoal 'Missing' %} After",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        // Goal not found: either inline error text or Data error
++        if (result.Success)
++        {
++            var output = result.Value?.ToString() ?? "";
++            await Assert.That(output).Contains("[Error:");
++        }
++        else
++        {
++            await Assert.That(result.Error).IsNotNull();
++        }
++    }
++
++    [Test]
++    public async Task Render_Include_RendersPartialInline()
++    {
++        WriteTemplateFile("partial.html", "I am a partial");
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Before {% include 'partial.html' %} After",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).Contains("I am a partial");
++    }
++
++    [Test]
++    public async Task Render_Include_InheritsVariables()
++    {
++        WriteTemplateFile("greet.html", "Hello {{ name }}");
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "World"));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% include 'greet.html' %}!",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).Contains("Hello World");
++    }
++
++    // --- Batch 4: Provider & Path Resolution ---
++
++    [Test]
++    public async Task Render_CustomProvider_IsUsed()
++    {
++        var customProvider = new StubTemplateProvider();
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = "anything", IsFile = false };
++
++        var result = await customProvider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("stub-rendered");
++    }
++
++    [Test]
++    public async Task Render_FilePathRelativeToGoalDir()
++    {
++        // Create a template in a subdirectory
++        WriteTemplateFile("goals/templates/page.html", "Page content");
++        var ctx = CreateContext();
++        // Simulate a goal at goals/MyGoal.goal by setting Goal.Path
++        // PathData resolves relative to goal's directory
++        var action = new Render { Context = ctx, Template = "goals/templates/page.html", IsFile = true };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Page content");
++    }
++
++    [Test]
++    public async Task Render_FilePathAbsolute_ResolvesFromRoot()
++    {
++        WriteTemplateFile("templates/abs.html", "Absolute content");
++        var ctx = CreateContext();
++        var action = new Render { Context = ctx, Template = "/templates/abs.html", IsFile = true };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Absolute content");
++    }
++
++    // --- Batch 5: Complex Data Types in Templates ---
++
++    [Test]
++    public async Task Render_DotNavigation_AccessesObjectProperties()
++    {
++        var ctx = CreateContext();
++        var user = new { name = "Alice", age = 30 };
++        ctx.MemoryStack.Put(new Data("user", user));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{{ user.name }} is {{ user.age }}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Alice is 30");
++    }
++
++    [Test]
++    public async Task Render_ListIteration_WorksInForLoop()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("items", new List<string> { "a", "b", "c" }));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% for item in items %}{{ item }}{% endfor %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("abc");
++    }
++
++    [Test]
++    public async Task Render_NullVariable_RendersEmpty()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", null));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Hello {{ name }}!",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello !");
++    }
++
++    [Test]
++    public async Task Render_UndefinedVariable_RendersEmpty()
++    {
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Hello {{ missing }}!",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello !");
++    }
++
++    [Test]
++    public async Task Render_DataObject_ExposesValueNotWrapper()
++    {
++        var ctx = CreateContext();
++        // Data wraps a complex object — template should navigate the inner object, not Data properties
++        var user = new { name = "Alice", age = 30 };
++        ctx.MemoryStack.Put(new Data("user", user));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{{ user.name }} is {{ user.age }}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        // Should see inner object properties, not Data.Name/Data.Value/Data.Error etc.
++        await Assert.That(output).IsEqualTo("Alice is 30");
++    }
++
++    [Test]
++    public async Task Render_NullDotNavigation_NoException()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("user", null));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Hello {{ user.name }}!",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        // Should not throw — renders empty for null navigation
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello !");
++    }
++
++    // --- Batch 6: callGoal Edge Cases ---
++
++    [Test]
++    public async Task Render_CallGoal_EmptyGoalReturnsEmptyOutput()
++    {
++        // An empty goal (no steps) returns Data.Ok() — callGoal writes "" to output
++        var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
++        _engine.Goals.Add(goal);
++
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Before{% callGoal 'EmptyGoal' %}After",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        // Empty goal produces no output — "BeforeAfter"
++        await Assert.That(output).DoesNotContain("[Error:");
++    }
++
++    [Test]
++    public async Task Render_CallGoal_GoalNameFromVariable()
++    {
++        // callGoal can use a Liquid variable for the goal name
++        var goal = new Goal { Name = "DynamicGoal", Path = "/DynamicGoal.goal" };
++        _engine.Goals.Add(goal);
++
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("goalName", "DynamicGoal"));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% callGoal goalName %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).DoesNotContain("[Error:");
++    }
++
++    [Test]
++    public async Task Render_CallGoal_SuccessWritesValueToOutput()
++    {
++        // Goal that sets a variable — verify the result value appears in template output
++        var goal = new Goal
++        {
++            Name = "GetNumber",
++            Path = "/GetNumber.goal",
++            Steps = new GoalSteps
++            {
++                MakeStep("variable", "set",
++                    new Dictionary<string, object?> { { "name", "num" }, { "value", 42 } },
++                    index: 0, text: "set num")
++            }
++        };
++        _engine.Goals.Add(goal);
++
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Number: {% callGoal 'GetNumber' %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).DoesNotContain("[Error:");
++    }
++
++    // --- Batch 7: Include Edge Cases ---
++
++    [Test]
++    public async Task Render_Include_MissingPartial_ReturnsError()
++    {
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% include 'nonexistent.html' %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        // Fluid throws FileNotFoundException for missing includes — caught as RenderError
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("RenderError");
++    }
++
++    [Test]
++    public async Task Render_Include_NestedPathResolvesRelativeToPartial()
++    {
++        // Fluid resolves includes from the FileProvider root, not relative to the partial
++        WriteTemplateFile("sub/a.html", "A{% include 'sub/b.html' %}");
++        WriteTemplateFile("sub/b.html", "B");
++        var ctx = CreateContext();
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% include 'sub/a.html' %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).Contains("A");
++        await Assert.That(output).Contains("B");
++    }
++
++    // --- Batch 8: Security & Encoding ---
++
++    [Test]
++    public async Task Render_HtmlInVariable_IsEscapedByDefault()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "<script>alert(1)</script>"));
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{{ name }}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        // Should be HTML-escaped
++        await Assert.That(output).DoesNotContain("<script>");
++        await Assert.That(output).Contains("&lt;script&gt;");
++    }
++
++    // --- Batch 9: Auto-detect (LooksLikeFilePath coverage) ---
++
++    [Test]
++    public async Task Render_IsFileNull_InlineWithLiquidSyntax_TreatedAsInline()
++    {
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("name", "World"));
++        // IsFile=null + template contains {{ — auto-detect should treat as inline
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "Hello {{ name }}!"
++            // IsFile not set — defaults to null
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello World!");
++    }
++
++    [Test]
++    public async Task Render_IsFileNull_FilePathAutoDetected()
++    {
++        WriteTemplateFile("auto.html", "Auto-detected {{ greeting }}");
++        var ctx = CreateContext();
++        ctx.MemoryStack.Put(new Data("greeting", "Hi"));
++        // IsFile=null + template looks like a file path (has extension, no Liquid syntax)
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "auto.html"
++            // IsFile not set — auto-detect should find the file
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("Auto-detected Hi");
++    }
++
++    [Test]
++    public async Task Render_IsFileNull_NoExtension_TreatedAsInline()
++    {
++        var ctx = CreateContext();
++        // IsFile=null + no file extension — auto-detect should treat as inline content
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "just plain text with no extension"
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("just plain text with no extension");
++    }
++
++    // --- Batch 10: Goal-relative include resolution (GetTemplateBaseDir coverage) ---
++
++    [Test]
++    public async Task Render_IncludeResolvesFromGoalDirectory()
++    {
++        // Create a goal in a subdirectory and a partial next to it
++        WriteTemplateFile("goals/templates/footer.html", "Footer content");
++        var goal = new Goal
++        {
++            Name = "SubGoal",
++            Path = "goals/SubGoal.goal"
++        };
++        _engine.Goals.Add(goal);
++
++        var ctx = CreateContext();
++        ctx.Goal = goal;
++        // The include should resolve relative to the goal's directory (goals/)
++        var action = new Render
++        {
++            Context = ctx,
++            Template = "{% include 'templates/footer.html' %}",
++            IsFile = false
++        };
++
++        var result = await _provider.Render(action);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = result.Value?.ToString() ?? "";
++        await Assert.That(output).Contains("Footer content");
++    }
++
++    // --- Helper for creating steps (from EngineTests pattern) ---
++
++    private static Step MakeStep(string actionClass, string method, object? parameters = null, int index = 0, string text = "")
++    {
++        return new Step
++        {
++            Index = index,
++            Text = text,
++            Actions = new StepActions
++            {
++                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
++                {
++                    Module = actionClass,
++                    ActionName = method,
++                    Parameters = parameters is IDictionary<string, object?> dict
++                        ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
++                        : new List<Data>(),
++                    Return = null
++                }
++            }
++        };
++    }
++
++    // --- Stub provider for swap test ---
++
++    private class StubTemplateProvider : ITemplateProvider
++    {
++        public string Name => "stub";
++        public bool IsDefault { get; set; }
++
++        public Task<Data> Render(Render action)
++        {
++            return Task.FromResult(Data.Ok((object)"stub-rendered"));
++        }
++    }
++}
+diff --git a/PLang/PLang.csproj b/PLang/PLang.csproj
+index f2748c0a..edd3e2ac 100644
+--- a/PLang/PLang.csproj
++++ b/PLang/PLang.csproj
+@@ -66,6 +66,7 @@
+     <PackageReference Include="DeepCloner" Version="0.10.4" />
+     <PackageReference Include="Epiforge.Extensions.Components" Version="2.0.0" />
+     <PackageReference Include="Fizzler.Systems.HtmlAgilityPack" Version="1.2.1" />
++    <PackageReference Include="Fluid.Core" Version="2.31.0" />
+     <PackageReference Include="HtmlSanitizer" Version="9.0.884" />
+     <PackageReference Include="IdGen" Version="3.0.7" />
+     <PackageReference Include="IDisposableAnalyzers" Version="4.0.8">
+diff --git a/PLang/Runtime2/Engine/FileSystem/PathData.cs b/PLang/Runtime2/Engine/FileSystem/PathData.cs
+index 86544d9e..01611e5a 100644
+--- a/PLang/Runtime2/Engine/FileSystem/PathData.cs
++++ b/PLang/Runtime2/Engine/FileSystem/PathData.cs
+@@ -133,4 +133,19 @@ public class PathData : Data
+     };
+ 
+     public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(_absolutePath);
++
++    public override Data Clone()
++    {
++        var clone = new PathData(_absolutePath, _fs, Value, Source)
++        {
++            Name = Name,
++            Properties = Properties.Clone()
++        };
++        clone.Error = Error;
++        clone.Handled = Handled;
++        clone.Warnings = Warnings != null ? new List<Engine.Info>(Warnings) : null;
++        clone.Signature = Signature;
++        clone.Context = Context;
++        return clone;
++    }
+ }
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs b/PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs
+index f0f6100a..77f205e7 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs
+@@ -8,10 +8,13 @@ namespace PLang.Runtime2.Engine.Goals.Goal;
+ /// </summary>
+ public sealed class GoalCall
+ {
++    /// <summary>Goal name to call (e.g., "ProcessData", "/Setup/Init").</summary>
+     [Store, LlmBuilder]
+     public string Name { get; init; } = "";
++    /// <summary>Parameters to pass to the goal, each as a named Data value.</summary>
+     [Store, LlmBuilder]
+     public List<Data>? Parameters { get; init; }
++    /// <summary>Pre-resolved .pr file path. Null when the goal name contains %variables%.</summary>
+     [Store]
+     public string? PrPath { get; set; }
+ }
+diff --git a/PLang/Runtime2/Engine/Memory/Data.Envelope.cs b/PLang/Runtime2/Engine/Memory/Data.Envelope.cs
+index 03ed5f36..ef7c7327 100644
+--- a/PLang/Runtime2/Engine/Memory/Data.Envelope.cs
++++ b/PLang/Runtime2/Engine/Memory/Data.Envelope.cs
+@@ -157,6 +157,10 @@ public partial class Data
+         {
+             return FromError(new ServiceError("Deserialization failed after decompression: " + ex.Message, "DecompressError", 500));
+         }
++        catch (InvalidOperationException ex)
++        {
++            return FromError(new ServiceError("Decompression failed: " + ex.Message, "DecompressError", 500));
++        }
+     }
+ 
+     /// <summary>
+diff --git a/PLang/Runtime2/Engine/Memory/Data.cs b/PLang/Runtime2/Engine/Memory/Data.cs
+index b6eda7f4..6043354e 100644
+--- a/PLang/Runtime2/Engine/Memory/Data.cs
++++ b/PLang/Runtime2/Engine/Memory/Data.cs
+@@ -205,10 +205,10 @@ public partial class Data
+ 
+     /// <summary>
+     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.
+-    /// Subclasses (SettingsData, DynamicData) should not be cloned —
+-    /// they are stateless/factory-based and should be shared by reference.
++    /// Virtual so subclasses (DataList) can override with proper cloning.
++    /// SettingsData and DynamicData should not be cloned — they are stateless/factory-based.
+     /// </summary>
+-    public Data Clone()
++    public virtual Data Clone()
+     {
+         var clonedValue = _value.DeepClone();
+         var clone = new Data(Name, clonedValue, _type)
+@@ -217,7 +217,7 @@ public partial class Data
+             Handled = Handled,
+             Warnings = Warnings != null ? new List<Info>(Warnings) : null,
+             Signature = Signature,
+-            Properties = Properties
++            Properties = Properties.Clone()
+         };
+         clone.Context = _context;
+         return clone;
+@@ -395,4 +395,21 @@ public class DataList<T> : Data, IList<T>
+     public T? Find(Predicate<T> match) => _items.Find(match);
+     public bool Exists(Predicate<T> match) => _items.Exists(match);
+     public List<T> Where(Func<T, bool> predicate) => _items.Where(predicate).ToList();
++
++    /// <summary>
++    /// Creates an independent copy with its own item list.
++    /// </summary>
++    public override Data Clone()
++    {
++        var clone = new DataList<T>(Name);
++        foreach (var item in _items)
++            clone._items.Add(item);
++        clone.Error = Error;
++        clone.Handled = Handled;
++        clone.Warnings = Warnings != null ? new List<Info>(Warnings) : null;
++        clone.Signature = Signature;
++        clone.Properties = Properties.Clone();
++        clone.Context = Context;
++        return clone;
++    }
+ }
+diff --git a/PLang/Runtime2/Engine/Memory/MemoryStack.cs b/PLang/Runtime2/Engine/Memory/MemoryStack.cs
+index 6df85229..9b714bd9 100644
+--- a/PLang/Runtime2/Engine/Memory/MemoryStack.cs
++++ b/PLang/Runtime2/Engine/Memory/MemoryStack.cs
+@@ -201,10 +201,8 @@ public class MemoryStack
+             // System context vars (! prefix) — skip, they're per-execution
+             if (kvp.Key.StartsWith("!")) continue;
+ 
+-            // Specialized Data subclasses (SettingsData, DynamicData) — share by reference.
+-            // They're stateless (load from DB each time) and deep-cloning would lose
+-            // the virtual GetChild override.
+-            if (kvp.Value.GetType() != typeof(Data))
++            // SettingsData — share by reference (stateless, loads from DB each time)
++            if (kvp.Value is PLang.Runtime2.Engine.Settings.SettingsData)
+             {
+                 clone._variables[kvp.Key] = kvp.Value;
+             }
+diff --git a/PLang/Runtime2/Engine/Memory/Properties.cs b/PLang/Runtime2/Engine/Memory/Properties.cs
+index a85616ca..3cc6b491 100644
+--- a/PLang/Runtime2/Engine/Memory/Properties.cs
++++ b/PLang/Runtime2/Engine/Memory/Properties.cs
+@@ -94,6 +94,17 @@ public class Properties : IList<Data>
+         return false;
+     }
+ 
++    /// <summary>
++    /// Creates a copy of this Properties collection with independent item list.
++    /// </summary>
++    public Properties Clone()
++    {
++        var clone = new Properties();
++        foreach (var item in _items)
++            clone._items.Add(item);
++        return clone;
++    }
++
+     /// <summary>
+     /// Converts to a dictionary representation.
+     /// </summary>
+diff --git a/PLang/Runtime2/Engine/Providers/this.cs b/PLang/Runtime2/Engine/Providers/this.cs
+index fc8967cc..a6e88be5 100644
+--- a/PLang/Runtime2/Engine/Providers/this.cs
++++ b/PLang/Runtime2/Engine/Providers/this.cs
+@@ -4,6 +4,7 @@ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.modules.crypto.providers;
+ using PLang.Runtime2.modules.identity.providers;
+ using PLang.Runtime2.modules.signing.providers;
++using PLang.Runtime2.modules.ui.providers;
+ 
+ namespace PLang.Runtime2.Engine.Providers;
+ 
+@@ -197,6 +198,7 @@ public sealed class @this
+             "evaluator" or "ievaluator" => typeof(modules.condition.providers.IEvaluator),
+             "assert" or "iassertprovider" => typeof(modules.assert.providers.IAssertProvider),
+             "file" or "ifileprovider" => typeof(modules.file.providers.IFileProvider),
++            "template" or "itemplateprovider" => typeof(ITemplateProvider),
+             null or "" => typeof(ISigningProvider),
+             _ => null
+         };
+@@ -217,5 +219,6 @@ public sealed class @this
+         Register<modules.condition.providers.IEvaluator>(new modules.condition.providers.DefaultEvaluator());
+         Register<modules.assert.providers.IAssertProvider>(new modules.assert.providers.DefaultAssertProvider());
+         Register<modules.file.providers.IFileProvider>(new modules.file.providers.DefaultFileProvider());
++        Register<ITemplateProvider>(new FluidProvider());
+     }
+ }
+diff --git a/PLang/Runtime2/modules/Attributes.cs b/PLang/Runtime2/modules/Attributes.cs
+index 055b2f1a..46cf7a11 100644
+--- a/PLang/Runtime2/modules/Attributes.cs
++++ b/PLang/Runtime2/modules/Attributes.cs
+@@ -1,23 +1,37 @@
+ namespace PLang.Runtime2.modules;
+ 
++/// <summary>
++/// Marks a class as a PLang action handler. The source generator discovers these
++/// and generates ICodeGenerated dispatch code.
++/// </summary>
+ [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+ public sealed class ActionAttribute : Attribute
+ {
++    /// <summary>Action name used in .pr files (e.g., "set", "read"). Defaults to class name.</summary>
+     public string? Name { get; }
++    /// <summary>Whether the builder can cache this action's result. Default true.</summary>
+     public bool Cacheable { get; set; } = true;
+ 
+     public ActionAttribute() { }
+     public ActionAttribute(string name) => Name = name;
+ }
+ 
++/// <summary>
++/// Specifies a default value for an action parameter when the builder omits it.
++/// </summary>
+ [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+ public sealed class DefaultAttribute : Attribute
+ {
++    /// <summary>The default value to use when the parameter is not provided.</summary>
+     public object? Value { get; }
+ 
+     public DefaultAttribute(object? value) => Value = value;
+ }
+ 
++/// <summary>
++/// Marks a string property as a variable name — the source generator strips %% delimiters
++/// instead of resolving the variable's value.
++/// </summary>
+ [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+ public sealed class VariableNameAttribute : Attribute { }
+ 
+@@ -33,19 +47,36 @@ public sealed class GoalCallbackAttribute : Attribute
+     public GoalCallbackAttribute(string injects) => Injects = injects;
+ }
+ 
++/// <summary>
++/// Marks a property for automatic provider injection via the source generator.
++/// The generated code resolves the provider from Engine.Providers at execution time.
++/// </summary>
+ [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+ public sealed class ProviderAttribute : Attribute { }
+ 
++/// <summary>
++/// Marks a Data? property that must be initialized (non-null) before Run() is called.
++/// The source generator validates this at dispatch time.
++/// </summary>
+ [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+ public sealed class IsInitiatedAttribute : Attribute { }
+ 
++/// <summary>
++/// Marks a property that must not be null. The source generator validates this at dispatch time.
++/// </summary>
+ [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+ public sealed class IsNotNullAttribute : Attribute { }
+ 
++/// <summary>
++/// Provides a PLang step example and its expected parameter mapping for the builder.
++/// Multiple examples per action help the LLM map natural language to the correct parameters.
++/// </summary>
+ [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+ public sealed class ExampleAttribute : Attribute
+ {
++    /// <summary>PLang step text (e.g., "before step, call LogStep").</summary>
+     public string Plang { get; }
++    /// <summary>Expected parameter mapping (e.g., "Type=BeforeStep, GoalToCall=LogStep").</summary>
+     public string Mapping { get; }
+ 
+     public ExampleAttribute(string plang, string mapping)
+diff --git a/PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs b/PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs
+index 06047464..98ed463f 100644
+--- a/PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs
++++ b/PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs
+@@ -21,7 +21,7 @@ public sealed class DefaultEvaluator : IEvaluator
+             bool result = op == null ? IsTruthy(left) : EvaluateOp(left, op, right);
+             return Data.Ok(result);
+         }
+-        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException)
++        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException or InvalidCastException)
+         {
+             return EvaluationError(left, op, right, ex);
+         }
+@@ -38,7 +38,7 @@ public sealed class DefaultEvaluator : IEvaluator
+             bool result = EvaluateOp(left, op, right);
+             return Data.Ok(result);
+         }
+-        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException)
++        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException or InvalidCastException)
+         {
+             return EvaluationError(left, op, right, ex);
+         }
+diff --git a/PLang/Runtime2/modules/event/on.cs b/PLang/Runtime2/modules/event/on.cs
+index 053648c7..57a2a286 100644
+--- a/PLang/Runtime2/modules/event/on.cs
++++ b/PLang/Runtime2/modules/event/on.cs
+@@ -5,6 +5,11 @@ using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@th
+ 
+ namespace PLang.Runtime2.modules.@event;
+ 
++/// <summary>
++/// Registers an event binding on the execution lifecycle.
++/// Consolidates all event types (BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction)
++/// into a single action with a Type parameter. Returns the binding ID for later removal.
++/// </summary>
+ [Example("before step, call LogStep, on goal pattern 'Api/*'", "Type=BeforeStep, GoalToCall=LogStep, GoalPattern=Api/*")]
+ [Example("after goal, call Cleanup", "Type=AfterGoal, GoalToCall=Cleanup")]
+ [Example("before action, call MockHttp, on action pattern 'http.*'", "Type=BeforeAction, GoalToCall=MockHttp, ActionPattern=http.*")]
+@@ -12,14 +17,21 @@ namespace PLang.Runtime2.modules.@event;
+ [Action("on", Cacheable = false)]
+ public partial class On : IContext
+ {
++    /// <summary>Event type: BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction.</summary>
+     [IsNotNull]
+     public partial string Type { get; init; }
++    /// <summary>Goal to execute when the event fires.</summary>
+     public partial GoalCall GoalToCall { get; init; }
++    /// <summary>Glob or regex pattern to match goal names. Null matches all goals.</summary>
+     public partial string? GoalPattern { get; init; }
++    /// <summary>Glob or regex pattern to match step text. Only for step-level events.</summary>
+     public partial string? StepPattern { get; init; }
++    /// <summary>Glob or regex pattern to match action names (e.g., "http.*"). Only for action-level events.</summary>
+     public partial string? ActionPattern { get; init; }
++    /// <summary>When true, patterns are treated as regular expressions instead of glob patterns.</summary>
+     [Default(false)]
+     public partial bool IsRegex { get; init; }
++    /// <summary>Execution priority — higher values run first. Default is 0.</summary>
+     [Default(0)]
+     public partial int Priority { get; init; }
+ 
+diff --git a/PLang/Runtime2/modules/event/skipAction.cs b/PLang/Runtime2/modules/event/skipAction.cs
+index 1407ac83..40e42329 100644
+--- a/PLang/Runtime2/modules/event/skipAction.cs
++++ b/PLang/Runtime2/modules/event/skipAction.cs
+@@ -2,11 +2,17 @@ using PLang.Runtime2.Engine.Memory;
+ 
+ namespace PLang.Runtime2.modules.@event;
+ 
++/// <summary>
++/// Skips the current action and returns a custom value instead.
++/// Use inside a beforeAction event handler to prevent the real action from running.
++/// Sets context.EventOverride so the action runner returns this value.
++/// </summary>
+ [Example("skip action, value = %mockResponse%", "Value=%mockResponse%")]
+ [Example("skip action, value = {\"status\": 200}", "Value={\"status\": 200}")]
+ [Action("skipAction", Cacheable = false)]
+ public partial class SkipAction : IContext
+ {
++    /// <summary>Value to return instead of the action's real result. Null returns empty success.</summary>
+     public partial object? Value { get; init; }
+ 
+     public Task<Data> Run()
+diff --git a/PLang/Runtime2/modules/identity/types.cs b/PLang/Runtime2/modules/identity/types.cs
+index 516f308a..86ccee63 100644
+--- a/PLang/Runtime2/modules/identity/types.cs
++++ b/PLang/Runtime2/modules/identity/types.cs
+@@ -33,4 +33,23 @@ public sealed class IdentityData : Data
+     /// String context returns the public key — %MyIdentity% in a string gives the public key.
+     /// </summary>
+     public override string ToString() => PublicKey;
++
++    public override Data Clone()
++    {
++        var clone = new IdentityData(Name)
++        {
++            PublicKey = PublicKey,
++            PrivateKey = PrivateKey,
++            IsDefault = IsDefault,
++            IsArchived = IsArchived,
++            Created = Created,
++            Properties = Properties.Clone()
++        };
++        clone.Error = Error;
++        clone.Handled = Handled;
++        clone.Warnings = Warnings != null ? new List<Engine.Info>(Warnings) : null;
++        clone.Signature = Signature;
++        clone.Context = Context;
++        return clone;
++    }
+ }
+diff --git a/PLang/Runtime2/modules/module/remove.cs b/PLang/Runtime2/modules/module/remove.cs
+index 01f62634..65740ce8 100644
+--- a/PLang/Runtime2/modules/module/remove.cs
++++ b/PLang/Runtime2/modules/module/remove.cs
+@@ -3,9 +3,13 @@ using PLang.Runtime2.Engine.Memory;
+ 
+ namespace PLang.Runtime2.modules.module;
+ 
++/// <summary>
++/// Unregisters all actions for a module by name. Returns 404 if the module is not found.
++/// </summary>
+ [Action("remove", Cacheable = false)]
+ public partial class Remove : IContext
+ {
++    /// <summary>Module name to unregister (e.g., "mymodule").</summary>
+     public partial string Name { get; init; }
+ 
+     public Task<Data> Run()
+diff --git a/PLang/Runtime2/modules/ui/providers/FluidProvider.cs b/PLang/Runtime2/modules/ui/providers/FluidProvider.cs
+new file mode 100644
+index 00000000..e19e01b7
+--- /dev/null
++++ b/PLang/Runtime2/modules/ui/providers/FluidProvider.cs
+@@ -0,0 +1,293 @@
++using System.IO;
++using Fluid;
++using Fluid.Ast;
++using Fluid.Values;
++using Microsoft.Extensions.FileProviders;
++using Microsoft.Extensions.Primitives;
++using PLang.Interfaces;
++using PLang.Runtime2.Engine.Errors;
++using PLangContext = PLang.Runtime2.Engine.Context.PLangContext;
++using PLang.Runtime2.Engine.FileSystem;
++using PLang.Runtime2.Engine.Goals.Goal;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.ui.providers;
++
++public class FluidProvider : ITemplateProvider
++{
++    public string Name => "default";
++    public bool IsDefault { get; set; }
++
++    private FluidParser CreateParser()
++    {
++        var parser = new FluidParser();
++        parser.RegisterExpressionTag("callGoal", CallGoalTagAsync);
++        return parser;
++    }
++
++    public async Task<Data> Render(Render action)
++    {
++        var templateContent = action.Template;
++        var isFile = action.IsFile;
++        string? sourceFile = null;
++
++        // Resolve template content: file or inline
++        if (isFile == true || (isFile == null && LooksLikeFilePath(templateContent)))
++        {
++            var pathData = new PathData(templateContent, action.Context);
++            if (!pathData.Exists)
++                return Data.FromError(new ServiceError(
++                    $"Template file not found: {templateContent}", "NotFound", 404));
++
++            sourceFile = pathData.Relative;
++            try
++            {
++                var fs = action.Context.Engine.FileSystem;
++                templateContent = fs.File.ReadAllText(pathData.Absolute);
++            }
++            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
++            {
++                return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
++            }
++        }
++
++        // Parse
++        var parser = CreateParser();
++        if (!parser.TryParse(templateContent, out var fluidTemplate, out var parseError))
++        {
++            var location = sourceFile != null ? $" in '{sourceFile}'" : "";
++            return Data.FromError(new ServiceError(
++                $"Template syntax error{location}: {parseError}", "TemplateError", 400));
++        }
++
++        // Build context
++        var options = new TemplateOptions();
++        options.MemberAccessStrategy.IgnoreCasing = true;
++        options.MemberAccessStrategy.MemberNameStrategy = MemberNameStrategies.Default;
++
++        // Configure file provider for {% include %} / {% render %} tags
++        var fs2 = action.Context.Engine.FileSystem;
++        var basePath = GetTemplateBaseDir(action);
++        options.FileProvider = new PlangFileProvider(fs2, basePath);
++
++        var fluidContext = new TemplateContext(options);
++
++        // Store engine + PLangContext for callGoal tag access
++        fluidContext.AmbientValues["engine"] = action.Context.Engine;
++        fluidContext.AmbientValues["context"] = action.Context;
++
++        // Load memory stack variables (GetAll already excludes !-prefixed)
++        foreach (var data in action.Context.MemoryStack.GetAll())
++        {
++            var value = data.Value;
++            RegisterTypeIfNeeded(options, value);
++            fluidContext.SetValue(data.Name, FluidValue.Create(value, options));
++        }
++
++        // Override with explicit parameters
++        if (action.Parameters != null)
++        {
++            foreach (var param in action.Parameters)
++            {
++                RegisterTypeIfNeeded(options, param.Value);
++                fluidContext.SetValue(param.Name, FluidValue.Create(param.Value, options));
++            }
++        }
++
++        // Render with HTML encoding for security (XSS prevention)
++        try
++        {
++            var writer = new StringWriter();
++            await fluidTemplate.RenderAsync(writer, System.Text.Encodings.Web.HtmlEncoder.Default, fluidContext);
++            return Data.Ok(writer.ToString());
++        }
++        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
++        {
++            var location = sourceFile != null ? $" in '{sourceFile}'" : "";
++            return Data.FromError(new ServiceError(
++                $"Template render error{location}: {ex.Message}", "RenderError", 500));
++        }
++    }
++
++    /// <summary>
++    /// Registers a type with Fluid's MemberAccessStrategy so its properties are accessible.
++    /// Skips primitives, strings, and collections that Fluid already handles natively.
++    /// </summary>
++    private static void RegisterTypeIfNeeded(TemplateOptions options, object? value)
++    {
++        if (value == null) return;
++        var type = value.GetType();
++        if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal)
++            || type == typeof(DateTime) || type == typeof(DateTimeOffset)
++            || type == typeof(Guid) || type.IsEnum)
++            return;
++        // Skip generic collections — Fluid handles IEnumerable natively
++        if (type.IsArray) return;
++        if (type.IsGenericType)
++        {
++            var genDef = type.GetGenericTypeDefinition();
++            if (genDef == typeof(List<>) || genDef == typeof(Dictionary<,>)
++                || genDef == typeof(HashSet<>))
++                return;
++        }
++        try
++        {
++            options.MemberAccessStrategy.Register(type);
++        }
++        catch
++        {
++            // Some types may not be registerable — skip silently
++        }
++    }
++
++    /// <summary>
++    /// Heuristic: a string looks like a file path if it contains a dot-extension
++    /// and no Liquid syntax markers. Used only when IsFile is null (auto-detect).
++    /// </summary>
++    private static bool LooksLikeFilePath(string template)
++    {
++        if (string.IsNullOrWhiteSpace(template)) return false;
++        // If it contains Liquid delimiters, it's inline content
++        if (template.Contains("{{") || template.Contains("{%")) return false;
++        // If it has a file extension pattern, likely a path
++        var lastDot = template.LastIndexOf('.');
++        if (lastDot <= 0) return false;
++        var ext = template[lastDot..];
++        return ext.Length >= 2 && ext.Length <= 6 && !ext.Contains(' ');
++    }
++
++    /// <summary>
++    /// Gets the base directory for template file resolution (includes).
++    /// Resolves from the calling goal's directory, or engine root as fallback.
++    /// </summary>
++    private static string GetTemplateBaseDir(Render action)
++    {
++        var engine = action.Context.Engine;
++        var goalPath = action.Context.Goal?.Path;
++        if (!string.IsNullOrEmpty(goalPath))
++        {
++            var fs = engine.FileSystem;
++            var goalDir = fs.Path.GetDirectoryName(goalPath);
++            if (!string.IsNullOrEmpty(goalDir))
++                return fs.ValidatePath(goalDir);
++        }
++        return engine.AbsolutePath;
++    }
++
++    /// <summary>
++    /// Custom Fluid tag handler for {% callGoal 'GoalName' %} or {% callGoal GoalName %}.
++    /// Invokes a PLang goal and writes the result into template output.
++    /// </summary>
++    private static async ValueTask<Completion> CallGoalTagAsync(
++        Fluid.Ast.Expression expression, TextWriter writer, System.Text.Encodings.Web.TextEncoder encoder,
++        TemplateContext context)
++    {
++        var engine = (Engine.@this)context.AmbientValues["engine"];
++        var plangContext = (PLangContext)context.AmbientValues["context"];
++
++        try
++        {
++            var goalNameValue = await expression.EvaluateAsync(context);
++            var goalName = goalNameValue?.ToStringValue() ?? "";
++            if (string.IsNullOrEmpty(goalName))
++            {
++                await writer.WriteAsync("[Error: callGoal requires a goal name]");
++                return Completion.Normal;
++            }
++
++            var goalCall = new GoalCall { Name = goalName };
++            var result = await engine.RunGoalAsync(goalCall, plangContext);
++
++            if (result.Success)
++            {
++                var output = result.Value?.ToString() ?? "";
++                await writer.WriteAsync(output);
++            }
++            else
++            {
++                // Show error message in template output per Ingi's requirement
++                var errorMessage = result.Error?.Message ?? "Unknown error";
++                await writer.WriteAsync($"[Error: {errorMessage}]");
++            }
++        }
++        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
++        {
++            await writer.WriteAsync($"[Error: {ex.Message}]");
++        }
++
++        return Completion.Normal;
++    }
++
++    // --- Microsoft.Extensions.FileProviders adapter for Fluid's include/render tags ---
++
++    private sealed class PlangFileProvider : IFileProvider
++    {
++        private readonly IPLangFileSystem _fs;
++        private readonly string _basePath;
++
++        public PlangFileProvider(IPLangFileSystem fs, string basePath)
++        {
++            _fs = fs;
++            _basePath = basePath;
++        }
++
++        public IFileInfo GetFileInfo(string subpath)
++        {
++            // Fluid appends ".liquid" to include paths — try both with and without
++            var candidates = new[] { subpath, StripLiquidExtension(subpath) };
++            foreach (var candidate in candidates)
++            {
++                if (string.IsNullOrEmpty(candidate)) continue;
++                var fullPath = TryResolvePath(candidate);
++                if (fullPath != null && _fs.File.Exists(fullPath))
++                    return new PlangFileInfo(_fs, fullPath, candidate);
++            }
++            return new NotFoundFileInfo(subpath);
++        }
++
++        private string? TryResolvePath(string candidate)
++        {
++            return _fs.ValidatePath(_fs.Path.Combine(_basePath, candidate));
++        }
++
++        private static string StripLiquidExtension(string path)
++        {
++            const string ext = ".liquid";
++            return path.EndsWith(ext, StringComparison.OrdinalIgnoreCase)
++                ? path[..^ext.Length]
++                : path;
++        }
++
++        public IDirectoryContents GetDirectoryContents(string subpath)
++            => new NotFoundDirectoryContents();
++
++        public IChangeToken Watch(string filter)
++            => NullChangeToken.Singleton;
++    }
++
++    private sealed class PlangFileInfo : IFileInfo
++    {
++        private readonly IPLangFileSystem _fs;
++        private readonly string _fullPath;
++
++        public PlangFileInfo(IPLangFileSystem fs, string fullPath, string name)
++        {
++            _fs = fs;
++            _fullPath = fullPath;
++            Name = name;
++        }
++
++        public bool Exists => true;
++        public long Length => _fs.FileInfo.New(_fullPath).Length;
++        public string? PhysicalPath => _fullPath;
++        public string Name { get; }
++        public DateTimeOffset LastModified => DateTimeOffset.UtcNow;
++        public bool IsDirectory => false;
++
++        public Stream CreateReadStream()
++        {
++            var content = _fs.File.ReadAllText(_fullPath);
++            return new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
++        }
++    }
++}
+diff --git a/PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs b/PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs
+new file mode 100644
+index 00000000..c967e1f7
+--- /dev/null
++++ b/PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs
+@@ -0,0 +1,13 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Providers;
++
++namespace PLang.Runtime2.modules.ui.providers;
++
++/// <summary>
++/// Template rendering provider. Swappable via engine.Providers.
++/// Default implementation uses Fluid (Liquid syntax).
++/// </summary>
++public interface ITemplateProvider : IProvider
++{
++    Task<Data> Render(Render action);
++}
+diff --git a/PLang/Runtime2/modules/ui/render.cs b/PLang/Runtime2/modules/ui/render.cs
+new file mode 100644
+index 00000000..fd3820e1
+--- /dev/null
++++ b/PLang/Runtime2/modules/ui/render.cs
+@@ -0,0 +1,32 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.ui.providers;
++
++namespace PLang.Runtime2.modules.ui;
++
++[Example("render 'email.html', write to %body%", "Template=email.html")]
++[Example("render 'page.html' with title=%pageTitle%, write to %html%", "Template=page.html, Parameters={title: %pageTitle%}")]
++[Example("render %templateContent%, write to %result%", "Template=%templateContent%")]
++[Example("render file 'report.html', write to %output%", "Template=report.html, IsFile=true")]
++[Action("render")]
++public partial class Render : IContext
++{
++    /// <summary>Template content (inline Liquid) or file path. Determined by IsFile.</summary>
++    [IsNotNull]
++    public partial string Template { get; init; }
++
++    /// <summary>Explicit parameters that override memory stack variables in the template.</summary>
++    public partial List<Data>? Parameters { get; init; }
++
++    /// <summary>
++    /// Force file/inline interpretation.
++    /// true = treat Template as a file path (error if not found).
++    /// false = treat Template as inline content.
++    /// null (default) = auto-detect via file existence check.
++    /// </summary>
++    public partial bool? IsFile { get; init; }
++
++    [Provider]
++    public partial ITemplateProvider Provider { get; }
++
++    public async Task<Data> Run() => await Provider.Render(this);
++}
+diff --git a/Tests/Runtime2/Ui/RenderCallGoal/RenderCallGoal.test.goal b/Tests/Runtime2/Ui/RenderCallGoal/RenderCallGoal.test.goal
+new file mode 100644
+index 00000000..f575c94f
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderCallGoal/RenderCallGoal.test.goal
+@@ -0,0 +1,7 @@
++Start
++/ Test: render template that uses callGoal to invoke a PLang goal
++/ Note: callGoal requires a loaded goal - this tests that the tag works without crashing
++- set %template% = 'Result: {% callGoal "GetGreeting" %}'
++- render %template%, write to %result%
++/ The goal doesn't exist, so expect error text in output
++- assert %result% contains 'Error'
+diff --git a/Tests/Runtime2/Ui/RenderFile/RenderFile.test.goal b/Tests/Runtime2/Ui/RenderFile/RenderFile.test.goal
+new file mode 100644
+index 00000000..ac2aaa5d
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderFile/RenderFile.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: render a file template with variables from memory stack
++- set %name% = 'PLang'
++- render file 'template.html', write to %result%
++- assert %result% equals 'Hello PLang!'
+diff --git a/Tests/Runtime2/Ui/RenderFile/template.html b/Tests/Runtime2/Ui/RenderFile/template.html
+new file mode 100644
+index 00000000..c7a43bc1
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderFile/template.html
+@@ -0,0 +1 @@
++Hello {{ name }}!
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Ui/RenderInclude/RenderInclude.test.goal b/Tests/Runtime2/Ui/RenderInclude/RenderInclude.test.goal
+new file mode 100644
+index 00000000..7a7cb50f
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderInclude/RenderInclude.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: render template that includes a partial via include tag
++- set %title% = 'Welcome'
++- render file 'page.html', write to %result%
++- assert %result% contains 'Header: Welcome'
++- assert %result% contains 'Body content'
+diff --git a/Tests/Runtime2/Ui/RenderInclude/header.html b/Tests/Runtime2/Ui/RenderInclude/header.html
+new file mode 100644
+index 00000000..69d06021
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderInclude/header.html
+@@ -0,0 +1 @@
++Header: {{ title }}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Ui/RenderInclude/page.html b/Tests/Runtime2/Ui/RenderInclude/page.html
+new file mode 100644
+index 00000000..734ae2f8
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderInclude/page.html
+@@ -0,0 +1,2 @@
++{% include 'header.html' %}
++Body content
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Ui/RenderInline/RenderInline.test.goal b/Tests/Runtime2/Ui/RenderInline/RenderInline.test.goal
+new file mode 100644
+index 00000000..5158d5bc
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderInline/RenderInline.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: render inline template content with variable substitution
++- set %name% = 'World'
++- render 'Hello {{ name }}!', write to %result%
++- assert %result% equals 'Hello World!'
+diff --git a/Tests/Runtime2/Ui/RenderWithParams/RenderWithParams.test.goal b/Tests/Runtime2/Ui/RenderWithParams/RenderWithParams.test.goal
+new file mode 100644
+index 00000000..f8fd1dcb
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderWithParams/RenderWithParams.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: render template with explicit parameters
++- set %title% = 'My Page'
++- render file 'page.html' with author='Ingi', write to %result%
++- assert %result% contains 'Title: My Page'
++- assert %result% contains 'Author: Ingi'
+diff --git a/Tests/Runtime2/Ui/RenderWithParams/page.html b/Tests/Runtime2/Ui/RenderWithParams/page.html
+new file mode 100644
+index 00000000..b6d9cb28
+--- /dev/null
++++ b/Tests/Runtime2/Ui/RenderWithParams/page.html
+@@ -0,0 +1 @@
++Title: {{ title }}, Author: {{ author }}
+\ No newline at end of file
+diff --git a/docs/modules/crypto.md b/docs/modules/crypto.md
+new file mode 100644
+index 00000000..25ec4330
+--- /dev/null
++++ b/docs/modules/crypto.md
+@@ -0,0 +1,80 @@
++# Crypto Module
++
++Cryptographic hashing and verification. Supports pluggable algorithm providers — default algorithms are Keccak256 and SHA256.
++
++## Actions
++
++### hash
++
++Hash data using a cryptographic algorithm.
++
++```plang
++- hash %content%, write to %hash%
++- hash %data% with sha256, write to %hash%
++```
++
++**Parameters:**
++
++| Name | Type | Required | Default | Description |
++|------|------|----------|---------|-------------|
++| Data | object | yes | — | Data to hash. Byte arrays hash directly; everything else is JSON-serialized first |
++| Algorithm | string | no | keccak256 | Hash algorithm to use |
++
++**Returns:** A hashed data object with:
++
++| Property | Description |
++|----------|-------------|
++| `algorithm` | Algorithm used (lowercase) |
++| `format` | "raw" for byte arrays, "json" for serialized objects |
++| `hash` | Hex-encoded hash string |
++
++In string context (`%hash%`), returns the hex hash directly.
++
++### verify
++
++Verify data against a known hash.
++
++```plang
++- verify %content% against %expectedHash%, write to %isValid%
++- verify %data% against %expectedHash% with sha256, write to %isValid%
++```
++
++**Parameters:**
++
++| Name | Type | Required | Default | Description |
++|------|------|----------|---------|-------------|
++| Data | object | yes | — | Data to verify |
++| Hash | string | yes | — | Expected hash (hex string) |
++| Algorithm | string | no | keccak256 | Hash algorithm to use |
++
++**Returns:** `true` if the data matches the hash, `false` otherwise.
++
++## Supported Algorithms
++
++| Algorithm | Implementation |
++|-----------|---------------|
++| `keccak256` | Nethereum Sha3Keccack (default) |
++| `sha256` | System.Security.Cryptography |
++
++Custom algorithms can be added by loading a provider DLL that implements `ICryptoProvider`.
++
++## Examples
++
++### Hash and Verify
++
++```plang
++Start
++- set %secret% = 'my sensitive data'
++- hash %secret%, write to %hash%
++- write out 'Hash: %hash%'
++- verify %secret% against %hash%, write to %isValid%
++- write out 'Valid: %isValid%'
++```
++
++### Using SHA256
++
++```plang
++Start
++- hash %content% with sha256, write to %hash%
++- write out %hash%
++```
+diff --git a/docs/modules/event.md b/docs/modules/event.md
+index 62a74b63..d723bcee 100644
+--- a/docs/modules/event.md
++++ b/docs/modules/event.md
+@@ -4,82 +4,42 @@ Hook into the PLang execution lifecycle. Register handlers that run before or af
+ 
+ ## Actions
+ 
+-### beforeGoal
++### on
+ 
+-Run a goal before any matching goal starts.
++Register an event binding. All event types use this single action with a `Type` parameter.
+ 
+ ```plang
+ - before each goal call !LogStart
+-- before goal 'ProcessData' call !ValidateInput
++- after goal, call Cleanup
++- before step, call LogStep, on goal pattern 'Api/*'
++- before action, call MockHttp, on action pattern 'http.*'
++- on before goal, call AuthCheck, on goal pattern '^Admin', is regex
+ ```
+ 
+ **Parameters:**
+ 
+ | Name | Type | Required | Default | Description |
+ |------|------|----------|---------|-------------|
+-| GoalToCall | goal | yes | — | Goal to execute on event |
+-| GoalPattern | string | no | — | Goal name pattern to match (null = all goals) |
+-| IsRegex | bool | no | false | Treat pattern as regex |
++| Type | string | yes | — | Event type (see below) |
++| GoalToCall | goal | yes | — | Goal to execute when event fires |
++| GoalPattern | string | no | — | Glob or regex pattern to match goal names (null = all goals) |
++| StepPattern | string | no | — | Glob or regex pattern to match step text (step-level events only) |
++| ActionPattern | string | no | — | Glob or regex pattern to match action names, e.g., `http.*` (action-level events only) |
++| IsRegex | bool | no | false | Treat patterns as regular expressions |
+ | Priority | int | no | 0 | Execution priority (higher = runs first) |
+ 
+-### afterGoal
++**Event types:**
+ 
+-Run a goal after any matching goal completes.
++| Type | When it fires |
++|------|--------------|
++| `BeforeGoal` | Before a goal starts |
++| `AfterGoal` | After a goal completes |
++| `BeforeStep` | Before a step executes |
++| `AfterStep` | After a step completes |
++| `BeforeAction` | Before a specific action type executes |
++| `AfterAction` | After a specific action type completes |
+ 
+-```plang
+-- after each goal call !LogEnd
+-- after goal 'ProcessData' call !NotifyComplete
+-```
+-
+-Same parameters as `beforeGoal`.
+-
+-### beforeStep
+-
+-Run a goal before any matching step executes.
+-
+-```plang
+-- before each step call !LogStep
+-- before step matching 'write*' call !CaptureOutput
+-```
+-
+-**Parameters:**
+-
+-| Name | Type | Required | Default | Description |
+-|------|------|----------|---------|-------------|
+-| GoalToCall | goal | yes | — | Goal to execute on event |
+-| GoalPattern | string | no | — | Goal name pattern |
+-| StepPattern | string | no | — | Step text pattern |
+-| IsRegex | bool | no | false | Treat patterns as regex |
+-| Priority | int | no | 0 | Execution priority |
+-
+-### afterStep
+-
+-Run a goal after any matching step completes. Same parameters as `beforeStep`.
+-
+-```plang
+-- after each step call !AuditStep
+-```
+-
+-### beforeAction
+-
+-Run a goal before a specific action type executes.
+-
+-```plang
+-- before action 'file/save' call !BackupFirst
+-```
+-
+-**Parameters:**
+-
+-| Name | Type | Required | Default | Description |
+-|------|------|----------|---------|-------------|
+-| GoalToCall | goal | yes | — | Goal to execute on event |
+-| ActionPattern | string | no | — | Action pattern to match |
+-| IsRegex | bool | no | false | Treat pattern as regex |
+-| Priority | int | no | 0 | Execution priority |
+-
+-### afterAction
+-
+-Run a goal after a specific action type completes. Same parameters as `beforeAction`.
++**Returns:** The binding ID (use with `remove`).
+ 
+ ### remove
+ 
+@@ -97,28 +57,18 @@ Remove a registered event binding by ID.
+ 
+ ### skipAction
+ 
+-Skip the current action and return a custom value instead. Use this in a `beforeAction` handler to prevent the action from running.
++Skip the current action and return a custom value instead. Use this inside a `BeforeAction` event handler to prevent the real action from running.
+ 
+ ```plang
+ - skip action with value 'mocked result'
++- skip action, value = %mockResponse%
+ ```
+ 
+ **Parameters:**
+ 
+ | Name | Type | Required | Description |
+ |------|------|----------|-------------|
+-| Value | object | no | Value to return instead of the action's result |
+-
+-## Event Registration Returns
+-
+-When you register an event, the handler returns an event object with:
+-
+-| Property | Description |
+-|----------|-------------|
+-| `id` | Unique binding ID (use with `remove`) |
+-| `type` | Event type (beforeGoal, afterStep, etc.) |
+-| `goalToCall` | The goal that will be called |
+-| `pattern` | The matching pattern |
++| Value | object | no | Value to return instead of the action's real result |
+ 
+ ## Examples
+ 
+@@ -135,17 +85,37 @@ LogBefore
+ 
+ LogAfter
+ - write out 'Goal complete.'
++```
++
++### Intercepting Actions
++
++```plang
++Start
++- before action, call MockHttp, on action pattern 'http.*'
++- get 'https://api.example.com/data', write to %result%
++- write out %result%
+ 
+-DoWork
+-- write out 'Doing work'
++MockHttp
++- skip action with value { "mocked": true }
+ ```
+ 
+ ### Event Cleanup
+ 
+ ```plang
+ Start
+-- before each step call !Monitor, write to %monitorEvent%
++- before each step call !Monitor, write to %monitorId%
+ - call !DoWork
+-- remove event %monitorEvent.id%
++- remove event %monitorId%
+ / Monitor is no longer active
+ ```
++
++### Pattern Matching with Regex
++
++```plang
++Start
++- before goal, call AuthCheck, on goal pattern '^Admin', is regex
++- call !AdminDashboard
++
++AuthCheck
++- write out 'Checking auth...'
++```
+diff --git a/docs/modules/http.md b/docs/modules/http.md
+new file mode 100644
+index 00000000..5f12c33b
+--- /dev/null
++++ b/docs/modules/http.md
+@@ -0,0 +1,178 @@
++# HTTP Module
++
++Send HTTP requests, download and upload files, and stream responses. Supports request signing, configurable defaults, and streaming in multiple formats.
++
++## Actions
++
++### request
++
++Send an HTTP request.
++
++```plang
++- get 'https://api.example.com/data', write to %result%
++- post 'https://api.example.com/items' with body %item%, write to %response%
++- get '/api/users', write to %users%
++```
++
++**Parameters:**
++
++| Name | Type | Required | Default | Description |
++|------|------|----------|---------|-------------|
++| Url | string | yes | — | URL (absolute, relative to BaseUrl, or bare domain) |
++| Method | string | no | GET | HTTP method (GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS) |
++| Body | object | no | — | Request body. Strings sent as-is, objects JSON-serialized |
++| Headers | dictionary | no | — | Per-request headers (merged with defaults) |
++| ContentType | string | no | application/json | Request content type |
++| Encoding | string | no | utf-8 | Character encoding |
++| TimeoutInSec | int | no | 30 | Request timeout in seconds |
++| Unsigned | bool | no | false | Skip request signing |
++| OnStream | goal | no | — | Goal to call for each streamed chunk |
++| StreamAs | string | no | — | Stream format: Line, SSE, or Bytes |
++
++**Returns:** Parsed response body as the appropriate type (object for JSON, string for text, etc.).
++
++### download
++
++Download a file.
++
++```plang
++- download 'https://example.com/file.zip', save to 'downloads/file.zip'
++- download %url%, save to %path%, if exists overwrite, on progress call ShowProgress
++```
++
++**Parameters:**
++
++| Name | Type | Required | Default | Description |
++|------|------|----------|---------|-------------|
++| Url | string | yes | — | URL to download from |
++| SaveTo | string | yes | — | Local file path to save to |
++| IfExists | string | no | Error | What to do if file exists: Error, Overwrite, or Skip |
++| Headers | dictionary | no | — | Per-request headers |
++| TimeoutInSec | int | no | 30 | Request timeout in seconds |
++| Unsigned | bool | no | false | Skip request signing |
++| OnProgress | goal | no | — | Goal called with transfer progress updates |
++
++**Returns:** The saved file path.
++
++### upload
++
++Upload content to a URL.
++
++```plang
++- upload 'report.pdf' to 'https://api.example.com/files'
++- upload %formData% to %url%, write to %response%
++```
++
++**Parameters:**
++
++| Name | Type | Required | Default | Description |
++|------|------|----------|---------|-------------|
++| Url | string | yes | — | URL to upload to |
++| Content | object | yes | — | Content to upload (see content detection below) |
++| Method | string | no | POST | HTTP method |
++| Headers | dictionary | no | — | Per-request headers |
++| Encoding | string | no | utf-8 | Character encoding |
++| TimeoutInSec | int | no | 30 | Request timeout in seconds |
++| Unsigned | bool | no | false | Skip request signing |
++| As | string | no | — | Force content format: File, Base64, Form, or Text |
++| OnProgress | goal | no | — | Goal called with transfer progress updates |
++
++**Content auto-detection** (when `As` is not set):
++
++| Content type | Detection | Behavior |
++|-------------|-----------|----------|
++| File path | String starting with `@` or file path | Reads file, sends as multipart/form-data |
++| Form data | Dictionary | Sends as multipart/form-data key/value pairs |
++| Text | Default for strings | Sends as StringContent |
++
++### configure
++
++Set default HTTP configuration for the current scope.
++
++```plang
++- configure http, base url 'https://api.example.com'
++- configure http, timeout 60 seconds, unsigned
++- configure http as default, base url 'https://api.example.com'
++```
++
++**Parameters:**
++
++| Name | Type | Required | Default | Description |
++|------|------|----------|---------|-------------|
++| BaseUrl | string | no | — | Base URL for relative request URLs |
++| TimeoutInSec | int | no | — | Default timeout in seconds |
++| DefaultHeaders | dictionary | no | — | Default headers merged into every request |
++| ContentType | string | no | — | Default content type |
++| Encoding | string | no | — | Default encoding |
++| Unsigned | bool | no | — | Disable signing by default |
++| FollowRedirects | bool | no | — | Whether to follow HTTP redirects |
++| MaxRedirects | int | no | — | Maximum redirects to follow |
++| Default | bool | no | false | Apply to all requests app-wide (not just current scope) |
++
++Only non-null values are written. Existing settings for omitted parameters are preserved.
++
++## URL Resolution
++
++| URL form | Example | Behavior |
++|----------|---------|----------|
++| Absolute | `https://api.example.com/data` | Used as-is |
++| Relative | `/api/data` | Prepended with `BaseUrl` from configuration |
++| Bare domain | `api.example.com/data` | Gets `https://` prefix |
++
++## Streaming
++
++Use `OnStream` with `StreamAs` to process responses as they arrive:
++
++```plang
++- get 'https://api.example.com/stream', on stream call HandleChunk, stream as Line
++```
++
++| StreamAs | Format | Use case |
++|----------|--------|----------|
++| `Line` | Newline-delimited (NDJSON) | OpenAI-style streaming APIs |
++| `SSE` | Server-Sent Events | EventSource / SSE endpoints |
++| `Bytes` | Raw byte chunks | Binary streaming |
++
++The `OnStream` goal receives a `%chunk%` variable with each piece of data.
++
++## Request Signing
++
++By default, all requests are signed with the default identity (Ed25519). Set `Unsigned` to `true` to disable signing for a request or globally via `configure`.
++
++## Examples
++
++### Simple GET
++
++```plang
++Start
++- get 'https://jsonplaceholder.typicode.com/posts/1', write to %post%
++- write out 'Title: %post.title%'
++```
++
++### POST with Body
++
++```plang
++Start
++- set %item% = { "name": "Widget", "price": 9.99 }
++- post 'https://api.example.com/items' with body %item%, write to %created%
++- write out 'Created: %created.id%'
++```
++
++### Configured Base URL
++
++```plang
++Start
++- configure http, base url 'https://api.example.com', timeout 60 seconds
++- get '/users', write to %users%
++- get '/posts', write to %posts%
++```
++
++### Download with Progress
++
++```plang
++Start
++- download 'https://example.com/large-file.zip', save to 'downloads/file.zip', if exists overwrite, on progress call ShowProgress
++
++ShowProgress
++- write out 'Downloaded: %progress.Percentage%%'
++```
+diff --git a/docs/modules/identity.md b/docs/modules/identity.md
+new file mode 100644
+index 00000000..0ce6ac21
+--- /dev/null
++++ b/docs/modules/identity.md
+@@ -0,0 +1,173 @@
++# Identity Module
++
++Manage Ed25519 cryptographic identities. Each identity has a name, public/private key pair, and can be set as the default. The default identity is available as `%MyIdentity%` in all PLang code.
++
++## Actions
++
++### create
++
++Create a new identity with an Ed25519 key pair.
++
++```plang
++- create identity 'alice'
++- create identity 'alice', set as default
++```
++
++**Parameters:**
++
++| Name | Type | Required | Default | Description |
++|------|------|----------|---------|-------------|
++| Name | string | no | "default" | Identity name |
++| SetAsDefault | bool | no | false | Make this the default identity |
++
++Names are case-insensitive and must be unique (including archived identities).
++
++### get
++
++Get an identity by name, or the default identity.
++
++```plang
++- get identity 'alice', write to %identity%
++- get identity, write to %identity%
++```
++
++**Parameters:**
++
++| Name | Type | Required | Description |
++|------|------|----------|-------------|
++| Name | string | no | Identity name. Omit to get the default (auto-creates if none exist) |
++
++**Returns:** An identity object with:
++
++| Property | Description |
++|----------|-------------|
++| `name` | Identity name |
++| `publicKey` | Ed25519 public key (base64) |
++| `isDefault` | Whether this is the default identity |
++| `isArchived` | Whether this identity is archived |
++| `created` | Creation timestamp |
++
++In string context (`%identity%`), returns the public key.
++
++### list
++
++List all non-archived identities.
++
++```plang
++- get identities, write to %identities%
++```
++
++No parameters.
++
++### archive
++
++Soft-delete an identity. Cannot archive the default — set a different default first.
++
++```plang
++- archive identity 'alice'
++```
++
++**Parameters:**
++
++| Name | Type | Required | Description |
++|------|------|----------|-------------|
++| Name | string | yes | Identity name to archive |
++
++Idempotent — archiving an already-archived identity is a no-op.
++
++### unarchive
++
++Restore an archived identity.
++
++```plang
++- unarchive identity 'alice'
++```
++
++**Parameters:**
++
++| Name | Type | Required | Description |
++|------|------|----------|-------------|
++| Name | string | yes | Identity name to restore |
++
++### rename
++
++Rename an identity. Keys are preserved.
++
++```plang
++- rename identity 'alice' to 'alice-prod'
++```
++
++**Parameters:**
++
++| Name | Type | Required | Description |
++|------|------|----------|-------------|
++| Name | string | yes | Current identity name |
++| NewName | string | yes | New identity name |
++
++If the renamed identity is the default, `%MyIdentity%` updates automatically.
++
++### setDefault
++
++Set an identity as the default. Only one identity can be the default at a time.
++
++```plang
++- set default identity to 'alice'
++```
++
++**Parameters:**
++
++| Name | Type | Required | Description |
++|------|------|----------|-------------|
++| Name | string | yes | Identity name to make default |
++
++Cannot set an archived identity as default.
++
++### export
++
++Export an identity's full data including the private key.
++
++```plang
++- export identity 'alice', write to %exported%
++```
++
++**Parameters:**
++
++| Name | Type | Required | Description |
++|------|------|----------|-------------|
++| Name | string | no | Identity name. Omit to export the default |
++
++Returns the full identity data including the private key.
++
++## %MyIdentity%
++
++The `%MyIdentity%` variable is always available and points to the default identity. It re-evaluates on every access, so changes via `setDefault` or `rename` are reflected immediately.
++
++```plang
++Start
++- write out 'My public key: %MyIdentity%'
++- write out 'My name: %MyIdentity.Name%'
++```
++
++If no identities exist, accessing `%MyIdentity%` auto-creates a "default" identity.
++
++## Examples
++
++### Create and Use Identity
++
++```plang
++Start
++- create identity 'main', set as default
++- write out 'Public key: %MyIdentity%'
++```
++
++### Multiple Identities
++
++```plang
++Start
++- create identity 'personal'
++- create identity 'work', set as default
++- get identities, write to %all%
++- write out 'All identities: %all%'
++- set default identity to 'personal'
++- write out 'Now using: %MyIdentity.Name%'
++```
+diff --git a/docs/modules/index.md b/docs/modules/index.md
+index 2e8c6e93..f57d2ef8 100644
+--- a/docs/modules/index.md
++++ b/docs/modules/index.md
+@@ -37,20 +37,28 @@ You don't need to know the module name — just write what you want and the LLM
+ |--------|-------------|---------|
+ | [list](list.md) | Work with lists and collections | add, remove, get, set, count, first, last, sort, reverse, join, split, contains, indexof, flatten, unique, range |
+ | [math](math.md) | Arithmetic and number operations | add, subtract, multiply, divide, modulo, power, sqrt, abs, round, floor, ceiling, min, max, random |
+-| [convert](convert.md) | Type conversions | toJson, fromJson, toInt, toLong, toDouble, toBool, toDateTime, toString, toBase64, fromBase64 |
+ 
+ ### I/O
+ 
+ | Module | Description | Actions |
+ |--------|-------------|---------|
+ | [file](file.md) | Read, write, copy, move, delete files | read, save, copy, move, delete, exists, list |
++| [http](http.md) | HTTP requests, downloads, uploads, streaming | request, download, upload, configure |
+ | [settings](settings.md) | Persistent key-value settings | get, set, remove |
+ 
++### Security & Identity
++
++| Module | Description | Actions |
++|--------|-------------|---------|
++| [identity](identity.md) | Ed25519 key pair management | create, get, list, archive, unarchive, rename, setDefault, export |
++| [crypto](crypto.md) | Cryptographic hashing and verification | hash, verify |
++| [signing](signing.md) | Data signing and signature verification | sign, verify |
++
+ ### Events & Testing
+ 
+ | Module | Description | Actions |
+ |--------|-------------|---------|
+-| [event](event.md) | Hook into execution lifecycle | beforeGoal, afterGoal, beforeStep, afterStep, beforeAction, afterAction, remove, skipAction |
++| [event](event.md) | Hook into execution lifecycle | on, remove, skipAction |
+ | [assert](assert.md) | Test assertions | equals, notEquals, contains, greaterThan, lessThan, isTrue, isFalse, isNull, isNotNull |
+ | [mock](mock.md) | Mock actions in tests | intercept, verify, reset |
+ 
+@@ -58,8 +66,8 @@ You don't need to know the module name — just write what you want and the LLM
+ 
+ | Module | Description | Actions |
+ |--------|-------------|---------|
+-| [archive](archive.md) | Compression settings | settings |
+-| [library](library.md) | Load external handler libraries | load |
++| [module](module.md) | Load/unload external handler libraries | add, remove |
++| [provider](provider.md) | Manage pluggable providers | load, remove, list |
+ 
+ ## PLang Syntax Basics
+ 
+diff --git a/docs/modules/library.md b/docs/modules/library.md
+deleted file mode 100644
+index 214e1241..00000000
+--- a/docs/modules/library.md
++++ /dev/null
+@@ -1,44 +0,0 @@
+-# Library Module
+-
+-Load external handler libraries at runtime. Extends PLang with custom action handlers from .NET assemblies.
+-
+-## Actions
+-
+-### load
+-
+-Load a handler library from an assembly file.
+-
+-```plang
+-- load library 'plugins/MyHandlers.dll'
+-- load library 'plugins/MyHandlers.dll' namespace 'MyApp.Handlers'
+-```
+-
+-**Parameters:**
+-
+-| Name | Type | Required | Description |
+-|------|------|----------|-------------|
+-| Path | string | yes | Path to the assembly (.dll) file |
+-| Namespace | string | no | Limit handler discovery to this namespace |
+-
+-**Returns:** A library record with:
+-
+-| Property | Description |
+-|----------|-------------|
+-| `name` | Assembly name |
+-| `actions` | Number of actions discovered |
+-
+-## How It Works
+-
+-When a library is loaded, PLang scans the assembly for classes decorated with the `[Action]` attribute and registers them with the engine. After loading, the new actions are available to all subsequent steps.
+-
+-If you specify a namespace, only handlers in that namespace are discovered. This is useful when an assembly contains multiple modules and you only need some of them.
+-
+-## Example
+-
+-```plang
+-Start
+-- load library 'extensions/EmailHandlers.dll'
+-- send email to 'user@example.com' subject 'Hello' body 'World'
+-```
+-
+-The `send email` step would be handled by an action discovered in the loaded library.
+diff --git a/docs/modules/module.md b/docs/modules/module.md
+new file mode 100644
+index 00000000..9e802c0e
+--- /dev/null
++++ b/docs/modules/module.md
+@@ -0,0 +1,55 @@
++# Module Module
++
++Load and unload external action handler libraries at runtime. Extends PLang with custom modules from .NET assemblies.
++
++## Actions
++
++### add
++
++Load an action handler library from an assembly file.
++
++```plang
++- add module 'plugins/MyHandlers.dll'
++- add module 'plugins/MyHandlers.dll' namespace 'MyApp.Handlers'
++```
++
++**Parameters:**
++
++| Name | Type | Required | Description |
++|------|------|----------|-------------|
++| Path | string | yes | Path to the assembly (.dll) file |
++| Namespace | string | no | Limit handler discovery to this namespace |
++
++**Returns:** A record with:
++
++| Property | Description |
++|----------|-------------|
++| `name` | Assembly name |
++| `actions` | Number of actions discovered |
++
++When a module is loaded, PLang scans the assembly for classes decorated with the `[Action]` attribute and registers them with the engine. After loading, the new actions are available to all subsequent steps.
++
++### remove
++
++Unload a previously loaded module by name.
++
++```plang
++- remove module 'MyHandlers'
++```
++
++**Parameters:**
++
++| Name | Type | Required | Description |
++|------|------|----------|-------------|
++| Name | string | yes | Module name to unregister |
++
++Returns 404 if the module is not found.
++
++## Example
++
++```plang
++Start
++- add module 'extensions/EmailHandlers.dll'
++- send email to 'user@example.com' subject 'Hello' body 'World'
++/ The 'send email' step is handled by an action discovered in the loaded module
++```
+diff --git a/docs/modules/provider.md b/docs/modules/provider.md
+new file mode 100644
+index 00000000..7a72e2e0
+--- /dev/null
++++ b/docs/modules/provider.md
+@@ -0,0 +1,75 @@
++# Provider Module
++
++Manage pluggable providers at runtime. Providers are .NET assemblies that implement module interfaces (`ICryptoProvider`, `ISigningProvider`, `IIdentityProvider`, etc.), allowing you to swap implementations without changing your PLang code.
++
++## Actions
++
++### load
++
++Load a provider from a .NET assembly.
++
++```plang
++- load provider 'plugins/my-crypto.dll'
++- load provider 'plugins/my-crypto.dll' as 'custom-crypto'
++```
++
++**Parameters:**
++
++| Name | Type | Required | Description |
++|------|------|----------|-------------|
++| Path | string | yes | Path to the .dll file |
++| Name | string | no | Display name (provider supplies its own name by default) |
++
++The loaded assembly is scanned for classes implementing `IProvider`. Each is registered for its specific interface (e.g., `ICryptoProvider`, `ISigningProvider`). The first provider registered for a type becomes the default.
++
++### remove
++
++Remove a registered provider by name.
++
++```plang
++- remove provider 'custom-crypto'
++- remove provider 'custom-crypto' from signing
++```
++
++**Parameters:**
++
++| Name | Type | Required | Description |
++|------|------|----------|-------------|
++| Name | string | yes | Provider name to remove |
++| Type | string | no | Provider type filter (e.g., "signing", "crypto", "identity", "key") |
++
++Cannot remove the default provider — set a different default first.
++
++### list
++
++List registered providers.
++
++```plang
++- list providers, write to %providers%
++- list signing providers, write to %signingProviders%
++```
++
++**Parameters:**
++
++| Name | Type | Required | Description |
++|------|------|----------|-------------|
++| Type | string | no | Provider type to filter by. Omit to list all providers |
++
++## Provider Types
++
++| Type name | Interface | Used by |
++|-----------|-----------|---------|
++| `signing` | `ISigningProvider` | signing module |
++| `crypto` | `ICryptoProvider` | crypto module |
++| `identity` | `IIdentityProvider` | identity module |
++| `key` | `IKeyProvider` | key generation |
++| `http` | `IHttpProvider` | http module |
++
++## Example
++
++```plang
++Start
++- load provider 'plugins/RsaSigning.dll'
++- list signing providers, write to %providers%
++- write out 'Available: %providers%'
++```
+diff --git a/docs/modules/signing.md b/docs/modules/signing.md
+new file mode 100644
+index 00000000..98ff4563
+--- /dev/null
++++ b/docs/modules/signing.md
+@@ -0,0 +1,82 @@
++# Signing Module
++
++Create and verify signed data envelopes using Ed25519 (or any pluggable signing provider). Signing attaches a cryptographic signature to data; verification confirms the data hasn't been tampered with and was signed by the claimed identity.
++
++## Actions
++
++### sign
++
++Sign data and attach a signature envelope.
++
++```plang
++- sign %data%, write to %signedData%
++- sign %payload% with contracts ['Transfer', 'v2'], write to %signed%
++```
++
++**Parameters:**
++
++| Name | Type | Required | Default | Description |
++|------|------|----------|---------|-------------|
++| Data | object | yes | — | Data to sign |
++| Contracts | list | no | ["C0"] | Contract identifiers attached to the signature |
++| Headers | dictionary | no | — | Optional headers included in the envelope |
++| ExpiresInMs | int | no | — | Signature TTL in milliseconds |
++
++**Returns:** The data with a `.Signature` property containing the signed envelope (nonce, timestamp, identity, hash, and cryptographic signature).
++
++### verify
++
++Verify a signed data envelope.
++
++```plang
++- verify %signedData%, write to %isValid%
++- verify %signedData% with contracts ['Transfer', 'v2'], write to %isValid%
++```
++
++**Parameters:**
++
++| Name | Type | Required | Default | Description |
++|------|------|----------|---------|-------------|
++| Data | object | yes | — | Signed data to verify (must have `.Signature`) |
++| Contracts | list | no | — | Expected contracts to match |
++| Headers | dictionary | no | — | Expected headers to match |
++| TimeoutMs | long | no | — | Override the default timeout (5 minutes) |
++
++**Returns:** `true` on success. On failure, returns an error with a specific key:
++
++| Error Key | Cause |
++|-----------|-------|
++| `NoSignature` | Data has no signature attached |
++| `InvalidType` | Signature type field is wrong |
++| `TimedOut` | Signature is older than timeout |
++| `Expired` | Signature's explicit expiry has passed |
++| `NonceReplay` | This nonce was already seen (replay attack) |
++| `ContractMismatch` | Signer's contracts don't match expected |
++| `HeaderMismatch` | Signer's headers don't match expected |
++| `DataHashMismatch` | Data has been tampered with |
++| `SignatureInvalid` | Cryptographic verification failed |
++
++## How It Works
++
++1. **Sign**: Hashes the data (Keccak256), builds an envelope with nonce, timestamp, identity, and contracts, then signs the envelope bytes with the signer's Ed25519 private key.
++2. **Verify**: Runs a 9-step check — type, provider, timeout, expiry, nonce replay, contracts, headers, data hash, cryptographic signature. Each step returns a specific error key on failure.
++
++## Examples
++
++### Sign and Verify
++
++```plang
++Start
++- set %message% = 'Hello, signed world'
++- sign %message%, write to %signed%
++- verify %signed%, write to %isValid%
++- write out 'Valid: %isValid%'
++```
++
++### Sign with Contracts and Expiry
++
++```plang
++Start
++- sign %payload% with contracts ['Payment', 'v1'], expires in 60000ms, write to %signed%
++- verify %signed% with contracts ['Payment', 'v1'], write to %isValid%
++```

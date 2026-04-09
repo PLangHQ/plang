@@ -1,0 +1,160 @@
+[
+  {
+    "name": "Start",
+    "description": "Sets tracking variables, calls AlwaysFails with GoalFirst error handling (handler goal first, then retry 2 times), and asserts the handler was invoked.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %goalFirstHandled% = false",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "GoalFirst order \u2014 call error handler first, then retry",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%goalFirstHandled%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": false,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "set %goalFirstAttempts% = 0",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%goalFirstAttempts%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": 0,
+                "type": "int"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "call AlwaysFails, on error call GoalFirstHandler, then retry 2 times",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "goal",
+            "action": "call",
+            "parameters": [
+              {
+                "name": "GoalName",
+                "value": {
+                  "name": "AlwaysFails"
+                },
+                "type": "goal.call"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": {
+            "name": "GoalFirstHandler",
+            "description": null,
+            "parallel": false,
+            "parameters": null,
+            "prPath": null
+          },
+          "retryCount": 2,
+          "retryOverMs": null,
+          "order": 0,
+          "ignoreError": false,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "assert %goalFirstHandled% is true, \u0022error goal should be called in GoalFirst order\u0022",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isTrue",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%goalFirstHandled%",
+                "type": "bool"
+              },
+              {
+                "name": "Message",
+                "value": "error goal should be called in GoalFirst order",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "subGoals": [],
+    "visibility": 1,
+    "path": "/ErrorGoalFirst.test.goal",
+    "prPath": "/.build/errorgoalfirst.test.pr",
+    "hash": "e7fff35aa8b251b0726e792f79f6f003fbed9f55b66ef9d316cfb0b40b541245",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

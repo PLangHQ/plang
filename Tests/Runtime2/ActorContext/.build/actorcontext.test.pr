@@ -1,89 +1,116 @@
-{
-  "name": "Start",
-  "steps": [
-    {
-      "index": 0,
-      "text": "assert %!engine% is not null",
-      "lineNumber": 3,
-      "indent": 0,
-      "comment": "context variables available",
-      "actions": [
-        {
-          "module": "assert",
-          "action": "isNotNull",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "%!engine%",
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 1,
-      "text": "assert %!context% is not null",
-      "lineNumber": 4,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "isNotNull",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "%!context%",
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 2,
-      "text": "assert %!memoryStack% is not null",
-      "lineNumber": 5,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "isNotNull",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "%!memoryStack%",
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    }
-  ],
-  "subGoals": [],
-  "visibility": 1,
-  "path": "/ActorContext.test.goal",
-  "prPath": "/.build/actorcontext.test.pr",
-  "hash": "2ff7b33582614388a724f93dcd15ab5346deb0f864df05dcfc730df91bbf2949",
-  "isSetup": false,
-  "isEvent": false,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "Start"
-}
+[
+  {
+    "name": "Start",
+    "description": "Asserts that required context variables (%!engine%, %!context%, %!memoryStack%) are not null.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "assert %!engine% is not null",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "context variables available",
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%!engine%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %!engine% to be not null.",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "assert %!context% is not null",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%!context%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Expected %!context% to be not null.",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %!memoryStack% is not null",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%!memoryStack%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "memoryStack must not be null",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/ActorContext.test.goal",
+    "prPath": "/.build/actorcontext.test.pr",
+    "hash": "fce9c249a5caee614bf2e847ba967347f6f2d76bd4cf0c977abc81772459550b",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

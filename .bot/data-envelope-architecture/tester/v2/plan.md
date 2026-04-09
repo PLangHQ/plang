@@ -2,7 +2,7 @@
 
 ## What I'm testing
 
-Coder v2 added Phase 2: Type gets context + lazy navigation (Kind, Compressible, ClrType), Data gets late-bound context, MemoryStack/PLangContext stamp context. 23 new tests were added (6 KindOf, 12 Data, 5 MemoryStack).
+Coder v2 added Phase 2: Type gets context + lazy navigation (Kind, Compressible, ClrType), Data gets late-bound context, Variables/PLangContext stamp context. 23 new tests were added (6 KindOf, 12 Data, 5 Variables).
 
 ## Steps
 

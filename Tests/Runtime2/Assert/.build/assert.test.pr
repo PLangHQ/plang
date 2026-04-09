@@ -1,5 +1,7 @@
 {
   "name": "Start",
+  "description": "Builds a sequence of assertions: not-equals, is-false, is-null, greater-than, and less-than, using variable set steps where needed.",
+  "comment": null,
   "steps": [
     {
       "index": 0,
@@ -13,22 +15,24 @@
           "action": "notEquals",
           "parameters": [
             {
-              "name": "expected",
-              "value": 5,
+              "name": "Expected",
+              "value": 10,
               "type": "int"
             },
             {
-              "name": "actual",
-              "value": 10,
+              "name": "Actual",
+              "value": 5,
               "type": "int"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "return": null,
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -43,22 +47,24 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%flag%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": false,
               "type": "bool"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "return": null,
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -66,23 +72,26 @@
       "text": "assert %flag% is false",
       "lineNumber": 6,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "assert",
           "action": "isFalse",
           "parameters": [
             {
-              "name": "value",
+              "name": "Value",
               "value": "%flag%",
-              "type": "string"
+              "type": "bool"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "return": null,
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -97,21 +106,24 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%nothing%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
+              "value": null,
               "type": "object"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "return": null,
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -119,23 +131,26 @@
       "text": "assert %nothing% is null",
       "lineNumber": 9,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "assert",
           "action": "isNull",
           "parameters": [
             {
-              "name": "value",
+              "name": "Value",
               "value": "%nothing%",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "return": null,
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -150,22 +165,24 @@
           "action": "greaterThan",
           "parameters": [
             {
-              "name": "a",
+              "name": "A",
               "value": 10,
               "type": "int"
             },
             {
-              "name": "b",
+              "name": "B",
               "value": 5,
               "type": "int"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "return": null,
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -180,34 +197,36 @@
           "action": "lessThan",
           "parameters": [
             {
-              "name": "a",
+              "name": "A",
               "value": 3,
               "type": "int"
             },
             {
-              "name": "b",
+              "name": "B",
               "value": 7,
               "type": "int"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "return": null,
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     }
   ],
-  "subGoals": [],
+  "goals": [],
   "visibility": 1,
   "path": "/Assert.test.goal",
   "prPath": "/.build/assert.test.pr",
-  "hash": "e2d9ffabdf5587e81ef59702f5e9e92e3993b0d7ab302a3a95928ba2333a3993",
+  "hash": "1815c780867821a77fd6445aa08ecd27f6d5d34e0c875d967718c63ab3d7e4b6",
+  "builderVersion": "0.3",
   "isSetup": false,
   "isEvent": false,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "Start"
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
 }

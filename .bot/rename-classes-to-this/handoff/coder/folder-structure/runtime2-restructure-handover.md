@@ -1,8 +1,8 @@
-# Runtime2 Engine — Folder Restructure Handover
+# App Engine — Folder Restructure Handover
 
 ## Objective
 
-Restructure the PLang Runtime2 engine so that **folder paths match namespaces exactly**, and every folder's primary class is named `this.cs`. The goal is a predictable, mechanical mapping that an LLM can navigate without ambiguity.
+Restructure the PLang App engine so that **folder paths match namespaces exactly**, and every folder's primary class is named `this.cs`. The goal is a predictable, mechanical mapping that an LLM can navigate without ambiguity.
 
 ## Core Rules
 
@@ -41,12 +41,12 @@ Engine/
 │                       └── Methods.cs → Action runtime methods (RunAsync)
 │
 ├── Context/
-│   ├── this.cs                    → PLangContext (per-request: MemoryStack, CallStack, Actor, EventScope)
+│   ├── this.cs                    → PLangContext (per-request: Variables, CallStack, Actor, EventScope)
 │   ├── Actor.cs                   → Identity (System/Service/User)
 │   └── EventScope.cs              → Event scope wrapper (owns EngineEvents)
 │
 ├── Memory/
-│   ├── this.cs                    → MemoryStack (ConcurrentDictionary, case-insensitive)
+│   ├── this.cs                    → Variables (ConcurrentDictionary, case-insensitive)
 │   ├── Data.cs                    → Universal container + Type class (value, error, success)
 │   ├── Properties.cs              → Properties : IList<Data>
 │   ├── IValueNavigator.cs         → Navigation interface for dot-paths
@@ -74,7 +74,7 @@ Engine/
 │   ├── ValidationError.cs         → Validation errors
 │   ├── AssertionError.cs          → Test assertion errors
 │   ├── ErrorCategory.cs           → Error categorization
-│   └── Exceptions.cs              → Runtime2Exception types
+│   └── Exceptions.cs              → AppException types
 │
 ├── Channels/
 │   ├── this.cs                    → EngineChannels (channel manager, named I/O routing)
@@ -120,7 +120,7 @@ Engine/
 └── Utility/
     ├── TypeMapping.cs             → PLang type names + MIME → CLR types + ConvertTo
     ├── AppData.cs                 → Application data utilities
-    ├── GoalMapper.cs              → Building.Model → Runtime2 conversion
+    ├── GoalMapper.cs              → Building.Model → App conversion
     └── PrParser.cs                → .pr file parser
 ```
 
@@ -149,7 +149,7 @@ This table maps every file from the current flat structure to its new location.
 | `Engine/Context/PLangContext.cs` | `Engine/Context/this.cs` |
 | `Engine/Context/Actor.cs` | `Engine/Context/Actor.cs` |
 | `Engine/Context/EventScope.cs` | `Engine/Context/EventScope.cs` |
-| `Engine/Memory/MemoryStack.cs` | `Engine/Memory/this.cs` |
+| `Engine/Memory/Variables.cs` | `Engine/Memory/this.cs` |
 | `Engine/Memory/Data.cs` | `Engine/Memory/Data.cs` |
 | `Engine/Memory/Properties.cs` | `Engine/Memory/Properties.cs` |
 | `Engine/Memory/IValueNavigator.cs` | `Engine/Memory/IValueNavigator.cs` |
@@ -257,6 +257,6 @@ These are convenience properties that point to deeply nested canonical locations
 
 ## What NOT to change
 
-- The `actions/` folder (lowercase, at the Runtime2 root) containing handler implementations (`variable/`, `file/`, `output/`, etc.) is separate from the Engine structure. Don't restructure it as part of this task.
+- The `actions/` folder (lowercase, at the App root) containing handler implementations (`variable/`, `file/`, `output/`, etc.) is separate from the Engine structure. Don't restructure it as part of this task.
 - File contents and class logic stay the same. This is purely a move + namespace update.
 - The builder pipeline (v1 engine) is untouched.

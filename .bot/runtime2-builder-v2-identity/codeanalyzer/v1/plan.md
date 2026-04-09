@@ -1,0 +1,36 @@
+# Code Analyzer Plan — Identity Module v1
+
+## Scope
+
+All production code changed on `runtime2-builder-v2-identity` vs `runtime2`:
+
+**Identity module (8 handlers + 3 support files):**
+- `PLang/App/modules/identity/create.cs`
+- `PLang/App/modules/identity/get.cs`
+- `PLang/App/modules/identity/getAll.cs`
+- `PLang/App/modules/identity/archive.cs`
+- `PLang/App/modules/identity/unarchive.cs`
+- `PLang/App/modules/identity/rename.cs`
+- `PLang/App/modules/identity/setDefault.cs`
+- `PLang/App/modules/identity/export.cs`
+- `PLang/App/modules/identity/types.cs` (IdentityVariable)
+- `PLang/App/modules/identity/IdentityData.cs`
+- `PLang/App/modules/identity/KeyGenerator.cs`
+
+**Infrastructure changes:**
+- `PLang/App/View.cs` (SensitiveAttribute)
+- `PLang/App/Channels/Serializers/SensitivePropertyFilter.cs`
+- `PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs`
+- `PLang/App/Context/Actor.cs`
+
+## 5-Pass Analysis
+
+1. **OBP Compliance** — Check all 5 OBP rules against every file. Focus on: behavior ownership (persistence on IdentityVariable), navigate-don't-pass (handlers accessing Engine.System.Identity), object references vs extracted fields.
+
+2. **Simplification** — Dead abstractions, over-parameterized methods, redundant patterns, copy-paste across handlers.
+
+3. **Readability** — Naming, method length, flow clarity, consistency with existing module patterns.
+
+4. **Behavioral Reasoning** — Trace data flows: sync-over-async in IdentityData.ResolveDefault(), dictionary Deserialize key casing, race conditions in lazy Identity resolution, clone/copy family audit for Actor.
+
+5. **Deletion Tests** — For each code path: "if I deleted lines X-Y, would any test fail?" Focus on fix-introduced code paths.

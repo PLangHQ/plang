@@ -12,15 +12,15 @@ No OBP violations found. The architecture correctly follows all 5 OBP rules:
 - Data owns its own envelope behavior (Wrap/Compress/Encrypt)
 - Engine.Types consolidates type knowledge on Engine (navigate, don't pass)
 - Data keeps object references (parent Data, context)
-- Context is per-request, propagated through MemoryStack
+- Context is per-request, propagated through Variables
 - Return list iteration in Action.Methods is acceptable (simple list, not a smart collection)
 
 Seven findings, all low-to-medium:
 
 | # | Severity | What | File |
 |---|----------|------|------|
-| 1 | Medium | Duplicated `CleanName` in Data + MemoryStack | MemoryStack.cs, Data.cs |
-| 2 | Low | Duplicated system variable check in Clear/Clone | MemoryStack.cs |
+| 1 | Medium | Duplicated `CleanName` in Data + Variables | Variables.cs, Data.cs |
+| 2 | Low | Duplicated system variable check in Clear/Clone | Variables.cs |
 | 3 | Low | Inverse dictionary sync risk (_nameToClr / _clrToName) | Types/this.cs |
 | 4 | Low | Inconsistent concurrency (lock vs ConcurrentDictionary) | Types/this.cs |
 | 5 | Low | RehydrateNestedData heuristic could false-positive | Data.Envelope.cs |
@@ -41,13 +41,13 @@ var inbound = outbound.Decrypt().Decompress().Unwrap();
 Each pipeline method follows the same structure: check preconditions → return self → do work → return result. Self-contained, no external dependencies, fluent chain. This is OBP done right — Data owns its own transport transformation.
 
 ## Files analyzed
-- `PLang/Runtime2/Engine/Memory/Data.cs` (+ .Result.cs, .Navigation.cs, .Envelope.cs)
-- `PLang/Runtime2/Engine/Memory/MemoryStack.cs`
-- `PLang/Runtime2/Engine/Types/this.cs`
-- `PLang/Runtime2/Engine/View.cs`
-- `PLang/Runtime2/Engine/this.cs`
-- `PLang/Runtime2/Engine/Context/PLangContext.cs`
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`
-- `PLang/Runtime2/actions/convert/fromJson.cs`
-- `PLang/Runtime2/GlobalUsings.cs`
-- `PLang.Tests/` (DataTests, MemoryStackTests, EngineTypesTests, GlobalUsings)
+- `PLang/App/Memory/Data.cs` (+ .Result.cs, .Navigation.cs, .Envelope.cs)
+- `PLang/App/Memory/Variables.cs`
+- `PLang/App/Types/this.cs`
+- `PLang/App/View.cs`
+- `PLang/App/this.cs`
+- `PLang/App/Context/PLangContext.cs`
+- `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`
+- `PLang/App/actions/convert/fromJson.cs`
+- `PLang/App/GlobalUsings.cs`
+- `PLang.Tests/` (DataTests, VariablesTests, EngineTypesTests, GlobalUsings)

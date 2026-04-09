@@ -1,0 +1,8 @@
+Start
+/ Test: sign without creating identity first, should error
+- set %data% = { "payload": "unsigned" }
+- sign %data%, on error call HandleNoIdentity
+- assert %noIdentity% is true, "sign without identity should fail"
+
+HandleNoIdentity
+- set %noIdentity% = true

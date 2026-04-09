@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Start",
+    "description": "Writes \u0027Hello World\u0027 to the output channel.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "write out \u0022Hello World\u0022",
+        "lineNumber": 2,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "output",
+            "action": "write",
+            "parameters": [
+              {
+                "name": "Data",
+                "value": "Hello World",
+                "type": "string"
+              },
+              {
+                "name": "Channels",
+                "value": "this",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/Start.goal",
+    "prPath": "/.build/start.pr",
+    "hash": "fbac4a519a04987603b07e7a1d1203982e09f1576652f2b9e5951e5a702baa87",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

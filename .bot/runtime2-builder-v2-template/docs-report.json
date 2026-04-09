@@ -1,0 +1,16 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-builder-v2-template",
+  "timestamp": "2026-03-27T23:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "All documentation gaps filled for the UI module. Created user-facing docs with PLang examples, security warnings (SSTI), and parameter tables. Updated module index, architecture docs, and provider registry documentation. XML docs verified — one gap filled on ITemplateProvider.Render.",
+  "stats": { "gaps_found": 5, "gaps_filled": 5, "docs_updated": 3, "docs_created": 1 },
+  "changes": [
+    { "id": 1, "type": "architecture-doc", "action": "created", "file": "docs/modules/ui.md", "description": "User-facing UI module docs: render action, Liquid syntax, includes, callGoal, file detection, HTML encoding, SSTI security warning, custom provider, examples" },
+    { "id": 2, "type": "architecture-doc", "action": "updated", "file": "docs/modules/index.md", "description": "Added UI module entry to I/O section" },
+    { "id": 3, "type": "architecture-doc", "action": "updated", "file": "Documentation/Runtime2/modules.md", "description": "Added ui | render to Built-in Action Handlers table" },
+    { "id": 4, "type": "architecture-doc", "action": "updated", "file": "Documentation/Runtime2/good_to_know.md", "description": "Added ITemplateProvider to provider interfaces list and type mapping" },
+    { "id": 5, "type": "xml-doc", "action": "updated", "file": "PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs", "description": "Added XML doc on Render method" }
+  ],
+  "findings": []
+}

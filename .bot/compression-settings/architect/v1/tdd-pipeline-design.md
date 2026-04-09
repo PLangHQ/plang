@@ -96,5 +96,5 @@ This is the critical list. The scaffolder is the single point where code convent
 8. **Lazy navigation** — properties resolve on first access through the graph
 9. **Source generator awareness** — knows which interfaces trigger generation, what `ICodeGenerated` means
 10. **File system abstraction** — never `System.IO`, always `IPLangFileSystem`
-11. **`System.Text.Json`** — never Newtonsoft in Runtime2
+11. **`System.Text.Json`** — never Newtonsoft in App
 12. **Strong typing** — never weaken to `object`

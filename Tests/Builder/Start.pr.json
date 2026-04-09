@@ -26,7 +26,7 @@
           "module": "output",
           "action": "write",
           "parameters": [
-            { "name": "content", "value": "%name%" }
+            { "name": "Data", "value": "%name%" }
           ]
         }
       ]
@@ -55,7 +55,7 @@
           "module": "output",
           "action": "write",
           "parameters": [
-            { "name": "content", "value": "NewVar: %newVarName%" }
+            { "name": "Data", "value": "NewVar: %newVarName%" }
           ]
         }
       ]

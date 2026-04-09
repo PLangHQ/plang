@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "1827 tests pass. IdentityData throw change covered by existing test for path #2. 1 minor: no-provider throw path (line 55) untested." }

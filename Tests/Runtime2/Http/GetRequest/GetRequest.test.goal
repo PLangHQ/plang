@@ -1,0 +1,7 @@
+Start
+/ Test: GET request returns JSON response data and status code
+- get https://httpbin.org/get, unsigned, write to %response%
+- if %response% is not empty then
+    - write out 'GET request returned data'
+- if %response.StatusCode% equals 200 then
+    - write out 'Status code is 200'

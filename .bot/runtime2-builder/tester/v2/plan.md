@@ -1,8 +1,8 @@
-# Plan: Create missing PLang tests for Runtime2 actions (Tester v2)
+# Plan: Create missing PLang tests for App actions (Tester v2)
 
 ## Context
 
-Runtime2 has 15+ action modules but only partial PLang test coverage. PLang `.goal` tests validate the full pipeline (builder -> .pr generation -> GoalMapper -> runtime). Several modules have no dedicated test, and some existing tests miss actions.
+App has 15+ action modules but only partial PLang test coverage. PLang `.goal` tests validate the full pipeline (builder -> .pr generation -> GoalMapper -> runtime). Several modules have no dedicated test, and some existing tests miss actions.
 
 ## Tests to Create
 
@@ -25,7 +25,7 @@ Runtime2 has 15+ action modules but only partial PLang test coverage. PLang `.go
 
 ## Workflow
 1. Create/modify all `.goal` files
-2. Build: `cd Tests/Runtime2 && plang p build --llmservice=openai`
+2. Build: `cd Tests/App && plang p build --llmservice=openai`
 3. Read generated `.pr` files — verify correct module/action/parameter mapping
 4. Run: `plang p !test` — check results
 5. Run: `dotnet run --project PLang.Tests` — C# tests still pass

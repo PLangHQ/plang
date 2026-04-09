@@ -19,7 +19,7 @@ The engine becomes a folder. `this.cs` is the entry point.
 | `Memory/Data.cs` → `Type` | `Engine/Type.cs` | `[V]` Root value type. Separate file from Data. |
 | `Core/Info.cs` → `Info` | `Engine/Info.cs` | `[V]` Used in Goal, Step, Action. Root-level because it's everywhere. |
 
-**Namespace**: `PLang.Runtime2.Engine`
+**Namespace**: `App.Engine`
 
 ### Key change: Engine unseals
 Currently `sealed`. Must become `partial` for the source generator to emit `EngineGoals Goals { get; }` etc. Can remain effectively sealed — the generator emits a partial class, no one else subclasses it.
@@ -35,7 +35,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Core/GoalMethods.cs` → `Goal` partial | `Engine/Goals/Goal.Methods.cs` | `[E]` RunAsync, Load, FormatForLlm |
 | `Core/GoalCall.cs` → `GoalCall` | `Engine/Goals/GoalCall.cs` | Invocation descriptor. |
 
-**Namespace**: `PLang.Runtime2.Engine.Goals`
+**Namespace**: `App.Goals`
 
 ---
 
@@ -48,7 +48,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Core/StepMethods.cs` → `Step` partial | `Engine/Goals/Steps/Step.Methods.cs` | `[E]` RunAsync, Load, HandleError, Retry |
 | `Core/ErrorHandler.cs` → `ErrorHandler`, `ErrorOrder` | `Engine/Goals/Steps/ErrorHandler.cs` | Step's error config. Lives with Step. |
 
-**Namespace**: `PLang.Runtime2.Engine.Goals.Steps`
+**Namespace**: `App.Goals.Steps`
 
 ---
 
@@ -61,7 +61,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Core/ActionMethods.cs` → `Action` partial | `Engine/Goals/Steps/Actions/Action.Methods.cs` | `[E]` RunAsync |
 | `Core/IAction.cs` → `IAction` | `Engine/Goals/Steps/Actions/IAction.cs` | Interface. |
 
-**Namespace**: `PLang.Runtime2.Engine.Goals.Steps.Actions`
+**Namespace**: `App.Goals.Steps.Actions`
 
 ---
 
@@ -73,7 +73,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `IO/Channel.cs` → `Channel` | `Engine/Channels/Channel.cs` | `[E]` Single channel entity. |
 | `IO/ChannelData.cs` → `ChannelData` | `Engine/Channels/ChannelData.cs` | Channel metadata. |
 
-**Namespace**: `PLang.Runtime2.Engine.Channels`
+**Namespace**: `App.Channels`
 
 ---
 
@@ -83,7 +83,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 |---------|----------|-------|
 | `Core/Property.cs` → `Property` | `Engine/Property/this.cs` → **`EngineProperty`** | `[CW]` Key-value store + GoalCall resolution. Layer 2 dispatch fallback. |
 
-**Namespace**: `PLang.Runtime2.Engine.Property`
+**Namespace**: `App.Property`
 
 ---
 
@@ -97,7 +97,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Core/Lifecycle.cs` → `Lifecycle`, `Bindings` | `Engine/Events/Lifecycle.cs` | Before/After bindings container. |
 | `Context/EventScope.cs` → `EventScope` | `Engine/Events/EventScope.cs` | **Moves from Context → Events.** Semantically it's events. |
 
-**Namespace**: `PLang.Runtime2.Engine.Events`
+**Namespace**: `App.Events`
 
 ---
 
@@ -113,7 +113,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Serialization/ViewPropertyFilter.cs` | `Engine/Serializers/ViewPropertyFilter.cs` | |
 | `Serialization/SerializerRegistry.cs` → `SerializeOptions`, `DeserializeOptions` | Same file or separate | Options DTOs. |
 
-**Namespace**: `PLang.Runtime2.Engine.Serializers`
+**Namespace**: `App.Serializers`
 
 ---
 
@@ -128,7 +128,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 | `Core/StepCache.cs` → `StepCache` | `Engine/Cache/StepCache.cs` | Behavioral wrapper per-step. |
 | `Core/StepCacheEntry.cs` → `StepCacheEntry`, `CachedVariable` | `Engine/Cache/StepCacheEntry.cs` | Cache data. |
 
-**Namespace**: `PLang.Runtime2.Engine.Cache`
+**Namespace**: `App.Cache`
 
 **Resolved**: Convention-wired as `EngineCache` (option A). Wraps `ICache`, delegates to pluggable implementation. Default is `MemoryStepCache`.
 
@@ -140,7 +140,7 @@ Currently `sealed`. Must become `partial` for the source generator to emit `Engi
 |---------|----------|-------|
 | `Core/DebugMode.cs` → `DebugMode` (static) | `Engine/Debug/this.cs` → **`EngineDebug`** | `[CW]` Becomes instance class, convention-wired. |
 
-**Namespace**: `PLang.Runtime2.Engine.Debug`
+**Namespace**: `App.Debug`
 
 Currently static. To be convention-wired, needs to become an instance owned by Engine. The `Apply` method becomes `Enable(object debugValue)` or similar.
 
@@ -152,7 +152,7 @@ Currently static. To be convention-wired, needs to become an instance owned by E
 |---------|----------|-------|
 | `Core/TestMode.cs` → `TestMode` (static) | `Engine/Testing/this.cs` → **`EngineTesting`** | `[CW]` Test runner, convention-wired. |
 
-**Namespace**: `PLang.Runtime2.Engine.Testing`
+**Namespace**: `App.Testing`
 
 Same static → instance conversion as Debug.
 
@@ -170,7 +170,7 @@ Per-request state. Not convention-wired because Context is a parameter, not an e
 | `Core/CallStack.cs` → `CallStack` + serializable types | `Engine/Context/CallStack.cs` | Per-context tracking. |
 | `Core/CallFrame.cs` → `CallFrame`, `ExecutedStep`, `ExecutionPhase` | `Engine/Context/CallFrame.cs` | Call frame data. |
 
-**Namespace**: `PLang.Runtime2.Engine.Context`
+**Namespace**: `App.Context`
 
 ---
 
@@ -178,7 +178,7 @@ Per-request state. Not convention-wired because Context is a parameter, not an e
 
 | Current | Proposed | Notes |
 |---------|----------|-------|
-| `Memory/MemoryStack.cs` | `Engine/Memory/MemoryStack.cs` | |
+| `Memory/Variables.cs` | `Engine/Memory/Variables.cs` | |
 | `Memory/TString.cs` | `Engine/Memory/TString.cs` | |
 | `Memory/Properties.cs` | `Engine/Memory/Properties.cs` | |
 | `Memory/IValueNavigator.cs` | `Engine/Memory/IValueNavigator.cs` | |
@@ -186,7 +186,7 @@ Per-request state. Not convention-wired because Context is a parameter, not an e
 | `Memory/TypeJsonConverter.cs` | `Engine/Memory/TypeJsonConverter.cs` | |
 | `Memory/Navigators/*.cs` | `Engine/Memory/Navigators/*.cs` | Same structure. |
 
-**Namespace**: `PLang.Runtime2.Engine.Memory`
+**Namespace**: `App.Variables`
 
 **Note**: `Data` and `Type` move OUT of Memory → Engine root. Everything else stays.
 
@@ -205,7 +205,7 @@ Per-request state. Not convention-wired because Context is a parameter, not an e
 | `modules/DefaultAttribute.cs` | `Engine/Libraries/DefaultAttribute.cs` | |
 | `modules/VariableNameAttribute.cs` | `Engine/Libraries/VariableNameAttribute.cs` | |
 
-**Namespace**: `PLang.Runtime2.Engine.Libraries`
+**Namespace**: `App.Libraries`
 
 ---
 
@@ -222,7 +222,7 @@ These are the action handlers — `variable/set.cs`, `file/read.cs`, etc. They'r
 | `modules/output/*.cs` | `Engine/modules/output/*.cs` | |
 | ... (all handler subfolders) | `Engine/modules/{module}/*.cs` | |
 
-**Namespace**: `PLang.Runtime2.Engine.modules.{module}`
+**Namespace**: `App.modules.{module}`
 
 ---
 
@@ -232,7 +232,7 @@ These are the action handlers — `variable/set.cs`, `file/read.cs`, etc. They'r
 |---------|----------|-------|
 | `Errors/*.cs` (all 10 files) | `Engine/Errors/*.cs` | Same structure. |
 
-**Namespace**: `PLang.Runtime2.Engine.Errors`
+**Namespace**: `App.Errors`
 
 ---
 
@@ -243,7 +243,7 @@ These are the action handlers — `variable/set.cs`, `file/read.cs`, etc. They'r
 | `Utility/TypeMapping.cs` | `Engine/Utility/TypeMapping.cs` | |
 | `Utility/AppData.cs` | `Engine/Utility/AppData.cs` | |
 
-**Namespace**: `PLang.Runtime2.Engine.Utility`
+**Namespace**: `App.Utility`
 
 ---
 
@@ -254,7 +254,7 @@ These are the action handlers — `variable/set.cs`, `file/read.cs`, etc. They'r
 | `Parsing/PrParser.cs` | `Engine/Parsing/PrParser.cs` | |
 | `Mapping/GoalMapper.cs` | `Engine/Mapping/GoalMapper.cs` | |
 
-**Namespaces**: `PLang.Runtime2.Engine.Parsing`, `PLang.Runtime2.Engine.Mapping`
+**Namespaces**: `App.Parsing`, `App.Mapping`
 
 ---
 
@@ -287,7 +287,7 @@ All `[CW]` classes that the source generator will discover and auto-wire:
 The folder stays as `modules/`. The name maps directly to PLang syntax (`module.action`). User-facing naming matters.
 
 ### Q3: Data and Type — RESOLVED: Move to Engine root
-`Data` and `Type` move from `Memory/` to `Engine/`. Namespace becomes `PLang.Runtime2.Engine`. They're root value types used everywhere.
+`Data` and `Type` move from `Memory/` to `Engine/`. Namespace becomes `App.Engine`. They're root value types used everywhere.
 
 ### Q4: Dot-naming for partial files — RESOLVED: Use dot convention
 `Goal.Methods.cs`, `Step.Methods.cs`, `Action.Methods.cs`. Visual grouping in IDEs.

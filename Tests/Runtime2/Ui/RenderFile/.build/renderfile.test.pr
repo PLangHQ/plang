@@ -1,0 +1,132 @@
+[
+  {
+    "name": "Start",
+    "description": "Sets %name% to \u0027PLang\u0027, renders template.html to %result%, then asserts the rendered result equals \u0027Hello PLang!\u0027.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "set %name% = \u0027PLang\u0027",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: render a file template with variables from memory stack",
+        "actions": [
+          {
+            "module": "variable",
+            "action": "set",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "%name%",
+                "type": "string"
+              },
+              {
+                "name": "Value",
+                "value": "PLang",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": [
+              {
+                "name": "asdefault",
+                "value": false,
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "render file \u0027template.html\u0027, write to %result%",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "ui",
+            "action": "render",
+            "parameters": [
+              {
+                "name": "Template",
+                "value": "template.html",
+                "type": "string"
+              },
+              {
+                "name": "IsFile",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": [
+              {
+                "name": "result",
+                "value": null
+              }
+            ],
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %result% equals \u0027Hello PLang!\u0027",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "equals",
+            "parameters": [
+              {
+                "name": "Expected",
+                "value": "Hello PLang!",
+                "type": "string"
+              },
+              {
+                "name": "Actual",
+                "value": "%result%",
+                "type": "string"
+              },
+              {
+                "name": "Message",
+                "value": "Rendered %result% should equal \u0027Hello PLang!\u0027",
+                "type": "string"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/RenderFile/RenderFile.test.goal",
+    "prPath": "/RenderFile/.build/renderfile.test.pr",
+    "hash": "0fc14d1a392d5187223f8d6e4e82cb96a2d1a4752ae6c5fe88759c290e98f2d3",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

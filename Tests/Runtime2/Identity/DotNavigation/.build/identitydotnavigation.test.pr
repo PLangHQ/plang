@@ -1,0 +1,215 @@
+[
+  {
+    "name": "Start",
+    "description": "Archives and recreates an identity, then asserts that dot-navigation access to %MyIdentity.Name%, %MyIdentity.PublicKey%, and %MyIdentity.IsDefault% yields non-null values and a true default flag. Archive steps ignore errors.",
+    "comment": null,
+    "steps": [
+      {
+        "index": 0,
+        "text": "archive identity \u0027TestDotNav\u0027, force, on error ignore, force",
+        "lineNumber": 3,
+        "indent": 0,
+        "comment": "Test: access %MyIdentity.Name%, %MyIdentity.PublicKey%, %MyIdentity.IsDefault% via dot navigation",
+        "actions": [
+          {
+            "module": "identity",
+            "action": "archive",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestDotNav",
+                "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 1,
+        "text": "create identity \u0027TestDotNav\u0027, set as default",
+        "lineNumber": 4,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "create",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestDotNav",
+                "type": "string"
+              },
+              {
+                "name": "SetAsDefault",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 2,
+        "text": "assert %MyIdentity.Name% is not null",
+        "lineNumber": 5,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%MyIdentity.Name%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 3,
+        "text": "assert %MyIdentity.PublicKey% is not null",
+        "lineNumber": 6,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isNotNull",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%MyIdentity.PublicKey%",
+                "type": "object"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 4,
+        "text": "assert %MyIdentity.IsDefault% is true",
+        "lineNumber": 7,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "assert",
+            "action": "isTrue",
+            "parameters": [
+              {
+                "name": "Value",
+                "value": "%MyIdentity.IsDefault%",
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": null,
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      },
+      {
+        "index": 5,
+        "text": "archive identity \u0027TestDotNav\u0027, force",
+        "lineNumber": 8,
+        "indent": 0,
+        "comment": null,
+        "actions": [
+          {
+            "module": "identity",
+            "action": "archive",
+            "parameters": [
+              {
+                "name": "Name",
+                "value": "TestDotNav",
+                "type": "string"
+              },
+              {
+                "name": "Force",
+                "value": true,
+                "type": "bool"
+              }
+            ],
+            "return": null,
+            "defaults": null
+          }
+        ],
+        "intent": null,
+        "onError": {
+          "goal": null,
+          "retryCount": null,
+          "retryOverMs": null,
+          "order": null,
+          "ignoreError": true,
+          "message": null,
+          "statusCode": null,
+          "key": null
+        },
+        "cache": null,
+        "timeout": null,
+        "waitForExecution": true
+      }
+    ],
+    "goals": [],
+    "visibility": 1,
+    "path": "/IdentityDotNavigation.test.goal",
+    "prPath": "/.build/identitydotnavigation.test.pr",
+    "hash": "547f9ad6d1e97746936a490ed53285414c13889b2f923a1226f3ac93382ca33e",
+    "builderVersion": "0.3",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false,
+    "inputParameters": null
+  }
+]

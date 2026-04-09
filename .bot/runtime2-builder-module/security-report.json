@@ -1,0 +1,160 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-builder-module",
+  "timestamp": "2026-03-30T16:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "goal-parser",
+      "exposure": "Goal.Parse() processes .goal file text into Goal/Step objects. New text parser — first parser in a system that uses LLM for all natural-language mapping.",
+      "trust_boundary": ".goal files are user-authored on the local filesystem. Builder discovers them via file.list with *.goal pattern under a search path.",
+      "mitigations": [
+        "BuildingGuard prevents execution outside build phase",
+        "File I/O goes through engine.RunAction (file system abstraction)",
+        "Tab normalization prevents tab/space ambiguity",
+        "Block comment state machine handles /* */ correctly"
+      ],
+      "gaps": [
+        "No input size limit — pathologically large .goal files processed without cap",
+        "No limit on number of goals or steps per file"
+      ]
+    },
+    {
+      "area": "pr-deserialization",
+      "exposure": "DefaultBuilderProvider.MergePrData and App read .pr files via JsonSerializer.Deserialize",
+      "trust_boundary": ".pr files are LLM output on the local filesystem. Trusted under PLang threat model.",
+      "mitigations": [
+        "JsonException caught at MergePrData:284 and App:219 — errors surfaced as warnings/errors, not crashes",
+        "Uses System.Text.Json (not Newtonsoft) — no polymorphic deserialization by default",
+        "PrPath is derived from Goal.Path (convention-based), not user-supplied directly"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "action-registry",
+      "exposure": "EngineModules.Discover() scans assemblies for [Action]-attributed ICodeGenerated types. Describe() and GetDefaults() use reflection on registered types.",
+      "trust_boundary": "Built-in types from PLang assembly at construction. External DLLs added via module.add (user-controlled .pr files).",
+      "mitigations": [
+        "Namespace filtering: Discover only registers types under the specified baseNamespace",
+        "Type filtering: requires [Action] attribute AND ICodeGenerated interface AND non-abstract",
+        "GetDefaults catches Activator.CreateInstance failure (bare catch)"
+      ],
+      "gaps": [
+        "GetDefaults bare catch hides construction failures — should catch specific exceptions"
+      ]
+    },
+    {
+      "area": "provider-registry",
+      "exposure": "Named provider registry with type resolution, default management, registration/removal.",
+      "trust_boundary": "Providers registered at engine startup (built-in defaults) or via provider.load (user-controlled .pr files).",
+      "mitigations": [
+        "Cannot remove default provider — must set another as default first",
+        "Thread-safe via ConcurrentDictionary",
+        "Type resolution uses hardcoded switch (no arbitrary type loading from strings)",
+        "SetDefault sets new default before clearing old — no window where Get<T> returns null"
+      ],
+      "gaps": [
+        "ResolveType defaults to ISigningProvider for null/empty type — surprising silent default"
+      ]
+    },
+    {
+      "area": "assembly-loading",
+      "exposure": "module.add and provider.load use Assembly.LoadFrom() without signature verification",
+      "trust_boundary": "DLL paths come from .pr files which are trusted under PLang's user-sovereign model",
+      "mitigations": [
+        "module.add checks file existence before loading",
+        "provider.load validates non-empty path",
+        "provider.load requires parameterless constructor"
+      ],
+      "gaps": [
+        "No signature verification on loaded assemblies — accepted risk per threat model"
+      ]
+    },
+    {
+      "area": "builder-authorization",
+      "exposure": "BuildingGuard checks engine.Building.IsEnabled before all builder operations",
+      "trust_boundary": "engine.Building.IsEnabled is set by the engine lifecycle — not user-controllable at runtime",
+      "mitigations": [
+        "All 8 builder actions consistently check BuildingGuard as their first operation",
+        "Guard returns a typed error (BuildingDisabled, 400), not an exception"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "merge-pipeline",
+      "exposure": "Step.Merge() and Goal.MergeFrom() copy LLM-derived fields from existing .pr data onto freshly-parsed goals",
+      "trust_boundary": "Source data comes from deserialized .pr files (trusted)",
+      "mitigations": [
+        "MergeFrom matches by step Text — exact string match, no pattern matching",
+        "Consumed set prevents duplicate matching",
+        "Merge only copies LLM-derived fields, not structural fields"
+      ],
+      "gaps": [
+        "Actions copied by reference, not deep clone — mutation in one affects both"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "Goal.Parse() processes arbitrarily large .goal file text with no size limit. A multi-GB .goal file in a cloned repository would be read into memory as a string, split into lines, and processed into Goal/Step objects without any cap.",
+      "preconditions": "User clones a repository containing a pathologically large .goal file, then runs `plang build`.",
+      "impact": "OutOfMemoryException during build. Builder crash, no runtime impact.",
+      "affected_files": ["PLang/Runtime2/Engine/Goals/Goal/this.cs"],
+      "exploit_sketch": "Create a .goal file with millions of steps or extremely long step text. Builder processes it without limit.",
+      "proposed_fix": "Add a size check in DefaultBuilderProvider.Goals() after reading file content — if text.Length exceeds a reasonable limit (e.g., 10MB), skip the file and add a warning. The limit should be configurable.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "medium",
+      "category": "info-disclosure",
+      "vector": "Providers.ResolveType() returns ISigningProvider when type is null or empty (line 204). This means passing empty string to provider.remove, provider.setDefault, or provider.list silently targets the signing provider — a security-critical subsystem.",
+      "preconditions": "A .pr file has a provider action with an empty or missing Type parameter.",
+      "impact": "Unintended modification or removal of signing providers. Could break signature verification pipeline without clear user intent.",
+      "affected_files": ["PLang/Runtime2/Engine/Providers/this.cs"],
+      "exploit_sketch": "PLang step: 'remove provider myProvider' — if LLM maps Type as empty string, it removes from signing providers instead of erroring.",
+      "proposed_fix": "Return null for null/empty type (same as unknown type), letting callers surface the 'UnknownType' error. Signing should require explicit type='signing'.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Builder error messages include full file paths and JsonException details. DefaultBuilderProvider.Goals line 87: 'Failed to read {file.Raw}: {readResult.Error?.Message}'. MergePrData line 289: 'Failed to parse .pr file at {prPath}: {ex.Message}'.",
+      "preconditions": "Corrupt .goal or .pr file on disk during build.",
+      "impact": "File paths and internal error details exposed in build output. Minimal risk since builder runs on developer's machine, but worth noting for scenarios where build output is shared (CI logs, error reports).",
+      "affected_files": ["PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs"],
+      "exploit_sketch": "N/A — informational finding for build output hygiene.",
+      "proposed_fix": "Consider using relative paths in error messages instead of raw/absolute paths.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Step.Merge() copies Actions by reference (AddRange), not deep clone. If caller mutates merged actions, both the original and merged step see the change.",
+      "preconditions": "Code path that modifies action objects after merge.",
+      "impact": "Unexpected state sharing. Not directly exploitable — builder pipeline is sequential and doesn't mutate actions post-merge. Defensive coding concern.",
+      "affected_files": ["PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs"],
+      "exploit_sketch": "N/A — structural concern, no exploit path in current code.",
+      "proposed_fix": "Consider deep-cloning actions in Merge() if the pattern is ever used in concurrent or multi-pass scenarios.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 5,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "EngineModules.GetDefaults() at line 214 uses bare 'catch' around Activator.CreateInstance(configType). This swallows all exceptions including security-relevant ones (e.g., TypeLoadException from tampered assemblies).",
+      "preconditions": "IConfigure<TConfig> implementation with a constructor that throws.",
+      "impact": "Silent fallback to [Default] attributes instead of surfacing the config construction error. Could mask a tampered or incompatible provider DLL.",
+      "affected_files": ["PLang/Runtime2/Engine/Modules/this.cs"],
+      "exploit_sketch": "N/A — the fallback behavior is reasonable. Finding is about observability, not exploitability.",
+      "proposed_fix": "Narrow catch to 'catch (Exception ex)' and log a warning, or at minimum catch specific exceptions (MissingMethodException, TypeLoadException, TargetInvocationException).",
+      "status": "open"
+    }
+  ],
+  "summary": "The builder module has a clean security posture. All 8 actions consistently apply BuildingGuard. File I/O goes through engine.RunAction (correct abstraction). JSON deserialization errors are caught. No recursive methods without existing guards. The module follows the PLang threat model correctly — .goal and .pr files are trusted user content. Two medium findings: (1) no size limit on Goal.Parse() input (supply-chain OOM risk), (2) ResolveType silently defaults to signing provider on empty type. Three low findings are observability/hygiene issues, not exploitable vectors. No critical or high findings."
+}

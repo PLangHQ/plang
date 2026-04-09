@@ -7,7 +7,7 @@ Review test quality for coder v2 of the DataSource + Settings Bridge feature.
 1. Read coder v2 summary and codeanalyzer v2 report to understand what was built and reviewed
 2. Read all source files (14 changed files) and test files
 3. Run C# test suite (dotnet run --project PLang.Tests)
-4. Run PLang test suite (plang p !test from Tests/Runtime2/)
+4. Run PLang test suite (plang p !test from Tests/App/)
 5. Analyze test quality using false-green hunting techniques
 6. Check PLang test existence for new settings module
 7. Verify .pr file correctness for any Settings PLang tests

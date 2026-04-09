@@ -1,0 +1,206 @@
+{
+  "name": "HandleBuildStepFailure",
+  "steps": [
+    {
+      "index": 0,
+      "text": "if %!error.StatusCode% = 402 then",
+      "lineNumber": 18,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%!error.StatusCode%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 402,
+              "type": "int"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "throw %!error%",
+      "lineNumber": 19,
+      "indent": 1,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "%!error.Message%",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "if %!error.StatusCode% >= 500 then",
+      "lineNumber": 20,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%!error.StatusCode%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": ">=",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 500,
+              "type": "int"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "throw %!error%",
+      "lineNumber": 21,
+      "indent": 1,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "%!error.Message%",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "if %!error.retryCount% > 3 then",
+      "lineNumber": 22,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%!error.retryCount%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": ">",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 3,
+              "type": "int"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "throw error \"Build step failed after 3 retries\"",
+      "lineNumber": 23,
+      "indent": 1,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "Build step failed after 3 retries",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "write out \"  Retry %!error.retryCount%/3: %!error.Message%\"",
+      "lineNumber": 24,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "  Retry %!error.retryCount%/3: %!error.Message%",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "call BuildStep",
+      "lineNumber": 25,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "BuildStep"
+              },
+              "type": "goal.call"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 0,
+  "path": "/system/builder/BuildStep.goal",
+  "prPath": "/system/builder/.build/handlebuildstepfailure.pr",
+  "hash": "",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false
+}
