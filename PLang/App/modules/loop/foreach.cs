@@ -34,6 +34,7 @@ public partial class Foreach : IContext
                 Context.Variables.Set(KeyName, key);
 
             var result = await app.RunGoalAsync(GoalName, Context, Context.CancellationToken);
+            if (result.Returned) return result;
             if (!result.Success && !result.Handled) return result;
             count++;
         }

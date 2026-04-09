@@ -126,7 +126,7 @@ public sealed class @this : IAsyncDisposable
 
         // Resolve %var% references from the context's Variables
         if (content is string str && str.Contains('%'))
-            content = action.Context.Variables.Resolve(str);
+            content = action.Context.Variables.Resolve(str, skipInfrastructure: true);
 
         return await WriteAsync(channel, content);
     }
