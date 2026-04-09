@@ -359,17 +359,22 @@ Each result file:
   "promptHash": "a3f8c2...",
   "outputAccuracy": 0.89,
   "fieldAccuracy": 0.95,
+  "firstAttemptAccuracy": 0.82,
   "cases": [
     {
       "name": "variable-set-string",
       "pass": true,
+      "attempts": [{ "attempt": 1, "pass": true }],
       "fields": { "module": true, "action": true, "params": true }
     },
     {
       "name": "file-read",
-      "pass": false,
-      "fields": { "module": true, "action": true, "params": false },
-      "diff": "param 'path' expected 'test.txt', got 'test'"
+      "pass": true,
+      "attempts": [
+        { "attempt": 1, "pass": false, "error": "param 'filepath' not found" },
+        { "attempt": 2, "pass": true }
+      ],
+      "fields": { "module": true, "action": true, "params": true }
     }
   ]
 }
@@ -389,10 +394,43 @@ The suite grows over time — every builder failure becomes a new eval case.
 - `cache` present/correct when expected?
 - `formalized` array correct? (once implemented)
 
+**Correctness = structural equivalence.** We compare the `.pr` structure against the `.golden` structure. Behavioral equivalence (does it produce the same runtime result?) is harder to determine and not in scope for now.
+
+### Error Logging — Full Attempt Chain
+
+When the builder retries a step (pass 2, validation retry), we must log ALL attempts — not just the final result. If a step always fails on attempt 1 but succeeds on attempt 2, that's a pattern we can fix with a prompt improvement. If we only log the final success, we never see it.
+
+Each eval case records the full journey:
+```json
+{
+  "name": "file-read",
+  "pass": true,
+  "attempts": [
+    { "attempt": 1, "pass": false, "error": "param 'filepath' not found, expected 'path'" },
+    { "attempt": 2, "pass": true }
+  ],
+  "fields": { "module": true, "action": true, "params": true }
+}
+```
+
+This data tells us:
+- **Which patterns need retry?** → Prompt improvements to fix first-attempt failures
+- **Which modules cause the most retries?** → Documentation improvements for those modules
+- **Are retries increasing or decreasing over time?** → Regression detection on builder quality
+
 ### Metrics
 
 - **Output Accuracy**: proportion of golden files where ALL fields correct
 - **Field Accuracy**: proportion of individual fields correct (shows where the builder struggles)
+- **First-attempt accuracy**: proportion of steps correct on first try (measures prompt quality independent of retry mechanism)
+
+### .pr Format Versioning
+
+The `.pr` file already contains a `buildVersion` field (to be renamed to `version`). When the `.pr` schema changes (e.g., adding `formalized`, removing `return`), the version changes. Old `.pr` files with older versions still work — the runtime handles migration. This is how we evolve the bytecode format without breaking existing builds.
+
+### Incremental Builds
+
+The builder already handles incremental builds: when a `.goal` file changes, the whole file is sent to the LLM, but steps that haven't changed from the previous build are not rebuilt. Only changed steps get new `.pr` output. This means the eval suite tests full builds (all steps fresh), while normal development benefits from incremental builds.
 
 ### Future (When We Need It)
 
