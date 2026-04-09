@@ -196,6 +196,81 @@
         "health": "needs-fixes",
         "notes": "4 critical false-greens found: foreach, error retry, error goal, events. GoalSteps condition detection fragile. Cache still 0%. Verdict: needs-fixes."
       }
+    },
+    {
+      "id": "a1b2c3d4-e5f6-7890-1234-auditor000001",
+      "bot": "auditor",
+      "timestamp_start": "2026-04-09T12:00:00Z",
+      "timestamp_end": "2026-04-09T12:45:00Z",
+      "intent": "Cross-cutting integrity audit — find what file-level, test, and security reviewers missed",
+      "before": {
+        "assumptions": "Codeanalyzer approved file-level, tester found false-greens, security approved fixes. Need to check cross-file contracts and gaps between reviewers.",
+        "risk": "High surface area (809 files). Cross-file contract breaks are the most dangerous class of bug on this branch."
+      },
+      "plan": "Read all bot reports. Verify 3 security fixes. Trace cross-file contracts: skipInfrastructure callers, foreach Returned propagation, condition detection coupling, Data.Clone family. Run tests. Write findings.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/system-goals-architecture/codeanalyzer/summary.md",
+            ".bot/system-goals-architecture/security/summary.md",
+            ".bot/system-goals-architecture/tester/summary.md",
+            ".bot/system-goals-architecture/security-report.json",
+            ".bot/system-goals-architecture/test-report.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read all previous bot reports to understand what was already checked and what verdicts were given."
+        },
+        {
+          "paths": [
+            "PLang/App/Events/Lifecycle/Bindings/Binding/this.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified all 3 security fixes are code-complete. Found all 3 lack test coverage."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/Goals/Goal/Steps/this.cs",
+            "PLang/App/Goals/Goal/this.cs",
+            "PLang/App/modules/goal/return.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced Returned flag contract: goal.return sets it, GoalSteps propagates it, Goal decrements ReturnDepth. foreach IGNORES it — critical contract break."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/this.cs",
+            "PLang/App/modules/file/read.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced skipInfrastructure usage across all Resolve() callers. Found Channels/this.cs:129 missing skipInfrastructure — second untrusted-input path the security fix missed."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang/App/Goals/Goal/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Data.Clone() shallow-copies Signature. Goal.Goals lazy-assigns Parent. Both minor architectural smells."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow",
+        "notes": "Verdict FAIL. 2 critical: foreach ignores Returned (cross-file contract break), skipInfrastructure missing on channel output. 2 major: security fixes without tests, fragile condition detection. 2 minor. Architecture is strong overall."
+      }
     }
   ]
 }

@@ -1,0 +1,80 @@
+{
+  "reviewer": "auditor",
+  "branch": "system-goals-architecture",
+  "timestamp": "2026-04-09T12:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Audited the system-goals-architecture branch (Runtime2 → App namespace, 809 production files, 2025 tests passing). Found 2 critical cross-file contract breaks (foreach ignores Returned flag, skipInfrastructure missing on channel output), 2 major findings (all 3 security fixes lack tests, GoalSteps condition detection is fragile and coupled to module name string), and 2 minor issues. The architecture is strong — OBP compliance is excellent, Data return type is consistent, actor model is clean. But the cross-file gaps between foreach/GoalSteps and the untested security fixes make this a FAIL.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — v2 findings were real, fixes verified. File-level analysis was thorough.",
+    "tester": "agree — false-green findings are real and well-documented. Missed the skipInfrastructure test gap and foreach Returned contract break.",
+    "security": "agree — fixes are code-complete but all three lack tests, which the security bot noted but didn't escalate to FAIL-level. Security fixes without tests are findings."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "category": "cross-file",
+      "file": "PLang/App/modules/loop/foreach.cs",
+      "line": 37,
+      "issue": "foreach ignores Returned flag. Line 37 checks `result.Success && result.Handled` but never checks `result.Returned`. GoalSteps.RunAsync (Steps/this.cs:100) correctly propagates Returned, and Goal.RunAsync (Goal/this.cs:247) decrements ReturnDepth. But foreach breaks the contract — a goal.return inside a foreach body continues iterating instead of unwinding.",
+      "missed_by": "tester",
+      "impact": "goal.return inside a foreach body is silently ignored. The loop continues iterating when the user expects it to unwind. This is a semantic bug — PLang developers will write 'return from loop' and it won't work.",
+      "suggestion": "After line 36 in foreach.cs, add: `if (result.Returned) return result;` before the count increment. This matches the contract in GoalSteps.RunAsync:100."
+    },
+    {
+      "id": 2,
+      "severity": "critical",
+      "category": "cross-file",
+      "file": "PLang/App/Channels/this.cs",
+      "line": 129,
+      "issue": "Channel WriteAsync(Write action) calls `Context.Variables.Resolve(str)` without skipInfrastructure=true. Output data written to channels can contain %!app.AbsolutePath%, %!callStack% etc. which will be resolved, leaking infrastructure state. The security fix only applied skipInfrastructure to file.read — channel output is also an untrusted-input path.",
+      "missed_by": "security",
+      "impact": "Information disclosure via channel output. If a PLang step outputs user-controlled content containing %!app% patterns, the output will contain resolved infrastructure variables (file paths, goal names, actor names).",
+      "suggestion": "Change line 129 to: `content = action.Context.Variables.Resolve(str, skipInfrastructure: true);` — channel output should not resolve infrastructure variables."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "category": "review-gap",
+      "file": "PLang/App/Events/Lifecycle/Bindings/Binding/this.cs",
+      "line": 34,
+      "issue": "All 3 security fixes (Binding try-finally, skipInfrastructure, CRLF header sanitization) are code-complete but have ZERO test coverage. No test verifies ExitEvent is called after handler exception. No test verifies %!var% stays unresolved with skipInfrastructure=true. No test verifies CRLF is stripped from headers.",
+      "missed_by": "security",
+      "impact": "Security guards can be silently removed with no test failure. The fixes are real but unprotected — a future refactor could regress all three without any test catching it.",
+      "suggestion": "Three tests needed: (1) Event handler throws → ExitEvent still called → binding re-usable. (2) Resolve('text with %!app%', skipInfrastructure: true) → %!app% left unresolved. (3) HTTP header with \\r\\n → sanitized before send."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "category": "architectural",
+      "file": "PLang/App/Goals/Goal/Steps/this.cs",
+      "line": 103,
+      "issue": "GoalSteps condition detection is coupled to a module name string. Line 106 checks `step.Actions[0].Module == \"condition\"` (case-insensitive). This is fragile: (1) No action name verification — any action in the condition module triggers it. (2) Multiple other modules return bools (list.contains, cache.check, assert.*, signing.verify) — if any were ever named 'condition', they'd falsely trigger sub-step skipping. (3) Only checks first action, but steps can have multiple actions.",
+      "missed_by": "none",
+      "impact": "Low immediate risk (no other module is currently named 'condition'), but the coupling is architectural — it's a runtime string check for what should be a typed contract. Adding a new condition-like module would require knowing about this string check.",
+      "suggestion": "Consider a typed marker (interface or attribute) on condition actions rather than string matching on module name. Short-term: add a comment documenting this contract and add a test that verifies a non-condition module returning false does NOT trigger sub-step skipping."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "category": "foundation",
+      "file": "PLang/App/Data/this.cs",
+      "line": 229,
+      "issue": "Data.Clone() shallow-copies Signature (line 229: `Signature = Signature`). SignedData contains a nested Data.Hash property. If the original Data's signature is modified after cloning, the clone sees the mutation. This is only relevant if Data objects with signatures are cloned and then independently modified.",
+      "missed_by": "codeanalyzer",
+      "impact": "Low — signatures are typically set once during HTTP transport and not modified. But the pattern violates clone semantics (independent copy).",
+      "suggestion": "Either document that Signature is intentionally shared (immutable after creation), or deep-clone it. Given SignedData has internal-set properties, documenting immutability is probably sufficient."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "category": "architectural",
+      "file": "PLang/App/Goals/Goal/this.cs",
+      "line": 0,
+      "issue": "Goals list getter lazy-assigns Parent on access (`g.Parent ??= this`). This means Parent is only set when the Goals property is read, not when a sub-goal is added. If code accesses a sub-goal directly from the internal list without going through the property, Parent will be null.",
+      "missed_by": "codeanalyzer",
+      "impact": "Low — all current access goes through the property. But it's a subtle OBP smell: ownership should be set on Add, not on enumeration.",
+      "suggestion": "Move parent assignment to the Add path. Or document the lazy-assignment convention."
+    }
+  ]
+}
