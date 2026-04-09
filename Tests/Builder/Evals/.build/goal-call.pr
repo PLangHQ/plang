@@ -1,0 +1,53 @@
+{
+  "name": "Start",
+  "description": "Calls goal ProcessData with parameter pr set to null.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call ProcessData",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ProcessData",
+                "parameters": [
+                  {
+                    "name": "pr",
+                    "value": null,
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/goal-call.goal",
+  "prPath": "/.build/goal-call.pr",
+  "hash": "2d7e4efabb9e593f97d96b55a0668167a591d00599b9db3b79860580a19e4c7f",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

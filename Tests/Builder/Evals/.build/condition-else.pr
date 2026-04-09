@@ -1,0 +1,84 @@
+{
+  "name": "Start",
+  "description": "Conditionally calls WhenBig or WhenSmall based on whether %x% is greater than 5.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "if %x% \u003E 5, call WhenBig, else call WhenSmall",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%x%",
+              "type": "int"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 5,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "WhenBig",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "WhenSmall",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/condition-else.goal",
+  "prPath": "/.build/condition-else.pr",
+  "hash": "c4a9e7862b0cc2af30a3fca1ed447161128f4b397c70cda5ed1a9fcef8e27049",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

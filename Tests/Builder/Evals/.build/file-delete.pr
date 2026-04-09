@@ -1,0 +1,44 @@
+{
+  "name": "Start",
+  "description": "Deletes the file \u0027test.txt\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "delete file \u0027test.txt\u0027",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "delete",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "test.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/file-delete.goal",
+  "prPath": "/.build/file-delete.pr",
+  "hash": "b75ef7d5fed269f11de1652b585a4a8c113870aee0038faf56927859cc5b0e97",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

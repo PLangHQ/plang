@@ -1,5 +1,2 @@
 Start
 - if %x% > 10, call WhenBig
-
-WhenBig
-- write out "big"

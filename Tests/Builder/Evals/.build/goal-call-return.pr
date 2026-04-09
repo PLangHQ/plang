@@ -1,0 +1,64 @@
+{
+  "name": "Start",
+  "description": "Calls ComputeAnswer and writes its result into %answer% (variable assignment).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call ComputeAnswer, write to %answer%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ComputeAnswer",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%answer%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/goal-call-return.goal",
+  "prPath": "/.build/goal-call-return.pr",
+  "hash": "3f614214a94eec6d6b7d3f4ade7bad51510ef4dcb86ac5bb0caf117e79862cce",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

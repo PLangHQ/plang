@@ -1,8 +1,2 @@
 Start
 - call DoWork, a villu kalla i HandleError
-
-DoWork
-- write out "working"
-
-HandleError
-- write out "error handled"

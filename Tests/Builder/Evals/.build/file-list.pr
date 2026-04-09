@@ -1,0 +1,61 @@
+{
+  "name": "Start",
+  "description": "Lists files in the current directory and writes the resulting list to %files%.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "list files in \u0027.\u0027, write to %files%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "list",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": ".",
+              "type": "path"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%files%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/file-list.goal",
+  "prPath": "/.build/file-list.pr",
+  "hash": "c4eb3b3127f8f83b311738bbc9433d97f05afe126afd18353aeb288bbdccac97",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

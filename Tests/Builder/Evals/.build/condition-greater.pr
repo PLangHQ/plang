@@ -1,0 +1,69 @@
+{
+  "name": "Start",
+  "description": "Conditionally calls WhenBig when %x% \u003E 10.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "if %x% \u003E 10, call WhenBig",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%x%",
+              "type": "int"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "10",
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "WhenBig",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/condition-greater.goal",
+  "prPath": "/.build/condition-greater.pr",
+  "hash": "611f0e16d3f24d5c0fcc0d734cf102e50e19f782d15330b217856b48e818006e",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

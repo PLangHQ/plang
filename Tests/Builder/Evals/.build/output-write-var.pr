@@ -1,0 +1,44 @@
+{
+  "name": "Start",
+  "description": "Outputs the provided %message% value to the user (write out).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out %message%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%message%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/output-write-var.goal",
+  "prPath": "/.build/output-write-var.pr",
+  "hash": "32bee496e9f0496a6e95591fbdb5e78c63636ce94e80247665429de2832852e0",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

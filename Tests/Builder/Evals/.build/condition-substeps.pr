@@ -1,0 +1,80 @@
+{
+  "name": "Start",
+  "description": "Conditionally checks %ready% and then writes output \u0027ready\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "if %ready% is true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%ready%",
+              "type": "bool"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out \u0022ready\u0022",
+      "lineNumber": 3,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "ready",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/condition-substeps.goal",
+  "prPath": "/.build/condition-substeps.pr",
+  "hash": "f72286a93e515a5420d30e387ff3ece72a653993ba8d5561bebc15378432dd72",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

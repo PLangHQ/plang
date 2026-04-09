@@ -1,8 +1,2 @@
 Start
 - call DoWork, on error call HandleError
-
-DoWork
-- write out "working"
-
-HandleError
-- write out "error handled"

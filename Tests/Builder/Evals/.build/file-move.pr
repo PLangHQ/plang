@@ -1,0 +1,49 @@
+{
+  "name": "Start",
+  "description": "Moves/renames a file from \u0027old.txt\u0027 to \u0027new.txt\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "move file \u0027old.txt\u0027 to \u0027new.txt\u0027",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "move",
+          "parameters": [
+            {
+              "name": "Source",
+              "value": "old.txt",
+              "type": "path"
+            },
+            {
+              "name": "Destination",
+              "value": "new.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/file-move.goal",
+  "prPath": "/.build/file-move.pr",
+  "hash": "c36d11b91a64c9f302a18f6e0697e6f129787fd0c292b571fc1d89c65ecc631a",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

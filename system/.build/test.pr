@@ -26,11 +26,15 @@
       "index": 2,
       "text": "foreach %tests%, call RunTest, item=%test%",
       "indent": 0,
-      "actions": [{"module": "loop", "action": "foreach", "parameters": [
-        {"name": "Collection", "value": "%tests%", "type": "list"},
-        {"name": "GoalName", "value": {"name": "RunTest"}, "type": "goal.call"},
-        {"name": "ItemName", "value": "test", "type": "string"}
-      ]}],
+      "actions": [
+        {"module": "loop", "action": "foreach", "parameters": [
+          {"name": "Collection", "value": "%tests%", "type": "list"},
+          {"name": "ItemName", "value": "test", "type": "string"}
+        ]},
+        {"module": "goal", "action": "call", "parameters": [
+          {"name": "GoalName", "value": {"name": "RunTest"}, "type": "goal.call"}
+        ]}
+      ],
       "waitForExecution": true
     },
     {

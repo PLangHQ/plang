@@ -1,5 +1,2 @@
 Start
 - call SendEmail to=%email%, subject="hi"
-
-SendEmail
-- write out %to%

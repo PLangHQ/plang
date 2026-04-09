@@ -1,0 +1,53 @@
+{
+  "name": "Start",
+  "description": "Sets the %items% variable to a literal list of strings.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%items%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": [
+                "a",
+                "b",
+                "c"
+              ],
+              "type": "list"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/variable-set-list.goal",
+  "prPath": "/.build/variable-set-list.pr",
+  "hash": "42b9ae3570df749abbc810800825709f9aa1a66b8a7612f21187a87c3e568016",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

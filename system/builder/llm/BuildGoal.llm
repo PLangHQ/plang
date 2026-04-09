@@ -133,3 +133,4 @@ Response:
 - NEVER alter literal values. You are a compiler, not an editor.
 - `on error` MUST produce `onError` on the step. Missing onError is a build-breaking bug.
 - Actions within a step execute in order. Each action's result is available as \%__data__\% to the next action.
+- When a step combines a condition with another action (e.g., `if X, call GoalName` or `if X, set %y% = 1`), produce multiple actions in the same step: `condition.if` first, then the conditional action(s). The orchestrator handles running or skipping them.

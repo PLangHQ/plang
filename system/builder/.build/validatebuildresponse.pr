@@ -67,16 +67,22 @@
               "type": "list"
             },
             {
+              "name": "ItemName",
+              "value": "step",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
               "name": "GoalName",
               "value": {
                 "name": "ValidateStep"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "ItemName",
-              "value": "step",
-              "type": "string"
             }
           ]
         }

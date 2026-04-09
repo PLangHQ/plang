@@ -1,0 +1,44 @@
+{
+  "name": "Start",
+  "description": "Outputs the literal text \u0022hello world\u0022 using the output.write action.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022hello world\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hello world",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/output-write.goal",
+  "prPath": "/.build/output-write.pr",
+  "hash": "8f1b4ab9435f67152f05113cf4b6e1c511e7b64ba1c19ab9e34205387519ee62",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

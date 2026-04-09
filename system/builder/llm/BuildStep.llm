@@ -58,9 +58,31 @@ Response:
 }
 ```
 
+## Conditions with inline goal calls
+
+When a step has `if ... call GoalName`, produce TWO actions: condition.if (evaluates) + goal.call (runs if true). The condition.if orchestrator handles running or skipping the goal.call based on the result.
+
+Step:
+```plang
+- if \%x\% == 5, call WhenEqual
+  <= actions: [{module: "condition", action: "if"}]
+```
+
+Response:
+```json
+{
+  "errors": [],
+  "warnings": [],
+  "actions": [
+    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%x\%", "type": "int"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": 5, "type": "int"}]},
+    {"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "WhenEqual"}, "type": "goal.call"}]}
+  ]
+}
+```
+
 ## Compound Conditions (and / or)
 
-When a step has a compound condition (e.g., `if %a% > 1 and %b% < 10`), split it into multiple actions within the same step:
+When a step has a compound condition (e.g., `if %a% > 1 and %b% < 10`), split into multiple condition.if actions within the same step:
 
 Step:
 ```plang
@@ -74,20 +96,14 @@ Response:
   "errors": [],
   "warnings": [],
   "actions": [
-    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%a\%"}, {"name": "Operator", "value": ">"}, {"name": "Right", "value": 1}], "return": [{"name": "__conditionReturn1__"}]},
-    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%b\%"}, {"name": "Operator", "value": "<"}, {"name": "Right", "value": 10}], "return": [{"name": "__conditionReturn2__"}]},
-    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%__conditionReturn1__\%"}, {"name": "Operator", "value": "and"}, {"name": "Right", "value": "\%__conditionReturn2__\%"}, {"name": "GoalIfTrue", "value": {"name": "DoThing"}, "type": "goal.call"}]}
+    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%a\%"}, {"name": "Operator", "value": ">"}, {"name": "Right", "value": 1}]},
+    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%b\%"}, {"name": "Operator", "value": "<"}, {"name": "Right", "value": 10}]},
+    {"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "DoThing"}, "type": "goal.call"}]}
   ]
 }
 ```
 
-Each sub-condition stores its bool result in `__conditionReturn1__`, `__conditionReturn2__`, etc. The final action combines them with `and`/`or` and carries the GoalIfTrue/GoalIfFalse.
-
-When splitting into multiple actions:
-- Sub-condition actions must NOT include GoalIfTrue or GoalIfFalse parameters — omit them entirely
-- Only the final combining action carries GoalIfTrue/GoalIfFalse
-- The original suggestion may have empty GoalIfTrue/GoalIfFalse — ignore those, the goal call moves to the final action
-- Do not report this as an error
+The condition.if orchestrator evaluates all conditions and only runs the goal.call if all pass.
 
 ## Multi-action steps with return types
 
@@ -98,7 +114,8 @@ Example: `if testfile.txt exists, call ProcessFile`
 {
   "actions": [
     {"module": "file", "action": "exists", "parameters": [{"name": "Path", "value": "testfile.txt", "type": "path"}], "return": [{"name": "__conditionReturn__"}]},
-    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%__conditionReturn__.Exists\%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": true, "type": "bool"}, {"name": "GoalIfTrue", "value": {"name": "ProcessFile"}, "type": "goal.call"}]}
+    {"module": "condition", "action": "if", "parameters": [{"name": "Left", "value": "\%__conditionReturn__.Exists\%", "type": "bool"}, {"name": "Operator", "value": "=="}, {"name": "Right", "value": true, "type": "bool"}]},
+    {"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "ProcessFile"}, "type": "goal.call"}]}
   ]
 }
 ```

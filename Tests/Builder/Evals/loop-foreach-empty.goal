@@ -1,6 +1,2 @@
 Start
-- set %empty% = []
 - foreach %empty%, call DoThing item=%item%
-
-DoThing
-- write out %item%

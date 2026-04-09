@@ -195,11 +195,6 @@
               "type": "object"
             },
             {
-              "name": "GoalName",
-              "value": {"name": "BuildGoal"},
-              "type": "goal.call"
-            },
-            {
               "name": "ItemName",
               "value": "goal",
               "type": "string"
@@ -207,6 +202,17 @@
           ],
           "errors": [],
           "warnings": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {"name": "BuildGoal"},
+              "type": "goal.call"
+            }
+          ]
         }
       ],
       "errors": [],

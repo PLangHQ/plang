@@ -199,6 +199,22 @@ public partial class @this
         return TypeMapping.ConvertTo(_value, targetType);
     }
 
+    /// <summary>
+    /// Enumerates the inner value. If Value is enumerable, delegates to it.
+    /// If Value is a single non-enumerable item, yields it as a one-element sequence.
+    /// </summary>
+    public System.Collections.IEnumerable AsEnumerable()
+    {
+        if (_value is System.Collections.IEnumerable enumerable and not string)
+            return enumerable;
+
+        // Single value — treat as a list of one
+        if (_value != null)
+            return new[] { _value };
+
+        return Array.Empty<object>();
+    }
+
     [JsonIgnore]
     public bool IsEmpty => !IsInitialized || _value == null ||
         (_value is string s && string.IsNullOrEmpty(s));

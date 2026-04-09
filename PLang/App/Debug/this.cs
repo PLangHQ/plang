@@ -366,8 +366,8 @@ public sealed class @this
     private static string TruncateToString(object? value, int max)
     {
         if (value == null) return "null";
-        if (value is string s) return s.Length > max ? $"\"{s[..max]}...\"" : $"\"{s}\"";
+        if (value is string s) return s.Length > max ? $"\"{s[..max]}...[{s.Length - max} more chars]\"" : $"\"{s}\"";
         var str = value.ToString() ?? "?";
-        return str.Length > max ? $"{str[..max]}..." : str;
+        return str.Length > max ? $"{str[..max]}...[{str.Length - max} more chars]" : str;
     }
 }

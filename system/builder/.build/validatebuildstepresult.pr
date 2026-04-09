@@ -56,16 +56,22 @@
               "type": "list"
             },
             {
+              "name": "ItemName",
+              "value": "action",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
               "name": "GoalName",
               "value": {
                 "name": "ValidateActionErrors"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "ItemName",
-              "value": "action",
-              "type": "string"
             }
           ]
         }

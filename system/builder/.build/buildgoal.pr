@@ -203,8 +203,14 @@
           "action": "foreach",
           "parameters": [
             { "name": "Collection", "value": "%stepResults.steps%", "type": "object" },
-            { "name": "GoalName", "value": {"name": "PreValidateStep"}, "type": "goal.call" },
             { "name": "ItemName", "value": "stepResult", "type": "string" }
+          ]
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            { "name": "GoalName", "value": {"name": "PreValidateStep"}, "type": "goal.call" }
           ]
         }
       ],
@@ -221,8 +227,14 @@
           "action": "foreach",
           "parameters": [
             { "name": "Collection", "value": "%stepResults.steps%", "type": "object" },
-            { "name": "GoalName", "value": {"name": "ApplyStep"}, "type": "goal.call" },
             { "name": "ItemName", "value": "stepResult", "type": "string" }
+          ]
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            { "name": "GoalName", "value": {"name": "ApplyStep"}, "type": "goal.call" }
           ]
         }
       ],

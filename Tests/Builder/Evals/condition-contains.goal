@@ -1,5 +1,2 @@
 Start
 - if %text% contains "hello", call Found
-
-Found
-- write out "found"

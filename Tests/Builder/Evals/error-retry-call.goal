@@ -1,8 +1,2 @@
 Start
 - call DoWork, on error retry 2 times, then call HandleError
-
-DoWork
-- write out "working"
-
-HandleError
-- write out "error handled"

@@ -1,0 +1,52 @@
+{
+  "name": "Start",
+  "description": "Sets the %user% variable to the provided object literal (name and age).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %user% = {name:\u0022john\u0022, age:20}",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%user%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "name": "john",
+                "age": 20
+              },
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/variable-set-json.goal",
+  "prPath": "/.build/variable-set-json.pr",
+  "hash": "7645575a2f9dcfa1a532ed7bd944d15ab53f709fa879c6cef177c0e9d64b20f7",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

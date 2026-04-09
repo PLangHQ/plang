@@ -1,5 +1,2 @@
 Start
 - call DoWork, on error ignore
-
-DoWork
-- write out "working"

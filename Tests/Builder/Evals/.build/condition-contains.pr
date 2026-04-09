@@ -1,0 +1,69 @@
+{
+  "name": "Start",
+  "description": "Checks whether %text% contains the literal substring \u0022hello\u0022; if true, calls goal Found.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "if %text% contains \u0022hello\u0022, call Found",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%text%",
+              "type": "string"
+            },
+            {
+              "name": "Operator",
+              "value": "contains",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "hello",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "Found",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/condition-contains.goal",
+  "prPath": "/.build/condition-contains.pr",
+  "hash": "7bce6186ede7a03853e97bf1bc7e1047559c62ed326eddee3fc64460214fef74",
+  "builderVersion": "0.3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}
