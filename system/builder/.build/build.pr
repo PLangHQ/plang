@@ -107,13 +107,16 @@
               "type": "string"
             }
           ],
-          "return": [
-            {
-              "name": "app"
-            }
-          ],
           "errors": [],
           "warnings": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%app%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
         }
       ],
       "errors": [],
@@ -136,13 +139,16 @@
               "type": "string"
             }
           ],
-          "return": [
-            {
-              "name": "goals"
-            }
-          ],
           "errors": [],
           "warnings": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%goals%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
         }
       ],
       "errors": [],

@@ -256,7 +256,6 @@ public sealed partial class @this : Data.@this<@this>
                 Module = a.Module,
                 ActionName = a.ActionName,
                 Parameters = new List<Data.@this>(a.Parameters),
-                Return = a.Return != null ? new List<Data.@this>(a.Return) : null,
                 Defaults = a.Defaults != null ? new List<Data.@this>(a.Defaults) : null,
                 Errors = new List<Info>(a.Errors),
                 Warnings = new List<Info>(a.Warnings)

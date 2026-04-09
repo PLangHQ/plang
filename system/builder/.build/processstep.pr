@@ -52,14 +52,15 @@
               "value": "%stepResult%",
               "type": "object"
             }
-          ],
-          "return": [
-            {
-              "name": "goal.Steps[stepResult.index]"
-            }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%goal.Steps[stepResult.index]%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
         }
       ],
       "errors": [],

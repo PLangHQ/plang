@@ -23,7 +23,8 @@ public sealed partial class @this : Data.@this<@this>
     [Store, LlmBuilder, Debug, Default]
     public List<Data.@this> Parameters { get; init; } = new();
 
-    [Store, LlmBuilder, Debug, Default]
+    // Return is deprecated — use variable.set action with %__data__% instead
+    [JsonIgnore]
     public List<Data.@this>? Return { get; init; }
 
     [Store, Debug, Default]
@@ -66,14 +67,11 @@ public sealed partial class @this : Data.@this<@this>
         // Dispatch to handler
         var result = await context.App!.Run(this, context);
 
-        // Map return variables
-        if (result.Success && Return != null)
+        // Store result as %__data__% — available to next action or step
+        if (result.Success)
         {
-            foreach (var returnVar in Return)
-            {
-                result.Name = returnVar.Name;
-                context.Variables.Put(result);
-            }
+            result.Name = "__data__";
+            context.Variables.Put(result);
         }
 
         // AfterAction events

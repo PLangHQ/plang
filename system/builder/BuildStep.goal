@@ -10,7 +10,7 @@ BuildStep
         scheme: {
                 errors?: [{key: string, message: string}],
                 warnings?: [{key: string, message: string}],
-                actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}],
+                actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}],
                     errors?: [{key: string, message: string}],
                     warnings?: [{key: string, message: string}]}]
                 }

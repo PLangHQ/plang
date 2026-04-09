@@ -1,7 +1,7 @@
 BuildGoal
 / Builds a single goal - single LLM pass
 / LLM sees entire goal + compact action summary with DTOs
-/ Returns complete [{module, action, data, return}] for all steps
+/ Returns complete [{module, action, parameters}] for all steps
 / Falls back to BuildStep for steps with level medium or low
 
 - write out "Building goal: %goal.Name%"
@@ -17,7 +17,7 @@ BuildGoal
             errors?: [{key: string, message: string}],
             warnings?: [{key: string, message: string}],
             steps: [{index: int, guidance: string,
-                  actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}],
+                  actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}],
                               errors?: [{key: string, message: string}],
                               warnings?: [{key: string, message: string}]}],
                   errors?: [{key: string, message: string}],

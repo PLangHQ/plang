@@ -12,16 +12,8 @@
           "module": "variable",
           "action": "set",
           "parameters": [
-            {
-              "name": "Name",
-              "value": "%step%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%goal.Steps[stepResult.index]%",
-              "type": "object"
-            }
+            { "name": "Name", "value": "%step%", "type": "string" },
+            { "name": "Value", "value": "%goal.Steps[stepResult.index]%", "type": "object" }
           ]
         }
       ],
@@ -37,21 +29,16 @@
           "module": "ui",
           "action": "render",
           "parameters": [
-            {
-              "name": "Template",
-              "value": "/system/builder/templates/v2/stepGroupContext.template",
-              "type": "string"
-            },
-            {
-              "name": "IsFile",
-              "value": true,
-              "type": "bool"
-            }
-          ],
-          "return": [
-            {
-              "name": "groupContext"
-            }
+            { "name": "Template", "value": "/system/builder/templates/v2/stepGroupContext.template", "type": "string" },
+            { "name": "IsFile", "value": true, "type": "bool" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%groupContext%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
           ]
         }
       ],
@@ -67,21 +54,16 @@
           "module": "ui",
           "action": "render",
           "parameters": [
-            {
-              "name": "Template",
-              "value": "/system/builder/templates/v2/stepForLlm.template",
-              "type": "string"
-            },
-            {
-              "name": "IsFile",
-              "value": true,
-              "type": "bool"
-            }
-          ],
-          "return": [
-            {
-              "name": "stepForLlm"
-            }
+            { "name": "Template", "value": "/system/builder/templates/v2/stepForLlm.template", "type": "string" },
+            { "name": "IsFile", "value": true, "type": "bool" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%stepForLlm%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
           ]
         }
       ],
@@ -97,21 +79,16 @@
           "module": "ui",
           "action": "render",
           "parameters": [
-            {
-              "name": "Template",
-              "value": "/system/builder/templates/v2/stepActionDetails.template",
-              "type": "string"
-            },
-            {
-              "name": "IsFile",
-              "value": true,
-              "type": "bool"
-            }
-          ],
-          "return": [
-            {
-              "name": "actionDetails"
-            }
+            { "name": "Template", "value": "/system/builder/templates/v2/stepActionDetails.template", "type": "string" },
+            { "name": "IsFile", "value": true, "type": "bool" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%actionDetails%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
           ]
         }
       ],
@@ -127,21 +104,16 @@
           "module": "file",
           "action": "read",
           "parameters": [
-            {
-              "name": "Path",
-              "value": "llm/BuildStep.llm",
-              "type": "path"
-            },
-            {
-              "name": "ResolveVariables",
-              "value": true,
-              "type": "bool"
-            }
-          ],
-          "return": [
-            {
-              "name": "buildStepPrompt"
-            }
+            { "name": "Path", "value": "llm/BuildStep.llm", "type": "path" },
+            { "name": "ResolveVariables", "value": true, "type": "bool" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%buildStepPrompt%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
           ]
         }
       ],
@@ -160,47 +132,28 @@
             {
               "name": "Messages",
               "value": [
-                {
-                  "role": "system",
-                  "text": "%buildStepPrompt%"
-                },
-                {
-                  "role": "user",
-                  "text": "%stepForLlm%"
-                }
+                { "role": "system", "text": "%buildStepPrompt%" },
+                { "role": "user", "text": "%stepForLlm%" }
               ],
               "type": "object"
             },
             {
               "name": "Schema",
-              "value": "{\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}],\"actions\":[{\"module\":\"string\",\"action\":\"string\",\"parameters?\":[{\"name\":\"string\",\"value?\":\"object\",\"type?\":\"string\"}],\"return?\":[{\"name\":\"string\"}],\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}]}]}",
+              "value": "{\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}],\"actions\":[{\"module\":\"string\",\"action\":\"string\",\"parameters?\":[{\"name\":\"string\",\"value?\":\"object\",\"type?\":\"string\"}],\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}]}]}",
               "type": "string"
             },
-            {
-              "name": "Format",
-              "value": "json",
-              "type": "string"
-            },
-            {
-              "name": "Temperature",
-              "value": 0.0,
-              "type": "double"
-            },
-            {
-              "name": "MaxTokens",
-              "value": 8000,
-              "type": "int"
-            },
-            {
-              "name": "Cache",
-              "value": "%!build.cache%",
-              "type": "bool"
-            }
-          ],
-          "return": [
-            {
-              "name": "result"
-            }
+            { "name": "Format", "value": "json", "type": "string" },
+            { "name": "Temperature", "value": 0.0, "type": "double" },
+            { "name": "MaxTokens", "value": 8000, "type": "int" },
+            { "name": "Cache", "value": "%!build.cache%", "type": "bool" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%result%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
           ]
         }
       ],
@@ -223,13 +176,7 @@
           "module": "goal",
           "action": "call",
           "parameters": [
-            {
-              "name": "GoalName",
-              "value": {
-                "name": "ValidateBuildStepResult"
-              },
-              "type": "goal.call"
-            }
+            { "name": "GoalName", "value": {"name": "ValidateBuildStepResult"}, "type": "goal.call" }
           ]
         }
       ],
@@ -245,16 +192,8 @@
           "module": "variable",
           "action": "set",
           "parameters": [
-            {
-              "name": "Name",
-              "value": "%goal.Steps[stepResult.index].Actions%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%result.actions%",
-              "type": "object"
-            }
+            { "name": "Name", "value": "%goal.Steps[stepResult.index].Actions%", "type": "string" },
+            { "name": "Value", "value": "%result.actions%", "type": "object" }
           ]
         }
       ],
@@ -270,11 +209,7 @@
           "module": "builder",
           "action": "actions.validate",
           "parameters": [
-            {
-              "name": "Actions",
-              "value": "%goal.Steps[stepResult.index].Actions%",
-              "type": "object"
-            }
+            { "name": "Actions", "value": "%goal.Steps[stepResult.index].Actions%", "type": "object" }
           ]
         }
       ],

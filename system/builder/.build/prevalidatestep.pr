@@ -48,8 +48,7 @@
               "value": "%stepResult.actions%",
               "type": "object"
             }
-          ],
-          "return": [{"name": "data"}]
+          ]
         }
       ],
       "onError": {
@@ -59,7 +58,7 @@
     },
     {
       "index": 3,
-      "text": "if %data.Success% == false",
+      "text": "if %__data__.Success% == false",
       "lineNumber": 6,
       "indent": 0,
       "actions": [
@@ -67,7 +66,7 @@
           "module": "condition",
           "action": "if",
           "parameters": [
-            {"name": "Left", "value": "%data.Success%", "type": "bool"},
+            {"name": "Left", "value": "%__data__.Success%", "type": "bool"},
             {"name": "Operator", "value": "=="},
             {"name": "Right", "value": false, "type": "bool"}
           ]
@@ -94,7 +93,7 @@
     },
     {
       "index": 5,
-      "text": "set %stepResult.validationError% = %data.Error.Message%",
+      "text": "set %stepResult.validationError% = %__data__.Error.Message%",
       "lineNumber": 8,
       "indent": 1,
       "actions": [
@@ -103,7 +102,7 @@
           "action": "set",
           "parameters": [
             {"name": "Name", "value": "%stepResult.validationError%", "type": "string"},
-            {"name": "Value", "value": "%data.Error.Message%", "type": "string"}
+            {"name": "Value", "value": "%__data__.Error.Message%", "type": "string"}
           ]
         }
       ],

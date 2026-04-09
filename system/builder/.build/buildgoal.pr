@@ -1,7 +1,6 @@
 {
   "name": "BuildGoal",
   "description": "Builds a single goal via a single LLM pass. Falls back to BuildStep for steps needing detail.",
-  "comment": "Builds a single goal - single LLM pass",
   "steps": [
     {
       "index": 0,
@@ -13,18 +12,10 @@
           "module": "output",
           "action": "write",
           "parameters": [
-            {
-              "name": "Data",
-              "value": "Building goal: %goal.Name%",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
+            { "name": "Data", "value": "Building goal: %goal.Name%", "type": "string" }
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
@@ -36,18 +27,17 @@
         {
           "module": "builder",
           "action": "actions",
-          "parameters": [],
-          "return": [
-            {
-              "name": "actions"
-            }
-          ],
-          "errors": [],
-          "warnings": []
+          "parameters": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%actions%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
@@ -59,18 +49,17 @@
         {
           "module": "builder",
           "action": "types",
-          "parameters": [],
-          "return": [
-            {
-              "name": "typeInfo"
-            }
-          ],
-          "errors": [],
-          "warnings": []
+          "parameters": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%typeInfo%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
@@ -83,28 +72,19 @@
           "module": "ui",
           "action": "render",
           "parameters": [
-            {
-              "name": "Template",
-              "value": "/system/actions/v2/summary.md",
-              "type": "string"
-            },
-            {
-              "name": "IsFile",
-              "value": true,
-              "type": "bool"
-            }
-          ],
-          "return": [
-            {
-              "name": "actionSummary"
-            }
-          ],
-          "errors": [],
-          "warnings": []
+            { "name": "Template", "value": "/system/actions/v2/summary.md", "type": "string" },
+            { "name": "IsFile", "value": true, "type": "bool" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%actionSummary%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
@@ -117,28 +97,19 @@
           "module": "ui",
           "action": "render",
           "parameters": [
-            {
-              "name": "Template",
-              "value": "/system/builder/templates/v2/goalFormatForLlm.template",
-              "type": "string"
-            },
-            {
-              "name": "IsFile",
-              "value": true,
-              "type": "bool"
-            }
-          ],
-          "return": [
-            {
-              "name": "goalForLlm"
-            }
-          ],
-          "errors": [],
-          "warnings": []
+            { "name": "Template", "value": "/system/builder/templates/v2/goalFormatForLlm.template", "type": "string" },
+            { "name": "IsFile", "value": true, "type": "bool" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%goalForLlm%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
@@ -151,28 +122,19 @@
           "module": "file",
           "action": "read",
           "parameters": [
-            {
-              "name": "Path",
-              "value": "llm/BuildGoal.llm",
-              "type": "path"
-            },
-            {
-              "name": "ResolveVariables",
-              "value": true,
-              "type": "bool"
-            }
-          ],
-          "return": [
-            {
-              "name": "buildGoalPrompt"
-            }
-          ],
-          "errors": [],
-          "warnings": []
+            { "name": "Path", "value": "llm/BuildGoal.llm", "type": "path" },
+            { "name": "ResolveVariables", "value": true, "type": "bool" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%buildGoalPrompt%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
@@ -188,42 +150,20 @@
             {
               "name": "Messages",
               "value": [
-                {
-                  "role": "system",
-                  "text": "%buildGoalPrompt%"
-                },
-                {
-                  "role": "user",
-                  "text": "%goalForLlm%"
-                }
+                { "role": "system", "text": "%buildGoalPrompt%" },
+                { "role": "user", "text": "%goalForLlm%" }
               ],
               "type": "object"
             },
             {
               "name": "Schema",
-              "value": "{\"description\":\"string\",\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}],\"steps\":[{\"index\":\"int\",\"guidance\":\"string\",\"group?\":\"string\",\"actions?\":[{\"module\":\"string\",\"action\":\"string\",\"parameters?\":[{\"name\":\"string\",\"value?\":\"object\",\"type?\":\"string\"}],\"return?\":[{\"name\":\"string\"}],\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}]}],\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}],\"cache?\":{\"durationMs\":\"long\",\"sliding?\":\"bool\",\"key?\":\"string\"},\"onError?\":{\"ignoreError?\":\"bool\",\"goal?\":{\"name\":\"string\"},\"retryCount?\":\"int\",\"retryOverMs?\":\"int\",\"order?\":\"string\",\"message?\":\"string\"},\"level\":\"string\",\"confidence\":\"int\"}]}",
+              "value": "{\"description\":\"string\",\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}],\"steps\":[{\"index\":\"int\",\"guidance\":\"string\",\"group?\":\"string\",\"actions?\":[{\"module\":\"string\",\"action\":\"string\",\"parameters?\":[{\"name\":\"string\",\"value?\":\"object\",\"type?\":\"string\"}],\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}]}],\"errors?\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings?\":[{\"key\":\"string\",\"message\":\"string\"}],\"cache?\":{\"durationMs\":\"long\",\"sliding?\":\"bool\",\"key?\":\"string\"},\"onError?\":{\"ignoreError?\":\"bool\",\"goal?\":{\"name\":\"string\"},\"retryCount?\":\"int\",\"retryOverMs?\":\"int\",\"order?\":\"string\",\"message?\":\"string\"},\"level\":\"string\",\"confidence\":\"int\"}]}",
               "type": "string"
             },
-            {
-              "name": "Format",
-              "value": "json",
-              "type": "string"
-            },
-            {
-              "name": "Temperature",
-              "value": 0.0,
-              "type": "double"
-            },
-            {
-              "name": "MaxTokens",
-              "value": 8000,
-              "type": "int"
-            },
-            {
-              "name": "Cache",
-              "value": "%!build.cache%",
-              "type": "bool"
-            },
+            { "name": "Format", "value": "json", "type": "string" },
+            { "name": "Temperature", "value": 0.0, "type": "double" },
+            { "name": "MaxTokens", "value": 8000, "type": "int" },
+            { "name": "Cache", "value": "%!build.cache%", "type": "bool" },
             {
               "name": "OnValidateResponse",
               "value": {
@@ -232,14 +172,15 @@
               },
               "type": "goal.call"
             }
-          ],
-          "return": [
-            {
-              "name": "stepResults"
-            }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%stepResults%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
         }
       ],
       "onError": {
@@ -249,8 +190,6 @@
         },
         "ignoreError": false
       },
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
@@ -263,21 +202,9 @@
           "module": "loop",
           "action": "foreach",
           "parameters": [
-            {
-              "name": "Collection",
-              "value": "%stepResults.steps%",
-              "type": "object"
-            },
-            {
-              "name": "GoalName",
-              "value": {"name": "PreValidateStep"},
-              "type": "goal.call"
-            },
-            {
-              "name": "ItemName",
-              "value": "stepResult",
-              "type": "string"
-            }
+            { "name": "Collection", "value": "%stepResults.steps%", "type": "object" },
+            { "name": "GoalName", "value": {"name": "PreValidateStep"}, "type": "goal.call" },
+            { "name": "ItemName", "value": "stepResult", "type": "string" }
           ]
         }
       ],
@@ -293,28 +220,12 @@
           "module": "loop",
           "action": "foreach",
           "parameters": [
-            {
-              "name": "Collection",
-              "value": "%stepResults.steps%",
-              "type": "object"
-            },
-            {
-              "name": "GoalName",
-              "value": {"name": "ApplyStep"},
-              "type": "goal.call"
-            },
-            {
-              "name": "ItemName",
-              "value": "stepResult",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
+            { "name": "Collection", "value": "%stepResults.steps%", "type": "object" },
+            { "name": "GoalName", "value": {"name": "ApplyStep"}, "type": "goal.call" },
+            { "name": "ItemName", "value": "stepResult", "type": "string" }
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
@@ -327,16 +238,8 @@
           "module": "variable",
           "action": "set",
           "parameters": [
-            {
-              "name": "Name",
-              "value": "%goal.BuilderVersion%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "0.3",
-              "type": "string"
-            }
+            { "name": "Name", "value": "%goal.BuilderVersion%", "type": "string" },
+            { "name": "Value", "value": "0.3", "type": "string" }
           ]
         }
       ],
@@ -352,18 +255,10 @@
           "module": "builder",
           "action": "goals.save",
           "parameters": [
-            {
-              "name": "Goal",
-              "value": "%goal%",
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
+            { "name": "Goal", "value": "%goal%", "type": "object" }
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     }
   ],
@@ -375,8 +270,5 @@
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "BuildGoal"
+  "isTest": false
 }
