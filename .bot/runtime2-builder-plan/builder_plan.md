@@ -48,16 +48,16 @@ The LLM first translates the natural language step into a **structured pseudo-sy
 
 ```
 Step text:  "read file.txt and write it into %content%"
-Formalized: "file.read file.txt | variable.set %content%"
+Formalized: ["file.read file.txt", "variable.set %content%"]
 
 Step text:  "if %count% is greater than 5, call HandleOverflow"
-Formalized: "condition.if %count% > 5 | goal.call HandleOverflow"
+Formalized: ["condition.if %count% > 5", "goal.call HandleOverflow"]
 
 Step text:  "get http://api.example.com/users and set %users%"
-Formalized: "http.get http://api.example.com/users | variable.set %users%"
+Formalized: ["http.get http://api.example.com/users", "variable.set %users%"]
 ```
 
-The `|` (pipe) indicates module boundaries — when a step involves multiple modules, each becomes explicit. The pipe means: the output of the left side (available as `%__data__%`) flows into the right side. This is **structured chain-of-thought**: the LLM reasons about what the step means before committing to action parameters.
+`formalized` is an array where each entry is one module operation. The array order is the pipeline — each entry’s output (available as `%__data__%`) flows into the next. The 1:1 mapping between `formalized` entries and `actions` makes validation straightforward. This is **structured chain-of-thought**: the LLM reasons about what the step means before committing to action parameters.
 
 **Why formalization matters:**
 - Forces the LLM to decompose multi-module steps explicitly
@@ -87,7 +87,7 @@ New:
 }
 ```
 
-The formalization already showed this: `file.read file.txt | variable.set %content%`. Two modules, two actions. No magic `return` property needed.
+The formalization already showed this: `["file.read file.txt", "variable.set %content%"]`. Two entries, two actions, 1:1 mapping. No magic `return` property needed. No magic `return` property needed.
 
 #### Phase 3: Self-Assessment (after actions)
 
@@ -98,14 +98,14 @@ After producing actions, the LLM assesses its own work with **both** a categoric
   "steps": [
     {
       "index": 0,
-      "formalized": "file.read file.txt | variable.set %content%",
+      "formalized": ["file.read file.txt", "variable.set %content%"],
       "actions": [...],
       "level": "high",
       "confidence": 0.95
     },
     {
       "index": 1,
-      "formalized": "condition.if %count% > 5 | goal.call HandleOverflow",
+      "formalized": ["condition.if %count% > 5", "goal.call HandleOverflow"],
       "actions": [...],
       "level": "medium",
       "confidence": 0.7
