@@ -326,6 +326,20 @@ EvalCase
 
 PLang runtime handles JSON-to-object conversion automatically — no explicit convert step needed.
 
+### Prompt Visibility
+
+The system prompt is dynamically generated (changes when modules are added) and the LLM provider may modify it. We need to see the actual prompts the builder sends.
+
+**Mechanism:** A `dumpPrompts` property on the build config, passed via existing `--build` JSON:
+
+```
+plang build --build='{"dumpPrompts": true}'
+```
+
+This adds a `DumpPrompts` property to `engine.Building` (extracted from the JSON like `files` already is). Builder goals check this and write the rendered system prompt + user content to console during build.
+
+**For eval tracking:** The eval runner computes a `promptHash` in-memory during the run — no files needed. The hash goes into the results so you can see "did the prompt change between run A and run B?"
+
 ### Results Tracking
 
 Results are stored per run, one file per date:
@@ -342,6 +356,7 @@ Each result file:
 {
   "timestamp": "2026-04-09T14:30:00Z",
   "model": "gpt-4o-2024-08-06",
+  "promptHash": "a3f8c2...",
   "outputAccuracy": 0.89,
   "fieldAccuracy": 0.95,
   "cases": [
