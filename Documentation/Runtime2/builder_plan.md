@@ -177,8 +177,11 @@ This means standardization of the format — including the formalization syntax 
 
 ### Remaining Open Questions
 
-- What is the exact grammar for formalization syntax? (Need to define the formal spec)
-- Should `level` and `confidence` be stored in the `.pr` file, or are they build-time-only metadata?
+- **Formalization grammar**: Will emerge from real LLM output. Run the builder, collect examples, then formalize the grammar bottom-up from what the LLM actually produces. Don't define the spec before we have data.
+
+### Additional Decisions
+
+- **`level` and `confidence` are stored in the `.pr` file.** They are part of the build artifact, not transient metadata. This enables evals to analyze builder confidence patterns from existing `.pr` files without re-running the builder.
 
 ---
 
