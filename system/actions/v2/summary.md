@@ -1,7 +1,4 @@
 Notation: %var% = value must be a %variable% reference | type(a|b) = valid values | = val is default, param is optional
-DEBUG: actions = {{ actions }}
-DEBUG: actions size = {{ actions.size }}
-DEBUG: goal = {{ goal.Name }}
 {% assign classes = actions | map: "Module" | uniq %}
 {% for class_name in classes %}
 # {{ class_name }}

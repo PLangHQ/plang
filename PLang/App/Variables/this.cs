@@ -59,16 +59,7 @@ public class @this
         // Simple case: no dot/bracket path — set the root variable directly
         if (rootName == name)
         {
-            // If value is already a Data object, adopt it with the new name
-            if (value is Data.@this dataValue)
-            {
-                dataValue.Name = name;
-                if (type != null)
-                    dataValue.Type = type;
-                dataValue.Context = _context;
-                _variables[name] = dataValue;
-            }
-            else if (_variables.TryGetValue(name, out var existing))
+            if (_variables.TryGetValue(name, out var existing))
             {
                 existing.Value = value;
                 if (type != null)

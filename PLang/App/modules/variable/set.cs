@@ -11,7 +11,7 @@ public partial class Set : IContext
 {
     [VariableName]
     public partial string Name { get; init; }
-    public partial object? Value { get; init; }
+    public partial Data.@this Value { get; init; }
     public partial string? Type { get; init; }
     [Default(false)]
     public partial bool AsDefault { get; init; }
@@ -22,11 +22,13 @@ public partial class Set : IContext
         {
             var existing = Context.Variables.Get(Name);
             if (existing.IsInitialized)
-                return Task.FromResult(existing);
+                return Task.FromResult(Data(existing.Value));
         }
 
-        Context.Variables.Set(Name, Value,
-            Type != null ? App.Data.Type.FromName(Type) : null);
-        return Task.FromResult(Context.Variables.Get(Name));
+        Value.Name = Name;
+        if (Type != null) Value.Type = App.Data.Type.FromName(Type);
+        Context.Variables.Put(Value);
+
+        return Task.FromResult(Data());
     }
 }

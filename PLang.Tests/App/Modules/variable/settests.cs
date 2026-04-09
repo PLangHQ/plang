@@ -19,7 +19,7 @@ public class SetTests
     {
         var (context, memory) = CreateContext();
 
-        var action = new Set { Context = context, Name = "testVar", Value = "testValue" };
+        var action = new Set { Context = context, Name = "testVar", Value = new global::App.Data.@this("value", "testValue") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -31,7 +31,7 @@ public class SetTests
     {
         var (context, memory) = CreateContext();
 
-        var action = new Set { Context = context, Name = "count", Value = 42, Type = "int" };
+        var action = new Set { Context = context, Name = "count", Value = new global::App.Data.@this("value", 42), Type = "int" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -39,26 +39,27 @@ public class SetTests
     }
 
     [Test]
-    public async Task Set_ReturnsDataFromStack()
+    public async Task Set_ReturnsOk()
     {
         var (context, _) = CreateContext();
 
-        var action = new Set { Context = context, Name = "testVar", Value = "testValue" };
+        var action = new Set { Context = context, Name = "testVar", Value = new global::App.Data.@this("value", "testValue") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Name).IsEqualTo("testVar");
-        await Assert.That(result.Value).IsEqualTo("testValue");
+        // variable.set returns Ok() — the value is in the named variable, not the result
+        await Assert.That(context.Variables.GetValue("testVar")).IsEqualTo("testValue");
     }
 
     [Test]
-    public async Task Set_WithType_ReturnsTypeOnData()
+    public async Task Set_WithType_SetsTypeOnStoredVariable()
     {
         var (context, _) = CreateContext();
 
-        var action = new Set { Context = context, Name = "count", Value = 42, Type = "int" };
+        var action = new Set { Context = context, Name = "count", Value = new global::App.Data.@this("value", 42), Type = "int" };
         var result = await action.Run();
 
-        await Assert.That(result.Type!.Value).IsEqualTo("int");
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(context.Variables.Get("count")!.Type!.Value).IsEqualTo("int");
     }
 }
