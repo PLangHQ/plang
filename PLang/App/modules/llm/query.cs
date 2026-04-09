@@ -60,7 +60,7 @@ public partial class query : IContext
     public partial int MaxToolCalls { get; init; }
 
     /// <summary>Maximum validation retries before returning error.</summary>
-    [Default(3)]
+    [Default(0)]
     public partial int MaxValidationRetries { get; init; }
 
     /// <summary>Whether to cache the response. Skipped when Tools is non-null.</summary>

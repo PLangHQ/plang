@@ -3,28 +3,18 @@
   "steps": [
     {
       "index": 0,
-      "text": "if %!error.StatusCode% = 402 then",
-      "lineNumber": 18,
+      "text": "write out \"  Build step error: %!error.Message%\"",
+      "lineNumber": 38,
       "indent": 0,
       "actions": [
         {
-          "module": "condition",
-          "action": "if",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "Left",
-              "value": "%!error.StatusCode%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": "==",
+              "name": "Data",
+              "value": "  Build step error: %!error.Message%",
               "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": 402,
-              "type": "int"
             }
           ]
         }
@@ -34,8 +24,8 @@
     {
       "index": 1,
       "text": "throw %!error%",
-      "lineNumber": 19,
-      "indent": 1,
+      "lineNumber": 39,
+      "indent": 0,
       "actions": [
         {
           "module": "error",
@@ -45,198 +35,6 @@
               "name": "Message",
               "value": "%!error.Message%",
               "type": "string"
-            }
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 2,
-      "text": "if %!error.StatusCode% = 429 then",
-      "lineNumber": 20,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%!error.StatusCode%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": "==",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": 429,
-              "type": "int"
-            }
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "throw %!error%",
-      "lineNumber": 21,
-      "indent": 1,
-      "actions": [
-        {
-          "module": "error",
-          "action": "throw",
-          "parameters": [
-            {
-              "name": "Message",
-              "value": "%!error.Message%",
-              "type": "string"
-            }
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 4,
-      "text": "if %!error.StatusCode% >= 500 then",
-      "lineNumber": 20,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%!error.StatusCode%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": ">=",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": 500,
-              "type": "int"
-            }
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 5,
-      "text": "throw %!error%",
-      "lineNumber": 23,
-      "indent": 1,
-      "actions": [
-        {
-          "module": "error",
-          "action": "throw",
-          "parameters": [
-            {
-              "name": "Message",
-              "value": "%!error.Message%",
-              "type": "string"
-            }
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 6,
-      "text": "if %!error.retryCount% > 3 then",
-      "lineNumber": 24,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%!error.retryCount%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": ">",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": 3,
-              "type": "int"
-            }
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 7,
-      "text": "throw error \"Build step failed after 3 retries\"",
-      "lineNumber": 25,
-      "indent": 1,
-      "actions": [
-        {
-          "module": "error",
-          "action": "throw",
-          "parameters": [
-            {
-              "name": "Message",
-              "value": "Build step failed after 3 retries",
-              "type": "string"
-            }
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 8,
-      "text": "write out \"  Retry %!error.retryCount%/3: %!error.Message%\"",
-      "lineNumber": 26,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {
-              "name": "Data",
-              "value": "  Retry %!error.retryCount%/3: %!error.Message%",
-              "type": "string"
-            }
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 9,
-      "text": "call BuildStep",
-      "lineNumber": 27,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "name": "GoalName",
-              "value": {
-                "name": "BuildStep"
-              },
-              "type": "goal.call"
             }
           ]
         }

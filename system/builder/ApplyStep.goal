@@ -8,5 +8,6 @@ ApplyStep
 
 
 HandleValidationError
+- write out "  Validation error: %!error.Message%"
 - set %goal.Steps[stepResult.index].validationError% = %!error%
 - call BuildStep

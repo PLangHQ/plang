@@ -34,14 +34,5 @@ BuildGoal
 
 
 HandleBuildGoalFailure
-- if %!error.StatusCode% = 402 then
-    - throw %!error%
-- if %!error.StatusCode% = 429 then
-    - throw %!error%
-- if %!error.StatusCode% >= 500 then
-    - throw %!error%
-- append %!error% to %goal.errors%
-- if %!error.retryCount% > 3 then
-    - throw %!error%
-- write out "  Retry %!error.retryCount%/3: %!error.Message%"
-- call BuildGoal
+- write out "  Build error: %!error.Message%"
+- throw %!error%

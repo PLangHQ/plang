@@ -274,11 +274,6 @@ public sealed class OpenAiProvider : ILlmProvider
             // --- Custom validation ---
             if (action.OnValidateResponse != null)
             {
-                if (validationRetries >= action.MaxValidationRetries)
-                    return App.Data.@this.FromError(new ActionError(
-                        $"Validation failed after {action.MaxValidationRetries} retries",
-                        "ValidationFailed", 400));
-
                 var validationCall = new GoalCall
                 {
                     Name = action.OnValidateResponse.Name,
@@ -289,12 +284,20 @@ public sealed class OpenAiProvider : ILlmProvider
 
                 if (!validationResult.Success)
                 {
+                    var validationError = validationResult.Error?.Message ?? "Unknown validation error";
+                    Console.WriteLine($"  LLM validation failed: {validationError}");
+
+                    if (validationRetries >= action.MaxValidationRetries)
+                        return App.Data.@this.FromError(new ActionError(
+                            $"LLM validation failed: {validationError}",
+                            "ValidationFailed", 400));
+
                     validationRetries++;
                     messages.Add(new LlmMessage
                     {
                         Role = "user",
                         Text = "Your response failed validation: "
-                               + (validationResult.Error?.Message ?? "Unknown error")
+                               + validationError
                                + "\nPlease fix and try again."
                     });
                     continue; // re-query

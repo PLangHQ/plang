@@ -1,14 +1,11 @@
 {
   "name": "ValidateBuildResponse",
-  "description": "Validates that the LLM build response contains exactly one step per goal step, then validates each returned step via ValidateStep.",
-  "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "if %response.steps.Count% is not %goal.Steps.Count%, throw error \u0027LLM returned %response.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with \u0027- \u0027. Return exactly one result per goal step.\u0027",
+      "text": "if %response.steps.Count% is not %goal.Steps.Count%, throw error 'LLM returned %response.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step.'",
       "lineNumber": 3,
       "indent": 0,
-      "comment": "Validates the LLM build response",
       "actions": [
         {
           "module": "condition",
@@ -17,7 +14,7 @@
             {
               "name": "Left",
               "value": "%response.steps.Count%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -27,54 +24,38 @@
             {
               "name": "Right",
               "value": "%goal.Steps.Count%",
-              "type": "string"
-            },
-            {
-              "name": "GoalIfTrue",
-              "value": {
-                "name": "throw",
-                "type": "goal.call"
-              },
-              "type": "dict\u003Cstring,object\u003E"
-            },
-            {
-              "name": "GoalIfFalse",
-              "value": {
-                "name": "noop",
-                "type": "goal.call"
-              },
-              "type": "dict\u003Cstring,object\u003E"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": {
-                "name": "throw",
-                "type": "goal.call"
-              },
-              "type": "dict\u003Cstring,object\u003E"
+              "type": "object"
             }
-          ],
-          "return": null,
-          "defaults": null
+          ]
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 1,
+      "text": "throw error 'LLM returned %response.steps.Count% steps but goal has %goal.Steps.Count% steps'",
+      "lineNumber": 3,
+      "indent": 1,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "LLM returned %response.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step.",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
       "text": "foreach %response.steps%, call ValidateStep, item=%step%",
       "lineNumber": 4,
       "indent": 0,
-      "comment": null,
       "actions": [
         {
           "module": "loop",
@@ -88,14 +69,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ValidateStep",
-                "parameters": [
-                  {
-                    "name": "item",
-                    "value": "%step%",
-                    "type": "object"
-                  }
-                ]
+                "name": "ValidateStep"
               },
               "type": "goal.call"
             },
@@ -104,72 +78,84 @@
               "value": "step",
               "type": "string"
             }
-          ],
-          "return": null,
-          "defaults": null
+          ]
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [
     {
       "name": "ValidateStep",
-      "description": null,
-      "comment": null,
       "steps": [
         {
           "index": 0,
           "text": "if %step.actions% is empty",
           "lineNumber": 8,
           "indent": 0,
-          "comment": "Validates a single step from the LLM response",
-          "actions": [],
-          "intent": null,
-          "onError": null,
-          "cache": null,
-          "timeout": null,
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%step.actions%",
+                  "type": "object"
+                },
+                {
+                  "name": "Operator",
+                  "value": "isEmpty",
+                  "type": "string"
+                },
+                {
+                  "name": "Right",
+                  "value": null,
+                  "type": "object"
+                }
+              ]
+            }
+          ],
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "throw error \u0027Step at index %step.index% has no actions. Every step must include actions with module and action filled in.\u0027",
+          "text": "throw error 'Step at index %step.index% has no actions. Every step must include actions with module and action filled in.'",
           "lineNumber": 9,
           "indent": 1,
-          "comment": null,
-          "actions": [],
-          "intent": null,
-          "onError": null,
-          "cache": null,
-          "timeout": null,
+          "actions": [
+            {
+              "module": "error",
+              "action": "throw",
+              "parameters": [
+                {
+                  "name": "Message",
+                  "value": "Step at index %step.index% has no actions. Every step must include actions with module and action filled in.",
+                  "type": "string"
+                }
+              ]
+            }
+          ],
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/workspace/plang/PlangConsole/bin/Debug/net10.0/system/builder/ValidateBuildResponse.goal",
-      "prPath": "/workspace/plang/PlangConsole/bin/Debug/net10.0/system/builder/.build/validatebuildresponse.pr",
-      "hash": "4f4ed8e4f47fe5fddacf06b9a7d0c89a28731b2a5948adc90cf2ea4aa6fd8afb",
-      "builderVersion": null,
+      "path": "/system/builder/ValidateBuildResponse.goal",
+      "prPath": "/system/builder/.build/validatebuildresponse.pr",
+      "hash": "",
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
-      "isTest": false,
-      "inputParameters": null
+      "isSystem": true,
+      "isTest": false
     }
   ],
   "visibility": 1,
-  "path": "/workspace/plang/PlangConsole/bin/Debug/net10.0/system/builder/ValidateBuildResponse.goal",
-  "prPath": "/workspace/plang/PlangConsole/bin/Debug/net10.0/system/builder/.build/validatebuildresponse.pr",
-  "hash": "b50891bb19eb554fb4759bf7b6040d0aeaa2e48c9ba63ab6c74dcce7a6166306",
-  "builderVersion": "0.3",
+  "path": "/system/builder/ValidateBuildResponse.goal",
+  "prPath": "/system/builder/.build/validatebuildresponse.pr",
+  "hash": "",
   "isSetup": false,
   "isEvent": false,
-  "isSystem": false,
-  "isTest": false,
-  "inputParameters": null
+  "isSystem": true,
+  "isTest": false
 }

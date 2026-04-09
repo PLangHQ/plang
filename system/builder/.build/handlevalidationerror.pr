@@ -3,8 +3,28 @@
   "steps": [
     {
       "index": 0,
+      "text": "write out \"  Validation error: %!error.Message%\"",
+      "lineNumber": 11,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "  Validation error: %!error.Message%",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
       "text": "set %goal.Steps[stepResult.index].validationError% = %!error%",
-      "lineNumber": 15,
+      "lineNumber": 12,
       "indent": 0,
       "actions": [
         {
@@ -21,19 +41,15 @@
               "value": "%!error%",
               "type": "object"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     },
     {
-      "index": 1,
-      "text": "call BuildStep, step=%goal.Steps[stepResult.index]%",
-      "lineNumber": 16,
+      "index": 2,
+      "text": "call BuildStep",
+      "lineNumber": 13,
       "indent": 0,
       "actions": [
         {
@@ -43,20 +59,13 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "BuildStep",
-                "parameters": {
-                  "step": "%goal.Steps[stepResult.index]%"
-                }
+                "name": "BuildStep"
               },
               "type": "goal.call"
             }
-          ],
-          "errors": [],
-          "warnings": []
+          ]
         }
       ],
-      "errors": [],
-      "warnings": [],
       "waitForExecution": true
     }
   ],
@@ -68,8 +77,5 @@
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
-  "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "HandleValidationError"
+  "isTest": false
 }

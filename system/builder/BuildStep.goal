@@ -35,13 +35,5 @@ ThrowActionErrors
 - throw error "Action %action.module%.%action.action% failed for step '%step.Text%': %action.errors%"
 
 HandleBuildStepFailure
-- if %!error.StatusCode% = 402 then
-    - throw %!error%
-- if %!error.StatusCode% = 429 then
-    - throw %!error%
-- if %!error.StatusCode% >= 500 then
-    - throw %!error%
-- if %!error.retryCount% > 3 then
-    - throw error "Build step failed after 3 retries"
-- write out "  Retry %!error.retryCount%/3: %!error.Message%"
-- call BuildStep
+- write out "  Build step error: %!error.Message%"
+- throw %!error%

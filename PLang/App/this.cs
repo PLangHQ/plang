@@ -379,11 +379,12 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         context ??= System.Context;
         CurrentActor = System;
 
-        // Building → PLang builder
+        // Building → PLang builder (runs as User — user is building their code)
         if (Building.IsEnabled)
         {
+            CurrentActor = User;
             var buildCall = new GoalCall { Name = "Build", PrPath = "/system/builder/.build/build.pr" };
-            return await RunGoalAsync(buildCall, context);
+            return await RunGoalAsync(buildCall, User.Context);
         }
 
         // Resolve goal file
