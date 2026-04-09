@@ -154,13 +154,31 @@ Group 3: [step 2, step 5] → validation failures → one LLM call with error co
 - **Confidence feeds evals** — track which modules/patterns produce low confidence
 - **Validation errors grouped** — the LLM can learn from one error to fix related ones
 
-### Open Questions
+### Decisions
 
-- Should `formalized` be stored in the `.pr` file? (Pro: documentation and eval. Con: extra weight in every .pr)
-- How does `%__data__%` (or equivalent) work for chaining action output to `variable.set`? Is it implicit (last action's Data) or explicit?
-- Should groups that share modules be merged? (e.g., a low-confidence file step and a validation-failed file step)
-- Should pass 2 failures go to a pass 3, or surface as build errors?
-- Does the formalization syntax need to be standardized, or is it free-form as long as it names modules?
+- **`formalized` is stored in the .pr file.** The `.pr` file is runtime-independent bytecode — like IL or JVM bytecode. The underlying runtime engine can be in any language (currently C#). The formalization is part of this portable contract: it tells any runtime what the step *means*, independent of implementation.
+
+- **`%__data__%` is implicit.** The runtime always sets `%__data__%` after each module execution. The pipe `|` in the formalization represents this — there is no explicit wiring needed. Every action can read `%__data__%` to get the previous action's result.
+
+- **Grouping starts simple.** No merging of groups initially (low-confidence and validation-failed stay separate). Once evals are in place, we can experiment with merging and measure the impact.
+
+- **Pass 2 failures get 2 retries, then build error.** On validation failure, the error feeds back to the LLM (onValidation). Two retry attempts max. If it still fails, surface as a build error — don't spiral.
+
+- **Formalization syntax should be standardized.** Since .pr files are portable bytecode, the formalization syntax needs a defined grammar: `module.action [params] | module.action [params]`. This enables any runtime to parse and understand the formalization, and enables structural validation of the formalization itself.
+
+### PR as Portable Bytecode
+
+The .pr file is PLang's equivalent of bytecode. It is:
+- **Runtime-independent** — any language can implement a PLang runtime that reads these files
+- **Builder-produced** — only the LLM builder generates them, never manual editing
+- **Self-describing** — the formalization tells you what the step means, the actions tell you how to execute it
+
+This means standardization of the format — including the formalization syntax and module/action structure — is a first-class concern, not an afterthought.
+
+### Remaining Open Questions
+
+- What is the exact grammar for formalization syntax? (Need to define the formal spec)
+- Should `level` and `confidence` be stored in the `.pr` file, or are they build-time-only metadata?
 
 ---
 
