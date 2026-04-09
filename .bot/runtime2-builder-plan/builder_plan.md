@@ -178,37 +178,9 @@ Group 3: [step 2, step 5] → validation failures → one LLM call with error co
 
 ## Part 2: Eval Strategy
 
-### The Four Layers
+### What We're Building Now: Golden Eval Suite
 
-Building on prior analysis (`.bot/runtime2-plang-test-gaps/coder/v1/builder-improvement-options.md`):
-
-### Layer 1: Structural Validation (Every Build)
-
-**Runs:** Automatically on every build, deterministic, zero LLM cost.
-
-**What it checks** (all from structured .pr JSON, never from step text):
-- Parameter names match the module registry
-- Parameter types are compatible with registry type definitions
-- Required parameters are present
-- No unknown module/action combinations
-- `onError` structure is valid when present
-- Step indices are unique and sequential
-- `path` and `prPath` follow naming conventions
-
-**What it cannot check:**
-- Whether the *right* module was chosen (semantic)
-- Whether parameter *values* are correct (semantic)
-- Whether `onError` *should* be present (intent)
-
-**Feedback loop:** Validation errors feed back into pass 2 (see pipeline redesign above). The LLM self-corrects with concrete error messages.
-
-**Status:** Partially exists (`ValidateActions` checks module.action existence). Needs expansion to cover parameter validation.
-
-### Layer 2: Golden Eval Suite (On-Demand)
-
-**Runs:** After changing builder prompts, before switching LLMs, periodic confidence checks.
-
-**What it is:** A curated set of `.goal` files paired with human-verified `.pr.golden` files. The known-correct answer for each PLang pattern.
+A curated set of `.goal` files paired with human-verified `.pr` output. Build, compare, score. That's it.
 
 **Structure:**
 ```
@@ -219,67 +191,47 @@ Tests/Builder/Evals/
   if-else.goal               → .build/if-else.pr.golden
   goal-call-return.goal      → .build/goal-call-return.pr.golden
   file-read-write.goal       → .build/file-read-write.pr.golden
-  ... (~50-100 files covering all known patterns)
+  ... (start with ~20-30 files, grow from failures)
 ```
+
+**How it works:**
+1. Write a `.goal` file for a PLang pattern
+2. Build it, manually verify the `.pr` output is correct, save as `.golden`
+3. After any builder change, rebuild and compare field-by-field against `.golden`
+4. Report what matched and what didn't
+
+**What we compare per step:**
+- Correct module?
+- Correct action?
+- Parameter names match?
+- Parameter values match?
+- `onError` present/correct when expected?
+- `formalized` array makes sense? (once implemented)
 
 **Metrics:**
 - **Output Accuracy**: proportion of golden files where ALL fields correct
-- **Field Accuracy**: proportion of individual fields correct across all golden files (shows where the LLM struggles)
+- **Field Accuracy**: proportion of individual fields correct (shows where the builder struggles)
 
-**Targets:**
-- Baseline: measure where we are today
-- v0.2: 90% Output Accuracy
-- v0.3: 95%
-- v1.0: 99%+
+**When to run:** After changing builder prompts, before switching LLMs, or when something feels off.
 
-### Layer 3: Consistency Scoring (When Evaluating LLMs)
+The suite grows over time — every failure we discover becomes a new golden test case.
 
-**Runs:** When evaluating a new LLM candidate.
+### Future (When We Need It)
 
-**What it does:** Builds the same `.goal` file N times (5-10), compares outputs against each other. Produces a consistency score (1.0 = identical every time, 0.5 = different half the time).
+These are ideas for later, not now. Documented in detail in `.bot/runtime2-plang-test-gaps/coder/v1/builder-improvement-options.md`.
 
-**Why it matters:** A pattern might match the golden output 80% of the time. Golden tests catch this only if you're unlucky. Consistency scoring catches it by design.
-
-**Cost:** N × LLM calls per pattern. Periodic use only.
-
-### Layer 4: LLM-as-Judge (Semantic Validation)
-
-**Runs:** On-demand for patterns where structural checks aren't sufficient.
-
-**What it does:** A second LLM evaluates whether the builder's output correctly represents the user's intent. Handles multilingual validation (can judge Icelandic, Swedish, etc. steps).
-
-**Cost:** Doubles LLM cost per step. Use selectively.
-
-### Learning from Failures
-
-Every eval run produces data. That data should feed back into the system:
-
-1. **Failure patterns** → New golden test cases (the suite grows from real failures)
-2. **Low-confidence patterns** → Builder prompt improvements
-3. **Consistency drops** → Module documentation improvements (give the LLM better information)
-4. **Field-level accuracy** → Targeted structural validation (if parameters are the weak point, validate parameters harder)
-
-The eval suite is not just a test — it's a learning system.
-
----
-
-## Part 3: Additional Ideas
-
-*This section is for ongoing ideas as we develop the plan.*
-
-<!-- Ingi: add your thoughts here -->
+- **Structural validation expansion** — Expand `ValidateActions` to check parameter names/types, not just module.action existence
+- **Consistency scoring** — Build the same `.goal` N times, measure how much the output varies. For evaluating new LLMs.
+- **LLM-as-judge** — Second LLM validates the first LLM's output. For semantic checks the golden suite can't cover.
 
 ---
 
 ## Implementation Order
 
-1. **This document** — Get alignment on the vision (now)
-2. **Golden eval suite** — Start measuring before we change anything
-3. **Structural validation expansion** — Expand ValidateActions to cover parameters
-4. **Formalization + return removal** — Add formalization phase to builder prompt, remove return from schema
-5. **Pipeline redesign** — Replace needsDetail with level/confidence + grouping
-6. **Consistency scoring** — Build the tooling for LLM evaluation
-7. **LLM-as-judge** — Add semantic validation where needed
+1. **This document** — Get alignment on the vision (done)
+2. **Golden eval suite** — Write ~20-30 `.goal` files, verify `.pr` output, build comparison tool
+3. **Formalization + return removal** — Add formalization phase to builder prompt, remove return from schema
+4. **Pipeline redesign** — Replace needsDetail with level/confidence + grouping
 
 ---
 
