@@ -71,13 +71,14 @@ Start
     cache for 5 minutes
 - if %config.debug% is true
     - write out "debug mode"
+- foreach %config.items%, call ProcessItem item=%item%
 - call Save, on error retry 2 times, then call HandleError
 ```
 
 Response:
 ```json
 {
-  "description": "Calls Greet, reads cached config, conditional debug output, saves with retry.",
+  "description": "Calls Greet, reads cached config, conditional debug output, iterates items, saves with retry.",
   "steps": [
     {
       "index": 0,
@@ -109,6 +110,12 @@ Response:
     },
     {
       "index": 4,
+      "guidance": "loop.foreach iterates collection, goal.call is the loop body — two separate actions, orchestrator runs goal.call per item",
+      "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%config.items%", "type": "object"}, {"name": "ItemName", "value": "item", "type": "string"}]}, {"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "ProcessItem"}, "type": "goal.call"}]}],
+      "level": "high", "confidence": 95
+    },
+    {
+      "index": 5,
       "guidance": "goal.call to Save with retry+goal error handling",
       "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "Save"}, "type": "goal.call"}]}],
       "onError": {"retryCount": 2, "order": "RetryFirst", "goal": {"name": "HandleError"}},

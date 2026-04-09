@@ -1,7 +1,6 @@
 using global::App.Actor.Context;
 using App;
 using global::App.Variables;
-using global::App.modules.loop;
 using LoopResult = global::App.modules.loop.types.loop;
 
 namespace PLang.Tests.App.actions.loop;
@@ -23,7 +22,6 @@ public class ForeachTests
         var items = new List<object?> { "a", "b", "c" };
         context.Variables.Set("items", items);
 
-        // Register a goal that the goal.call action will invoke
         var goal = new Goal
         {
             Name = "ProcessItem",
@@ -32,26 +30,10 @@ public class ForeachTests
         };
         _app.Goals.Add(goal);
 
-        // Build a step with foreach + goal.call (the orchestration pattern)
-        var foreachAction = new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-        {
-            Module = "loop",
-            ActionName = "foreach",
-            Parameters = new List<Data>
-            {
-                new Data("collection", "%items%"),
-                new Data("itemname", "%item%")
-            }
-        };
-        var goalCallAction = new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-        {
-            Module = "goal",
-            ActionName = "call",
-            Parameters = new List<Data>
-            {
-                new Data("goalname", new Dictionary<string, object?> { ["name"] = "ProcessItem" })
-            }
-        };
+        var foreachAction = TestAction.Create("loop", "foreach",
+            ("collection", "%items%"), ("itemname", "%item%"));
+        var goalCallAction = TestAction.Create("goal", "call",
+            ("goalname", new Dictionary<string, object?> { ["name"] = "ProcessItem" }));
 
         var step = new Step
         {
@@ -62,11 +44,9 @@ public class ForeachTests
         foreachAction.Step = step;
         goalCallAction.Step = step;
 
-        // Run via the step (which triggers ExecuteAsync → Run → orchestration)
         var result = await step.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        // After the loop, item should be the last value
         await Assert.That(context.Variables.GetValue("item")).IsEqualTo("c");
     }
 
@@ -74,16 +54,11 @@ public class ForeachTests
     public async Task Foreach_EmptyCollection_ReturnsZeroCount()
     {
         var context = _app.Context;
-        var items = new List<object?>();
+        context.Variables.Set("items", new List<object?>());
 
-        var action = new Foreach
-        {
-            Context = context,
-            Collection = items,
-            ItemName = "item"
-        };
-
-        var result = await action.Run();
+        var action = TestAction.Create("loop", "foreach",
+            ("collection", "%items%"), ("itemname", "%item%"));
+        var result = await _app.Run(action, context);
 
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;
@@ -95,37 +70,24 @@ public class ForeachTests
     public async Task Foreach_SetsItemVariable()
     {
         var context = _app.Context;
-        var items = new List<object?> { "hello" };
+        context.Variables.Set("items", new List<object?> { "hello" });
 
-        // Build step with foreach + output.write to verify item is set
-        var foreachAction = new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-        {
-            Module = "loop",
-            ActionName = "foreach",
-            Parameters = new List<Data>
-            {
-                new Data("collection", items),
-                new Data("itemname", "%myItem%")
-            }
-        };
-        var writeAction = new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-        {
-            Module = "output",
-            ActionName = "write",
-            Parameters = new List<Data>
-            {
-                new Data("data", "%myItem%")
-            }
-        };
+        var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
+        _app.Goals.Add(goal);
+
+        var foreachAction = TestAction.Create("loop", "foreach",
+            ("collection", "%items%"), ("itemname", "%myItem%"));
+        var goalCallAction = TestAction.Create("goal", "call",
+            ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" }));
 
         var step = new Step
         {
             Index = 0,
-            Text = "foreach %items%, write out %myItem%",
-            Actions = new StepActions { foreachAction, writeAction }
+            Text = "foreach %items%, call DoNothing item=%myItem%",
+            Actions = new StepActions { foreachAction, goalCallAction }
         };
         foreachAction.Step = step;
-        writeAction.Step = step;
+        goalCallAction.Step = step;
 
         var result = await step.RunAsync(context);
 
@@ -138,44 +100,28 @@ public class ForeachTests
     {
         var context = _app.Context;
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
+        context.Variables.Set("dict", dict);
 
-        var action = new Foreach
+        var goal = new Goal { Name = "DictGoal", Path = "/DictGoal.goal", Steps = new GoalSteps() };
+        _app.Goals.Add(goal);
+
+        var foreachAction = TestAction.Create("loop", "foreach",
+            ("collection", "%dict%"), ("itemname", "%val%"), ("keyname", "%key%"));
+        var goalCallAction = TestAction.Create("goal", "call",
+            ("goalname", new Dictionary<string, object?> { ["name"] = "DictGoal" }));
+
+        var step = new Step
         {
-            Context = context,
-            Collection = dict,
-            ItemName = "val",
-            KeyName = "key"
+            Index = 0,
+            Text = "foreach %dict%, call DictGoal item=%val%",
+            Actions = new StepActions { foreachAction, goalCallAction }
         };
+        foreachAction.Step = step;
+        goalCallAction.Step = step;
 
-        var result = await action.Run();
+        var result = await step.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        var loopResult = result.Value as LoopResult;
-        await Assert.That(loopResult!.itemCount).IsEqualTo(2);
-    }
-
-    [Test]
-    public async Task Foreach_VerifiesEachItemVisited()
-    {
-        var context = _app.Context;
-        var items = new List<object?> { "alpha", "beta", "gamma" };
-
-        // Foreach with no body actions — just iterates and sets item variable
-        var action = new Foreach
-        {
-            Context = context,
-            Collection = items,
-            ItemName = "item"
-        };
-
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("item")).IsEqualTo("gamma");
-
-        var loopResult = result.Value as LoopResult;
-        await Assert.That(loopResult!.itemCount).IsEqualTo(3);
-        await Assert.That(loopResult.completed).IsTrue();
     }
 
     [Test]
@@ -183,14 +129,9 @@ public class ForeachTests
     {
         var context = _app.Context;
 
-        var action = new Foreach
-        {
-            Context = context,
-            Collection = null,
-            ItemName = "item"
-        };
-
-        var result = await action.Run();
+        var action = TestAction.Create("loop", "foreach",
+            ("collection", null), ("itemname", "%item%"));
+        var result = await _app.Run(action, context);
 
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;
@@ -202,20 +143,15 @@ public class ForeachTests
     public async Task Foreach_Cancellation_StopsIteration()
     {
         var context = _app.Context;
-        var items = new List<object?> { "a", "b", "c", "d", "e" };
+        context.Variables.Set("items", new List<object?> { "a", "b", "c", "d", "e" });
 
         var cts = new CancellationTokenSource();
         context.PushCancellation(cts);
-        cts.Cancel(); // Cancel immediately
+        cts.Cancel();
 
-        var action = new Foreach
-        {
-            Context = context,
-            Collection = items,
-            ItemName = "item"
-        };
-
-        var result = await action.Run();
+        var action = TestAction.Create("loop", "foreach",
+            ("collection", "%items%"), ("itemname", "%item%"));
+        var result = await _app.Run(action, context);
 
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;

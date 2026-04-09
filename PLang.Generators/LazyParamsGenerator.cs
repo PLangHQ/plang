@@ -299,7 +299,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
             sb.AppendLine($"    public partial {prop.TypeName} {prop.Name}");
             sb.AppendLine("    {");
-            sb.AppendLine($"        get => {setFlag} ? {backingField}! : {resolveExpr};");
+            sb.AppendLine($"        get {{ if (!{setFlag}) {{ {backingField} = {resolveExpr}; {setFlag} = true; }} return {backingField}!; }}");
             sb.AppendLine($"        init {{ {backingField} = value; {setFlag} = true; }}");
             sb.AppendLine("    }");
             sb.AppendLine();
