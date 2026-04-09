@@ -185,14 +185,112 @@ A curated set of `.goal` files paired with human-verified `.pr` output. Build, c
 **Structure:**
 ```
 Tests/Builder/Evals/
-  variable-set.goal          → .build/variable-set.pr.golden
-  on-error-call.goal         → .build/on-error-call.pr.golden
-  foreach-call.goal          → .build/foreach-call.pr.golden
-  if-else.goal               → .build/if-else.pr.golden
-  goal-call-return.goal      → .build/goal-call-return.pr.golden
-  file-read-write.goal       → .build/file-read-write.pr.golden
-  ... (start with ~20-30 files, grow from failures)
+  {pattern-name}.goal        → build → .build/{name}.pr → verify → save as .golden
 ```
+
+### Eval Catalogue
+
+Each eval is one `.goal` file testing one builder pattern. The step text column shows exactly what the PLang developer writes. The expected mapping column shows what the builder should produce.
+
+#### Core: Variable Module
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 1 | `variable-set-string` | `set %name% = "hello"` | `variable.set` name=%name%, value="hello", type=string |
+| 2 | `variable-set-number` | `set %count% = 42` | `variable.set` name=%count%, value=42, type=int |
+| 3 | `variable-set-json` | `set %user% = {name:"john", age:20}` | `variable.set` name=%user%, value={...}, type=object |
+| 4 | `variable-set-list` | `set %items% = ["a", "b", "c"]` | `variable.set` name=%items%, value=[...], type=list |
+
+#### Core: Output Module
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 5 | `output-write` | `write out "hello world"` | `output.write` content="hello world" |
+| 6 | `output-write-var` | `write out %message%` | `output.write` content=%message% |
+
+#### Core: File Module
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 7 | `file-save` | `save "hello world" to file 'test.txt'` | `file.save` content="hello world", path=test.txt |
+| 8 | `file-read` | `read file 'test.txt', write to %content%` | `file.read` path=test.txt → return %content% |
+| 9 | `file-exists` | `check if file 'test.txt' exists, write to %info%` | `file.exists` path=test.txt → return %info% |
+| 10 | `file-copy` | `copy file 'source.txt' to 'dest.txt'` | `file.copy` source=source.txt, destination=dest.txt |
+| 11 | `file-move` | `move file 'old.txt' to 'new.txt'` | `file.move` source=old.txt, destination=new.txt |
+| 12 | `file-delete` | `delete file 'test.txt'` | `file.delete` path=test.txt |
+| 13 | `file-list` | `list files in '.', write to %files%` | `file.list` path=. → return %files% |
+
+#### Core: Condition Module
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 14 | `condition-equals` | `if %x% == 5, call WhenEqual` | `condition.if` left=%x%, operator===, right=5, goalIfTrue=WhenEqual |
+| 15 | `condition-greater` | `if %x% > 10, call WhenBig` | `condition.if` left=%x%, operator=>, right=10, goalIfTrue=WhenBig |
+| 16 | `condition-contains` | `if %text% contains "hello", call Found` | `condition.if` left=%text%, operator=contains, right="hello", goalIfTrue=Found |
+| 17 | `condition-else` | `if %x% > 5, call WhenBig, else call WhenSmall` | `condition.if` left=%x%, operator=>, right=5, goalIfTrue=WhenBig, goalIfFalse=WhenSmall |
+| 18 | `condition-substeps` | `if %ready% is true` (with indented steps below) | `condition.if` left=%ready%, operator===, right=true (sub-steps execute via __condition__) |
+
+#### Core: Goal Module
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 19 | `goal-call` | `call ProcessData` | `goal.call` name=ProcessData |
+| 20 | `goal-call-return` | `call ComputeAnswer, write to %answer%` | `goal.call` name=ComputeAnswer → return %answer% |
+| 21 | `goal-call-params` | `call SendEmail to=%email%, subject="hi"` | `goal.call` name=SendEmail, parameters=[to=%email%, subject="hi"] |
+
+#### Core: Loop Module
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 22 | `loop-foreach` | `foreach %items%, call ProcessItem item=%item%` | `loop.foreach` list=%items%, goal=ProcessItem, item=%item% |
+| 23 | `loop-foreach-empty` | `foreach %empty%, call DoThing item=%item%` | `loop.foreach` list=%empty%, goal=DoThing, item=%item% |
+
+#### Core: Math Module
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 24 | `math-add` | `add 5 and 3, write to %sum%` | `math.add` a=5, b=3 → return %sum% |
+| 25 | `math-divide` | `divide 10 by 4, write to %result%` | `math.divide` a=10, b=4 → return %result% |
+| 26 | `math-round` | `round 3.14159 to 2 decimal places, write to %rounded%` | `math.round` value=3.14159, decimals=2 → return %rounded% |
+
+#### Error Handling (Step Modifiers)
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 27 | `error-call` | `call DoWork, on error call HandleError` | `goal.call` name=DoWork + onError.goal=HandleError |
+| 28 | `error-retry` | `call DoWork, on error retry 3 times` | `goal.call` name=DoWork + onError.retryCount=3 |
+| 29 | `error-retry-call` | `call DoWork, on error retry 2 times, then call HandleError` | `goal.call` + onError.retryCount=2, onError.goal=HandleError |
+| 30 | `error-ignore` | `call DoWork, on error ignore` | `goal.call` + onError.ignoreError=true |
+
+#### Multilingual (Builder Must Handle Any Language)
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 31 | `error-icelandic` | `call DoWork, a villu kalla i HandleError` | `goal.call` + onError.goal=HandleError |
+| 32 | `error-japanese` | `call DoWork, エラー時に HandleError を呼ぶ` | `goal.call` + onError.goal=HandleError |
+
+#### Convert Module
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 33 | `convert-tojson` | `convert %data% to json, write to %json%` | `convert.toJson` value=%data% → return %json% |
+| 34 | `convert-fromjson` | `convert %json% from json, write to %obj%` | `convert.fromJson` value=%json% → return %obj% |
+
+#### List Module
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 35 | `list-add` | `add "item" to %myList%` | `list.add` list=%myList%, value="item" |
+| 36 | `list-count` | `get count of %myList%, write to %total%` | `list.count` list=%myList% → return %total% |
+
+#### Cache (Step Modifier)
+
+| # | Eval name | Step text | Expected mapping |
+|---|-----------|-----------|-----------------|
+| 37 | `cache-simple` | `read file 'config.txt', cache for 5 minutes` | `file.read` + cache.durationSeconds=300 |
+| 38 | `cache-sliding` | `read file 'config.txt', cache for 10 minutes sliding` | `file.read` + cache.durationSeconds=600, cache.sliding=true |
+
+**Total: 38 eval cases** covering all current Runtime2 modules, error handling, caching, and multilingual support. The suite grows from failures — every builder bug we find becomes a new eval.
 
 **How it works:**
 1. Write a `.goal` file for a PLang pattern
