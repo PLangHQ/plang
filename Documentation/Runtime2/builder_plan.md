@@ -62,7 +62,7 @@ The `|` (pipe) indicates module boundaries — when a step involves multiple mod
 **Why formalization matters:**
 - Forces the LLM to decompose multi-module steps explicitly
 - Creates an evaluatable intermediate representation (we can check formalization independently of actions)
-- Makes data flow visible — where does the output go?
+- Makes data flow visible — you can see exactly where each output goes
 - Serves as human-readable documentation if stored in the `.pr` file
 
 #### Phase 2: Actions (no more `return`)
