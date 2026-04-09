@@ -204,3 +204,14 @@ Indented steps (sub-steps) default to NOT executing. They must be "proven true" 
 3. **Unknown numeric type** → falls back to `decimal` (the widest), not `byte`
 
 This prevents `InvalidCastException` when comparing `int` vs `long` (a common JSON deserialization mismatch). The `ContainsElement` helper applies the same normalization per-element for collection `contains`/`in` checks.
+
+---
+
+## .pr Files as Portable Bytecode
+
+The `.pr` file is PLang's equivalent of bytecode (like IL or JVM bytecode). It is:
+- **Runtime-independent** — any language can implement a PLang runtime that reads `.pr` files. The current runtime is C#, but nothing in the `.pr` format depends on that.
+- **Builder-produced** — only the LLM builder generates `.pr` files, never manual editing.
+- **Self-describing** — the module/action structure and (future) formalization tell any runtime what each step means and how to execute it.
+
+Standardization of the `.pr` format — module structure, action schema, parameter types — is a first-class concern because portability depends on it.
