@@ -1,10 +1,12 @@
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using App.Actor.Context;
 using App.Settings;
 using App.Errors;
 using App.Variables;
 using App.modules;
 using Goal = App.Goals.Goal.@this;
-using System.Globalization;
 
 namespace App;
 
@@ -28,31 +30,31 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// <summary>
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
     /// </summary>
-    [global::System.Text.Json.Serialization.JsonPropertyName("id")]
+    [JsonPropertyName("id")]
     public string Id { get; set; }
 
     /// <summary>
     /// Name of this app.
     /// </summary>
-    [global::System.Text.Json.Serialization.JsonPropertyName("name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; }
 
     /// <summary>
     /// When the app was first created.
     /// </summary>
-    [global::System.Text.Json.Serialization.JsonPropertyName("created")]
+    [JsonPropertyName("created")]
     public DateTime Created { get; set; }
 
     /// <summary>
     /// When the app was last updated.
     /// </summary>
-    [global::System.Text.Json.Serialization.JsonPropertyName("updated")]
+    [JsonPropertyName("updated")]
     public DateTime Updated { get; set; }
 
     /// <summary>
     /// Version of the builder used.
     /// </summary>
-    [global::System.Text.Json.Serialization.JsonPropertyName("version")]
+    [JsonPropertyName("version")]
     public string? Version { get; set; }
 
     /// <summary>
@@ -297,7 +299,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         if (string.IsNullOrWhiteSpace(json)) return;
         try
         {
-            using var doc = global::System.Text.Json.JsonDocument.Parse(json);
+            using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
             if (root.TryGetProperty("id", out var idProp)) Id = idProp.GetString() ?? Id;
             if (root.TryGetProperty("name", out var nameProp)) Name = nameProp.GetString() ?? Name;
@@ -305,7 +307,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
             if (root.TryGetProperty("updated", out var updatedProp) && updatedProp.TryGetDateTime(out var updated)) Updated = updated;
             if (root.TryGetProperty("version", out var versionProp)) Version = versionProp.GetString();
         }
-        catch (global::System.Text.Json.JsonException) { /* corrupt app.pr — keep generated identity */ }
+        catch (JsonException) { /* corrupt app.pr — keep generated identity */ }
     }
 
     /// <summary>
@@ -315,7 +317,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     {
         Updated = DateTime.UtcNow;
         if (Created == default) Created = Updated;
-        var json = global::System.Text.Json.JsonSerializer.Serialize(
+        var json = JsonSerializer.Serialize(
             new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
             Utils.Json.CamelCaseIndented);
         var path = FileSystem.ValidatePath(".build/app.pr");

@@ -15,7 +15,7 @@ public class DefaultBuilderProvider : IBuilderProvider
     private static Data.@this? BuildingGuard(IContext action)
     {
         if (!action.Context.App.Building.IsEnabled)
-            return global::App.Data.@this.FromError(new Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
+            return Data.@this.FromError(new Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
         return null;
     }
 
@@ -26,7 +26,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return Task.FromResult(guard);
 
-        return Task.FromResult(global::App.Data.@this.Ok(action.Context.App.Modules.Describe()));
+        return Task.FromResult(Data.@this.Ok(action.Context.App.Modules.Describe()));
     }
 
     // --- Types ---
@@ -40,7 +40,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var schemas = TypeMapping.GetComplexTypeSchemas();
         var schemaLines = schemas.Select(kvp => $"  {kvp.Key}: {kvp.Value}");
 
-        return global::App.Data.@this.Ok(new BuilderTypeInfo(
+        return Data.@this.Ok(new BuilderTypeInfo(
             string.Join(", ", names),
             string.Join("\n", schemaLines)));
     }
@@ -69,7 +69,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var files = listResult.Value as FileSystem.Path[];
         if (files == null || files.Length == 0)
-            return global::App.Data.@this.Ok(new List<Goal>());
+            return Data.@this.Ok(new List<Goal>());
 
         // Filter by app.Building.Files if set (--build={"files":"test.goal"})
         var buildFiles = app.Building.Files;
@@ -84,7 +84,7 @@ public class DefaultBuilderProvider : IBuilderProvider
                     || f.Relative.EndsWith(bf.Relative, StringComparison.OrdinalIgnoreCase)))
                 .ToArray();
             if (files.Length == 0)
-                return global::App.Data.@this.Ok(new List<Goal>());
+                return Data.@this.Ok(new List<Goal>());
         }
 
         var allGoals = new List<Goal>();
@@ -120,7 +120,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             allGoals.Add(goal);
         }
 
-        var result = global::App.Data.@this.Ok(allGoals);
+        var result = Data.@this.Ok(allGoals);
         if (allErrors.Count > 0)
             result.Warnings = allErrors;
         return result;
@@ -147,7 +147,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var prPath = goal.PrPath;
         if (string.IsNullOrEmpty(prPath))
-            return global::App.Data.@this.FromError(new Errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
+            return Data.@this.FromError(new Errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
 
         var json = JsonSerializer.Serialize(goal, Json.PrWrite);
 
@@ -158,7 +158,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             Value = new Data.@this("", json)
         };
         var saveResult = await app.RunAction(saveAction, context);
-        return saveResult.Success ? global::App.Data.@this.Ok(true) : saveResult;
+        return saveResult.Success ? Data.@this.Ok(true) : saveResult;
     }
 
     // --- Validate ---
@@ -173,7 +173,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var modules = app.Modules;
 
         if (action.Actions == null || action.Actions.Count == 0)
-            return global::App.Data.@this.Ok(true);
+            return Data.@this.Ok(true);
 
         var notFound = new List<string>();
         foreach (var a in action.Actions)
@@ -183,7 +183,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         }
 
         if (notFound.Count > 0)
-            return global::App.Data.@this.FromError(new Errors.ActionError(
+            return Data.@this.FromError(new Errors.ActionError(
                 $"Actions not found: {string.Join(", ", notFound)}", "ActionNotFound", 400));
 
         await ResolveGoalCallPaths(action.Actions, app, context);
@@ -197,7 +197,7 @@ public class DefaultBuilderProvider : IBuilderProvider
             a.Defaults = modules.GetDefaults(a.Module, a.ActionName, paramNames);
         }
 
-        return global::App.Data.@this.Ok(true);
+        return Data.@this.Ok(true);
     }
 
     // --- Merge ---
@@ -208,7 +208,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (guard != null) return guard;
 
         action.Step.Merge(action.StepFromLlm);
-        return global::App.Data.@this.Ok(action.Step);
+        return Data.@this.Ok(action.Step);
     }
 
     // --- App ---
@@ -220,7 +220,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var app = action.Context.App;
         // App loads its identity from app.pr at Start() — just return it
-        return global::App.Data.@this.Ok(app);
+        return Data.@this.Ok(app);
     }
 
     public async Task<Data.@this> AppSave(appSave action)

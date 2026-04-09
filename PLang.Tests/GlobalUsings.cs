@@ -44,6 +44,8 @@ global using TString = global::App.Data.TString;
 global using Variables = App.Variables.@this;
 
 // FileSystem types
+global using FileSystem = App.FileSystem;
+global using PLangFileSystem = App.FileSystem.Default.PLangFileSystem;
 
 // Type system
 global using EngineTypes = App.Types.@this;

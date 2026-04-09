@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using App.Attributes;
+using App.Events;
 using App.modules;
 using App.Utils;
 namespace App.Goals.Goal;
@@ -235,7 +236,7 @@ public sealed partial class @this : Data.@this<@this>
         var lifecycle = context.LifecycleFor(this);
 
         // BeforeGoal events
-        var beforeResult = await lifecycle.Before.Run(context, global::App.Events.EventType.BeforeGoal);
+        var beforeResult = await lifecycle.Before.Run(context, EventType.BeforeGoal);
         if (!beforeResult.Success) { context.Goal = previousGoal; return beforeResult; }
         if (beforeResult.Handled) { context.Goal = previousGoal; return beforeResult; }
 
@@ -252,7 +253,7 @@ public sealed partial class @this : Data.@this<@this>
             }
 
             // AfterGoal events
-            var afterResult = await lifecycle.After.Run(context, global::App.Events.EventType.AfterGoal);
+            var afterResult = await lifecycle.After.Run(context, EventType.AfterGoal);
             if (!afterResult.Success) return afterResult;
 
             return result;
