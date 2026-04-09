@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using App.Utils;
 using System.Text.Json;
 using App.Goals.Goal;
@@ -11,6 +12,8 @@ public class DefaultBuilderProvider : IBuilderProvider
 {
     public string Name => "default";
     public bool IsDefault { get; set; }
+
+    private static readonly Stopwatch _buildTimer = new();
 
     private static Data.@this? BuildingGuard(IContext action)
     {
@@ -120,6 +123,8 @@ public class DefaultBuilderProvider : IBuilderProvider
             allGoals.Add(goal);
         }
 
+        _buildTimer.Restart();
+
         var result = Data.@this.Ok(allGoals);
         if (allErrors.Count > 0)
             result.Warnings = allErrors;
@@ -158,6 +163,11 @@ public class DefaultBuilderProvider : IBuilderProvider
             Value = new Data.@this("", json)
         };
         var saveResult = await app.RunAction(saveAction, context);
+
+        var elapsed = _buildTimer.Elapsed;
+        Console.WriteLine($"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s)");
+        _buildTimer.Restart();
+
         return saveResult.Success ? Data.@this.Ok(true) : saveResult;
     }
 

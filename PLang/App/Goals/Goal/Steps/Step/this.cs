@@ -174,7 +174,7 @@ public sealed partial class @this : Data.@this<@this>
         {
             context.CancellationToken.ThrowIfCancellationRequested();
             result = await action.RunAsync(context);
-            if (!result.Success) break;
+            if (!result.Success || result.Handled) break;
         }
         return result;
     }

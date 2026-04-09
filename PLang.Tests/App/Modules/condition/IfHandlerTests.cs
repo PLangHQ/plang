@@ -4,6 +4,7 @@ using global::App.Variables;
 using global::App.modules.condition;
 using global::App.FileSystem;
 using global::App.FileSystem.Default;
+using Action = global::App.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace PLang.Tests.App.Modules.condition;
 
@@ -59,7 +60,7 @@ public class IfHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task Run_ConditionTrue_GoalIfTrue_CallsGoal()
+    public async Task Run_ConditionTrue_OrchestrateThenBranch()
     {
         var captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new Channel(
@@ -67,42 +68,31 @@ public class IfHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
-        var trueGoal = new Goal
+        // Build a step with: condition.if, then output.write
+        var condAction = new Action
         {
-            Name = "TrueBranch",
-            Path = "/TrueBranch.goal",
-            Steps = new GoalSteps
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
             {
-                new Step
-                {
-                    Index = 0,
-                    Text = "write true branch",
-                    Actions = new StepActions
-                    {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "output",
-                            ActionName = "write",
-                            Parameters = new List<Data> { new Data("Data", "true-branch") }
-                        }
-                    }
-                }
+                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
             }
         };
-        _app.Goals.Add(trueGoal);
-
-        var action = new If
+        var thenAction = new Action
         {
-            Context = _app.Context,
-            Left = Data.Ok(true),
-            Operator = "==",
-            Right = Data.Ok(true),
-            GoalIfTrue = new GoalCall { Name = "TrueBranch" }
+            Module = "output", ActionName = "write",
+            Parameters = new List<Data> { new Data("Data", "true-branch") }
         };
-        var result = await action.Run();
+
+        var step = new Step
+        {
+            Index = 0, Text = "if true, write true-branch",
+            Actions = new StepActions { condAction, thenAction }
+        };
+        condAction.Step = step;
+
+        var result = await step.RunAsync(_app.Context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo(true);
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
@@ -110,7 +100,7 @@ public class IfHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task Run_ConditionFalse_GoalIfFalse_CallsGoal()
+    public async Task Run_ConditionFalse_SkipsThenBranch()
     {
         var captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new Channel(
@@ -118,46 +108,141 @@ public class IfHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
-        var falseGoal = new Goal
+        var condAction = new Action
         {
-            Name = "FalseBranch",
-            Path = "/FalseBranch.goal",
-            Steps = new GoalSteps
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
             {
-                new Step
-                {
-                    Index = 0,
-                    Text = "write false branch",
-                    Actions = new StepActions
-                    {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "output",
-                            ActionName = "write",
-                            Parameters = new List<Data> { new Data("Data", "false-branch") }
-                        }
-                    }
-                }
+                new Data("Left", false), new Data("Operator", "=="), new Data("Right", true)
             }
         };
-        _app.Goals.Add(falseGoal);
-
-        var action = new If
+        var thenAction = new Action
         {
-            Context = _app.Context,
-            Left = Data.Ok(false),
-            Operator = "==",
-            Right = Data.Ok(true),
-            GoalIfFalse = new GoalCall { Name = "FalseBranch" }
+            Module = "output", ActionName = "write",
+            Parameters = new List<Data> { new Data("Data", "should-not-appear") }
         };
-        var result = await action.Run();
+
+        var step = new Step
+        {
+            Index = 0, Text = "if false, write (should skip)",
+            Actions = new StepActions { condAction, thenAction }
+        };
+        condAction.Step = step;
+
+        var result = await step.RunAsync(_app.Context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo(false);
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("false-branch" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("");
+    }
+
+    [Test]
+    public async Task Run_IfElse_TrueRunsThen()
+    {
+        var captureStream = new System.IO.MemoryStream();
+        _app.User.Channels.Register(new Channel(
+            EngineChannels.Default, captureStream,
+            ChannelDirection.Output, ownsStream: true)
+        { ContentType = "text/plain" });
+
+        // if true → write "then", else → write "else"
+        var condAction = new Action
+        {
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
+            {
+                new Data("Left", 10), new Data("Operator", ">"), new Data("Right", 5)
+            }
+        };
+        var thenAction = new Action
+        {
+            Module = "output", ActionName = "write",
+            Parameters = new List<Data> { new Data("Data", "then-branch") }
+        };
+        var elseCondAction = new Action
+        {
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
+            {
+                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
+            }
+        };
+        var elseAction = new Action
+        {
+            Module = "output", ActionName = "write",
+            Parameters = new List<Data> { new Data("Data", "else-branch") }
+        };
+
+        var step = new Step
+        {
+            Index = 0, Text = "if x > 5 write then, else write else",
+            Actions = new StepActions { condAction, thenAction, elseCondAction, elseAction }
+        };
+        condAction.Step = step;
+
+        var result = await step.RunAsync(_app.Context);
+
+        await Assert.That(result.Success).IsTrue();
+
+        captureStream.Position = 0;
+        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+        await Assert.That(output).IsEqualTo("then-branch" + System.Environment.NewLine);
+    }
+
+    [Test]
+    public async Task Run_IfElse_FalseRunsElse()
+    {
+        var captureStream = new System.IO.MemoryStream();
+        _app.User.Channels.Register(new Channel(
+            EngineChannels.Default, captureStream,
+            ChannelDirection.Output, ownsStream: true)
+        { ContentType = "text/plain" });
+
+        // if false → skip then, else always true → write "else"
+        var condAction = new Action
+        {
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
+            {
+                new Data("Left", 3), new Data("Operator", ">"), new Data("Right", 5)
+            }
+        };
+        var thenAction = new Action
+        {
+            Module = "output", ActionName = "write",
+            Parameters = new List<Data> { new Data("Data", "then-branch") }
+        };
+        // "else" is a condition that's always true
+        var elseCondAction = new Action
+        {
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
+            {
+                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
+            }
+        };
+        var elseAction = new Action
+        {
+            Module = "output", ActionName = "write",
+            Parameters = new List<Data> { new Data("Data", "else-branch") }
+        };
+
+        var step = new Step
+        {
+            Index = 0, Text = "if x > 5 write then, else write else",
+            Actions = new StepActions { condAction, thenAction, elseCondAction, elseAction }
+        };
+        condAction.Step = step;
+
+        var result = await step.RunAsync(_app.Context);
+
+        await Assert.That(result.Success).IsTrue();
+
+        captureStream.Position = 0;
+        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+        await Assert.That(output).IsEqualTo("else-branch" + System.Environment.NewLine);
     }
 
     [Test]
@@ -203,23 +288,6 @@ public class IfHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task Run_GoalExecutionFails_PropagatesError()
-    {
-        var action = new If
-        {
-            Context = _app.Context,
-            Left = Data.Ok(true),
-            Operator = "==",
-            Right = Data.Ok(true),
-            GoalIfTrue = new GoalCall { Name = "NonExistentGoal" }
-        };
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
-    }
-
-    [Test]
     public async Task Run_Negate_FlipsTrue_ToFalse()
     {
         var action = new If { Context = _app.Context, Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5), Negate = true };
@@ -245,7 +313,6 @@ public class IfHandlerTests : IDisposable
     public async Task IsTruthy_DataWithToBooleanTrue_ReturnsTrue()
     {
         var data = new TestData(true);
-
         await Assert.That(Operator.IsTruthy(data)).IsTrue();
     }
 
@@ -253,7 +320,6 @@ public class IfHandlerTests : IDisposable
     public async Task IsTruthy_DataWithToBooleanFalse_ReturnsFalse()
     {
         var data = new TestData(false);
-
         await Assert.That(Operator.IsTruthy(data)).IsFalse();
     }
 
@@ -277,58 +343,6 @@ public class IfHandlerTests : IDisposable
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo(false);
-    }
-
-    [Test]
-    public async Task Run_Negate_IsEmpty_CallsGoalWhenNotEmpty()
-    {
-        var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new Channel(
-            EngineChannels.Default, captureStream,
-            ChannelDirection.Output, ownsStream: true)
-        { ContentType = "text/plain" });
-
-        var goal = new Goal
-        {
-            Name = "NotEmptyBranch",
-            Path = "/NotEmptyBranch.goal",
-            Steps = new GoalSteps
-            {
-                new Step
-                {
-                    Index = 0,
-                    Text = "write not empty",
-                    Actions = new StepActions
-                    {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "output",
-                            ActionName = "write",
-                            Parameters = new List<Data> { new Data("Data", "not-empty") }
-                        }
-                    }
-                }
-            }
-        };
-        _app.Goals.Add(goal);
-
-        var list = new List<string> { "item1" };
-        var action = new If
-        {
-            Context = _app.Context,
-            Left = Data.Ok(list),
-            Operator = "isempty",
-            Negate = true,
-            GoalIfTrue = new GoalCall { Name = "NotEmptyBranch" }
-        };
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo(true);
-
-        captureStream.Position = 0;
-        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("not-empty" + System.Environment.NewLine);
     }
 
     [Test]

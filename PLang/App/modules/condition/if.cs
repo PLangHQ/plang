@@ -1,21 +1,19 @@
 using App;
 using App.Variables;
 using App.modules.condition.providers;
+using Action = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace App.modules.condition;
 
-[Example("if %count% > 0, call ProcessItems", "Left=%count%, Operator=>, Right=0, GoalIfTrue=ProcessItems")]
-[Example("if %isAdmin%, call ShowAdminPanel, else call ShowUserPanel", "Left=%isAdmin%, Operator===, Right=true, GoalIfTrue=ShowAdminPanel, GoalIfFalse=ShowUserPanel")]
-[Example("if not %flag%, call HandleFalse", "Left=%flag%, Operator===, Right=true, Negate=true, GoalIfTrue=HandleFalse")]
+[Example("if %count% > 0\n    - call ProcessItems", "Left=%count%, Operator=>, Right=0")]
 [Example("if %name% equals 'Alice'\n    - write 'Hello Alice'", "Left=%name%, Operator===, Right=Alice")]
+[Example("if %x% > 5 set %b% = 4, else set %b% = 0", "Left=%x%, Operator=>, Right=5 (condition orchestrates then/else actions in same step)")]
 [Action("if")]
 public partial class If : IContext, IStep
 {
     public partial Data.@this? Left { get; init; }
     public partial Operator Operator { get; init; }
     public partial Data.@this? Right { get; init; }
-    public partial GoalCall? GoalIfTrue { get; init; }
-    public partial GoalCall? GoalIfFalse { get; init; }
     [Default(false)]
     public partial bool Negate { get; init; }
 
@@ -29,15 +27,11 @@ public partial class If : IContext, IStep
 
         var conditionResult = evalResult.Value is true;
         if (Negate) conditionResult = !conditionResult;
-        evalResult = Data(conditionResult);
 
         // Mark indented sub-steps: disabled when false, clean when true
-        // Step comes from IStep capability (action.Step = the user step being executed)
         var userStep = Step;
         if (userStep?.Goal != null)
         {
-            // Use system context for disabled flags — the GoalSteps enumerator
-            // runs on system context (run.pr iterates steps)
             var disableContext = Context.App!.System.Context;
             var steps = userStep.Goal.Steps;
             for (int i = userStep.Index + 1; i < steps.Count; i++)
@@ -48,13 +42,112 @@ public partial class If : IContext, IStep
             }
         }
 
-        var goalToCall = conditionResult ? GoalIfTrue : GoalIfFalse;
-        if (goalToCall != null)
+        // Orchestrate if/elseif/else when there are multiple actions in this step
+        var actions = userStep?.Actions;
+        var alreadyOrchestrating = Context.Variables.Get("__condition_orchestrating__")?.Value is true;
+
+        if (!alreadyOrchestrating && actions != null && actions.Count > 1)
         {
-            var goalResult = await Context.App!.RunGoalAsync(goalToCall, Context, Context.CancellationToken);
-            if (!goalResult.Success) return goalResult;
+            Context.Variables.Put(new Data.@this("__condition_orchestrating__", true));
+            try
+            {
+                var result = await Orchestrate(actions, conditionResult);
+                result.Handled = true;
+                return result;
+            }
+            finally
+            {
+                Context.Variables.Remove("__condition_orchestrating__");
+            }
         }
 
-        return evalResult;
+        return Data(conditionResult);
     }
+
+    /// <summary>
+    /// Groups the step's actions into branches: [condition, actions...], [condition, actions...], [else actions...]
+    /// Then evaluates conditions in order and runs the first matching branch.
+    /// </summary>
+    private async Task<Data.@this> Orchestrate(
+        App.Goals.Goal.Steps.Step.Actions.@this actions, bool firstConditionResult)
+    {
+        // Find our position
+        int myIndex = 0;
+        for (int i = 0; i < actions.Count; i++)
+        {
+            if (ReferenceEquals(actions[i], __action))
+            {
+                myIndex = i;
+                break;
+            }
+        }
+
+        // Build branches: each branch is (conditionAction, thenActions[])
+        // The last branch with no condition action is the else branch
+        var branches = new List<(Action? condition, List<Action> body)>();
+        List<Action>? currentBody = null;
+        Action? currentCondition = null;
+
+        for (int i = myIndex; i < actions.Count; i++)
+        {
+            if (IsConditionAction(actions[i]))
+            {
+                // Start a new branch
+                if (currentBody != null)
+                    branches.Add((currentCondition, currentBody));
+                currentCondition = actions[i];
+                currentBody = new List<Action>();
+            }
+            else
+            {
+                currentBody ??= new List<Action>();
+                currentBody.Add(actions[i]);
+            }
+        }
+        if (currentBody != null)
+            branches.Add((currentCondition, currentBody));
+
+        // Execute: first branch uses our already-evaluated result
+        for (int b = 0; b < branches.Count; b++)
+        {
+            var (condition, body) = branches[b];
+            bool branchResult;
+
+            if (b == 0)
+            {
+                // First branch — we already evaluated this
+                branchResult = firstConditionResult;
+            }
+            else if (condition != null)
+            {
+                // Elseif — evaluate the condition
+                var elseIfResult = await condition.RunAsync(Context);
+                if (!elseIfResult.Success) return elseIfResult;
+                branchResult = elseIfResult.Value is true;
+            }
+            else
+            {
+                // Else — no condition, always runs if we get here
+                branchResult = true;
+            }
+
+            if (branchResult)
+            {
+                Data.@this lastResult = Data(true);
+                foreach (var action in body)
+                {
+                    lastResult = await action.RunAsync(Context);
+                    if (!lastResult.Success) return lastResult;
+                }
+                return lastResult;
+            }
+        }
+
+        // No branch matched
+        return Data(false);
+    }
+
+    private static bool IsConditionAction(Action action) =>
+        string.Equals(action.Module, "condition", StringComparison.OrdinalIgnoreCase)
+        && string.Equals(action.ActionName, "if", StringComparison.OrdinalIgnoreCase);
 }

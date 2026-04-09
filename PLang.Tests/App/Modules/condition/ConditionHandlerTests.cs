@@ -4,6 +4,8 @@ using global::App.Variables;
 using global::App.modules.condition;
 using global::App.FileSystem;
 using global::App.FileSystem.Default;
+using Action = global::App.Goals.Goal.Steps.Step.Actions.Action.@this;
+
 namespace PLang.Tests.App.actions.condition;
 
 public class ConditionHandlerTests : IDisposable
@@ -27,7 +29,7 @@ public class ConditionHandlerTests : IDisposable
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    // --- Unit tests: no goals ---
+    // --- Unit tests: no branching ---
 
     [Test]
     public async Task IfTrue_NoGoals_ReturnsSuccessWithTrue()
@@ -49,56 +51,41 @@ public class ConditionHandlerTests : IDisposable
         await Assert.That(result.Value).IsEqualTo(false);
     }
 
-    // --- Unit tests: with goals ---
+    // --- Orchestration tests: condition + actions in same step ---
 
     [Test]
-    public async Task IfTrue_CallsGoalIfTrue()
+    public async Task IfTrue_Orchestrate_RunsThenBranch()
     {
-
         var captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new Channel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
-        // Register a goal that writes "true-branch"
-        var trueGoal = new Goal
+        var condAction = new Action
         {
-            Name = "TrueBranch",
-            Path = "/TrueBranch.goal",
-            Steps = new GoalSteps
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
             {
-                new Step
-                {
-                    Index = 0,
-                    Text = "write true branch",
-                    Actions = new StepActions
-                    {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "output",
-                            ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<Data> { new Data("Data", "true-branch") }
-                        }
-                    }
-                }
+                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
             }
         };
-        _app.Goals.Add(trueGoal);
-
-        var action = new If
+        var thenAction = new Action
         {
-            Context = _app.Context,
-            Left = Data.Ok(true),
-            Operator = "==",
-            Right = Data.Ok(true),
-            GoalIfTrue = new GoalCall { Name = "TrueBranch" },
-            GoalIfFalse = new GoalCall { Name = "FalseBranch" }
+            Module = "output", ActionName = "write",
+            Parameters = new List<Data> { new Data("Data", "true-branch") }
         };
-        var result = await action.Run();
+
+        var step = new Step
+        {
+            Index = 0, Text = "if true, write true-branch",
+            Actions = new StepActions { condAction, thenAction }
+        };
+        condAction.Step = step;
+
+        var result = await step.RunAsync(_app.Context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo(true);
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
@@ -106,175 +93,54 @@ public class ConditionHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task IfFalse_CallsGoalIfFalse()
+    public async Task IfFalse_Orchestrate_RunsElseBranch()
     {
-
         var captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new Channel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
-        var falseGoal = new Goal
+        var condAction = new Action
         {
-            Name = "FalseBranch",
-            Path = "/FalseBranch.goal",
-            Steps = new GoalSteps
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
             {
-                new Step
-                {
-                    Index = 0,
-                    Text = "write false branch",
-                    Actions = new StepActions
-                    {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "output",
-                            ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<Data> { new Data("Data", "false-branch") }
-                        }
-                    }
-                }
+                new Data("Left", false), new Data("Operator", "=="), new Data("Right", true)
             }
         };
-        _app.Goals.Add(falseGoal);
-
-        var action = new If
+        var thenAction = new Action
         {
-            Context = _app.Context,
-            Left = Data.Ok(false),
-            Operator = "==",
-            Right = Data.Ok(true),
-            GoalIfTrue = new GoalCall { Name = "TrueBranch" },
-            GoalIfFalse = new GoalCall { Name = "FalseBranch" }
+            Module = "output", ActionName = "write",
+            Parameters = new List<Data> { new Data("Data", "then-branch") }
         };
-        var result = await action.Run();
+        var elseCondAction = new Action
+        {
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
+            {
+                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
+            }
+        };
+        var elseAction = new Action
+        {
+            Module = "output", ActionName = "write",
+            Parameters = new List<Data> { new Data("Data", "else-branch") }
+        };
+
+        var step = new Step
+        {
+            Index = 0, Text = "if false then, else write else",
+            Actions = new StepActions { condAction, thenAction, elseCondAction, elseAction }
+        };
+        condAction.Step = step;
+
+        var result = await step.RunAsync(_app.Context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo(false);
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("false-branch" + System.Environment.NewLine);
-    }
-
-    [Test]
-    public async Task IfTrue_GoalNotFound_ReturnsError()
-    {
-
-        var action = new If
-        {
-            Context = _app.Context,
-            Left = Data.Ok(true),
-            Operator = "==",
-            Right = Data.Ok(true),
-            GoalIfTrue = new GoalCall { Name = "NonExistentGoal" }
-        };
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsFalse();
-    }
-
-    // --- Integration: file.exists → condition.if → output.write ---
-
-    [Test]
-    public async Task Integration_FileExists_ConditionTrue_CallsGoal()
-    {
-        // Arrange: create a real file
-        System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "real.txt"), "I exist");
-
-
-        var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new Channel(
-            EngineChannels.Default, captureStream,
-            ChannelDirection.Output, ownsStream: true)
-        { ContentType = "text/plain" });
-
-        // Register the goal that condition.if will call
-        var writeGoal = new Goal
-        {
-            Name = "WriteExists",
-            Path = "/WriteExists.goal",
-            Steps = new GoalSteps
-            {
-                new Step
-                {
-                    Index = 0,
-                    Text = "write file exists",
-                    Actions = new StepActions
-                    {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "output",
-                            ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<Data> { new Data("Data", "file exists!") }
-                        }
-                    }
-                }
-            }
-        };
-        _app.Goals.Add(writeGoal);
-
-        // Build main goal: file.exists → condition.if (using %fileResult.Exists%)
-        var mainGoal = new Goal
-        {
-            Name = "TestConditionFlow",
-            Steps = new GoalSteps
-            {
-                new Step
-                {
-                    Index = 0,
-                    Text = "check if file exists",
-                    Actions = new StepActions
-                    {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "file",
-                            ActionName = "exists",
-                            Parameters = new System.Collections.Generic.List<Data> { new Data("path", System.IO.Path.Combine(_tempDir, "real.txt")) },
-                            Return = new System.Collections.Generic.List<Data> { new Data("fileResult") }
-                        }
-                    }
-                },
-                new Step
-                {
-                    Index = 1,
-                    Text = "if file exists call WriteExists",
-                    Actions = new StepActions
-                    {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "condition",
-                            ActionName = "if",
-                            Parameters = new System.Collections.Generic.List<Data>
-                            {
-                                new Data("left", "%fileResult.Exists%"),
-                                new Data("operator", "=="),
-                                new Data("right", true),
-                                new Data("goalIfTrue", "WriteExists")
-                            }
-                        }
-                    }
-                }
-            }
-        };
-
-        var context = _app.Context;
-        var goalResult = await _app.RunGoalAsync(mainGoal, context);
-
-        // Assert: goal succeeded
-        await Assert.That(goalResult.Success).IsTrue();
-
-        // Assert: fileResult is in memory
-        var fileData = context.Variables.Get("fileResult");
-        await Assert.That(fileData).IsNotNull();
-        var fileObj = fileData as global::App.FileSystem.Path;
-        await Assert.That(fileObj).IsNotNull();
-        await Assert.That(fileObj!.Exists).IsTrue();
-
-        // Assert: output.write was called by the condition's true branch
-        captureStream.Position = 0;
-        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("file exists!" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("else-branch" + System.Environment.NewLine);
     }
 }
