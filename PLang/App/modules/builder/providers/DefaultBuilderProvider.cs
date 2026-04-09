@@ -75,6 +75,10 @@ public class DefaultBuilderProvider : IBuilderProvider
         var buildFiles = app.Building.Files;
         if (buildFiles.Count > 0)
         {
+            // Ensure filter paths have Context so FileName/Relative work
+            foreach (var bf in buildFiles)
+                bf.Context ??= context;
+
             files = files.Where(f =>
                 buildFiles.Any(bf => f.FileName.Equals(bf.FileName, StringComparison.OrdinalIgnoreCase)
                     || f.Relative.EndsWith(bf.Relative, StringComparison.OrdinalIgnoreCase)))
