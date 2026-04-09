@@ -158,7 +158,7 @@ Group 3: [step 2, step 5] → validation failures → one LLM call with error co
 
 - **`formalized` is stored in the .pr file.** The `.pr` file is runtime-independent bytecode — like IL or JVM bytecode. The underlying runtime engine can be in any language (currently C#). The formalization is part of this portable contract: it tells any runtime what the step *means*, independent of implementation.
 
-- **`%__data__%` is implicit.** The runtime always sets `%__data__%` after each module execution. The pipe `|` in the formalization represents this — there is no explicit wiring needed. Every action can read `%__data__%` to get the previous action's result.
+- **`%__data__%` is implicit.** The runtime always sets `%__data__%` after each module execution. The array order in `formalized` represents this flow — there is no explicit wiring needed. Every action can read `%__data__%` to get the previous action's result.
 
 - **Grouping starts simple.** No merging of groups initially (low-confidence and validation-failed stay separate). Once evals are in place, we can experiment with merging and measure the impact.
 
