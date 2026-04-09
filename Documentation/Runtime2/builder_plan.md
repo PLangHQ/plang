@@ -48,16 +48,16 @@ The LLM first translates the natural language step into a **structured pseudo-sy
 
 ```
 Step text:  "read file.txt and write it into %content%"
-Formalized: "file.read file.txt -> variable.set %content%"
+Formalized: "file.read file.txt | variable.set %content%"
 
 Step text:  "if %count% is greater than 5, call HandleOverflow"
-Formalized: "condition.if %count% > 5 -> goal.call HandleOverflow"
+Formalized: "condition.if %count% > 5 | goal.call HandleOverflow"
 
 Step text:  "get http://api.example.com/users and set %users%"
-Formalized: "http.get http://api.example.com/users -> variable.set %users%"
+Formalized: "http.get http://api.example.com/users | variable.set %users%"
 ```
 
-The `->` indicates module boundaries — when a step involves multiple modules, each becomes explicit. This is **structured chain-of-thought**: the LLM reasons about what the step means before committing to action parameters.
+The `|` (pipe) indicates module boundaries — when a step involves multiple modules, each becomes explicit. The pipe means: the output of the left side (available as `%__data__%`) flows into the right side. This is **structured chain-of-thought**: the LLM reasons about what the step means before committing to action parameters.
 
 **Why formalization matters:**
 - Forces the LLM to decompose multi-module steps explicitly
@@ -82,12 +82,12 @@ New:
 {
   "actions": [
     { "module": "file", "action": "read", "parameters": [{ "name": "path", "value": "file.txt" }] },
-    { "module": "variable", "action": "set", "parameters": [{ "name": "name", "value": "%content%" }, { "name": "value", "value": "%prevStepResult%" }] }
+    { "module": "variable", "action": "set", "parameters": [{ "name": "name", "value": "%content%" }, { "name": "value", "value": "%__data__%" }] }
   ]
 }
 ```
 
-The formalization already showed this: `file.read file.txt -> variable.set %content%`. Two modules, two actions. No magic `return` property needed.
+The formalization already showed this: `file.read file.txt | variable.set %content%`. Two modules, two actions. No magic `return` property needed.
 
 #### Phase 3: Self-Assessment (after actions)
 
@@ -98,14 +98,14 @@ After producing actions, the LLM assesses its own work with **both** a categoric
   "steps": [
     {
       "index": 0,
-      "formalized": "file.read file.txt -> variable.set %content%",
+      "formalized": "file.read file.txt | variable.set %content%",
       "actions": [...],
       "level": "high",
       "confidence": 0.95
     },
     {
       "index": 1,
-      "formalized": "condition.if %count% > 5 -> goal.call HandleOverflow",
+      "formalized": "condition.if %count% > 5 | goal.call HandleOverflow",
       "actions": [...],
       "level": "medium",
       "confidence": 0.7
@@ -157,7 +157,7 @@ Group 3: [step 2, step 5] → validation failures → one LLM call with error co
 ### Open Questions
 
 - Should `formalized` be stored in the `.pr` file? (Pro: documentation and eval. Con: extra weight in every .pr)
-- How does `%prevStepResult%` (or equivalent) work for chaining action output to `variable.set`? Is it implicit (last action's Data) or explicit?
+- How does `%__data__%` (or equivalent) work for chaining action output to `variable.set`? Is it implicit (last action's Data) or explicit?
 - Should groups that share modules be merged? (e.g., a low-confidence file step and a validation-failed file step)
 - Should pass 2 failures go to a pass 3, or surface as build errors?
 - Does the formalization syntax need to be standardized, or is it free-form as long as it names modules?
