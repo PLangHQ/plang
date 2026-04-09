@@ -1,0 +1,18 @@
+{
+  "branch": "runtime2-builder-plan",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "architect",
+      "timestamp_start": "2026-04-09T00:00:00Z",
+      "intent": "Create comprehensive builder architecture and eval strategy document",
+      "before": {
+        "assumptions": "Builder works for simple hello world. Two-pass LLM strategy exists but needsDetail is crude. No eval suite. Prior work in builder-improvement-options.md.",
+        "risk": "Low — planning/documentation session, no code changes"
+      },
+      "plan": "",
+      "actions": [],
+      "after": {}
+    }
+  ]
+}
