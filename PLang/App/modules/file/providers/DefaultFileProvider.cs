@@ -191,7 +191,9 @@ public class DefaultFileProvider : IFileProvider
 
     public FileSystem.Path Exists(Exists action)
     {
-        return new FileSystem.Path(action.Path.Absolute) { Context = action.Context };
+        var path = new FileSystem.Path(action.Path.Absolute) { Context = action.Context };
+        path.SetValue(() => path.Exists);
+        return path;
     }
 
     // --- Helpers ---

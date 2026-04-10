@@ -69,6 +69,7 @@ public sealed class Type
 public partial class @this
 {
     private object? _value;
+    private Func<object?>? _valueFactory;
     private Type? _type;
     private Actor.Context.@this? _context;
 
@@ -125,14 +126,33 @@ public partial class @this
     [JsonPropertyName("value")]
     public virtual object? Value
     {
-        get => _value;
+        get
+        {
+            if (_valueFactory != null)
+            {
+                _value = _valueFactory();
+                _valueFactory = null;
+            }
+            return _value;
+        }
         set
         {
             _value = UnwrapJsonElement(value);
+            _valueFactory = null;
             Updated = System.DateTime.UtcNow;
             IsInitialized = true;
             _type = null;
         }
+    }
+
+    /// <summary>
+    /// Sets a lazy value factory. Invoked on first Value access, then cached.
+    /// </summary>
+    public void SetValue(Func<object?> factory)
+    {
+        _valueFactory = factory;
+        _value = null;
+        IsInitialized = true;
     }
 
     /// <summary>
