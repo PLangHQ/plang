@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -99,6 +100,14 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// Cancellation token for graceful shutdown.
     /// </summary>
     public CancellationToken ShutdownToken => _shutdownCts.Token;
+
+    /// <summary>
+    /// App-scoped static storage for modules. Persists for the lifetime of the app.
+    /// TODO: Replace with goal-backed dynamic property (see todos.md).
+    /// </summary>
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, object?>> _statics = new();
+    internal ConcurrentDictionary<string, object?> GetStatic(string key) =>
+        _statics.GetOrAdd(key, _ => new ConcurrentDictionary<string, object?>(StringComparer.OrdinalIgnoreCase));
 
     /// <summary>
     /// Global event collection for the application.

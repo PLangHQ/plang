@@ -63,5 +63,46 @@
 
 ---
 
+---
+
+## Goal-Backed Statics (Dynamic Properties)
+
+**Date:** 2026-04-10
+
+**Context:** While building `IStatic` for the timer module, we realized module statics shouldn't be a C# class (`AppStatics`) or a helper method (`GetOrCreateStatic`). They should be a PLang goal that the runtime calls through property access.
+
+**The Design:**
+
+`app.Statics["timer"]` resolves to a goal call — runs `/system/app/statics/this.goal` via `app.run`. The Statics goal manages the dictionary. It's a PLang service, like events are goals.
+
+```plang
+Statics
+/ System goal managing module-scoped static storage
+- list.get %key% from %app.static%, return %data%
+```
+
+When a key doesn't exist, return uninitialized Data (null/nothing), not an error.
+
+**Scope levels via the same pattern:**
+- `app.Statics["timer"]` — app lifetime, survives across contexts
+- `goal.Statics["timer"]` — goal-scoped, cleared when goal ends  
+- `context.Statics["timer"]` — context lifetime (current default)
+- `step.Statics["timer"]` — step-local
+
+Each scope level is backed by a goal at the appropriate system path. `timer.start scope=app` writes to `app.Statics["timer"]`, `scope=goal` writes to `goal.Statics["timer"]`.
+
+**Bigger idea: Goal-backed dynamic properties.** This pattern generalizes. Any property on app/goal/context/step could be a dynamic property backed by a goal. `app.Statics` is one instance. `app.Config`, `app.Secrets` could follow the same pattern — access triggers a goal, the goal manages the storage. The C# runtime provides the property resolution mechanism. The behavior lives in PLang goals.
+
+**Current state:** `IStatic` exists with `ConcurrentDictionary` on context. Timer module works. The goal-backed approach replaces the C# backing with PLang goals. `IStatic` interface stays — the source generator wires it to the goal-backed storage instead of a direct dictionary.
+
+**Key files:**
+- `PLang/App/modules/IStatic.cs` — current interface
+- `PLang/App/Actor/Context/this.cs` — `GetModuleStatic()` (to be replaced)
+- `PLang/App/this.cs` — app-level statics (to be replaced with goal-backed property)
+- `PLang.Generators/LazyParamsGenerator.cs` — wires IStatic to Static property
+- `PLang/App/modules/timer/` — first consumer of IStatic
+
+---
+
 ### Open question:
 How does the deserialized Goal get `App` if we can't store it on the Goal? The caller (GoalCall, Goals.LoadFromFileAsync) sets `goal.App` after loading — that's acceptable because it's the loading path, not per-request state. The rule is about not caching *context* (which is per-request). `App` is per-application and set once during loading. But this needs discussion — is `Goal.App` actually safe on cached goals, or should goals navigate to App differently?

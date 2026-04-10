@@ -7,12 +7,21 @@ public partial class End : IContext, IStatic
 
     public Task<Data.@this> Run()
     {
-        var key = Name ?? "default";
-        if (!Static.TryGetValue(key, out var startObj) || startObj is not DateTimeOffset startTime)
+        // If no name given, use the last started timer
+        var key = Name;
+        if (key == null)
+        {
+            if (!Static.TryGetValue("__last__", out var lastObj) || lastObj is not string lastKey)
+                return Task.FromResult(Error(
+                    new App.Errors.ValidationError("No timer has been started")));
+            key = lastKey;
+        }
+
+        if (!Static.TryGetValue(key, out var entryObj) || entryObj is not TimerEntry entry)
             return Task.FromResult(Error(
                 new App.Errors.ValidationError($"Timer '{key}' was not started")));
 
-        var elapsed = DateTimeOffset.UtcNow - startTime;
+        var elapsed = DateTimeOffset.UtcNow - entry.StartedAt;
         Static.TryRemove(key, out _);
         return Task.FromResult(Data(elapsed));
     }
