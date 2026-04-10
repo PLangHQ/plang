@@ -171,7 +171,7 @@ public class @this
     public Data.@this Get(string name)
     {
         if (string.IsNullOrEmpty(name))
-            return Data.@this.Null(name ?? "");
+            return Data.@this.NotFound(name ?? "");
 
         name = CleanName(name);
 
@@ -197,7 +197,7 @@ public class @this
 
         if (!_variables.TryGetValue(rootName, out var root))
         {
-            return Data.@this.Null(name);
+            return Data.@this.NotFound(name);
         }
 
         if (string.IsNullOrEmpty(remaining))

@@ -28,6 +28,8 @@ public partial class Set : IContext
         Value.Name = Name;
         if (Type != null) Value.Type = App.Data.Type.FromName(Type);
         Context.Variables.Put(Value);
+        var verify = Context.Variables.Get(Name);
+        Console.Error.WriteLine($"[Set] stored '{Name}', verify: initialized={verify.IsInitialized}, name={verify.Name}, value={verify.Value}");
 
         return Task.FromResult(Data());
     }

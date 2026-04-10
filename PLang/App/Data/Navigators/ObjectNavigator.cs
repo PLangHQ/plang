@@ -12,11 +12,11 @@ public sealed class ObjectNavigator : INavigator
     public Data.@this Navigate(Data.@this data, string key)
     {
         var value = data.Value;
-        if (value == null) return Data.@this.Null(key);
+        if (value == null) return Data.@this.NotFound(key);
 
         var prop = value.GetType().GetProperty(key,
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-        if (prop == null) return Data.@this.Null(key);
+        if (prop == null) return Data.@this.NotFound(key);
 
         return new Data.@this(key, prop.GetValue(value), parent: data);
     }

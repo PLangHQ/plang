@@ -14,7 +14,7 @@ public partial class @this
 
     /// <summary>
     /// Gets a child value by path (dot notation, index, or method call).
-    /// Never returns null — returns Data.Null(key) when the path doesn't resolve.
+    /// Never returns null — returns Data.NotFound(key) when the path doesn't resolve.
     /// </summary>
     public virtual @this GetChild(string path, int depth = 0)
     {
@@ -138,7 +138,7 @@ public partial class @this
             "tolower" => new @this(Name, str?.ToLowerInvariant()),
             "toupper" => new @this(Name, str?.ToUpperInvariant()),
             "replace" => Replace(str, args),
-            _ => Null(method)
+            _ => NotFound(method)
         };
     }
 
@@ -273,7 +273,7 @@ public partial class @this
             return new @this(key, ownProp.GetValue(this), parent: this);
         }
 
-        return Null(key);
+        return NotFound(key);
     }
 
     /// <summary>
@@ -294,6 +294,6 @@ public partial class @this
         if (prop != null)
             return new @this(key, prop.GetValue(this), parent: this);
 
-        return Null(key);
+        return NotFound(key);
     }
 }

@@ -22,6 +22,6 @@ internal static class ValueNavigators
             if (nav.CanNavigate(data))
                 return nav.Navigate(data, key);
         }
-        return Data.@this.Null(key);
+        return Data.@this.NotFound(key);
     }
 }

@@ -22,7 +22,7 @@ public sealed class DictionaryNavigator : INavigator
                 if (string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
                     return new Data.@this(key, kvp.Value, parent: data);
             }
-            return Data.@this.Null(key);
+            return Data.@this.NotFound(key);
         }
 
         if (value is IDictionary dict)
@@ -32,9 +32,9 @@ public sealed class DictionaryNavigator : INavigator
                 if (entry.Key is string k && string.Equals(k, key, StringComparison.OrdinalIgnoreCase))
                     return new Data.@this(key, entry.Value, parent: data);
             }
-            return Data.@this.Null(key);
+            return Data.@this.NotFound(key);
         }
 
-        return Data.@this.Null(key);
+        return Data.@this.NotFound(key);
     }
 }

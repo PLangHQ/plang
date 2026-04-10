@@ -25,12 +25,12 @@ public class DataTests
     }
 
     [Test]
-    public async Task Constructor_WithNullValue_NotInitialized()
+    public async Task Constructor_WithNullValue_IsInitialized()
     {
         var ov = new Data("test", null);
 
         await Assert.That(ov.Value).IsNull();
-        await Assert.That(ov.IsInitialized).IsFalse();
+        await Assert.That(ov.IsInitialized).IsTrue();
     }
 
     [Test]
@@ -373,6 +373,16 @@ public class DataTests
         var ov = Data.Null("test");
 
         await Assert.That(ov.Name).IsEqualTo("test");
+        await Assert.That(ov.Value).IsNull();
+        await Assert.That(ov.IsInitialized).IsTrue();
+    }
+
+    [Test]
+    public async Task NotFound_CreatesUninitializedData()
+    {
+        var ov = Data.NotFound("missing");
+
+        await Assert.That(ov.Name).IsEqualTo("missing");
         await Assert.That(ov.Value).IsNull();
         await Assert.That(ov.IsInitialized).IsFalse();
     }

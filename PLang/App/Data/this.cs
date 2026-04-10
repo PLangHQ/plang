@@ -114,7 +114,7 @@ public partial class @this
         _type = type;
         Parent = parent;
         Path = BuildPath(parent, Name);
-        IsInitialized = _value != null;
+        IsInitialized = true;
         Created = System.DateTime.UtcNow;
         Updated = Created;
         Properties = new Properties();
@@ -220,6 +220,7 @@ public partial class @this
         (_value is string s && string.IsNullOrEmpty(s));
 
     public static @this Null(string name = "") => new(name, null);
+    public static @this NotFound(string name = "") => new(name, null) { IsInitialized = false };
 
     /// <summary>
     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.

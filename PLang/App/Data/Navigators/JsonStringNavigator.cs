@@ -25,20 +25,20 @@ public sealed class JsonStringNavigator : INavigator
     public Data.@this Navigate(Data.@this data, string key)
     {
         if (data.Value is not string str)
-            return Data.@this.Null(key);
+            return Data.@this.NotFound(key);
 
         try
         {
             var doc = JsonDocument.Parse(str);
             var parsed = UnwrapElement(doc.RootElement);
-            if (parsed == null) return Data.@this.Null(key);
+            if (parsed == null) return Data.@this.NotFound(key);
 
             var parsedData = new Data.@this(data.Name, parsed, parent: data);
             return ValueNavigators.Navigate(parsedData, key);
         }
         catch (JsonException)
         {
-            return Data.@this.Null(key);
+            return Data.@this.NotFound(key);
         }
     }
 
