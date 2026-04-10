@@ -20,6 +20,11 @@ public sealed class @this
     /// </summary>
     public List<FileSystem.Path> Files { get; set; } = new();
 
+    /// <summary>
+    /// Whether to use LLM cache. Default true. Set via --build={"cache":false}
+    /// </summary>
+    public bool Cache { get; set; } = true;
+
     public @this(App.@this app)
     {
         _app = app;

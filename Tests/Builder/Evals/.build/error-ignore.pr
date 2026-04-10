@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Calls ComputeAnswer and stores its result into %answer% via variable.set.",
+  "description": "Calls goal DoWork as system actor; ignores any error from the call.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "call ComputeAnswer, write to %answer%",
+      "text": "call DoWork, on error ignore",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
@@ -17,34 +17,31 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ComputeAnswer",
+                "name": "DoWork",
                 "parameters": []
               },
               "type": "goal.call"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%answer%",
-              "type": "string"
             },
             {
-              "name": "Value",
-              "value": "%__data__%",
-              "type": "object"
+              "name": "Actor",
+              "value": "system",
+              "type": "actor(system|user|service)"
             }
           ],
           "defaults": null
         }
       ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -52,9 +49,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/goal-call-return.goal",
-  "prPath": "/.build/goal-call-return.pr",
-  "hash": "3f614214a94eec6d6b7d3f4ade7bad51510ef4dcb86ac5bb0caf117e79862cce",
+  "path": "/error-ignore.goal",
+  "prPath": "/.build/error-ignore.pr",
+  "hash": "427fdee8e8c2806f38b5d582373fafc315faf05785a4a4ba1734b05b9b895ae2",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

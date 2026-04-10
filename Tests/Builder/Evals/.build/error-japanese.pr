@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Calls goal ProcessData (as provided in the step) with no explicit parameters.",
+  "description": "Calls goal DoWork and, on error, calls HandleError.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "call ProcessData",
+      "text": "call DoWork, \u30A8\u30E9\u30FC\u6642\u306B HandleError \u3092\u547C\u3076",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
@@ -17,7 +17,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ProcessData",
+                "name": "DoWork",
                 "parameters": []
               },
               "type": "goal.call"
@@ -27,7 +27,22 @@
         }
       ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": {
+          "name": "HandleError",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": 0,
+        "ignoreError": false,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -35,9 +50,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/goal-call.goal",
-  "prPath": "/.build/goal-call.pr",
-  "hash": "2d7e4efabb9e593f97d96b55a0668167a591d00599b9db3b79860580a19e4c7f",
+  "path": "/error-japanese.goal",
+  "prPath": "/.build/error-japanese.pr",
+  "hash": "9d1f45602ef211a707fe1d27276f0432260759f15824c970b902733b51656eb1",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

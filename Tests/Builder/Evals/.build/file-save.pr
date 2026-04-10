@@ -1,32 +1,28 @@
 {
   "name": "Start",
-  "description": "Sets the %items% variable to the provided list literal.",
+  "description": "Saves the literal string \u0022hello world\u0022 to file test.txt.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
+      "text": "save \u0022hello world\u0022 to file \u0027test.txt\u0027",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "variable",
-          "action": "set",
+          "module": "file",
+          "action": "save",
           "parameters": [
             {
-              "name": "Name",
-              "value": "%items%",
-              "type": "string"
+              "name": "Path",
+              "value": "test.txt",
+              "type": "path"
             },
             {
               "name": "Value",
-              "value": [
-                "a",
-                "b",
-                "c"
-              ],
-              "type": "list"
+              "value": "hello world",
+              "type": "string"
             }
           ],
           "defaults": null
@@ -41,9 +37,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/variable-set-list.goal",
-  "prPath": "/.build/variable-set-list.pr",
-  "hash": "42b9ae3570df749abbc810800825709f9aa1a66b8a7612f21187a87c3e568016",
+  "path": "/file-save.goal",
+  "prPath": "/.build/file-save.pr",
+  "hash": "bec2a848521737bea4ea44e1f1d62378e9a1543bc914ee6f98c9c152f9993979",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

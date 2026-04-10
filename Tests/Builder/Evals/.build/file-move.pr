@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Moves/renames a file from \u0027old.txt\u0027 to \u0027new.txt\u0027.",
+  "description": "Moves file old.txt to new.txt.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,7 @@
   "path": "/file-move.goal",
   "prPath": "/.build/file-move.pr",
   "hash": "c36d11b91a64c9f302a18f6e0697e6f129787fd0c292b571fc1d89c65ecc631a",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

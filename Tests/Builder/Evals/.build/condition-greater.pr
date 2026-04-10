@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Conditionally calls WhenBig when %x% \u003E 10.",
+  "description": "Condition checks whether %x% \u003E 10, and if true calls goal WhenBig.",
   "comment": null,
   "steps": [
     {
@@ -26,7 +26,7 @@
             },
             {
               "name": "Right",
-              "value": "10",
+              "value": 10,
               "type": "int"
             }
           ],
@@ -60,7 +60,7 @@
   "path": "/condition-greater.goal",
   "prPath": "/.build/condition-greater.pr",
   "hash": "611f0e16d3f24d5c0fcc0d734cf102e50e19f782d15330b217856b48e818006e",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

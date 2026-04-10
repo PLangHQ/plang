@@ -1,0 +1,63 @@
+{
+  "name": "Start",
+  "description": "Iterates over %items% and calls ProcessItem for each item, passing item=%item%.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "foreach %items%, call ProcessItem item=%item%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%items%",
+              "type": "object"
+            },
+            {
+              "name": "ItemName",
+              "value": "item",
+              "type": "string"
+            },
+            {
+              "name": "Step",
+              "value": {
+                "name": "ProcessItem",
+                "parameters": [
+                  {
+                    "name": "item",
+                    "value": "%item%",
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/loop-foreach.goal",
+  "prPath": "/.build/loop-foreach.pr",
+  "hash": "7c28c03cbb0bb3411aed980b4f84cddb34621aab92b2a6dd14d089812c9d8a2d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

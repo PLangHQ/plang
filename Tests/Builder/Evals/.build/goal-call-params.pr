@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls goal SendEmail with parameter to=%email% and subject=\u0022hi\u0022. No additional steps or error modifiers provided.",
+  "description": "Calls goal SendEmail with parameter to=%email% and subject=\u0022hi\u0022.",
   "comment": null,
   "steps": [
     {
@@ -49,7 +49,7 @@
   "path": "/goal-call-params.goal",
   "prPath": "/.build/goal-call-params.pr",
   "hash": "73b3c818351eebb1b35bbe60e7733afa37a57d73b332cb66935c4e83be3446fa",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

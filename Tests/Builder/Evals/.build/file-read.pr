@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Reads \u0027test.txt\u0027 and stores the file contents into %content%.",
+  "description": "Reads test.txt and stores its contents into %content%.",
   "comment": null,
   "steps": [
     {
@@ -52,7 +52,7 @@
   "path": "/file-read.goal",
   "prPath": "/.build/file-read.pr",
   "hash": "bbd093948a1ed1c0839af0aca958519edf906ef6c17ed7ec0912b02dc3bd9d3e",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

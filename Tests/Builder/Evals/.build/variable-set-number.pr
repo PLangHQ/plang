@@ -40,7 +40,7 @@
   "path": "/variable-set-number.goal",
   "prPath": "/.build/variable-set-number.pr",
   "hash": "679923a4c4d650ced5deffed4e062db9a0d58513050a1710fb7353daa5792026",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

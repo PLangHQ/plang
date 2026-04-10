@@ -1,32 +1,40 @@
 {
   "name": "Start",
-  "description": "Sets the %items% variable to the provided list literal.",
+  "description": "Convert %json% from JSON into an object and write the result to %obj%.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
+      "text": "convert %json% from json, write to %obj%",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "variable",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%json%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
           "action": "set",
           "parameters": [
             {
               "name": "Name",
-              "value": "%items%",
+              "value": "%obj%",
               "type": "string"
             },
             {
               "name": "Value",
-              "value": [
-                "a",
-                "b",
-                "c"
-              ],
-              "type": "list"
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -41,9 +49,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/variable-set-list.goal",
-  "prPath": "/.build/variable-set-list.pr",
-  "hash": "42b9ae3570df749abbc810800825709f9aa1a66b8a7612f21187a87c3e568016",
+  "path": "/convert-fromjson.goal",
+  "prPath": "/.build/convert-fromjson.pr",
+  "hash": "7caab272191a280316ea8190bfd8fb5763b9f9a80321ccb5a7cee0ff70e15f0a",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

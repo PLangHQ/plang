@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Copies source.txt to dest.txt using file copy action.",
+  "description": "Copies source.txt to dest.txt using file.copy.",
   "comment": null,
   "steps": [
     {
@@ -15,12 +15,12 @@
           "action": "copy",
           "parameters": [
             {
-              "name": "SourcePath",
+              "name": "Source",
               "value": "source.txt",
               "type": "path"
             },
             {
-              "name": "DestinationPath",
+              "name": "Destination",
               "value": "dest.txt",
               "type": "path"
             }
@@ -40,7 +40,7 @@
   "path": "/file-copy.goal",
   "prPath": "/.build/file-copy.pr",
   "hash": "d1193f23e9b7f70c86cfbeca51b5d82ad7559b9b60605ac7a1a532b4d237c437",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

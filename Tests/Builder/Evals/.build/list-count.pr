@@ -1,32 +1,40 @@
 {
   "name": "Start",
-  "description": "Sets the %items% variable to the provided list literal.",
+  "description": "Gets the count of %myList% and writes it to %total% by using list.count and then assigning the result to the requested variable.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
+      "text": "get count of %myList%, write to %total%",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
       "actions": [
+        {
+          "module": "list",
+          "action": "count",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
         {
           "module": "variable",
           "action": "set",
           "parameters": [
             {
               "name": "Name",
-              "value": "%items%",
+              "value": "%total%",
               "type": "string"
             },
             {
               "name": "Value",
-              "value": [
-                "a",
-                "b",
-                "c"
-              ],
-              "type": "list"
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -41,9 +49,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/variable-set-list.goal",
-  "prPath": "/.build/variable-set-list.pr",
-  "hash": "42b9ae3570df749abbc810800825709f9aa1a66b8a7612f21187a87c3e568016",
+  "path": "/list-count.goal",
+  "prPath": "/.build/list-count.pr",
+  "hash": "62b476e59126d6aff627fc06341162517f13482ff4535c3bc519f8a32ccd5abf",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

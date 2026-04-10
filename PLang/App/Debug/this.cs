@@ -22,10 +22,32 @@ public sealed class @this
     public bool IsEnabled { get; set; }
 
     /// <summary>
-    /// Explicit variables to watch. When set, these are printed in every step debug output.
-    /// Set via --debug={"variables":["%response%","%goal%"]}
+    /// Filter to a specific goal name. Null = all goals.
     /// </summary>
-    public List<string>? WatchVariables { get; private set; }
+    public string? Goal { get; set; }
+
+    /// <summary>
+    /// Filter to a specific step index. Null = all steps.
+    /// </summary>
+    public int? Step { get; set; }
+
+    /// <summary>
+    /// Explicit variables to watch. Printed in every step debug output.
+    /// </summary>
+    public List<string>? Variables { get; set; }
+
+    /// <summary>
+    /// Max characters per line before truncation. Default 500.
+    /// </summary>
+    public int MaxLength { get; set; } = 500;
+
+    /// <summary>
+    /// Regex string to filter debug output lines.
+    /// </summary>
+    public string? Grep { get; set; }
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    private Regex? _grepRegex;
 
     public @this(App.@this engine)
     {
@@ -36,104 +58,44 @@ public sealed class @this
     {
         IsEnabled = true;
 
-        string? goalFilter = null;
-        int? stepFilter = null;
-
         if (debugValue is IDictionary<string, object?> dict)
+            App.Utils.TypeMapping.Populate(this, dict);
+
+        // Strip % from variable names
+        if (Variables != null)
+            Variables = Variables.Select(v => v.Trim('%')).ToList();
+
+        // Build grep regex
+        if (!string.IsNullOrEmpty(Grep))
         {
-            ParseJsonFilter(dict, out goalFilter, out stepFilter);
-        }
-        else if (debugValue is not true and not false)
-        {
-            var converted = ToDictionary(debugValue);
-            if (converted != null)
-                ParseJsonFilter(converted, out goalFilter, out stepFilter);
+            try { _grepRegex = new Regex(Grep, RegexOptions.IgnoreCase); }
+            catch { _grepRegex = new Regex(Regex.Escape(Grep), RegexOptions.IgnoreCase); }
         }
 
         var events = _engine.Context.Events;
 
         events.Register(new EventBinding(
             EventType.BeforeStep,
-            context => BeforeStepHandler(context, stepFilter),
-            goalNamePattern: goalFilter ?? "*",
+            context => BeforeStepHandler(context, Step),
+            goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
 
         events.Register(new EventBinding(
             EventType.AfterStep,
-            context => AfterStepHandler(context, stepFilter),
-            goalNamePattern: goalFilter ?? "*",
+            context => AfterStepHandler(context, Step),
+            goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
 
         events.Register(new EventBinding(
             EventType.AfterGoal,
             AfterGoalHandler,
-            goalNamePattern: goalFilter ?? "*",
+            goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
     }
 
-    private static IDictionary<string, object?>? ToDictionary(object value)
-    {
-        // Handle Newtonsoft JObject and similar dictionary-like types
-        if (value is System.Collections.IDictionary rawDict)
-        {
-            var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-            foreach (System.Collections.DictionaryEntry entry in rawDict)
-                result[entry.Key.ToString()!] = entry.Value;
-            return result;
-        }
-
-        // Try indexer pattern (JObject implements this)
-        var type = value.GetType();
-        var indexer = type.GetProperty("Item", new[] { typeof(string) });
-        if (indexer == null) return null;
-
-        var result2 = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        // Try known property names
-        foreach (var name in new[] { "goal", "step", "goals", "verbose" })
-        {
-            try
-            {
-                var val = indexer.GetValue(value, new object[] { name });
-                if (val != null) result2[name] = val.ToString();
-            }
-            catch { }
-        }
-        return result2.Count > 0 ? result2 : null;
-    }
-
-    private void ParseJsonFilter(IDictionary<string, object?> dict, out string? goalFilter, out int? stepFilter)
-    {
-        goalFilter = null;
-        stepFilter = null;
-
-        if (dict.TryGetValue("goal", out var goalVal) && goalVal is string g && !string.IsNullOrEmpty(g))
-            goalFilter = g;
-
-        if (dict.TryGetValue("step", out var stepVal))
-        {
-            if (stepVal is int i) stepFilter = i;
-            else if (stepVal is long l) stepFilter = (int)l;
-            else if (stepVal is string s && int.TryParse(s, out var parsed)) stepFilter = parsed;
-        }
-
-        if (dict.TryGetValue("variables", out var varsVal))
-        {
-            WatchVariables = new List<string>();
-            if (varsVal is System.Collections.IEnumerable list and not string)
-            {
-                foreach (var item in list)
-                    if (item?.ToString() is string v)
-                        WatchVariables.Add(v.Trim('%'));
-            }
-            else if (varsVal is string single)
-            {
-                WatchVariables.Add(single.Trim('%'));
-            }
-        }
-    }
 
     private static Task<Data.@this> BeforeStepHandler(Actor.Context.@this context, int? stepFilter)
     {
@@ -199,8 +161,9 @@ public sealed class @this
 
     private static void WriteFiltered(StringBuilder sb, Actor.Context.@this context)
     {
-        var maxLen = GetMaxLength(context);
-        var grep = GetGrepPattern(context);
+        var debug = context.App?.Debug;
+        var maxLen = debug?.MaxLength ?? 500;
+        var grep = debug?._grepRegex;
         var output = sb.ToString();
 
         // Grep first on full content
@@ -238,22 +201,6 @@ public sealed class @this
         return Task.FromResult(App.Data.@this.Ok());
     }
 
-    private static int GetMaxLength(Actor.Context.@this context)
-    {
-        var val = context.Variables.GetValue("!debug.maxLength");
-        if (val is int i) return i;
-        if (val is long l) return (int)l;
-        return 500; // default
-    }
-
-    private static Regex? GetGrepPattern(Actor.Context.@this context)
-    {
-        var val = context.Variables.GetValue("!debug.grep");
-        if (val is not string pattern || string.IsNullOrEmpty(pattern)) return null;
-        try { return new Regex(pattern, RegexOptions.IgnoreCase); }
-        catch { return new Regex(Regex.Escape(pattern), RegexOptions.IgnoreCase); }
-    }
-
     private static readonly Regex VarRefPattern = new(@"%([^%]+)%", RegexOptions.Compiled);
 
     private static void AppendStepVariables(StringBuilder sb, Actor.Context.@this context)
@@ -285,7 +232,7 @@ public sealed class @this
         }
 
         // Add explicitly watched variables
-        var watchVars = context.App?.Debug.WatchVariables;
+        var watchVars = context.App?.Debug.Variables;
         if (watchVars != null)
             foreach (var v in watchVars)
                 varNames.Add(v);

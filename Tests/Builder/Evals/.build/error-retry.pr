@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Calls goal ProcessData (as provided in the step) with no explicit parameters.",
+  "description": "Calls goal DoWork with retry-on-error (3 times).",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "call ProcessData",
+      "text": "call DoWork, on error retry 3 times",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
@@ -17,7 +17,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ProcessData",
+                "name": "DoWork",
                 "parameters": []
               },
               "type": "goal.call"
@@ -27,7 +27,16 @@
         }
       ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": null,
+        "retryCount": 3,
+        "retryOverMs": null,
+        "order": 1,
+        "ignoreError": false,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -35,9 +44,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/goal-call.goal",
-  "prPath": "/.build/goal-call.pr",
-  "hash": "2d7e4efabb9e593f97d96b55a0668167a591d00599b9db3b79860580a19e4c7f",
+  "path": "/error-retry.goal",
+  "prPath": "/.build/error-retry.pr",
+  "hash": "d11b6ec44165f80da7d997c671d0b0b64d35ab1e950994ad84a4c633f2c1d05f",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

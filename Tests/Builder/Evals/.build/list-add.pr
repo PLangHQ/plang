@@ -1,32 +1,33 @@
 {
   "name": "Start",
-  "description": "Sets the %items% variable to the provided list literal.",
+  "description": "Adds literal value \u0027item\u0027 to the list referenced by %myList% at index -1.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
+      "text": "add \u0022item\u0022 to %myList%",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "variable",
-          "action": "set",
+          "module": "list",
+          "action": "add",
           "parameters": [
             {
-              "name": "Name",
-              "value": "%items%",
+              "name": "ListName",
+              "value": "%myList%",
               "type": "string"
             },
             {
               "name": "Value",
-              "value": [
-                "a",
-                "b",
-                "c"
-              ],
-              "type": "list"
+              "value": "item",
+              "type": "object"
+            },
+            {
+              "name": "AtIndex",
+              "value": -1,
+              "type": "int"
             }
           ],
           "defaults": null
@@ -41,9 +42,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/variable-set-list.goal",
-  "prPath": "/.build/variable-set-list.pr",
-  "hash": "42b9ae3570df749abbc810800825709f9aa1a66b8a7612f21187a87c3e568016",
+  "path": "/list-add.goal",
+  "prPath": "/.build/list-add.pr",
+  "hash": "7eb64f246ec9fcbaa7e839e8d63613b57ff439a3dde16f47a25c129f949a5df4",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

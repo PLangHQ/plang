@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets the %user% variable to the provided object literal (name and age).",
+  "description": "Sets the %user% variable to the provided object literal.",
   "comment": null,
   "steps": [
     {
@@ -43,7 +43,7 @@
   "path": "/variable-set-json.goal",
   "prPath": "/.build/variable-set-json.pr",
   "hash": "7645575a2f9dcfa1a532ed7bd944d15ab53f709fa879c6cef177c0e9d64b20f7",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

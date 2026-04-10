@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Sets the %items% variable to the provided list literal.",
+  "description": "Converts %data% to JSON and writes the result to %json%.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
+      "text": "convert %data% to json, write to %json%",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
@@ -16,17 +16,18 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%items%",
+              "value": "%json%",
               "type": "string"
             },
             {
               "name": "Value",
-              "value": [
-                "a",
-                "b",
-                "c"
-              ],
-              "type": "list"
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
             }
           ],
           "defaults": null
@@ -41,9 +42,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/variable-set-list.goal",
-  "prPath": "/.build/variable-set-list.pr",
-  "hash": "42b9ae3570df749abbc810800825709f9aa1a66b8a7612f21187a87c3e568016",
+  "path": "/convert-tojson.goal",
+  "prPath": "/.build/convert-tojson.pr",
+  "hash": "1dfe50961e3398c1202be8b6341bb2b547f7e06d6f873dec3fcac8e0652fab02",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

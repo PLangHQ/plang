@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Checks whether %x% equals 5; if true, calls goal WhenEqual.",
+  "description": "Checks whether %x% equals 5; if true, calls goal WhenEqual as system.",
   "comment": null,
   "steps": [
     {
@@ -39,10 +39,15 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenEqual",
+                "name": "",
                 "parameters": []
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "system",
+              "type": "actor(system)"
             }
           ],
           "defaults": null
@@ -60,7 +65,7 @@
   "path": "/condition-equals.goal",
   "prPath": "/.build/condition-equals.pr",
   "hash": "4c1fa65a3f5fd50d66aaccdb38b0ccb4b7505b2844192a1379e2a18796d8156a",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -290,6 +290,22 @@ public static class TypeMapping
     }
 
     /// <summary>
+    /// Populates an object's public writable properties from a dictionary.
+    /// Keys are matched case-insensitively to property names. Values are converted via ConvertTo.
+    /// </summary>
+    public static void Populate(object target, IDictionary<string, object?> values)
+    {
+        foreach (var kvp in values)
+        {
+            var prop = target.GetType().GetProperty(kvp.Key,
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            if (prop?.CanWrite != true) continue;
+            var converted = ConvertTo(kvp.Value, prop.PropertyType);
+            if (converted != null) prop.SetValue(target, converted);
+        }
+    }
+
+    /// <summary>
     /// Attempts to convert a value to the specified type.
     /// Returns the converted value and null error on success,
     /// or null value and an Error describing what went wrong.

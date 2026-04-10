@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Outputs the literal text \u0022hello world\u0022 using the output.write action.",
+  "description": "Writes \u0027hello world\u0027 to output.",
   "comment": null,
   "steps": [
     {
@@ -35,7 +35,7 @@
   "path": "/output-write.goal",
   "prPath": "/.build/output-write.pr",
   "hash": "8f1b4ab9435f67152f05113cf4b6e1c511e7b64ba1c19ab9e34205387519ee62",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

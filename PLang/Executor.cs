@@ -53,10 +53,11 @@ namespace PLang
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", fileSystem.RootDirectory);
 
-				// Extract build options from JSON build value
 				if (buildValue is IDictionary<string, object?> buildDict)
 				{
-					// Files filter → engine.Building.Files
+					TypeMapping.Populate(engine.Building, buildDict);
+
+					// Files needs special handling — string or list of strings → List<Path>
 					if (buildDict.TryGetValue("files", out var filesVal))
 					{
 						if (filesVal is string singleFile)
@@ -65,11 +66,10 @@ namespace PLang
 							foreach (var f in fileList)
 								if (f?.ToString() is string s) engine.Building.Files.Add(new App.FileSystem.Path(s));
 					}
-
-					// Cache flag → %!build.cache% (overrides the "set default" in Build.goal)
-					if (buildDict.TryGetValue("cache", out var cacheVal))
-						userVars.Set("!build.cache", cacheVal);
 				}
+
+				// Sync cache flag to %!build.cache% for Build.goal
+				userVars.Set("!build.cache", engine.Building.Cache);
 			}
 
 			// Set the goal file on system context — Start() reads it

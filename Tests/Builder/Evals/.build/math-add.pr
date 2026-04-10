@@ -1,32 +1,45 @@
 {
   "name": "Start",
-  "description": "Sets the %items% variable to the provided list literal.",
+  "description": "Adds 5 and 3, then writes the result to %sum% via variable assignment.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
+      "text": "add 5 and 3, write to %sum%",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
       "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        },
         {
           "module": "variable",
           "action": "set",
           "parameters": [
             {
               "name": "Name",
-              "value": "%items%",
+              "value": "%sum%",
               "type": "string"
             },
             {
               "name": "Value",
-              "value": [
-                "a",
-                "b",
-                "c"
-              ],
-              "type": "list"
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -41,9 +54,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/variable-set-list.goal",
-  "prPath": "/.build/variable-set-list.pr",
-  "hash": "42b9ae3570df749abbc810800825709f9aa1a66b8a7612f21187a87c3e568016",
+  "path": "/math-add.goal",
+  "prPath": "/.build/math-add.pr",
+  "hash": "67a26e82bf8974ce27f9084fcb532b323fc2b6d4e386cd8a90afce32aec900fa",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

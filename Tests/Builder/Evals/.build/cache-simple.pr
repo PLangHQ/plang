@@ -1,28 +1,23 @@
 {
   "name": "Start",
-  "description": "Divides 10 by 4 and stores the result in %result%.",
+  "description": "Reads config.txt and stores its contents in %config%, caching the read for 5 minutes.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "divide 10 by 4, write to %result%",
+      "text": "read file \u0027config.txt\u0027, cache for 5 minutes",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "math",
-          "action": "divide",
+          "module": "file",
+          "action": "read",
           "parameters": [
             {
-              "name": "A",
-              "value": 10,
-              "type": "decimal"
-            },
-            {
-              "name": "B",
-              "value": 4,
-              "type": "decimal"
+              "name": "Path",
+              "value": "config.txt",
+              "type": "path"
             }
           ],
           "defaults": null
@@ -33,7 +28,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%result%",
+              "value": "%config%",
               "type": "string"
             },
             {
@@ -47,16 +42,21 @@
       ],
       "intent": null,
       "onError": null,
-      "cache": null,
+      "cache": {
+        "durationMs": 300000,
+        "sliding": false,
+        "key": null,
+        "location": null
+      },
       "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/math-divide.goal",
-  "prPath": "/.build/math-divide.pr",
-  "hash": "e975798dbc11a774f299be1fa11414e55adf241b35277e165b8bc817e54026a0",
+  "path": "/cache-simple.goal",
+  "prPath": "/.build/cache-simple.pr",
+  "hash": "625d3b26b510b2d068cc65f60e02371916c5dc7dc78870c423aecf53cbf65dae",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

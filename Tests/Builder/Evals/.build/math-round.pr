@@ -1,28 +1,28 @@
 {
   "name": "Start",
-  "description": "Divides 10 by 4 and stores the result in %result%.",
+  "description": "Rounds 3.14159 to 2 decimal places and stores the result in %rounded%.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "divide 10 by 4, write to %result%",
+      "text": "round 3.14159 to 2 decimal places, write to %rounded%",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "math",
-          "action": "divide",
+          "action": "round",
           "parameters": [
             {
-              "name": "A",
-              "value": 10,
-              "type": "decimal"
+              "name": "Value",
+              "value": 3.14159,
+              "type": "double"
             },
             {
-              "name": "B",
-              "value": 4,
-              "type": "decimal"
+              "name": "Decimals",
+              "value": 2,
+              "type": "int"
             }
           ],
           "defaults": null
@@ -33,7 +33,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%result%",
+              "value": "%rounded%",
               "type": "string"
             },
             {
@@ -54,9 +54,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/math-divide.goal",
-  "prPath": "/.build/math-divide.pr",
-  "hash": "e975798dbc11a774f299be1fa11414e55adf241b35277e165b8bc817e54026a0",
+  "path": "/math-round.goal",
+  "prPath": "/.build/math-round.pr",
+  "hash": "c91ec5634e4ea3d33e2a3e4a0c4768523af59e6eb0d660a7ed6aa82ac142135e",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

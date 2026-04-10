@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Checks whether %text% contains the literal substring \u0022hello\u0022; if true, calls goal Found.",
+  "description": "Checks whether %text% contains the substring \u0027hello\u0027; if true, calls goal Found.",
   "comment": null,
   "steps": [
     {
@@ -60,7 +60,7 @@
   "path": "/condition-contains.goal",
   "prPath": "/.build/condition-contains.pr",
   "hash": "7bce6186ede7a03853e97bf1bc7e1047559c62ed326eddee3fc64460214fef74",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

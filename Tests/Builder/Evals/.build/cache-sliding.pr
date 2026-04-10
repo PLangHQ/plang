@@ -1,28 +1,23 @@
 {
   "name": "Start",
-  "description": "Divides 10 by 4 and stores the result in %result%.",
+  "description": "Reads config.txt into %__data__% and stores it in %config% with a 10-minute sliding cache.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "divide 10 by 4, write to %result%",
+      "text": "read file \u0027config.txt\u0027, cache for 10 minutes sliding",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "math",
-          "action": "divide",
+          "module": "file",
+          "action": "read",
           "parameters": [
             {
-              "name": "A",
-              "value": 10,
-              "type": "decimal"
-            },
-            {
-              "name": "B",
-              "value": 4,
-              "type": "decimal"
+              "name": "Path",
+              "value": "config.txt",
+              "type": "path"
             }
           ],
           "defaults": null
@@ -33,7 +28,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%result%",
+              "value": "%config%",
               "type": "string"
             },
             {
@@ -47,16 +42,21 @@
       ],
       "intent": null,
       "onError": null,
-      "cache": null,
+      "cache": {
+        "durationMs": 600000,
+        "sliding": true,
+        "key": null,
+        "location": null
+      },
       "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/math-divide.goal",
-  "prPath": "/.build/math-divide.pr",
-  "hash": "e975798dbc11a774f299be1fa11414e55adf241b35277e165b8bc817e54026a0",
+  "path": "/cache-sliding.goal",
+  "prPath": "/.build/cache-sliding.pr",
+  "hash": "d6a27da60c5dfff11b9561b174c60919275a2ab9360f0cad1b70c964bd8a613a",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Conditionally checks %ready% and then writes output \u0027ready\u0027.",
+  "description": "Conditionally writes \u0027ready\u0027 to the out channel when %ready% is true.",
   "comment": null,
   "steps": [
     {
@@ -54,6 +54,11 @@
               "name": "Data",
               "value": "ready",
               "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "out",
+              "type": "string"
             }
           ],
           "defaults": null
@@ -71,7 +76,7 @@
   "path": "/condition-substeps.goal",
   "prPath": "/.build/condition-substeps.pr",
   "hash": "f72286a93e515a5420d30e387ff3ece72a653993ba8d5561bebc15378432dd72",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

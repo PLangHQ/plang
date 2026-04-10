@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Checks whether file \u0027test.txt\u0027 exists and writes the result to %info%.",
+  "description": "Checks whether file \u0027test.txt\u0027 exists and stores the result in %info%.",
   "comment": null,
   "steps": [
     {

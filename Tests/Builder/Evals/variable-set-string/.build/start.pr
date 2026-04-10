@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Sets the %items% variable to the provided list literal.",
+  "description": "Sets the variable %name% to the literal string \u0022hello\u0022.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
+      "text": "set %name% = \u0022hello\u0022",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
@@ -16,17 +16,13 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%items%",
+              "value": "%name%",
               "type": "string"
             },
             {
               "name": "Value",
-              "value": [
-                "a",
-                "b",
-                "c"
-              ],
-              "type": "list"
+              "value": "hello",
+              "type": "string"
             }
           ],
           "defaults": null
@@ -41,9 +37,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/variable-set-list.goal",
-  "prPath": "/.build/variable-set-list.pr",
-  "hash": "42b9ae3570df749abbc810800825709f9aa1a66b8a7612f21187a87c3e568016",
+  "path": "/variable-set-string/Start.goal",
+  "prPath": "/variable-set-string/.build/start.pr",
+  "hash": "737c7f6d479f8af304ff015b39e11ef4a563141b3ada3219d97c4b663c24220d",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
