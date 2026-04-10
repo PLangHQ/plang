@@ -1,0 +1,2 @@
+HandleError
+- write out "handling error: %!error.Message%"

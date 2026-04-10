@@ -1,0 +1,49 @@
+{
+  "name": "DoWork",
+  "description": "DoWork goal writes a simple status message to output.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022doing work\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "doing work",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": null,
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/DoWork.goal",
+  "prPath": "/.build/dowork.pr",
+  "hash": "03f88dfd44bf837b5578989c945ad1d2d06c42390a187939d3c2598869b97817",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

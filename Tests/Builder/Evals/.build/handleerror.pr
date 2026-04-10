@@ -1,32 +1,27 @@
 {
-  "name": "Start",
-  "description": "Converts %data% to JSON and writes the result to %json%.",
+  "name": "HandleError",
+  "description": "HandleError goal writes an error message to output, referencing the error object field %!error.Message%.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "convert %data% to json, write to %json%",
+      "text": "write out \u0022handling error: %!error.Message%\u0022",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "variable",
-          "action": "set",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "Name",
-              "value": "%json%",
+              "name": "Data",
+              "value": "handling error: %!error.Message%",
               "type": "string"
             },
             {
-              "name": "Value",
-              "value": "%data%",
-              "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "json",
+              "name": "Channels",
+              "value": "out",
               "type": "string"
             }
           ],
@@ -42,9 +37,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/convert-tojson.goal",
-  "prPath": "/.build/convert-tojson.pr",
-  "hash": "1dfe50961e3398c1202be8b6341bb2b547f7e06d6f873dec3fcac8e0652fab02",
+  "path": "/HandleError.goal",
+  "prPath": "/.build/handleerror.pr",
+  "hash": "6929a73d12ecaa228dfbb1f5d9295c3f4f9b198784baa2ffcbb6a4a29d8bda88",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
