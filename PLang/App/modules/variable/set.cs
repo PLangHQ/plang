@@ -26,8 +26,8 @@ public partial class Set : IContext
         }
 
         Value.Name = Name;
-        if (Type != null) Value.Type = App.Data.Type.FromName(Type);
-        Context.Variables.Put(Value);
+        Context.Variables.Set(Name, Value,
+            Type != null ? App.Data.Type.FromName(Type) : null);
 
         return Task.FromResult(Data());
     }

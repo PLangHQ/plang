@@ -56,10 +56,21 @@ public class @this
 
         var rootName = GetRootName(name);
 
+        // Unwrap Data for the raw value — store Data directly for simple names
+        var rawValue = value is Data.@this dataValue ? dataValue.Value : value;
+
         // Simple case: no dot/bracket path — set the root variable directly
         if (rootName == name)
         {
-            if (_variables.TryGetValue(name, out var existing))
+            if (value is Data.@this dv)
+            {
+                // Store Data directly — preserves properties, type, etc.
+                dv.Name = name;
+                if (type != null) dv.Type = type;
+                dv.Context = _context;
+                _variables[name] = dv;
+            }
+            else if (_variables.TryGetValue(name, out var existing))
             {
                 existing.Value = value;
                 if (type != null)
@@ -74,7 +85,7 @@ public class @this
             return;
         }
 
-        // Dot/bracket path: navigate to the parent object, then set the final property
+        // Dot/bracket path: navigate to the parent object, set the property with raw value
         if (!_variables.TryGetValue(rootName, out var root))
         {
             // Root doesn't exist — create it as a dictionary so dot-path properties work
@@ -106,7 +117,7 @@ public class @this
 
         if (!parent.IsInitialized && parent.Value == null) return;
 
-        var result = SetValueOnObject(parent.Value, propertyName, value);
+        var result = SetValueOnObject(parent.Value, propertyName, rawValue);
         if (!ReferenceEquals(result, parent.Value))
             parent.Value = result;
     }
