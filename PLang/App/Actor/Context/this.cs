@@ -209,6 +209,18 @@ public sealed class @this : IDisposable
     public bool ContainsKey(string key) => _data.ContainsKey(key);
 
     /// <summary>
+    /// Gets the module-scoped static dictionary for the given module namespace.
+    /// Created on first access, persists for the lifetime of this context.
+    /// Used by IStatic — actions in the same module share the same dictionary.
+    /// </summary>
+    public ConcurrentDictionary<string, object?> GetModuleStatic(string moduleNamespace)
+    {
+        var key = $"__static_{moduleNamespace}__";
+        return (ConcurrentDictionary<string, object?>)_data.GetOrAdd(key,
+            _ => new ConcurrentDictionary<string, object?>(StringComparer.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
     /// Creates a child context for nested execution.
     /// </summary>
     public @this CreateChild(Variables.@this? variables = null)

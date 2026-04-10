@@ -85,6 +85,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
             i.Name == "IStep"
             && i.ContainingNamespace.ToDisplayString() == "App.modules");
 
+        // Check if it implements IStatic
+        var implementsIStatic = classSymbol.AllInterfaces.Any(i =>
+            i.Name == "IStatic"
+            && i.ContainingNamespace.ToDisplayString() == "App.modules");
+
         // Find partial properties (declared by author, needing generated implementation)
         var properties = new List<ActionPropertyInfo>();
         foreach (var member in classSymbol.GetMembers())
@@ -169,6 +174,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
             implementsIChannel,
             implementsIAction,
             implementsIStep,
+            implementsIStatic,
             properties);
     }
 
@@ -213,6 +219,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
         if (info.ImplementsIStep)
         {
             sb.AppendLine("    public App.Goals.Goal.Steps.Step.@this Step { get; set; } = null!;");
+            sb.AppendLine();
+        }
+
+        // IStatic auto-provision
+        if (info.ImplementsIStatic)
+        {
+            sb.AppendLine("    public System.Collections.Concurrent.ConcurrentDictionary<string, object?> Static { get; set; } = null!;");
             sb.AppendLine();
         }
 
@@ -358,6 +371,14 @@ public class LazyParamsGenerator : IIncrementalGenerator
         if (info.ImplementsIStep)
         {
             sb.AppendLine("        Step = __action?.Step;");
+        }
+        if (info.ImplementsIStatic)
+        {
+            // Module namespace: e.g., "App.modules.timer" → "timer"
+            var moduleNs = info.Namespace;
+            var prefix = "App.modules.";
+            var moduleName = moduleNs.StartsWith(prefix) ? moduleNs.Substring(prefix.Length).Split('.')[0] : moduleNs;
+            sb.AppendLine($"        Static = context.GetModuleStatic(\"{moduleName}\");");
         }
 
         // Push callstack frame for this action (only when dispatched from .pr)
@@ -573,10 +594,12 @@ internal class ActionClassInfo
     public bool ImplementsIChannel { get; }
     public bool ImplementsIAction { get; }
     public bool ImplementsIStep { get; }
+    public bool ImplementsIStatic { get; }
     public List<ActionPropertyInfo> Properties { get; }
 
     public ActionClassInfo(string ns, string className, string fullName,
-        bool implementsIContext, bool implementsIChannel, bool implementsIAction, bool implementsIStep, List<ActionPropertyInfo> properties)
+        bool implementsIContext, bool implementsIChannel, bool implementsIAction, bool implementsIStep,
+        bool implementsIStatic, List<ActionPropertyInfo> properties)
     {
         Namespace = ns;
         ClassName = className;
@@ -585,6 +608,7 @@ internal class ActionClassInfo
         ImplementsIChannel = implementsIChannel;
         ImplementsIAction = implementsIAction;
         ImplementsIStep = implementsIStep;
+        ImplementsIStatic = implementsIStatic;
         Properties = properties;
     }
 }
