@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Checks whether %x% equals 5; if true, calls goal WhenEqual as system.",
+  "description": "Conditionally calls goal WhenEqual when %x% equals 5.",
   "comment": null,
   "steps": [
     {
@@ -39,7 +39,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "",
+                "name": "WhenEqual",
                 "parameters": []
               },
               "type": "goal.call"

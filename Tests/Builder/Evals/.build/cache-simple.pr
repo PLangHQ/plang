@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Reads config.txt and stores its contents in %config%, caching the read for 5 minutes.",
+  "description": "Reads config.txt and stores its contents into %config%, caching the read for 5 minutes.",
   "comment": null,
   "steps": [
     {

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Rounds 3.14159 to 2 decimal places and stores the result in %rounded%.",
+  "description": "Rounds 3.14159 to 2 decimal places using math.round, then stores the result in %rounded%.",
   "comment": null,
   "steps": [
     {

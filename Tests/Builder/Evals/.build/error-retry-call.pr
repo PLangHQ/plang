@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls goal DoWork with on-error handling that retries 2 times, then calls HandleError.",
+  "description": "Calls goal DoWork with error handling that retries 2 times, then calls HandleError.",
   "comment": null,
   "steps": [
     {
@@ -17,8 +17,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "DoWork",
-                "parameters": []
+                "name": "DoWork"
               },
               "type": "goal.call"
             }

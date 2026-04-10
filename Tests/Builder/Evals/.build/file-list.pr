@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Lists files in the current directory and stores the result in %files%.",
+  "description": "Lists files in the current directory and stores the result into %files%.",
   "comment": null,
   "steps": [
     {

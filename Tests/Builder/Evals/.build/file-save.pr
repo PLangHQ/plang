@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Saves the literal string \u0022hello world\u0022 to file test.txt.",
+  "description": "Saves the literal string \u0022hello world\u0022 to file test.txt using file.save.",
   "comment": null,
   "steps": [
     {

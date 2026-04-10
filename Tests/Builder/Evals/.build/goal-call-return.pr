@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls ComputeAnswer and stores its result into %answer% via variable.set.",
+  "description": "Calls ComputeAnswer and stores its result into %answer%.",
   "comment": null,
   "steps": [
     {

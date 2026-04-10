@@ -54,19 +54,7 @@ namespace PLang
 					userVars.Set("path", fileSystem.RootDirectory);
 
 				if (buildValue is IDictionary<string, object?> buildDict)
-				{
 					TypeMapping.Populate(engine.Building, buildDict);
-
-					// Files needs special handling — string or list of strings → List<Path>
-					if (buildDict.TryGetValue("files", out var filesVal))
-					{
-						if (filesVal is string singleFile)
-							engine.Building.Files.Add(new App.FileSystem.Path(singleFile));
-						else if (filesVal is System.Collections.IEnumerable fileList)
-							foreach (var f in fileList)
-								if (f?.ToString() is string s) engine.Building.Files.Add(new App.FileSystem.Path(s));
-					}
-				}
 
 				// Sync cache flag to %!build.cache% for Build.goal
 				userVars.Set("!build.cache", engine.Building.Cache);

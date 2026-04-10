@@ -438,6 +438,35 @@ public static class TypeMapping
             }
         }
 
+        // Types with a constructor that accepts a single string (may have optional params)
+        if (value is string ctorStr)
+        {
+            var ctor = targetType.GetConstructors()
+                .FirstOrDefault(c =>
+                {
+                    var ps = c.GetParameters();
+                    return ps.Length >= 1
+                        && ps[0].ParameterType == typeof(string)
+                        && ps.Skip(1).All(p => p.IsOptional);
+                });
+            if (ctor != null)
+            {
+                try
+                {
+                    var ps = ctor.GetParameters();
+                    var args = new object?[ps.Length];
+                    args[0] = ctorStr;
+                    for (int ci = 1; ci < ps.Length; ci++)
+                        args[ci] = ps[ci].DefaultValue;
+                    return (ctor.Invoke(args), null);
+                }
+                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+                {
+                    return (null, new Errors.Error(ex.InnerException?.Message ?? ex.Message, "ConstructorFailed", 400));
+                }
+            }
+        }
+
         // Handle enum types
         if (targetType.IsEnum)
         {
