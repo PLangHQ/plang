@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Checks whether \u0027test.txt\u0027 exists and writes the result to %info%.",
+  "description": "Checks whether file \u0027test.txt\u0027 exists and writes the result to %info%.",
   "comment": null,
   "steps": [
     {
@@ -52,7 +52,7 @@
   "path": "/file-exists.goal",
   "prPath": "/.build/file-exists.pr",
   "hash": "cb455373d930a0f1566c71935a4e746d251c2247ffa690333767be7306e8a5c3",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
