@@ -46,6 +46,11 @@ public sealed class @this
     /// </summary>
     public string? Grep { get; set; }
 
+    /// <summary>
+    /// Debug detail level. "step" (default) or "action" (shows state between actions).
+    /// </summary>
+    public string Level { get; set; } = "step";
+
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
 
@@ -94,6 +99,23 @@ public sealed class @this
             goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
+
+        if (string.Equals(Level, "action", StringComparison.OrdinalIgnoreCase))
+        {
+            events.Register(new EventBinding(
+                EventType.BeforeAction,
+                context => BeforeActionHandler(context, Step),
+                goalNamePattern: Goal ?? "*",
+                priority: int.MaxValue,
+                stopOnError: false));
+
+            events.Register(new EventBinding(
+                EventType.AfterAction,
+                context => AfterActionHandler(context, Step),
+                goalNamePattern: Goal ?? "*",
+                priority: int.MaxValue,
+                stopOnError: false));
+        }
     }
 
 
@@ -198,6 +220,38 @@ public sealed class @this
     {
         var goalName = context.Goal?.Name ?? "?";
         Console.Error.WriteLine($"--- DEBUG: Goal '{goalName}' completed ---");
+        return Task.FromResult(App.Data.@this.Ok());
+    }
+
+    private static Task<Data.@this> BeforeActionHandler(Actor.Context.@this context, int? stepFilter)
+    {
+        var step = context.Step;
+        if (step == null) return Task.FromResult(App.Data.@this.Ok());
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return Task.FromResult(App.Data.@this.Ok());
+
+        var goalName = context.Goal?.Name ?? "?";
+        var sb = new StringBuilder();
+        sb.AppendLine($"  --- ACTION [BEFORE] in Step [{step.Index}] of {goalName} ---");
+
+        AppendStepVariables(sb, context);
+
+        WriteFiltered(sb, context);
+        return Task.FromResult(App.Data.@this.Ok());
+    }
+
+    private static Task<Data.@this> AfterActionHandler(Actor.Context.@this context, int? stepFilter)
+    {
+        var step = context.Step;
+        if (step == null) return Task.FromResult(App.Data.@this.Ok());
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return Task.FromResult(App.Data.@this.Ok());
+
+        var goalName = context.Goal?.Name ?? "?";
+        var sb = new StringBuilder();
+        sb.AppendLine($"  --- ACTION [AFTER] in Step [{step.Index}] of {goalName} ---");
+
+        AppendStepVariables(sb, context);
+
+        WriteFiltered(sb, context);
         return Task.FromResult(App.Data.@this.Ok());
     }
 

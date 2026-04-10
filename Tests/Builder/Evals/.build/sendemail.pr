@@ -1,0 +1,49 @@
+{
+  "name": "SendEmail",
+  "description": "Writes a log/output message indicating an email is being sent to %to% with subject %subject%.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022sending email to %to% with subject %subject%\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "sending email to %to% with subject %subject%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "out",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/SendEmail.goal",
+  "prPath": "/.build/sendemail.pr",
+  "hash": "074846cbf6558a105761e3f66e972ce7fb50a3afd065e0d54351ffa6b566e826",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

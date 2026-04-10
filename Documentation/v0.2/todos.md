@@ -37,5 +37,19 @@
 - `PLang/App/Goals/Goal/this.cs` — Goal entity, needs to own its child wiring
 - `PLang/App/Goals/this.cs:306` — LoadFromFileAsync, currently does manual wiring
 
+---
+
+## Replace Console.Write with AskUser in build app confirmation
+
+**Date:** 2026-04-10
+
+**Location:** `PLang/App/this.cs` — `Start()` method, build mode section
+
+**Problem:** `Console.Write("No app found... Create new app? (y/n)")` uses raw Console I/O. When the AskUser module is implemented, this should use it instead so the prompt works through any UI channel (CLI, web, IDE), not just console.
+
+**Fix:** Replace `Console.Write`/`Console.ReadLine` with `AskUser` action when available.
+
+---
+
 ### Open question:
 How does the deserialized Goal get `App` if we can't store it on the Goal? The caller (GoalCall, Goals.LoadFromFileAsync) sets `goal.App` after loading — that's acceptable because it's the loading path, not per-request state. The rule is about not caching *context* (which is per-request). `App` is per-application and set once during loading. But this needs discussion — is `Goal.App` actually safe on cached goals, or should goals navigate to App differently?

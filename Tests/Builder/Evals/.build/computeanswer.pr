@@ -1,43 +1,28 @@
 {
-  "name": "Start",
-  "description": "Calls ComputeAnswer, stores its result in %returnedAnswer%, then writes %returnedAnswer% to output.",
+  "name": "ComputeAnswer",
+  "description": "Sets %answer% to 42 and returns it.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "call ComputeAnswer, write to %returnedAnswer%",
+      "text": "set %answer% = 42",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
       "actions": [
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "name": "GoalName",
-              "value": {
-                "name": "ComputeAnswer",
-                "parameters": []
-              },
-              "type": "goal.call"
-            }
-          ],
-          "defaults": null
-        },
         {
           "module": "variable",
           "action": "set",
           "parameters": [
             {
               "name": "Name",
-              "value": "%returnedAnswer%",
+              "value": "%answer%",
               "type": "string"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
-              "type": "object"
+              "value": 42,
+              "type": "int"
             }
           ],
           "defaults": null
@@ -51,24 +36,24 @@
     },
     {
       "index": 1,
-      "text": "write out %returnedAnswer%",
+      "text": "return %answer%",
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "output",
-          "action": "write",
+          "module": "goal",
+          "action": "return",
           "parameters": [
             {
               "name": "Data",
-              "value": "%returnedAnswer%",
+              "value": "%answer%",
               "type": "object"
             },
             {
-              "name": "Channels",
-              "value": "out",
-              "type": "string"
+              "name": "Depth",
+              "value": 1,
+              "type": "int"
             }
           ],
           "defaults": null
@@ -83,9 +68,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/goal-call-return.goal",
-  "prPath": "/.build/goal-call-return.pr",
-  "hash": "f33e1ae42ae97dc1fc5b1bd8a30063b80831852fe485b64e3e6372f6c0db9e8b",
+  "path": "/ComputeAnswer.goal",
+  "prPath": "/.build/computeanswer.pr",
+  "hash": "6f98b24e850de25c7148d791c9245e4f49118b8229fb594d2b26d739d5ea044d",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
