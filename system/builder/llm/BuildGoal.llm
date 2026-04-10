@@ -125,12 +125,35 @@ Response:
 }
 ```
 
+## Multi-Action Patterns (CRITICAL)
+
+These patterns ALWAYS produce multiple actions in one step. Missing the second action is a build-breaking bug.
+
+**"write to \%var\%"** → TWO actions: the main action PLUS `variable.set`
+```
+step: "render template 'foo.md', write to %result%"
+actions: [
+  {"module": "ui", "action": "render", "parameters": [...]},
+  {"module": "variable", "action": "set", "parameters": [{"name": "Name", "value": "%result%"}, {"name": "Value", "value": "%__data__%"}]}
+]
+```
+The engine stores each action's result as \%__data__\%. The variable.set reads it. This applies to EVERY step containing "write to \%var\%" — file.read, builder.actions, builder.types, ui.render, llm.query, list.group, etc. If the step text contains "write to", you MUST produce a variable.set action. No exceptions.
+
+**"foreach \%list\%, call GoalName"** → TWO actions: `loop.foreach` PLUS `goal.call`
+```
+step: "foreach %items%, call ProcessItem item=%item%"
+actions: [
+  {"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%items%"}, {"name": "ItemName", "value": "item"}]},
+  {"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "ProcessItem"}, "type": "goal.call"}]}
+]
+```
+The foreach iterates, the goal.call runs per item. Both actions are required.
+
 ## Rules
 
 - Step count in response MUST match step count in goal. Comments (/) are NOT steps. `on error` is part of its step, not separate.
 - Comments are documentation only — never influence action mapping.
 - Variables use \%name\% syntax — preserve literally.
-- `write to \%var\%` means the user wants the result stored in a variable. Produce TWO actions: the main action (e.g., file.read) PLUS `variable.set` with Name="\%var\%" and Value="\%__data__\%". The engine stores each action's result as \%__data__\% automatically, so the variable.set reads it.
 - NEVER use `"return"` on actions. There is no return property. Variable assignment is always an explicit `variable.set` action.
 - For `goal.call`: simple = `{"name": "GoalName"}`, with params = `{"name": "GoalName", "parameters": [{"name": "key", "value": "val", "type": "string"}]}`.
 - Omit nullable parameters (types ending ?) when not applicable.

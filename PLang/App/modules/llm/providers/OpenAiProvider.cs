@@ -125,6 +125,8 @@ public sealed class OpenAiProvider : ILlmProvider
                 ["temperature"] = action.Temperature,
                 ["max_completion_tokens"] = action.MaxTokens
             };
+            if (action.TopP.HasValue)
+                body["top_p"] = action.TopP.Value;
             if (apiTools != null)
                 body["tools"] = apiTools;
             if (action.OnStream != null)

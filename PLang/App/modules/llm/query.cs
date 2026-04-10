@@ -51,6 +51,9 @@ public partial class query : IContext
     [Default(0.0)]
     public partial double Temperature { get; init; }
 
+    /// <summary>Top-p (nucleus sampling). 0.0 = greedy, 1.0 = full distribution.</summary>
+    public partial double? TopP { get; init; }
+
     /// <summary>Maximum tokens in the response.</summary>
     [Default(4000)]
     public partial int MaxTokens { get; init; }
