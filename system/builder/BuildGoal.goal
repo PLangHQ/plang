@@ -5,33 +5,17 @@ BuildGoal
 / Falls back to BuildStep for steps with level medium or low
 
 - write out "Building goal: %goal.Name%"
-- get all actions, write to %actions%
-- get type info, write to %typeInfo%
+- builder.actions, write to %actions%
+- builder.types, write to %typeInfo%
 - render template "/system/actions/v2/summary.md", write to %actionSummary%
 - render template "/system/builder/templates/goalFormatForLlm.template", write to %goalForLlm%
 - read file "llm/BuildGoal.llm", load vars, write to %buildGoalPrompt%
-- [llm] system: %buildGoalPrompt%
-        user: %goalForLlm%
-         scheme: {
-            description: string,
-            errors?: [{key: string, message: string}],
-            warnings?: [{key: string, message: string}],
-            steps: [{index: int, guidance: string,
-                  actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}],
-                              errors?: [{key: string, message: string}],
-                              warnings?: [{key: string, message: string}]}],
-                  errors?: [{key: string, message: string}],
-                  warnings?: [{key: string, message: string}],
-                  cache?: {durationMs: long, sliding?: bool, key?: string},
-                  onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string},
-                  level: string, confidence: int}]
-                }
-        on error HandleBuildGoalFailure
-        write to %stepResults%
+- llm.query system=%buildGoalPrompt%, user=%goalForLlm%, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, on error HandleBuildGoalFailure, write to %stepResults%
+- call ValidateBuildResponse, on error call LlmFixer
 - set %traceId% = %Now.Ticks%_%goal.Name%
 - set %trace% = {id: %traceId%, goal: %goal.Name%, timestamp: %Now%, pass1: {system: %buildGoalPrompt%, user: %goalForLlm%, response: %stepResults%}, detailPasses: []}
 - group %stepResults.steps% by "level", write to %groupedSteps%
-- foreach %groupedSteps%, call ProcessGroup item=%group%
+- loop.foreach %groupedSteps%, goal.call ProcessGroup item=%group%
 - save %trace% to file '/.build/traces/%traceId%.json'
 - add %traceId% to %traceGoals%
 - set %goal.Version% = "0.2.1"
@@ -43,6 +27,13 @@ ProcessGroup
 - if %group.steps[0].level% is "low" or "medium"
     - foreach %group.steps%, call BuildStep item=%stepResult%
 - foreach %group.steps%, call ApplyStep item=%stepResult%
+
+
+LlmFixer
+/ LLM produced invalid output — retry with error context
+- write out "  Validation failed: %!error.Message% — retrying..."
+- llm.query system=%buildGoalPrompt%, user="Your previous response had an error: %!error.Message%. The developer's PLang code is:\n%goalForLlm%\n\nYour previous answer:\n%stepResults%\n\nFix the error and return the correct response.", scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, write to %stepResults%
+- call ValidateBuildResponse
 
 
 HandleBuildGoalFailure
