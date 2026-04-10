@@ -5,6 +5,7 @@ Build
 
 - set default %path% = "."
 - set default %!build.cache% = true
+- set %traceGoals% = []
 - write out "Building path: %path%"
 - [plang] call GetApp, write to %app%
 - [plang] GetGoalsV2, fileOrFolderPath=%path%, parser="goal", write to %goals%
