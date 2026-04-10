@@ -18,6 +18,11 @@
               "name": "Path",
               "value": "test.txt",
               "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
             }
           ],
           "defaults": null

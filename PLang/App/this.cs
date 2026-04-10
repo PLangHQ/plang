@@ -382,6 +382,17 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         // Building → PLang builder (runs as User — user is building their code)
         if (Building.IsEnabled)
         {
+            // Safety check: confirm new app creation if no app.pr exists
+            var appPrPath = FileSystem.ValidatePath(".build/app.pr");
+            if (!FileSystem.File.Exists(appPrPath))
+            {
+                Console.Write($"No app found at {AbsolutePath}. Create new app? (y/n): ");
+                var answer = Console.ReadLine()?.Trim().ToLowerInvariant();
+                if (answer != "y" && answer != "yes")
+                    return Data.@this.FromError(new Errors.ServiceError(
+                        "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
+            }
+
             CurrentActor = User;
             var buildCall = new GoalCall { Name = "Build", PrPath = "/system/builder/.build/build.pr" };
             return await RunGoalAsync(buildCall, User.Context);
