@@ -40,6 +40,17 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["%actions%"],"maxLength
 | `variables` | string[] | null | Variables to watch in every step output (with or without `%`). |
 | `maxLength` | int | 500 | Max characters per line before truncation. |
 | `grep` | string | null | Regex pattern to filter output lines (case-insensitive). |
+| `level` | string | "step" | Detail level: `"step"` (per step) or `"action"` (per action within steps). |
+
+## Detail Levels
+
+**step** (default): Shows BEFORE/AFTER for each step. Multi-action steps show the final state only.
+
+**action**: Also shows BEFORE/AFTER for each action within a step. Useful for seeing how `%__data__%` flows between actions like `goal.call` → `variable.set`.
+
+```bash
+plang '--debug={"level":"action","variables":["%__data__%"]}'
+```
 
 ## Output Format
 
