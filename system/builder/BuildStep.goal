@@ -17,7 +17,7 @@ BuildStep
         on error call HandleBuildStepFailure
         write to %result%
 - add {stepIndex: %stepResult.index%, stepText: %step.Text%, level: %stepResult.level%, system: %buildStepPrompt%, user: %stepForLlm%, response: %result%} to %trace.detailPasses%
-- save %trace% to file '.build/traces/%goal.Name%.json'
+- save %trace% to file '/.build/traces/%goal.Name%.json'
 - call ValidateBuildStepResult
 - set %goal.Steps[stepResult.index].Actions% = %result.actions%
 - [plang] ValidateActions, actions=%goal.Steps[stepResult.index].Actions%

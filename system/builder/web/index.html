@@ -77,6 +77,14 @@
     background: var(--surface2);
   }
   .goal-item .badge.has-detail { background: var(--yellow); color: #000; }
+  .goal-item .changed-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    margin-left: 6px;
+  }
 
   /* Main */
   #main {
@@ -193,7 +201,7 @@
   }
   .level-high { color: var(--green); }
   .level-medium { color: var(--yellow); }
-  .level-low { color: var(--orange); }
+  .level-low { color: var(--accent); }
 
   /* Detail pass card */
   .detail-pass {
@@ -221,6 +229,24 @@
   .reason-medium { background: var(--yellow); color: #000; }
   .reason-low { background: var(--orange); color: #000; }
   .reason-validation { background: var(--accent); color: #fff; }
+
+  /* PLang formatted view */
+  .plang-view {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.15);
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+  }
+  .pv-step { color: var(--text-dim); display: block; margin-top: 4px; }
+  .pv-step:first-child { margin-top: 0; }
+  .pv-conf-high { color: var(--green); font-size: 10px; }
+  .pv-conf-med { color: var(--yellow); font-size: 10px; }
+  .pv-conf-low { color: var(--accent); font-size: 10px; }
+  .pv-action { color: var(--green); display: block; }
+  .pv-modifier { color: var(--orange); display: block; font-size: 11px; }
 
   /* Auto-refresh toggle */
   #controls {
@@ -256,27 +282,38 @@
 <script>
 // Default: traces relative to app root. Override with ?traces=path
 const params = new URLSearchParams(location.search);
-const TRACE_BASE = params.get('traces') || 'system/builder/.build/traces';
+const TRACE_BASE = params.get('traces') || '/.build/traces';
 const POLL_MS = 3000;
 
 let goals = [];
-let traces = {};
+let traces = {};          // current fetched data per goal
+let traceHashes = {};     // hash of last fetched JSON per goal
+let displayedHash = {};   // hash of what's currently rendered per goal
+let changedGoals = new Set(); // goals with newer data than what's displayed
 let selectedGoal = null;
-let pollTimer = null;
+let initialLoad = true;
+
+function hashString(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  }
+  return h.toString(36);
+}
 
 async function fetchJson(url) {
   try {
     const r = await fetch(url, { cache: 'no-store' });
     if (!r.ok) return null;
-    return await r.json();
+    return await r.text(); // return raw text so we can hash it
   } catch { return null; }
 }
 
 async function poll() {
-  const manifest = await fetchJson(`${TRACE_BASE}/manifest.json`);
+  const manifestText = await fetchJson(`${TRACE_BASE}/manifest.json`);
   const statusEl = document.getElementById('status');
 
-  if (!manifest) {
+  if (!manifestText) {
     statusEl.textContent = 'no data';
     statusEl.className = 'status';
     return;
@@ -285,17 +322,37 @@ async function poll() {
   statusEl.textContent = 'live';
   statusEl.className = 'status live';
 
+  const manifest = JSON.parse(manifestText);
   const goalNames = Array.isArray(manifest) ? manifest : (manifest.goals || []);
+
+  // Detect new goals
+  const hadNewGoals = goalNames.some(n => !goals.includes(n));
   goals = goalNames;
 
-  // Fetch all traces
+  // Fetch all traces, detect changes via hash
   for (const name of goalNames) {
-    traces[name] = await fetchJson(`${TRACE_BASE}/${name}.json`);
+    const raw = await fetchJson(`${TRACE_BASE}/${name}.json`);
+    if (!raw) continue;
+
+    const newHash = hashString(raw);
+    if (newHash !== traceHashes[name]) {
+      traces[name] = JSON.parse(raw);
+      traceHashes[name] = newHash;
+
+      // If we already displayed this goal and the data changed, mark it
+      if (displayedHash[name] && displayedHash[name] !== newHash) {
+        changedGoals.add(name);
+      }
+    }
   }
 
   renderGoalList();
-  if (selectedGoal && traces[selectedGoal]) {
-    renderTrace(traces[selectedGoal]);
+
+  // On first load, auto-select BuildGoal if available, otherwise first goal
+  if (initialLoad && goals.length > 0) {
+    initialLoad = false;
+    const defaultGoal = goals.includes('BuildGoal') ? 'BuildGoal' : goals[0];
+    selectGoal(defaultGoal);
   }
 }
 
@@ -308,7 +365,9 @@ function renderGoalList() {
     const div = document.createElement('div');
     div.className = 'goal-item' + (name === selectedGoal ? ' active' : '');
     const detailCount = trace?.detailPasses?.length || 0;
+    const hasChanged = changedGoals.has(name);
     div.innerHTML = `
+      ${hasChanged ? '<div class="changed-dot"></div>' : ''}
       <span>${esc(name)}</span>
       ${detailCount > 0 ? `<span class="badge has-detail">${detailCount} detail</span>` : '<span class="badge">ready</span>'}
     `;
@@ -319,10 +378,12 @@ function renderGoalList() {
 
 function selectGoal(name) {
   selectedGoal = name;
+  changedGoals.delete(name); // clear changed indicator
   renderGoalList();
   const trace = traces[name];
   if (trace) {
     renderTrace(trace);
+    displayedHash[name] = traceHashes[name]; // mark as displayed
   }
 }
 
@@ -354,7 +415,8 @@ function renderTrace(trace) {
         <tr><th>#</th><th>Guidance</th><th>Module.Action</th><th>Level</th><th>Conf</th><th>Group</th></tr>
         ${steps.map(s => {
           const actions = (s.actions || []).map(a => `${a.module}.${a.action}`).join(', ');
-          const levelClass = 'level-' + (s.level || 'high');
+          const conf = s.confidence ?? 0;
+          const levelClass = conf >= 85 ? 'level-high' : conf >= 50 ? 'level-medium' : 'level-low';
           return `<tr>
             <td>${s.index}</td>
             <td>${esc(s.guidance || '')}</td>
@@ -369,7 +431,7 @@ function renderTrace(trace) {
   </div>`;
 
   // Pass 1 prompts
-  html += renderPromptSection('Pass 1 — BuildGoal', trace.pass1?.system, trace.pass1?.user, trace.pass1?.response);
+  html += renderPromptSection('Pass 1 — BuildGoal', trace.pass1?.system, trace.pass1?.user, trace.pass1?.response, true);
 
   // Detail passes
   if (detailPasses.length > 0) {
@@ -396,13 +458,13 @@ function renderTrace(trace) {
   main.innerHTML = html;
 }
 
-function renderPromptSection(title, system, user, response) {
+function renderPromptSection(title, system, user, response, open = false) {
   return `<div class="section">
     <div class="section-title" onclick="toggleSection(this)">
       <span>${esc(title)}</span>
-      <span class="arrow">&#9654;</span>
+      <span class="arrow${open ? ' open' : ''}">&#9654;</span>
     </div>
-    <div class="section-body">
+    <div class="section-body${open ? ' open' : ''}">
       ${renderPromptBlocks(system, user, response)}
     </div>
   </div>`;
@@ -422,16 +484,70 @@ function renderPromptBlocks(system, user, response) {
         <span>User Prompt</span>
         <span>${estimateSize(user)}</span>
       </div>
-      <div class="block-content"><pre>${esc(typeof user === 'string' ? user : JSON.stringify(user, null, 2))}</pre></div>
+      <div class="block-content open"><pre>${esc(typeof user === 'string' ? user : JSON.stringify(user, null, 2))}</pre></div>
     </div>` : ''}
     ${response ? `<div class="block">
       <div class="block-label" onclick="toggleBlock(this)">
         <span>LLM Response</span>
         <span>${estimateSize(response)}</span>
       </div>
-      <div class="block-content"><pre>${esc(typeof response === 'string' ? response : JSON.stringify(response, null, 2))}</pre></div>
+      <div class="block-content open">
+        ${formatPlangView(response)}
+        <pre>${esc(typeof response === 'string' ? response : JSON.stringify(response, null, 2))}</pre>
+      </div>
     </div>` : ''}
   `;
+}
+
+function formatPlangView(response) {
+  if (!response || typeof response === 'string') return '';
+  const steps = response.steps || (response.actions ? [response] : null);
+  if (!steps) return '';
+
+  let lines = [];
+  for (const step of steps) {
+    const actions = step.actions || [];
+    if (actions.length === 0) continue;
+
+    // Step header if it has index/guidance
+    if (step.index !== undefined) {
+      const level = step.level || '?';
+      const conf = step.confidence ?? '?';
+      const group = step.group ? ` group=${step.group}` : '';
+      const confClass = typeof conf === 'number' ? (conf >= 85 ? 'pv-conf-high' : conf >= 50 ? 'pv-conf-med' : 'pv-conf-low') : 'pv-conf-med';
+      lines.push(`<span class="pv-step">[${step.index}] ${esc(step.guidance || '')} <span class="${confClass}">${level} ${conf}%${group}</span></span>`);
+    }
+
+    for (const a of actions) {
+      const params = (a.parameters || []).map(p => {
+        const type = p.type ? `[${p.type}] ` : '';
+        let val = p.value;
+        if (val !== null && typeof val === 'object') val = JSON.stringify(val);
+        return `${esc(p.name)}(${type}${esc(String(val ?? ''))})`;
+      }).join(', ');
+      lines.push(`<span class="pv-action">  - ${esc(a.module)}.${esc(a.action)} ${params}</span>`);
+    }
+
+    // Step modifiers
+    if (step.onError) {
+      const oe = step.onError;
+      let parts = [];
+      if (oe.retryCount) parts.push(`retry ${oe.retryCount}`);
+      if (oe.goal?.name) parts.push(`call ${oe.goal.name}`);
+      if (oe.ignoreError) parts.push('ignore');
+      if (oe.order) parts.push(`order=${oe.order}`);
+      lines.push(`<span class="pv-modifier">    onError: ${esc(parts.join(', '))}</span>`);
+    }
+    if (step.cache) {
+      const c = step.cache;
+      let parts = [`${c.durationMs}ms`];
+      if (c.sliding) parts.push('sliding');
+      lines.push(`<span class="pv-modifier">    cache: ${esc(parts.join(', '))}</span>`);
+    }
+  }
+
+  if (lines.length === 0) return '';
+  return `<div class="plang-view">${lines.join('\n')}</div>`;
 }
 
 function toggleSection(el) {
@@ -462,7 +578,7 @@ function esc(s) {
 // Polling
 function startPolling() {
   poll();
-  pollTimer = setInterval(() => {
+  setInterval(() => {
     if (document.getElementById('auto-refresh').checked) {
       poll();
     }

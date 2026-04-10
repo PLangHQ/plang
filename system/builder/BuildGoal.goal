@@ -30,9 +30,9 @@ BuildGoal
         write to %stepResults%
 - set %trace% = {goal: %goal.Name%, pass1: {system: %buildGoalPrompt%, user: %goalForLlm%, response: %stepResults%}, detailPasses: []}
 - foreach %stepResults.steps%, call ApplyStep, item=%stepResult%
-- save %trace% to file '.build/traces/%goal.Name%.json'
+- save %trace% to file '/.build/traces/%goal.Name%.json'
 - add %goal.Name% to %traceGoals%
-- save %traceGoals% to file '.build/traces/manifest.json'
+- save %traceGoals% to file '/.build/traces/manifest.json'
 - set %goal.Version% = "0.2.1"
 - call SaveGoal %goal%
 
