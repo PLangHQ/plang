@@ -69,6 +69,49 @@
     },
     {
       "index": 2,
+      "text": "read file '/.build/traces/manifest.json', write to %traceGoals%",
+      "lineNumber": 8,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            { "name": "Path", "value": "/.build/traces/manifest.json", "type": "path" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%traceGoals%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
+        }
+      ],
+      "onError": { "ignoreError": true },
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set default %traceGoals% = []",
+      "lineNumber": 9,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%traceGoals%", "type": "string" },
+            { "name": "Value", "value": [], "type": "list" },
+            { "name": "AsDefault", "value": true, "type": "bool" }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
       "text": "write out \"Building path: %path%\"",
       "lineNumber": 8,
       "indent": 0,
@@ -92,7 +135,7 @@
       "waitForExecution": true
     },
     {
-      "index": 3,
+      "index": 5,
       "text": "[plang] call GetApp, write to %app%",
       "lineNumber": 9,
       "indent": 0,
@@ -124,7 +167,7 @@
       "waitForExecution": true
     },
     {
-      "index": 4,
+      "index": 6,
       "text": "[plang] GetGoalsV2, fileOrFolderPath=%path%, parser=\"goal\", write to %goals%",
       "lineNumber": 10,
       "indent": 0,
@@ -156,7 +199,7 @@
       "waitForExecution": true
     },
     {
-      "index": 5,
+      "index": 7,
       "text": "write out \"Found %goals.Count% goals\"",
       "lineNumber": 11,
       "indent": 0,
@@ -180,7 +223,7 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 8,
       "text": "foreach %goals%, call BuildGoal, item=%goal%",
       "lineNumber": 12,
       "indent": 0,
@@ -220,7 +263,7 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 9,
       "text": "[plang] call SaveApp, app=%app%",
       "lineNumber": 13,
       "indent": 0,

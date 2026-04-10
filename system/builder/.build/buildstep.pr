@@ -168,8 +168,53 @@
     },
     {
       "index": 6,
-      "text": "call ValidateBuildStepResult",
+      "text": "add {stepIndex: %stepResult.index%, stepText: %step.Text%, level: %stepResult.level%, system: %buildStepPrompt%, user: %stepForLlm%, response: %result%} to %trace.detailPasses%",
       "lineNumber": 19,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "list",
+          "action": "add",
+          "parameters": [
+            { "name": "ListName", "value": "%trace.detailPasses%", "type": "string" },
+            {
+              "name": "Value",
+              "value": {
+                "stepIndex": "%stepResult.index%",
+                "stepText": "%step.Text%",
+                "level": "%stepResult.level%",
+                "system": "%buildStepPrompt%",
+                "user": "%stepForLlm%",
+                "response": "%result%"
+              },
+              "type": "object"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "save %trace% to file '/.build/traces/%goal.Name%.json'",
+      "lineNumber": 20,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            { "name": "Value", "value": "%trace%", "type": "object" },
+            { "name": "Path", "value": "/.build/traces/%goal.Name%.json", "type": "path" }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "call ValidateBuildStepResult",
+      "lineNumber": 21,
       "indent": 0,
       "actions": [
         {
@@ -183,7 +228,7 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 9,
       "text": "set %goal.Steps[stepResult.index].Actions% = %result.actions%",
       "lineNumber": 20,
       "indent": 0,
@@ -200,7 +245,7 @@
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 10,
       "text": "[plang] ValidateActions, actions=%goal.Steps[stepResult.index].Actions%",
       "lineNumber": 21,
       "indent": 0,
