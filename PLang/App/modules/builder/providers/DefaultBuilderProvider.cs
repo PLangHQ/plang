@@ -241,6 +241,99 @@ public class DefaultBuilderProvider : IBuilderProvider
         return await action.Context.App.Save();
     }
 
+    // --- Promote Groups ---
+
+    public Data.@this PromoteGroups(promoteGroups action)
+    {
+        var guard = BuildingGuard(action);
+        if (guard != null) return guard;
+
+        var steps = ToStepList(action.Steps);
+        if (steps == null || steps.Count == 0)
+            return Data.@this.Ok(action.Steps);
+
+        // Collect groups and find the lowest level in each
+        var groupLevels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var step in steps)
+        {
+            var group = GetString(step, "group");
+            if (string.IsNullOrEmpty(group)) continue;
+
+            var level = GetString(step, "level") ?? "high";
+            if (!groupLevels.TryGetValue(group, out var current))
+            {
+                groupLevels[group] = level;
+            }
+            else
+            {
+                groupLevels[group] = LowestLevel(current, level);
+            }
+        }
+
+        // Promote: if any group has a non-high level, set all members to that level
+        int promoted = 0;
+        foreach (var step in steps)
+        {
+            var group = GetString(step, "group");
+            if (string.IsNullOrEmpty(group)) continue;
+
+            if (!groupLevels.TryGetValue(group, out var groupLevel)) continue;
+            if (string.Equals(groupLevel, "high", StringComparison.OrdinalIgnoreCase)) continue;
+
+            var currentLevel = GetString(step, "level") ?? "high";
+            if (string.Equals(currentLevel, "high", StringComparison.OrdinalIgnoreCase))
+            {
+                SetValue(step, "level", groupLevel);
+                promoted++;
+            }
+        }
+
+        if (promoted > 0)
+            Console.WriteLine($"  Group promotion: {promoted} step(s) promoted to detail pass");
+
+        return Data.@this.Ok(action.Steps);
+    }
+
+    private static string LowestLevel(string a, string b)
+    {
+        int Rank(string l) => l.ToLowerInvariant() switch
+        {
+            "low" => 0,
+            "medium" => 1,
+            _ => 2
+        };
+        return Rank(a) <= Rank(b) ? a : b;
+    }
+
+    private static List<object>? ToStepList(object? steps)
+    {
+        if (steps is List<object> list) return list;
+        if (steps is List<object?> nullableList) return nullableList.Where(s => s != null).Select(s => s!).ToList();
+        if (steps is System.Collections.IList rawList)
+        {
+            var result = new List<object>();
+            foreach (var item in rawList)
+                if (item != null) result.Add(item);
+            return result;
+        }
+        return null;
+    }
+
+    private static string? GetString(object step, string key)
+    {
+        if (step is IDictionary<string, object?> dict && dict.TryGetValue(key, out var val))
+            return val?.ToString();
+        if (step is JsonElement je && je.TryGetProperty(key, out var prop))
+            return prop.GetString();
+        return null;
+    }
+
+    private static void SetValue(object step, string key, string value)
+    {
+        if (step is IDictionary<string, object?> dict)
+            dict[key] = value;
+    }
+
     /// <summary>
     /// Normalizes parameter values to match their declared type.
     /// LLMs are non-deterministic — they may produce "false" (string) instead of false (bool).

@@ -51,5 +51,17 @@
 
 ---
 
+---
+
+## %Now.ToString("format")% doesn't resolve in variable.set
+
+**Date:** 2026-04-10
+
+**Problem:** `- set %traceId% = %Now.ToString("yyyyMMdd-HHmmss")%_%goal.Name%` produces `_Start` — the `ToString("...")` call doesn't resolve. Fell back to `%Now.Ticks%` which works. Method calls with string arguments inside `%variable%` expressions may not be supported or the quotes conflict with the step's own quoting.
+
+**Expected:** `%Now.ToString("yyyyMMdd-HHmmss")%` should resolve to e.g. `20260410-183500`.
+
+---
+
 ### Open question:
 How does the deserialized Goal get `App` if we can't store it on the Goal? The caller (GoalCall, Goals.LoadFromFileAsync) sets `goal.App` after loading — that's acceptable because it's the loading path, not per-request state. The rule is about not caching *context* (which is per-request). `App` is per-application and set once during loading. But this needs discussion — is `Goal.App` actually safe on cached goals, or should goals navigate to App differently?

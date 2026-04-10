@@ -28,13 +28,21 @@ BuildGoal
                 }
         on error HandleBuildGoalFailure
         write to %stepResults%
-- set %trace% = {goal: %goal.Name%, pass1: {system: %buildGoalPrompt%, user: %goalForLlm%, response: %stepResults%}, detailPasses: []}
-- foreach %stepResults.steps%, call ApplyStep, item=%stepResult%
-- save %trace% to file '/.build/traces/%goal.Name%.json'
-- add %goal.Name% to %traceGoals%
-- save %traceGoals% to file '/.build/traces/manifest.json'
+- set %traceId% = %Now.Ticks%_%goal.Name%
+- set %trace% = {id: %traceId%, goal: %goal.Name%, timestamp: %Now%, pass1: {system: %buildGoalPrompt%, user: %goalForLlm%, response: %stepResults%}, detailPasses: []}
+- group %stepResults.steps% by "level", write to %groupedSteps%
+- foreach %groupedSteps%, call ProcessGroup item=%group%
+- save %trace% to file '/.build/traces/%traceId%.json'
+- add %traceId% to %traceGoals%
 - set %goal.Version% = "0.2.1"
 - call SaveGoal %goal%
+
+
+ProcessGroup
+/ Process a group of steps with the same confidence level
+- if %group.steps[0].level% is "low" or "medium"
+    - foreach %group.steps%, call BuildStep item=%stepResult%
+- foreach %group.steps%, call ApplyStep item=%stepResult%
 
 
 HandleBuildGoalFailure

@@ -1,0 +1,6 @@
+Start
+- read file 'config.json', write to %config%
+- if %config.debug% is true, call EnableDebug
+- write out %config.appName%
+- set %count% = 0
+- foreach %config.items%, call ProcessItem item=%item%

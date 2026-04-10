@@ -11,4 +11,5 @@ Build
 - [plang] GetGoalsV2, fileOrFolderPath=%path%, parser="goal", write to %goals%
 - write out "Found %goals.Count% goals"
 - foreach %goals%, call BuildGoal, item=%goal%
+- save %traceGoals% to file '/.build/traces/manifest.json'
 - [plang] call SaveApp, app=%app%

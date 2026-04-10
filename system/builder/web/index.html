@@ -325,6 +325,9 @@ async function poll() {
   const manifest = JSON.parse(manifestText);
   const goalNames = Array.isArray(manifest) ? manifest : (manifest.goals || []);
 
+  // Sort newest first (IDs start with date-time)
+  goalNames.sort((a, b) => b.localeCompare(a));
+
   // Detect new goals
   const hadNewGoals = goalNames.some(n => !goals.includes(n));
   goals = goalNames;
@@ -366,9 +369,12 @@ function renderGoalList() {
     div.className = 'goal-item' + (name === selectedGoal ? ' active' : '');
     const detailCount = trace?.detailPasses?.length || 0;
     const hasChanged = changedGoals.has(name);
+    const goalName = trace?.goal || name.replace(/^\d{8}-\d{6}_/, '');
+    const timeMatch = name.match(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/);
+    const timeLabel = timeMatch ? `${timeMatch[4]}:${timeMatch[5]}:${timeMatch[6]}` : '';
     div.innerHTML = `
       ${hasChanged ? '<div class="changed-dot"></div>' : ''}
-      <span>${esc(name)}</span>
+      <span><span style="display:block">${esc(goalName)}</span>${timeLabel ? `<span style="font-size:10px;color:var(--text-dim)">${timeLabel}</span>` : ''}</span>
       ${detailCount > 0 ? `<span class="badge has-detail">${detailCount} detail</span>` : '<span class="badge">ready</span>'}
     `;
     div.onclick = () => selectGoal(name);
