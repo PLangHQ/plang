@@ -242,7 +242,7 @@
     },
     {
       "index": 9,
-      "text": "set %goal.BuilderVersion% = \"0.3\"",
+      "text": "set %goal.BuilderVersion% = \"0.2.1\"",
       "lineNumber": 30,
       "indent": 0,
       "actions": [
@@ -251,7 +251,7 @@
           "action": "set",
           "parameters": [
             { "name": "Name", "value": "%goal.BuilderVersion%", "type": "string" },
-            { "name": "Value", "value": "0.3", "type": "string" }
+            { "name": "Value", "value": "0.2.1", "type": "string" }
           ]
         }
       ],
