@@ -21,6 +21,12 @@ public sealed class @this
     /// </summary>
     public bool IsEnabled { get; set; }
 
+    /// <summary>
+    /// Explicit variables to watch. When set, these are printed in every step debug output.
+    /// Set via --debug={"variables":["%response%","%goal%"]}
+    /// </summary>
+    public List<string>? WatchVariables { get; private set; }
+
     public @this(App.@this engine)
     {
         _engine = engine;
@@ -98,7 +104,7 @@ public sealed class @this
         return result2.Count > 0 ? result2 : null;
     }
 
-    private static void ParseJsonFilter(IDictionary<string, object?> dict, out string? goalFilter, out int? stepFilter)
+    private void ParseJsonFilter(IDictionary<string, object?> dict, out string? goalFilter, out int? stepFilter)
     {
         goalFilter = null;
         stepFilter = null;
@@ -111,6 +117,21 @@ public sealed class @this
             if (stepVal is int i) stepFilter = i;
             else if (stepVal is long l) stepFilter = (int)l;
             else if (stepVal is string s && int.TryParse(s, out var parsed)) stepFilter = parsed;
+        }
+
+        if (dict.TryGetValue("variables", out var varsVal))
+        {
+            WatchVariables = new List<string>();
+            if (varsVal is System.Collections.IEnumerable list and not string)
+            {
+                foreach (var item in list)
+                    if (item?.ToString() is string v)
+                        WatchVariables.Add(v.Trim('%'));
+            }
+            else if (varsVal is string single)
+            {
+                WatchVariables.Add(single.Trim('%'));
+            }
         }
     }
 
@@ -262,6 +283,12 @@ public sealed class @this
                 }
             }
         }
+
+        // Add explicitly watched variables
+        var watchVars = context.App?.Debug.WatchVariables;
+        if (watchVars != null)
+            foreach (var v in watchVars)
+                varNames.Add(v);
 
         if (varNames.Count == 0) return;
 

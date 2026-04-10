@@ -110,7 +110,7 @@ public sealed partial class @this : Data.@this<@this>
     private string? _hash;
 
     [Store, Debug]
-    public string? Version { get; set; }
+    public string? BuilderVersion { get; set; }
 
     [Store, Debug, Default]
     public bool IsSetup { get; init; }

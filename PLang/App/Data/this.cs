@@ -219,19 +219,6 @@ public partial class @this
     public bool IsEmpty => !IsInitialized || _value == null ||
         (_value is string s && string.IsNullOrEmpty(s));
 
-    /// <summary>
-    /// Count of the inner value. Lists/arrays → element count, dictionaries → key count,
-    /// null/uninitialized → 0, any other value → 1.
-    /// </summary>
-    [JsonIgnore]
-    public int Count => _value switch
-    {
-        null => 0,
-        System.Collections.ICollection col => col.Count,
-        System.Collections.IEnumerable e and not string => e.Cast<object>().Count(),
-        _ => 1
-    };
-
     public static @this Null(string name = "") => new(name, null);
     public static @this NotFound(string name = "") => new(name, null) { IsInitialized = false };
 
