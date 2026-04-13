@@ -18,7 +18,7 @@ public static class Json
     public static readonly JsonSerializerOptions CaseInsensitiveRead = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true) },
+        Converters = { new JsonStringEnumConverter(allowIntegerValues: true) },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 

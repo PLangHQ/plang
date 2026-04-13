@@ -200,8 +200,7 @@ public class Error : IError
                 sb.AppendLine($"{indent}📋 Variables in scope ({ctxSource}, id={ctxId}):");
                 foreach (var v in allVars)
                 {
-                    var val = v.Value?.ToString() ?? "(null)";
-                    if (val.Length > 100) val = val[..100] + $"... ({val.Length} chars)";
+                    var val = FormatVerboseValue(v.Value);
                     sb.AppendLine($"{indent}    %{v.Name}% = {val} ({v.Type?.Value ?? "?"})");
                 }
             }
@@ -233,6 +232,24 @@ public class Error : IError
                 }
             }
         }
+    }
+
+    private static string FormatVerboseValue(object? value)
+    {
+        if (value == null) return "(null)";
+        if (value is string s)
+            return s.Length > 200 ? $"\"{s[..200]}...\" ({s.Length} chars)" : $"\"{s}\"";
+        if (value is System.Collections.IDictionary or System.Collections.IList)
+        {
+            try
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(value);
+                return json.Length > 300 ? json[..300] + $"... ({json.Length} chars)" : json;
+            }
+            catch { return value.ToString() ?? "?"; }
+        }
+        var str = value.ToString() ?? "?";
+        return str.Length > 200 ? $"{str[..200]}... ({str.Length} chars)" : str;
     }
 
     protected virtual void FormatExtra(StringBuilder sb, string indent) { }
