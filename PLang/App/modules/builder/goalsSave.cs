@@ -4,7 +4,7 @@ using Goal = App.Goals.Goal.@this;
 
 namespace App.modules.builder;
 
-[Action("goals.save")]
+[Action("goalsSave")]
 public partial class goalsSave : IContext
 {
     [IsNotNull]

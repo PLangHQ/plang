@@ -3,7 +3,7 @@ using App.modules.builder.providers;
 
 namespace App.modules.builder;
 
-[Action("steps.promoteGroups")]
+[Action("promoteGroups")]
 public partial class promoteGroups : IContext
 {
     [IsNotNull]

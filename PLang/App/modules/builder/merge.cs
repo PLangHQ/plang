@@ -3,7 +3,7 @@ using App.modules.builder.providers;
 
 namespace App.modules.builder;
 
-[Action("steps.merge")]
+[Action("merge")]
 public partial class merge : IContext
 {
     [IsNotNull]

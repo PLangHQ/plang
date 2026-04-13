@@ -247,6 +247,13 @@ public partial class @this
         var prop = Properties[key];
         if (prop != null) return prop;
 
+        // Lazy type conversion — if value is a string with a typed Data, convert on first navigation
+        if (val is string && _type != null)
+        {
+            ConvertValue();
+            val = Value;
+        }
+
         // Navigate the Value object via registered navigator (dict, list, CLR reflection, etc.)
         if (val != null)
         {

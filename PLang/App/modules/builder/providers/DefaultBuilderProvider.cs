@@ -189,12 +189,18 @@ public class DefaultBuilderProvider : IBuilderProvider
         foreach (var a in action.Actions)
         {
             if (!modules.Contains(a.Module, a.ActionName))
-                notFound.Add($"{a.Module}.{a.ActionName}");
+            {
+                var available = modules.GetActions(a.Module);
+                var availableStr = available.Any()
+                    ? $" Available actions in '{a.Module}': [{string.Join(", ", available)}]"
+                    : $" Module '{a.Module}' not found. Available modules: [{string.Join(", ", modules.Names)}]";
+                notFound.Add($"{a.Module}.{a.ActionName}{availableStr}");
+            }
         }
 
         if (notFound.Count > 0)
             return Data.@this.FromError(new Errors.ActionError(
-                $"Actions not found: {string.Join(", ", notFound)}", "ActionNotFound", 400));
+                $"Actions not found: {string.Join("; ", notFound)}", "ActionNotFound", 400));
 
         await ResolveGoalCallPaths(action.Actions, app, context);
         NormalizeParameterTypes(action.Actions);

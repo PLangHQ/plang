@@ -117,6 +117,9 @@ public class @this
 
         if (!parent.IsInitialized && parent.Value == null) return;
 
+        // Lazy convert if parent is a typed string (e.g., json) — must happen before navigation
+        parent.ConvertValue();
+
         // For dot-path, extract raw value from Data — we're setting a property on a C# object
         var rawValue = value is Data.@this dv2 ? dv2.Value : value;
         var result = SetValueOnObject(parent.Value, propertyName, rawValue);

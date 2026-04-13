@@ -58,6 +58,21 @@ public sealed class Type
     public static Type FromName(string typeName) => new(typeName);
 
     public override string ToString() => Value;
+
+    /// <summary>
+    /// Converts a raw string value to the appropriate object based on this type.
+    /// Returns null if no conversion is needed or possible.
+    /// Called lazily on first navigation into a string-typed Data.
+    /// </summary>
+    public object? Convert(string raw)
+    {
+        return Value.ToLowerInvariant() switch
+        {
+            "json" => JsonSerializer.Deserialize<Dictionary<string, object?>>(raw,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }),
+            _ => TypeMapping.TryConvertTo(raw, ClrType ?? typeof(object)).Value
+        };
+    }
 }
 
 /// <summary>
@@ -153,6 +168,20 @@ public partial class @this
         _valueFactory = factory;
         _value = null;
         IsInitialized = true;
+    }
+
+    /// <summary>
+    /// Lazily converts the value based on its Type.
+    /// Called on first navigation into the value — if the value is a string
+    /// and the Type knows how to convert it, replaces the value with the converted object.
+    /// Only converts once — subsequent accesses use the converted value directly.
+    /// </summary>
+    public void ConvertValue()
+    {
+        if (_value is not string raw || _type == null) return;
+        var converted = _type.Convert(raw);
+        if (converted != null)
+            SetValueDirect(converted);
     }
 
     /// <summary>
