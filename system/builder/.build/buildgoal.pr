@@ -725,7 +725,7 @@
   ],
   "goals": [
     {
-      "name": "",
+      "name": "ProcessGroup",
       "description": null,
       "comment": null,
       "steps": [
@@ -782,7 +782,7 @@
       "inputParameters": null
     },
     {
-      "name": "",
+      "name": "LlmFixer",
       "description": null,
       "comment": null,
       "steps": [
@@ -839,7 +839,7 @@
       "inputParameters": null
     },
     {
-      "name": "",
+      "name": "HandleBuildGoalFailure",
       "description": null,
       "comment": null,
       "steps": [

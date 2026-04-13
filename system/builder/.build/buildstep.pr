@@ -442,7 +442,7 @@
   ],
   "goals": [
     {
-      "name": "",
+      "name": "ValidateBuildStepResult",
       "description": null,
       "comment": null,
       "steps": [
@@ -486,7 +486,7 @@
       "inputParameters": null
     },
     {
-      "name": "",
+      "name": "ThrowBuildStepErrors",
       "description": null,
       "comment": null,
       "steps": [
@@ -517,7 +517,7 @@
       "inputParameters": null
     },
     {
-      "name": "",
+      "name": "ValidateActionErrors",
       "description": null,
       "comment": null,
       "steps": [
@@ -548,7 +548,7 @@
       "inputParameters": null
     },
     {
-      "name": "",
+      "name": "ThrowActionErrors",
       "description": null,
       "comment": null,
       "steps": [
@@ -579,7 +579,7 @@
       "inputParameters": null
     },
     {
-      "name": "",
+      "name": "HandleBuildStepFailure",
       "description": null,
       "comment": null,
       "steps": [

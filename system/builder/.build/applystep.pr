@@ -205,7 +205,7 @@
   ],
   "goals": [
     {
-      "name": "",
+      "name": "HandleValidationError",
       "description": null,
       "comment": null,
       "steps": [

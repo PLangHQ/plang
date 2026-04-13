@@ -136,7 +136,7 @@
   ],
   "goals": [
     {
-      "name": "",
+      "name": "ValidateStep",
       "description": null,
       "comment": null,
       "steps": [
