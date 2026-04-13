@@ -59,11 +59,12 @@ public class @this
         // Simple case: no dot/bracket path — set the root variable directly
         if (rootName == name)
         {
-            // Adopt pure Data values (from variable.set) — but not Data subclasses
-            // like Goal, Path, etc. that happen to extend Data but aren't variable wrappers
-            if (value is Data.@this dv && value.GetType() == typeof(Data.@this))
+            // Store Data values directly — includes subclasses like Goal, Path, etc.
+            // Only rename pure Data wrappers; subclasses own their Name (e.g., Goal.Name = "Start")
+            if (value is Data.@this dv)
             {
-                dv.Name = name;
+                if (value.GetType() == typeof(Data.@this))
+                    dv.Name = name;
                 if (type != null) dv.Type = type;
                 dv.Context = _context;
                 _variables[name] = dv;

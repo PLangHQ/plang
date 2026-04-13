@@ -521,6 +521,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("                    __resolutionError = __resolved;");
         sb.AppendLine("                    return default;");
         sb.AppendLine("                }");
+        sb.AppendLine("                if (__resolved is T __asT) return __asT;");
         sb.AppendLine("                return __TryConvert<T>(__resolved?.Value, name);");
         sb.AppendLine("            }");
         sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
