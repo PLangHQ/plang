@@ -319,7 +319,8 @@ public static class TypeMapping
     /// Returns the converted value and null error on success,
     /// or null value and an Error describing what went wrong.
     /// </summary>
-    public static (object? Value, Errors.Error? Error) TryConvertTo(object? value, Type targetType)
+    public static (object? Value, Errors.Error? Error) TryConvertTo(object? value, Type targetType,
+        Actor.Context.@this? context = null)
     {
         if (value == null)
             return (targetType.IsValueType ? Activator.CreateInstance(targetType) : null, null);
@@ -555,18 +556,33 @@ public static class TypeMapping
         // Complex types: dict/JsonElement/list → serialize to JSON → deserialize to target type
         if (value is IDictionary<string, object?> or System.Text.Json.JsonElement or System.Collections.IList)
         {
+            string json = "";
             try
             {
-                var json = System.Text.Json.JsonSerializer.Serialize(value);
+                json = System.Text.Json.JsonSerializer.Serialize(value);
                 var result = System.Text.Json.JsonSerializer.Deserialize(json, targetType, Json.CaseInsensitiveRead);
                 return (result, null);
             }
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
+                // Extract byte position from error message and show JSON around it
+                string jsonPreview;
+                var posMatch = System.Text.RegularExpressions.Regex.Match(ex.Message, @"BytePositionInLine: (\d+)");
+                if (posMatch.Success && int.TryParse(posMatch.Groups[1].Value, out var bytePos) && bytePos < json.Length)
+                {
+                    var start = Math.Max(0, bytePos - 100);
+                    var end = Math.Min(json.Length, bytePos + 100);
+                    jsonPreview = $"...{json[start..end]}...";
+                }
+                else
+                {
+                    var maxLen = context?.App?.Debug?.MaxLength ?? 500;
+                    jsonPreview = json.Length > maxLen ? json[..maxLen] + $"... ({json.Length} chars)" : json;
+                }
                 return (null, new Errors.Error(
                     $"Failed to deserialize {sourceType.Name} to {targetType.Name}: {ex.Message}",
                     "DeserializationFailed", 400)
-                    { FixSuggestion = $"Source: {sourceType.FullName}, Target: {targetType.FullName}" });
+                    { FixSuggestion = $"JSON around error: {jsonPreview}" });
             }
         }
 
