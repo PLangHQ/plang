@@ -74,9 +74,9 @@ public sealed class OpenAiProvider : ILlmProvider
         {
             var systemMsg = messages.Find(m => m.Role == "system");
             if (systemMsg != null)
-                systemMsg.Text += "\n" + formatInstruction;
+                systemMsg.Content += "\n" + formatInstruction;
             else
-                messages.Insert(0, new LlmMessage { Role = "system", Text = formatInstruction });
+                messages.Insert(0, new LlmMessage { Role = "system", Content = formatInstruction });
         }
 
         // --- Cache check ---
@@ -208,7 +208,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 messages.Add(new LlmMessage
                 {
                     Role = "assistant",
-                    Text = content,
+                    Content = content,
                     ToolCalls = toolCalls
                 });
 
@@ -239,7 +239,7 @@ public sealed class OpenAiProvider : ILlmProvider
                     {
                         Role = "tool",
                         ToolCallId = toolCalls[i].Id,
-                        Text = results[i]
+                        Content = results[i]
                     });
                     toolCallCount++;
                 }
@@ -298,7 +298,7 @@ public sealed class OpenAiProvider : ILlmProvider
                     messages.Add(new LlmMessage
                     {
                         Role = "user",
-                        Text = "Your response failed validation: "
+                        Content = "Your response failed validation: "
                                + validationError
                                + "\nPlease fix and try again."
                     });
@@ -307,7 +307,7 @@ public sealed class OpenAiProvider : ILlmProvider
             }
 
             // --- Store conversation for continuity (pre-mutation originals) ---
-            originalMessages.Add(new LlmMessage { Role = "assistant", Text = rawResponse });
+            originalMessages.Add(new LlmMessage { Role = "assistant", Content = rawResponse });
             context.Set(ConversationKey, originalMessages);
             context.Set(SchemaKey, schema);
 
@@ -505,7 +505,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 result.Add(new Dictionary<string, object?>
                 {
                     ["role"] = "tool",
-                    ["content"] = msg.Text ?? "",
+                    ["content"] = msg.Content ?? "",
                     ["tool_call_id"] = msg.ToolCallId
                 });
                 continue;
@@ -517,7 +517,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 var apiMsg = new Dictionary<string, object?>
                 {
                     ["role"] = "assistant",
-                    ["content"] = msg.Text,
+                    ["content"] = msg.Content,
                     ["tool_calls"] = msg.ToolCalls.Select(tc => new Dictionary<string, object>
                     {
                         ["id"] = tc.Id,
@@ -537,8 +537,8 @@ public sealed class OpenAiProvider : ILlmProvider
             if (msg.Images != null && msg.Images.Count > 0)
             {
                 var contentParts = new List<object>();
-                if (!string.IsNullOrEmpty(msg.Text))
-                    contentParts.Add(new Dictionary<string, string> { ["type"] = "text", ["text"] = msg.Text });
+                if (!string.IsNullOrEmpty(msg.Content))
+                    contentParts.Add(new Dictionary<string, string> { ["type"] = "text", ["text"] = msg.Content });
 
                 foreach (var image in msg.Images)
                 {
@@ -557,7 +557,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 result.Add(new Dictionary<string, object?>
                 {
                     ["role"] = msg.Role,
-                    ["content"] = msg.Text
+                    ["content"] = msg.Content
                 });
             }
         }
@@ -729,7 +729,7 @@ public sealed class OpenAiProvider : ILlmProvider
         var sb = new StringBuilder();
         foreach (var msg in messages)
         {
-            sb.Append(msg.Role).Append(':').Append(msg.Text ?? "").Append('|');
+            sb.Append(msg.Role).Append(':').Append(msg.Content ?? "").Append('|');
             if (msg.Images != null)
                 foreach (var img in msg.Images)
                     sb.Append("img:").Append(img).Append('|');
@@ -864,7 +864,7 @@ public sealed class OpenAiProvider : ILlmProvider
         return messages.Select(m => new LlmMessage
         {
             Role = m.Role,
-            Text = m.Text,
+            Content = m.Content,
             Images = m.Images != null ? new List<string>(m.Images) : null,
             ToolCallId = m.ToolCallId,
             ToolCalls = m.ToolCalls?.Select(tc => new ToolCall

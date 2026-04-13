@@ -124,7 +124,7 @@ public class FluidProvider : ITemplateProvider
         var lastDot = template.LastIndexOf('.');
         if (lastDot <= 0) return false;
         var ext = template[lastDot..];
-        return ext.Length >= 2 && ext.Length <= 6 && !ext.Contains(' ');
+        return ext.Length >= 2 && ext.Length <= 10 && !ext.Contains(' ');
     }
 
     /// <summary>

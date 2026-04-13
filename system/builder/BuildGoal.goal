@@ -8,7 +8,7 @@ BuildGoal
 - builder.actions, write to %actions%
 - builder.types, write to %typeInfo%
 - render template "/system/actions/v2/summary.md", write to %actionSummary%
-- render template "/system/builder/templates/goalFormatForLlm.template", write to %goalForLlm%
+- render template "/system/builder/templates/v2/goalFormatForLlm.template", write to %goalForLlm%
 - read file "llm/BuildGoal.llm", load vars, write to %buildGoalPrompt%
 - llm.query system=%buildGoalPrompt%, user=%goalForLlm%, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, on error HandleBuildGoalFailure, write to %stepResults%
 - call ValidateBuildResponse, on error call LlmFixer
