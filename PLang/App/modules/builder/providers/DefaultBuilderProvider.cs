@@ -191,24 +191,25 @@ public class DefaultBuilderProvider : IBuilderProvider
             if (!modules.Contains(a.Module, a.ActionName))
             {
                 var available = modules.GetActions(a.Module);
-                var availableStr = available.Any()
-                    ? $" Available actions in '{a.Module}': [{string.Join(", ", available)}]"
-                    : $" Module '{a.Module}' not found. Available modules: [{string.Join(", ", modules.Names)}]";
-
-                // Include action parameters for debugging
-                var paramStr = a.Parameters != null
-                    ? string.Join(", ", a.Parameters.Select(p => $"{p.Name}={p.Value}"))
-                    : "(none)";
-                notFound.Add($"{a.Module}.{a.ActionName} [params: {paramStr}]{availableStr}");
+                string suggestion;
+                if (available.Any())
+                {
+                    var sorted = Utils.StringDistance.OrderBySimilarity(a.ActionName, available);
+                    suggestion = $"Module '{a.Module}' exists but action '{a.ActionName}' not found. Did you mean: {string.Join(", ", sorted.Take(5))}?";
+                }
+                else
+                {
+                    var sorted = Utils.StringDistance.OrderBySimilarity(a.Module, modules.Names);
+                    suggestion = $"Module '{a.Module}' not found. Did you mean: {string.Join(", ", sorted.Take(5))}?";
+                }
+                notFound.Add($"{a.Module}.{a.ActionName}: {suggestion}");
             }
         }
 
         if (notFound.Count > 0)
         {
-            var goalName = context.Goal?.Name ?? "unknown";
-            var stepText = context.Step?.Text ?? "unknown";
             return Data.@this.FromError(new Errors.ActionError(
-                $"Actions not found in goal '{goalName}', step: '{stepText}': {string.Join("; ", notFound)}",
+                $"Actions not found: {string.Join("; ", notFound)}",
                 "ActionNotFound", 400));
         }
 

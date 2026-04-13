@@ -7,3 +7,4 @@ ValidateStep
 / Validates a single step from the LLM response
 - if %step.actions% is empty
     - throw error 'Step at index %step.index% has no actions. Every step must include actions with module and action filled in.'
+- builder.validate actions=%step.actions%
