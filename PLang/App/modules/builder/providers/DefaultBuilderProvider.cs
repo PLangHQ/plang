@@ -40,7 +40,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (guard != null) return guard;
 
         var names = TypeMapping.GetBuilderTypeNames();
-        var schemas = TypeMapping.GetComplexTypeSchemas();
+        var schemas = TypeMapping.GetComplexTypeSchemas(action.Context.App.Modules);
         var schemaLines = schemas.Select(kvp => $"  {kvp.Key}: {kvp.Value}");
 
         return Data.@this.Ok(new BuilderTypeInfo(

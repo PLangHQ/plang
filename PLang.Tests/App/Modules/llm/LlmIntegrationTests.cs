@@ -52,8 +52,8 @@ public class LlmIntegrationTests
     {
         var messages = new List<LlmMessage>
         {
-            new LlmMessage { Role = "system", Text = "You are a calculator. Respond with ONLY the number, nothing else." },
-            new LlmMessage { Role = "user", Text = "What is 7 * 6?" }
+            new LlmMessage { Role = "system", Content = "You are a calculator. Respond with ONLY the number, nothing else." },
+            new LlmMessage { Role = "user", Content = "What is 7 * 6?" }
         };
 
         var result = await RunWithSnapshot("SimpleCalculation", messages, new query
@@ -78,8 +78,8 @@ public class LlmIntegrationTests
     {
         var messages = new List<LlmMessage>
         {
-            new LlmMessage { Role = "system", Text = "Analyze the sentiment of the text." },
-            new LlmMessage { Role = "user", Text = "I absolutely love sunny days at the beach!" }
+            new LlmMessage { Role = "system", Content = "Analyze the sentiment of the text." },
+            new LlmMessage { Role = "user", Content = "I absolutely love sunny days at the beach!" }
         };
 
         var result = await RunWithSnapshot("JsonSchema", messages, new query
@@ -108,8 +108,8 @@ public class LlmIntegrationTests
     {
         var messages = new List<LlmMessage>
         {
-            new LlmMessage { Role = "system", Text = "Write the requested code." },
-            new LlmMessage { Role = "user", Text = "Write a Python function that returns the sum of two numbers." }
+            new LlmMessage { Role = "system", Content = "Write the requested code." },
+            new LlmMessage { Role = "user", Content = "Write a Python function that returns the sum of two numbers." }
         };
 
         var result = await RunWithSnapshot("PythonFormat", messages, new query
@@ -138,8 +138,8 @@ public class LlmIntegrationTests
     {
         var messages1 = new List<LlmMessage>
         {
-            new LlmMessage { Role = "system", Text = "You are a helpful assistant. Be very brief." },
-            new LlmMessage { Role = "user", Text = "My name is Alice." }
+            new LlmMessage { Role = "system", Content = "You are a helpful assistant. Be very brief." },
+            new LlmMessage { Role = "user", Content = "My name is Alice." }
         };
 
         var result1 = await RunWithSnapshot("ConvPart1", messages1, new query
@@ -156,7 +156,7 @@ public class LlmIntegrationTests
         // Second query continues the conversation
         var messages2 = new List<LlmMessage>
         {
-            new LlmMessage { Role = "user", Text = "What is my name?" }
+            new LlmMessage { Role = "user", Content = "What is my name?" }
         };
 
         var result2 = await RunWithSnapshot("ConvPart2", messages2, new query
@@ -181,8 +181,8 @@ public class LlmIntegrationTests
     {
         var messages = new List<LlmMessage>
         {
-            new LlmMessage { Role = "system", Text = "You have tools available. Use them when appropriate. Be brief." },
-            new LlmMessage { Role = "user", Text = "What is the weather in London right now?" }
+            new LlmMessage { Role = "system", Content = "You have tools available. Use them when appropriate. Be brief." },
+            new LlmMessage { Role = "user", Content = "What is the weather in London right now?" }
         };
 
         var tools = new List<GoalCall>

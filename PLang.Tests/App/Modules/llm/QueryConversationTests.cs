@@ -57,8 +57,8 @@ public class QueryConversationTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "system", Text = "You are helpful" },
-                new LlmMessage { Role = "user", Text = "What is 2+2?" }
+                new LlmMessage { Role = "system", Content = "You are helpful" },
+                new LlmMessage { Role = "user", Content = "What is 2+2?" }
             },
             Cache = false
         };
@@ -70,7 +70,7 @@ public class QueryConversationTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "And 3+3?" }
+                new LlmMessage { Role = "user", Content = "And 3+3?" }
             },
             ContinuePreviousConversation = true,
             Cache = false
@@ -103,7 +103,7 @@ public class QueryConversationTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "fresh start" }
+                new LlmMessage { Role = "user", Content = "fresh start" }
             },
             ContinuePreviousConversation = false,
             Cache = false
@@ -127,8 +127,8 @@ public class QueryConversationTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "system", Text = "analyze" },
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "system", Content = "analyze" },
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Schema = "{ok: bool}",
             Cache = false
@@ -141,7 +141,7 @@ public class QueryConversationTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "again" }
+                new LlmMessage { Role = "user", Content = "again" }
             },
             Schema = "{ok: bool}",
             ContinuePreviousConversation = true,
@@ -168,8 +168,8 @@ public class QueryConversationTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "system", Text = "analyze" },
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "system", Content = "analyze" },
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Schema = "{result: string}",
             Cache = false
@@ -182,7 +182,7 @@ public class QueryConversationTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "again" }
+                new LlmMessage { Role = "user", Content = "again" }
             },
             ContinuePreviousConversation = true,
             Cache = false
@@ -205,7 +205,7 @@ public class QueryConversationTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Schema = "{oldSchema: string}",
             Cache = false
@@ -218,7 +218,7 @@ public class QueryConversationTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "test2" }
+                new LlmMessage { Role = "user", Content = "test2" }
             },
             Schema = "{newSchema: int}",
             ContinuePreviousConversation = true,

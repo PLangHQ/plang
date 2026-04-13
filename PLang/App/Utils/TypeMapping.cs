@@ -620,11 +620,26 @@ public static class TypeMapping
     }
 
     /// <summary>
-    /// Returns schemas for complex types (goal.call, etc.) based on [LlmBuilder] attributes.
+    /// Returns schemas for complex types based on [LlmBuilder] attributes.
+    /// Includes types registered in NameToType only. Use the overload with AppModules
+    /// to auto-discover types from action parameters.
     /// </summary>
     public static Dictionary<string, string> GetComplexTypeSchemas()
     {
-        var schemas = new Dictionary<string, string>();
+        return GetComplexTypeSchemas(null);
+    }
+
+    /// <summary>
+    /// Returns schemas for complex types based on [LlmBuilder] attributes.
+    /// When modules is provided, also discovers complex types used in action parameters
+    /// (e.g., List&lt;LlmMessage&gt; → LlmMessage schema). No manual registration needed.
+    /// </summary>
+    public static Dictionary<string, string> GetComplexTypeSchemas(App.Modules.@this? modules)
+    {
+        var schemas = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var seen = new HashSet<System.Type>();
+
+        // 1. Registered types from NameToType
         foreach (var kvp in NameToType)
         {
             var name = kvp.Key;
@@ -633,15 +648,72 @@ public static class TypeMapping
             if (type.IsArray || type.IsGenericType) continue;
             if (GetValidValues(type) != null) continue;
 
-            var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.CanRead && p.Name != "EqualityContract")
-                .Where(p => Attribute.IsDefined(p, typeof(LlmBuilderAttribute)))
-                .Where(p => !Attribute.IsDefined(p, typeof(JsonIgnoreAttribute)))
-                .Select(p => $"{char.ToLower(p.Name[0]) + p.Name[1..]}: {GetTypeName(p.PropertyType)}");
-
-            if (props.Any())
-                schemas[name] = $"{{ {string.Join(", ", props)} }}";
+            TryAddSchema(schemas, seen, type, name);
         }
+
+        // 2. Discover types from action parameters
+        if (modules != null)
+        {
+            foreach (var ns in modules.Names)
+            {
+                foreach (var actionName in modules.GetActions(ns))
+                {
+                    var actionType = modules.GetActionType(ns, actionName);
+                    if (actionType == null) continue;
+
+                    foreach (var prop in actionType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                    {
+                        if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
+                        var paramType = UnwrapType(prop.PropertyType);
+                        if (paramType == null || IsPrimitive(paramType) || paramType == typeof(object)) continue;
+                        if (seen.Contains(paramType)) continue;
+
+                        var typeName = GetTypeName(paramType);
+                        TryAddSchema(schemas, seen, paramType, typeName);
+                    }
+                }
+            }
+        }
+
         return schemas;
+    }
+
+    /// <summary>
+    /// Unwraps generic wrappers (List&lt;T&gt;, Nullable&lt;T&gt;) to get the inner type.
+    /// </summary>
+    private static System.Type? UnwrapType(System.Type type)
+    {
+        var underlying = Nullable.GetUnderlyingType(type);
+        if (underlying != null) return UnwrapType(underlying);
+
+        if (type.IsGenericType)
+        {
+            var generic = type.GetGenericTypeDefinition();
+            if (generic == typeof(List<>) || generic == typeof(IList<>))
+                return UnwrapType(type.GetGenericArguments()[0]);
+            if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>))
+                return null; // dict values are too generic
+        }
+
+        if (type.IsArray)
+            return UnwrapType(type.GetElementType()!);
+
+        if (IsPrimitive(type)) return null;
+        return type;
+    }
+
+    private static void TryAddSchema(Dictionary<string, string> schemas, HashSet<System.Type> seen, System.Type type, string name)
+    {
+        if (!seen.Add(type)) return;
+
+        var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanRead && p.Name != "EqualityContract")
+            .Where(p => Attribute.IsDefined(p, typeof(LlmBuilderAttribute)))
+            .Where(p => !Attribute.IsDefined(p, typeof(JsonIgnoreAttribute)))
+            .Select(p => $"{char.ToLower(p.Name[0]) + p.Name[1..]}: {GetTypeName(p.PropertyType)}");
+
+        var propList = props.ToList();
+        if (propList.Count > 0)
+            schemas[name] = $"{{ {string.Join(", ", propList)} }}";
     }
 }
