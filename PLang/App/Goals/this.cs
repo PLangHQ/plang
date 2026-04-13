@@ -53,6 +53,13 @@ public sealed class @this
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
             name = name[..^5];
 
+        // During build: check snapshot first to avoid using mutated goal objects
+        if (App.Building.IsEnabled)
+        {
+            var snapshot = App.Building.GetSnapshot(name);
+            if (snapshot != null) return snapshot;
+        }
+
         // Try by PrPath key (exact match)
         if (_goals.TryGetValue(name, out var goal) && !goal.IsSetup)
             return goal;
