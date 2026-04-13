@@ -203,22 +203,26 @@ public sealed partial class @this : Data.@this<@this>
     /// </summary>
     public void MergeFrom(@this? existing)
     {
-        if (existing == null || existing.Steps.Count == 0) return;
+        if (existing == null) return;
 
-        var consumed = new HashSet<int>();
-        foreach (var step in Steps)
+        if (existing.Steps.Count > 0)
         {
-            for (int i = 0; i < existing.Steps.Count; i++)
+            var consumed = new HashSet<int>();
+            foreach (var step in Steps)
             {
-                if (consumed.Contains(i)) continue;
-                if (existing.Steps[i].Text == step.Text)
+                for (int i = 0; i < existing.Steps.Count; i++)
                 {
-                    step.Merge(existing.Steps[i]);
-                    consumed.Add(i);
-                    break;
+                    if (consumed.Contains(i)) continue;
+                    if (existing.Steps[i].Text == step.Text)
+                    {
+                        step.Merge(existing.Steps[i]);
+                        consumed.Add(i);
+                        break;
+                    }
                 }
             }
         }
+
     }
 
     /// <summary>

@@ -37,7 +37,7 @@ public partial class Check : IContext, IAction
         }
 
         // Ignore — swallow
-        if (onError.IgnoreError)
+        if (onError.IgnoreError == true)
             return App.Data.@this.Ok();
 
         var app = Context.App!;

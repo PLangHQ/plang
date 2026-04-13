@@ -144,17 +144,47 @@ public class @this
             return target;
         }
 
-        // CLR object — try writable property first
-        var prop = target.GetType().GetProperty(propertyName,
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (prop != null && prop.CanWrite)
+        // Handle bracket indexing: "Steps[0]" → property "Steps", index 0
+        var bracketIdx = propertyName.IndexOf('[');
+        if (bracketIdx > 0)
         {
-            if (value != null && !prop.PropertyType.IsAssignableFrom(value.GetType()))
+            var baseProp = propertyName[..bracketIdx];
+            var indexStr = propertyName[(bracketIdx + 1)..].TrimEnd(']');
+            var prop = target.GetType().GetProperty(baseProp,
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+            if (prop != null)
             {
-                var (typedValue, _) = Utils.TypeMapping.TryConvertTo(value, prop.PropertyType);
+                var collection = prop.GetValue(target);
+                if (collection is System.Collections.IList list && int.TryParse(indexStr, out var idx) && idx >= 0 && idx < list.Count)
+                {
+                    if (value != null)
+                    {
+                        var elementType = list.GetType().IsGenericType
+                            ? list.GetType().GetGenericArguments()[0]
+                            : typeof(object);
+                        if (!elementType.IsAssignableFrom(value.GetType()))
+                        {
+                            var (typedValue, _) = Utils.TypeMapping.TryConvertTo(value, elementType);
+                            if (typedValue != null) value = typedValue;
+                        }
+                    }
+                    list[idx] = value;
+                    return target;
+                }
+            }
+        }
+
+        // CLR object — try writable property first
+        var clrProp = target.GetType().GetProperty(propertyName,
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        if (clrProp != null && clrProp.CanWrite)
+        {
+            if (value != null && !clrProp.PropertyType.IsAssignableFrom(value.GetType()))
+            {
+                var (typedValue, _) = Utils.TypeMapping.TryConvertTo(value, clrProp.PropertyType);
                 if (typedValue != null) value = typedValue;
             }
-            prop.SetValue(target, value);
+            clrProp.SetValue(target, value);
             return target;
         }
 
@@ -173,6 +203,7 @@ public class @this
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         foreach (var prop in props)
         {
+            if (prop.GetIndexParameters().Length > 0) continue; // skip indexers
             dict[prop.Name] = prop.GetValue(obj);
         }
         // Primitive/value type with no navigable properties — preserve original value

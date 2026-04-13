@@ -184,7 +184,7 @@ public sealed partial class @this : Data.@this<@this>
         var handler = OnError!;
 
         // Ignore — swallow error
-        if (handler.IgnoreError)
+        if (handler.IgnoreError == true)
             return Data.@this.Ok();
 
         var app = context.App!;

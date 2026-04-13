@@ -216,12 +216,34 @@ public class DefaultBuilderProvider : IBuilderProvider
         await ResolveGoalCallPaths(action.Actions, app, context);
         NormalizeParameterTypes(action.Actions);
 
+        var validationErrors = new List<string>();
         foreach (var a in action.Actions)
         {
             var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (a.Parameters != null)
                 foreach (var p in a.Parameters) paramNames.Add(p.Name);
             a.Defaults = modules.GetDefaults(a.Module, a.ActionName, paramNames);
+
+            // Action-level build validation
+            var actionType = modules.GetActionType(a.Module, a.ActionName);
+            if (actionType != null && typeof(IBuildValidatable).IsAssignableFrom(actionType))
+            {
+                var method = actionType.GetMethod("ValidateBuild",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                if (method != null)
+                {
+                    var error = (string?)method.Invoke(null, [a.Parameters]);
+                    if (error != null)
+                        validationErrors.Add($"{a.Module}.{a.ActionName}: {error}");
+                }
+            }
+        }
+
+        if (validationErrors.Count > 0)
+        {
+            return Data.@this.FromError(new Errors.ActionError(
+                string.Join("; ", validationErrors),
+                "BuildValidation", 400));
         }
 
         return Data.@this.Ok(true);

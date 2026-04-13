@@ -7,8 +7,17 @@ namespace App.modules.variable;
 /// When AsDefault is true, only sets if the variable doesn't already exist.
 /// </summary>
 [Action("set", Cacheable = false)]
-public partial class Set : IContext
+public partial class Set : IContext, IBuildValidatable
 {
+    public static string? ValidateBuild(List<Data.@this> parameters)
+    {
+        var value = parameters.FirstOrDefault(p =>
+            string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
+        if (value?.Value is string s && s == "this")
+            return "Parameter 'Value' is the literal string \"this\" — this is wrong. For \"write to %var%\" patterns, use \"%__data__%\" to capture the previous action's result. \"this\" is a type annotation, not a value.";
+        return null;
+    }
+
     [VariableName]
     public partial string Name { get; init; }
     public partial Data.@this Value { get; init; }

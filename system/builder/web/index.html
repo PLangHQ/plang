@@ -16,6 +16,7 @@
     --green: #4ecca3;
     --yellow: #f0c040;
     --orange: #e87040;
+    --blue: #5b9bd5;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -29,8 +30,8 @@
 
   /* Sidebar */
   #sidebar {
-    width: 260px;
-    min-width: 260px;
+    width: 280px;
+    min-width: 280px;
     background: var(--surface);
     border-right: 1px solid var(--border);
     display: flex;
@@ -42,17 +43,14 @@
     border-bottom: 1px solid var(--border);
     font-size: 14px;
     font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
   }
-  #sidebar header .status {
+  #sidebar header .meta {
     font-size: 11px;
     color: var(--text-dim);
+    margin-top: 4px;
   }
-  #sidebar header .status.live {
-    color: var(--green);
-  }
+  #sidebar header .meta.live { color: var(--green); }
+
   #goal-list {
     flex: 1;
     overflow-y: auto;
@@ -67,30 +65,59 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
   }
   .goal-item:hover { background: var(--surface2); }
   .goal-item.active { background: var(--surface2); border-left: 3px solid var(--accent); }
-  .goal-item .badge {
+  .goal-item .goal-info { flex: 1; min-width: 0; }
+  .goal-item .goal-name {
+    display: block;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .goal-item .goal-path {
+    display: block;
+    font-size: 10px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .goal-item .goal-badges {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    align-items: center;
+  }
+  .badge {
     font-size: 10px;
     padding: 2px 6px;
     border-radius: 10px;
-    background: var(--surface2);
+    white-space: nowrap;
   }
-  .goal-item .badge.has-detail { background: var(--yellow); color: #000; }
-  .goal-item .changed-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    flex-shrink: 0;
-    margin-left: 6px;
-  }
+  .badge-steps { background: var(--surface2); color: var(--text-dim); }
+  .badge-ok { background: rgba(78,204,163,0.15); color: var(--green); }
+  .badge-warn { background: rgba(240,192,64,0.15); color: var(--yellow); }
+  .badge-err { background: rgba(233,69,96,0.15); color: var(--accent); }
+  .badge-detail { background: rgba(91,155,213,0.15); color: var(--blue); }
 
-  /* Main */
+  #controls {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #controls label { cursor: pointer; color: var(--text-dim); }
+
+  /* Main panel */
   #main {
     flex: 1;
     overflow-y: auto;
-    padding: 24px;
+    padding: 24px 32px;
   }
   #main.empty {
     display: flex;
@@ -100,58 +127,158 @@
     font-size: 15px;
   }
 
-  /* Sections */
-  .trace-header {
-    font-size: 20px;
+  /* Goal header */
+  .goal-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .goal-header h1 {
+    font-size: 22px;
     font-weight: 600;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    margin-bottom: 4px;
   }
-  .trace-header .tag {
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    background: var(--surface2);
-    font-weight: 400;
+  .goal-header .subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
   }
+  .goal-header .subtitle span { margin-right: 16px; }
 
-  .section {
-    margin-bottom: 16px;
+  /* BuildGoal LLM section */
+  .buildgoal-llm {
+    margin-bottom: 24px;
     border: 1px solid var(--border);
     border-radius: 8px;
     overflow: hidden;
   }
-  .section-title {
-    padding: 12px 16px;
+  .buildgoal-llm-title {
+    padding: 10px 16px;
     background: var(--surface);
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 13px;
-    font-weight: 600;
     user-select: none;
   }
-  .section-title:hover { background: var(--surface2); }
-  .section-title .arrow {
-    transition: transform 0.2s;
+  .buildgoal-llm-title:hover { background: var(--surface2); }
+  .buildgoal-llm-body { display: none; }
+  .buildgoal-llm-body.open { display: block; }
+
+  /* Step cards */
+  .step-card {
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .step-card.has-error { border-color: rgba(233,69,96,0.4); }
+  .step-card.has-detail { border-color: rgba(91,155,213,0.3); }
+
+  .step-header {
+    padding: 12px 16px;
+    background: var(--surface);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .step-header:hover { background: var(--surface2); }
+  .step-index {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.05);
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-text {
+    flex: 1;
+    font-size: 13px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .step-status {
+    flex-shrink: 0;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-top: 1px;
+  }
+
+  /* Flow pipeline */
+  .step-flow {
+    padding: 0 16px 12px 50px;
+    background: var(--surface);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    align-items: center;
     font-size: 11px;
   }
-  .section-title .arrow.open { transform: rotate(90deg); }
-  .section-body {
-    display: none;
-    padding: 0;
+  .flow-phase {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin: 2px 0;
   }
-  .section-body.open { display: block; }
+  .flow-arrow {
+    color: var(--text-dim);
+    margin: 0 2px;
+    font-size: 10px;
+  }
+  .flow-phase.phase-pass { background: rgba(78,204,163,0.1); color: var(--green); }
+  .flow-phase.phase-error { background: rgba(233,69,96,0.15); color: var(--accent); cursor: pointer; }
+  .flow-phase.phase-detail { background: rgba(91,155,213,0.15); color: var(--blue); cursor: pointer; }
+  .flow-phase.phase-neutral { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+  .flow-phase.phase-medium { background: rgba(240,192,64,0.12); color: var(--yellow); }
+
+  /* Step detail body (expandable) */
+  .step-body { display: none; }
+  .step-body.open { display: block; }
+
+  /* Error detail */
+  .error-detail {
+    padding: 10px 16px 10px 50px;
+    background: rgba(233,69,96,0.05);
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--accent);
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
 
   /* Prompt/Response blocks */
+  .prompt-section {
+    border-top: 1px solid var(--border);
+    margin: 0 16px 12px 34px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .prompt-section-title {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blue);
+    background: rgba(91,155,213,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
   .block {
     border-top: 1px solid var(--border);
   }
   .block-label {
-    padding: 8px 16px;
+    padding: 6px 12px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -167,7 +294,7 @@
     display: none;
     max-height: 600px;
     overflow: auto;
-    padding: 12px 16px;
+    padding: 12px;
     background: rgba(0,0,0,0.3);
   }
   .block-content.open { display: block; }
@@ -179,86 +306,26 @@
     word-break: break-word;
   }
 
-  /* Step summary table */
-  .steps-table {
-    width: 100%;
-    border-collapse: collapse;
+  /* Actions summary */
+  .actions-summary {
+    padding: 8px 16px 8px 50px;
+    background: rgba(0,0,0,0.1);
     font-size: 12px;
-  }
-  .steps-table th {
-    text-align: left;
-    padding: 8px 12px;
-    background: rgba(0,0,0,0.2);
-    color: var(--text-dim);
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 10px;
-  }
-  .steps-table td {
-    padding: 8px 12px;
-    border-top: 1px solid var(--border);
-    vertical-align: top;
-  }
-  .level-high { color: var(--green); }
-  .level-medium { color: var(--yellow); }
-  .level-low { color: var(--accent); }
-
-  /* Detail pass card */
-  .detail-pass {
-    margin: 8px 16px 16px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .detail-pass-header {
-    padding: 10px 14px;
-    background: var(--surface);
-    font-size: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .detail-pass-header .step-text {
-    font-weight: 600;
-  }
-  .detail-pass-header .reason {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 4px;
-  }
-  .reason-medium { background: var(--yellow); color: #000; }
-  .reason-low { background: var(--orange); color: #000; }
-  .reason-validation { background: var(--accent); color: #fff; }
-
-  /* PLang formatted view */
-  .plang-view {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(0,0,0,0.15);
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-    font-size: 12px;
-    line-height: 1.8;
-    white-space: pre-wrap;
-  }
-  .pv-step { color: var(--text-dim); display: block; margin-top: 4px; }
-  .pv-step:first-child { margin-top: 0; }
-  .pv-conf-high { color: var(--green); font-size: 10px; }
-  .pv-conf-med { color: var(--yellow); font-size: 10px; }
-  .pv-conf-low { color: var(--accent); font-size: 10px; }
-  .pv-action { color: var(--green); display: block; }
-  .pv-modifier { color: var(--orange); display: block; font-size: 11px; }
-
-  /* Auto-refresh toggle */
-  #controls {
-    padding: 12px 16px;
     border-top: 1px solid var(--border);
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
   }
-  #controls label { cursor: pointer; color: var(--text-dim); }
-  #controls input[type="checkbox"] { cursor: pointer; }
+  .action-line {
+    color: var(--green);
+    padding: 2px 0;
+  }
+  .action-line .param-name { color: var(--text-dim); }
+  .action-line .param-value { color: var(--text); }
+  .action-line .param-type { color: var(--yellow); font-size: 10px; }
+  .modifier-line {
+    color: var(--orange);
+    font-size: 11px;
+    padding: 2px 0 2px 16px;
+  }
 </style>
 </head>
 <body>
@@ -266,7 +333,7 @@
 <div id="sidebar">
   <header>
     <span>Builder Trace</span>
-    <span class="status" id="status">waiting</span>
+    <div class="meta" id="build-meta">waiting for build data...</div>
   </header>
   <div id="goal-list"></div>
   <div id="controls">
@@ -280,298 +347,18 @@
 </div>
 
 <script>
-// Default: traces relative to app root. Override with ?traces=path
 const params = new URLSearchParams(location.search);
 const TRACE_BASE = params.get('traces') || '/.build/traces';
 const POLL_MS = 3000;
 
-let goals = [];
-let traces = {};          // current fetched data per goal
-let traceHashes = {};     // hash of last fetched JSON per goal
-let displayedHash = {};   // hash of what's currently rendered per goal
-let changedGoals = new Set(); // goals with newer data than what's displayed
-let selectedGoal = null;
-let initialLoad = true;
+let buildRun = null;
+let lastHash = null;
+let selectedGoalIndex = null;
 
-function hashString(str) {
+function hashStr(s) {
   let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
-  }
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
   return h.toString(36);
-}
-
-async function fetchJson(url) {
-  try {
-    const r = await fetch(url, { cache: 'no-store' });
-    if (!r.ok) return null;
-    return await r.text(); // return raw text so we can hash it
-  } catch { return null; }
-}
-
-async function poll() {
-  const manifestText = await fetchJson(`${TRACE_BASE}/manifest.json`);
-  const statusEl = document.getElementById('status');
-
-  if (!manifestText) {
-    statusEl.textContent = 'no data';
-    statusEl.className = 'status';
-    return;
-  }
-
-  statusEl.textContent = 'live';
-  statusEl.className = 'status live';
-
-  const manifest = JSON.parse(manifestText);
-  const goalNames = Array.isArray(manifest) ? manifest : (manifest.goals || []);
-
-  // Sort newest first (IDs start with date-time)
-  goalNames.sort((a, b) => b.localeCompare(a));
-
-  // Detect new goals
-  const hadNewGoals = goalNames.some(n => !goals.includes(n));
-  goals = goalNames;
-
-  // Fetch all traces, detect changes via hash
-  for (const name of goalNames) {
-    const raw = await fetchJson(`${TRACE_BASE}/${name}.json`);
-    if (!raw) continue;
-
-    const newHash = hashString(raw);
-    if (newHash !== traceHashes[name]) {
-      traces[name] = JSON.parse(raw);
-      traceHashes[name] = newHash;
-
-      // If we already displayed this goal and the data changed, mark it
-      if (displayedHash[name] && displayedHash[name] !== newHash) {
-        changedGoals.add(name);
-      }
-    }
-  }
-
-  renderGoalList();
-
-  // On first load, auto-select BuildGoal if available, otherwise first goal
-  if (initialLoad && goals.length > 0) {
-    initialLoad = false;
-    const defaultGoal = goals.includes('BuildGoal') ? 'BuildGoal' : goals[0];
-    selectGoal(defaultGoal);
-  }
-}
-
-function renderGoalList() {
-  const list = document.getElementById('goal-list');
-  list.innerHTML = '';
-
-  for (const name of goals) {
-    const trace = traces[name];
-    const div = document.createElement('div');
-    div.className = 'goal-item' + (name === selectedGoal ? ' active' : '');
-    const detailCount = trace?.detailPasses?.length || 0;
-    const hasChanged = changedGoals.has(name);
-    const goalName = trace?.goal || name.replace(/^\d{8}-\d{6}_/, '');
-    const timeMatch = name.match(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/);
-    const timeLabel = timeMatch ? `${timeMatch[4]}:${timeMatch[5]}:${timeMatch[6]}` : '';
-    div.innerHTML = `
-      ${hasChanged ? '<div class="changed-dot"></div>' : ''}
-      <span><span style="display:block">${esc(goalName)}</span>${timeLabel ? `<span style="font-size:10px;color:var(--text-dim)">${timeLabel}</span>` : ''}</span>
-      ${detailCount > 0 ? `<span class="badge has-detail">${detailCount} detail</span>` : '<span class="badge">ready</span>'}
-    `;
-    div.onclick = () => selectGoal(name);
-    list.appendChild(div);
-  }
-}
-
-function selectGoal(name) {
-  selectedGoal = name;
-  changedGoals.delete(name); // clear changed indicator
-  renderGoalList();
-  const trace = traces[name];
-  if (trace) {
-    renderTrace(trace);
-    displayedHash[name] = traceHashes[name]; // mark as displayed
-  }
-}
-
-function renderTrace(trace) {
-  const main = document.getElementById('main');
-  main.className = '';
-
-  const steps = trace.pass1?.response?.steps || [];
-  const detailPasses = trace.detailPasses || [];
-  const stepCount = steps.length;
-  const detailCount = detailPasses.length;
-
-  let html = `
-    <div class="trace-header">
-      ${esc(trace.goal)}
-      <span class="tag">${stepCount} steps</span>
-      ${detailCount > 0 ? `<span class="tag">${detailCount} detail passes</span>` : ''}
-    </div>
-  `;
-
-  // Step summary table
-  html += `<div class="section">
-    <div class="section-title" onclick="toggleSection(this)">
-      <span>Step Overview</span>
-      <span class="arrow open">&#9654;</span>
-    </div>
-    <div class="section-body open">
-      <table class="steps-table">
-        <tr><th>#</th><th>Guidance</th><th>Module.Action</th><th>Level</th><th>Conf</th><th>Group</th></tr>
-        ${steps.map(s => {
-          const actions = (s.actions || []).map(a => `${a.module}.${a.action}`).join(', ');
-          const conf = s.confidence ?? 0;
-          const levelClass = conf >= 85 ? 'level-high' : conf >= 50 ? 'level-medium' : 'level-low';
-          return `<tr>
-            <td>${s.index}</td>
-            <td>${esc(s.guidance || '')}</td>
-            <td><code>${esc(actions)}</code></td>
-            <td class="${levelClass}">${esc(s.level || '?')}</td>
-            <td>${s.confidence ?? '?'}</td>
-            <td>${esc(s.group || '-')}</td>
-          </tr>`;
-        }).join('')}
-      </table>
-    </div>
-  </div>`;
-
-  // Pass 1 prompts
-  html += renderPromptSection('Pass 1 — BuildGoal', trace.pass1?.system, trace.pass1?.user, trace.pass1?.response, true);
-
-  // Detail passes
-  if (detailPasses.length > 0) {
-    html += `<div class="section">
-      <div class="section-title" onclick="toggleSection(this)">
-        <span>Detail Passes (${detailPasses.length})</span>
-        <span class="arrow open">&#9654;</span>
-      </div>
-      <div class="section-body open">
-        ${detailPasses.map((dp, i) => {
-          const reasonClass = dp.level === 'low' ? 'reason-low' : dp.level === 'medium' ? 'reason-medium' : 'reason-validation';
-          return `<div class="detail-pass">
-            <div class="detail-pass-header">
-              <span class="step-text">[${dp.stepIndex}] ${esc(dp.stepText || '')}</span>
-              <span class="reason ${reasonClass}">${esc(dp.level || 'validation')}</span>
-            </div>
-            ${renderPromptBlocks(dp.system, dp.user, dp.response)}
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
-  }
-
-  main.innerHTML = html;
-}
-
-function renderPromptSection(title, system, user, response, open = false) {
-  return `<div class="section">
-    <div class="section-title" onclick="toggleSection(this)">
-      <span>${esc(title)}</span>
-      <span class="arrow${open ? ' open' : ''}">&#9654;</span>
-    </div>
-    <div class="section-body${open ? ' open' : ''}">
-      ${renderPromptBlocks(system, user, response)}
-    </div>
-  </div>`;
-}
-
-function renderPromptBlocks(system, user, response) {
-  return `
-    ${system ? `<div class="block">
-      <div class="block-label" onclick="toggleBlock(this)">
-        <span>System Prompt</span>
-        <span>${estimateSize(system)}</span>
-      </div>
-      <div class="block-content"><pre>${esc(typeof system === 'string' ? system : JSON.stringify(system, null, 2))}</pre></div>
-    </div>` : ''}
-    ${user ? `<div class="block">
-      <div class="block-label" onclick="toggleBlock(this)">
-        <span>User Prompt</span>
-        <span>${estimateSize(user)}</span>
-      </div>
-      <div class="block-content open"><pre>${esc(typeof user === 'string' ? user : JSON.stringify(user, null, 2))}</pre></div>
-    </div>` : ''}
-    ${response ? `<div class="block">
-      <div class="block-label" onclick="toggleBlock(this)">
-        <span>LLM Response</span>
-        <span>${estimateSize(response)}</span>
-      </div>
-      <div class="block-content open">
-        ${formatPlangView(response)}
-        <pre>${esc(typeof response === 'string' ? response : JSON.stringify(response, null, 2))}</pre>
-      </div>
-    </div>` : ''}
-  `;
-}
-
-function formatPlangView(response) {
-  if (!response || typeof response === 'string') return '';
-  const steps = response.steps || (response.actions ? [response] : null);
-  if (!steps) return '';
-
-  let lines = [];
-  for (const step of steps) {
-    const actions = step.actions || [];
-    if (actions.length === 0) continue;
-
-    // Step header if it has index/guidance
-    if (step.index !== undefined) {
-      const level = step.level || '?';
-      const conf = step.confidence ?? '?';
-      const group = step.group ? ` group=${step.group}` : '';
-      const confClass = typeof conf === 'number' ? (conf >= 85 ? 'pv-conf-high' : conf >= 50 ? 'pv-conf-med' : 'pv-conf-low') : 'pv-conf-med';
-      lines.push(`<span class="pv-step">[${step.index}] ${esc(step.guidance || '')} <span class="${confClass}">${level} ${conf}%${group}</span></span>`);
-    }
-
-    for (const a of actions) {
-      const params = (a.parameters || []).map(p => {
-        const type = p.type ? `[${p.type}] ` : '';
-        let val = p.value;
-        if (val !== null && typeof val === 'object') val = JSON.stringify(val);
-        return `${esc(p.name)}(${type}${esc(String(val ?? ''))})`;
-      }).join(', ');
-      lines.push(`<span class="pv-action">  - ${esc(a.module)}.${esc(a.action)} ${params}</span>`);
-    }
-
-    // Step modifiers
-    if (step.onError) {
-      const oe = step.onError;
-      let parts = [];
-      if (oe.retryCount) parts.push(`retry ${oe.retryCount}`);
-      if (oe.goal?.name) parts.push(`call ${oe.goal.name}`);
-      if (oe.ignoreError) parts.push('ignore');
-      if (oe.order) parts.push(`order=${oe.order}`);
-      lines.push(`<span class="pv-modifier">    onError: ${esc(parts.join(', '))}</span>`);
-    }
-    if (step.cache) {
-      const c = step.cache;
-      let parts = [`${c.durationMs}ms`];
-      if (c.sliding) parts.push('sliding');
-      lines.push(`<span class="pv-modifier">    cache: ${esc(parts.join(', '))}</span>`);
-    }
-  }
-
-  if (lines.length === 0) return '';
-  return `<div class="plang-view">${lines.join('\n')}</div>`;
-}
-
-function toggleSection(el) {
-  const body = el.nextElementSibling;
-  const arrow = el.querySelector('.arrow');
-  body.classList.toggle('open');
-  arrow.classList.toggle('open');
-}
-
-function toggleBlock(el) {
-  el.nextElementSibling.classList.toggle('open');
-}
-
-function estimateSize(val) {
-  const str = typeof val === 'string' ? val : JSON.stringify(val);
-  const bytes = new Blob([str]).size;
-  if (bytes < 1024) return bytes + 'B';
-  return (bytes / 1024).toFixed(1) + 'KB';
 }
 
 function esc(s) {
@@ -581,17 +368,285 @@ function esc(s) {
   return d.innerHTML;
 }
 
-// Polling
-function startPolling() {
-  poll();
-  setInterval(() => {
-    if (document.getElementById('auto-refresh').checked) {
-      poll();
-    }
-  }, POLL_MS);
+function sizeLabel(val) {
+  const s = typeof val === 'string' ? val : JSON.stringify(val);
+  const b = new Blob([s]).size;
+  return b < 1024 ? b + 'B' : (b / 1024).toFixed(1) + 'KB';
 }
 
-startPolling();
+// ---------- Data fetching ----------
+
+async function poll() {
+  try {
+    const r = await fetch(`${TRACE_BASE}/build-run.json`, { cache: 'no-store' });
+    if (!r.ok) { setMeta('no data', false); return; }
+    const text = await r.text();
+    const h = hashStr(text);
+    if (h === lastHash) return; // unchanged
+    lastHash = h;
+    buildRun = JSON.parse(text);
+    setMeta(`${buildRun.goalCount} goals | ${buildRun.timestamp?.substring(0,19).replace('T',' ')}`, true);
+    renderGoalList();
+    if (selectedGoalIndex === null && buildRun.goals.length > 0) {
+      selectGoal(0);
+    } else if (selectedGoalIndex !== null) {
+      renderGoalDetail(selectedGoalIndex);
+    }
+  } catch(e) {
+    setMeta('error: ' + e.message, false);
+  }
+}
+
+function setMeta(text, live) {
+  const el = document.getElementById('build-meta');
+  el.textContent = text;
+  el.className = live ? 'meta live' : 'meta';
+}
+
+// ---------- Sidebar ----------
+
+function renderGoalList() {
+  const list = document.getElementById('goal-list');
+  list.innerHTML = '';
+  if (!buildRun) return;
+
+  buildRun.goals.forEach((g, i) => {
+    const stepCount = g.steps?.length || g.stepCount || 0;
+    const detailCount = countDetails(g);
+    const errorCount = countErrors(g);
+
+    const div = document.createElement('div');
+    div.className = 'goal-item' + (i === selectedGoalIndex ? ' active' : '');
+    div.innerHTML = `
+      <div class="goal-info">
+        <span class="goal-name">${esc(g.name)}</span>
+        <span class="goal-path">${esc(g.path || '')}</span>
+      </div>
+      <div class="goal-badges">
+        <span class="badge badge-steps">${stepCount}</span>
+        ${errorCount > 0 ? `<span class="badge badge-err">${errorCount} err</span>` : ''}
+        ${detailCount > 0 ? `<span class="badge badge-detail">${detailCount} detail</span>` : ''}
+        ${errorCount === 0 && detailCount === 0 ? `<span class="badge badge-ok">ok</span>` : ''}
+      </div>
+    `;
+    div.onclick = () => selectGoal(i);
+    list.appendChild(div);
+  });
+}
+
+function countDetails(goal) {
+  return (goal.steps || []).filter(s => s.flow?.some(f => f.phase === 'buildStep')).length;
+}
+function countErrors(goal) {
+  return (goal.steps || []).filter(s => s.flow?.some(f => f.status === 'error')).length;
+}
+
+function selectGoal(idx) {
+  selectedGoalIndex = idx;
+  renderGoalList();
+  renderGoalDetail(idx);
+}
+
+// ---------- Main panel ----------
+
+function renderGoalDetail(idx) {
+  const main = document.getElementById('main');
+  const g = buildRun.goals[idx];
+  if (!g) { main.className = 'empty'; main.innerHTML = '<span>Goal not found</span>'; return; }
+  main.className = '';
+
+  const steps = g.steps || [];
+  const detailCount = countDetails(g);
+  const errorCount = countErrors(g);
+
+  let html = `
+    <div class="goal-header">
+      <h1>${esc(g.name)}</h1>
+      <div class="subtitle">
+        <span>${esc(g.path || '')}</span>
+        <span>${steps.length} steps</span>
+        ${g.duration ? `<span>${esc(g.duration)}</span>` : ''}
+        ${detailCount > 0 ? `<span style="color:var(--blue)">${detailCount} detail passes</span>` : ''}
+        ${errorCount > 0 ? `<span style="color:var(--accent)">${errorCount} validation errors (recovered)</span>` : ''}
+      </div>
+    </div>
+  `;
+
+  // BuildGoal LLM call (collapsible)
+  if (g.buildGoal) {
+    html += `
+      <div class="buildgoal-llm">
+        <div class="buildgoal-llm-title" onclick="toggleEl(this.nextElementSibling)">
+          <span>BuildGoal LLM Call</span>
+          <span style="font-size:11px;color:var(--text-dim)">${sizeLabel(g.buildGoal.system || '')} system | ${sizeLabel(g.buildGoal.user || '')} user</span>
+        </div>
+        <div class="buildgoal-llm-body">
+          ${renderPromptBlocks(g.buildGoal.system, g.buildGoal.user, g.buildGoal.response)}
+        </div>
+      </div>
+    `;
+  }
+
+  // Steps
+  for (const step of steps) {
+    const hasError = step.flow?.some(f => f.status === 'error');
+    const hasDetail = step.flow?.some(f => f.phase === 'buildStep');
+    const cardClass = hasError ? 'has-error' : hasDetail ? 'has-detail' : '';
+
+    html += `<div class="step-card ${cardClass}">`;
+
+    // Step header with flow pipeline
+    html += `
+      <div class="step-header" onclick="toggleStepBody(this)">
+        <span class="step-index">${step.index}</span>
+        <span class="step-text">${esc(step.text)}</span>
+        <span class="step-status">
+          ${renderConfBadge(step.finalLevel, step.finalConfidence)}
+        </span>
+      </div>
+    `;
+
+    // Flow pipeline (always visible)
+    html += `<div class="step-flow">${renderFlowPipeline(step.flow)}</div>`;
+
+    // Error detail (auto-shown)
+    const errorPhase = (step.flow || []).find(f => f.status === 'error');
+    if (errorPhase) {
+      html += `<div class="error-detail">${esc(errorPhase.error || 'validation error')}</div>`;
+    }
+
+    // Expandable body (detail pass LLM, actions)
+    html += `<div class="step-body${hasError || hasDetail ? ' open' : ''}">`;
+
+    // Detail pass LLM content
+    const detailPhase = (step.flow || []).find(f => f.phase === 'buildStep');
+    if (detailPhase) {
+      html += `
+        <div class="prompt-section">
+          <div class="prompt-section-title">
+            <span>BuildStep Detail Pass</span>
+            <span>${sizeLabel(detailPhase.response || '')}</span>
+          </div>
+          ${renderPromptBlocks(detailPhase.system, detailPhase.user, detailPhase.response)}
+        </div>
+      `;
+    }
+
+    // Actions summary
+    if (step.actions && step.actions.length > 0) {
+      html += `<div class="actions-summary">${renderActions(step.actions, step)}</div>`;
+    }
+
+    html += `</div>`; // step-body
+    html += `</div>`; // step-card
+  }
+
+  main.innerHTML = html;
+}
+
+function renderConfBadge(level, conf) {
+  if (level === 'high') return `<span class="badge badge-ok">${conf}%</span>`;
+  if (level === 'medium') return `<span class="badge badge-warn">${conf}%</span>`;
+  return `<span class="badge badge-err">${conf}%</span>`;
+}
+
+function renderFlowPipeline(flow) {
+  if (!flow || flow.length === 0) return '';
+  return flow.map((f, i) => {
+    const arrow = i > 0 ? '<span class="flow-arrow">&rarr;</span>' : '';
+    let cls = 'phase-neutral';
+    let label = f.phase;
+
+    if (f.phase === 'buildGoal') {
+      cls = f.level === 'high' ? 'phase-pass' : f.level === 'medium' ? 'phase-medium' : 'phase-error';
+      label = `buildGoal: ${f.level} ${f.confidence}%`;
+    } else if (f.phase === 'validate') {
+      cls = f.status === 'pass' ? 'phase-pass' : 'phase-error';
+      label = f.status === 'pass' ? 'validate: pass' : 'validate: ERROR';
+    } else if (f.phase === 'buildStep') {
+      cls = 'phase-detail';
+      label = 'buildStep (detail)';
+    } else if (f.phase === 'applyStep') {
+      cls = 'phase-pass';
+      label = 'apply: merged';
+    }
+
+    return `${arrow}<span class="flow-phase ${cls}">${esc(label)}</span>`;
+  }).join('');
+}
+
+function renderActions(actions, step) {
+  let html = '';
+  for (const a of actions) {
+    const params = (a.parameters || []).map(p => {
+      const typeStr = p.type ? `<span class="param-type">[${esc(p.type)}]</span> ` : '';
+      let val = p.value;
+      if (val !== null && typeof val === 'object') val = JSON.stringify(val);
+      return `<span class="param-name">${esc(p.name)}</span>=${typeStr}<span class="param-value">${esc(String(val ?? ''))}</span>`;
+    }).join(', ');
+    html += `<div class="action-line">${esc(a.module)}.${esc(a.action)} ${params}</div>`;
+  }
+
+  // Show onError / cache if present on the step's buildGoal response
+  if (step._onError) {
+    let parts = [];
+    if (step._onError.retryCount) parts.push(`retry ${step._onError.retryCount}`);
+    if (step._onError.goal?.name) parts.push(`call ${step._onError.goal.name}`);
+    if (step._onError.ignoreError) parts.push('ignore');
+    html += `<div class="modifier-line">onError: ${esc(parts.join(', '))}</div>`;
+  }
+  if (step._cache) {
+    html += `<div class="modifier-line">cache: ${step._cache.durationMs}ms${step._cache.sliding ? ' sliding' : ''}</div>`;
+  }
+
+  return html;
+}
+
+function renderPromptBlocks(system, user, response) {
+  let html = '';
+  if (system) {
+    html += `<div class="block">
+      <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
+        <span>System Prompt</span><span>${sizeLabel(system)}</span>
+      </div>
+      <div class="block-content"><pre>${esc(typeof system === 'string' ? system : JSON.stringify(system, null, 2))}</pre></div>
+    </div>`;
+  }
+  if (user) {
+    html += `<div class="block">
+      <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
+        <span>User Prompt</span><span>${sizeLabel(user)}</span>
+      </div>
+      <div class="block-content open"><pre>${esc(typeof user === 'string' ? user : JSON.stringify(user, null, 2))}</pre></div>
+    </div>`;
+  }
+  if (response) {
+    html += `<div class="block">
+      <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
+        <span>LLM Response</span><span>${sizeLabel(response)}</span>
+      </div>
+      <div class="block-content open"><pre>${esc(typeof response === 'string' ? response : JSON.stringify(response, null, 2))}</pre></div>
+    </div>`;
+  }
+  return html;
+}
+
+// ---------- Interactions ----------
+
+function toggleEl(el) { el.classList.toggle('open'); }
+
+function toggleStepBody(headerEl) {
+  const card = headerEl.closest('.step-card');
+  const body = card.querySelector('.step-body');
+  if (body) body.classList.toggle('open');
+}
+
+// ---------- Polling ----------
+
+poll();
+setInterval(() => {
+  if (document.getElementById('auto-refresh').checked) poll();
+}, POLL_MS);
 </script>
 </body>
 </html>

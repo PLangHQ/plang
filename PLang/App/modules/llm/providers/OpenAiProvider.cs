@@ -39,8 +39,8 @@ public sealed class OpenAiProvider : ILlmProvider
         var endpoint = await ResolveConfigAsync(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
             "https://api.openai.com/v1/chat/completions");
         var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);
-        var model = action.Model
-            ?? await ResolveConfigAsync(settings, "llm.model", null, "gpt-5.4-nano");
+        var model = string.IsNullOrWhiteSpace(action.Model) ? null : action.Model;
+        model ??= await ResolveConfigAsync(settings, "llm.model", null, "gpt-5.4-nano");
 
         // --- Validate ---
         if (action.Messages.Count == 0)

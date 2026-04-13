@@ -15,12 +15,12 @@ The engine does: find class → set properties → call Run().
 
 ## Available Actions
 
-%actionSummary%
+{{ actionSummary }}
 
 ## Type Information
 
-Valid types: %typeInfo.TypeNames%
-%typeInfo.TypeSchemas%
+Valid types: {{ typeInfo.TypeNames }}
+{{ typeInfo.TypeSchemas }}
 
 ## Response Format
 
@@ -148,6 +148,19 @@ actions: [
 ]
 ```
 The foreach iterates, the goal.call runs per item. Both actions are required.
+
+**"llm.query system=..., user=..."** → Messages is `list<llmmessage>`, map shorthand to message objects
+```
+step: "llm.query system=%prompt%, user=%input%, schema={result: string}, write to %answer%"
+actions: [
+  {"module": "llm", "action": "query", "parameters": [
+    {"name": "Messages", "value": [{"Role": "system", "Content": "%prompt%"}, {"Role": "user", "Content": "%input%"}], "type": "list<llmmessage>"},
+    {"name": "Schema", "value": "{\"result\":\"string\"}", "type": "string"}
+  ]},
+  {"module": "variable", "action": "set", "parameters": [{"name": "Name", "value": "%answer%"}, {"name": "Value", "value": "%__data__%"}]}
+]
+```
+`system=` becomes `{"Role": "system", "Content": "..."}`, `user=` becomes `{"Role": "user", "Content": "..."}`. Always build the Messages list from these. The `schema=` shorthand maps to the `Schema` string parameter.
 
 ## Rules
 

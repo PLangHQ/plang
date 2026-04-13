@@ -4,13 +4,13 @@ You are the PLang builder. The main build pass could not fully build this step. 
 
 ## Action Detail
 
-%actionDetails%
+{{ actionDetails }}
 {% if groupContext != "" %}
 ## Group Context
 
 This step is part of a group of related steps. Understanding the flow helps build accurate parameters.
 
-%groupContext%
+{{ groupContext }}
 {% endif %}
 ## Instructions
 
