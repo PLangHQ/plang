@@ -53,13 +53,6 @@ public sealed class @this
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
             name = name[..^5];
 
-        // During build: check snapshot first to avoid using mutated goal objects
-        if (App.Building.IsEnabled)
-        {
-            var snapshot = App.Building.GetSnapshot(name);
-            if (snapshot != null) return snapshot;
-        }
-
         // Try by PrPath key (exact match)
         if (_goals.TryGetValue(name, out var goal) && !goal.IsSetup)
             return goal;
@@ -105,13 +98,6 @@ public sealed class @this
     /// </summary>
     public async Task<Goal.@this?> GetAsync(string name, string? callingFolderPath = null, CancellationToken cancellationToken = default)
     {
-        // During build: return snapshotted goals to avoid using overwritten .pr files
-        if (App.Building.IsEnabled)
-        {
-            var snapshot = App.Building.GetSnapshot(name);
-            if (snapshot != null) return snapshot;
-        }
-
         var goal = Get(name);
         if (goal != null)
             return goal;
@@ -158,13 +144,6 @@ public sealed class @this
     private async Task<Goal.@this?> TryLoadPr(string dir, string file, string name, CancellationToken ct)
     {
         var prFile = file.ToLowerInvariant() + ".pr";
-
-        // During build: check snapshot first — don't load overwritten .pr files
-        if (App.Building.IsEnabled)
-        {
-            var snapshot = App.Building.GetSnapshot(file);
-            if (snapshot != null) return snapshot;
-        }
 
         // 1. Try user's root directory
         var rootPath = App.FileSystem.Path.Combine(App.FileSystem.RootDirectory, dir, ".build", prFile);
@@ -358,8 +337,6 @@ public sealed class @this
                     step.Goal = goal;
 
                 Add(goal);
-                if (app.Building.IsEnabled)
-                    app.Building.SnapshotGoal(goal);
                 primary ??= goal;
             }
 

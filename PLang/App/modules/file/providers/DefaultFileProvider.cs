@@ -17,6 +17,24 @@ public class DefaultFileProvider : IFileProvider
     {
         var fs = action.Context.App.FileSystem;
         var path = action.Path;
+        // During build: use snapshotted .pr content to avoid reading overwritten files
+        if (action.Context.App.Building.IsEnabled && path.Extension == ".pr")
+        {
+            var snapshot = action.Context.App.Building.GetPrSnapshot(path.Absolute);
+            if (snapshot != null)
+            {
+                var snapshotType = Data.Type.FromMime(TypeMapping.GetMimeType(path.Extension));
+                var snapshotClr = snapshotType.ClrType;
+                if (snapshotClr != null && snapshotClr != typeof(string))
+                {
+                    var (converted, _) = TypeMapping.TryConvertTo(snapshot, snapshotClr);
+                    if (converted != null)
+                        return new App.Data.@this(path.Raw, converted, snapshotType);
+                }
+                return new App.Data.@this(path.Raw, snapshot, snapshotType);
+            }
+        }
+
         if (!fs.File.Exists(path.Absolute))
             return App.Data.@this.FromError(new ServiceError($"File not found: {path.Raw} ({path.Absolute})", "NotFound", 404));
 
@@ -33,6 +51,11 @@ public class DefaultFileProvider : IFileProvider
             else
             {
                 var text = fs.File.ReadAllText(path.Absolute);
+
+                // During build: snapshot .pr file content on first read
+                if (action.Context.App.Building.IsEnabled && path.Extension == ".pr")
+                    action.Context.App.Building.SnapshotPrFile(path.Absolute, text);
+
                 var clr = type.ClrType;
                 // If the type has a CLR mapping (not just string), deserialize
                 if (clr != null && clr != typeof(string))

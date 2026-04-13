@@ -44,16 +44,9 @@ public sealed class GoalCall : modules.IEvent
     public async Task<Data.@this> GetGoalAsync(App.@this app, Actor.Context.@this context)
     {
         // PrPath is authoritative — load from file, no name-based search
-        // During build: check snapshot first to avoid loading overwritten .pr files
+        // PrPath is authoritative — load from file, no name-based search
         if (!string.IsNullOrEmpty(PrPath))
-        {
-            if (app.Building.IsEnabled)
-            {
-                var snapshot = app.Building.GetSnapshot(PrPath);
-                if (snapshot != null) return Data.@this.Ok(snapshot);
-            }
             return await LoadFromFile(PrPath, app, context);
-        }
 
         // 1. Check via the action's step's goal chain (action → step → goal → walk up)
         var currentGoal = Action?.Step?.Goal;

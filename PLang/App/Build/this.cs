@@ -28,47 +28,27 @@ public sealed class @this
     public bool Cache { get; set; } = true;
 
     /// <summary>
-    /// Snapshot of system goals loaded at build start.
-    /// During building, goal resolution uses these instead of reading from disk,
-    /// so newly-saved .pr files don't affect the running build.
+    /// Snapshot of .pr file content (raw JSON) loaded at first access during build.
+    /// Keyed by absolute file path. When a .pr file is overwritten during build,
+    /// the snapshot provides the original content for re-deserialization.
     /// </summary>
-    private readonly Dictionary<string, Goals.Goal.@this> _goalSnapshot = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _prSnapshot = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Snapshots a goal so it won't be affected by .pr overwrites during the build.
-    /// Called when goals are first loaded at build start.
+    /// Snapshots .pr file content if not already captured.
+    /// Called from file.Read paths during building.
     /// </summary>
-    public void SnapshotGoal(Goals.Goal.@this goal)
+    public void SnapshotPrFile(string absolutePath, string content)
     {
-        if (!string.IsNullOrEmpty(goal.PrPath))
-            _goalSnapshot[goal.PrPath] = goal.DeepClone();
+        _prSnapshot.TryAdd(absolutePath, content);
     }
 
     /// <summary>
-    /// Gets a snapshotted goal by name or PrPath. Returns null if not snapshotted.
+    /// Gets snapshotted .pr file content. Returns null if not snapshotted.
     /// </summary>
-    public Goals.Goal.@this? GetSnapshot(string nameOrPath)
+    public string? GetPrSnapshot(string absolutePath)
     {
-        if (_goalSnapshot.TryGetValue(nameOrPath, out var goal)) return goal;
-        // Try matching by goal name
-        foreach (var g in _goalSnapshot.Values)
-        {
-            if (string.Equals(g.Name, nameOrPath, StringComparison.OrdinalIgnoreCase))
-                return g;
-        }
-        return null;
-    }
-
-    /// <summary>
-    /// Snapshots all currently loaded goals. Called when building starts,
-    /// so goals loaded at startup are preserved during the build.
-    /// </summary>
-    public void SnapshotAll()
-    {
-        foreach (var goal in _app.Goals.AllIncludingSetup)
-        {
-            SnapshotGoal(goal);
-        }
+        return _prSnapshot.TryGetValue(absolutePath, out var content) ? content : null;
     }
 
     public @this(App.@this app)
