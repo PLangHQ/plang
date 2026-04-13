@@ -5,17 +5,7 @@ BuildStep
 - render template "/system/builder/templates/v2/stepForLlm.template", write to %stepForLlm%
 - render template "/system/builder/templates/v2/stepActionDetails.template", write to %actionDetails%
 - read file "llm/BuildStep.llm", load vars, write to %buildStepPrompt%
-- [llm] system: %buildStepPrompt%
-        user: %stepForLlm%
-        scheme: {
-                errors?: [{key: string, message: string}],
-                warnings?: [{key: string, message: string}],
-                actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}],
-                    errors?: [{key: string, message: string}],
-                    warnings?: [{key: string, message: string}]}]
-                }
-        on error call HandleBuildStepFailure
-        write to %result%
+- llm.query system=%buildStepPrompt%, user=%stepForLlm%, scheme={errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}]}, on error call HandleBuildStepFailure, write to %result%
 - add {stepIndex: %stepResult.index%, stepText: %step.Text%, level: %stepResult.level%, system: %buildStepPrompt%, user: %stepForLlm%, response: %result%} to %trace.detailPasses%
 - save %trace% to file '/.build/traces/%goal.Name%.json'
 - call ValidateBuildStepResult

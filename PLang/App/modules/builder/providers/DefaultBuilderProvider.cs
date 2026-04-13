@@ -194,13 +194,23 @@ public class DefaultBuilderProvider : IBuilderProvider
                 var availableStr = available.Any()
                     ? $" Available actions in '{a.Module}': [{string.Join(", ", available)}]"
                     : $" Module '{a.Module}' not found. Available modules: [{string.Join(", ", modules.Names)}]";
-                notFound.Add($"{a.Module}.{a.ActionName}{availableStr}");
+
+                // Include action parameters for debugging
+                var paramStr = a.Parameters != null
+                    ? string.Join(", ", a.Parameters.Select(p => $"{p.Name}={p.Value}"))
+                    : "(none)";
+                notFound.Add($"{a.Module}.{a.ActionName} [params: {paramStr}]{availableStr}");
             }
         }
 
         if (notFound.Count > 0)
+        {
+            var goalName = context.Goal?.Name ?? "unknown";
+            var stepText = context.Step?.Text ?? "unknown";
             return Data.@this.FromError(new Errors.ActionError(
-                $"Actions not found: {string.Join("; ", notFound)}", "ActionNotFound", 400));
+                $"Actions not found in goal '{goalName}', step: '{stepText}': {string.Join("; ", notFound)}",
+                "ActionNotFound", 400));
+        }
 
         await ResolveGoalCallPaths(action.Actions, app, context);
         NormalizeParameterTypes(action.Actions);
