@@ -176,6 +176,25 @@ public class Error : IError
             }
         }
 
+        // Verbose variable dump — shows all variables in scope at point of failure
+        var app = error.Goal?.App ?? error.Step?.Goal?.App;
+        if (app?.Debug?.Verbose == true)
+        {
+            var context = app.Context;
+            var allVars = context?.Variables?.GetAll();
+            if (allVars != null)
+            {
+                sb.AppendLine();
+                sb.AppendLine($"{indent}📋 All variables in scope:");
+                foreach (var v in allVars)
+                {
+                    var val = v.Value?.ToString() ?? "(null)";
+                    if (val.Length > 100) val = val[..100] + $"... ({val.Length} chars)";
+                    sb.AppendLine($"{indent}    %{v.Name}% = {val} ({v.Type?.Value ?? "?"})");
+                }
+            }
+        }
+
         // Error source (ActionError overrides FormatExtra)
         if (error is Error e)
             e.FormatExtra(sb, indent);

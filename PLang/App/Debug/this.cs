@@ -51,6 +51,13 @@ public sealed class @this
     /// </summary>
     public string Level { get; set; } = "step";
 
+    /// <summary>
+    /// When true, errors include a dump of all available variables at the point of failure.
+    /// Useful for diagnosing missing variables in foreach/goal.call chains.
+    /// Set via: --debug={"verbose":true}
+    /// </summary>
+    public bool Verbose { get; set; }
+
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
 

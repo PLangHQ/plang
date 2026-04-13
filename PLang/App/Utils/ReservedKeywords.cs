@@ -30,6 +30,7 @@
 		public static readonly string CurrentDataSource = "!CurrentDataSource";
 		public static readonly string Error = "!Error";
 		public static readonly string DetailedError = "!DetailedError";
+		public static readonly string VerboseError = "!VerboseError";
 		public static readonly string LlmDocumentation = "!DOC";
 		public static readonly string Llm = "!LLM";
 
