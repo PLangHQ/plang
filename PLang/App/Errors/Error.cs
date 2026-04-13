@@ -23,6 +23,13 @@ public class Error : IError
     public Goal? Goal { get; set; }
     public IReadOnlyList<CallFrame> CallFrames { get; set; } = Array.Empty<CallFrame>();
     public Dictionary<string, string> Variables { get; set; } = new();
+
+    /// <summary>
+    /// The execution context where this error occurred. Used by verbose debug to dump variables.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public Actor.Context.@this? Context { get; set; }
+
     public virtual ErrorCategory Category => StatusCode < 500 ? ErrorCategory.Application : ErrorCategory.Runtime;
 
     /// <summary>
@@ -63,6 +70,7 @@ public class Error : IError
         : this(message, context.Step, key, statusCode)
     {
         Goal = context.Goal;
+        Context = context;
         CallFrames = context.CallStack?.GetFrames() ?? (IReadOnlyList<CallFrame>)Array.Empty<CallFrame>();
     }
 
@@ -180,12 +188,16 @@ public class Error : IError
         var app = error.Goal?.App ?? error.Step?.Goal?.App;
         if (app?.Debug?.Verbose == true)
         {
-            var context = app.Context;
-            var allVars = context?.Variables?.GetAll();
+            var errorContext = (error as Error)?.Context;
+            var fallbackContext = app.Context;
+            var ctx = errorContext ?? fallbackContext;
+            var allVars = ctx?.Variables?.GetAll();
             if (allVars != null)
             {
+                var ctxId = ctx?.Id ?? "?";
+                var ctxSource = errorContext != null ? "error context" : "app context (error context not captured)";
                 sb.AppendLine();
-                sb.AppendLine($"{indent}📋 All variables in scope:");
+                sb.AppendLine($"{indent}📋 Variables in scope ({ctxSource}, id={ctxId}):");
                 foreach (var v in allVars)
                 {
                     var val = v.Value?.ToString() ?? "(null)";

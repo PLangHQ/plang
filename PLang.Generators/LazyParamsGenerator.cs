@@ -435,11 +435,14 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     sb.AppendLine($"        if ({prop.Name} == null)");
                 }
                 sb.AppendLine("            {");
+                sb.AppendLine($"                if (__resolutionError != null) {{ context.Step = __previousStep; context.Goal = __previousGoal; return __resolutionError; }}");
                 sb.AppendLine($"                var __prValue = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{prop.Name}\", System.StringComparison.OrdinalIgnoreCase))?.Value?.ToString() ?? \"(unknown)\";");
                 sb.AppendLine($"                var __stepText = __step?.Text ?? \"(unknown step)\";");
                 sb.AppendLine($"                if (__stepText.Length > 80) __stepText = __stepText[..80] + \"...\";");
-                sb.AppendLine($"                return App.Data.@this.FromError(new App.Errors.ServiceError(");
-                sb.AppendLine($"                    $\"'{{__prValue}}' is empty — nothing to use as '{prop.Name.ToLowerInvariant()}' in step: {{__stepText}}\", __step, __callFrames, \"MissingParameter\", 400));");
+                sb.AppendLine($"                var __err = new App.Errors.ServiceError(");
+                sb.AppendLine($"                    $\"'{{__prValue}}' is empty — nothing to use as '{prop.Name.ToLowerInvariant()}' in step: {{__stepText}}\", __step, __callFrames, \"MissingParameter\", 400);");
+                sb.AppendLine($"                __err.Context = context;");
+                sb.AppendLine($"                return App.Data.@this.FromError(__err);");
                 sb.AppendLine("            }");
             }
         }
