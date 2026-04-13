@@ -402,6 +402,9 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
                         "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
             }
 
+            // Snapshot all loaded goals so .pr overwrites during build don't affect running goals
+            Building.SnapshotAll();
+
             CurrentActor = User;
             var buildCall = new GoalCall { Name = "Build", PrPath = "/system/builder/.build/build.pr" };
             return await RunGoalAsync(buildCall, User.Context);

@@ -1,3 +1,5 @@
+using Force.DeepCloner;
+
 namespace App.Build;
 
 /// <summary>
@@ -24,6 +26,50 @@ public sealed class @this
     /// Whether to use LLM cache. Default true. Set via --build={"cache":false}
     /// </summary>
     public bool Cache { get; set; } = true;
+
+    /// <summary>
+    /// Snapshot of system goals loaded at build start.
+    /// During building, goal resolution uses these instead of reading from disk,
+    /// so newly-saved .pr files don't affect the running build.
+    /// </summary>
+    private readonly Dictionary<string, Goals.Goal.@this> _goalSnapshot = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Snapshots a goal so it won't be affected by .pr overwrites during the build.
+    /// Called when goals are first loaded at build start.
+    /// </summary>
+    public void SnapshotGoal(Goals.Goal.@this goal)
+    {
+        if (!string.IsNullOrEmpty(goal.PrPath))
+            _goalSnapshot[goal.PrPath] = goal.DeepClone();
+    }
+
+    /// <summary>
+    /// Gets a snapshotted goal by name or PrPath. Returns null if not snapshotted.
+    /// </summary>
+    public Goals.Goal.@this? GetSnapshot(string nameOrPath)
+    {
+        if (_goalSnapshot.TryGetValue(nameOrPath, out var goal)) return goal;
+        // Try matching by goal name
+        foreach (var g in _goalSnapshot.Values)
+        {
+            if (string.Equals(g.Name, nameOrPath, StringComparison.OrdinalIgnoreCase))
+                return g;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Snapshots all currently loaded goals. Called when building starts,
+    /// so goals loaded at startup are preserved during the build.
+    /// </summary>
+    public void SnapshotAll()
+    {
+        foreach (var goal in _app.Goals.AllIncludingSetup)
+        {
+            SnapshotGoal(goal);
+        }
+    }
 
     public @this(App.@this app)
     {
