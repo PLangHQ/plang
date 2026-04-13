@@ -287,14 +287,17 @@ public sealed class OpenAiProvider : ILlmProvider
                 if (!validationResult.Success)
                 {
                     var validationError = validationResult.Error?.Message ?? "Unknown validation error";
-                    Console.WriteLine($"  LLM validation failed: {validationError}");
 
                     if (validationRetries >= action.MaxValidationRetries)
+                    {
+                        Console.WriteLine($"  Validation failed (no retries left): {validationError}");
                         return App.Data.@this.FromError(new ActionError(
                             $"LLM validation failed: {validationError}",
                             "ValidationFailed", 400));
+                    }
 
                     validationRetries++;
+                    Console.WriteLine($"  Validation failed (retry {validationRetries}/{action.MaxValidationRetries}): {validationError}");
                     messages.Add(new LlmMessage
                     {
                         Role = "user",
