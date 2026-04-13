@@ -1,13 +1,14 @@
 {
   "name": "Build",
-  "description": "Main entry point for the PLang builder. Transforms .goal files into .pr files.",
+  "description": "Build pipeline: initialize defaults, render progress output, load builder app/goals, iterate goals to call BuildGoal per item, then save trace manifest and persist app state.",
+  "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = \".\"",
+      "text": "set default %path% = \u0022.\u0022",
       "lineNumber": 6,
       "indent": 0,
-      "comment": "Parameters: %path% - folder to build (default: \".\")",
+      "comment": null,
       "actions": [
         {
           "module": "variable",
@@ -24,17 +25,23 @@
               "type": "string"
             },
             {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            },
+            {
               "name": "AsDefault",
               "value": true,
               "type": "bool"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -42,6 +49,7 @@
       "text": "set default %!build.cache% = true",
       "lineNumber": 7,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "variable",
@@ -58,63 +66,72 @@
               "type": "bool"
             },
             {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
+            },
+            {
               "name": "AsDefault",
               "value": true,
               "type": "bool"
             }
-          ]
+          ],
+          "defaults": null
         }
       ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "read file '/.build/traces/manifest.json', write to %traceGoals%",
+      "text": "set %traceGoals% = []",
       "lineNumber": 8,
       "indent": 0,
+      "comment": null,
       "actions": [
-        {
-          "module": "file",
-          "action": "read",
-          "parameters": [
-            { "name": "Path", "value": "/.build/traces/manifest.json", "type": "path" }
-          ]
-        },
         {
           "module": "variable",
           "action": "set",
           "parameters": [
-            { "name": "Name", "value": "%traceGoals%", "type": "string" },
-            { "name": "Value", "value": "%__data__%", "type": "object" }
-          ]
+            {
+              "name": "Name",
+              "value": "%traceGoals%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": [],
+              "type": "list"
+            },
+            {
+              "name": "Type",
+              "value": "list",
+              "type": "string"
+            },
+            {
+              "name": "AsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
         }
       ],
-      "onError": { "ignoreError": true },
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "set default %traceGoals% = []",
+      "text": "write out \u0022Building path: %path%\u0022",
       "lineNumber": 9,
       "indent": 0,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            { "name": "Name", "value": "%traceGoals%", "type": "string" },
-            { "name": "Value", "value": [], "type": "list" },
-            { "name": "AsDefault", "value": true, "type": "bool" }
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 4,
-      "text": "write out \"Building path: %path%\"",
-      "lineNumber": 8,
-      "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "output",
@@ -123,22 +140,29 @@
             {
               "name": "Data",
               "value": "Building path: %path%",
-              "type": "string"
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "object",
+              "type": "object"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
-      "index": 5,
-      "text": "[plang] call GetApp, write to %app%",
-      "lineNumber": 9,
+      "index": 4,
+      "text": "builder.app, write to %app%",
+      "lineNumber": 10,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "builder",
@@ -146,31 +170,42 @@
           "parameters": [
             {
               "name": "Path",
-              "value": "%path%",
+              "value": ".",
               "type": "string"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "defaults": null
         },
         {
           "module": "variable",
           "action": "set",
           "parameters": [
-            { "name": "Name", "value": "%app%", "type": "string" },
-            { "name": "Value", "value": "%__data__%", "type": "object" }
-          ]
+            {
+              "name": "Name",
+              "value": "%app%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
-      "index": 6,
-      "text": "[plang] GetGoalsV2, fileOrFolderPath=%path%, parser=\"goal\", write to %goals%",
-      "lineNumber": 10,
+      "index": 5,
+      "text": "builder.goals path=%path%, write to %goals%",
+      "lineNumber": 11,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "builder",
@@ -182,27 +217,38 @@
               "type": "string"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "defaults": null
         },
         {
           "module": "variable",
           "action": "set",
           "parameters": [
-            { "name": "Name", "value": "%goals%", "type": "string" },
-            { "name": "Value", "value": "%__data__%", "type": "object" }
-          ]
+            {
+              "name": "Name",
+              "value": "%goals%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
-      "index": 7,
-      "text": "write out \"Found %goals.Count% goals\"",
-      "lineNumber": 11,
+      "index": 6,
+      "text": "write out \u0022Found %goals.Count% goals\u0022",
+      "lineNumber": 12,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "output",
@@ -212,21 +258,28 @@
               "name": "Data",
               "value": "Found %goals.Count% goals",
               "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 7,
       "text": "foreach %goals%, call BuildGoal, item=%goal%",
-      "lineNumber": 12,
+      "lineNumber": 13,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "loop",
@@ -243,8 +296,7 @@
               "type": "string"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "defaults": null
         },
         {
           "module": "goal",
@@ -252,54 +304,89 @@
           "parameters": [
             {
               "name": "GoalName",
-              "value": {"name": "BuildGoal"},
+              "value": {
+                "name": "BuildGoal",
+                "parameters": [
+                  {
+                    "name": "item",
+                    "value": "%goal%",
+                    "type": "string"
+                  }
+                ]
+              },
               "type": "goal.call"
             }
-          ]
+          ],
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "save %traceGoals% to file \u0027/.build/traces/manifest.json\u0027",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "/.build/traces/manifest.json",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "%traceGoals%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 9,
-      "text": "[plang] call SaveApp, app=%app%",
-      "lineNumber": 13,
+      "text": "builder.appSave",
+      "lineNumber": 15,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "builder",
-          "action": "app.save",
-          "parameters": [
-            {
-              "name": "App",
-              "value": "%app%",
-              "type": "object"
-            }
-          ],
-          "errors": [],
-          "warnings": []
+          "action": "appSave",
+          "parameters": [],
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "inputParameters": {
-    "%path%": "The folder path to build, defaults to '.' if not provided."
-  },
-  "path": "/system/builder/Build.goal",
-  "prPath": "/system/builder/.build/build.pr",
-  "hash": "",
+  "path": "/PlangConsole/bin/Debug/net10.0/system/builder/Build.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/build.pr",
+  "hash": "ac0c7cdb2f92075272286c024c605759e7f237667a8768fb7c01dc6590dc1b26",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
-  "isSystem": true,
+  "isSystem": false,
   "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "Build"
+  "inputParameters": null
 }

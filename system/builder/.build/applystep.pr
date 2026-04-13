@@ -1,72 +1,128 @@
 {
   "name": "ApplyStep",
-  "description": "Validates and applies step result. level=high skips BuildStep, medium/low runs it with guidance.",
+  "description": "ApplyStep: validate stepResult, merge it into the target goal step, and if stepResult.level != \u0022high\u0022 then call BuildStep.",
+  "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "[plang] ValidateActions, actions=%stepResult.actions%",
+      "text": "builder.validate actions=%stepResult.actions%, on error call HandleValidationError",
       "lineNumber": 4,
       "indent": 0,
+      "comment": "Validates and applies step result\nlevel=high \u2192 use as-is, medium/low \u2192 run BuildStep with guidance",
       "actions": [
         {
           "module": "builder",
-          "action": "actions.validate",
+          "action": "validate",
           "parameters": [
             {
               "name": "Actions",
               "value": "%stepResult.actions%",
-              "type": "object"
+              "type": "object?"
             }
-          ]
+          ],
+          "defaults": null
         }
       ],
+      "intent": null,
       "onError": {
         "goal": {
           "name": "HandleValidationError",
-          "prPath": "/system/builder/.build/handlevalidationerror.pr"
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
         },
-        "ignoreError": false
+        "retryCount": 0,
+        "retryOverMs": null,
+        "order": 0,
+        "ignoreError": false,
+        "message": null,
+        "statusCode": null,
+        "key": null
       },
+      "cache": {
+        "durationMs": 0,
+        "sliding": false,
+        "key": null,
+        "location": null
+      },
+      "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "[plang] MergeStep %goal.Steps[stepResult.index]%, %stepResult%, write to %goal.Steps[stepResult.index]%",
-      "lineNumber": 6,
+      "text": "builder.merge step=%goal.Steps[stepResult.index]%, stepFromLlm=%stepResult%, write to %goal.Steps[stepResult.index]%",
+      "lineNumber": 5,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "builder",
-          "action": "steps.merge",
+          "action": "merge",
           "parameters": [
             {
               "name": "Step",
               "value": "%goal.Steps[stepResult.index]%",
-              "type": "object"
+              "type": "object?"
             },
             {
               "name": "StepFromLlm",
               "value": "%stepResult%",
-              "type": "object"
+              "type": "object?"
             }
-          ]
+          ],
+          "defaults": null
         },
         {
           "module": "variable",
           "action": "set",
           "parameters": [
-            { "name": "Name", "value": "%goal.Steps[stepResult.index]%", "type": "string" },
-            { "name": "Value", "value": "%__data__%", "type": "object" }
-          ]
+            {
+              "name": "Name",
+              "value": "%goal.Steps[stepResult.index]%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
+      "intent": null,
+      "onError": {
+        "goal": {
+          "name": "HandleValidationError",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": 0,
+        "retryOverMs": null,
+        "order": 0,
+        "ignoreError": false,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
+      "cache": {
+        "durationMs": 0,
+        "sliding": false,
+        "key": null,
+        "location": null
+      },
+      "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "if %stepResult.level% != \"high\", call BuildStep",
-      "lineNumber": 7,
+      "text": "if %stepResult.level% != \u0022high\u0022, call BuildStep",
+      "lineNumber": 6,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "condition",
@@ -75,7 +131,7 @@
             {
               "name": "Left",
               "value": "%stepResult.level%",
-              "type": "string"
+              "type": "string?"
             },
             {
               "name": "Operator",
@@ -88,26 +144,132 @@
               "type": "string"
             },
             {
-              "name": "GoalIfTrue",
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
               "value": {
-                "name": "BuildStep",
-                "prPath": "/system/builder/.build/buildstep.pr"
+                "name": "BuildStep"
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "system",
+              "type": "actor(system|user|service)"
             }
-          ]
+          ],
+          "defaults": null
         }
       ],
+      "intent": null,
+      "onError": {
+        "goal": {
+          "name": "HandleValidationError",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": 0,
+        "retryOverMs": null,
+        "order": 0,
+        "ignoreError": false,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
+      "cache": {
+        "durationMs": 0,
+        "sliding": false,
+        "key": null,
+        "location": null
+      },
+      "timeout": null,
       "waitForExecution": true
     }
   ],
-  "goals": [],
-  "visibility": 0,
-  "path": "/system/builder/ApplyStep.goal",
-  "prPath": "/system/builder/.build/applystep.pr",
-  "hash": "",
+  "goals": [
+    {
+      "name": "",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out \u0022  Validation error: %!error.Message%\u0022",
+          "lineNumber": 10,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "set %goal.Steps[stepResult.index].validationError% = %!error%",
+          "lineNumber": 11,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "call BuildStep",
+          "lineNumber": 12,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/PlangConsole/bin/Debug/net10.0/system/builder/ApplyStep.goal",
+      "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/applystep.pr",
+      "hash": "d44ef719ec271b3d4a9ab83019aa388ac185a38f3b7d3808dd9e7949b348d70c",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/PlangConsole/bin/Debug/net10.0/system/builder/ApplyStep.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/applystep.pr",
+  "hash": "0a4adb1a2d4f3ffed41d973b310a73183f5f1482681194a20b452484d7dc4e22",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
-  "isSystem": true,
-  "isTest": false
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
 }
