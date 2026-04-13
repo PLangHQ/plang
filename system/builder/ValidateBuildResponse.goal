@@ -1,7 +1,7 @@
 ValidateBuildResponse
 / Validates the LLM build response
-- if %response.steps.Count% is not %goal.Steps.Count%, throw error 'LLM returned %response.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step.'
-- foreach %response.steps%, call ValidateStep, item=%step%
+- if %stepResults.steps.Count% is not %goal.Steps.Count%, throw error 'LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step.'
+- foreach %stepResults.steps%, call ValidateStep, item=%step%
 
 ValidateStep
 / Validates a single step from the LLM response
