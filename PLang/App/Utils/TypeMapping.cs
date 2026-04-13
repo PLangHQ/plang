@@ -252,6 +252,15 @@ public static class TypeMapping
     /// </summary>
     public static string[]? GetValidValues(Type type)
     {
+        // Unwrap nullable
+        var underlying = Nullable.GetUnderlyingType(type);
+        if (underlying != null) type = underlying;
+
+        // Enums: return all enum names
+        if (type.IsEnum)
+            return Enum.GetNames(type);
+
+        // Convention: static ValidValues property
         var prop = type.GetProperty("ValidValues",
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
         if (prop != null && prop.PropertyType == typeof(string[]))

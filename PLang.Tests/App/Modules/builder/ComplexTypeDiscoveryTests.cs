@@ -76,4 +76,25 @@ public class ComplexTypeDiscoveryTests
         await Assert.That(schemas.ContainsKey("int")).IsFalse();
         await Assert.That(schemas.ContainsKey("bool")).IsFalse();
     }
+
+    [Test]
+    public async Task Enums_ReturnValidValues()
+    {
+        // Enums should return their names as valid values
+        var values = TypeMapping.GetValidValues(typeof(global::App.Goals.Goal.Steps.Step.ErrorOrder));
+
+        await Assert.That(values).IsNotNull();
+        await Assert.That(values!).Contains("GoalFirst");
+        await Assert.That(values!).Contains("RetryFirst");
+    }
+
+    [Test]
+    public async Task NullableEnums_ReturnValidValues()
+    {
+        // Nullable enums should unwrap and return valid values
+        var values = TypeMapping.GetValidValues(typeof(global::App.Goals.Goal.Steps.Step.ErrorOrder?));
+
+        await Assert.That(values).IsNotNull();
+        await Assert.That(values!).Contains("GoalFirst");
+    }
 }
