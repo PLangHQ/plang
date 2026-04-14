@@ -302,9 +302,24 @@ public partial class @this
     /// <summary>
     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.
     /// The natural boolean meaning of this Data.
-    /// Default: IsInitialized. Subtypes override (e.g., Path → Exists).
+    /// Follows common language conventions: null, false, 0, "" are falsy. Everything else is truthy.
     /// </summary>
-    public virtual bool ToBoolean() => IsInitialized;
+    public virtual bool ToBoolean()
+    {
+        if (!IsInitialized) return false;
+        var val = Value;
+        if (val == null) return false;
+        if (val is bool b) return b;
+        if (val is string s) return s.Length > 0;
+        if (val is int i) return i != 0;
+        if (val is long l) return l != 0;
+        if (val is double d) return d != 0;
+        if (val is float f) return f != 0;
+        if (val is decimal dec) return dec != 0;
+        if (val is short sh) return sh != 0;
+        if (val is byte by) return by != 0;
+        return true;
+    }
 
     /// <summary>
     /// Virtual so subclasses can override with proper cloning.

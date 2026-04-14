@@ -22,16 +22,6 @@ public class StepTests
                     Module = "http",
                     ActionName = "get",
                     Parameters = new List<Data> { new Data("url", "https://api.example.com") },
-                },
-                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                {
-                    Module = "variable",
-                    ActionName = "set",
-                    Parameters = new List<Data>
-                    {
-                        new Data("Name", "response"),
-                        new Data("Value", "%__data__%")
-                    }
                 }
             },
             WaitForExecution = false
@@ -42,7 +32,7 @@ public class StepTests
         await Assert.That(step.LineNumber).IsEqualTo(10);
         await Assert.That(step.Indent).IsEqualTo(2);
         await Assert.That(step.Comment).IsEqualTo("This makes an HTTP call");
-        await Assert.That(step.Actions.Count).IsEqualTo(2);
+        await Assert.That(step.Actions.Count).IsEqualTo(1);
         await Assert.That(step.Actions[0].Module).IsEqualTo("http");
         await Assert.That(step.Actions[0].ActionName).IsEqualTo("get");
         await Assert.That(step.WaitForExecution).IsFalse();
@@ -148,16 +138,6 @@ public class StepTests
                     Module = "variable",
                     ActionName = "set",
                     Parameters = new List<Data> { new Data("name", "test") },
-                },
-                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                {
-                    Module = "variable",
-                    ActionName = "set",
-                    Parameters = new List<Data>
-                    {
-                        new Data("Name", "result"),
-                        new Data("Value", "%__data__%")
-                    }
                 }
             },
             WaitForExecution = false,
@@ -171,7 +151,7 @@ public class StepTests
         await Assert.That(clone.LineNumber).IsEqualTo(original.LineNumber);
         await Assert.That(clone.Indent).IsEqualTo(original.Indent);
         await Assert.That(clone.Comment).IsEqualTo(original.Comment);
-        await Assert.That(clone.Actions.Count).IsEqualTo(2);
+        await Assert.That(clone.Actions.Count).IsEqualTo(1);
         await Assert.That(clone.Actions[0].Module).IsEqualTo("variable");
         await Assert.That(clone.Actions[0].ActionName).IsEqualTo("set");
         await Assert.That(clone.WaitForExecution).IsEqualTo(original.WaitForExecution);

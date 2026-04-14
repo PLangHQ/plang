@@ -509,7 +509,10 @@ public class RenderTests : IDisposable
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "num" }, { "value", 42 } },
-                    index: 0, text: "set num")
+                    index: 0, text: "set num"),
+                MakeStep("goal", "return",
+                    new Dictionary<string, object?> { { "data", "%num%" } },
+                    index: 1, text: "return num")
             }
         };
         _app.Goals.Add(goal);

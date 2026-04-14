@@ -176,6 +176,26 @@ public class @this
                     list[idx] = value;
                     return target;
                 }
+                // Generic IList<T> (e.g., Steps.@this, Actions.@this) — use indexer via reflection
+                else if (collection != null && int.TryParse(indexStr, out var gIdx) && gIdx >= 0)
+                {
+                    var indexer = collection.GetType().GetProperty("Item");
+                    var countProp = collection.GetType().GetProperty("Count");
+                    if (indexer != null && countProp != null)
+                    {
+                        var count = (int)countProp.GetValue(collection)!;
+                        if (gIdx < count)
+                        {
+                            if (value != null && !indexer.PropertyType.IsAssignableFrom(value.GetType()))
+                            {
+                                var (typedValue, _) = Utils.TypeMapping.TryConvertTo(value, indexer.PropertyType);
+                                if (typedValue != null) value = typedValue;
+                            }
+                            indexer.SetValue(collection, value, new object[] { gIdx });
+                            return target;
+                        }
+                    }
+                }
             }
         }
 

@@ -150,16 +150,6 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "subdata.txt") },
-                        },
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "variable",
-                            ActionName = "set",
-                            Parameters = new List<Data>
-                            {
-                                new Data("Name", "content"),
-                                new Data("Value", "%__data__%")
-                            }
                         }
                     }
                 }
@@ -172,7 +162,7 @@ public class PrPipelineTests
 
         // File found — relative resolves to {root}/sub/subdata.txt (goal folder)
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("content")!.ToString()).IsEqualTo("Hello from subfolder");
+        await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from subfolder");
     }
 
     [Test]
@@ -199,16 +189,6 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "../testdata.txt") },
-                        },
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "variable",
-                            ActionName = "set",
-                            Parameters = new List<Data>
-                            {
-                                new Data("Name", "fromParent"),
-                                new Data("Value", "%__data__%")
-                            }
                         }
                     }
                 }
@@ -220,7 +200,7 @@ public class PrPipelineTests
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("fromParent")!.ToString()).IsEqualTo("Hello from test file");
+        await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from test file");
     }
 
     [Test]
@@ -247,16 +227,6 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "../sub/subdata.txt") },
-                        },
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "variable",
-                            ActionName = "set",
-                            Parameters = new List<Data>
-                            {
-                                new Data("Name", "backAndDown"),
-                                new Data("Value", "%__data__%")
-                            }
                         }
                     }
                 }
@@ -268,7 +238,7 @@ public class PrPipelineTests
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("backAndDown")!.ToString()).IsEqualTo("Hello from subfolder");
+        await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from subfolder");
     }
 
     [Test]
@@ -295,16 +265,6 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "nonexistent.txt") },
-                        },
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "variable",
-                            ActionName = "set",
-                            Parameters = new List<Data>
-                            {
-                                new Data("Name", "content"),
-                                new Data("Value", "%__data__%")
-                            }
                         }
                     }
                 }
@@ -344,16 +304,6 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "../../etc/passwd") },
-                        },
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "variable",
-                            ActionName = "set",
-                            Parameters = new List<Data>
-                            {
-                                new Data("Name", "content"),
-                                new Data("Value", "%__data__%")
-                            }
                         }
                     }
                 }
