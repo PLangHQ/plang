@@ -13,7 +13,7 @@ namespace App.modules.file;
 [Action("read")]
 public partial class Read : IContext
 {
-    public partial FileSystem.Path Path { get; init; }
+    public partial Data.@this<FileSystem.Path> Path { get; init; }
 
     [Default(false)]
     public partial bool ResolveVariables { get; init; }

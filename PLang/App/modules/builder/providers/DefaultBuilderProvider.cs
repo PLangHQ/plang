@@ -62,7 +62,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var listAction = new file.List
         {
             Context = context,
-            Path = FileSystem.Path.Resolve(searchPath, context),
+            Path = Data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(searchPath, context)),
             Pattern = "*.goal",
             Recursive = true
         };
@@ -95,7 +95,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         foreach (var file in files)
         {
-            var readAction = new file.Read { Context = context, Path = file };
+            var readAction = new file.Read { Context = context, Path = Data.@this<FileSystem.Path>.Ok(file) };
             var readResult = await app.RunAction(readAction, context);
             if (!readResult.Success)
             {
@@ -159,7 +159,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var saveAction = new file.Save
         {
             Context = context,
-            Path = FileSystem.Path.Resolve(prPath, context),
+            Path = Data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(prPath, context)),
             Value = new Data.@this("", json)
         };
         var saveResult = await app.RunAction(saveAction, context);
@@ -414,7 +414,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var readAction = new file.Read
         {
             Context = context,
-            Path = FileSystem.Path.Resolve(prPath, context)
+            Path = Data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(prPath, context))
         };
         var readResult = await app.RunAction(readAction, context);
         if (!readResult.Success) return errors;

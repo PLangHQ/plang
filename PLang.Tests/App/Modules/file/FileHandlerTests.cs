@@ -31,11 +31,11 @@ public class FileHandlerTests : IDisposable
     private string TempPath(string relativePath) =>
         _fs.Path.Combine(_tempDir, relativePath);
 
-    private PLangPath MakePath(string relativePath) =>
-        new PLangPath(TempPath(relativePath)) { Context = _app.Context };
+    private global::App.Data.@this<PLangPath> MakePath(string relativePath) =>
+        new("", new PLangPath(TempPath(relativePath)) { Context = _app.Context });
 
-    private PLangPath MakeAbsPath(string absolutePath) =>
-        new PLangPath(absolutePath) { Context = _app.Context };
+    private global::App.Data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
+        new("", new PLangPath(absolutePath) { Context = _app.Context });
 
     // --- Save ---
 
@@ -231,7 +231,7 @@ public class FileHandlerTests : IDisposable
     {
         _fs.File.WriteAllText(TempPath("check.txt"), "present");
 
-        var action = new Exists { Context = _app.Context, Path = new global::App.Data.@this<PLangPath>("", MakePath("check.txt")) };
+        var action = new Exists { Context = _app.Context, Path = MakePath("check.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -243,7 +243,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Exists_NonexistentFile_ReturnsFalse()
     {
-        var action = new Exists { Context = _app.Context, Path = new global::App.Data.@this<PLangPath>("", MakePath("missing.txt")) };
+        var action = new Exists { Context = _app.Context, Path = MakePath("missing.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

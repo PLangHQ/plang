@@ -292,6 +292,21 @@ public partial class @this
 
         // Convert using TypeMapping
         var ctx = context ?? _context;
+
+        // Context-resolvable types: if T has static Resolve(string, Context) and Value is string
+        if (Value is string strVal && ctx != null)
+        {
+            var resolveMethod = typeof(T).GetMethod("Resolve",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                null, new[] { typeof(string), typeof(Actor.Context.@this) }, null);
+            if (resolveMethod != null)
+            {
+                var resolved = resolveMethod.Invoke(null, new object[] { strVal, ctx });
+                if (resolved is T result)
+                    return new @this<T>(Name, result, _type, Parent) { Context = ctx };
+            }
+        }
+
         var (converted, error) = TypeMapping.TryConvertTo(Value, typeof(T), ctx);
         if (error != null)
             return @this<T>.FromError(error);

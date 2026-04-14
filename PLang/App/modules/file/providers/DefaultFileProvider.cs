@@ -16,7 +16,7 @@ public class DefaultFileProvider : IFileProvider
     public Data.@this Read(Read action)
     {
         var fs = action.Context.App.FileSystem;
-        var path = action.Path;
+        var path = action.Path.Value!;
         // During build: use snapshotted .pr content to avoid reading overwritten files
         if (action.Context.App.Building.IsEnabled && path.Extension == ".pr")
         {
@@ -80,7 +80,7 @@ public class DefaultFileProvider : IFileProvider
     public async Task<Data.@this> Save(Save action)
     {
         var fs = action.Context.App.FileSystem;
-        var path = action.Path;
+        var path = action.Path.Value!;
         try
         {
             EnsureDirectory(fs, fs.Path.GetDirectoryName(path.Absolute));
@@ -113,7 +113,7 @@ public class DefaultFileProvider : IFileProvider
     public Data.@this Delete(Delete action)
     {
         var fs = action.Context.App.FileSystem;
-        var path = action.Path;
+        var path = action.Path.Value!;
         try
         {
             if (fs.File.Exists(path.Absolute))
@@ -141,13 +141,14 @@ public class DefaultFileProvider : IFileProvider
     public Data.@this Copy(Copy action)
     {
         var fs = action.Context.App.FileSystem;
-        var source = action.Source;
+        var source = action.Source.Value!;
         if (!source.Exists)
             return App.Data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
 
         try
         {
-            var destPath = ResolveDestinationPath(fs, source, action.Destination);
+            var destination = action.Destination.Value!;
+            var destPath = ResolveDestinationPath(fs, source, destination);
             EnsureDirectory(fs, fs.Path.GetDirectoryName(destPath));
 
             if (fs.File.Exists(source.Absolute))
@@ -167,13 +168,14 @@ public class DefaultFileProvider : IFileProvider
     public Data.@this Move(Move action)
     {
         var fs = action.Context.App.FileSystem;
-        var source = action.Source;
+        var source = action.Source.Value!;
         if (!source.Exists)
             return App.Data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
 
         try
         {
-            var destPath = ResolveDestinationPath(fs, source, action.Destination);
+            var destination = action.Destination.Value!;
+            var destPath = ResolveDestinationPath(fs, source, destination);
             EnsureDirectory(fs, fs.Path.GetDirectoryName(destPath));
 
             if (fs.File.Exists(source.Absolute))
@@ -198,7 +200,7 @@ public class DefaultFileProvider : IFileProvider
     public Data.@this List(List action)
     {
         var fs = action.Context.App.FileSystem;
-        var path = action.Path;
+        var path = action.Path.Value!;
         if (!fs.Directory.Exists(path.Absolute))
             return App.Data.@this.FromError(new ServiceError($"Directory not found: {path.Raw}", "NotFound", 404));
 
