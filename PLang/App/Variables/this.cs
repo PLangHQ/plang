@@ -122,9 +122,13 @@ public class @this
         parent.ConvertValue();
 
         // For dot-path, extract raw value from Data — we're setting a property on a C# object
-        var rawValue = value is Data.@this dv2 ? dv2.Value : value;
-        var result = SetValueOnObject(parent.Value, propertyName, rawValue);
-        if (!ReferenceEquals(result, parent.Value))
+        // Pure Data wrappers: unwrap to .Value. Data subclasses (Goal, Step, Path): keep as-is.
+        var rawValue = value is Data.@this dv2 && dv2.GetType() == typeof(Data.@this) ? dv2.Value : value;
+        // Data subclasses (Goal, Path) ARE the value — their _value is null
+        var target = parent.Value ?? (parent.GetType() != typeof(Data.@this) ? parent : null);
+        if (target == null) return;
+        var result = SetValueOnObject(target, propertyName, rawValue);
+        if (!ReferenceEquals(result, target))
             parent.Value = result;
     }
 

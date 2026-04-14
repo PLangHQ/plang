@@ -929,6 +929,100 @@ public class VariablesAccessorTests
         await Assert.That(result!.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("NavigationDepthExceeded");
     }
+
+    // --- Goal sub-goal navigation tests ---
+    // These validate that --debug variable watches and __Resolve can navigate Goal.Goals[0].Name
+
+    [Test]
+    public async Task Get_GoalSubGoalName_NavigatesCorrectly()
+    {
+        var stack = new Variables();
+        var goal = new global::App.Goals.Goal.@this { Name = "BuildGoal" };
+        goal.Goals.Add(new global::App.Goals.Goal.@this { Name = "ProcessGroup" });
+        goal.Goals.Add(new global::App.Goals.Goal.@this { Name = "LlmFixer" });
+        goal.Goals.Add(new global::App.Goals.Goal.@this { Name = "HandleFailure" });
+        stack.Set("goal", goal);
+
+        var name0 = stack.Get("goal.Goals[0].Name");
+        var name1 = stack.Get("goal.Goals[1].Name");
+        var name2 = stack.Get("goal.Goals[2].Name");
+
+        await Assert.That(name0.IsInitialized).IsTrue();
+        await Assert.That(name0.Value).IsEqualTo("ProcessGroup");
+        await Assert.That(name1.Value).IsEqualTo("LlmFixer");
+        await Assert.That(name2.Value).IsEqualTo("HandleFailure");
+    }
+
+    [Test]
+    public async Task Get_GoalName_ReturnsGoalName()
+    {
+        var stack = new Variables();
+        var goal = new global::App.Goals.Goal.@this { Name = "BuildGoal" };
+        stack.Set("goal", goal);
+
+        var name = stack.Get("goal.Name");
+
+        await Assert.That(name.IsInitialized).IsTrue();
+        await Assert.That(name.Value).IsEqualTo("BuildGoal");
+    }
+
+    [Test]
+    public async Task Get_GoalGoalsCount_ReturnsCount()
+    {
+        var stack = new Variables();
+        var goal = new global::App.Goals.Goal.@this { Name = "BuildGoal" };
+        goal.Goals.Add(new global::App.Goals.Goal.@this { Name = "Sub1" });
+        goal.Goals.Add(new global::App.Goals.Goal.@this { Name = "Sub2" });
+        stack.Set("goal", goal);
+
+        var count = stack.Get("goal.Goals.Count");
+
+        await Assert.That(count.IsInitialized).IsTrue();
+        await Assert.That(count.Value).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task Set_GoalStepsBracketIndex_PreservesGoalIdentity()
+    {
+        var stack = new Variables();
+        var goal = new global::App.Goals.Goal.@this { Name = "BuildGoal" };
+        goal.Goals.Add(new global::App.Goals.Goal.@this { Name = "SubGoal" });
+        var step = new global::App.Goals.Goal.Steps.Step.@this { Index = 0, Text = "original" };
+        goal.Steps.Add(step);
+        stack.Set("goal", goal);
+
+        // Simulate what builder.merge does: set %goal.Steps[0]% = newStep
+        var newStep = new global::App.Goals.Goal.Steps.Step.@this { Index = 0, Text = "updated" };
+        stack.Set("goal.Steps[0]", newStep);
+
+        // Goal should still be a Goal, not a dictionary
+        var retrieved = stack.Get("goal");
+        await Assert.That(retrieved.Value).IsTypeOf<global::App.Goals.Goal.@this>();
+
+        // Sub-goal names should survive
+        var subName = stack.Get("goal.Goals[0].Name");
+        await Assert.That(subName.IsInitialized).IsTrue();
+        await Assert.That(subName.Value).IsEqualTo("SubGoal");
+
+        // Step should be updated
+        var stepText = stack.Get("goal.Steps[0].Text");
+        await Assert.That(stepText.Value).IsEqualTo("updated");
+    }
+
+    [Test]
+    public async Task Set_GoalAsDataSubclass_StoredDirectly()
+    {
+        var stack = new Variables();
+        var goal = new global::App.Goals.Goal.@this { Name = "MyGoal" };
+        stack.Set("goal", goal);
+
+        // Should get the Goal itself back, not a wrapper
+        var retrieved = stack.Get("goal");
+        await Assert.That(retrieved).IsNotNull();
+
+        // The retrieved Data should BE the Goal (same object)
+        await Assert.That(object.ReferenceEquals(retrieved, goal)).IsTrue();
+    }
 }
 
 // --- Test helper classes for Set dot-path tests ---
