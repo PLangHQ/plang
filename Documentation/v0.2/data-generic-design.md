@@ -1,5 +1,11 @@
 # Data<T> Design — Composition Over Inheritance
 
+## Guiding Principle
+
+**Get to strongly typed, specific objects as soon as possible.**
+
+The builder knows the action schema. It stamps correct types at build time. The runtime loads typed Data from .pr files. Handlers access `.Value` only at the boundary where actual work happens. Data is never unwrapped in the runtime pipeline.
+
 ## Problem
 
 Data is the universal type in PLang. Currently, domain types (Path, Identity, Goal, Step, Action) inherit from Data directly. This conflates two concerns:
@@ -24,11 +30,224 @@ After:   Data<Path> wraps Path (Data HAS a Path)
 
 The runtime handles one uniform type: `Data` (and `Data<T>`). It never knows or cares what's inside. Only the consumer — the handler that creates or uses the value — touches `.Value`.
 
-## Two Patterns
+---
+
+## The Full Pipeline
+
+### 1. PLang developer writes code
+
+```
+ReadConfig
+- read file 'config.json', write to %config%
+- set %appName% to %config.name%
+```
+
+### 2. LLM returns plain values
+
+The LLM's output IS Data — each parameter has name, value, type — it just doesn't know that's what it is. The LLM prompt formalizes this: "Each parameter is a Data object with name, value, and type."
+
+```json
+{
+  "actions": [{
+    "module": "file",
+    "action": "read",
+    "parameters": [
+      { "name": "Path", "value": "config.json", "type": "string" }
+    ]
+  }]
+}
+```
+
+The LLM guesses `"type": "string"` because it sees a string literal. That's fine — the builder corrects it.
+
+### 3. Builder validates and formalizes
+
+**DefaultBuilderProvider.Validate()** reflects on the `file.read` action class:
+
+```csharp
+public partial class read : IContext
+{
+    public partial Data<Path> Path { get; init; }
+    public partial Data<string> Encoding { get; init; }
+}
+```
+
+The builder sees: parameter "Path" maps to property `Data<Path>`. The inner type is `Path`. It corrects the LLM's type:
+
+```json
+{ "name": "Path", "value": "config.json", "type": "path" }
+```
+
+**Type inference across actions**: The builder knows `file.read` returns `Data<Path>`. When the next action (`variable.set`) uses `%__data__%`, the builder infers the type from the previous action's return type:
+
+```json
+// Before (blind):
+{ "name": "Value", "value": "%__data__%", "type": "object" }
+
+// After (builder infers from file.read's return type):
+{ "name": "Value", "value": "%__data__%", "type": "path" }
+```
+
+The builder is the formalization layer. It has the action schema. It has visibility of the action chain. It stamps correct types — strongly typed as soon as possible.
+
+### 4. Saves .pr file
+
+```json
+{
+  "name": "ReadConfig",
+  "steps": [{
+    "text": "read file 'config.json', write to %config%",
+    "index": 0,
+    "actions": [{
+      "module": "file",
+      "action": "read",
+      "parameters": [
+        { "name": "Path", "value": "config.json", "type": "path" }
+      ]
+    }, {
+      "module": "variable",
+      "action": "set",
+      "parameters": [
+        { "name": "Name", "value": "config", "type": "string" },
+        { "name": "Value", "value": "%__data__%", "type": "path" }
+      ]
+    }]
+  }]
+}
+```
+
+Types are correct on disk. Values are still raw (string literals, `%var%` references). The type tells the runtime what to convert them into.
+
+### 5. Runtime loads .pr file
+
+`Goals.LoadFromFileAsync()` deserializes JSON into Goal, Steps, Actions. Each parameter becomes:
+
+```
+Data { Name="Path", Value="config.json", Type="path" }
+```
+
+Data.Type is already correct from the .pr file. No guessing needed.
+
+### 6. Source generator's ExecuteAsync
+
+Handler properties are `Data<T>`. Resolution uses null check — no separate `_set` flag needed because Data is never null:
+
+```csharp
+public partial class read : ICodeGenerated
+{
+    private Data<Path>? __Path_backing;
+
+    public partial Data<Path> Path
+    {
+        get
+        {
+            if (__Path_backing == null)
+                __Path_backing = __Resolve<Path>("path");
+            return __Path_backing!;
+        }
+    }
+
+    public async Task<Data.@this> ExecuteAsync(Action action, Context context)
+    {
+        __action = action;
+        __variables = context.Variables;
+        Context = context;
+
+        if (Path == null) return Error(...);
+
+        return await Run();
+    }
+}
+```
+
+### 7. Lazy resolution — Data converts itself
+
+`__Resolve` finds the parameter Data and asks it to convert itself. OBP — Data owns the conversion because it has the Value, the Type, and the Context:
+
+```csharp
+private Data<T> __Resolve<T>(string name)
+{
+    var data = FindParameter(name);
+
+    if (data.Value is string str && str.Contains('%'))
+    {
+        var resolved = ResolveVariables(str);
+        return resolved.As<T>(Context);
+    }
+
+    return data.As<T>(Context);
+}
+```
+
+```csharp
+// On Data:
+public Data<T> As<T>(Context context)
+{
+    if (Value is T already)
+        return new Data<T>(Name, already, Type);
+
+    // Data owns the conversion, using its Type knowledge
+    var converted = Type.Convert(Value, typeof(T), context);
+    return new Data<T>(Name, (T)converted, Type);
+}
+```
+
+For `Data { Value="config.json", Type="path" }`:
+- Type says "path" → convert string to Path via `Path.Resolve("config.json", context)`
+- Returns `Data<Path> { Value=Path(...), Type="path" }`
+
+For `Data { Value="%myPath%", Type="path" }`:
+- Resolves `%myPath%` from Variables → might already be `Data<Path>`
+- If already correct type → pass through, no conversion
+- If wrong type → `data.As<Path>(context)` converts
+
+### 8. Handler runs
+
+```csharp
+public Task<Data.@this> Run()
+{
+    // Path is Data<Path> — unwrap at the boundary where actual work happens
+    var path = Path.Value;
+    var content = await Fs.ReadAllTextAsync(path.Absolute);
+
+    return Data<string>.Ok(content);
+}
+```
+
+`.Value` accessed here — the lowest level, where the actual filesystem call happens. Nowhere before this.
+
+### 9. Result flows back
+
+```csharp
+// Action.RunAsync:
+var result = await context.App.Run(this, context);
+result.Name = "__data__";
+context.Variables.Put(result);   // stored as %__data__%
+```
+
+The runtime only touches Data. It renames `.Name`, stores it. Never looks at `.Value`.
+
+### 10. Next action picks up typed Data
+
+`variable.set` with `Value = "%__data__%"` and `Type = "path"`:
+- `context.Variables.Get("__data__")` returns the `Data<Path>` from the previous action
+- Already the correct type → passes through, no conversion
+- Stored as `%config%` — still `Data<Path>`
+
+### 11. Dot-path navigation
+
+Next step: `%config.name%`
+- `Variables.Get("config.name")` → gets root `Data<Path>` for "config"
+- `Data.GetChild("name")` → navigates into Value via CLR reflection/navigators
+- Returns `Data { Name="name", Value="MyApp" }`
+
+---
+
+## Two Patterns for Domain Objects
 
 ### Value types (Path, Identity, etc.)
 
-Created fresh per-execution by action handlers. Inherently thread safe.
+Created fresh per-execution by action handlers. Inherently thread safe. No cache needed.
 
 ```csharp
 // Plain domain class — no Data inheritance
@@ -48,7 +267,6 @@ public class Path : IContext
     public string Absolute => _absolutePath;
     public bool Exists => Fs.File.Exists(_absolutePath);
     public string Extension => _context.App.FileSystem.Path.GetExtension(_absolutePath);
-    // ...
 }
 
 // Handler creates and wraps:
@@ -59,21 +277,17 @@ public Task<Data> Run()
 }
 ```
 
-No cache needed. The handler creates it, wraps it in Data<T>, returns it. Done.
-
 ### Structural types (Goal, Step, Action)
 
-Loaded from `.pr` files, shared across threads. Need per-execution Data wrappers with stable identity.
+Loaded from `.pr` files, shared across threads. Need per-execution Data wrappers with stable identity. The domain object owns its Data representation (OBP):
 
 ```csharp
-// Plain domain class — structural template
 public class Step : IDataWrappable
 {
     public string Text { get; set; }
     public int Index { get; set; }
     public int Indent { get; set; }
     public List<Action> Actions { get; set; }
-    // ... structural properties only
 
     // OBP: Step is responsible for its own Data representation
     public Data<Step> AsData(Context context)
@@ -105,7 +319,7 @@ public Data<T> GetOrCreate<T>(T key, Func<Data<T>> factory) where T : class
 }
 ```
 
-This ensures identity:
+Identity guaranteed:
 
 ```csharp
 // Engine executing a step:
@@ -117,6 +331,8 @@ var stepData = step.AsData(context);    // hits cache -> same object
 
 // Same reference. Always.
 ```
+
+---
 
 ## Interfaces
 
@@ -131,7 +347,7 @@ public interface IContext
 }
 ```
 
-Used by: Path (needs FileSystem for Exists, Size — these are properties, not methods, so Context must be stored), action handlers (need Context to execute).
+Used by: Path (needs FileSystem for Exists, Size — properties, not methods, so Context must be stored), action handlers (need Context to execute).
 Not used by: Identity (pure data), Goal/Step/Action (shared templates — receive Context as method parameters instead, e.g., `RunAsync(context)`). Storing Context on shared structural types would break thread safety.
 
 ### IDataWrappable
@@ -147,6 +363,8 @@ public interface IDataWrappable
 
 Used by: Goal, Step, Action (shared templates needing per-execution wrappers).
 Not used by: Path, Identity (already per-execution, handlers wrap directly).
+
+---
 
 ## Context Propagation
 
@@ -165,6 +383,53 @@ set
 
 When a Data<Path> moves between actors or gets stored in a new context, the inner Path's Context updates automatically.
 
+---
+
+## Data Owns Its Conversion
+
+OBP: Data has the Value, the Type, and access to Context. It converts itself:
+
+```csharp
+// On Data:
+public Data<T> As<T>(Context context)
+{
+    if (Value is T already)
+        return new Data<T>(Name, already, Type);
+
+    var converted = Type.Convert(Value, typeof(T), context);
+    return new Data<T>(Name, (T)converted, Type);
+}
+```
+
+No external TypeMapping calls from the source generator. Data does its own conversion.
+
+---
+
+## Action Handler Properties Are Data<T>
+
+Every property on an action record is `Data<T>`, not a primitive:
+
+```csharp
+[Action("read")]
+public partial class read : IContext
+{
+    public partial Data<Path> Path { get; init; }
+    public partial Data<string> Encoding { get; init; }
+
+    public Task<Data.@this> Run()
+    {
+        var content = await Fs.ReadAllTextAsync(Path.Value.Absolute);
+        return Data<string>.Ok(content);
+    }
+}
+```
+
+The source generator resolves `%var%` references into `Data<T>`. The handler accesses `.Value` at the boundary where it does actual work.
+
+Null check for lazy resolution uses `== null` — no separate `_set` flag needed because Data is never null.
+
+---
+
 ## Execution State
 
 Properties like Handled, Returned, ReturnDepth, Disabled are execution-flow control, not variable/value properties. They move off Data:
@@ -177,6 +442,8 @@ Properties like Handled, Returned, ReturnDepth, Disabled are execution-flow cont
 | Disabled | Step (computed) | Context config lookup | "Skip this step" — configuration concern |
 | Signature | Data | Stays on Data | About the value — travels with it |
 | Error | Data | Stays on Data | Result semantics — "this operation failed" |
+
+---
 
 ## Navigation
 
@@ -196,6 +463,8 @@ if (element is IDataWrappable wrappable && _context != null)
 else
     return new Data(key, element, parent: this);
 ```
+
+---
 
 ## Thread Safety Summary
 
@@ -220,15 +489,39 @@ Execution flow:
   Data.Error            <- on the wrapper (per-execution)
 ```
 
-## The Discipline
+---
 
-The system only touches Data. Never the inner value. The boundary where `.Value` is accessed:
+## The Complete Pipeline Summary
 
-- **Creation**: handler creates the domain object, wraps in Data<T>
-- **Consumption**: handler calls `data.GetValue<Path>()` to work with the domain object
-- **PLang navigation**: transparent — Data navigates into Value via reflection/navigators
+```
+PLang code     "read file 'config.json'"         human intent
+    |
+LLM            { value: "config.json", type: "string" }  casual guess
+    |
+Builder        { value: "config.json", type: "path" }    formalized, correct type
+    |                                                     (infers __data__ types from
+    |                                                      previous action return types)
+    |
+.pr file       Data { Value="config.json", Type="path" } strongly typed on disk
+    |
+Runtime load   Data { Value="config.json", Type="path" } deserialized, type intact
+    |
+__Resolve      data.As<Path>(context)                     Data converts itself
+    |
+Handler prop   Data<Path>                                 Data wrapper, not raw Path
+    |
+Handler.Run()  Path.Value.Absolute                        .Value at the boundary
+    |
+Return         Data<string>.Ok(content)                   wrapped result
+    |
+Runtime        Data flows, renamed, stored                never unwrapped
+    |
+Next handler   data.As<T>(context)                        Data converts itself again
+```
 
-Everything in between — Variables, `__data__` rename, events, conditions, channels — only sees Data.
+**Data is never unwrapped in the runtime. Only at handler boundaries — where the actual work happens.**
+
+---
 
 ## Implementation Phases
 
@@ -238,6 +531,7 @@ Smallest blast radius, proves the pattern:
 - Make Path a plain class (remove Data inheritance), implement IContext
 - Make Identity a plain class (no interfaces needed — pure data)
 - Update handlers to return Data<T>
+- Add `Data.As<T>(context)` conversion method
 - Update navigation to handle Value traversal (already works for CLR objects)
 - Add Context propagation to Value in Data.Context setter
 
@@ -250,9 +544,17 @@ Smallest blast radius, proves the pattern:
 - Move Returned, ReturnDepth, Handled to Context
 - Update execution engine to check Context for flow control
 
-### Phase 3: Clean up Data
+### Phase 3: Action handler properties as Data<T>
+
+- Update action records: all properties become Data<T>
+- Update source generator: __Resolve returns Data<T>, null check replaces _set flag
+- Update builder: stamp correct types from action schema, infer __data__ types from action chain
+- Formalize Data concept in LLM prompt ("each parameter is a Data with name, value, type")
+
+### Phase 4: Clean up
 
 - Remove subclass-specific reflection logic from GetChildValue
 - Remove Variables.Set type-checking logic (adopt vs wrap)
+- Remove TypeMapping calls from source generator (Data.As<T> handles conversion)
 - Simplify Clone, serialization
 - Remove any dead code from the inheritance era
