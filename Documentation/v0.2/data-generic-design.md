@@ -47,7 +47,7 @@ public class Path : IContextual
 
     public string Absolute => _absolutePath;
     public bool Exists => Fs.File.Exists(_absolutePath);
-    public string Extension => System.IO.Path.GetExtension(_absolutePath);
+    public string Extension => _context.App.FileSystem.Path.GetExtension(_absolutePath);
     // ...
 }
 
@@ -131,8 +131,8 @@ public interface IContextual
 }
 ```
 
-Used by: Path (needs FileSystem), and any domain type needing runtime graph access.
-Not used by: Identity (pure data), Goal/Step/Action (structural templates, don't store Context).
+Used by: Path (needs FileSystem for Exists, Size — these are properties, not methods, so Context must be stored).
+Not used by: Identity (pure data), Goal/Step/Action (shared templates — receive Context as method parameters instead, e.g., `RunAsync(context)`). Storing Context on shared structural types would break thread safety.
 
 Note: The existing `IContext` interface on action handlers serves the same purpose for handlers. Whether to merge these or keep them separate is an implementation detail.
 
