@@ -26,7 +26,7 @@ public class Ed25519Provider : ISigningProvider
         // Get identity
         var identityResult = await app.RunAction<identity.Get>(new identity.Get(), action.Context);
         if (!identityResult.Success) return identityResult;
-        var identity = (Identity)identityResult;
+        var identity = (Identity)identityResult.Value!;
 
         // Hash the data
         var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = "keccak256" }, action.Context);
