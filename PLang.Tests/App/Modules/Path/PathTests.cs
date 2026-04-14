@@ -42,23 +42,23 @@ public class PathTests : IDisposable
     /// <summary>Resolves a relative path through the engine context.</summary>
     private PLangPath ResolvePath(string rawPath) => PLangPath.Resolve(rawPath, _app.Context);
 
-    // --- ToBoolean ---
+    // --- Exists (was ToBoolean) ---
 
     [Test]
-    public async Task ToBoolean_FileExists_ReturnsTrue()
+    public async Task Exists_FileExists_ReturnsTrue()
     {
         var path = TempFile("exists.txt");
         var pd = MakePath(path);
 
-        await Assert.That(pd.ToBoolean()).IsTrue();
+        await Assert.That(pd.Exists).IsTrue();
     }
 
     [Test]
-    public async Task ToBoolean_FileDoesNotExist_ReturnsFalse()
+    public async Task Exists_FileDoesNotExist_ReturnsFalse()
     {
         var pd = MakePath(_fs.Path.Combine(_tempDir,"nope.txt"));
 
-        await Assert.That(pd.ToBoolean()).IsFalse();
+        await Assert.That(pd.Exists).IsFalse();
     }
 
     [Test]
@@ -67,7 +67,7 @@ public class PathTests : IDisposable
         var path = TempFile("truthy.txt");
         var pd = MakePath(path);
 
-        await Assert.That(global::App.modules.condition.Operator.IsTruthy(pd)).IsTrue();
+        await Assert.That(global::App.modules.condition.Operator.IsTruthy(new Data("", pd.Exists))).IsTrue();
     }
 
     [Test]
@@ -75,7 +75,7 @@ public class PathTests : IDisposable
     {
         var pd = MakePath(_fs.Path.Combine(_tempDir,"missing.txt"));
 
-        await Assert.That(global::App.modules.condition.Operator.IsTruthy(pd)).IsFalse();
+        await Assert.That(global::App.modules.condition.Operator.IsTruthy(new Data("", pd.Exists))).IsFalse();
     }
 
     // --- Constructor & Absolute ---
@@ -343,9 +343,7 @@ public class PathTests : IDisposable
         var result = _provider.Read(new Read { Context = _app.Context, Path = p });
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PLangPath;
-        await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Value).IsEqualTo("test content");
+        await Assert.That(result.Value).IsEqualTo("test content");
     }
 
     [Test]
@@ -475,7 +473,7 @@ public class PathTests : IDisposable
         var result = _provider.Exists(new Exists { Context = _app.Context, Path = p });
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PLangPath;
+        var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Exists).IsTrue();
     }

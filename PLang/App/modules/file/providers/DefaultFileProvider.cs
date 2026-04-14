@@ -69,7 +69,7 @@ public class DefaultFileProvider : IFileProvider
                 }
             }
 
-            return new FileSystem.Path(path.Absolute, content) { Context = action.Context };
+            return new App.Data.@this(path.Raw, content, Data.Type.FromMime(mime));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -97,7 +97,8 @@ public class DefaultFileProvider : IFileProvider
                     { Stream = stream, Data = value, Extension = path.Extension });
             }
 
-            return new FileSystem.Path(path.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(path.Absolute) { Context = action.Context };
+            return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -128,7 +129,8 @@ public class DefaultFileProvider : IFileProvider
             else if (!action.IgnoreIfNotFound)
                 return App.Data.@this.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
 
-            return new FileSystem.Path(path.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(path.Absolute) { Context = action.Context };
+            return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -153,7 +155,8 @@ public class DefaultFileProvider : IFileProvider
             else
                 CopyDirectory(fs, source.Absolute, destPath, action.Overwrite, action.IncludeSubfolders);
 
-            return new FileSystem.Path(destPath, source: source.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(destPath, source: source.Absolute) { Context = action.Context };
+            return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -183,7 +186,8 @@ public class DefaultFileProvider : IFileProvider
                 fs.Directory.Move(source.Absolute, destPath);
             }
 
-            return new FileSystem.Path(destPath, source: source.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(destPath, source: source.Absolute) { Context = action.Context };
+            return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -212,11 +216,10 @@ public class DefaultFileProvider : IFileProvider
         }
     }
 
-    public FileSystem.Path Exists(Exists action)
+    public Data.@this Exists(Exists action)
     {
         var path = new FileSystem.Path(action.Path.Absolute) { Context = action.Context };
-        path.SetValue(() => path.Exists);
-        return path;
+        return Data.@this<FileSystem.Path>.Ok(path);
     }
 
     // --- Helpers ---

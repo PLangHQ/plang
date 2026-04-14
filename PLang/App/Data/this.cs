@@ -99,6 +99,8 @@ public partial class @this
         {
             _context = value;
             if (_type != null) _type.Context = value;
+            if (_value is modules.IContext contextual && value != null)
+                contextual.Context = value;
         }
     }
 
@@ -157,6 +159,8 @@ public partial class @this
             Updated = System.DateTime.UtcNow;
             IsInitialized = true;
             _type = null;
+            if (_value is modules.IContext contextual && _context != null)
+                contextual.Context = _context;
         }
     }
 
@@ -270,6 +274,30 @@ public partial class @this
 
     public static @this Null(string name = "") => new(name, null);
     public static @this NotFound(string name = "") => new(name, null) { IsInitialized = false };
+
+    /// <summary>
+    /// Converts this Data to a Data&lt;T&gt; by converting the inner Value.
+    /// OBP: Data owns its own conversion — it has the Value, the Type, and the Context.
+    /// Returns this if Value is already T. Otherwise uses TypeMapping.
+    /// </summary>
+    public @this<T> As<T>(Actor.Context.@this? context = null)
+    {
+        // Already a Data<T> with correct type — return directly
+        if (this is @this<T> typed && typed.Value is T)
+            return typed;
+
+        // Value is already the right type — wrap
+        if (Value is T already)
+            return new @this<T>(Name, already, _type, Parent) { Context = context ?? _context };
+
+        // Convert using TypeMapping
+        var ctx = context ?? _context;
+        var (converted, error) = TypeMapping.TryConvertTo(Value, typeof(T), ctx);
+        if (error != null)
+            return @this<T>.FromError(error);
+
+        return new @this<T>(Name, (T?)converted, _type, Parent) { Context = ctx };
+    }
 
     /// <summary>
     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.

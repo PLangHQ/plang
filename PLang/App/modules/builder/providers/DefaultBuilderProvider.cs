@@ -476,7 +476,7 @@ public class DefaultBuilderProvider : IBuilderProvider
                         Path = FileSystem.Path.Resolve(expectedPrPath, context)
                     };
                     var existsResult = await app.RunAction(existsAction, context);
-                    if (existsResult.Success && existsResult is FileSystem.Path pathData && pathData.Exists)
+                    if (existsResult.Success && existsResult.Value is FileSystem.Path pathData && pathData.Exists)
                     {
                         goalCall.PrPath = expectedPrPath;
                     }

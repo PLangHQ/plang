@@ -1,15 +1,13 @@
-using App.Variables;
 using App.Utils;
 
 namespace App.FileSystem;
 
 /// <summary>
-/// Path that IS a Data — flows through PLang as a variable.
-/// FileSystem is resolved lazily from Context.App.FileSystem.
-/// Exists and Size are live (lazy filesystem checks).
-/// Value holds file content when set by the provider (e.g., Read).
+/// Plain domain class representing a filesystem path.
+/// NOT a Data subclass — wrapped in Data&lt;Path&gt; by handlers.
+/// Implements IContext for runtime graph access (FileSystem, etc.).
 /// </summary>
-public class Path : Data.@this
+public class Path : modules.IContext
 {
     private readonly string _absolutePath;
 
@@ -30,12 +28,17 @@ public class Path : Data.@this
     /// Creates a Path from an absolute path with optional content.
     /// </summary>
     public Path(string absolutePath, object? content = null, string? source = null)
-        : base("", content, content != null ? Data.Type.FromMime(TypeMapping.GetMimeType(
-            global::System.IO.Path.GetExtension(absolutePath))) : null)
     {
         _absolutePath = absolutePath;
+        Content = content;
         Source = source;
     }
+
+    /// <summary>
+    /// Context for runtime access. Set via IContext interface.
+    /// Data propagates this automatically when Path is inside Data&lt;Path&gt;.
+    /// </summary>
+    public Actor.Context.@this? Context { get; set; }
 
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
     public static Path Resolve(string rawPath, Actor.Context.@this context)
@@ -127,17 +130,17 @@ public class Path : Data.@this
         }
     }
 
+    // --- Content (file content when set by provider, e.g., after file.read) ---
+
+    public object? Content { get; set; }
+
     // --- Copy/move source tracking ---
 
     public string? Source { get; }
 
-    // --- ToBoolean ---
-
-    public override bool ToBoolean() => Exists;
-
     // --- Display ---
 
-    public override string ToString() => Value?.ToString() ?? Relative;
+    public override string ToString() => Content?.ToString() ?? Relative;
 
     public override bool Equals(object? obj) => obj switch
     {
@@ -147,19 +150,4 @@ public class Path : Data.@this
     };
 
     public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(_absolutePath);
-
-    public override Data.@this Clone()
-    {
-        var clone = new Path(_absolutePath, Value, Source)
-        {
-            Name = Name,
-            Properties = Properties.Clone(),
-            Context = Context
-        };
-        clone.Error = Error;
-        clone.Handled = Handled;
-        clone.Warnings = Warnings != null ? new List<Info>(Warnings) : null;
-        clone.Signature = Signature;
-        return clone;
-    }
 }
