@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Condition checks whether %x% \u003E 10, and if true calls goal WhenBig.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -57,8 +57,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/condition-greater.goal",
-  "prPath": "/.build/condition-greater.pr",
+  "path": "/Tests/Builder/Evals/condition-greater.goal",
+  "prPath": "/Tests/Builder/Evals/.build/condition-greater.pr",
   "hash": "611f0e16d3f24d5c0fcc0d734cf102e50e19f782d15330b217856b48e818006e",
   "builderVersion": null,
   "isSetup": false,

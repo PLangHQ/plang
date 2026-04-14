@@ -1,133 +1,98 @@
-[
-  {
-    "name": "Start",
-    "description": "Sets %x% to 10, checks if %x% \u003E 5, calls WhenGreater when true, then asserts %result% equals \u0027greater\u0027.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %x% = 10",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "Test: greater than operator calls goal when condition is true",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%x%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": 10,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "if %x% \u003E 5, call WhenGreater",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%x%",
-                "type": "data"
-              },
-              {
-                "name": "Operator",
-                "value": "\u003E",
-                "type": "operator"
-              },
-              {
-                "name": "Right",
-                "value": 5,
-                "type": "int"
-              },
-              {
-                "name": "GoalIfTrue",
-                "value": {
-                  "name": "WhenGreater"
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "assert %result% equals \u0022greater\u0022, \u0022GoalIfTrue should have been called for x \u003E 5\u0022",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "greater",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%result%",
-                "type": "data"
-              },
-              {
-                "name": "Message",
-                "value": "GoalIfTrue should have been called for x \u003E 5",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/GreaterThan/ConditionGreaterThan.test.goal",
-    "prPath": "/GreaterThan/.build/conditiongreaterthan.test.pr",
-    "hash": "df77bfacc5403b8a9d116844f19337ab0324690151f0dc72e84a3196e7406ea3",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = 10",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: greater than operator calls goal when condition is true",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 10,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %x% \u003E 5, call WhenGreater",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %result% equals \u0022greater\u0022, \u0022GoalIfTrue should have been called for x \u003E 5\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "greater",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%result%",
+              "type": "data"
+            },
+            {
+              "name": "Message",
+              "value": "GoalIfTrue should have been called for x \u003E 5",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Condition/GreaterThan/ConditionGreaterThan.test.goal",
+  "prPath": "/Tests/Runtime2/Condition/GreaterThan/.build/conditiongreaterthan.test.pr",
+  "hash": "df77bfacc5403b8a9d116844f19337ab0324690151f0dc72e84a3196e7406ea3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

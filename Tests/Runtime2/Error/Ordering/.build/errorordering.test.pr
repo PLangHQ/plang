@@ -1,129 +1,108 @@
-[
-  {
-    "name": "Start",
-    "description": "Sets %order% to empty, calls FailOnce with retry-first error handling (retry 1 time, then call LogRetryError), then asserts that %order% contains the substring \u0022error\u0022.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %order% = \u0022\u0022",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "retry first then call goal",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%order%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "call FailOnce, on error retry 1 times, then call LogRetryError",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "goal",
-            "action": "call",
-            "parameters": [
-              {
-                "name": "GoalName",
-                "value": {
-                  "name": "FailOnce",
-                  "parameters": []
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": {
-            "name": "LogRetryError",
-            "description": null,
-            "parallel": false,
-            "parameters": null,
-            "prPath": null
-          },
-          "retryCount": 1,
-          "retryOverMs": null,
-          "order": 1,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %order% = \u0022\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "retry first then call goal",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%order%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call FailOnce, on error retry 1 times, then call LogRetryError",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": {
+        "goal": {
+          "name": "LogRetryError",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
         },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
+        "retryCount": 1,
+        "retryOverMs": null,
+        "order": 1,
+        "ignoreError": false,
+        "message": null,
+        "statusCode": null,
+        "key": null
       },
-      {
-        "index": 2,
-        "text": "assert %order% contains \u0022error\u0022",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "contains",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%order%",
-                "type": "data"
-              },
-              {
-                "name": "Container",
-                "value": "error",
-                "type": "data"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [],
-    "visibility": 1,
-    "path": "/ErrorOrdering.test.goal",
-    "prPath": "/.build/errorordering.test.pr",
-    "hash": "38ca5305ba8097ecc606cd908d65fc442a1a0650aee0c20e2cc4526b22a82f8c",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %order% contains \u0022error\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%order%",
+              "type": "data"
+            },
+            {
+              "name": "Container",
+              "value": "error",
+              "type": "data"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Error/Ordering/ErrorOrdering.test.goal",
+  "prPath": "/Tests/Runtime2/Error/Ordering/.build/errorordering.test.pr",
+  "hash": "38ca5305ba8097ecc606cd908d65fc442a1a0650aee0c20e2cc4526b22a82f8c",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

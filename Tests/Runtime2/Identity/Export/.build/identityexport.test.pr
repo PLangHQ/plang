@@ -1,184 +1,154 @@
-[
-  {
-    "name": "Start",
-    "description": "Archives an identity, recreates it as default, exports it to %exported%, asserts the export is not null, then archives it again. Error on the first step is ignored.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "archive identity \u0027TestExportId\u0027, force, on error ignore, force",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "Test: export identity and verify non-empty result",
-        "actions": [
-          {
-            "module": "identity",
-            "action": "archive",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "TestExportId",
-                "type": "string"
-              },
-              {
-                "name": "Force",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "archive identity \u0027TestExportId\u0027, force, on error ignore, force",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: export identity and verify non-empty result",
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "TestExportId",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
       },
-      {
-        "index": 1,
-        "text": "create identity \u0027TestExportId\u0027, set as default",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "identity",
-            "action": "create",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "TestExportId",
-                "type": "string"
-              },
-              {
-                "name": "SetAsDefault",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "export identity \u0027TestExportId\u0027, write to %exported%",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "identity",
-            "action": "export",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "TestExportId",
-                "type": "string"
-              }
-            ],
-            "return": [
-              {
-                "name": "exported",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "assert %exported% is not null",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "isNotNull",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%exported%",
-                "type": "object"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
-        "text": "archive identity \u0027TestExportId\u0027, force",
-        "lineNumber": 7,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "identity",
-            "action": "archive",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "TestExportId",
-                "type": "string"
-              },
-              {
-                "name": "Force",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/IdentityExport.test.goal",
-    "prPath": "/.build/identityexport.test.pr",
-    "hash": "3771ce1ad11b8481a981e672b30e3fd6f5a52a2f007f4a1845d640674c9a2636",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "create identity \u0027TestExportId\u0027, set as default",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "export identity \u0027TestExportId\u0027, write to %exported%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "identity",
+          "action": "export",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "TestExportId",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %exported% is not null",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%exported%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "archive identity \u0027TestExportId\u0027, force",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "TestExportId",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Identity/Export/IdentityExport.test.goal",
+  "prPath": "/Tests/Runtime2/Identity/Export/.build/identityexport.test.pr",
+  "hash": "3771ce1ad11b8481a981e672b30e3fd6f5a52a2f007f4a1845d640674c9a2636",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -1,0 +1,31 @@
+{
+  "name": "CatchThrow",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %throwKey% = %!error.Key%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Error/Types/CatchThrow.goal",
+  "prPath": "/Tests/Runtime2/Error/Types/.build/catchthrow.pr",
+  "hash": "a9d4109da4f4fdea5487a25def29160b0e3b117c4c5a4ad46277163ff63cc402",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Builds a sequence of assertions: not-equals, is-false, is-null, greater-than, and less-than, using variable set steps where needed.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -25,7 +25,6 @@
               "type": "int"
             }
           ],
-          "return": null,
           "defaults": null
         }
       ],
@@ -41,26 +40,7 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": "isFalse",
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%flag%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "return": null,
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -84,7 +64,6 @@
               "type": "bool"
             }
           ],
-          "return": null,
           "defaults": null
         }
       ],
@@ -116,7 +95,6 @@
               "type": "object"
             }
           ],
-          "return": null,
           "defaults": null
         }
       ],
@@ -143,7 +121,6 @@
               "type": "object"
             }
           ],
-          "return": null,
           "defaults": null
         }
       ],
@@ -175,7 +152,6 @@
               "type": "int"
             }
           ],
-          "return": null,
           "defaults": null
         }
       ],
@@ -207,7 +183,6 @@
               "type": "int"
             }
           ],
-          "return": null,
           "defaults": null
         }
       ],
@@ -220,10 +195,10 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Assert.test.goal",
-  "prPath": "/.build/assert.test.pr",
+  "path": "/Tests/Runtime2/Assert/Assert.test.goal",
+  "prPath": "/Tests/Runtime2/Assert/.build/assert.test.pr",
   "hash": "1815c780867821a77fd6445aa08ecd27f6d5d34e0c875d967718c63ab3d7e4b6",
-  "builderVersion": "0.3",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

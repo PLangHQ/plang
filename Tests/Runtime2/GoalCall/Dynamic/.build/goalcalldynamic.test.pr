@@ -1,111 +1,93 @@
-[
-  {
-    "name": "Start",
-    "description": "Sets %goalName% to \u0027TargetGoal\u0027, calls the goal referenced by %goalName%, then asserts that %dynamicResult% equals \u0027reached\u0027.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %goalName% = \u0022TargetGoal\u0022",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "call goal by variable name",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%goalName%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "TargetGoal",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "call %goalName%",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "goal",
-            "action": "call",
-            "parameters": [
-              {
-                "name": "GoalName",
-                "value": "%goalName%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "assert %dynamicResult% equals \u0022reached\u0022",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "reached",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%dynamicResult%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [],
-    "visibility": 1,
-    "path": "/GoalCallDynamic.test.goal",
-    "prPath": "/.build/goalcalldynamic.test.pr",
-    "hash": "be5fdfa8098f28bad9b07b1562a74bea782e882575a057eeae821965441a287a",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %goalName% = \u0022TargetGoal\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "call goal by variable name",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalName%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "TargetGoal",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call %goalName%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %dynamicResult% equals \u0022reached\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "reached",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%dynamicResult%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/GoalCall/Dynamic/GoalCallDynamic.test.goal",
+  "prPath": "/Tests/Runtime2/GoalCall/Dynamic/.build/goalcalldynamic.test.pr",
+  "hash": "be5fdfa8098f28bad9b07b1562a74bea782e882575a057eeae821965441a287a",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

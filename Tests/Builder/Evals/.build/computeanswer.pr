@@ -1,6 +1,6 @@
 {
   "name": "ComputeAnswer",
-  "description": "Sets %answer% to 42 and returns it.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -40,25 +40,7 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "goal",
-          "action": "return",
-          "parameters": [
-            {
-              "name": "Data",
-              "value": "%answer%",
-              "type": "object"
-            },
-            {
-              "name": "Depth",
-              "value": 1,
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -68,8 +50,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ComputeAnswer.goal",
-  "prPath": "/.build/computeanswer.pr",
+  "path": "/Tests/Builder/Evals/ComputeAnswer.goal",
+  "prPath": "/Tests/Builder/Evals/.build/computeanswer.pr",
   "hash": "6f98b24e850de25c7148d791c9245e4f49118b8229fb594d2b26d739d5ea044d",
   "builderVersion": null,
   "isSetup": false,

@@ -1,47 +1,44 @@
-[
-  {
-    "name": "OverrideFileRead",
-    "description": "Skip the next action and set the result variable to the literal value \u0022overridden\u0022.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "skip action and set \u0022overridden\u0022 as result",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "event",
-            "action": "skipAction",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "overridden",
-                "type": "object"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [],
-    "visibility": 1,
-    "path": "/OverrideFileRead.goal",
-    "prPath": "/.build/overridefileread.pr",
-    "hash": "a20cae08e3840d08d1e3c63c952b105a657a943912577cae40303948bcd12d82",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "OverrideFileRead",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "skip action and set \u0022overridden\u0022 as result",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "event",
+          "action": "skipAction",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "overridden",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Event/Override/OverrideFileRead.goal",
+  "prPath": "/Tests/Runtime2/Event/Override/.build/overridefileread.pr",
+  "hash": "a20cae08e3840d08d1e3c63c952b105a657a943912577cae40303948bcd12d82",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

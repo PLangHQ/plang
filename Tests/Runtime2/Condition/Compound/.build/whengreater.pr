@@ -1,52 +1,49 @@
-[
-  {
-    "name": "WhenGreater",
-    "description": "Sets %greaterResult% to \u0027yes\u0027 in the WhenGreater goal step.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %greaterResult% = \u0022yes\u0022",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%greaterResult%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "yes",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/Compound/WhenGreater.goal",
-    "prPath": "/Compound/.build/whengreater.pr",
-    "hash": "de1b2350ea4346d265a5ff9ada731caaf2f4e03ca5c99df387838b0bd87206b8",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "WhenGreater",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %greaterResult% = \u0022yes\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%greaterResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "yes",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Condition/Compound/WhenGreater.goal",
+  "prPath": "/Tests/Runtime2/Condition/Compound/.build/whengreater.pr",
+  "hash": "de1b2350ea4346d265a5ff9ada731caaf2f4e03ca5c99df387838b0bd87206b8",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

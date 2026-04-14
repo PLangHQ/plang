@@ -1,6 +1,6 @@
 {
   "name": "RunEvals",
-  "description": "Lists files in \u0027.\u0027, initializes goldens/results arrays, checks each file to populate goldens, evaluates each golden case, then saves results to results/%Now%.json and writes results out.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -62,25 +62,7 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%goldens%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": [],
-              "type": "list"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -273,7 +255,7 @@
   ],
   "goals": [
     {
-      "name": "",
+      "name": "CheckGolden",
       "description": null,
       "comment": null,
       "steps": [
@@ -293,8 +275,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/RunEvals.goal",
-      "prPath": "/.build/runevals.pr",
+      "path": "/Tests/Builder/Evals/RunEvals.goal",
+      "prPath": "/Tests/Builder/Evals/.build/runevals.pr",
       "hash": "d379fc0ec5c7eececf216dd7e6de7a1f732341c3d1d02c2b1998a8918fe0b491",
       "builderVersion": null,
       "isSetup": false,
@@ -304,7 +286,7 @@
       "inputParameters": null
     },
     {
-      "name": "",
+      "name": "AddGolden",
       "description": null,
       "comment": null,
       "steps": [
@@ -324,8 +306,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/RunEvals.goal",
-      "prPath": "/.build/runevals.pr",
+      "path": "/Tests/Builder/Evals/RunEvals.goal",
+      "prPath": "/Tests/Builder/Evals/.build/runevals.pr",
       "hash": "0d6000561a3aa1a6d513afea5b0d6eb75529c74b4bb1ebadecba0c56fb3cf221",
       "builderVersion": null,
       "isSetup": false,
@@ -335,7 +317,7 @@
       "inputParameters": null
     },
     {
-      "name": "",
+      "name": "EvalCase",
       "description": null,
       "comment": null,
       "steps": [
@@ -407,8 +389,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/RunEvals.goal",
-      "prPath": "/.build/runevals.pr",
+      "path": "/Tests/Builder/Evals/RunEvals.goal",
+      "prPath": "/Tests/Builder/Evals/.build/runevals.pr",
       "hash": "bade211f9db86d9661d231266b16cdd911f33eb9af53a89df5bbb7798416903f",
       "builderVersion": null,
       "isSetup": false,
@@ -419,8 +401,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/RunEvals.goal",
-  "prPath": "/.build/runevals.pr",
+  "path": "/Tests/Builder/Evals/RunEvals.goal",
+  "prPath": "/Tests/Builder/Evals/.build/runevals.pr",
   "hash": "c39dedef00f6f45131587fffdb8e3fe32e0be7d1406934ba8ae03d287f0074bd",
   "builderVersion": null,
   "isSetup": false,

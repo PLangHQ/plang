@@ -1,6 +1,6 @@
 {
   "name": "Build",
-  "description": "Calls the goal /builder/Build with GoalName and Actor parameters, using cache=0ms and onError retry=0 (order=1).",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {

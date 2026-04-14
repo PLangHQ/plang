@@ -1,53 +1,50 @@
-[
-  {
-    "name": "ThrowTestError",
-    "description": "Single step that throws an error with message \u0022test error\u0022.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "throw error \u0022test error\u0022",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "error",
-            "action": "throw",
-            "parameters": [
-              {
-                "name": "Message",
-                "value": "test error",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": [
-              {
-                "name": "statuscode",
-                "value": 500,
-                "type": "int"
-              }
-            ]
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/ThrowTestError.goal",
-    "prPath": "/.build/throwtesterror.pr",
-    "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "ThrowTestError",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022test error\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "test error",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Error/Call/ThrowTestError.goal",
+  "prPath": "/Tests/Runtime2/Error/Call/.build/throwtesterror.pr",
+  "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

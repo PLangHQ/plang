@@ -1,62 +1,54 @@
-[
-  {
-    "name": "ReadCached",
-    "description": "Reads cacheslide.txt with a cache duration of 60 seconds and writes the file contents to %cachedValue%.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "read file \u0027cacheslide.txt\u0027, cache for 60 seconds, write to %cachedValue%",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "file",
-            "action": "read",
-            "parameters": [
-              {
-                "name": "Path",
-                "value": "cacheslide.txt",
-                "type": "path"
-              },
-              {
-                "name": "ResolveVariables",
-                "value": false,
-                "type": "bool"
-              }
-            ],
-            "return": [
-              {
-                "name": "cachedValue",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": {
-          "durationMs": 60000,
-          "sliding": true,
-          "key": null,
-          "location": null
-        },
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [],
-    "visibility": 1,
-    "path": "/ReadCached.goal",
-    "prPath": "/.build/readcached.pr",
-    "hash": "a42f6e6232c2cd7c67fa24f0938f74634d8cc0e4552c9b7a94d54e1cd2563268",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "ReadCached",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027cacheslide.txt\u0027, cache for 60 seconds, write to %cachedValue%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "cacheslide.txt",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": {
+        "durationMs": 60000,
+        "sliding": true,
+        "key": null,
+        "location": null
+      },
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Cache/Sliding/ReadCached.goal",
+  "prPath": "/Tests/Runtime2/Cache/Sliding/.build/readcached.pr",
+  "hash": "a42f6e6232c2cd7c67fa24f0938f74634d8cc0e4552c9b7a94d54e1cd2563268",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -1,52 +1,154 @@
-[
-  {
-    "name": "HandleHeaderError",
-    "description": "Sets the %headerFailed% flag to true (header error handling).",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %headerFailed% = true",
-        "lineNumber": 13,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%headerFailed%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 0,
-    "path": "/SigningHeaderMismatch.test.goal",
-    "prPath": "/.build/signingheadermismatch.test.pr",
-    "hash": "7563068bd6895c224b7083ab5ba33d7087c80cdc9a9c7a9102100d85dc81f3b0",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: verify fails when expected headers don\u0027t match signed headers",
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "create identity testSigner",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \u0022body\u0022: \u0022content\u0022 }",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %signHeaders% = { \u0022method\u0022: \u0022POST\u0022, \u0022url\u0022: \u0022/api/send\u0022 }",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "sign %data% with headers %signHeaders%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "set %wrongHeaders% = { \u0022method\u0022: \u0022GET\u0022, \u0022url\u0022: \u0022/api/send\u0022 }",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "verify %data% with contracts [\u0027C0\u0027] and headers %wrongHeaders%, on error call HandleHeaderError",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %headerFailed% is true, \u0022header mismatch should fail verification\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "HandleHeaderError",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %headerFailed% = true",
+          "lineNumber": 13,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Tests/Runtime2/Signing/HeaderMismatch/SigningHeaderMismatch.test.goal",
+      "prPath": "/Tests/Runtime2/Signing/HeaderMismatch/.build/signingheadermismatch.test.pr",
+      "hash": "7563068bd6895c224b7083ab5ba33d7087c80cdc9a9c7a9102100d85dc81f3b0",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Signing/HeaderMismatch/SigningHeaderMismatch.test.goal",
+  "prPath": "/Tests/Runtime2/Signing/HeaderMismatch/.build/signingheadermismatch.test.pr",
+  "hash": "ca2988229674c2ef237cfe215b1ea2279eb19ec83ba354a6ae4ab5493842011d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -1,0 +1,141 @@
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: corrupt signature field, verify fails",
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "create identity testSigner",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \u0022payload\u0022: \u0022corrupt\u0022 }",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "sign %data%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "set %data.Signature.Signature% = \u0022AAAA/corrupted\u002Bbase64==\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "verify %data% with contracts [\u0027C0\u0027], on error call HandleCorrupt",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %corrupted% is true, \u0022corrupted signature should fail verification\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "HandleCorrupt",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %corrupted% = true",
+          "lineNumber": 12,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Tests/Runtime2/Signing/CorruptedSignature/SigningCorruptedSignature.test.goal",
+      "prPath": "/Tests/Runtime2/Signing/CorruptedSignature/.build/signingcorruptedsignature.test.pr",
+      "hash": "46b4cf7c1a1a90aff7fbaf9d7b18ba8e6e15ee23d063ffb081a2351e4012d4c6",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Signing/CorruptedSignature/SigningCorruptedSignature.test.goal",
+  "prPath": "/Tests/Runtime2/Signing/CorruptedSignature/.build/signingcorruptedsignature.test.pr",
+  "hash": "7d053c94ed66d5724020a7c14963e1222e05b6cf4f7bcc08f5c83ecfcd79d0ab",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -1,150 +1,125 @@
-[
-  {
-    "name": "Start",
-    "description": "Writes call stack depth before and after calling Inner twice, using the provided %!callStack.Depth% placeholder.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "write out \u0022Depth before: %!callStack.Depth%\\n\u0022",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "Depth before: %!callStack.Depth%\\n",
-                "type": "string"
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Depth before: %!callStack.Depth%\\n\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Depth before: %!callStack.Depth%\\n",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call goal Inner",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out \u0022Depth after: %!callStack.Depth%\\n\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Depth after: %!callStack.Depth%\\n",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "call goal Inner  ",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "Inner",
+                "description": null,
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/inner.pr"
               },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "call goal Inner",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "goal",
-            "action": "call",
-            "parameters": [
-              {
-                "name": "GoalName",
-                "value": {
-                  "name": "Inner",
-                  "description": null,
-                  "parallel": false,
-                  "parameters": null,
-                  "prPath": "/.build/inner.pr"
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "write out \u0022Depth after: %!callStack.Depth%\\n\u0022",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "Depth after: %!callStack.Depth%\\n",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "call goal Inner  ",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "goal",
-            "action": "call",
-            "parameters": [
-              {
-                "name": "GoalName",
-                "value": {
-                  "name": "Inner",
-                  "description": null,
-                  "parallel": false,
-                  "parameters": null,
-                  "prPath": "/.build/inner.pr"
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/Start.goal",
-    "prPath": "/.build/start.pr",
-    "hash": "c823029a7220b2924dd7dd88f2761ae549afeb98a81f218f1ecb566f4b49f315",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/CallStack/Start.goal",
+  "prPath": "/Tests/Runtime2/CallStack/.build/start.pr",
+  "hash": "c823029a7220b2924dd7dd88f2761ae549afeb98a81f218f1ecb566f4b49f315",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -1,63 +1,60 @@
-[
-  {
-    "name": "HandleRetryError",
-    "description": "Set the %retryErrorHandled% flag to true in HandleRetryError.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %retryErrorHandled% = true",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%retryErrorHandled%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": true,
-                "type": "bool"
-              },
-              {
-                "name": "Type",
-                "value": "bool",
-                "type": "string"
-              }
-            ],
-            "return": [],
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/HandleRetryError.goal",
-    "prPath": "/.build/handleretryerror.pr",
-    "hash": "07977c4a77a01653f722fc2cc4587a4232ba762697c7e13ac982efcf4dcb38c8",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "HandleRetryError",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %retryErrorHandled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%retryErrorHandled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Retry/HandleRetryError.goal",
+  "prPath": "/Tests/Runtime2/Retry/.build/handleretryerror.pr",
+  "hash": "07977c4a77a01653f722fc2cc4587a4232ba762697c7e13ac982efcf4dcb38c8",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

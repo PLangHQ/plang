@@ -1,232 +1,187 @@
-[
-  {
-    "name": "Start",
-    "description": "Performs an unsigned HTTP GET to httpbin.org/get, writes the response to %response%, checks that the response is not empty, then verifies that response.StatusCode equals 200 and writes corresponding output messages.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "get https://httpbin.org/get, unsigned, write to %response%",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "Test: GET request returns JSON response data and status code",
-        "actions": [
-          {
-            "module": "http",
-            "action": "request",
-            "parameters": [
-              {
-                "name": "Url",
-                "value": "https://httpbin.org/get",
-                "type": "string"
-              },
-              {
-                "name": "Method",
-                "value": "GET",
-                "type": "string"
-              },
-              {
-                "name": "Unsigned",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": [
-              {
-                "name": "response",
-                "value": null
-              }
-            ],
-            "defaults": [
-              {
-                "name": "contenttype",
-                "value": "application/json",
-                "type": "string"
-              },
-              {
-                "name": "encoding",
-                "value": "utf-8",
-                "type": "string"
-              },
-              {
-                "name": "timeoutinsec",
-                "value": 30,
-                "type": "int"
-              }
-            ]
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "if %response% is not empty then",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%response%",
-                "type": "string"
-              },
-              {
-                "name": "Operator",
-                "value": "isempty",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": "",
-                "type": "string"
-              },
-              {
-                "name": "Negate",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "write out \u0027GET request returned data\u0027",
-        "lineNumber": 5,
-        "indent": 1,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "GET request returned data",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "pr",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "if %response.StatusCode% equals 200 then",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%response.StatusCode%",
-                "type": "string"
-              },
-              {
-                "name": "Operator",
-                "value": "==",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": "200",
-                "type": "string"
-              }
-            ],
-            "return": [
-              {
-                "name": "__conditionReturn__",
-                "value": null
-              }
-            ],
-            "defaults": [
-              {
-                "name": "negate",
-                "value": false,
-                "type": "bool"
-              }
-            ]
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
-        "text": "write out \u0027Status code is 200\u0027",
-        "lineNumber": 7,
-        "indent": 1,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "Status code is 200",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "pr",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [],
-    "visibility": 1,
-    "path": "/GetRequest.test.goal",
-    "prPath": "/.build/getrequest.test.pr",
-    "hash": "bd80ccafae6164da0d48e695d55f2be1e6b1ba6efc1a1673b0403e0a4638e542",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "get https://httpbin.org/get, unsigned, write to %response%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: GET request returns JSON response data and status code",
+      "actions": [
+        {
+          "module": "http",
+          "action": "request",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "https://httpbin.org/get",
+              "type": "string"
+            },
+            {
+              "name": "Method",
+              "value": "GET",
+              "type": "string"
+            },
+            {
+              "name": "Unsigned",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "contenttype",
+              "value": "application/json",
+              "type": "string"
+            },
+            {
+              "name": "encoding",
+              "value": "utf-8",
+              "type": "string"
+            },
+            {
+              "name": "timeoutinsec",
+              "value": 30,
+              "type": "int"
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %response% is not empty then",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out \u0027GET request returned data\u0027",
+      "lineNumber": 5,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "GET request returned data",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "pr",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "if %response.StatusCode% equals 200 then",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%response.StatusCode%",
+              "type": "string"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "200",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "write out \u0027Status code is 200\u0027",
+      "lineNumber": 7,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Status code is 200",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "pr",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Http/GetRequest/GetRequest.test.goal",
+  "prPath": "/Tests/Runtime2/Http/GetRequest/.build/getrequest.test.pr",
+  "hash": "bd80ccafae6164da0d48e695d55f2be1e6b1ba6efc1a1673b0403e0a4638e542",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

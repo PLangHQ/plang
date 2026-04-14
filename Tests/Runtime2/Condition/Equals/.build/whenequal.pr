@@ -1,52 +1,49 @@
-[
-  {
-    "name": "WhenEqual",
-    "description": "Sets %result% to the string \u0022equal\u0022.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %result% = \u0022equal\u0022",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%result%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "equal",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/Equals/WhenEqual.goal",
-    "prPath": "/Equals/.build/whenequal.pr",
-    "hash": "830e91bfee72d07e3af29591fa2533c6fd399afd470dadce05fd29da117af8ab",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "WhenEqual",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022equal\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "equal",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Condition/Equals/WhenEqual.goal",
+  "prPath": "/Tests/Runtime2/Condition/Equals/.build/whenequal.pr",
+  "hash": "830e91bfee72d07e3af29591fa2533c6fd399afd470dadce05fd29da117af8ab",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

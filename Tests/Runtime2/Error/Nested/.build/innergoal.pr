@@ -1,0 +1,31 @@
+{
+  "name": "InnerGoal",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call ThrowInnerError, on error call InnerHandler",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Error/Nested/InnerGoal.goal",
+  "prPath": "/Tests/Runtime2/Error/Nested/.build/innergoal.pr",
+  "hash": "a60dacbb90144444eb57f4e9cb6fa09714365e4b956c674f73d69b64dc38f5c7",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

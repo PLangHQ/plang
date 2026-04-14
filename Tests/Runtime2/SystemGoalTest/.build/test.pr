@@ -1,12 +1,14 @@
 {
   "name": "Start",
-  "description": "Calls WriteOut to display a greeting.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
   "steps": [
     {
       "index": 0,
       "text": "call goal WriteOut",
       "lineNumber": 2,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "goal",
@@ -14,58 +16,63 @@
           "parameters": [
             {
               "name": "GoalName",
-              "value": { "name": "WriteOut" },
+              "value": {
+                "name": "WriteOut"
+              },
               "type": "goal.call"
             }
-          ]
+          ],
+          "defaults": null
         }
       ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [
     {
       "name": "WriteOut",
-      "description": "Writes hello plang world to output.",
+      "description": null,
+      "comment": null,
       "steps": [
         {
           "index": 0,
-          "text": "write out \"hello plang world\"",
+          "text": "write out \u0022hello plang world\u0022",
           "lineNumber": 5,
           "indent": 0,
-          "actions": [
-            {
-              "module": "output",
-              "action": "write",
-              "parameters": [
-                {
-                  "name": "Data",
-                  "value": "hello plang world",
-                  "type": "string"
-                }
-              ]
-            }
-          ],
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/Test.goal",
-      "prPath": "/.build/test.pr",
+      "path": "/Tests/Runtime2/SystemGoalTest/Test.goal",
+      "prPath": "/Tests/Runtime2/SystemGoalTest/.build/test.pr",
+      "hash": "3be0cf8c671538ebc9500db89b248cb7df76b7f7a868d9f396c66ad4919f2f0b",
+      "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
       "isSystem": false,
-      "isTest": false
+      "isTest": false,
+      "inputParameters": null
     }
   ],
   "visibility": 1,
-  "path": "/Test.goal",
-  "prPath": "/.build/test.pr",
-  "hash": "",
-  "builderVersion": "0.3",
+  "path": "/Tests/Runtime2/SystemGoalTest/Test.goal",
+  "prPath": "/Tests/Runtime2/SystemGoalTest/.build/test.pr",
+  "hash": "d4ede1cd47b4687a6cefcce4522af183e526fcca01b6f9fb337ddeee54b65138",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
-  "isTest": false
+  "isTest": false,
+  "inputParameters": null
 }

@@ -1,78 +1,51 @@
-[
-  {
-    "name": "Start",
-    "description": "Gets type info from the builder and asserts the returned mapping data is not empty.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "get type info, write to %typeInfo%",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "Test that builder.getTypeInfo returns PLang type names and complex type schemas",
-        "actions": [
-          {
-            "module": "builder",
-            "action": "types",
-            "parameters": [],
-            "return": [
-              {
-                "name": "typeInfo",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "assert %typeInfo% is not empty, \u0022getTypeInfo should return type mapping data\u0022",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "isNotNull",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%typeInfo%?",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "getTypeInfo should return type mapping data",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/GetTypeInfo/BuilderGetTypeInfo.test.goal",
-    "prPath": "/GetTypeInfo/.build/buildergettypeinfo.test.pr",
-    "hash": "a77d1e5bda9da96cdb0552988db174a880b44a971dde6f8a784826ac06f79b56",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "get type info, write to %typeInfo%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test that builder.getTypeInfo returns PLang type names and complex type schemas",
+      "actions": [
+        {
+          "module": "builder",
+          "action": "types",
+          "parameters": [],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %typeInfo% is not empty, \u0022getTypeInfo should return type mapping data\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal",
+  "prPath": "/Tests/Runtime2/Builder/GetTypeInfo/.build/buildergettypeinfo.test.pr",
+  "hash": "a77d1e5bda9da96cdb0552988db174a880b44a971dde6f8a784826ac06f79b56",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

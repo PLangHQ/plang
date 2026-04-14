@@ -1,96 +1,74 @@
-[
-  {
-    "name": "Start",
-    "description": "Attempts to call a non-existent goal, routes the failure to HandleMissing via on error, then asserts that %missingCaught% was set to true.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "call NonExistentGoal, on error call HandleMissing",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "calling non-existent goal should error",
-        "actions": [
-          {
-            "module": "goal",
-            "action": "call",
-            "parameters": [
-              {
-                "name": "GoalName",
-                "value": {
-                  "name": "NonExistentGoal"
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": {
-            "name": "HandleMissing",
-            "description": null,
-            "parallel": false,
-            "parameters": null,
-            "prPath": null
-          },
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "assert %missingCaught% equals true",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": true,
-                "type": "bool"
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call NonExistentGoal, on error call HandleMissing",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "calling non-existent goal should error",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "NonExistentGoal"
               },
-              {
-                "name": "Actual",
-                "value": "%missingCaught%",
-                "type": "object"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [],
-    "visibility": 1,
-    "path": "/GoalCallMissing.test.goal",
-    "prPath": "/.build/goalcallmissing.test.pr",
-    "hash": "42ff00589e01e37c2a08137308ad6fc27dc45b3a0b3cd118fb5496c7fc4978f7",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": {
+        "goal": {
+          "name": "HandleMissing",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": false,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %missingCaught% equals true",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/GoalCall/Missing/GoalCallMissing.test.goal",
+  "prPath": "/Tests/Runtime2/GoalCall/Missing/.build/goalcallmissing.test.pr",
+  "hash": "42ff00589e01e37c2a08137308ad6fc27dc45b3a0b3cd118fb5496c7fc4978f7",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

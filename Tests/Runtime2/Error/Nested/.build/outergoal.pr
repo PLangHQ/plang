@@ -1,85 +1,57 @@
-[
-  {
-    "name": "OuterGoal",
-    "description": "OuterGoal calls InnerGoal, then sets %outerCompleted% to true.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "call InnerGoal",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "goal",
-            "action": "call",
-            "parameters": [
-              {
-                "name": "GoalName",
-                "value": "",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "set %outerCompleted% = true",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%outerCompleted%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/OuterGoal.goal",
-    "prPath": "/.build/outergoal.pr",
-    "hash": "3d350858b806fc84804e872cd32f364549ef42dfee0f09f5705a4e7469cb160c",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "OuterGoal",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call InnerGoal",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %outerCompleted% = true",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Error/Nested/OuterGoal.goal",
+  "prPath": "/Tests/Runtime2/Error/Nested/.build/outergoal.pr",
+  "hash": "3d350858b806fc84804e872cd32f364549ef42dfee0f09f5705a4e7469cb160c",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

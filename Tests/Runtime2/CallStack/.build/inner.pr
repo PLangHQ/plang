@@ -1,84 +1,62 @@
-[
-  {
-    "name": "Inner",
-    "description": "Writes two debug lines to output, referencing call stack variables %!callStack.Depth% and %!callStack%.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "write out \u0022Inner depth: %!callStack.Depth%\u0022",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "Inner depth: %!callStack.Depth%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "write out %!callStack%",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "%!callStack%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/Inner.goal",
-    "prPath": "/.build/inner.pr",
-    "hash": "c452e9306f2b1fc2b587335d46ab29010b24c9087bf1daf508a2d12d129960ed",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Inner",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Inner depth: %!callStack.Depth%\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Inner depth: %!callStack.Depth%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out %!callStack%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/CallStack/Inner.goal",
+  "prPath": "/Tests/Runtime2/CallStack/.build/inner.pr",
+  "hash": "c452e9306f2b1fc2b587335d46ab29010b24c9087bf1daf508a2d12d129960ed",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

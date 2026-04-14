@@ -1,298 +1,270 @@
-[
-  {
-    "name": "Start",
-    "description": "Parses two JSON literals into %obj% and %arr%, then writes selected fields/indices to output.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "convert \u0027{\u0022name\u0022:\u0022test\u0022,\u0022values\u0022:[1,2,3],\u0022nested\u0022:{\u0022flag\u0022:true,\u0022data\u0022:null}}\u0027 from json, write to %obj%",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%obj%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "{\u0022name\u0022:\u0022test\u0022,\u0022values\u0022:[1,2,3],\u0022nested\u0022:{\u0022flag\u0022:true,\u0022data\u0022:null}}",
-                "type": "string"
-              },
-              {
-                "name": "Type",
-                "value": "json",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "write out %obj.name%",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "%obj.name%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "write out %obj.values[0]%",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "%obj.values[0]%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "write out %obj.values[2]%",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "%obj.values[2]%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
-        "text": "write out %obj.nested.flag%",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "%obj.nested.flag%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 5,
-        "text": "convert \u0027[{\u0022id\u0022:1},{\u0022id\u0022:2}]\u0027 from json, write to %arr%",
-        "lineNumber": 7,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%arr%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "[{\u0022id\u0022:1},{\u0022id\u0022:2}]",
-                "type": "string"
-              },
-              {
-                "name": "Type",
-                "value": "json",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
-        "text": "write out %arr[0].id%",
-        "lineNumber": 8,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "%arr[0].id%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 7,
-        "text": "write out %arr[1].id%",
-        "lineNumber": 9,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "%arr[1].id%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/Start.goal",
-    "prPath": "/.build/start.pr",
-    "hash": "91d7a29c78322c66b6208fd0ef4bd1d447b9fb65aef577dc2781ec5efd51aa44",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "convert \u0027{\u0022name\u0022:\u0022test\u0022,\u0022values\u0022:[1,2,3],\u0022nested\u0022:{\u0022flag\u0022:true,\u0022data\u0022:null}}\u0027 from json, write to %obj%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%obj%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "{\u0022name\u0022:\u0022test\u0022,\u0022values\u0022:[1,2,3],\u0022nested\u0022:{\u0022flag\u0022:true,\u0022data\u0022:null}}",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out %obj.name%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out %obj.values[0]%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%obj.values[0]%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "write out %obj.values[2]%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%obj.values[2]%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "write out %obj.nested.flag%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%obj.nested.flag%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "convert \u0027[{\u0022id\u0022:1},{\u0022id\u0022:2}]\u0027 from json, write to %arr%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%arr%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "[{\u0022id\u0022:1},{\u0022id\u0022:2}]",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "write out %arr[0].id%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%arr[0].id%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "write out %arr[1].id%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%arr[1].id%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/FromJson/Start.goal",
+  "prPath": "/Tests/Runtime2/FromJson/.build/start.pr",
+  "hash": "91d7a29c78322c66b6208fd0ef4bd1d447b9fb65aef577dc2781ec5efd51aa44",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

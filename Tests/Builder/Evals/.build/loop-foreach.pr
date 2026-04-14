@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Iterates over %items% and calls ProcessItem for each item, passing item=%item%.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -51,8 +51,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/loop-foreach.goal",
-  "prPath": "/.build/loop-foreach.pr",
+  "path": "/Tests/Builder/Evals/loop-foreach.goal",
+  "prPath": "/Tests/Builder/Evals/.build/loop-foreach.pr",
   "hash": "7c28c03cbb0bb3411aed980b4f84cddb34621aab92b2a6dd14d089812c9d8a2d",
   "builderVersion": null,
   "isSetup": false,

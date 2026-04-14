@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Rounds 3.14159 to 2 decimal places using math.round, then stores the result in %rounded%.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -54,8 +54,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/math-round.goal",
-  "prPath": "/.build/math-round.pr",
+  "path": "/Tests/Builder/Evals/math-round.goal",
+  "prPath": "/Tests/Builder/Evals/.build/math-round.pr",
   "hash": "c91ec5634e4ea3d33e2a3e4a0c4768523af59e6eb0d660a7ed6aa82ac142135e",
   "builderVersion": null,
   "isSetup": false,

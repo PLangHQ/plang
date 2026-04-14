@@ -1,0 +1,17 @@
+{
+  "name": "null",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Builder/ParseGoal/ParseGoal/parse_test/Test.goal",
+  "prPath": "/Tests/Runtime2/Builder/ParseGoal/ParseGoal/parse_test/.build/test.pr",
+  "hash": null,
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

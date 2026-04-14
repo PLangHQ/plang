@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Moves file old.txt to new.txt.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/file-move.goal",
-  "prPath": "/.build/file-move.pr",
+  "path": "/Tests/Builder/Evals/file-move.goal",
+  "prPath": "/Tests/Builder/Evals/.build/file-move.pr",
   "hash": "c36d11b91a64c9f302a18f6e0697e6f129787fd0c292b571fc1d89c65ecc631a",
   "builderVersion": null,
   "isSetup": false,

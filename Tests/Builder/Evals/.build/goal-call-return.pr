@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls ComputeAnswer, stores its result in %returnedAnswer%, then writes %returnedAnswer% to output.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -55,25 +55,7 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {
-              "name": "Data",
-              "value": "%returnedAnswer%",
-              "type": "object"
-            },
-            {
-              "name": "Channels",
-              "value": "out",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -83,8 +65,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/goal-call-return.goal",
-  "prPath": "/.build/goal-call-return.pr",
+  "path": "/Tests/Builder/Evals/goal-call-return.goal",
+  "prPath": "/Tests/Builder/Evals/.build/goal-call-return.pr",
   "hash": "f33e1ae42ae97dc1fc5b1bd8a30063b80831852fe485b64e3e6372f6c0db9e8b",
   "builderVersion": null,
   "isSetup": false,

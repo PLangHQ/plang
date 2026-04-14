@@ -1,591 +1,513 @@
-[
-  {
-    "name": "Start",
-    "description": "Performs basic math operations (add, subtract, multiply, divide, abs, round, min, max, random) and writes formatted results to output.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "add 5 and 3, write to %sum%",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "math",
-            "action": "add",
-            "parameters": [
-              {
-                "name": "A",
-                "value": 5,
-                "type": "int"
-              },
-              {
-                "name": "B",
-                "value": 3,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "sum",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "write out \u00225 \u002B 3 = %sum%\u0022",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "5 \u002B 3 = %sum%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "subtract 3 from 10, write to %diff%",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "math",
-            "action": "subtract",
-            "parameters": [
-              {
-                "name": "A",
-                "value": 10,
-                "type": "int"
-              },
-              {
-                "name": "B",
-                "value": 3,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "diff",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "write out \u002210 - 3 = %diff%\u0022",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "10 - 3 = %diff%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
-        "text": "multiply 6 by 7, write to %product%",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "math",
-            "action": "multiply",
-            "parameters": [
-              {
-                "name": "A",
-                "value": 6,
-                "type": "int"
-              },
-              {
-                "name": "B",
-                "value": 7,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "product",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 5,
-        "text": "write out \u00226 * 7 = %product%\u0022",
-        "lineNumber": 7,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "6 * 7 = %product%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
-        "text": "divide 10 by 3, write to %quotient%",
-        "lineNumber": 8,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "math",
-            "action": "divide",
-            "parameters": [
-              {
-                "name": "A",
-                "value": 10,
-                "type": "int"
-              },
-              {
-                "name": "B",
-                "value": 3,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "quotient",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 7,
-        "text": "write out \u002210 / 3 = %quotient%\u0022",
-        "lineNumber": 9,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "10 / 3 = %quotient%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 8,
-        "text": "get absolute value of -42, write to %absVal%",
-        "lineNumber": 10,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "math",
-            "action": "abs",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": -42,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "absVal",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 9,
-        "text": "write out \u0022abs(-42) = %absVal%\u0022",
-        "lineNumber": 11,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "abs(-42) = %absVal%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 10,
-        "text": "round 3.14159 to 2 decimal places, write to %rounded%",
-        "lineNumber": 12,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "math",
-            "action": "round",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": 3.14159,
-                "type": "double"
-              },
-              {
-                "name": "Decimals",
-                "value": 2,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "rounded",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 11,
-        "text": "write out \u0022round(3.14159, 2) = %rounded%\u0022",
-        "lineNumber": 13,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "round(3.14159, 2) = %rounded%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 12,
-        "text": "get min of 5 and 3, write to %minimum%",
-        "lineNumber": 14,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "math",
-            "action": "min",
-            "parameters": [
-              {
-                "name": "A",
-                "value": 5,
-                "type": "int"
-              },
-              {
-                "name": "B",
-                "value": 3,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "minimum",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 13,
-        "text": "write out \u0022min(5, 3) = %minimum%\u0022",
-        "lineNumber": 15,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "min(5, 3) = %minimum%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 14,
-        "text": "get max of 5 and 3, write to %maximum%",
-        "lineNumber": 16,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "math",
-            "action": "max",
-            "parameters": [
-              {
-                "name": "A",
-                "value": 5,
-                "type": "int"
-              },
-              {
-                "name": "B",
-                "value": 3,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "maximum",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 15,
-        "text": "write out \u0022max(5, 3) = %maximum%\u0022",
-        "lineNumber": 17,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "max(5, 3) = %maximum%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 16,
-        "text": "generate random number between 1 and 100, write to %rand%",
-        "lineNumber": 18,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "math",
-            "action": "random",
-            "parameters": [
-              {
-                "name": "Min",
-                "value": 1,
-                "type": "int"
-              },
-              {
-                "name": "Max",
-                "value": 100,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "rand",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 17,
-        "text": "write out \u0022random: %rand%\u0022",
-        "lineNumber": 19,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "random: %rand%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/Start.goal",
-    "prPath": "/.build/start.pr",
-    "hash": "e92b5952596a1ac057a67614002052ab2e129c4e884bf4b570c8aa5ac3a5e0c0",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "add 5 and 3, write to %sum%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out \u00225 \u002B 3 = %sum%\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "subtract 3 from 10, write to %diff%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "subtract",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "write out \u002210 - 3 = %diff%\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "10 - 3 = %diff%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "multiply 6 by 7, write to %product%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "multiply",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 6,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 7,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "write out \u00226 * 7 = %product%\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "6 * 7 = %product%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "divide 10 by 3, write to %quotient%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "divide",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "write out \u002210 / 3 = %quotient%\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "10 / 3 = %quotient%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "get absolute value of -42, write to %absVal%",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "abs",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": -42,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "write out \u0022abs(-42) = %absVal%\u0022",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "abs(-42) = %absVal%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "round 3.14159 to 2 decimal places, write to %rounded%",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "round",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": 3.14159,
+              "type": "double"
+            },
+            {
+              "name": "Decimals",
+              "value": 2,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "write out \u0022round(3.14159, 2) = %rounded%\u0022",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "round(3.14159, 2) = %rounded%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "get min of 5 and 3, write to %minimum%",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "min",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "write out \u0022min(5, 3) = %minimum%\u0022",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "min(5, 3) = %minimum%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 14,
+      "text": "get max of 5 and 3, write to %maximum%",
+      "lineNumber": 16,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "max",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 15,
+      "text": "write out \u0022max(5, 3) = %maximum%\u0022",
+      "lineNumber": 17,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "max(5, 3) = %maximum%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 16,
+      "text": "generate random number between 1 and 100, write to %rand%",
+      "lineNumber": 18,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "random",
+          "parameters": [
+            {
+              "name": "Min",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Max",
+              "value": 100,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 17,
+      "text": "write out \u0022random: %rand%\u0022",
+      "lineNumber": 19,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "random: %rand%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Math/Start.goal",
+  "prPath": "/Tests/Runtime2/Math/.build/start.pr",
+  "hash": "e92b5952596a1ac057a67614002052ab2e129c4e884bf4b570c8aa5ac3a5e0c0",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

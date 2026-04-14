@@ -1,52 +1,49 @@
-[
-  {
-    "name": "BareRetryCatcher",
-    "description": "Sets the %bareRetryCaught% flag to true (no additional actions).",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %bareRetryCaught% = true",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%bareRetryCaught%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [],
-    "visibility": 1,
-    "path": "/BareRetryCatcher.goal",
-    "prPath": "/.build/bareretrycatcher.pr",
-    "hash": "721530b5266483f76149d388538696506be500e36c0e32b9216a91de8f854701",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "BareRetryCatcher",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %bareRetryCaught% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%bareRetryCaught%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Error/RetryOnly/BareRetryCatcher.goal",
+  "prPath": "/Tests/Runtime2/Error/RetryOnly/.build/bareretrycatcher.pr",
+  "hash": "721530b5266483f76149d388538696506be500e36c0e32b9216a91de8f854701",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

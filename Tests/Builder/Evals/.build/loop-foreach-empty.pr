@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Iterates over %empty% and calls DoThing for each item, passing item=%item%.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -77,8 +77,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/loop-foreach-empty.goal",
-  "prPath": "/.build/loop-foreach-empty.pr",
+  "path": "/Tests/Builder/Evals/loop-foreach-empty.goal",
+  "prPath": "/Tests/Builder/Evals/.build/loop-foreach-empty.pr",
   "hash": "be53e2609e15edc806433ed984474c4879b20365383c9b29c0e35fb936eeca1e",
   "builderVersion": null,
   "isSetup": false,

@@ -1,185 +1,145 @@
-[
-  {
-    "name": "Start",
-    "description": "Sets title, renders page.html with explicit author parameter into %result%, then asserts the rendered output contains the expected Title and Author strings.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %title% = \u0027My Page\u0027",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "Test: render template with explicit parameters",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%title%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "My Page",
-                "type": "string"
-              },
-              {
-                "name": "Type",
-                "value": "string",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "render file \u0027page.html\u0027 with author=\u0027Ingi\u0027, write to %result%",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "ui",
-            "action": "render",
-            "parameters": [
-              {
-                "name": "Template",
-                "value": "page.html",
-                "type": "string"
-              },
-              {
-                "name": "Parameters",
-                "value": [
-                  {
-                    "name": "author",
-                    "value": "Ingi",
-                    "type": "string"
-                  }
-                ],
-                "type": "list"
-              },
-              {
-                "name": "IsFile",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": [
-              {
-                "name": "result",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "assert %result% contains \u0027Title: My Page\u0027",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "contains",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%result%",
-                "type": "string"
-              },
-              {
-                "name": "Container",
-                "value": "Title: My Page",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "Expected %result% to contain \u0027Title: My Page\u0027.",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "assert %result% contains \u0027Author: Ingi\u0027",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "contains",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%result%",
-                "type": "string"
-              },
-              {
-                "name": "Container",
-                "value": "Author: Ingi",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "Expected %result% to contain \u0027Author: Ingi\u0027.",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/RenderWithParams/RenderWithParams.test.goal",
-    "prPath": "/RenderWithParams/.build/renderwithparams.test.pr",
-    "hash": "fd5f4292a59df89e78557a09e4d3b9eb657498f8eff94f7a748741cf33b9ec27",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %title% = \u0027My Page\u0027",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: render template with explicit parameters",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%title%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "My Page",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "render file \u0027page.html\u0027 with author=\u0027Ingi\u0027, write to %result%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %result% contains \u0027Title: My Page\u0027",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "Title: My Page",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %result% to contain \u0027Title: My Page\u0027.",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %result% contains \u0027Author: Ingi\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "Author: Ingi",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %result% to contain \u0027Author: Ingi\u0027.",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Ui/RenderWithParams/RenderWithParams.test.goal",
+  "prPath": "/Tests/Runtime2/Ui/RenderWithParams/.build/renderwithparams.test.pr",
+  "hash": "fd5f4292a59df89e78557a09e4d3b9eb657498f8eff94f7a748741cf33b9ec27",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

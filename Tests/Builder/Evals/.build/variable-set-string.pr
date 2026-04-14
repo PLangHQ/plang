@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets the variable %name% to the literal string \u0022hello\u0022.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/variable-set-string.goal",
-  "prPath": "/.build/variable-set-string.pr",
+  "path": "/Tests/Builder/Evals/variable-set-string.goal",
+  "prPath": "/Tests/Builder/Evals/.build/variable-set-string.pr",
   "hash": "737c7f6d479f8af304ff015b39e11ef4a563141b3ada3219d97c4b663c24220d",
   "builderVersion": null,
   "isSetup": false,

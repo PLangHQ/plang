@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Conditionally calls goal WhenEqual when %x% equals 5.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -62,8 +62,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/condition-equals.goal",
-  "prPath": "/.build/condition-equals.pr",
+  "path": "/Tests/Builder/Evals/condition-equals.goal",
+  "prPath": "/Tests/Builder/Evals/.build/condition-equals.pr",
   "hash": "4c1fa65a3f5fd50d66aaccdb38b0ccb4b7505b2844192a1379e2a18796d8156a",
   "builderVersion": null,
   "isSetup": false,

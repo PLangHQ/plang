@@ -1,133 +1,98 @@
-[
-  {
-    "name": "Start",
-    "description": "Sets %name% to \u0027hello world\u0027, checks whether it contains \u0027world\u0027 and calls WhenContains if true, then asserts %result% equals \u0027contains\u0027.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %name% = \u0022hello world\u0022",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "Test: contains string operator calls goal when substring present",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%name%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "hello world",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "if %name% contains \u0022world\u0022, call WhenContains",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%name%",
-                "type": "string"
-              },
-              {
-                "name": "Operator",
-                "value": "contains",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": "world",
-                "type": "string"
-              },
-              {
-                "name": "GoalIfTrue",
-                "value": {
-                  "name": "WhenContains"
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "assert %result% equals \u0022contains\u0022, \u0022GoalIfTrue should have been called for contains\u0022",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "contains",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%result%",
-                "type": "string"
-              },
-              {
-                "name": "Message",
-                "value": "GoalIfTrue should have been called for contains",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/Contains/ConditionContains.test.goal",
-    "prPath": "/Contains/.build/conditioncontains.test.pr",
-    "hash": "9ffdba833592c772bb37f764984e7b08eccddd6431e756d5aaa861b9befcb91c",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %name% = \u0022hello world\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: contains string operator calls goal when substring present",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "hello world",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %name% contains \u0022world\u0022, call WhenContains",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %result% equals \u0022contains\u0022, \u0022GoalIfTrue should have been called for contains\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "contains",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "GoalIfTrue should have been called for contains",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Condition/Contains/ConditionContains.test.goal",
+  "prPath": "/Tests/Runtime2/Condition/Contains/.build/conditioncontains.test.pr",
+  "hash": "9ffdba833592c772bb37f764984e7b08eccddd6431e756d5aaa861b9befcb91c",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

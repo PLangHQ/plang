@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Adds literal value \u0027item\u0027 to the list referenced by %myList% at index -1.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -42,8 +42,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/list-add.goal",
-  "prPath": "/.build/list-add.pr",
+  "path": "/Tests/Builder/Evals/list-add.goal",
+  "prPath": "/Tests/Builder/Evals/.build/list-add.pr",
   "hash": "7eb64f246ec9fcbaa7e839e8d63613b57ff439a3dde16f47a25c129f949a5df4",
   "builderVersion": null,
   "isSetup": false,

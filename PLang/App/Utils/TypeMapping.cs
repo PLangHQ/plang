@@ -205,6 +205,8 @@ public static class TypeMapping
         if (type.IsGenericType)
         {
             var generic = type.GetGenericTypeDefinition();
+            if (generic == typeof(Data.@this<>))
+                return GetTypeName(type.GetGenericArguments()[0]);
             if (generic == typeof(List<>) || generic == typeof(IList<>))
             {
                 return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
@@ -215,6 +217,10 @@ public static class TypeMapping
                 return $"dict<{GetTypeName(args[0])},{GetTypeName(args[1])}>";
             }
         }
+
+        // Plain Data.@this (non-generic) — universal wrapper, maps to object
+        if (type == typeof(Data.@this))
+            return "object";
 
         // Handle arrays
         if (type.IsArray)
@@ -255,6 +261,10 @@ public static class TypeMapping
         // Unwrap nullable
         var underlying = Nullable.GetUnderlyingType(type);
         if (underlying != null) type = underlying;
+
+        // Unwrap Data<T>
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Data.@this<>))
+            type = type.GetGenericArguments()[0];
 
         // Enums: return all enum names
         if (type.IsEnum)

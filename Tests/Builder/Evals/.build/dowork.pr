@@ -1,6 +1,6 @@
 {
   "name": "DoWork",
-  "description": "DoWork goal writes a simple status message to output.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/DoWork.goal",
-  "prPath": "/.build/dowork.pr",
+  "path": "/Tests/Builder/Evals/DoWork.goal",
+  "prPath": "/Tests/Builder/Evals/.build/dowork.pr",
   "hash": "03f88dfd44bf837b5578989c945ad1d2d06c42390a187939d3c2598869b97817",
   "builderVersion": null,
   "isSetup": false,

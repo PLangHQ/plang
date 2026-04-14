@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls goal SendEmail with parameter to=%email% and subject=\u0022hi\u0022.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -46,8 +46,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/goal-call-params.goal",
-  "prPath": "/.build/goal-call-params.pr",
+  "path": "/Tests/Builder/Evals/goal-call-params.goal",
+  "prPath": "/Tests/Builder/Evals/.build/goal-call-params.pr",
   "hash": "73b3c818351eebb1b35bbe60e7733afa37a57d73b332cb66935c4e83be3446fa",
   "builderVersion": null,
   "isSetup": false,

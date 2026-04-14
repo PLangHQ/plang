@@ -1,275 +1,212 @@
-[
-  {
-    "name": "Start",
-    "description": "Sets up an event binding, intercepts output.write via a before-action hook to increment %writeCount%, fires two writes with an event removal in between, and asserts the counter behavior.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %writeCount% = 0",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "register event, fire, remove, fire again",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%writeCount%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": 0,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "before action output.write call Counter, write to %eventBinding%",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "event",
-            "action": "on",
-            "parameters": [
-              {
-                "name": "Type",
-                "value": "BeforeAction",
-                "type": "string"
-              },
-              {
-                "name": "GoalToCall",
-                "value": {
-                  "name": "Counter",
-                  "description": null,
-                  "parallel": false,
-                  "parameters": null,
-                  "prPath": "/.build/counter.pr"
-                },
-                "type": "goal.call"
-              },
-              {
-                "name": "GoalPattern",
-                "value": "",
-                "type": "string"
-              },
-              {
-                "name": "StepPattern",
-                "value": "",
-                "type": "string"
-              },
-              {
-                "name": "ActionPattern",
-                "value": "output.write",
-                "type": "string"
-              },
-              {
-                "name": "IsRegex",
-                "value": false,
-                "type": "bool"
-              },
-              {
-                "name": "Priority",
-                "value": 0,
-                "type": "int"
-              }
-            ],
-            "return": [
-              {
-                "name": "eventBinding",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "write out \u0022first\u0022",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "first",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "assert %writeCount% equals 1",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": 1,
-                "type": "int"
-              },
-              {
-                "name": "Actual",
-                "value": "%writeCount%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
-        "text": "remove event %eventBinding%",
-        "lineNumber": 7,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "event",
-            "action": "remove",
-            "parameters": [
-              {
-                "name": "EventId",
-                "value": "%eventBinding%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 5,
-        "text": "write out \u0022second\u0022",
-        "lineNumber": 8,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "second",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
-        "text": "assert %writeCount% equals 1",
-        "lineNumber": 9,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": 1,
-                "type": "int"
-              },
-              {
-                "name": "Actual",
-                "value": "%writeCount%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [],
-    "visibility": 1,
-    "path": "/EventRemove.test.goal",
-    "prPath": "/.build/eventremove.test.pr",
-    "hash": "c1aab1a156ef3b1154f5aa41533b3d21f86b54d517cced7f67aee12e06b04fc5",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %writeCount% = 0",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "register event, fire, remove, fire again",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%writeCount%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "before action output.write call Counter, write to %eventBinding%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out \u0022first\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "first",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %writeCount% equals 1",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%writeCount%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "remove event %eventBinding%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "event",
+          "action": "remove",
+          "parameters": [
+            {
+              "name": "EventId",
+              "value": "%eventBinding%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "write out \u0022second\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "second",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %writeCount% equals 1",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%writeCount%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Event/Remove/EventRemove.test.goal",
+  "prPath": "/Tests/Runtime2/Event/Remove/.build/eventremove.test.pr",
+  "hash": "c1aab1a156ef3b1154f5aa41533b3d21f86b54d517cced7f67aee12e06b04fc5",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

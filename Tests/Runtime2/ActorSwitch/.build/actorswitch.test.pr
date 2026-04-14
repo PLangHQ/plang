@@ -1,148 +1,124 @@
-[
-  {
-    "name": "Start",
-    "description": "Writes two output messages to different actors (default user, then system), sets a flag variable, and asserts the flag is true.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "write out \u0022user message\u0022",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "write to different actors",
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "user message",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "this"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "write out \u0022system message\u0022 actor=\u0022system\u0022",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "engine",
-            "action": "execute",
-            "parameters": [
-              {
-                "name": "Step",
-                "value": "",
-                "type": "string"
-              },
-              {
-                "name": "Actor",
-                "value": "system",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "set %actorTestDone% = true",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%actorTestDone%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "assert %actorTestDone% equals true",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": true,
-                "type": "bool"
-              },
-              {
-                "name": "Actual",
-                "value": "%actorTestDone%",
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/ActorSwitch.test.goal",
-    "prPath": "/.build/actorswitch.test.pr",
-    "hash": "341e120d2c886661e3602c2062ceabe2dd64c7e228984740b5b4e1689d1588fd",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022user message\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "write to different actors",
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "user message",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "this"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out \u0022system message\u0022 actor=\u0022system\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %actorTestDone% = true",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%actorTestDone%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %actorTestDone% equals true",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%actorTestDone%",
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/ActorSwitch/ActorSwitch.test.goal",
+  "prPath": "/Tests/Runtime2/ActorSwitch/.build/actorswitch.test.pr",
+  "hash": "341e120d2c886661e3602c2062ceabe2dd64c7e228984740b5b4e1689d1588fd",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

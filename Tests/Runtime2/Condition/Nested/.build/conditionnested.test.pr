@@ -1,386 +1,346 @@
-[
-  {
-    "name": "Start",
-    "description": "Sets up x/y and flags, then runs two nested condition checks (outer x\u003E5, inner y\u003E100). The inner false path should skip only the inner block, while the outer continues and sets outerAfterRan to yes; asserts verify innerRan remains no and outerAfterRan becomes yes.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %x% = 10",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "Test: nested conditions \u2014 inner false only skips inner block, outer continues",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%x%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": 10,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "set %y% = 3",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%y%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": 3,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "set %innerRan% = \u0022no\u0022",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%innerRan%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "no",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "set %outerAfterRan% = \u0022no\u0022",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%outerAfterRan%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "no",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
-        "text": "if %x% \u003E 5",
-        "lineNumber": 7,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%x%",
-                "type": "int"
-              },
-              {
-                "name": "Operator",
-                "value": "\u003E",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": 5,
-                "type": "int"
-              },
-              {
-                "name": "Negate",
-                "value": false,
-                "type": "bool"
-              }
-            ],
-            "return": [
-              {
-                "name": "__conditionReturn__",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 5,
-        "text": "if %y% \u003E 100",
-        "lineNumber": 8,
-        "indent": 1,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%y%",
-                "type": "string"
-              },
-              {
-                "name": "Operator",
-                "value": "\u003E",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": 100,
-                "type": "int"
-              },
-              {
-                "name": "Negate",
-                "value": false,
-                "type": "bool"
-              }
-            ],
-            "return": [
-              {
-                "name": "__conditionReturn__",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
-        "text": "set %innerRan% = \u0022yes\u0022",
-        "lineNumber": 9,
-        "indent": 2,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%innerRan%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "yes",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": [
-              {
-                "name": "asdefault",
-                "value": false,
-                "type": "bool"
-              }
-            ]
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 7,
-        "text": "set %outerAfterRan% = \u0022yes\u0022",
-        "lineNumber": 10,
-        "indent": 1,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%outerAfterRan%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "yes",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 8,
-        "text": "assert %innerRan% equals \u0022no\u0022, \u0022inner block should be skipped (y not \u003E 100)\u0022",
-        "lineNumber": 11,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "no",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%innerRan%",
-                "type": "data"
-              },
-              {
-                "name": "Message",
-                "value": "inner block should be skipped (y not \u003E 100)",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 9,
-        "text": "assert %outerAfterRan% equals \u0022yes\u0022, \u0022outer block step after inner-if should execute\u0022",
-        "lineNumber": 12,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "yes",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%outerAfterRan%",
-                "type": "data"
-              },
-              {
-                "name": "Message",
-                "value": "outer block step after inner-if should execute",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/Nested/ConditionNested.test.goal",
-    "prPath": "/Nested/.build/conditionnested.test.pr",
-    "hash": "fa1b29070a16b3c7970d353c4240aa79f32eb16faa7ed137f08e0c200504cbb0",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = 10",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: nested conditions \u2014 inner false only skips inner block, outer continues",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 10,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %y% = 3",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %innerRan% = \u0022no\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerRan%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "no",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %outerAfterRan% = \u0022no\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%outerAfterRan%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "no",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "if %x% \u003E 5",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%x%",
+              "type": "int"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "if %y% \u003E 100",
+      "lineNumber": 8,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%y%",
+              "type": "string"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 100,
+              "type": "int"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "set %innerRan% = \u0022yes\u0022",
+      "lineNumber": 9,
+      "indent": 2,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerRan%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "yes",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "set %outerAfterRan% = \u0022yes\u0022",
+      "lineNumber": 10,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%outerAfterRan%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "yes",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "assert %innerRan% equals \u0022no\u0022, \u0022inner block should be skipped (y not \u003E 100)\u0022",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "no",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%innerRan%",
+              "type": "data"
+            },
+            {
+              "name": "Message",
+              "value": "inner block should be skipped (y not \u003E 100)",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "assert %outerAfterRan% equals \u0022yes\u0022, \u0022outer block step after inner-if should execute\u0022",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "yes",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%outerAfterRan%",
+              "type": "data"
+            },
+            {
+              "name": "Message",
+              "value": "outer block step after inner-if should execute",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Condition/Nested/ConditionNested.test.goal",
+  "prPath": "/Tests/Runtime2/Condition/Nested/.build/conditionnested.test.pr",
+  "hash": "fa1b29070a16b3c7970d353c4240aa79f32eb16faa7ed137f08e0c200504cbb0",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

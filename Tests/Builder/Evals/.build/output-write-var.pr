@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Writes the value of %message% to output.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -32,8 +32,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/output-write-var.goal",
-  "prPath": "/.build/output-write-var.pr",
+  "path": "/Tests/Builder/Evals/output-write-var.goal",
+  "prPath": "/Tests/Builder/Evals/.build/output-write-var.pr",
   "hash": "32bee496e9f0496a6e95591fbdb5e78c63636ce94e80247665429de2832852e0",
   "builderVersion": null,
   "isSetup": false,

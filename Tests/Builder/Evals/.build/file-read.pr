@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Reads test.txt and stores its contents into %content%.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -54,8 +54,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/file-read.goal",
-  "prPath": "/.build/file-read.pr",
+  "path": "/Tests/Builder/Evals/file-read.goal",
+  "prPath": "/Tests/Builder/Evals/.build/file-read.pr",
   "hash": "bbd093948a1ed1c0839af0aca958519edf906ef6c17ed7ec0912b02dc3bd9d3e",
   "builderVersion": null,
   "isSetup": false,

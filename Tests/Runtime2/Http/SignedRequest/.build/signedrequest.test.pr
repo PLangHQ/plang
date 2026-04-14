@@ -1,158 +1,120 @@
-[
-  {
-    "name": "Start",
-    "description": "Fetches headers from httpbin, then conditionally proceeds based on whether the response is non-empty, and finally writes a confirmation message for the signed request scenario.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "get https://httpbin.org/headers, write to %response%",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": "Test: Signed request includes X-Signature header\nDefault behavior is signed \u2014 no unsigned flag",
-        "actions": [
-          {
-            "module": "http",
-            "action": "request",
-            "parameters": [
-              {
-                "name": "Url",
-                "value": "https://httpbin.org/headers",
-                "type": "string"
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "get https://httpbin.org/headers, write to %response%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Test: Signed request includes X-Signature header\nDefault behavior is signed \u2014 no unsigned flag",
+      "actions": [
+        {
+          "module": "http",
+          "action": "request",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "https://httpbin.org/headers",
+              "type": "string"
+            },
+            {
+              "name": "Method",
+              "value": "GET",
+              "type": "httpmethod"
+            },
+            {
+              "name": "OnStream",
+              "value": {
+                "name": "",
+                "description": null,
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
               },
-              {
-                "name": "Method",
-                "value": "GET",
-                "type": "httpmethod"
-              },
-              {
-                "name": "OnStream",
-                "value": {
-                  "name": "",
-                  "description": null,
-                  "parallel": false,
-                  "parameters": null,
-                  "prPath": null
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": [
-              {
-                "name": "response",
-                "value": null
-              }
-            ],
-            "defaults": [
-              {
-                "name": "contenttype",
-                "value": "application/json",
-                "type": "string"
-              },
-              {
-                "name": "encoding",
-                "value": "utf-8",
-                "type": "string"
-              },
-              {
-                "name": "timeoutinsec",
-                "value": 30,
-                "type": "int"
-              },
-              {
-                "name": "unsigned",
-                "value": false,
-                "type": "bool"
-              }
-            ]
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "if %response% is not empty then",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%response%",
-                "type": "string"
-              },
-              {
-                "name": "Operator",
-                "value": "isempty",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": "",
-                "type": "string"
-              },
-              {
-                "name": "Negate",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "write out \u0027Signed request returned data\u0027",
-        "lineNumber": 6,
-        "indent": 1,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "Signed request returned data",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [],
-    "visibility": 1,
-    "path": "/SignedRequest.test.goal",
-    "prPath": "/.build/signedrequest.test.pr",
-    "hash": "c616554ac67fad8477f13b1a065394cf31a6a95d3fb9d94fab8083f8e575088d",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+              "type": "goal.call"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "contenttype",
+              "value": "application/json",
+              "type": "string"
+            },
+            {
+              "name": "encoding",
+              "value": "utf-8",
+              "type": "string"
+            },
+            {
+              "name": "timeoutinsec",
+              "value": 30,
+              "type": "int"
+            },
+            {
+              "name": "unsigned",
+              "value": false,
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %response% is not empty then",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out \u0027Signed request returned data\u0027",
+      "lineNumber": 6,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Signed request returned data",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Http/SignedRequest/SignedRequest.test.goal",
+  "prPath": "/Tests/Runtime2/Http/SignedRequest/.build/signedrequest.test.pr",
+  "hash": "c616554ac67fad8477f13b1a065394cf31a6a95d3fb9d94fab8083f8e575088d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

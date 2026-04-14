@@ -1,52 +1,49 @@
-[
-  {
-    "name": "LogRetryError",
-    "description": "Sets the %order% variable to the literal string \u0022error\u0022.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %order% = \u0022error\u0022",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%order%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "error",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [],
-    "visibility": 1,
-    "path": "/LogRetryError.goal",
-    "prPath": "/.build/logretryerror.pr",
-    "hash": "51313fa12d49b8619cb31583b870ffabe109bfdafe268ce0f17242a2064d6148",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "LogRetryError",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %order% = \u0022error\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%order%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "error",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Error/Ordering/LogRetryError.goal",
+  "prPath": "/Tests/Runtime2/Error/Ordering/.build/logretryerror.pr",
+  "hash": "51313fa12d49b8619cb31583b870ffabe109bfdafe268ce0f17242a2064d6148",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

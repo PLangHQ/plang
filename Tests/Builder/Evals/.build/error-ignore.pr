@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls goal DoWork as system actor; ignores any error from the call.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -49,8 +49,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/error-ignore.goal",
-  "prPath": "/.build/error-ignore.pr",
+  "path": "/Tests/Builder/Evals/error-ignore.goal",
+  "prPath": "/Tests/Builder/Evals/.build/error-ignore.pr",
   "hash": "427fdee8e8c2806f38b5d582373fafc315faf05785a4a4ba1734b05b9b895ae2",
   "builderVersion": null,
   "isSetup": false,

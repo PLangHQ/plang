@@ -1,6 +1,6 @@
 {
   "name": "SendEmail",
-  "description": "Writes a log/output message indicating an email is being sent to %to% with subject %subject%.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/SendEmail.goal",
-  "prPath": "/.build/sendemail.pr",
+  "path": "/Tests/Builder/Evals/SendEmail.goal",
+  "prPath": "/Tests/Builder/Evals/.build/sendemail.pr",
   "hash": "074846cbf6558a105761e3f66e972ce7fb50a3afd065e0d54351ffa6b566e826",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Gets the count of %myList% and writes it to %total% by using list.count and then assigning the result to the requested variable.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -49,8 +49,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/list-count.goal",
-  "prPath": "/.build/list-count.pr",
+  "path": "/Tests/Builder/Evals/list-count.goal",
+  "prPath": "/Tests/Builder/Evals/.build/list-count.pr",
   "hash": "62b476e59126d6aff627fc06341162517f13482ff4535c3bc519f8a32ccd5abf",
   "builderVersion": null,
   "isSetup": false,

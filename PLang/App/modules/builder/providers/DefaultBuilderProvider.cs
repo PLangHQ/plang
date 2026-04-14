@@ -215,7 +215,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         }
 
         await ResolveGoalCallPaths(actions, app, context);
-        NormalizeParameterTypes(actions);
+        NormalizeParameterTypes(actions, modules);
 
         var validationErrors = new List<string>();
         foreach (var a in actions)
@@ -379,11 +379,29 @@ public class DefaultBuilderProvider : IBuilderProvider
     /// LLMs are non-deterministic — they may produce "false" (string) instead of false (bool).
     /// This runs at build time so the .pr file has correct types.
     /// </summary>
-    private static void NormalizeParameterTypes(Actions actions)
+    private static void NormalizeParameterTypes(Actions actions, App.Modules.@this modules)
     {
         foreach (var a in actions)
         {
             if (a.Parameters == null) continue;
+
+            // Stamp missing types from the action schema
+            var actionType = modules.GetActionType(a.Module, a.ActionName);
+            if (actionType != null)
+            {
+                var props = actionType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                foreach (var p in a.Parameters)
+                {
+                    if (p.Type != null) continue;
+                    var schemaProp = props.FirstOrDefault(sp =>
+                        string.Equals(sp.Name, p.Name, StringComparison.OrdinalIgnoreCase));
+                    if (schemaProp == null) continue;
+                    var typeName = TypeMapping.GetTypeName(schemaProp.PropertyType);
+                    if (typeName != "object")
+                        p.Type = new Data.Type(typeName);
+                }
+            }
+
             foreach (var p in a.Parameters)
             {
                 if (p.Value is not string strValue) continue;

@@ -1,675 +1,625 @@
-[
-  {
-    "name": "Start",
-    "description": "Sets variables and runs conditional goal calls for greater-than, less-than, equals, not-equals, string-contains, and a false (else) condition, then asserts expected result variables.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %x% = 10",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "greaterThan",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%x%",
-                "type": "string"
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = 10",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "greaterThan",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 10,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %x% \u003E 5, call WhenGreater",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %greaterResult% equals \u0022yes\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "yes",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%greaterResult%",
+              "type": "data"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %y% = 3",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": "lessThan",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%y%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "if %y% \u003C 10, call WhenLess",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%y%",
+              "type": "data"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003C",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "GoalIfTrue",
+              "value": {
+                "name": "WhenLess"
               },
-              {
-                "name": "Value",
-                "value": 10,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "if %x% \u003E 5, call WhenGreater",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%x%",
-                "type": "data"
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %lessResult% equals \u0022yes\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "yes",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%lessResult%",
+              "type": "data"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "set %z% = 5",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": "equals",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%z%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 5,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "if %z% == 5, call WhenEqual",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%z%",
+              "type": "data"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "GoalIfTrue",
+              "value": {
+                "name": "WhenEqual"
               },
-              {
-                "name": "Operator",
-                "value": "\u003E",
-                "type": "string"
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "assert %equalResult% equals \u0022yes\u0022",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "yes",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%equalResult%",
+              "type": "data"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "set %a% = 7",
+      "lineNumber": 18,
+      "indent": 0,
+      "comment": "notEquals",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%a%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 7,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "if %a% != 3, call WhenNotEqual",
+      "lineNumber": 19,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%a%",
+              "type": "data"
+            },
+            {
+              "name": "Operator",
+              "value": "!=",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "GoalIfTrue",
+              "value": {
+                "name": "WhenNotEqual"
               },
-              {
-                "name": "Right",
-                "value": 5,
-                "type": "int"
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "assert %notEqualResult% equals \u0022yes\u0022",
+      "lineNumber": 20,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "yes",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%notEqualResult%",
+              "type": "data"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "set %name% = \u0022hello world\u0022",
+      "lineNumber": 23,
+      "indent": 0,
+      "comment": "stringContains",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "hello world",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "if %name% contains \u0022world\u0022, call WhenContains",
+      "lineNumber": 24,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%name%",
+              "type": "data"
+            },
+            {
+              "name": "Operator",
+              "value": "contains",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "world",
+              "type": "string"
+            },
+            {
+              "name": "GoalIfTrue",
+              "value": {
+                "name": "WhenContains"
               },
-              {
-                "name": "GoalIfTrue",
-                "value": {
-                  "name": "WhenGreater"
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "assert %greaterResult% equals \u0022yes\u0022",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "yes",
-                "type": "string"
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 14,
+      "text": "assert %containsResult% equals \u0022yes\u0022",
+      "lineNumber": 25,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "yes",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%containsResult%",
+              "type": "data"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 15,
+      "text": "set %b% = 2",
+      "lineNumber": 28,
+      "indent": 0,
+      "comment": "falseCondition",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%b%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 2,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 16,
+      "text": "if %b% \u003E 100, call WhenGreater, else call WhenFalse",
+      "lineNumber": 29,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%b%",
+              "type": "data"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 100,
+              "type": "int"
+            },
+            {
+              "name": "GoalIfTrue",
+              "value": {
+                "name": "WhenGreater"
               },
-              {
-                "name": "Actual",
-                "value": "%greaterResult%",
-                "type": "data"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "set %y% = 3",
-        "lineNumber": 8,
-        "indent": 0,
-        "comment": "lessThan",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%y%",
-                "type": "string"
+              "type": "goal.call"
+            },
+            {
+              "name": "GoalIfFalse",
+              "value": {
+                "name": "WhenFalse"
               },
-              {
-                "name": "Value",
-                "value": 3,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
-        "text": "if %y% \u003C 10, call WhenLess",
-        "lineNumber": 9,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%y%",
-                "type": "data"
-              },
-              {
-                "name": "Operator",
-                "value": "\u003C",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": 10,
-                "type": "int"
-              },
-              {
-                "name": "GoalIfTrue",
-                "value": {
-                  "name": "WhenLess"
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 5,
-        "text": "assert %lessResult% equals \u0022yes\u0022",
-        "lineNumber": 10,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "yes",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%lessResult%",
-                "type": "data"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
-        "text": "set %z% = 5",
-        "lineNumber": 13,
-        "indent": 0,
-        "comment": "equals",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%z%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": 5,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 7,
-        "text": "if %z% == 5, call WhenEqual",
-        "lineNumber": 14,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%z%",
-                "type": "data"
-              },
-              {
-                "name": "Operator",
-                "value": "==",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": 5,
-                "type": "int"
-              },
-              {
-                "name": "GoalIfTrue",
-                "value": {
-                  "name": "WhenEqual"
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 8,
-        "text": "assert %equalResult% equals \u0022yes\u0022",
-        "lineNumber": 15,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "yes",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%equalResult%",
-                "type": "data"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 9,
-        "text": "set %a% = 7",
-        "lineNumber": 18,
-        "indent": 0,
-        "comment": "notEquals",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%a%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": 7,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 10,
-        "text": "if %a% != 3, call WhenNotEqual",
-        "lineNumber": 19,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%a%",
-                "type": "data"
-              },
-              {
-                "name": "Operator",
-                "value": "!=",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": 3,
-                "type": "int"
-              },
-              {
-                "name": "GoalIfTrue",
-                "value": {
-                  "name": "WhenNotEqual"
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 11,
-        "text": "assert %notEqualResult% equals \u0022yes\u0022",
-        "lineNumber": 20,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "yes",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%notEqualResult%",
-                "type": "data"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 12,
-        "text": "set %name% = \u0022hello world\u0022",
-        "lineNumber": 23,
-        "indent": 0,
-        "comment": "stringContains",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%name%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "hello world",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 13,
-        "text": "if %name% contains \u0022world\u0022, call WhenContains",
-        "lineNumber": 24,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%name%",
-                "type": "data"
-              },
-              {
-                "name": "Operator",
-                "value": "contains",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": "world",
-                "type": "string"
-              },
-              {
-                "name": "GoalIfTrue",
-                "value": {
-                  "name": "WhenContains"
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 14,
-        "text": "assert %containsResult% equals \u0022yes\u0022",
-        "lineNumber": 25,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "yes",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%containsResult%",
-                "type": "data"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 15,
-        "text": "set %b% = 2",
-        "lineNumber": 28,
-        "indent": 0,
-        "comment": "falseCondition",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%b%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": 2,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 16,
-        "text": "if %b% \u003E 100, call WhenGreater, else call WhenFalse",
-        "lineNumber": 29,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "condition",
-            "action": "if",
-            "parameters": [
-              {
-                "name": "Left",
-                "value": "%b%",
-                "type": "data"
-              },
-              {
-                "name": "Operator",
-                "value": "\u003E",
-                "type": "string"
-              },
-              {
-                "name": "Right",
-                "value": 100,
-                "type": "int"
-              },
-              {
-                "name": "GoalIfTrue",
-                "value": {
-                  "name": "WhenGreater"
-                },
-                "type": "goal.call"
-              },
-              {
-                "name": "GoalIfFalse",
-                "value": {
-                  "name": "WhenFalse"
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 17,
-        "text": "assert %falseResult% equals \u0022no\u0022",
-        "lineNumber": 30,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": "no",
-                "type": "string"
-              },
-              {
-                "name": "Actual",
-                "value": "%falseResult%",
-                "type": "data"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/Compound/ConditionCompound.test.goal",
-    "prPath": "/Compound/.build/conditioncompound.test.pr",
-    "hash": "9b189b9e28d5b45c9a83ddf05681b7b878ce40779e9bde3e606bf33dccdd647e",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 17,
+      "text": "assert %falseResult% equals \u0022no\u0022",
+      "lineNumber": 30,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "no",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%falseResult%",
+              "type": "data"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Condition/Compound/ConditionCompound.test.goal",
+  "prPath": "/Tests/Runtime2/Condition/Compound/.build/conditioncompound.test.pr",
+  "hash": "9b189b9e28d5b45c9a83ddf05681b7b878ce40779e9bde3e606bf33dccdd647e",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

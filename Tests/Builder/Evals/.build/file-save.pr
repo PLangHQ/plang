@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Saves the literal string \u0022hello world\u0022 to file test.txt using file.save.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/file-save.goal",
-  "prPath": "/.build/file-save.pr",
+  "path": "/Tests/Builder/Evals/file-save.goal",
+  "prPath": "/Tests/Builder/Evals/.build/file-save.pr",
   "hash": "bec2a848521737bea4ea44e1f1d62378e9a1543bc914ee6f98c9c152f9993979",
   "builderVersion": null,
   "isSetup": false,

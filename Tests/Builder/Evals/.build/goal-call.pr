@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls goal ProcessData (as provided in the step) with no explicit parameters.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -35,8 +35,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/goal-call.goal",
-  "prPath": "/.build/goal-call.pr",
+  "path": "/Tests/Builder/Evals/goal-call.goal",
+  "prPath": "/Tests/Builder/Evals/.build/goal-call.pr",
   "hash": "2d7e4efabb9e593f97d96b55a0668167a591d00599b9db3b79860580a19e4c7f",
   "builderVersion": null,
   "isSetup": false,

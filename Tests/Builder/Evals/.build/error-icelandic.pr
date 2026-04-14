@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls goal DoWork with error handling that calls HandleError (as specified).",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -50,8 +50,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/error-icelandic.goal",
-  "prPath": "/.build/error-icelandic.pr",
+  "path": "/Tests/Builder/Evals/error-icelandic.goal",
+  "prPath": "/Tests/Builder/Evals/.build/error-icelandic.pr",
   "hash": "d4f992e9870105e708b363f0fb8993a2881c7ae600c717aa2ad6bf19e8214a42",
   "builderVersion": null,
   "isSetup": false,

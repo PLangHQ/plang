@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls goal DoWork and, on error, calls HandleError.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -50,8 +50,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/error-japanese.goal",
-  "prPath": "/.build/error-japanese.pr",
+  "path": "/Tests/Builder/Evals/error-japanese.goal",
+  "prPath": "/Tests/Builder/Evals/.build/error-japanese.pr",
   "hash": "9d1f45602ef211a707fe1d27276f0432260759f15824c970b902733b51656eb1",
   "builderVersion": null,
   "isSetup": false,

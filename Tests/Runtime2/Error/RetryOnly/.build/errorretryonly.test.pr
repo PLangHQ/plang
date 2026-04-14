@@ -1,388 +1,357 @@
-[
-  {
-    "name": "Start",
-    "description": "Compiles the Start goal into engine actions: initializes retry tracking variables, calls BareRetryGoal with retry handling that exhausts then calls BareRetryCatcher, asserts exhaustion propagated and attempt count is 3; repeats the same pattern for TimedRetryGoal with timed retry over 500ms and asserts exhaustion and attempt count.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %bareRetryCaught% = false",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "bare retry \u2014 retries exhaust, error propagates to caller",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%bareRetryCaught%",
-                "type": "string"
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %bareRetryCaught% = false",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "bare retry \u2014 retries exhaust, error propagates to caller",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%bareRetryCaught%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %bareRetryAttempts% = 0",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "call BareRetryGoal, on error retry 2 times, then call BareRetryCatcher",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "BareRetryGoal",
+                "description": "",
+                "parallel": false,
+                "parameters": []
               },
-              {
-                "name": "Value",
-                "value": false,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "set %bareRetryAttempts% = 0",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%bareRetryAttempts%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": 0,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "call BareRetryGoal, on error retry 2 times, then call BareRetryCatcher",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "goal",
-            "action": "call",
-            "parameters": [
-              {
-                "name": "GoalName",
-                "value": {
-                  "name": "BareRetryGoal",
-                  "description": "",
-                  "parallel": false,
-                  "parameters": []
-                },
-                "type": "goal.call"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": {
-            "name": "BareRetryCatcher",
-            "description": null,
-            "parallel": false,
-            "parameters": null,
-            "prPath": null
-          },
-          "retryCount": 2,
-          "retryOverMs": null,
-          "order": 1,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": {
+        "goal": {
+          "name": "BareRetryCatcher",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
         },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
+        "retryCount": 2,
+        "retryOverMs": null,
+        "order": 1,
+        "ignoreError": false,
+        "message": null,
+        "statusCode": null,
+        "key": null
       },
-      {
-        "index": 3,
-        "text": "assert %bareRetryCaught% is true, \u0022bare retry exhaustion should propagate error to caller\u0022",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "isTrue",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%bareRetryCaught%",
-                "type": "object"
-              },
-              {
-                "name": "Message",
-                "value": "bare retry exhaustion should propagate error to caller",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
-        "text": "assert %bareRetryAttempts% equals 3, \u0022should have 1 initial \u002B 2 retries = 3 attempts\u0022",
-        "lineNumber": 7,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": 3,
-                "type": "int"
-              },
-              {
-                "name": "Actual",
-                "value": "%bareRetryAttempts%",
-                "type": "object"
-              },
-              {
-                "name": "Message",
-                "value": "should have 1 initial \u002B 2 retries = 3 attempts",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 5,
-        "text": "set %timedRetryCaught% = false",
-        "lineNumber": 9,
-        "indent": 0,
-        "comment": "timed retry \u2014 retry over milliseconds",
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%timedRetryCaught%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": false,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
-        "text": "set %timedRetryAttempts% = 0",
-        "lineNumber": 10,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%timedRetryAttempts%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": 0,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 7,
-        "text": "call TimedRetryGoal, on error retry 2 times over 500, then call TimedRetryCatcher",
-        "lineNumber": 11,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "goal",
-            "action": "call",
-            "parameters": [
-              {
-                "name": "GoalName",
-                "value": "TimedRetryGoal",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          },
-          {
-            "module": "goal",
-            "action": "call",
-            "parameters": [
-              {
-                "name": "GoalName",
-                "value": "TimedRetryCatcher",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": {
-            "name": "TimedRetryCatcher",
-            "description": null,
-            "parallel": false,
-            "parameters": null,
-            "prPath": null
-          },
-          "retryCount": 2,
-          "retryOverMs": 500,
-          "order": 1,
-          "ignoreError": false,
-          "message": null,
-          "statusCode": null,
-          "key": null
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %bareRetryCaught% is true, \u0022bare retry exhaustion should propagate error to caller\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%bareRetryCaught%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "bare retry exhaustion should propagate error to caller",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %bareRetryAttempts% equals 3, \u0022should have 1 initial \u002B 2 retries = 3 attempts\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%bareRetryAttempts%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "should have 1 initial \u002B 2 retries = 3 attempts",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "set %timedRetryCaught% = false",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": "timed retry \u2014 retry over milliseconds",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%timedRetryCaught%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "set %timedRetryAttempts% = 0",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%timedRetryAttempts%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "call TimedRetryGoal, on error retry 2 times over 500, then call TimedRetryCatcher",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": "TimedRetryGoal",
+              "type": "string"
+            }
+          ],
+          "defaults": null
         },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": "TimedRetryCatcher",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": {
+        "goal": {
+          "name": "TimedRetryCatcher",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": 2,
+        "retryOverMs": 500,
+        "order": 1,
+        "ignoreError": false,
+        "message": null,
+        "statusCode": null,
+        "key": null
       },
-      {
-        "index": 8,
-        "text": "assert %timedRetryCaught% is true, \u0022timed retry exhaustion should propagate error to caller\u0022",
-        "lineNumber": 12,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "isTrue",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%timedRetryCaught%",
-                "type": "object"
-              },
-              {
-                "name": "Message",
-                "value": "timed retry exhaustion should propagate error to caller",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 9,
-        "text": "assert %timedRetryAttempts% equals 3, \u0022timed retry should have 1 initial \u002B 2 retries = 3 attempts\u0022",
-        "lineNumber": 13,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "equals",
-            "parameters": [
-              {
-                "name": "Expected",
-                "value": 3,
-                "type": "int"
-              },
-              {
-                "name": "Actual",
-                "value": "%timedRetryAttempts%",
-                "type": "object"
-              },
-              {
-                "name": "Message",
-                "value": "timed retry should have 1 initial \u002B 2 retries = 3 attempts",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "subGoals": [],
-    "visibility": 1,
-    "path": "/ErrorRetryOnly.test.goal",
-    "prPath": "/.build/errorretryonly.test.pr",
-    "hash": "96a26b749f43cc186e430e26b98692236ef09efc220d4930e9241da1aa50525d",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "assert %timedRetryCaught% is true, \u0022timed retry exhaustion should propagate error to caller\u0022",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%timedRetryCaught%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "timed retry exhaustion should propagate error to caller",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "assert %timedRetryAttempts% equals 3, \u0022timed retry should have 1 initial \u002B 2 retries = 3 attempts\u0022",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%timedRetryAttempts%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "timed retry should have 1 initial \u002B 2 retries = 3 attempts",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Error/RetryOnly/ErrorRetryOnly.test.goal",
+  "prPath": "/Tests/Runtime2/Error/RetryOnly/.build/errorretryonly.test.pr",
+  "hash": "96a26b749f43cc186e430e26b98692236ef09efc220d4930e9241da1aa50525d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

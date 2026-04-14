@@ -1,52 +1,49 @@
-[
-  {
-    "name": "WhenNotEqual",
-    "description": "Sets %notEqualResult% to \u0027yes\u0027 (string).",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %notEqualResult% = \u0022yes\u0022",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%notEqualResult%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "yes",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/Compound/WhenNotEqual.goal",
-    "prPath": "/Compound/.build/whennotequal.pr",
-    "hash": "63094fc1d603d21557ff55e1e388dea437e0804ccd1f0fa964903093d823e476",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "WhenNotEqual",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %notEqualResult% = \u0022yes\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%notEqualResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "yes",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Condition/Compound/WhenNotEqual.goal",
+  "prPath": "/Tests/Runtime2/Condition/Compound/.build/whennotequal.pr",
+  "hash": "63094fc1d603d21557ff55e1e388dea437e0804ccd1f0fa964903093d823e476",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

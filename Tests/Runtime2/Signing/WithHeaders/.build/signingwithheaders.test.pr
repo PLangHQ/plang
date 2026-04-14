@@ -1,270 +1,238 @@
-[
-  {
-    "name": "Start",
-    "description": "Archives and recreates an identity, sets data and headers, signs the data with the headers, verifies against contract C0 using the same headers, then asserts verification success.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "Test: sign with headers, verify with matching headers",
-        "actions": [
-          {
-            "module": "identity",
-            "action": "archive",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "testSigner",
-                "type": "string"
-              },
-              {
-                "name": "Force",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: sign with headers, verify with matching headers",
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
       },
-      {
-        "index": 1,
-        "text": "create identity testSigner",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "identity",
-            "action": "create",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "testSigner",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "set %data% = { \u0022body\u0022: \u0022content\u0022 }",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%data%",
-                "type": "string"
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "create identity testSigner",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \u0022body\u0022: \u0022content\u0022 }",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "body": "content"
               },
-              {
-                "name": "Value",
-                "value": {
-                  "body": "content"
-                },
-                "type": "json"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "set %headers% = { \u0022method\u0022: \u0022POST\u0022, \u0022url\u0022: \u0022/api/send\u0022 }",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%headers%",
-                "type": "string"
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %headers% = { \u0022method\u0022: \u0022POST\u0022, \u0022url\u0022: \u0022/api/send\u0022 }",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%headers%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "method": "POST",
+                "url": "/api/send"
               },
-              {
-                "name": "Value",
-                "value": {
-                  "method": "POST",
-                  "url": "/api/send"
-                },
-                "type": "json"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
-        "text": "sign %data% with headers %headers%",
-        "lineNumber": 7,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "signing",
-            "action": "sign",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "%data%",
-                "type": "string"
-              },
-              {
-                "name": "Headers",
-                "value": "%headers%",
-                "type": "dict"
-              }
-            ],
-            "return": [
-              {
-                "name": "signature",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 5,
-        "text": "verify %data% with contracts [\u0027C0\u0027] and headers %headers%, write to %verifyResult%",
-        "lineNumber": 8,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "signing",
-            "action": "verify",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "%data%",
-                "type": "string"
-              },
-              {
-                "name": "Contracts",
-                "value": [
-                  "C0"
-                ],
-                "type": "list\u003Cobject\u003E"
-              },
-              {
-                "name": "Headers",
-                "value": "%headers%",
-                "type": "string"
-              }
-            ],
-            "return": [
-              {
-                "name": "verifyResult",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
-        "text": "assert %verifyResult.Success% is true, \u0022matching headers should verify\u0022",
-        "lineNumber": 9,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "assert",
-            "action": "isTrue",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "%verifyResult.Success%",
-                "type": "bool"
-              },
-              {
-                "name": "Message",
-                "value": "matching headers should verify",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/SigningWithHeaders.test.goal",
-    "prPath": "/.build/signingwithheaders.test.pr",
-    "hash": "50db935291681ff124a0177cc3b0b04b35178ca76197ee3ecca9afe30c3c620f",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "sign %data% with headers %headers%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Headers",
+              "value": "%headers%",
+              "type": "dict"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "verify %data% with contracts [\u0027C0\u0027] and headers %headers%, write to %verifyResult%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "C0"
+              ],
+              "type": "list\u003Cobject\u003E"
+            },
+            {
+              "name": "Headers",
+              "value": "%headers%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %verifyResult.Success% is true, \u0022matching headers should verify\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%verifyResult.Success%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "matching headers should verify",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Signing/WithHeaders/SigningWithHeaders.test.goal",
+  "prPath": "/Tests/Runtime2/Signing/WithHeaders/.build/signingwithheaders.test.pr",
+  "hash": "50db935291681ff124a0177cc3b0b04b35178ca76197ee3ecca9afe30c3c620f",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

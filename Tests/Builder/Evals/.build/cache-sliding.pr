@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Reads config.txt into %__data__% and stores it in %config% with a 10-minute sliding cache.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -54,8 +54,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/cache-sliding.goal",
-  "prPath": "/.build/cache-sliding.pr",
+  "path": "/Tests/Builder/Evals/cache-sliding.goal",
+  "prPath": "/Tests/Builder/Evals/.build/cache-sliding.pr",
   "hash": "d6a27da60c5dfff11b9561b174c60919275a2ab9360f0cad1b70c964bd8a613a",
   "builderVersion": null,
   "isSetup": false,

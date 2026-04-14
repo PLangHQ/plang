@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Writes the provided greeting to output.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {

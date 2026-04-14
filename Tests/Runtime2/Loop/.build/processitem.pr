@@ -1,0 +1,31 @@
+{
+  "name": "ProcessItem",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Item: %item%\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Loop/ProcessItem.goal",
+  "prPath": "/Tests/Runtime2/Loop/.build/processitem.pr",
+  "hash": "cfeb4d0ddd62c20bc3ca1f0a7102830269241c0d6547c72d7e16db832eae042d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

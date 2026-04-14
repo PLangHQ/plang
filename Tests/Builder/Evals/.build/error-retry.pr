@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls goal DoWork with retry-on-error (3 times).",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -43,8 +43,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/error-retry.goal",
-  "prPath": "/.build/error-retry.pr",
+  "path": "/Tests/Builder/Evals/error-retry.goal",
+  "prPath": "/Tests/Builder/Evals/.build/error-retry.pr",
   "hash": "d11b6ec44165f80da7d997c671d0b0b64d35ab1e950994ad84a4c633f2c1d05f",
   "builderVersion": null,
   "isSetup": false,

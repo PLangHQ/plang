@@ -1,534 +1,464 @@
-[
-  {
-    "name": "Start",
-    "description": "Builds a list, appends an item, then writes the list and derived values (count, first, last, contains check, join, and split).",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %myList% = [10, 20, 30]",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%myList%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": [
-                  10,
-                  20,
-                  30
-                ],
-                "type": "list"
-              },
-              {
-                "name": "Type",
-                "value": "list",
-                "type": "string"
-              },
-              {
-                "name": "AsDefault",
-                "value": false,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 1,
-        "text": "add 40 to %myList%",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "list",
-            "action": "add",
-            "parameters": [
-              {
-                "name": "ListName",
-                "value": "%myList%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": 40,
-                "type": "object"
-              },
-              {
-                "name": "AtIndex",
-                "value": -1,
-                "type": "int"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "write out \u0022After add: %myList%\u0022",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "After add: %myList%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "get count of %myList%, write to %count%",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "list",
-            "action": "count",
-            "parameters": [
-              {
-                "name": "ListName",
-                "value": "%myList%",
-                "type": "string"
-              }
-            ],
-            "return": [
-              {
-                "name": "count",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
-        "text": "write out \u0022Count: %count%\u0022",
-        "lineNumber": 6,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "Count: %count%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 5,
-        "text": "get first item from %myList%, write to %first%",
-        "lineNumber": 7,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "list",
-            "action": "first",
-            "parameters": [
-              {
-                "name": "ListName",
-                "value": "%myList%",
-                "type": "list"
-              }
-            ],
-            "return": [
-              {
-                "name": "first",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 6,
-        "text": "write out \u0022First: %first%\u0022",
-        "lineNumber": 8,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "First: %first%",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 7,
-        "text": "get last item from %myList%, write to %last%",
-        "lineNumber": 9,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "list",
-            "action": "last",
-            "parameters": [
-              {
-                "name": "ListName",
-                "value": "%myList%",
-                "type": "list"
-              }
-            ],
-            "return": [
-              {
-                "name": "last",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 8,
-        "text": "write out \u0022Last: %last%\u0022",
-        "lineNumber": 10,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "Last: %last%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 9,
-        "text": "check if %myList% contains 20, write to %has20%",
-        "lineNumber": 11,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "list",
-            "action": "contains",
-            "parameters": [
-              {
-                "name": "ListName",
-                "value": "%myList%",
-                "type": "list"
-              },
-              {
-                "name": "Value",
-                "value": 20,
-                "type": "object"
-              }
-            ],
-            "return": [
-              {
-                "name": "has20",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 10,
-        "text": "write out \u0022Contains 20: %has20%\u0022",
-        "lineNumber": 12,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "Contains 20: %has20%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 11,
-        "text": "join %myList% with separator \u0022, \u0022, write to %joined%",
-        "lineNumber": 13,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "list",
-            "action": "join",
-            "parameters": [
-              {
-                "name": "ListName",
-                "value": "%myList%",
-                "type": "list"
-              },
-              {
-                "name": "Separator",
-                "value": ", ",
-                "type": "string"
-              }
-            ],
-            "return": [
-              {
-                "name": "joined",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 12,
-        "text": "write out \u0022Joined: %joined%\u0022",
-        "lineNumber": 14,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "Joined: %joined%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 13,
-        "text": "split \u0022a-b-c\u0022 by \u0022-\u0022, write to %parts%",
-        "lineNumber": 15,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "list",
-            "action": "split",
-            "parameters": [
-              {
-                "name": "Value",
-                "value": "a-b-c",
-                "type": "string"
-              },
-              {
-                "name": "Separator",
-                "value": "-",
-                "type": "string"
-              },
-              {
-                "name": "RemoveEmpty",
-                "value": false,
-                "type": "bool"
-              }
-            ],
-            "return": [
-              {
-                "name": "parts",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 14,
-        "text": "write out \u0022Split: %parts%\u0022",
-        "lineNumber": 16,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "Split: %parts%",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/Start.goal",
-    "prPath": "/.build/start.pr",
-    "hash": "ee8e3b0c0bf597ba573709e7b7cb784ef470689d932ba99d6c8d3f433e9ff251",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %myList% = [10, 20, 30]",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": [
+                10,
+                20,
+                30
+              ],
+              "type": "list"
+            },
+            {
+              "name": "Type",
+              "value": "list",
+              "type": "string"
+            },
+            {
+              "name": "AsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "add 40 to %myList%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out \u0022After add: %myList%\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "After add: %myList%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "get count of %myList%, write to %count%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "count",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "write out \u0022Count: %count%\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Count: %count%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "get first item from %myList%, write to %first%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "first",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "list"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "write out \u0022First: %first%\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "First: %first%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "get last item from %myList%, write to %last%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "last",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "list"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "write out \u0022Last: %last%\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Last: %last%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "check if %myList% contains 20, write to %has20%",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "list"
+            },
+            {
+              "name": "Value",
+              "value": 20,
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "write out \u0022Contains 20: %has20%\u0022",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Contains 20: %has20%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "join %myList% with separator \u0022, \u0022, write to %joined%",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "join",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "list"
+            },
+            {
+              "name": "Separator",
+              "value": ", ",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "write out \u0022Joined: %joined%\u0022",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Joined: %joined%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "split \u0022a-b-c\u0022 by \u0022-\u0022, write to %parts%",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "split",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "a-b-c",
+              "type": "string"
+            },
+            {
+              "name": "Separator",
+              "value": "-",
+              "type": "string"
+            },
+            {
+              "name": "RemoveEmpty",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 14,
+      "text": "write out \u0022Split: %parts%\u0022",
+      "lineNumber": 16,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Split: %parts%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/ListOps/Start.goal",
+  "prPath": "/Tests/Runtime2/ListOps/.build/start.pr",
+  "hash": "ee8e3b0c0bf597ba573709e7b7cb784ef470689d932ba99d6c8d3f433e9ff251",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

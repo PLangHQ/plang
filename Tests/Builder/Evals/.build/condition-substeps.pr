@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Conditionally writes \u0027ready\u0027 to the out channel when %ready% is true.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -45,25 +45,7 @@
       "lineNumber": 3,
       "indent": 1,
       "comment": null,
-      "actions": [
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {
-              "name": "Data",
-              "value": "ready",
-              "type": "string"
-            },
-            {
-              "name": "Channels",
-              "value": "out",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -73,8 +55,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/condition-substeps.goal",
-  "prPath": "/.build/condition-substeps.pr",
+  "path": "/Tests/Builder/Evals/condition-substeps.goal",
+  "prPath": "/Tests/Builder/Evals/.build/condition-substeps.pr",
   "hash": "f72286a93e515a5420d30e387ff3ece72a653993ba8d5561bebc15378432dd72",
   "builderVersion": null,
   "isSetup": false,

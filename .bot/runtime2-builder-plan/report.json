@@ -41,6 +41,46 @@
       "plan": "",
       "actions": [],
       "after": {}
+    },
+    {
+      "id": "c0d3r006-builder-data-t-unwrap-0001",
+      "bot": "coder",
+      "timestamp_start": "2026-04-14T14:00:00Z",
+      "timestamp_end": null,
+      "intent": "Make builder correctly unwrap Data<T> in type names, valid values, and parameter type stamping",
+      "before": {
+        "assumptions": "GetTypeName doesn't unwrap Data<T>, GetValidValues doesn't unwrap Data<T>, NormalizeParameterTypes doesn't stamp missing types from schema. UnwrapType already exists for schema discovery but isn't used elsewhere.",
+        "risk": "Low — additive changes to existing methods, no behavior change for non-Data types"
+      },
+      "plan": "1. Add Data<T> unwrapping to GetTypeName() and GetValidValues() in TypeMapping.cs. 2. Add parameter type stamping from action schema in NormalizeParameterTypes(). 3. Add C# tests for all changes. 4. Verify with dotnet build and test run.",
+      "actions": [
+        {
+          "paths": ["PLang/App/Utils/TypeMapping.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Data<T> unwrapping in GetTypeName() and GetValidValues()"
+        },
+        {
+          "paths": ["PLang/App/modules/builder/providers/DefaultBuilderProvider.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added parameter type stamping from action schema in NormalizeParameterTypes()"
+        },
+        {
+          "paths": ["PLang.Tests/App/Utility/TypeMappingTests.cs", "PLang.Tests/App/Engine/Modules/DescribeTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "6 new tests for Data<T> unwrapping and Describe integration"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green — 2062/2064 tests pass (2 pre-existing failures)",
+        "notes": "Ready for end-to-end verification with plang build"
+      }
     }
   ]
 }

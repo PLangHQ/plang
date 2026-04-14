@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Reads config.txt and stores its contents into %config%, caching the read for 5 minutes.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -54,8 +54,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/cache-simple.goal",
-  "prPath": "/.build/cache-simple.pr",
+  "path": "/Tests/Builder/Evals/cache-simple.goal",
+  "prPath": "/Tests/Builder/Evals/.build/cache-simple.pr",
   "hash": "625d3b26b510b2d068cc65f60e02371916c5dc7dc78870c423aecf53cbf65dae",
   "builderVersion": null,
   "isSetup": false,

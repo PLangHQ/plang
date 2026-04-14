@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Conditional call: if %x% \u003E 5 then call WhenBig, else call WhenSmall.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -72,8 +72,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/condition-else.goal",
-  "prPath": "/.build/condition-else.pr",
+  "path": "/Tests/Builder/Evals/condition-else.goal",
+  "prPath": "/Tests/Builder/Evals/.build/condition-else.pr",
   "hash": "c4a9e7862b0cc2af30a3fca1ed447161128f4b397c70cda5ed1a9fcef8e27049",
   "builderVersion": null,
   "isSetup": false,

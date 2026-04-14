@@ -37,6 +37,32 @@ public class DescribeTests
 
         await Assert.That(action.ReturnType).IsNull();
     }
+
+    [Test]
+    public async Task Describe_DataWrappedProperty_ShowsInnerTypeName()
+    {
+        var modules = new AppModules();
+        modules.RegisterType("testmod", "datapath", typeof(FakeDataPathAction));
+
+        var actions = modules.Describe();
+        var action = actions.First(a => a.Module == "testmod" && a.ActionName == "datapath");
+
+        var pathParam = action.Parameters!.FirstOrDefault(d => d.Name == "Path");
+        await Assert.That(pathParam).IsNotNull();
+        await Assert.That(pathParam!.Value!.ToString()).Contains("path");
+    }
+}
+
+// Fake action with Data<T> wrapped property
+[global::App.modules.Action("datapath")]
+public record FakeDataPathAction : global::App.modules.ICodeGenerated
+{
+    public global::App.Data.@this<global::App.FileSystem.Path> Path { get; init; }
+
+    public Task<Data> Run() => Task.FromResult(Data.Ok());
+
+    public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action,
+        global::App.Actor.Context.@this context) => Task.FromResult(Data.Ok());
 }
 
 // Fake action with concrete return type

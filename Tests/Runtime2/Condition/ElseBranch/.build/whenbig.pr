@@ -1,52 +1,49 @@
-[
-  {
-    "name": "WhenBig",
-    "description": "WhenBig sets %result% to the string \u0022big\u0022.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "set %result% = \u0022big\u0022",
-        "lineNumber": 2,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "variable",
-            "action": "set",
-            "parameters": [
-              {
-                "name": "Name",
-                "value": "%result%",
-                "type": "string"
-              },
-              {
-                "name": "Value",
-                "value": "big",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/ElseBranch/WhenBig.goal",
-    "prPath": "/ElseBranch/.build/whenbig.pr",
-    "hash": "3dffbc0e1cdf035691216d1a5708f49cd6c5dcd74c5e886b58fb647d91f19719",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+{
+  "name": "WhenBig",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022big\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "big",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Condition/ElseBranch/WhenBig.goal",
+  "prPath": "/Tests/Runtime2/Condition/ElseBranch/.build/whenbig.pr",
+  "hash": "3dffbc0e1cdf035691216d1a5708f49cd6c5dcd74c5e886b58fb647d91f19719",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

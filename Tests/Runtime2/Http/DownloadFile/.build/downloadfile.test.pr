@@ -1,184 +1,149 @@
-[
-  {
-    "name": "Start",
-    "description": "Deletes any existing test file, downloads a new binary to downloads/test.bin, checks that the file exists, writes a confirmation message, then deletes the file. The initial delete is set to ignore errors.",
-    "comment": null,
-    "steps": [
-      {
-        "index": 0,
-        "text": "delete file \u0027downloads/test.bin\u0027, on error ignore",
-        "lineNumber": 3,
-        "indent": 0,
-        "comment": "Test: Download file, verify file exists",
-        "actions": [
-          {
-            "module": "file",
-            "action": "delete",
-            "parameters": [
-              {
-                "name": "Path",
-                "value": "downloads/test.bin",
-                "type": "path"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": {
-          "goal": null,
-          "retryCount": null,
-          "retryOverMs": null,
-          "order": null,
-          "ignoreError": true,
-          "message": null,
-          "statusCode": null,
-          "key": null
-        },
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "delete file \u0027downloads/test.bin\u0027, on error ignore",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: Download file, verify file exists",
+      "actions": [
+        {
+          "module": "file",
+          "action": "delete",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "downloads/test.bin",
+              "type": "path"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
       },
-      {
-        "index": 1,
-        "text": "download https://httpbin.org/bytes/100, save to downloads/test.bin, unsigned",
-        "lineNumber": 4,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "http",
-            "action": "download",
-            "parameters": [
-              {
-                "name": "Url",
-                "value": "https://httpbin.org/bytes/100",
-                "type": "string"
-              },
-              {
-                "name": "SaveTo",
-                "value": "downloads/test.bin",
-                "type": "path"
-              },
-              {
-                "name": "Unsigned",
-                "value": true,
-                "type": "bool"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 2,
-        "text": "if file \u0027downloads/test.bin\u0027 exists then",
-        "lineNumber": 5,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "file",
-            "action": "exists",
-            "parameters": [
-              {
-                "name": "Path",
-                "value": "downloads/test.bin",
-                "type": "path"
-              }
-            ],
-            "return": [
-              {
-                "name": "__conditionReturn__",
-                "value": null
-              }
-            ],
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 3,
-        "text": "write out \u0027Downloaded file exists\u0027",
-        "lineNumber": 6,
-        "indent": 1,
-        "comment": null,
-        "actions": [
-          {
-            "module": "output",
-            "action": "write",
-            "parameters": [
-              {
-                "name": "Data",
-                "value": "Downloaded file exists",
-                "type": "string"
-              },
-              {
-                "name": "Channels",
-                "value": "this",
-                "type": "string"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      },
-      {
-        "index": 4,
-        "text": "delete file \u0027downloads/test.bin\u0027",
-        "lineNumber": 7,
-        "indent": 0,
-        "comment": null,
-        "actions": [
-          {
-            "module": "file",
-            "action": "delete",
-            "parameters": [
-              {
-                "name": "Path",
-                "value": "downloads/test.bin",
-                "type": "path"
-              }
-            ],
-            "return": null,
-            "defaults": null
-          }
-        ],
-        "intent": null,
-        "onError": null,
-        "cache": null,
-        "timeout": null,
-        "waitForExecution": true
-      }
-    ],
-    "goals": [],
-    "visibility": 1,
-    "path": "/DownloadFile.test.goal",
-    "prPath": "/.build/downloadfile.test.pr",
-    "hash": "72245deaf817709ed98698d8f86687529b6fe2f8e3e95038407cb3033d2d65ff",
-    "builderVersion": "0.3",
-    "isSetup": false,
-    "isEvent": false,
-    "isSystem": false,
-    "isTest": false,
-    "inputParameters": null
-  }
-]
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "download https://httpbin.org/bytes/100, save to downloads/test.bin, unsigned",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "if file \u0027downloads/test.bin\u0027 exists then",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "exists",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "downloads/test.bin",
+              "type": "path"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "write out \u0027Downloaded file exists\u0027",
+      "lineNumber": 6,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Downloaded file exists",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "delete file \u0027downloads/test.bin\u0027",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "delete",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "downloads/test.bin",
+              "type": "path"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Http/DownloadFile/DownloadFile.test.goal",
+  "prPath": "/Tests/Runtime2/Http/DownloadFile/.build/downloadfile.test.pr",
+  "hash": "72245deaf817709ed98698d8f86687529b6fe2f8e3e95038407cb3033d2d65ff",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

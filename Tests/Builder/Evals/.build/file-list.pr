@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Lists files in the current directory and stores the result into %files%.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -49,8 +49,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/file-list.goal",
-  "prPath": "/.build/file-list.pr",
+  "path": "/Tests/Builder/Evals/file-list.goal",
+  "prPath": "/Tests/Builder/Evals/.build/file-list.pr",
   "hash": "c4eb3b3127f8f83b311738bbc9433d97f05afe126afd18353aeb288bbdccac97",
   "builderVersion": null,
   "isSetup": false,

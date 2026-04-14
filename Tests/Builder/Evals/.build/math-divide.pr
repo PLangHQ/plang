@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Divides 10 by 4 and stores the result in %result%.",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
   "comment": null,
   "steps": [
     {
@@ -54,8 +54,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/math-divide.goal",
-  "prPath": "/.build/math-divide.pr",
+  "path": "/Tests/Builder/Evals/math-divide.goal",
+  "prPath": "/Tests/Builder/Evals/.build/math-divide.pr",
   "hash": "e975798dbc11a774f299be1fa11414e55adf241b35277e165b8bc817e54026a0",
   "builderVersion": null,
   "isSetup": false,
