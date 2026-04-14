@@ -9,10 +9,10 @@ namespace App.Goals.Goal.Steps.Step;
 /// <summary>
 /// Represents a step within a goal for App.
 /// </summary>
-public sealed partial class @this : Data.@this<@this>
+public sealed partial class @this : modules.IDataWrappable
 {
     [JsonIgnore]
-    public new Actor.Context.@this? Context { get; set; }
+    public Actor.Context.@this? Context { get; set; }
 
     /// <summary>
     /// Whether this step is disabled for the current execution.
@@ -240,6 +240,20 @@ public sealed partial class @this : Data.@this<@this>
         handler.Goal.Parameters.Add(new Data.@this("!error", failedResult.Error));
         handler.Goal.Action ??= Actions.Count > 0 ? Actions[0] : null;
         return await app.RunGoalAsync(handler.Goal, context);
+    }
+
+    /// <summary>
+    /// OBP: Step is responsible for its own Data representation.
+    /// Returns a cached per-execution Data&lt;Step&gt; wrapper from the context.
+    /// </summary>
+    public Data.@this AsData(Actor.Context.@this context)
+    {
+        return context.GetOrCreate(this, () =>
+        {
+            var data = new Data.@this<@this>("", this);
+            data.Context = context;
+            return data;
+        });
     }
 
     public @this Clone()

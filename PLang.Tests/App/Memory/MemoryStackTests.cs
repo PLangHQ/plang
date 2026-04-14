@@ -1016,12 +1016,12 @@ public class VariablesAccessorTests
         var goal = new global::App.Goals.Goal.@this { Name = "MyGoal" };
         stack.Set("goal", goal);
 
-        // Should get the Goal itself back, not a wrapper
+        // Should get a Data wrapping the Goal back
         var retrieved = stack.Get("goal");
         await Assert.That(retrieved).IsNotNull();
 
-        // The retrieved Data should BE the Goal (same object)
-        await Assert.That(object.ReferenceEquals(retrieved, goal)).IsTrue();
+        // The retrieved Data's Value should BE the Goal (same object)
+        await Assert.That(object.ReferenceEquals(retrieved!.Value, goal)).IsTrue();
     }
 }
 

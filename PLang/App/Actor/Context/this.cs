@@ -264,6 +264,20 @@ public sealed class @this : IDisposable
         return clone;
     }
 
+    // --- Data wrapper cache for structural types (Goal, Step, Action) ---
+    // Per-execution: same domain object → same Data wrapper within this context.
+    private readonly ConcurrentDictionary<object, Data.@this> _wrapperCache = new();
+
+    /// <summary>
+    /// Gets or creates a cached Data&lt;T&gt; wrapper for a structural domain object.
+    /// Ensures identity: same object → same wrapper within this execution context.
+    /// </summary>
+    public Data.@this<T> GetOrCreate<T>(T key, Func<Data.@this<T>> factory) where T : class
+    {
+        var data = _wrapperCache.GetOrAdd(key, _ => factory());
+        return (Data.@this<T>)data;
+    }
+
     private readonly ConcurrentDictionary<object, object> _eventContainers = new();
     private readonly ConcurrentDictionary<string, byte> _activeEventBindings = new();
 

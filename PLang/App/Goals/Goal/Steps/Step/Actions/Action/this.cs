@@ -6,8 +6,22 @@ namespace App.Goals.Goal.Steps.Step.Actions.Action;
 /// A single action within a step — the LLM-mapped unit of execution.
 /// Identifies the module and handler to invoke, with typed parameters, return mappings, and defaults.
 /// </summary>
-public sealed partial class @this : Data.@this<@this>
+public sealed partial class @this : modules.IDataWrappable
 {
+    /// <summary>
+    /// OBP: Action is responsible for its own Data representation.
+    /// Returns a cached per-execution Data&lt;Action&gt; wrapper from the context.
+    /// </summary>
+    public Data.@this AsData(Actor.Context.@this context)
+    {
+        return context.GetOrCreate(this, () =>
+        {
+            var data = new Data.@this<@this>("", this);
+            data.Context = context;
+            return data;
+        });
+    }
+
     [JsonIgnore]
     public System.Type? ParameterSchema { get; init; }
     [Store, LlmBuilder, Debug, Default]

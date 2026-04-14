@@ -19,7 +19,7 @@ public enum Visibility
 /// <summary>
 /// Represents a goal (a .goal file or sub-goal) for App.
 /// </summary>
-public sealed partial class @this : Data.@this<@this>
+public sealed partial class @this : modules.IDataWrappable
 {
     private modules.Events? _events;
     [JsonIgnore]
@@ -29,7 +29,7 @@ public sealed partial class @this : Data.@this<@this>
         set => _events = value;
     }
     [Store, LlmBuilder, Debug, Default]
-    public new string Name { get; init; } = "";
+    public string Name { get; init; } = "";
 
     [Store, LlmBuilder, Debug, Default]
     public string? Description { get; set; }
@@ -70,7 +70,7 @@ public sealed partial class @this : Data.@this<@this>
     }
 
     [Store, Debug]
-    public new string? Path { get; set; }
+    public string? Path { get; set; }
 
     [Store, Debug]
     public string? PrPath
@@ -153,7 +153,7 @@ public sealed partial class @this : Data.@this<@this>
 
     [LlmIgnore]
     [JsonIgnore]
-    public new @this? Parent { get; set; }
+    public @this? Parent { get; set; }
 
     [LlmIgnore]
     [JsonIgnore]
@@ -266,6 +266,20 @@ public sealed partial class @this : Data.@this<@this>
         {
             context.Goal = previousGoal;
         }
+    }
+
+    /// <summary>
+    /// OBP: Goal is responsible for its own Data representation.
+    /// Returns a cached per-execution Data&lt;Goal&gt; wrapper from the context.
+    /// </summary>
+    public Data.@this AsData(Actor.Context.@this context)
+    {
+        return context.GetOrCreate(this, () =>
+        {
+            var data = new Data.@this<@this>("", this);
+            data.Context = context;
+            return data;
+        });
     }
 
     public static @this NotFound(string name) => new()
