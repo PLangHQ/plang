@@ -39,28 +39,28 @@ public sealed class OpenAiProvider : ILlmProvider
         var endpoint = await ResolveConfigAsync(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
             "https://api.openai.com/v1/chat/completions");
         var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);
-        var model = string.IsNullOrWhiteSpace(action.Model) ? null : action.Model;
+        var model = string.IsNullOrWhiteSpace(action.Model?.Value) ? null : action.Model.Value;
         model ??= await ResolveConfigAsync(settings, "llm.model", null, "gpt-5.4-nano");
 
         // --- Validate ---
-        if (action.Messages.Count == 0)
+        if (action.Messages.Value!.Count == 0)
             return App.Data.@this.FromError(new ActionError("Messages list is empty", "ValidationError", 400));
 
         // --- Build messages ---
-        var messages = CloneMessages(action.Messages);
+        var messages = CloneMessages(action.Messages.Value!);
         string? schema;
 
-        if (action.ContinuePreviousConversation)
+        if (action.ContinuePreviousConversation.Value)
         {
             var prev = context.Get<List<LlmMessage>>(ConversationKey);
             if (prev != null)
                 messages.InsertRange(0, prev);
 
-            schema = action.Schema ?? context.Get<string>(SchemaKey);
+            schema = action.Schema?.Value ?? context.Get<string>(SchemaKey);
         }
         else
         {
-            schema = action.Schema;
+            schema = action.Schema?.Value;
             context.Set<List<LlmMessage>>(ConversationKey, null!);
             context.Set<string>(SchemaKey, null!);
         }
@@ -69,7 +69,7 @@ public sealed class OpenAiProvider : ILlmProvider
         var originalMessages = CloneMessages(messages);
 
         // Append format/schema instruction
-        var formatInstruction = BuildFormatInstruction(action.Format, schema);
+        var formatInstruction = BuildFormatInstruction(action.Format?.Value, schema);
         if (formatInstruction != null)
         {
             var systemMsg = messages.Find(m => m.Role == "system");
@@ -81,9 +81,9 @@ public sealed class OpenAiProvider : ILlmProvider
 
         // --- Cache check ---
         string? cacheKey = null;
-        if (action.Cache && action.Tools == null)
+        if (action.Cache.Value && action.Tools?.Value == null)
         {
-            cacheKey = ComputeCacheKey(messages, model, action.Temperature, schema, action.Format);
+            cacheKey = ComputeCacheKey(messages, model, action.Temperature.Value, schema, action.Format?.Value);
             var cached = await settings.Get(CacheTable, cacheKey);
             if (cached.Success && cached.Value != null)
             {
@@ -93,9 +93,9 @@ public sealed class OpenAiProvider : ILlmProvider
 
         // --- Build tools for API ---
         List<object>? apiTools = null;
-        if (action.Tools != null && action.Tools.Count > 0)
+        if (action.Tools?.Value != null && action.Tools.Value.Count > 0)
         {
-            apiTools = action.Tools.Select(t => (object)new Dictionary<string, object>
+            apiTools = action.Tools.Value.Select(t => (object)new Dictionary<string, object>
             {
                 ["type"] = "function",
                 ["function"] = new Dictionary<string, object?>
@@ -122,14 +122,14 @@ public sealed class OpenAiProvider : ILlmProvider
             {
                 ["model"] = model,
                 ["messages"] = ToApiMessages(messages, app.FileSystem),
-                ["temperature"] = action.Temperature,
-                ["max_completion_tokens"] = action.MaxTokens
+                ["temperature"] = action.Temperature.Value,
+                ["max_completion_tokens"] = action.MaxTokens.Value
             };
-            if (action.TopP.HasValue)
-                body["top_p"] = action.TopP.Value;
+            if (action.TopP?.Value is double topPValue)
+                body["top_p"] = topPValue;
             if (apiTools != null)
                 body["tools"] = apiTools;
-            if (action.OnStream != null)
+            if (action.OnStream?.Value != null)
                 body["stream"] = true;
 
             // Remove null entries
@@ -143,18 +143,18 @@ public sealed class OpenAiProvider : ILlmProvider
             var httpAction = new request
             {
                 Context = context,
-                Url = endpoint,
-                Method = PlangHttpMethod.POST,
-                Body = body,
-                Headers = headers,
-                Unsigned = true,
-                TimeoutInSec = 120,
+                Url = new Data.@this<string>("", endpoint),
+                Method = new Data.@this<PlangHttpMethod>("", PlangHttpMethod.POST),
+                Body = new Data.@this("", body),
+                Headers = new Data.@this<Dictionary<string, object>>("", headers),
+                Unsigned = new Data.@this<bool>("", true),
+                TimeoutInSec = new Data.@this<int>("", 120),
                 OnStream = action.OnStream,
-                StreamAs = action.OnStream != null ? StreamFormat.SSE : default
+                StreamAs = action.OnStream?.Value != null ? new Data.@this<StreamFormat>("", StreamFormat.SSE) : default
             };
 
             Data.@this httpResult = await app.RunAction(httpAction, context);
-            if (action.OnStream != null)
+            if (action.OnStream?.Value != null)
             {
                 // TODO: streaming tool call accumulation needs work
                 // For now, streaming returns the accumulated result via the callback
@@ -193,14 +193,14 @@ public sealed class OpenAiProvider : ILlmProvider
             // --- Tool calls? ---
             if (message.TryGetProperty("tool_calls", out var toolCallsProp) && toolCallsProp.GetArrayLength() > 0)
             {
-                if (toolCallCount >= action.MaxToolCalls)
+                if (toolCallCount >= action.MaxToolCalls.Value)
                     break; // hit limit
 
                 lastContent = content;
                 var toolCalls = ParseToolCalls(toolCallsProp);
 
                 // Slice to remaining budget — never execute more tools than the limit allows
-                int remaining = action.MaxToolCalls - toolCallCount;
+                int remaining = action.MaxToolCalls.Value - toolCallCount;
                 if (toolCalls.Count > remaining)
                     toolCalls = toolCalls.Take(remaining).ToList();
 
@@ -214,7 +214,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
                 // Determine parallel execution
                 bool allParallel = toolCalls.All(tc =>
-                    action.Tools?.Find(t => t.Name == tc.Name)?.Parallel == true);
+                    action.Tools?.Value?.Find(t => t.Name == tc.Name)?.Parallel == true);
 
                 // Execute tools
                 List<string> results;
@@ -251,7 +251,7 @@ public sealed class OpenAiProvider : ILlmProvider
             var rawResponse = content ?? "";
 
             // --- Format extraction ---
-            var effectiveFormat = action.Format ?? (schema != null ? "json" : null);
+            var effectiveFormat = action.Format?.Value ?? (schema != null ? "json" : null);
             var extracted = ExtractResponse(rawResponse, effectiveFormat);
 
             // --- JSON validation ---
@@ -274,12 +274,12 @@ public sealed class OpenAiProvider : ILlmProvider
             }
 
             // --- Custom validation ---
-            if (action.OnValidateResponse != null)
+            if (action.OnValidateResponse?.Value != null)
             {
                 var validationCall = new GoalCall
                 {
-                    Name = action.OnValidateResponse.Name,
-                    PrPath = action.OnValidateResponse.PrPath,
+                    Name = action.OnValidateResponse.Value.Name,
+                    PrPath = action.OnValidateResponse.Value.PrPath,
                     Parameters = new List<Data.@this> { new Data.@this("response", extracted) }
                 };
                 var validationResult = await app.RunGoalAsync(validationCall, context);
@@ -288,7 +288,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 {
                     var validationError = validationResult.Error?.Message ?? "Unknown validation error";
 
-                    if (validationRetries >= action.MaxValidationRetries)
+                    if (validationRetries >= action.MaxValidationRetries.Value)
                     {
                         Console.WriteLine($"  Validation failed (no retries left): {validationError}");
                         return App.Data.@this.FromError(new ActionError(
@@ -297,7 +297,7 @@ public sealed class OpenAiProvider : ILlmProvider
                     }
 
                     validationRetries++;
-                    Console.WriteLine($"  Validation failed (retry {validationRetries}/{action.MaxValidationRetries}): {validationError}");
+                    Console.WriteLine($"  Validation failed (retry {validationRetries}/{action.MaxValidationRetries.Value}): {validationError}");
                     messages.Add(new LlmMessage
                     {
                         Role = "user",
@@ -343,8 +343,8 @@ public sealed class OpenAiProvider : ILlmProvider
             SetProp(result, "RawResponse", rawResponse);
             SetProp(result, "Model", model);
             SetProp(result, "Messages", messages);
-            SetProp(result, "Temperature", action.Temperature);
-            SetProp(result, "MaxTokens", action.MaxTokens);
+            SetProp(result, "Temperature", action.Temperature.Value);
+            SetProp(result, "MaxTokens", action.MaxTokens.Value);
             SetProp(result, "Cached", false);
             SetProp(result, "PromptTokens", totalPromptTokens);
             SetProp(result, "CompletionTokens", totalCompletionTokens);
@@ -377,12 +377,12 @@ public sealed class OpenAiProvider : ILlmProvider
         var context = action.Context;
 
         // OnToolCall — starting
-        if (action.OnToolCall != null)
+        if (action.OnToolCall?.Value != null)
         {
             var startCall = new GoalCall
             {
-                Name = action.OnToolCall.Name,
-                PrPath = action.OnToolCall.PrPath,
+                Name = action.OnToolCall.Value.Name,
+                PrPath = action.OnToolCall.Value.PrPath,
                 Parameters = new List<Data.@this>
                 {
                     new Data.@this("name", toolCall.Name),
@@ -394,7 +394,7 @@ public sealed class OpenAiProvider : ILlmProvider
         }
 
         string result;
-        var goalCall = action.Tools?.Find(t => t.Name == toolCall.Name);
+        var goalCall = action.Tools?.Value?.Find(t => t.Name == toolCall.Name);
         if (goalCall == null)
         {
             result = $"Error: unknown tool '{toolCall.Name}'";
@@ -426,12 +426,12 @@ public sealed class OpenAiProvider : ILlmProvider
         }
 
         // OnToolCall — completed
-        if (action.OnToolCall != null)
+        if (action.OnToolCall?.Value != null)
         {
             var endCall = new GoalCall
             {
-                Name = action.OnToolCall.Name,
-                PrPath = action.OnToolCall.PrPath,
+                Name = action.OnToolCall.Value.Name,
+                PrPath = action.OnToolCall.Value.PrPath,
                 Parameters = new List<Data.@this>
                 {
                     new Data.@this("name", toolCall.Name),

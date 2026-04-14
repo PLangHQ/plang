@@ -16,7 +16,7 @@ public partial class Read : IContext
     public partial Data.@this<FileSystem.Path> Path { get; init; }
 
     [Default(false)]
-    public partial bool ResolveVariables { get; init; }
+    public partial Data.@this<bool> ResolveVariables { get; init; }
 
     [Provider]
     public partial IFileProvider Files { get; }
@@ -24,7 +24,7 @@ public partial class Read : IContext
     public Task<Data.@this> Run()
     {
         var result = Files.Read(this);
-        if (ResolveVariables && result.Success && result.Value is string content)
+        if (ResolveVariables.Value && result.Success && result.Value is string content)
         {
             // skipInfrastructure: file content is untrusted — don't resolve %!app% etc.
             var resolved = Context.Variables.Resolve(content, skipInfrastructure: true);

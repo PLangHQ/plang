@@ -11,7 +11,7 @@ namespace App.modules.goal;
 [Action("call")]
 public partial class Call : IContext
 {
-    public partial GoalCall GoalName { get; init; }
+    public partial Data.@this<GoalCall> GoalName { get; init; }
 
     /// <summary>
     /// Target actor to run the goal on. If null, runs on the current context.
@@ -22,6 +22,6 @@ public partial class Call : IContext
     {
         var app = Context.App!;
         var execContext = Actor?.Context ?? Context;
-        return await app.RunGoalAsync(GoalName, execContext);
+        return await app.RunGoalAsync(GoalName.Value!, execContext);
     }
 }

@@ -10,15 +10,15 @@ namespace App.modules.app;
 [Action("run")]
 public partial class run : IContext
 {
-    public partial GoalCall? GoalName { get; init; }
+    public partial Data.@this<GoalCall>? GoalName { get; init; }
     public partial Step? Step { get; init; }
     public partial Goals.Goal.Steps.Step.Actions.Action.@this? Action { get; init; }
     public partial Actor.@this? Actor { get; init; }
 
     public async Task<Data.@this> Run()
     {
-        if (GoalName != null)
-            return await Context.App!.RunGoalAsync(GoalName, Context);
+        if (GoalName?.Value != null)
+            return await Context.App!.RunGoalAsync(GoalName.Value, Context);
 
 
         if (Step != null)

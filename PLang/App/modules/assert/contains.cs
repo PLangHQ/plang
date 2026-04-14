@@ -10,7 +10,7 @@ public partial class Contains : IContext
 {
     public partial Data.@this? Value { get; init; }
     public partial Data.@this? Container { get; init; }
-    public partial string? Message { get; init; }
+    public partial Data.@this<string>? Message { get; init; }
 
     [Provider]
     public partial IAssertProvider Assert { get; }

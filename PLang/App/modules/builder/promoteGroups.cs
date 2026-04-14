@@ -7,7 +7,7 @@ namespace App.modules.builder;
 public partial class promoteGroups : IContext
 {
     [IsNotNull]
-    public partial object Steps { get; init; }
+    public partial Data.@this Steps { get; init; }
 
     [Provider]
     public partial IBuilderProvider Builder { get; }

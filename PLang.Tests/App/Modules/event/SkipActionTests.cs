@@ -26,7 +26,7 @@ public class SkipActionTests
     {
         var context = _app.Context;
 
-        var action = new SkipAction { Context = context, Value = "override-value" };
+        var action = new SkipAction { Context = context, Value = new global::App.Data.@this("", "override-value")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -52,7 +52,7 @@ public class SkipActionTests
     {
         var context = _app.Context;
 
-        var action = new SkipAction { Context = context, Value = 42 };
+        var action = new SkipAction { Context = context, Value = new global::App.Data.@this("", 42)};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -65,7 +65,7 @@ public class SkipActionTests
         var context = _app.Context;
         var obj = new Dictionary<string, object> { ["status"] = 200 };
 
-        var action = new SkipAction { Context = context, Value = obj };
+        var action = new SkipAction { Context = context, Value = new global::App.Data.@this("", obj)};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

@@ -5,15 +5,15 @@ namespace App.modules.math;
 [Action("round")]
 public partial class Round : IContext
 {
-    public partial object Value { get; init; }
+    public partial Data.@this Value { get; init; }
     [Default(0)]
-    public partial int Decimals { get; init; }
+    public partial Data.@this<int> Decimals { get; init; }
 
     public Task<Data.@this> Run()
     {
-        var result = Math.Round(MathHelper.ToDouble(Value), Decimals, MidpointRounding.AwayFromZero);
-        if (Decimals == 0)
-            return Task.FromResult(Data(MathHelper.PreserveType(result, Value)));
+        var result = Math.Round(MathHelper.ToDouble(Value.Value), Decimals.Value, MidpointRounding.AwayFromZero);
+        if (Decimals.Value == 0)
+            return Task.FromResult(Data(MathHelper.PreserveType(result, Value.Value)));
         return Task.FromResult(Data(result));
     }
 }

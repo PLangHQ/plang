@@ -7,11 +7,11 @@ namespace App.modules.@event;
 public partial class Remove : IContext
 {
     [IsNotNull]
-    public partial string EventId { get; init; }
+    public partial Data.@this<string> EventId { get; init; }
 
     public Task<Data.@this> Run()
     {
-        var removed = Context.Events.Unregister(EventId);
+        var removed = Context.Events.Unregister(EventId.Value!);
         return Task.FromResult(Data(removed));
     }
 }

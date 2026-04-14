@@ -29,7 +29,7 @@ public class Ed25519Provider : ISigningProvider
         var identity = (Identity)identityResult.Value!;
 
         // Hash the data
-        var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = "keccak256" }, action.Context);
+        var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new Data.@this<string>("", "keccak256") }, action.Context);
         if (!hash.Success) return hash;
 
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
@@ -41,9 +41,9 @@ public class Ed25519Provider : ISigningProvider
             Algorithm = Name,
             Nonce = nonce,
             Created = now,
-            Expires = action.ExpiresInMs.HasValue ? now.AddMilliseconds(action.ExpiresInMs.Value) : null,
-            Contracts = action.Contracts,
-            Headers = action.Headers,
+            Expires = action.ExpiresInMs?.Value is int expiryMs ? now.AddMilliseconds(expiryMs) : null,
+            Contracts = action.Contracts?.Value,
+            Headers = action.Headers?.Value,
             Hash = hash
         };
 
@@ -66,7 +66,7 @@ public class Ed25519Provider : ISigningProvider
         var app = action.Context.App;
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
         var signingSettings = app.Config.For<Config>(action.Context);
-        var effectiveTimeout = action.TimeoutMs ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
+        var effectiveTimeout = action.TimeoutMs?.Value ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
 
         // 1. Type check
         if (signedData.Type != "signature")
@@ -89,16 +89,16 @@ public class Ed25519Provider : ISigningProvider
             return App.Data.@this.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
         // 5. Contract matching
-        if (!ContractsMatch(signedData.Contracts, action.Contracts))
+        if (!ContractsMatch(signedData.Contracts, action.Contracts?.Value))
             return App.Data.@this.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
         // 6. Header matching
-        if (action.Headers != null)
+        if (action.Headers?.Value != null)
         {
             if (signedData.Headers == null)
                 return App.Data.@this.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
 
-            foreach (var kvp in action.Headers)
+            foreach (var kvp in action.Headers.Value)
             {
                 if (!signedData.Headers.TryGetValue(kvp.Key, out var signedValue) ||
                     !string.Equals(signedValue?.ToString(), kvp.Value?.ToString(), StringComparison.Ordinal))
@@ -113,7 +113,7 @@ public class Ed25519Provider : ISigningProvider
         if (action.Data?.Value != null)
         {
             var rehash = await app.RunAction<Hash>(
-                new Hash { Data = action.Data, Algorithm = signedData.Hash!.Type?.Value ?? "keccak256" }, action.Context);
+                new Hash { Data = action.Data, Algorithm = new Data.@this<string>("", signedData.Hash!.Type?.Value ?? "keccak256") }, action.Context);
             if (!rehash.Success) return rehash;
             if (rehash.Value is not byte[] rehashBytes || !rehashBytes.AsSpan().SequenceEqual(storedHash))
                 return App.Data.@this.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));

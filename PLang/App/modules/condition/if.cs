@@ -12,10 +12,10 @@ namespace App.modules.condition;
 public partial class If : IContext, IStep
 {
     public partial Data.@this? Left { get; init; }
-    public partial Operator Operator { get; init; }
+    public partial Data.@this<Operator> Operator { get; init; }
     public partial Data.@this? Right { get; init; }
     [Default(false)]
-    public partial bool Negate { get; init; }
+    public partial Data.@this<bool> Negate { get; init; }
 
     [Provider]
     public partial IEvaluator Evaluator { get; }
@@ -26,7 +26,7 @@ public partial class If : IContext, IStep
         if (!evalResult.Success) return evalResult;
 
         var conditionResult = evalResult.Value is true;
-        if (Negate) conditionResult = !conditionResult;
+        if (Negate.Value) conditionResult = !conditionResult;
 
         // Mark indented sub-steps: disabled when false, clean when true
         var userStep = Step;

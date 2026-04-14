@@ -12,10 +12,10 @@ public partial class Any : IContext
     [VariableName]
     public partial string ListName { get; init; }
     [IsNotNull]
-    public partial string Key { get; init; }
+    public partial Data.@this<string> Key { get; init; }
     [IsNotNull]
-    public partial condition.Operator Operator { get; init; }
-    public partial object? Value { get; init; }
+    public partial Data.@this<condition.Operator> Operator { get; init; }
+    public partial Data.@this Value { get; init; }
 
     public Task<Data.@this> Run()
     {
@@ -26,11 +26,11 @@ public partial class Any : IContext
 
         foreach (var item in rawList)
         {
-            var propValue = ExtractProperty(item, Key);
+            var propValue = ExtractProperty(item, Key.Value!);
             var left = propValue != null ? new Data.@this("", propValue) : null;
-            var right = Value != null ? new Data.@this("", Value) : null;
+            var right = Value.Value != null ? new Data.@this("", Value.Value) : null;
 
-            if (Operator.Evaluate(left, right))
+            if (Operator.Value!.Evaluate(left, right))
                 return Task.FromResult(Data(true, App.Data.Type.FromName("bool")));
         }
 

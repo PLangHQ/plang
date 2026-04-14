@@ -8,7 +8,7 @@ public partial class Join : IContext
     [VariableName]
     public partial string ListName { get; init; }
     [Default(",")]
-    public partial string Separator { get; init; }
+    public partial Data.@this<string> Separator { get; init; }
 
     public Task<Data.@this> Run()
     {
@@ -21,7 +21,7 @@ public partial class Join : IContext
         foreach (var item in list)
             strings.Add(item?.ToString() ?? "");
 
-        var result = string.Join(Separator, strings);
+        var result = string.Join(Separator.Value!, strings);
         return Task.FromResult(Data(result, App.Data.Type.String));
     }
 }

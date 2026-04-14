@@ -27,8 +27,8 @@ public class FluidProvider : ITemplateProvider
 
     public async Task<Data.@this> Render(Render action)
     {
-        var templateContent = action.Template;
-        var isFile = action.IsFile;
+        var templateContent = action.Template.Value!;
+        var isFile = action.IsFile?.Value;
         string? sourceFile = null;
 
         // Resolve template content: file or inline
@@ -88,9 +88,9 @@ public class FluidProvider : ITemplateProvider
         }
 
         // Override with explicit parameters
-        if (action.Parameters != null)
+        if (action.Parameters?.Value != null)
         {
-            foreach (var param in action.Parameters)
+            foreach (var param in action.Parameters.Value)
             {
                 fluidContext.SetValue(param.Name, FluidValue.Create(param.Value, options));
             }

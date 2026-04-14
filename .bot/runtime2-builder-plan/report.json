@@ -27,6 +27,20 @@
       "plan": "1. Add Data.Compare as new partial file (this.Compare.cs) — JSON-level structural diff. 2. C# tests for Compare. 3. Write 38 eval .goal files per architect catalogue. 4. Build, verify .pr output, save as .golden. 5. Write eval runner PLang goal.",
       "actions": [],
       "after": {}
+    },
+    {
+      "id": "c0d3r004-data-t-props-0001-0001-000000000004",
+      "bot": "coder",
+      "timestamp_start": "2026-04-14T00:00:00Z",
+      "timestamp_end": null,
+      "intent": "Convert action handler properties from plain types to Data<T> in list/, loop/, math/, event/ modules",
+      "before": {
+        "assumptions": "Data.@this<T> wrapper exists and is used in file/ modules already. Pattern is established. Source generator handles lazy resolution.",
+        "risk": "Medium — many files, mechanical but must be precise with .Value/.Value! access in Run() methods."
+      },
+      "plan": "",
+      "actions": [],
+      "after": {}
     }
   ]
 }

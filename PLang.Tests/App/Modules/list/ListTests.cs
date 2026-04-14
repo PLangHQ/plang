@@ -21,7 +21,7 @@ public class ListTests
     {
         var (context, memory) = CreateContext();
 
-        var action = new Add { Context = context, ListName = "myList", Value = "first" };
+        var action = new Add { Context = context, ListName = "myList", Value = new global::App.Data.@this("", "first")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -37,7 +37,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Add { Context = context, ListName = "myList", Value = "c" };
+        var action = new Add { Context = context, ListName = "myList", Value = new global::App.Data.@this("", "c")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -52,7 +52,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "c" });
 
-        var action = new Add { Context = context, ListName = "myList", Value = "b", AtIndex = 1 };
+        var action = new Add { Context = context, ListName = "myList", Value = new global::App.Data.@this("", "b"), AtIndex = 1 };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -68,7 +68,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Remove { Context = context, ListName = "myList", Value = "b" };
+        var action = new Remove { Context = context, ListName = "myList", Value = new global::App.Data.@this("", "b")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -140,7 +140,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Contains { Context = context, ListName = "myList", Value = "a" };
+        var action = new Contains { Context = context, ListName = "myList", Value = new global::App.Data.@this("", "a")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -153,7 +153,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Contains { Context = context, ListName = "myList", Value = "z" };
+        var action = new Contains { Context = context, ListName = "myList", Value = new global::App.Data.@this("", "z")};
         var result = await action.Run();
 
         await Assert.That(result.Value).IsEqualTo(false);
@@ -193,7 +193,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new IndexOf { Context = context, ListName = "myList", Value = "b" };
+        var action = new IndexOf { Context = context, ListName = "myList", Value = new global::App.Data.@this("", "b")};
         var result = await action.Run();
 
         await Assert.That(result.Value).IsEqualTo(1);

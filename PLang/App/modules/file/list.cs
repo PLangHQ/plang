@@ -11,10 +11,10 @@ public partial class List : IContext
     public partial Data.@this<FileSystem.Path> Path { get; init; }
 
     [Default("*")]
-    public partial string Pattern { get; init; }
+    public partial Data.@this<string> Pattern { get; init; }
 
     [Default(false)]
-    public partial bool Recursive { get; init; }
+    public partial Data.@this<bool> Recursive { get; init; }
 
     [Provider]
     public partial IFileProvider Files { get; }

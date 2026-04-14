@@ -12,7 +12,7 @@ public partial class Move : IContext
     public partial Data.@this<FileSystem.Path> Destination { get; init; }
 
     [Default(false)]
-    public partial bool Overwrite { get; init; }
+    public partial Data.@this<bool> Overwrite { get; init; }
 
     [Provider]
     public partial IFileProvider Files { get; }

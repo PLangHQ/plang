@@ -480,6 +480,9 @@ public class @this<T> : @this
 
     public static @this<T> Ok(T value, Type? type = null) => new("", value, type);
     public new static @this<T> FromError(IError error) => new() { Error = error };
+
+    /// <summary>Allows direct assignment of T values to Data.@this&lt;T&gt; properties.</summary>
+    public static implicit operator @this<T>(T value) => new("", value);
 }
 
 /// <summary>

@@ -8,7 +8,7 @@ public partial class Group : IContext
     [VariableName]
     public partial string ListName { get; init; }
     [IsNotNull]
-    public partial string Key { get; init; }
+    public partial Data.@this<string> Key { get; init; }
 
     public Task<Data.@this> Run()
     {
@@ -20,7 +20,7 @@ public partial class Group : IContext
         var groups = new Dictionary<string, List<object?>>();
         foreach (var item in rawList)
         {
-            var keyValue = ExtractKey(item, Key) ?? "";
+            var keyValue = ExtractKey(item, Key.Value!) ?? "";
             if (!groups.TryGetValue(keyValue, out var group))
             {
                 group = new List<object?>();

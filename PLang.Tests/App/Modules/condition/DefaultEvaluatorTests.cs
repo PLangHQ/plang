@@ -11,10 +11,10 @@ public class DefaultEvaluatorTests
     private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
 
     private Data Eval(object? left, string op, object? right)
-        => _eval.Evaluate(new Compare { Left = D(left), Operator = op, Right = D(right) });
+        => _eval.Evaluate(new Compare { Left = D(left), Operator = new Operator(op), Right = D(right) });
 
     private Data EvalIf(object? left, string op = "==", object? right = null)
-        => _eval.Evaluate(new If { Left = D(left), Operator = op, Right = D(right) });
+        => _eval.Evaluate(new If { Left = D(left), Operator = new Operator(op), Right = D(right) });
 
     private bool IsTrue(Data result) => result.Success && (bool)result.Value!;
     private bool IsFalse(Data result) => result.Success && !(bool)result.Value!;

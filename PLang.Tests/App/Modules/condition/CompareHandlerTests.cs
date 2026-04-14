@@ -31,7 +31,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_GreaterThan_ReturnsDataWithTrue()
     {
-        var action = new Compare { Context = _app.Context, Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
+        var action = new Compare { Context = _app.Context, Left = Data.Ok(10), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -41,7 +41,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_GreaterThan_Fails_ReturnsDataWithFalse()
     {
-        var action = new Compare { Context = _app.Context, Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5) };
+        var action = new Compare { Context = _app.Context, Left = Data.Ok(3), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -51,7 +51,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_ResultValueIsBool()
     {
-        var action = new Compare { Context = _app.Context, Left = Data.Ok(5), Operator = "==", Right = Data.Ok(5) };
+        var action = new Compare { Context = _app.Context, Left = Data.Ok(5), Operator = new Operator("=="), Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Value is bool).IsTrue();
@@ -68,7 +68,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_NonComparableType_ReturnsEvaluationError()
     {
-        var action = new Compare { Context = _app.Context, Left = Data.Ok(new object()), Operator = ">", Right = Data.Ok(5) };
+        var action = new Compare { Context = _app.Context, Left = Data.Ok(new object()), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();

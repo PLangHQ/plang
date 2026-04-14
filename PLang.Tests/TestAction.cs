@@ -18,4 +18,10 @@ public static class TestAction
                 .ToList()
         };
     }
+
+    /// <summary>Wraps a typed value in Data.@this&lt;T&gt; for direct action construction in tests.</summary>
+    public static global::App.Data.@this<T> D<T>(T value) => new("", value);
+
+    /// <summary>Wraps an untyped value in Data.@this for direct action construction in tests.</summary>
+    public static global::App.Data.@this D(object? value) => new("", value);
 }

@@ -5,11 +5,11 @@ namespace App.modules.math;
 [Action("sqrt")]
 public partial class Sqrt : IContext
 {
-    public partial object Value { get; init; }
+    public partial Data.@this Value { get; init; }
 
     public Task<Data.@this> Run()
     {
-        var input = MathHelper.ToDouble(Value);
+        var input = MathHelper.ToDouble(Value.Value);
         if (input < 0)
             return Task.FromResult(Error(
                 new App.Errors.ValidationError("Cannot take square root of negative number", "InvalidInput")));

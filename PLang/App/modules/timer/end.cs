@@ -3,12 +3,12 @@ namespace App.modules.timer;
 [Action("end", Cacheable = false)]
 public partial class End : IContext, IStatic
 {
-    public partial string? Name { get; init; }
+    public partial Data.@this<string>? Name { get; init; }
 
     public Task<Data.@this> Run()
     {
         // If no name given, use the last started timer
-        var key = Name;
+        var key = Name?.Value;
         if (key == null)
         {
             if (!Static.TryGetValue("__last__", out var lastObj) || lastObj is not string lastKey)

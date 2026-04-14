@@ -120,13 +120,13 @@ public class DefaultFileProvider : IFileProvider
                 fs.File.Delete(path.Absolute);
             else if (fs.Directory.Exists(path.Absolute))
             {
-                if (!action.Recursive && fs.Directory.GetFileSystemEntries(path.Absolute).Length > 0)
+                if (!action.Recursive.Value && fs.Directory.GetFileSystemEntries(path.Absolute).Length > 0)
                     return App.Data.@this.FromError(new ServiceError(
                         $"Directory is not empty: {path.Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
 
-                fs.Directory.Delete(path.Absolute, action.Recursive);
+                fs.Directory.Delete(path.Absolute, action.Recursive.Value);
             }
-            else if (!action.IgnoreIfNotFound)
+            else if (!action.IgnoreIfNotFound.Value)
                 return App.Data.@this.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
 
             var resultPath = new FileSystem.Path(path.Absolute) { Context = action.Context };
@@ -152,9 +152,9 @@ public class DefaultFileProvider : IFileProvider
             EnsureDirectory(fs, fs.Path.GetDirectoryName(destPath));
 
             if (fs.File.Exists(source.Absolute))
-                fs.File.Copy(source.Absolute, destPath, action.Overwrite);
+                fs.File.Copy(source.Absolute, destPath, action.Overwrite.Value);
             else
-                CopyDirectory(fs, source.Absolute, destPath, action.Overwrite, action.IncludeSubfolders);
+                CopyDirectory(fs, source.Absolute, destPath, action.Overwrite.Value, action.IncludeSubfolders.Value);
 
             var resultPath = new FileSystem.Path(destPath, source: source.Absolute) { Context = action.Context };
             return Data.@this<FileSystem.Path>.Ok(resultPath);
@@ -179,10 +179,10 @@ public class DefaultFileProvider : IFileProvider
             EnsureDirectory(fs, fs.Path.GetDirectoryName(destPath));
 
             if (fs.File.Exists(source.Absolute))
-                fs.File.Move(source.Absolute, destPath, action.Overwrite);
+                fs.File.Move(source.Absolute, destPath, action.Overwrite.Value);
             else
             {
-                if (action.Overwrite && fs.Directory.Exists(destPath))
+                if (action.Overwrite.Value && fs.Directory.Exists(destPath))
                     fs.Directory.Delete(destPath, recursive: true);
 
                 fs.Directory.Move(source.Absolute, destPath);
@@ -206,8 +206,8 @@ public class DefaultFileProvider : IFileProvider
 
         try
         {
-            var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            var files = fs.Directory.GetFiles(path.Absolute, action.Pattern, option)
+            var option = action.Recursive.Value ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            var files = fs.Directory.GetFiles(path.Absolute, action.Pattern.Value!, option)
                 .Select(f => new FileSystem.Path(f) { Context = action.Context })
                 .ToArray();
             return App.Data.@this.Ok(files);

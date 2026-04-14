@@ -109,8 +109,7 @@ public class SettingsDataTests
         {
             Context = context,
             Key = "HandlerKey",
-            Value = "HandlerValue"
-        };
+            Value = new global::App.Data.@this("", "HandlerValue")        };
 
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();

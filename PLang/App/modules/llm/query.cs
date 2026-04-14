@@ -39,58 +39,58 @@ public partial class query : IContext, IBuildValidatable
 
     /// <summary>Conversation messages (system, user, assistant).</summary>
     [IsNotNull]
-    public partial List<LlmMessage> Messages { get; init; }
+    public partial Data.@this<List<LlmMessage>> Messages { get; init; }
 
     /// <summary>Goals available as tools for the LLM to call.</summary>
-    public partial List<GoalCall>? Tools { get; init; }
+    public partial Data.@this<List<GoalCall>>? Tools { get; init; }
 
     /// <summary>Callback fired before/after each tool execution. Receives: name, arguments, status, result.</summary>
     [GoalCallback("toolCallInfo")]
-    public partial GoalCall? OnToolCall { get; init; }
+    public partial Data.@this<GoalCall>? OnToolCall { get; init; }
 
     /// <summary>Callback to validate the LLM's response. Return error to trigger retry.</summary>
     [GoalCallback("response")]
-    public partial GoalCall? OnValidateResponse { get; init; }
+    public partial Data.@this<GoalCall>? OnValidateResponse { get; init; }
 
     /// <summary>Callback fired for each streaming chunk. Receives: content, fullContent, isDone.</summary>
     [GoalCallback("streamChunk")]
-    public partial GoalCall? OnStream { get; init; }
+    public partial Data.@this<GoalCall>? OnStream { get; init; }
 
     /// <summary>JSON schema string the LLM must conform to. When set, format defaults to "json".</summary>
-    public partial string? Schema { get; init; }
+    public partial Data.@this<string>? Schema { get; init; }
 
     /// <summary>Response format: "json", "python", "md", etc. Non-json formats extract from code blocks.</summary>
-    public partial string? Format { get; init; }
+    public partial Data.@this<string>? Format { get; init; }
 
     /// <summary>Model override (e.g., "gpt-4o"). Falls back to provider settings default.</summary>
-    public partial string? Model { get; init; }
+    public partial Data.@this<string>? Model { get; init; }
 
     /// <summary>When true, prepends stored conversation history from previous queries.</summary>
     [Default(false)]
-    public partial bool ContinuePreviousConversation { get; init; }
+    public partial Data.@this<bool> ContinuePreviousConversation { get; init; }
 
     /// <summary>Sampling temperature. 0.0 = deterministic.</summary>
     [Default(0.0)]
-    public partial double Temperature { get; init; }
+    public partial Data.@this<double> Temperature { get; init; }
 
     /// <summary>Top-p (nucleus sampling). 0.0 = greedy, 1.0 = full distribution.</summary>
-    public partial double? TopP { get; init; }
+    public partial Data.@this<double>? TopP { get; init; }
 
     /// <summary>Maximum tokens in the response.</summary>
     [Default(4000)]
-    public partial int MaxTokens { get; init; }
+    public partial Data.@this<int> MaxTokens { get; init; }
 
     /// <summary>Maximum total individual tool calls before stopping the loop.</summary>
     [Default(10)]
-    public partial int MaxToolCalls { get; init; }
+    public partial Data.@this<int> MaxToolCalls { get; init; }
 
     /// <summary>Maximum validation retries before returning error.</summary>
     [Default(0)]
-    public partial int MaxValidationRetries { get; init; }
+    public partial Data.@this<int> MaxValidationRetries { get; init; }
 
     /// <summary>Whether to cache the response. Skipped when Tools is non-null.</summary>
     [Default(true)]
-    public partial bool Cache { get; init; }
+    public partial Data.@this<bool> Cache { get; init; }
 
     [Provider]
     public partial ILlmProvider Llm { get; }

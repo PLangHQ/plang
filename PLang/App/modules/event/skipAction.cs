@@ -13,11 +13,11 @@ namespace App.modules.@event;
 public partial class SkipAction : IContext
 {
     /// <summary>Value to return instead of the action's real result. Null returns empty success.</summary>
-    public partial object? Value { get; init; }
+    public partial Data.@this Value { get; init; }
 
     public Task<Data.@this> Run()
     {
-        Context.EventOverride = Data(Value);
-        return Task.FromResult(Data(Value));
+        Context.EventOverride = Data(Value.Value);
+        return Task.FromResult(Data(Value.Value));
     }
 }

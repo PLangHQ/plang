@@ -7,7 +7,7 @@ public partial class Get : IContext
 {
     [VariableName]
     public partial string ListName { get; init; }
-    public partial int Index { get; init; }
+    public partial Data.@this<int> Index { get; init; }
 
     public Task<Data.@this> Run()
     {
@@ -16,10 +16,10 @@ public partial class Get : IContext
             return Task.FromResult(Error(
                 new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
-        if (Index < 0 || Index >= list.Count)
+        if (Index.Value < 0 || Index.Value >= list.Count)
             return Task.FromResult(Error(
-                new App.Errors.ValidationError($"Index {Index} out of range (0..{list.Count - 1})")));
+                new App.Errors.ValidationError($"Index {Index.Value} out of range (0..{list.Count - 1})")));
 
-        return Task.FromResult(Data(list[Index]));
+        return Task.FromResult(Data(list[Index.Value]));
     }
 }

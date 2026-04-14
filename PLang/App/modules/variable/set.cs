@@ -21,13 +21,13 @@ public partial class Set : IContext, IBuildValidatable
     [VariableName]
     public partial string Name { get; init; }
     public partial Data.@this Value { get; init; }
-    public partial string? Type { get; init; }
+    public partial Data.@this<string>? Type { get; init; }
     [Default(false)]
-    public partial bool AsDefault { get; init; }
+    public partial Data.@this<bool> AsDefault { get; init; }
 
     public Task<Data.@this> Run()
     {
-        if (AsDefault)
+        if (AsDefault.Value)
         {
             var existing = Context.Variables.Get(Name);
             if (existing.IsInitialized)
@@ -36,7 +36,7 @@ public partial class Set : IContext, IBuildValidatable
 
         Value.Name = Name;
         Context.Variables.Set(Name, Value,
-            Type != null ? App.Data.Type.FromName(Type) : null);
+            Type?.Value != null ? App.Data.Type.FromName(Type.Value) : null);
 
         return Task.FromResult(Data());
     }

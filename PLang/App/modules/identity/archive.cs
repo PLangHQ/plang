@@ -12,11 +12,11 @@ namespace App.modules.identity;
 [Action("archive", Cacheable = false)]
 public partial class Archive : IContext
 {
-    public partial string Name { get; init; }
+    public partial Data.@this<string> Name { get; init; }
 
     /// <summary>When true, allows archiving even if it's the default identity.</summary>
     [Default(false)]
-    public partial bool Force { get; init; }
+    public partial Data.@this<bool> Force { get; init; }
 
     [Provider]
     public partial IIdentityProvider Identity { get; }

@@ -57,14 +57,14 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var app = action.Context.App;
         var context = action.Context;
-        var searchPath = string.IsNullOrWhiteSpace(action.Path) ? "." : action.Path;
+        var searchPath = string.IsNullOrWhiteSpace(action.Path.Value) ? "." : action.Path.Value!;
 
         var listAction = new file.List
         {
             Context = context,
             Path = Data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(searchPath, context)),
-            Pattern = "*.goal",
-            Recursive = true
+            Pattern = new Data.@this<string>("", "*.goal"),
+            Recursive = new Data.@this<bool>("", true)
         };
         var listResult = await app.RunAction(listAction, context);
         if (!listResult.Success)
@@ -287,9 +287,9 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        var steps = ToStepList(action.Steps);
+        var steps = ToStepList(action.Steps.Value);
         if (steps == null || steps.Count == 0)
-            return Data.@this.Ok(action.Steps);
+            return Data.@this.Ok(action.Steps.Value);
 
         // Collect groups and find the lowest level in each
         var groupLevels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -330,7 +330,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (promoted > 0)
             Console.WriteLine($"  Group promotion: {promoted} step(s) promoted to detail pass");
 
-        return Data.@this.Ok(action.Steps);
+        return Data.@this.Ok(action.Steps.Value);
     }
 
     private static string LowestLevel(string a, string b)

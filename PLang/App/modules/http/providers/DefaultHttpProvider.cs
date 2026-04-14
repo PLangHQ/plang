@@ -61,24 +61,24 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
 
-        var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
-        var contentType = action.ContentType ?? config.Resolve("ContentType", "application/json");
-        var encoding = action.Encoding ?? config.Resolve("Encoding", "utf-8");
+        var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
+        var timeout = action.TimeoutInSec.Value > 0 ? action.TimeoutInSec.Value : config.Resolve("TimeoutInSec", 30);
+        var contentType = action.ContentType.Value ?? config.Resolve("ContentType", "application/json");
+        var encoding = action.Encoding.Value ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl(action.Url, config);
+        var urlResult = ResolveUrl(action.Url.Value!, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
-        var headers = MergeHeaders(action.Headers, config);
+        var headers = MergeHeaders(action.Headers?.Value, config);
 
         // Build body
         HttpContent? httpContent = null;
         string? bodyString = null;
-        if (action.Body != null)
+        if (action.Body?.Value != null)
         {
             if (contentType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
-                && action.Body is Dictionary<string, object> formDict)
+                && action.Body.Value is Dictionary<string, object> formDict)
             {
                 var formValues = new Dictionary<string, string>();
                 foreach (var kvp in formDict)
@@ -87,24 +87,24 @@ public sealed class DefaultHttpProvider : IHttpProvider
             }
             else
             {
-                bodyString = action.Body is string s ? s : JsonSerializer.Serialize(action.Body);
+                bodyString = action.Body.Value is string s ? s : JsonSerializer.Serialize(action.Body.Value);
                 var enc = Encoding.GetEncoding(encoding);
                 httpContent = new StringContent(bodyString, enc, contentType);
             }
         }
 
-        var httpMethod = ToSystemMethod(action.Method);
+        var httpMethod = ToSystemMethod(action.Method.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions, bodyString, resolvedUrl, httpMethod.Method);
+        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions?.Value, bodyString, resolvedUrl, httpMethod.Method);
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
             ApplySignature(requestMessage, signResult);
         }
 
-        var completionOption = action.OnStream != null
+        var completionOption = action.OnStream?.Value != null
             ? HttpCompletionOption.ResponseHeadersRead
             : HttpCompletionOption.ResponseContentRead;
 
@@ -113,11 +113,11 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         var response = await SendHttpAsync(requestMessage, completionOption, config, cts.Token);
 
-        if (action.OnStream != null)
+        if (action.OnStream?.Value != null)
         {
             var maxSSEBuffer = config.Resolve("MaxSSEBufferSize", 10L * 1024 * 1024);
             return await HandleStreamingAsync(
-                response, requestMessage, action.OnStream, action.StreamAs,
+                response, requestMessage, action.OnStream.Value, action.StreamAs?.Value,
                 unsigned, app, action.Context, maxSSEBuffer, cts.Token);
         }
 
@@ -135,34 +135,34 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var config = app.Config.For<Config>(action.Context);
         var fs = app.FileSystem;
 
-        var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
-        var urlResult = ResolveUrl(action.Url, config);
+        var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
+        var timeout = action.TimeoutInSec.Value > 0 ? action.TimeoutInSec.Value : config.Resolve("TimeoutInSec", 30);
+        var urlResult = ResolveUrl(action.Url.Value!, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
-        var savePath = fs.ValidatePath(action.SaveTo);
+        var savePath = fs.ValidatePath(action.SaveTo.Value!);
 
         // File existence check
         if (fs.File.Exists(savePath))
         {
-            switch (action.IfExists)
+            switch (action.IfExists.Value)
             {
                 case FileExists.Error:
                     return App.Data.@this.FromError(new ServiceError(
-                        $"File already exists: {action.SaveTo}", "FileExists", 409));
+                        $"File already exists: {action.SaveTo.Value}", "FileExists", 409));
                 case FileExists.Skip:
-                    return App.Data.@this.Ok(action.SaveTo);
+                    return App.Data.@this.Ok(action.SaveTo.Value);
                 case FileExists.Overwrite:
                     break;
             }
         }
 
-        var headers = MergeHeaders(action.Headers, config);
+        var headers = MergeHeaders(action.Headers?.Value, config);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions, null, resolvedUrl, "GET");
+        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions?.Value, null, resolvedUrl, "GET");
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
@@ -189,9 +189,9 @@ public sealed class DefaultHttpProvider : IHttpProvider
         using var fileStream = fs.File.Create(savePath);
 
         await StreamWithProgressAsync(
-            responseStream, fileStream, totalBytes, action.OnProgress, app, action.Context, cts.Token);
+            responseStream, fileStream, totalBytes, action.OnProgress?.Value, app, action.Context, cts.Token);
 
-        return App.Data.@this.Ok(action.SaveTo);
+        return App.Data.@this.Ok(action.SaveTo.Value);
     });
 
     public Task<Data.@this> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
@@ -200,19 +200,19 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var config = app.Config.For<Config>(action.Context);
         var fs = app.FileSystem;
 
-        var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
-        var encoding = action.Encoding ?? config.Resolve("Encoding", "utf-8");
+        var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
+        var timeout = action.TimeoutInSec.Value > 0 ? action.TimeoutInSec.Value : config.Resolve("TimeoutInSec", 30);
+        var encoding = action.Encoding.Value ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl(action.Url, config);
+        var urlResult = ResolveUrl(action.Url.Value!, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
-        var headers = MergeHeaders(action.Headers, config);
+        var headers = MergeHeaders(action.Headers?.Value, config);
 
         var httpContent = await ResolveUploadContentAsync(action, fs, encoding);
 
-        var httpMethod = ToSystemMethod(action.Method);
+        var httpMethod = ToSystemMethod(action.Method.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
 
@@ -220,7 +220,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         if (httpContent is StringContent sc)
             bodyString = await sc.ReadAsStringAsync();
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions, bodyString, resolvedUrl, httpMethod.Method);
+        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions?.Value, bodyString, resolvedUrl, httpMethod.Method);
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
@@ -239,12 +239,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
     public Data.@this Configure(configure action)
     {
         // Redirect config can't change after first request (SocketsHttpHandler is immutable)
-        if (_client != null && (action.FollowRedirects.HasValue || action.MaxRedirects.HasValue))
+        if (_client != null && (action.FollowRedirects?.Value != null || action.MaxRedirects?.Value != null))
             return App.Data.@this.FromError(new ServiceError(
                 "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
                 "ConfigLocked", 409));
 
-        action.Context.App.Config.Apply<Config>(action, action.Context, action.Default);
+        action.Context.App.Config.Apply<Config>(action, action.Context, action.Default.Value);
         return App.Data.@this.Ok();
     }
 
@@ -374,11 +374,11 @@ public sealed class DefaultHttpProvider : IHttpProvider
         {
             Context = context,
             Data = new Data.@this("", bodyContent ?? ""),
-            Headers = new Dictionary<string, object>
+            Headers = new Data.@this<Dictionary<string, object>>("", new Dictionary<string, object>
             {
                 ["url"] = url,
                 ["method"] = method
-            },
+            }),
             Contracts = signOptions?.Contracts,
             ExpiresInMs = signOptions?.ExpiresInMs
         };
@@ -952,28 +952,29 @@ public sealed class DefaultHttpProvider : IHttpProvider
     private static async Task<HttpContent> ResolveUploadContentAsync(
         upload action, App.FileSystem.IPLangFileSystem fs, string encoding)
     {
-        if (action.As.HasValue)
+        var content = action.Content.Value;
+        if (action.As?.Value is ContentAs contentAs)
         {
-            return action.As.Value switch
+            return contentAs switch
             {
-                ContentAs.File => await CreateFileContentAsync(fs, action.Content.ToString()!),
-                ContentAs.Base64 => CreateBase64Content(action.Content.ToString()!),
-                ContentAs.Form => await CreateFormContentAsync(fs, action.Content),
+                ContentAs.File => await CreateFileContentAsync(fs, content!.ToString()!),
+                ContentAs.Base64 => CreateBase64Content(content!.ToString()!),
+                ContentAs.Form => await CreateFormContentAsync(fs, content!),
                 ContentAs.Text => new StringContent(
-                    action.Content is string s ? s : JsonSerializer.Serialize(action.Content),
+                    content is string s ? s : JsonSerializer.Serialize(content),
                     Encoding.GetEncoding(encoding)),
-                _ => new StringContent(action.Content.ToString()!, Encoding.GetEncoding(encoding))
+                _ => new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding))
             };
         }
 
         // Auto-detect
-        if (action.Content is Dictionary<string, object> ||
-            action.Content is JsonElement je && je.ValueKind == JsonValueKind.Object)
+        if (content is Dictionary<string, object> ||
+            content is JsonElement je && je.ValueKind == JsonValueKind.Object)
         {
-            return await CreateFormContentAsync(fs, action.Content);
+            return await CreateFormContentAsync(fs, content);
         }
 
-        if (action.Content is string str)
+        if (content is string str)
         {
             var path = fs.ValidatePath(str);
             if (fs.File.Exists(path))
@@ -983,7 +984,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         }
 
         return new StringContent(
-            JsonSerializer.Serialize(action.Content),
+            JsonSerializer.Serialize(content),
             Encoding.GetEncoding(encoding),
             "application/json");
     }
