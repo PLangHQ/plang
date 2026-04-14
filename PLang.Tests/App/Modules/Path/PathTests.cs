@@ -470,7 +470,7 @@ public class PathTests : IDisposable
     {
         var filePath = TempFile("asfile.txt");
         var p = MakePath(filePath);
-        var result = _provider.Exists(new Exists { Context = _app.Context, Path = p });
+        var result = _provider.Exists(new Exists { Context = _app.Context, Path = new global::App.Data.@this<PLangPath>("", p) });
 
         await Assert.That(result.Success).IsTrue();
         var f = result.Value as PLangPath;

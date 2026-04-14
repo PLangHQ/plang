@@ -218,8 +218,9 @@ public class DefaultFileProvider : IFileProvider
 
     public Data.@this Exists(Exists action)
     {
-        var path = new FileSystem.Path(action.Path.Absolute) { Context = action.Context };
-        return Data.@this<FileSystem.Path>.Ok(path);
+        var path = action.Path.Value!;
+        var result = new FileSystem.Path(path.Absolute) { Context = action.Context };
+        return Data.@this<FileSystem.Path>.Ok(result);
     }
 
     // --- Helpers ---

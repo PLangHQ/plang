@@ -473,7 +473,7 @@ public class DefaultBuilderProvider : IBuilderProvider
                     var existsAction = new file.Exists
                     {
                         Context = context,
-                        Path = FileSystem.Path.Resolve(expectedPrPath, context)
+                        Path = Data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(expectedPrPath, context))
                     };
                     var existsResult = await app.RunAction(existsAction, context);
                     if (existsResult.Success && existsResult.Value is FileSystem.Path pathData && pathData.Exists)

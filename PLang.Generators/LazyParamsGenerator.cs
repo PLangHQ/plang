@@ -151,6 +151,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
                         i.Name == "IEvent"
                         && i.ContainingNamespace.ToDisplayString() == "App.modules");
 
+                // Check if type is Data<T> (App.Data.@this<T>)
+                // Roslyn symbol name is "this" (without the @ verbatim prefix)
+                var isDataWrapped = prop.Type is INamedTypeSymbol dataType
+                    && dataType.IsGenericType
+                    && (dataType.OriginalDefinition.Name == "this" || dataType.OriginalDefinition.Name == "@this")
+                    && dataType.OriginalDefinition.ContainingNamespace.ToDisplayString() == "App.Data";
+
                 properties.Add(new ActionPropertyInfo(
                     prop.Name,
                     prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -162,7 +169,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     isProvider,
                     isInitiated,
                     isNotNull,
-                    implementsIEvent));
+                    implementsIEvent,
+                    isDataWrapped));
             }
         }
 
@@ -274,7 +282,24 @@ public class LazyParamsGenerator : IIncrementalGenerator
             // Build the get expression
             var paramName = prop.Name.ToLowerInvariant();
             string resolveExpr;
-            if (prop.IsAppResolvable)
+            if (prop.IsDataWrapped)
+            {
+                // Data<T> property — resolve via __ResolveData, then As<T> to convert
+                // No _set flag needed (Data is never null)
+                // Extract the inner type T from the type name: "global::App.Data.@this<global::App.FileSystem.Path>" → inner part
+                var typeName = prop.TypeName;
+                var ltIdx = typeName.IndexOf('<');
+                var innerType = ltIdx >= 0 ? typeName.Substring(ltIdx + 1, typeName.Length - ltIdx - 2) : "object";
+                resolveExpr = $"__ResolveData(\"{paramName}\").As<{innerType}>(Context)";
+                sb.AppendLine($"    public partial {prop.TypeName} {prop.Name}");
+                sb.AppendLine("    {");
+                sb.AppendLine($"        get {{ if ({backingField} == null) {{ {backingField} = {resolveExpr}; }} return {backingField}!; }}");
+                sb.AppendLine($"        init {{ {backingField} = value; {setFlag} = true; }}");
+                sb.AppendLine("    }");
+                sb.AppendLine();
+                continue;
+            }
+            else if (prop.IsAppResolvable)
             {
                 // Context-resolvable types: resolve raw string then call Type.Resolve(string, Context)
                 var rawStr = $"__Resolve<string>(\"{paramName}\")";
@@ -544,6 +569,31 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("            : default;");
         sb.AppendLine("    }");
         sb.AppendLine();
+
+        // __ResolveData — returns Data directly for Data<T> properties
+        sb.AppendLine("    private App.Data.@this __ResolveData(string name)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        var data = __action?.Parameters?.FirstOrDefault(");
+        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine("        data ??= __action?.Defaults?.FirstOrDefault(");
+        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine("        if (data == null) return App.Data.@this.NotFound(name);");
+        sb.AppendLine("        if (data.Value is string str && str.Contains('%'))");
+        sb.AppendLine("        {");
+        sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
+        sb.AppendLine("            if (fullMatch.Success)");
+        sb.AppendLine("                return __variables!.Get(fullMatch.Groups[1].Value);");
+        sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
+        sb.AppendLine("                var __r = __variables!.Get(m.Groups[1].Value);");
+        sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
+        sb.AppendLine("                return __FormatValue(__r?.Value);");
+        sb.AppendLine("            });");
+        sb.AppendLine("            return new App.Data.@this(name, interpolated);");
+        sb.AppendLine("        }");
+        sb.AppendLine("        return data;");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+
         sb.AppendLine("    private T? __TryConvert<T>(object? value, string paramName)");
         sb.AppendLine("    {");
         sb.AppendLine("        var (__result, __error) = App.Utils.TypeMapping.TryConvertTo(value, typeof(T), Context);");
@@ -635,11 +685,13 @@ internal class ActionPropertyInfo
     public bool IsInitiated { get; }
     public bool IsNotNull { get; }
     public bool ImplementsIEvent { get; }
+    public bool IsDataWrapped { get; }
 
     public ActionPropertyInfo(string name, string typeName, bool isNullable,
         bool isValueType, string? defaultValue, bool isVariableName = false,
         bool isAppResolvable = false, bool isProvider = false,
-        bool isInitiated = false, bool isNotNull = false, bool implementsIEvent = false)
+        bool isInitiated = false, bool isNotNull = false, bool implementsIEvent = false,
+        bool isDataWrapped = false)
     {
         Name = name;
         TypeName = typeName;
@@ -652,5 +704,6 @@ internal class ActionPropertyInfo
         IsInitiated = isInitiated;
         IsNotNull = isNotNull;
         ImplementsIEvent = implementsIEvent;
+        IsDataWrapped = isDataWrapped;
     }
 }

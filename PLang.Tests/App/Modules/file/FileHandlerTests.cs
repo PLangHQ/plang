@@ -231,7 +231,7 @@ public class FileHandlerTests : IDisposable
     {
         _fs.File.WriteAllText(TempPath("check.txt"), "present");
 
-        var action = new Exists { Context = _app.Context, Path = MakePath("check.txt") };
+        var action = new Exists { Context = _app.Context, Path = new global::App.Data.@this<PLangPath>("", MakePath("check.txt")) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -243,7 +243,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Exists_NonexistentFile_ReturnsFalse()
     {
-        var action = new Exists { Context = _app.Context, Path = MakePath("missing.txt") };
+        var action = new Exists { Context = _app.Context, Path = new global::App.Data.@this<PLangPath>("", MakePath("missing.txt")) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
