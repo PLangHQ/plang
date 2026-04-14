@@ -1,11 +1,14 @@
 {
   "name": "Build",
+  "description": "Calls the goal /builder/Build with GoalName and Actor parameters, using cache=0ms and onError retry=0 (order=1).",
+  "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "call goal /system/builder/Build",
+      "text": "call goal /builder/Build",
       "lineNumber": 2,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "goal",
@@ -14,31 +17,53 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "Build",
-                "prPath": "/system/builder/.build/build.pr"
+                "Name": "Build",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "%actor%",
+              "type": "actor"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": {
+        "goal": null,
+        "retryCount": 0,
+        "retryOverMs": null,
+        "order": 1,
+        "ignoreError": false,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
+      "cache": {
+        "durationMs": 0,
+        "sliding": false,
+        "key": null,
+        "location": null
+      },
+      "timeout": null,
       "waitForExecution": true
     }
   ],
-  "subGoals": [],
+  "goals": [],
   "visibility": 1,
-  "path": "/system/Build.goal",
-  "prPath": "/system/.build/build.pr",
-  "hash": "",
+  "path": "/PlangConsole/bin/Debug/net10.0/system/Build.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/build.pr",
+  "hash": "c73e799da0870eabbaaaabffa1683b9e654da2b41f5984db5efda0d76f46d30c",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
-  "isSystem": true,
+  "isSystem": false,
   "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "Build"
+  "inputParameters": null
 }

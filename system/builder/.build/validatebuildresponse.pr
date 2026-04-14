@@ -1,6 +1,6 @@
 {
   "name": "ValidateBuildResponse",
-  "description": "Validates that the LLM returned exactly one result per goal step, then validates each returned step via ValidateStep.",
+  "description": "Validates that the LLM returned exactly one result per goal step, then iterates through each returned step to validate it via ValidateStep.",
   "comment": null,
   "steps": [
     {
@@ -136,7 +136,7 @@
   ],
   "goals": [
     {
-      "name": "ValidateStep",
+      "name": "",
       "description": null,
       "comment": null,
       "steps": [

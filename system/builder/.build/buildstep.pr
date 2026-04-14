@@ -1,6 +1,6 @@
 {
   "name": "BuildStep",
-  "description": "BuildStep: prepares step text for LLM, queries LLM for detailed action info with error handling, traces the result, validates it, and stores the produced actions back into the goal step.",
+  "description": "BuildStep: prepares step text/prompt via template rendering, queries LLM for detailed step actions with error handling, traces the result, saves trace, validates, and stores validated actions back onto the goal step.",
   "comment": null,
   "steps": [
     {
@@ -442,7 +442,7 @@
   ],
   "goals": [
     {
-      "name": "ValidateBuildStepResult",
+      "name": "",
       "description": null,
       "comment": null,
       "steps": [
@@ -486,7 +486,7 @@
       "inputParameters": null
     },
     {
-      "name": "ThrowBuildStepErrors",
+      "name": "",
       "description": null,
       "comment": null,
       "steps": [
@@ -517,7 +517,7 @@
       "inputParameters": null
     },
     {
-      "name": "ValidateActionErrors",
+      "name": "",
       "description": null,
       "comment": null,
       "steps": [
@@ -548,7 +548,7 @@
       "inputParameters": null
     },
     {
-      "name": "ThrowActionErrors",
+      "name": "",
       "description": null,
       "comment": null,
       "steps": [
@@ -579,7 +579,7 @@
       "inputParameters": null
     },
     {
-      "name": "HandleBuildStepFailure",
+      "name": "",
       "description": null,
       "comment": null,
       "steps": [

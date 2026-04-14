@@ -1,6 +1,6 @@
 {
   "name": "ApplyStep",
-  "description": "ApplyStep: validate stepResult, merge it into the target goal step, and if stepResult.level != \u0022high\u0022 then call BuildStep.",
+  "description": "Maps ApplyStep into engine actions: validate stepResult, merge validated step into goal.Steps[stepResult.index] (writing to %goal.Steps[...]% requires variable.set), and if stepResult.level != \u0022high\u0022 then call BuildStep.",
   "comment": null,
   "steps": [
     {
@@ -205,7 +205,7 @@
   ],
   "goals": [
     {
-      "name": "HandleValidationError",
+      "name": "",
       "description": null,
       "comment": null,
       "steps": [

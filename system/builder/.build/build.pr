@@ -1,6 +1,6 @@
 {
   "name": "Build",
-  "description": "Build pipeline: initialize defaults, render progress output, load builder app/goals, iterate goals to call BuildGoal per item, then save trace manifest and persist app state.",
+  "description": "Build goal: initializes defaults and trace list, renders progress output, loads app and goals from %path%, iterates goals calling BuildGoal per item, saves traces manifest, then saves the builder app.",
   "comment": null,
   "steps": [
     {

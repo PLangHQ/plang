@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Writes \u0027hello world\u0027 to output.",
+  "description": "Writes the provided greeting to output.",
   "comment": null,
   "steps": [
     {
@@ -17,7 +17,7 @@
             {
               "name": "Data",
               "value": "hello world",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -32,8 +32,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/output-write.goal",
-  "prPath": "/.build/output-write.pr",
+  "path": "/Tests/Builder/Evals/output-write.goal",
+  "prPath": "/Tests/Builder/Evals/.build/output-write.pr",
   "hash": "8f1b4ab9435f67152f05113cf4b6e1c511e7b64ba1c19ab9e34205387519ee62",
   "builderVersion": null,
   "isSetup": false,

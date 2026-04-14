@@ -1,6 +1,6 @@
 {
   "name": "BuildGoal",
-  "description": "Compiles BuildGoal into engine actions: writes build header, builds intermediate artifacts via builder/actions/types and template rendering, queries LLM for goal format JSON, validates/fixes on error, traces and groups steps, processes grouped steps, saves trace, updates goal version, and saves the goal.",
+  "description": "Compiles BuildGoal into engine actions: writes build logs, builds action/type summaries and LLM prompts via templates, queries LLM for structured build steps with error handling, validates/fixes response, traces and groups steps, processes grouped steps, saves trace to file, tracks trace IDs, sets goal version, and saves the goal.",
   "comment": null,
   "steps": [
     {
@@ -333,15 +333,9 @@
               "type": "bool"
             },
             {
-              "name": "OnValidateResponse",
-              "value": {
-                "goal": {
-                  "name": "HandleBuildGoalFailure"
-                },
-                "retryCount": 0,
-                "order": "0"
-              },
-              "type": "goal.call"
+              "name": "MaxToolCalls",
+              "value": 10,
+              "type": "int"
             }
           ],
           "defaults": null
@@ -725,7 +719,7 @@
   ],
   "goals": [
     {
-      "name": "ProcessGroup",
+      "name": "",
       "description": null,
       "comment": null,
       "steps": [
@@ -782,7 +776,7 @@
       "inputParameters": null
     },
     {
-      "name": "LlmFixer",
+      "name": "",
       "description": null,
       "comment": null,
       "steps": [
@@ -839,7 +833,7 @@
       "inputParameters": null
     },
     {
-      "name": "HandleBuildGoalFailure",
+      "name": "",
       "description": null,
       "comment": null,
       "steps": [
