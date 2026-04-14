@@ -32,7 +32,7 @@ Created fresh per-execution by action handlers. Inherently thread safe.
 
 ```csharp
 // Plain domain class — no Data inheritance
-public class Path : IContextual
+public class Path : IContext
 {
     private Context _context;
 
@@ -120,21 +120,19 @@ var stepData = step.AsData(context);    // hits cache -> same object
 
 ## Interfaces
 
-### IContextual (existing pattern, renamed from IContext for domain objects)
+### IContext (existing interface)
 
-Domain objects that need runtime access implement this. Data propagates Context changes to Value automatically.
+Domain objects that need runtime access implement `IContext` — the same interface action handlers already use. Data propagates Context changes to Value automatically.
 
 ```csharp
-public interface IContextual
+public interface IContext
 {
     Context Context { get; set; }
 }
 ```
 
-Used by: Path (needs FileSystem for Exists, Size — these are properties, not methods, so Context must be stored).
+Used by: Path (needs FileSystem for Exists, Size — these are properties, not methods, so Context must be stored), action handlers (need Context to execute).
 Not used by: Identity (pure data), Goal/Step/Action (shared templates — receive Context as method parameters instead, e.g., `RunAsync(context)`). Storing Context on shared structural types would break thread safety.
-
-Note: The existing `IContext` interface on action handlers serves the same purpose for handlers. Whether to merge these or keep them separate is an implementation detail.
 
 ### IDataWrappable
 
@@ -160,7 +158,7 @@ set
 {
     _context = value;
     if (_type != null) _type.Context = value;
-    if (_value is IContextual contextual)
+    if (_value is IContext contextual)
         contextual.Context = value;
 }
 ```
@@ -237,7 +235,7 @@ Everything in between — Variables, `__data__` rename, events, conditions, chan
 ### Phase 1: Value types (Path, Identity)
 
 Smallest blast radius, proves the pattern:
-- Make Path a plain class (remove Data inheritance), implement IContextual
+- Make Path a plain class (remove Data inheritance), implement IContext
 - Make Identity a plain class (no interfaces needed — pure data)
 - Update handlers to return Data<T>
 - Update navigation to handle Value traversal (already works for CLR objects)
