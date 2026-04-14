@@ -17,7 +17,7 @@ public partial class SkipAction : IContext
 
     public Task<Data.@this> Run()
     {
-        Context.EventOverride = Data(Value.Value);
-        return Task.FromResult(Data(Value.Value));
+        Context.EventOverride = Data(Value?.Value);
+        return Task.FromResult(Data(Value?.Value));
     }
 }

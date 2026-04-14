@@ -158,6 +158,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     && (dataType.OriginalDefinition.Name == "this" || dataType.OriginalDefinition.Name == "@this")
                     && dataType.OriginalDefinition.ContainingNamespace.ToDisplayString() == "App.Data";
 
+
                 properties.Add(new ActionPropertyInfo(
                     prop.Name,
                     prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -285,15 +286,39 @@ public class LazyParamsGenerator : IIncrementalGenerator
             if (prop.IsDataWrapped)
             {
                 // Data<T> property — resolve via __ResolveData, then As<T> to convert
-                // No _set flag needed (Data is never null)
                 // Extract the inner type T from the type name: "global::App.Data.@this<global::App.FileSystem.Path>" → inner part
                 var typeName = prop.TypeName;
                 var ltIdx = typeName.IndexOf('<');
                 var innerType = ltIdx >= 0 ? typeName.Substring(ltIdx + 1, typeName.Length - ltIdx - 2) : "object";
-                resolveExpr = $"__ResolveData(\"{paramName}\").As<{innerType}>(Context)";
                 sb.AppendLine($"    public partial {prop.TypeName} {prop.Name}");
                 sb.AppendLine("    {");
-                sb.AppendLine($"        get {{ if ({backingField} == null) {{ {backingField} = {resolveExpr}; }} return {backingField}!; }}");
+                if (prop.IsNullable)
+                {
+                    // Nullable Data<T>? — if no parameter found, stay null
+                    sb.AppendLine($"        get {{ if ({backingField} == null && !{setFlag}) {{ var __d = __ResolveData(\"{paramName}\"); {backingField} = __d.IsEmpty ? null : __d.As<{innerType}>(Context); {setFlag} = true; }} return {backingField}; }}");
+                }
+                else if (prop.DefaultValue != null)
+                {
+                    // Non-nullable Data<T> with [Default] — use default when not found
+                    sb.AppendLine($"        get {{ if ({backingField} == null) {{ var __d = __ResolveData(\"{paramName}\"); {backingField} = __d.IsEmpty ? new App.Data.@this<{innerType}>(\"{paramName}\", ({innerType}){prop.DefaultValue}) : __d.As<{innerType}>(Context); }} return {backingField}!; }}");
+                }
+                else
+                {
+                    resolveExpr = $"__ResolveData(\"{paramName}\").As<{innerType}>(Context)";
+                    sb.AppendLine($"        get {{ if ({backingField} == null) {{ {backingField} = {resolveExpr}; }} return {backingField}!; }}");
+                }
+                sb.AppendLine($"        init {{ {backingField} = value; {setFlag} = true; }}");
+                sb.AppendLine("    }");
+                sb.AppendLine();
+                continue;
+            }
+            else if (prop.TypeName.Contains("App.Data.@this") && !prop.TypeName.Contains("<"))
+            {
+                // Plain Data.@this — use __ResolveData which returns Data directly (preserves null Value)
+                resolveExpr = $"__ResolveData(\"{paramName}\")";
+                sb.AppendLine($"    public partial {prop.TypeName} {prop.Name}");
+                sb.AppendLine("    {");
+                sb.AppendLine($"        get {{ if (!{setFlag}) {{ {backingField} = {resolveExpr}; {setFlag} = true; }} return {backingField}!; }}");
                 sb.AppendLine($"        init {{ {backingField} = value; {setFlag} = true; }}");
                 sb.AppendLine("    }");
                 sb.AppendLine();
@@ -446,7 +471,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // Validate non-nullable, non-defaulted properties
         foreach (var prop in info.Properties)
         {
-            if (prop.IsNullable || prop.DefaultValue != null || prop.IsAppResolvable || prop.IsProvider)
+            if (prop.IsNullable || prop.DefaultValue != null || prop.IsAppResolvable || prop.IsProvider || prop.IsDataWrapped)
+                continue;
+            // Plain Data.@this properties can wrap null values — only [IsNotNull] should reject that
+            if (prop.TypeName.Contains("App.Data.@this"))
                 continue;
 
             if (!prop.IsValueType)

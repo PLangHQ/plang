@@ -714,6 +714,8 @@ public static class TypeMapping
         if (type.IsGenericType)
         {
             var generic = type.GetGenericTypeDefinition();
+            if (generic == typeof(Data.@this<>))
+                return UnwrapType(type.GetGenericArguments()[0]);
             if (generic == typeof(List<>) || generic == typeof(IList<>))
                 return UnwrapType(type.GetGenericArguments()[0]);
             if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>))
