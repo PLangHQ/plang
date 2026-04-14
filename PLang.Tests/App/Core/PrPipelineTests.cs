@@ -150,7 +150,16 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "subdata.txt") },
-                            Return = new List<Data> { new Data("content") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new List<Data>
+                            {
+                                new Data("Name", "content"),
+                                new Data("Value", "%__data__%")
+                            }
                         }
                     }
                 }
@@ -190,7 +199,16 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "../testdata.txt") },
-                            Return = new List<Data> { new Data("fromParent") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new List<Data>
+                            {
+                                new Data("Name", "fromParent"),
+                                new Data("Value", "%__data__%")
+                            }
                         }
                     }
                 }
@@ -229,7 +247,16 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "../sub/subdata.txt") },
-                            Return = new List<Data> { new Data("backAndDown") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new List<Data>
+                            {
+                                new Data("Name", "backAndDown"),
+                                new Data("Value", "%__data__%")
+                            }
                         }
                     }
                 }
@@ -268,7 +295,16 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "nonexistent.txt") },
-                            Return = new List<Data> { new Data("content") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new List<Data>
+                            {
+                                new Data("Name", "content"),
+                                new Data("Value", "%__data__%")
+                            }
                         }
                     }
                 }
@@ -308,7 +344,16 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "../../etc/passwd") },
-                            Return = new List<Data> { new Data("content") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new List<Data>
+                            {
+                                new Data("Name", "content"),
+                                new Data("Value", "%__data__%")
+                            }
                         }
                     }
                 }

@@ -382,8 +382,16 @@ public class FileHandlerTests : IDisposable
                             ActionName = "exists",
                             Parameters = new System.Collections.Generic.List<global::App.Data.@this>
                                 { new global::App.Data.@this("path", TempPath("real.txt")) },
-                            Return = new System.Collections.Generic.List<global::App.Data.@this>
-                                { new global::App.Data.@this("fileResult") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new System.Collections.Generic.List<global::App.Data.@this>
+                            {
+                                new global::App.Data.@this("Name", "fileResult"),
+                                new global::App.Data.@this("Value", "%__data__%")
+                            }
                         }
                     }
                 },
@@ -451,8 +459,16 @@ public class FileHandlerTests : IDisposable
                             ActionName = "exists",
                             Parameters = new System.Collections.Generic.List<global::App.Data.@this>
                                 { new global::App.Data.@this("path", TempPath("ghost.txt")) },
-                            Return = new System.Collections.Generic.List<global::App.Data.@this>
-                                { new global::App.Data.@this("fileResult") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new System.Collections.Generic.List<global::App.Data.@this>
+                            {
+                                new global::App.Data.@this("Name", "fileResult"),
+                                new global::App.Data.@this("Value", "%__data__%")
+                            }
                         }
                     }
                 },
