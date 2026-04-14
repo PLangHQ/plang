@@ -236,7 +236,7 @@ public partial class @this
             if (dataChild.IsInitialized) return dataChild;
         }
 
-        // Check Data subclass properties (e.g., Path.Exists, Identity.PublicKey)
+        // Check Data subclass properties (e.g., SettingsVariable, DynamicData)
         // These are declared on the subclass, not on Data itself.
         var ownProp = GetType().GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);

@@ -59,12 +59,10 @@ public class @this
         // Simple case: no dot/bracket path — set the root variable directly
         if (rootName == name)
         {
-            // Store Data values directly — includes subclasses like Goal, Path, etc.
-            // Only rename pure Data wrappers; subclasses own their Name (e.g., Goal.Name = "Start")
+            // Store Data values directly — rename to match the variable name
             if (value is Data.@this dv)
             {
-                if (value.GetType() == typeof(Data.@this))
-                    dv.Name = name;
+                dv.Name = name;
                 if (type != null) dv.Type = type;
                 dv.Context = _context;
                 _variables[name] = dv;
@@ -122,10 +120,8 @@ public class @this
         parent.ConvertValue();
 
         // For dot-path, extract raw value from Data — we're setting a property on a C# object
-        // Pure Data wrappers: unwrap to .Value. Data subclasses (Goal, Step, Path): keep as-is.
-        var rawValue = value is Data.@this dv2 && dv2.GetType() == typeof(Data.@this) ? dv2.Value : value;
-        // Data subclasses (Goal, Path) ARE the value — their _value is null
-        var target = parent.Value ?? (parent.GetType() != typeof(Data.@this) ? parent : null);
+        var rawValue = value is Data.@this dv2 ? dv2.Value : value;
+        var target = parent.Value;
         if (target == null) return;
         var result = SetValueOnObject(target, propertyName, rawValue);
         if (!ReferenceEquals(result, target))
