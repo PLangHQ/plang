@@ -1,0 +1,17 @@
+{
+  "name": "Build",
+  "description": "No goal steps were provided to compile. Please paste the PLang goal text (with its steps) so I can map each step to engine actions.",
+  "comment": null,
+  "steps": [],
+  "goals": [],
+  "visibility": 1,
+  "path": "/PlangConsole/bin/Debug/net10.0/system/modules/DbModule/Builder/Build.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/modules/DbModule/Builder/.build/build.pr",
+  "hash": null,
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

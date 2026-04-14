@@ -1,0 +1,649 @@
+{
+  "name": "BuildGoal",
+  "description": "Reads a goal definition from %file% into %goals%, then iterates %goals% and calls BuildStep for each item.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "get goal in %file%, write to %goals%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%file%",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goals%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "foreach %goals%, call BuildStep %goal%=item",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%goals%",
+              "type": "object"
+            },
+            {
+              "name": "ItemName",
+              "value": "goal",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "BuildStep",
+                "parameters": [
+                  {
+                    "name": "goal",
+                    "value": "%goal%",
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0",
+          "lineNumber": 6,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "write %goal% to \u0022%goal.RelativePrPath%\u0022",
+          "lineNumber": 7,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/os/apps/Plang/BuildGoal.goal",
+      "prPath": "/os/apps/Plang/.build/buildgoal.pr",
+      "hash": "056f5e5b94e597cdaefb49beafac04a49510afa250bc398d88c021f25248e7fe",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "if %reload% is false and %step.PrFile.Text% equals %step.Text% then",
+          "lineNumber": 11,
+          "indent": 0,
+          "comment": "- write out \u0022prFileText: %step.PrFile% | stepText: %step.Text%\u0022",
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "log info \u0022Step %step.Name% is already built\u0022",
+          "lineNumber": 12,
+          "indent": 1,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "end goal",
+          "lineNumber": 13,
+          "indent": 1,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 3,
+          "text": "if %errorCount% \u003E 3 then",
+          "lineNumber": 14,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 4,
+          "text": "log warning \u0022Failed to build %step.Text% after 3 attempts\u0022",
+          "lineNumber": 15,
+          "indent": 1,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 5,
+          "text": "end goal",
+          "lineNumber": 16,
+          "indent": 1,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 6,
+          "text": "log info \u0022Building %step.Text%\u0022",
+          "lineNumber": 17,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 7,
+          "text": "[plang] get available modules for %step.Text%, %excludedModules% , write to %modules%",
+          "lineNumber": 18,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 8,
+          "text": "read llm/buildActionSelectModuleSystem.txt, load vars, write to %selectModuleSystem%",
+          "lineNumber": 19,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 9,
+          "text": "[llm] system:%selectModuleSystem%\nuser: %step.Text%\nscheme: {moduleName:string, prFileName:string}\nwrite to %selectedModule%",
+          "lineNumber": 20,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 10,
+          "text": "if %selectedModule.moduleName% == \u0022N/A\u0022 then",
+          "lineNumber": 24,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 11,
+          "text": "log error \u0022Could not find module for %step.Text%\u0022",
+          "lineNumber": 25,
+          "indent": 1,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 12,
+          "text": "end goal",
+          "lineNumber": 26,
+          "indent": 1,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 13,
+          "text": "log info \u0022Using %selectedModule.moduleName% to build step\u0022",
+          "lineNumber": 27,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 14,
+          "text": "get available methods in %selectedModule.moduleName%, write to %methods%",
+          "lineNumber": 28,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 15,
+          "text": "ready llm/buildActionSelectMethodSystem.txt, load vars, write to %selectMethodSystem%",
+          "lineNumber": 29,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 16,
+          "text": "[llm] system: %selectMethodSystem%\nuser: %step.Text%\nscheme: {methodName:string}\ncontinue from last\nwrite to %selectedMethod%",
+          "lineNumber": 30,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 17,
+          "text": "if %selectedMethod.methodName% == \u0022N/A\u0022 then",
+          "lineNumber": 35,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 18,
+          "text": "append to string list %excludedModules% = %selectedModule.moduleName%",
+          "lineNumber": 36,
+          "indent": 1,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 19,
+          "text": "call !BuildAction errorCount=%errorCount\u002B%",
+          "lineNumber": 37,
+          "indent": 1,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 20,
+          "text": "end goal",
+          "lineNumber": 38,
+          "indent": 1,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 21,
+          "text": "log info \u0022Using %selectedMethod.methodName% method to build step\u0022    ",
+          "lineNumber": 39,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 22,
+          "text": "get method description from %selectedMethod.methodName% in %selectedModule.moduleName%, write to %methodDescription%",
+          "lineNumber": 40,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 23,
+          "text": "get method mapping scheme, write to %scheme%",
+          "lineNumber": 41,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 24,
+          "text": "read llm/buildActionMapToMethodSystem.txt, load vars, write to %system%",
+          "lineNumber": 42,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 25,
+          "text": "[llm] system: %system%\nuser: %step.Text%\nresponse type : json\ncontinue from last\nscheme: %scheme%\nwrite to %action%",
+          "lineNumber": 43,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 26,
+          "text": "[plang] get scheme for step properties for %selectedMethod.methodName% in %selectedModule.moduleName%, write to %propertiesScheme%",
+          "lineNumber": 49,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 27,
+          "text": "read llm/buildActionMapPropertiesSystem.txt, load vars, write to %mapPropertiesSystem%",
+          "lineNumber": 50,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 28,
+          "text": "log info \u0022Building properties for %step.Name%\u0022",
+          "lineNumber": 51,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 29,
+          "text": "[llm] system: %mapPropertiesSystem%\nuser: %step.Text%\ncontinue from last\nscheme: %propertiesScheme%\nwrite to %properties%",
+          "lineNumber": 52,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 30,
+          "text": "[llm] get previous messages, write to %llmMessages%",
+          "lineNumber": 57,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 31,
+          "text": "set %stepInfo% = {\nModuleName:%selectedModule.moduleName%,\nAction: %action%,\nStepIndex: %step.Index%,\nText: %step.Text%,\nIndent: %step.Indent%,\nComment: %step.Comment%\nLlm: %llmMessages%\nGenerated: %Now%\n}",
+          "lineNumber": 58,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 32,
+          "text": "[code] incriment %position% \u002B 1, pad left with 0, max 2 numbers, add period,\nwrite to %position%",
+          "lineNumber": 68,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 33,
+          "text": "set %selectedModule.prFileName% = \u0022%position% %selectedModule.prFileName%\u0022",
+          "lineNumber": 70,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 34,
+          "text": "create path %goal.RelativePrFolderPath%, %fileName%, write to %relativePrFileName%",
+          "lineNumber": 71,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 35,
+          "text": "write %stepInfo% to /%relativePrFileName%",
+          "lineNumber": 74,
+          "indent": 0,
+          "comment": "- set %goal.GoalSteps[position].PrFileName% = %prFileName%\n%goal.GoalSteps[position].RelativePrFileName% = %relativePrFileName%",
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/os/apps/Plang/BuildGoal.goal",
+      "prPath": "/os/apps/Plang/.build/buildgoal.pr",
+      "hash": "23124e0c7faf948471018195e3af30a82354ae472afbff32bbdd7ea9bb4eca76",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/os/apps/Plang/BuildGoal.goal",
+  "prPath": "/os/apps/Plang/.build/buildgoal.pr",
+  "hash": "e376bf62abb0f54529b33e754b670531a2f05db85bed712edfac779f1d14226e",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}
