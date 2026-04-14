@@ -145,7 +145,7 @@
     },
     {
       "index": 4,
-      "text": "llm.query system=%buildStepPrompt%, user=%stepForLlm%, scheme={errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}]}, on error call HandleBuildStepFailure, write to %result%",
+      "text": "llm.query system=%buildStepPrompt%, user=%stepForLlm%, scheme={errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}]}, cache=%!build.cache%, on error call HandleBuildStepFailure, write to %result%",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -190,7 +190,7 @@
             },
             {
               "name": "Cache",
-              "value": true,
+              "value": "%!build.cache%",
               "type": "bool"
             }
           ],

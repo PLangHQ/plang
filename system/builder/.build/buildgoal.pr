@@ -240,7 +240,7 @@
     },
     {
       "index": 6,
-      "text": "llm.query system=%buildGoalPrompt%, user=%goalForLlm%, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, on error HandleBuildGoalFailure, write to %stepResults%",
+      "text": "llm.query system=%buildGoalPrompt%, user=%goalForLlm%, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, cache=%!build.cache%, on error HandleBuildGoalFailure, write to %stepResults%",
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
@@ -305,7 +305,7 @@
             },
             {
               "name": "Cache",
-              "value": true,
+              "value": "%!build.cache%",
               "type": "bool"
             },
             {
@@ -771,7 +771,7 @@
         },
         {
           "index": 1,
-          "text": "llm.query system=%buildGoalPrompt%, user=\u0022Your previous response had an error: %!error.Message%. The developer\u0027s PLang code is:\\n%goalForLlm%\\n\\nYour previous answer:\\n%stepResults%\\n\\nFix the error and return the correct response.\u0022, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, write to %stepResults%",
+          "text": "llm.query system=%buildGoalPrompt%, user=\u0022Your previous response had an error: %!error.Message%. The developer\u0027s PLang code is:\\n%goalForLlm%\\n\\nYour previous answer:\\n%stepResults%\\n\\nFix the error and return the correct response.\u0022, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, cache=%!build.cache%, write to %stepResults%",
           "lineNumber": 35,
           "indent": 0,
           "comment": null,
