@@ -8,7 +8,7 @@ namespace App.modules.builder;
 public partial class goalsSave : IContext
 {
     [IsNotNull]
-    public partial Goal Goal { get; init; }
+    public partial Data.@this<Goal> Goal { get; init; }
 
     [Provider]
     public partial IBuilderProvider Builder { get; }

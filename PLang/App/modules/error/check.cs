@@ -14,13 +14,13 @@ namespace App.modules.error;
 public partial class Check : IContext, IAction
 {
     public partial Data.@this Data { get; init; }
-    public partial Step? Step { get; init; }
+    public partial Data.@this<Step>? Step { get; init; }
 
     public async Task<Data.@this> Run()
     {
         if (this.Data == null || this.Data.Success) return this.Data ?? App.Data.@this.Ok();
 
-        var onError = Step?.OnError;
+        var onError = Step?.Value?.OnError;
 
         // No error handler — propagate
         if (onError == null)
@@ -46,9 +46,9 @@ public partial class Check : IContext, IAction
         if (order == ErrorOrder.GoalFirst)
         {
             // Goal first (e.g. fix preconditions), then retry
-            await CallErrorGoal(app, Step!, onError);
+            await CallErrorGoal(app, Step!.Value!, onError);
 
-            var retryResult = await Retry(app, Step!);
+            var retryResult = await Retry(app, Step!.Value!);
             if (retryResult != null) return retryResult;
 
             // Goal ran but no retry or retry failed — goal alone counts as handled
@@ -57,12 +57,12 @@ public partial class Check : IContext, IAction
         else
         {
             // Retry first (default), then error goal as fallback
-            var retryResult = await Retry(app, Step!);
+            var retryResult = await Retry(app, Step!.Value!);
             if (retryResult != null) return retryResult;
 
             if (onError.Goal != null)
             {
-                await CallErrorGoal(app, Step!, onError);
+                await CallErrorGoal(app, Step!.Value!, onError);
                 return App.Data.@this.Ok();
             }
         }

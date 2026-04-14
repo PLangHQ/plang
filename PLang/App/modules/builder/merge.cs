@@ -7,10 +7,10 @@ namespace App.modules.builder;
 public partial class merge : IContext
 {
     [IsNotNull]
-    public partial Step Step { get; init; }
+    public partial Data.@this<Step> Step { get; init; }
 
     [IsNotNull]
-    public partial Step StepFromLlm { get; init; }
+    public partial Data.@this<Step> StepFromLlm { get; init; }
 
     [Provider]
     public partial IBuilderProvider Builder { get; }

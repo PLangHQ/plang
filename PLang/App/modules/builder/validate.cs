@@ -7,7 +7,7 @@ namespace App.modules.builder;
 [Action("validate")]
 public partial class validate : IContext
 {
-    public partial Actions? Actions { get; init; }
+    public partial Data.@this<Actions>? Actions { get; init; }
 
     [Provider]
     public partial IBuilderProvider Builder { get; }

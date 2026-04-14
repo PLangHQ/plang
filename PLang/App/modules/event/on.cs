@@ -36,7 +36,7 @@ public partial class On : IContext
     public partial Data.@this<int> Priority { get; init; }
 
     /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
-    public partial Actor.@this? Actor { get; init; }
+    public partial Data.@this<Actor.@this>? Actor { get; init; }
 
     public Task<Data.@this> Run()
     {
@@ -45,7 +45,7 @@ public partial class On : IContext
                 new Errors.ValidationError($"Unknown event type: '{Type.Value}'", "InvalidEventType", 400)));
 
         // Resolve target actor — default to current context's actor
-        var targetActor = Actor ?? Context.Actor ?? Context.App!.User;
+        var targetActor = Actor?.Value ?? Context.Actor ?? Context.App!.User;
 
         var goalToCall = GoalToCall.Value!;
         Func<Actor.Context.@this, Task<Data.@this>> handler = async ctx =>

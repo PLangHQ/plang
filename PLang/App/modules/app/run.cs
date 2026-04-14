@@ -11,21 +11,20 @@ namespace App.modules.app;
 public partial class run : IContext
 {
     public partial Data.@this<GoalCall>? GoalName { get; init; }
-    public partial Step? Step { get; init; }
-    public partial Goals.Goal.Steps.Step.Actions.Action.@this? Action { get; init; }
-    public partial Actor.@this? Actor { get; init; }
+    public partial Data.@this<Step>? Step { get; init; }
+    public partial Data.@this<Goals.Goal.Steps.Step.Actions.Action.@this>? Action { get; init; }
+    public partial Data.@this<Actor.@this>? Actor { get; init; }
 
     public async Task<Data.@this> Run()
     {
         if (GoalName?.Value != null)
             return await Context.App!.RunGoalAsync(GoalName.Value, Context);
 
+        if (Step?.Value != null)
+            return await Step.Value.RunAsync(Context);
 
-        if (Step != null)
-            return await Step.RunAsync(Context);
-
-        if (Action != null)
-            return await Action.RunAsync(Context);
+        if (Action?.Value != null)
+            return await Action.Value.RunAsync(Context);
 
         return Error(new ActionError(
             "run requires a GoalCall, Step, or Action", "MissingInput", 400));

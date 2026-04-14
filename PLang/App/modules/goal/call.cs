@@ -16,12 +16,11 @@ public partial class Call : IContext
     /// <summary>
     /// Target actor to run the goal on. If null, runs on the current context.
     /// </summary>
-    public partial Actor.@this? Actor { get; init; }
+    public partial Data.@this<Actor.@this>? Actor { get; init; }
 
     public async Task<Data.@this> Run()
     {
-        var app = Context.App!;
-        var execContext = Actor?.Context ?? Context;
-        return await app.RunGoalAsync(GoalName.Value!, execContext);
+        var execContext = Actor?.Value?.Context ?? Context;
+        return await Context.App!.RunGoalAsync(GoalName.Value!, execContext);
     }
 }

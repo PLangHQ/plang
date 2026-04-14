@@ -11,16 +11,17 @@ namespace App.modules.cache;
 public partial class Check : IContext
 {
     [IsNotNull]
-    public partial Step Step { get; init; }
+    public partial Data.@this<Step> Step { get; init; }
 
     public async Task<Data.@this> Run()
     {
         // No cache settings on the step — skip (miss)
-        if (Step.Cache == null) return Data(false);
+        var step = Step.Value!;
+        if (step.Cache == null) return Data(false);
 
         // Any non-cacheable action — skip (miss)
         var modules = Context.App!.Modules;
-        foreach (var action in Step.Actions)
+        foreach (var action in step.Actions)
         {
             if (!modules.IsCacheable(action.Module, action.ActionName))
                 return Data(false);
@@ -43,10 +44,11 @@ public partial class Check : IContext
 
     private string BuildCacheKey()
     {
-        if (!string.IsNullOrEmpty(Step.Cache!.Key))
-            return Context.Variables.Resolve(Step.Cache.Key);
+        var step = Step.Value!;
+        if (!string.IsNullOrEmpty(step.Cache!.Key))
+            return Context.Variables.Resolve(step.Cache.Key);
 
-        var goalPath = Step.Goal?.Path ?? "unknown";
-        return $"step:{goalPath}:{Step.Index}";
+        var goalPath = step.Goal?.Path ?? "unknown";
+        return $"step:{goalPath}:{step.Index}";
     }
 }

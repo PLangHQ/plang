@@ -138,7 +138,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
         var app = action.Context.App;
         var context = action.Context;
-        var goal = action.Goal;
+        var goal = action.Goal.Value!;
 
         // Apply LLM-generated description if available in Variables
         var stepResults = context.Variables.Get("stepResults");
@@ -182,11 +182,12 @@ public class DefaultBuilderProvider : IBuilderProvider
         var context = action.Context;
         var modules = app.Modules;
 
-        if (action.Actions == null || action.Actions.Count == 0)
+        if (action.Actions?.Value == null || action.Actions.Value.Count == 0)
             return Data.@this.Ok(true);
 
+        var actions = action.Actions!.Value!;
         var notFound = new List<string>();
-        foreach (var a in action.Actions)
+        foreach (var a in actions)
         {
             if (!modules.Contains(a.Module, a.ActionName))
             {
@@ -213,11 +214,11 @@ public class DefaultBuilderProvider : IBuilderProvider
                 "ActionNotFound", 400));
         }
 
-        await ResolveGoalCallPaths(action.Actions, app, context);
-        NormalizeParameterTypes(action.Actions);
+        await ResolveGoalCallPaths(actions, app, context);
+        NormalizeParameterTypes(actions);
 
         var validationErrors = new List<string>();
-        foreach (var a in action.Actions)
+        foreach (var a in actions)
         {
             var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (a.Parameters != null)
@@ -256,8 +257,8 @@ public class DefaultBuilderProvider : IBuilderProvider
         var guard = BuildingGuard(action);
         if (guard != null) return guard;
 
-        action.Step.Merge(action.StepFromLlm);
-        return Data.@this.Ok(action.Step);
+        action.Step.Value!.Merge(action.StepFromLlm.Value!);
+        return Data.@this.Ok(action.Step.Value);
     }
 
     // --- App ---
