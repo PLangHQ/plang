@@ -1,11 +1,11 @@
 {
   "name": "Test",
-  "description": "RunTest writes a status message including %testFile% and then runs the provided goal call via app.run.",
+  "description": "PrintError: writes the runtime error variable %!error% (may be null) to output.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = '.'",
+      "text": "set default %path% = \u0027.\u0027",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Discovers and runs *.test.goal files. Results collected in %!test.results%.",
@@ -25,6 +25,11 @@
               "type": "string"
             },
             {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            },
+            {
               "name": "AsDefault",
               "value": true,
               "type": "bool"
@@ -41,7 +46,7 @@
     },
     {
       "index": 1,
-      "text": "find files '*.test.goal' in %path% recursive, write to %testFiles%",
+      "text": "find files \u0027*.test.goal\u0027 in %path% recursive, write to %testFiles%",
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
@@ -94,7 +99,7 @@
     },
     {
       "index": 2,
-      "text": "write out 'Found %testFiles.Length% test files'",
+      "text": "write out \u0027Found %testFiles.Length% test files\u0027",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -215,7 +220,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out 'Running %testFile%'",
+          "text": "write out \u0027Running %testFile%\u0027",
           "lineNumber": 11,
           "indent": 0,
           "comment": "Runs a single test goal through the full RunStep pipeline",
@@ -246,7 +251,7 @@
         },
         {
           "index": 1,
-          "text": "app run %testFile.GoalCall%",
+          "text": "app run %testFile.GoalCall%, on error call PrintError",
           "lineNumber": 12,
           "indent": 0,
           "comment": null,
@@ -259,6 +264,75 @@
                   "name": "GoalName",
                   "value": "%testFile.GoalCall%",
                   "type": "goal.call"
+                },
+                {
+                  "name": "Actor",
+                  "value": "this",
+                  "type": "actor(user|service|system)"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": {
+            "goal": {
+              "name": "PrintError",
+              "description": null,
+              "parallel": false,
+              "parameters": null,
+              "prPath": null
+            },
+            "retryCount": null,
+            "retryOverMs": null,
+            "order": 0,
+            "ignoreError": null,
+            "message": null,
+            "statusCode": null,
+            "key": null
+          },
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/PlangConsole/bin/Debug/net10.0/system/test.goal",
+      "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/test.pr",
+      "hash": "49fef1d435f8b975cc332c0c1a4022053428ab8ef622ae5d3ed6a4a718d9952d",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "PrintError",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out %!error%",
+          "lineNumber": 15,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "%!error%",
+                  "type": "object"
+                },
+                {
+                  "name": "Channels",
+                  "value": "this",
+                  "type": "string"
                 }
               ],
               "defaults": null
@@ -273,25 +347,25 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/system/test.goal",
-      "prPath": "/system/.build/test.pr",
-      "hash": "ae5bce1e279ac96e4c5d3fba0b76e62b45c714ad612346556f3f0ee0e2b49a2c",
+      "path": "/PlangConsole/bin/Debug/net10.0/system/test.goal",
+      "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/test.pr",
+      "hash": "8c3f77a5cd16d7ddc6e6b10f1a8fb93222b83b2cfd1b23aa8854ad59df1b733d",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": true,
+      "isSystem": false,
       "isTest": false,
       "inputParameters": null
     }
   ],
   "visibility": 1,
-  "path": "/system/test.goal",
-  "prPath": "/system/.build/test.pr",
+  "path": "/PlangConsole/bin/Debug/net10.0/system/test.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/test.pr",
   "hash": "76976193577f6cb787f8e0ab91b7d639c06b17b280fd964e789a0ca75dc7134e",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
-  "isSystem": true,
+  "isSystem": false,
   "isTest": false,
   "inputParameters": null
 }

@@ -9,4 +9,7 @@ Test
 RunTest
 / Runs a single test goal through the full RunStep pipeline
 - write out 'Running %testFile%'
-- app run %testFile.GoalCall%
+- app run %testFile.GoalCall%, on error call PrintError
+
+PrintError
+- write out %!error%
