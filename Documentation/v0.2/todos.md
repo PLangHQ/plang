@@ -104,5 +104,23 @@ Each scope level is backed by a goal at the appropriate system path. `timer.star
 
 ---
 
+---
+
+## Step-level rebuild in builder
+
+**Date:** 2026-04-15
+
+**Problem:** The builder rebuilds all steps in a goal — no way to rebuild a single step. When one step has a bad .pr mapping (e.g., LLM encoded JSON value as string), you have to rebuild the entire goal and risk the LLM breaking other steps.
+
+**Solution:** Add `steps` filter to `--build` options: `--build={"files":"BuildGoal.goal","steps":[8]}`. Skip the full BuildGoal LLM pass, go straight to BuildStep for the specified indexes. The infrastructure exists — BuildStep already does single-step LLM passes.
+
+**Changes needed:**
+1. `PLang/App/Build/this.cs` — add `public List<int> Steps { get; set; } = new();`
+2. `PLang/Executor.cs` — parse steps from build JSON, sync to `%!build.steps%`
+3. `system/builder/BuildGoal.goal` — conditional: if `%!build.steps%` has items, call BuildStep directly for each index instead of BuildGoalCore
+4. New `RebuildStep` sub-goal wrapping BuildStep with template rendering and trace
+
+---
+
 ### Open question:
 How does the deserialized Goal get `App` if we can't store it on the Goal? The caller (GoalCall, Goals.LoadFromFileAsync) sets `goal.App` after loading — that's acceptable because it's the loading path, not per-request state. The rule is about not caching *context* (which is per-request). `App` is per-application and set once during loading. But this needs discussion — is `Goal.App` actually safe on cached goals, or should goals navigate to App differently?
