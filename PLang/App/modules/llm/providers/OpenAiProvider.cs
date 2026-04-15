@@ -24,6 +24,9 @@ public sealed class OpenAiProvider : ILlmProvider
     public string Name { get; init; } = "OpenAi";
     public bool IsDefault { get; set; }
 
+    /// <summary>Fired before each LLM API call with the resolved messages. Debug subscribes to this.</summary>
+    public event Action<List<LlmMessage>>? OnBeforeRequest;
+
     private const string ConversationKey = "__llm_conversation__";
     private const string SchemaKey = "__llm_schema__";
     private const string CacheTable = "LlmCache";
@@ -88,6 +91,8 @@ public sealed class OpenAiProvider : ILlmProvider
             else
                 messages.Insert(0, new LlmMessage { Role = "system", Content = formatInstruction });
         }
+
+        OnBeforeRequest?.Invoke(messages);
 
         // --- Cache check ---
         string? cacheKey = null;

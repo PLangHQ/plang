@@ -61,6 +61,13 @@ public sealed class @this
     public bool Verbose { get; set; }
 
     /// <summary>
+    /// When true, logs the resolved LLM messages before each API call.
+    /// Shows the actual content sent to the LLM, not the raw %var% references.
+    /// Set via: --debug={"llmTrace":true}
+    /// </summary>
+    public bool LlmTrace { get; set; }
+
+    /// <summary>
     /// When true, logs every ResolveDeep call with input/output types.
     /// Useful for tracing where %variable% resolution changes types.
     /// Set via: --debug={"resolveTrace":true}
@@ -108,6 +115,27 @@ public sealed class @this
                         if (oldType != newType) LogMutation(v.Name, oldData, newData);
                     };
                 vars.Put(placeholder);
+            }
+        }
+
+        // Subscribe to LLM message tracing
+        if (LlmTrace)
+        {
+            var provider = _engine.Providers.Get<modules.llm.providers.ILlmProvider>();
+            if (provider.Success && provider.Value is modules.llm.providers.OpenAiProvider oai)
+            {
+                oai.OnBeforeRequest += (messages) =>
+                {
+                    var sb = new StringBuilder();
+                    sb.AppendLine("=== LLM REQUEST ===");
+                    foreach (var msg in messages)
+                    {
+                        var content = msg.Content ?? "(null)";
+                        sb.AppendLine($"  [{msg.Role}] {content}");
+                    }
+                    sb.AppendLine("=== END LLM REQUEST ===");
+                    WriteFiltered(sb, _engine.User.Context);
+                };
             }
         }
 
