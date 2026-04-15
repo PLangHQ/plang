@@ -111,6 +111,13 @@ public sealed class @this
             }
         }
 
+        // Subscribe to resolve tracing
+        if (ResolveTrace)
+        {
+            _engine.User.Context.Variables.OnResolveTrace += (varName, resolved, depth) =>
+                Console.Error.WriteLine($"  [ResolveDeep] %{varName}% → {resolved?.GetType().Name ?? "null"} (depth={depth})");
+        }
+
         // Build grep regex
         if (!string.IsNullOrEmpty(Grep))
         {

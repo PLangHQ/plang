@@ -370,12 +370,12 @@ public class @this
     /// </summary>
     [ThreadStatic] private static int _resolveDepth;
 
+    /// <summary>Fired during ResolveDeep for %variable% full-match resolutions. Args: varName, resolvedValue, depth.</summary>
+    public event Action<string, object?, int>? OnResolveTrace;
+
     public object? ResolveDeep(object? value)
     {
         if (value == null) return null;
-
-        var traceResolve = _context?.App?.Debug?.ResolveTrace == true;
-        var inputType = traceResolve ? value.GetType().Name : null;
 
         _resolveDepth++;
         if (_resolveDepth > 50)
@@ -405,9 +405,9 @@ public class @this
             var fullMatch = Regex.Match(str, @"^%([^%]+)%$");
             if (fullMatch.Success)
             {
-                var resolved = Get(fullMatch.Groups[1].Value)?.Value;
-                if (traceResolve)
-                    Console.Error.WriteLine($"  [ResolveDeep] %{fullMatch.Groups[1].Value}% → {resolved?.GetType().Name ?? "null"} (depth={_resolveDepth})");
+                var varName = fullMatch.Groups[1].Value;
+                var resolved = Get(varName)?.Value;
+                OnResolveTrace?.Invoke(varName, resolved, _resolveDepth);
                 return resolved;
             }
 
@@ -456,13 +456,6 @@ public class @this
                 if (!ReferenceEquals(resolved, strValue))
                     prop.SetValue(value, resolved);
             }
-        }
-
-        if (traceResolve)
-        {
-            var outputType = value?.GetType().Name ?? "null";
-            if (inputType != outputType)
-                Console.Error.WriteLine($"  [ResolveDeep] {inputType} → {outputType} (depth={_resolveDepth})");
         }
 
         return value;
