@@ -44,6 +44,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["%actions%"],"maxLength
 | `maxLength` | int | 500 | Max characters per line before truncation. |
 | `grep` | string | null | Regex pattern to filter output lines (case-insensitive). |
 | `level` | string | "step" | Detail level: `"step"` (per step) or `"action"` (per action within steps). |
+| `llmTrace` | bool | false | Log resolved LLM messages before each API call. |
 | `resolveTrace` | bool | false | Log every `%variable%` resolution with resolved type and depth. |
 
 ## Detail Levels
@@ -181,6 +182,35 @@ plang build '--build={"files":"myfile.goal","cache":false}' \
 ```
 
 Only fires for mutations like `null → Dictionary`, `Dictionary → String`, not `Dictionary → Dictionary`.
+
+## LLM Message Tracing
+
+See the actual resolved messages sent to the LLM API — not the raw `%var%` references but the final content.
+
+```bash
+plang build '--build={"files":"myfile.goal","cache":false}' \
+  '--debug={"llmTrace":true,"maxLength":500}'
+```
+
+Output:
+```
+=== LLM REQUEST ===
+  [system] # Goal Builder
+
+You are the PLang compiler. Map each step in a goal to engine actions...
+  [user] Start
+- read file 'test.txt', write to %content%  <= null
+=== END LLM REQUEST ===
+```
+
+Combine with `grep` to filter:
+```bash
+# Show only user messages
+plang build '--debug={"llmTrace":true,"grep":"user","maxLength":300}'
+
+# Show only null content (catch broken messages)
+plang build '--debug={"llmTrace":true,"grep":"null"}'
+```
 
 ## Resolve Tracing
 
