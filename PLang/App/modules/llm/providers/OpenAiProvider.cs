@@ -28,8 +28,18 @@ public sealed class OpenAiProvider : ILlmProvider
     private const string SchemaKey = "__llm_schema__";
     private const string CacheTable = "LlmCache";
 
+    // Hard safety limit — prevent infinite loops from burning API credits
+    // TODO: remove once proper retry/circuit-breaker is in place
+    private static int _requestCount;
+    private const int MaxRequestsPerProcess = 50;
+
     public async Task<Data.@this> Query(query action)
     {
+        if (Interlocked.Increment(ref _requestCount) > MaxRequestsPerProcess)
+            return App.Data.@this.FromError(new Errors.ActionError(
+                $"LLM request limit reached ({MaxRequestsPerProcess}). Possible infinite loop. Restart to reset.",
+                "RequestLimitExceeded", 429));
+
         var app = action.Context.App;
         var context = action.Context;
         var config = app.Config.For<http.Config>(context);
