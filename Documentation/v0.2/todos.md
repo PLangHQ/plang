@@ -122,5 +122,22 @@ Each scope level is backed by a goal at the appropriate system path. `timer.star
 
 ---
 
+---
+
+## Rename file.save Value property to Content
+
+**Date:** 2026-04-15
+
+**Problem:** `DefaultFileProvider.Save` has `action.Value?.Value` — the parameter is named `Value` and `Data` also has `.Value`, making `Value.Value`. Confusing naming collision.
+
+**Fix:** Rename the `Value` property on `file.save` to `Content`. Update all .pr files that reference `"name": "Value"` on file.save parameters. Update builder prompt examples.
+
+**Key files:**
+- `PLang/App/modules/file/save.cs` — rename property
+- All `.pr` files with `file.save` parameters
+- `PLang/App/modules/file/providers/DefaultFileProvider.cs` — update reference
+
+---
+
 ### Open question:
 How does the deserialized Goal get `App` if we can't store it on the Goal? The caller (GoalCall, Goals.LoadFromFileAsync) sets `goal.App` after loading — that's acceptable because it's the loading path, not per-request state. The rule is about not caching *context* (which is per-request). `App` is per-application and set once during loading. But this needs discussion — is `Goal.App` actually safe on cached goals, or should goals navigate to App differently?
