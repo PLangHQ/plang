@@ -1,6 +1,6 @@
 {
   "name": "Build",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Mapped PLang goal ValidateStep into exactly one engine step per each \u0027- \u0027 line in the provided code, including the onError modifier on the error.throw step.",
   "comment": null,
   "steps": [
     {
@@ -11,28 +11,23 @@
       "comment": null,
       "actions": [
         {
-          "module": "variable",
-          "action": "set",
+          "module": "condition",
+          "action": "if",
           "parameters": [
             {
-              "name": "Name",
-              "value": "%path%",
+              "name": "Left",
+              "value": "%step.actions%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "isempty",
               "type": "string"
             },
             {
-              "name": "Value",
-              "value": ".",
-              "type": "string"
-            },
-            {
-              "name": "Type",
-              "value": "string",
-              "type": "string"
-            },
-            {
-              "name": "AsDefault",
-              "value": true,
-              "type": "bool"
+              "name": "Right",
+              "value": null,
+              "type": "object"
             }
           ],
           "defaults": null
@@ -50,9 +45,36 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "Step at index %step.index% has no actions. Every step must include actions with module and action filled in.",
+              "type": "tstring"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -65,28 +87,13 @@
       "comment": null,
       "actions": [
         {
-          "module": "variable",
-          "action": "set",
+          "module": "builder",
+          "action": "validate",
           "parameters": [
             {
-              "name": "Name",
-              "value": "%traceGoals%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": [],
-              "type": "list"
-            },
-            {
-              "name": "Type",
-              "value": "list",
-              "type": "string"
-            },
-            {
-              "name": "AsDefault",
-              "value": false,
-              "type": "bool"
+              "name": "Actions",
+              "value": "%step.actions%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -352,13 +359,13 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/PlangConsole/bin/Debug/net10.0/system/builder/Build.goal",
-  "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/build.pr",
+  "path": "/system/builder/Build.goal",
+  "prPath": "/system/builder/.build/build.pr",
   "hash": "ac0c7cdb2f92075272286c024c605759e7f237667a8768fb7c01dc6590dc1b26",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
-  "isSystem": false,
+  "isSystem": true,
   "isTest": false,
   "inputParameters": null
 }
