@@ -541,7 +541,7 @@
               "parameters": null,
               "prPath": null
             },
-            "retryCount": null,
+            "retryCount": 3,
             "retryOverMs": null,
             "order": null,
             "ignoreError": null,
@@ -587,7 +587,7 @@
               "parameters": null,
               "prPath": null
             },
-            "retryCount": null,
+            "retryCount": 3,
             "retryOverMs": null,
             "order": null,
             "ignoreError": null,

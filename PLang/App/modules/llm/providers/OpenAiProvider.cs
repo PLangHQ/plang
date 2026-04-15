@@ -79,12 +79,6 @@ public sealed class OpenAiProvider : ILlmProvider
                 messages.Insert(0, new LlmMessage { Role = "system", Content = formatInstruction });
         }
 
-        // --- Debug: dump actual messages sent to LLM ---
-        Console.Error.WriteLine("=== LLM MESSAGES ===");
-        foreach (var msg in messages)
-            Console.Error.WriteLine($"  [{msg.Role}] {msg.Content?[..Math.Min(msg.Content.Length, 200)]}...");
-        Console.Error.WriteLine("=== END LLM MESSAGES ===");
-
         // --- Cache check ---
         string? cacheKey = null;
         if (action.Cache.Value && action.Tools?.Value == null)
