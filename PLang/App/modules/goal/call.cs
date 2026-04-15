@@ -20,7 +20,15 @@ public partial class Call : IContext
 
     public async Task<Data.@this> Run()
     {
+        var goalCall = GoalName.Value!;
+        // Stamp action chain so GetGoalAsync can navigate step → goal → sub-goals
+        if (goalCall.Action == null && Context.Step != null)
+        {
+            var currentAction = Context.Step.Actions.FirstOrDefault();
+            if (currentAction != null)
+                goalCall.Action = currentAction;
+        }
         var execContext = Actor?.Value?.Context ?? Context;
-        return await Context.App!.RunGoalAsync(GoalName.Value!, execContext);
+        return await Context.App!.RunGoalAsync(goalCall, execContext);
     }
 }
