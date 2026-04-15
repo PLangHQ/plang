@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Runs an llm.query with system\u002Buser messages, writes the response to %result%, then asserts %result% is not null.",
   "comment": null,
   "steps": [
     {
@@ -18,20 +18,39 @@
               "name": "Messages",
               "value": [
                 {
-                  "Role": "system",
-                  "Text": "You are a helpful assistant"
+                  "role": "system",
+                  "content": "You are a helpful assistant",
+                  "images": []
                 },
                 {
-                  "Role": "user",
-                  "Text": "What is 2\u002B2? Reply with just the number"
+                  "role": "user",
+                  "content": "What is 2\u002B2? Reply with just the number",
+                  "images": []
                 }
               ],
-              "type": "list"
+              "type": "list\u003Cllmmessage\u003E"
             },
             {
               "name": "Cache",
               "value": true,
               "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -49,7 +68,20 @@
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%result%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,

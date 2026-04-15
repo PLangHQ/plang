@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Runs the same llm.query twice with caching enabled, writes results to %first% and %second%, then asserts both are not null.",
   "comment": null,
   "steps": [
     {
@@ -18,20 +18,39 @@
               "name": "Messages",
               "value": [
                 {
-                  "Role": "system",
-                  "Text": "You are a helpful assistant"
+                  "role": "system",
+                  "content": "You are a helpful assistant",
+                  "images": []
                 },
                 {
-                  "Role": "user",
-                  "Text": "What is the capital of Iceland?"
+                  "role": "user",
+                  "content": "What is the capital of Iceland?",
+                  "images": []
                 }
               ],
-              "type": "list"
+              "type": "list\u003Cllmmessage\u003E"
             },
             {
               "name": "Cache",
               "value": true,
               "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%first%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -49,7 +68,53 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "llm",
+          "action": "query",
+          "parameters": [
+            {
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "You are a helpful assistant",
+                  "images": []
+                },
+                {
+                  "role": "user",
+                  "content": "What is the capital of Iceland?",
+                  "images": []
+                }
+              ],
+              "type": "list\u003Cllmmessage\u003E"
+            },
+            {
+              "name": "Cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%second%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,

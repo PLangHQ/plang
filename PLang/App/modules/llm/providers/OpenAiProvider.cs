@@ -34,7 +34,7 @@ public sealed class OpenAiProvider : ILlmProvider
     // Hard safety limit — prevent infinite loops from burning API credits
     // TODO: remove once proper retry/circuit-breaker is in place
     private static int _requestCount;
-    private const int MaxRequestsPerProcess = 500;
+    private const int MaxRequestsPerProcess = 5000;
 
     public async Task<Data.@this> Query(query action)
     {

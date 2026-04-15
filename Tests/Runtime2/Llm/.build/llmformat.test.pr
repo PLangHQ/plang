@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Calls llm.query requesting a JSON-only response, writes the result to %result%, then asserts %result% is not null.",
   "comment": null,
   "steps": [
     {
@@ -18,15 +18,17 @@
               "name": "Messages",
               "value": [
                 {
-                  "Role": "system",
-                  "Text": "Reply in JSON format only"
+                  "role": "system",
+                  "content": "Reply in JSON format only",
+                  "images": []
                 },
                 {
-                  "Role": "user",
-                  "Text": "Return a JSON object with key \u0022color\u0022 set to \u0022blue\u0022"
+                  "role": "user",
+                  "content": "Return a JSON object with key \u0022color\u0022 set to \u0022blue\u0022",
+                  "images": []
                 }
               ],
-              "type": "list"
+              "type": "list\u003Cllmmessage\u003E"
             },
             {
               "name": "Format",
@@ -37,6 +39,23 @@
               "name": "Cache",
               "value": true,
               "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -54,7 +73,25 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
