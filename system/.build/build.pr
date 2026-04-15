@@ -1,6 +1,6 @@
 {
   "name": "Build",
-  "description": "Calls the goal /builder/Build with GoalName set to %goal.call% and Actor set to %actor%, using cache=0ms and onError retry=0 order=1.",
+  "description": "Calls the goal /builder/Build with the provided goal.call payload, with cache disabled (0ms) and specified onError retry/order settings.",
   "comment": null,
   "steps": [
     {
@@ -21,13 +21,8 @@
                 "parameters": [
                   {
                     "name": "GoalName",
-                    "value": "%goal.call%",
-                    "type": "string"
-                  },
-                  {
-                    "name": "Actor",
-                    "value": "%actor%",
-                    "type": "actor(user|service|system)"
+                    "value": "[goal.call]",
+                    "type": "goal.call"
                   }
                 ]
               },
