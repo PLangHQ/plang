@@ -88,6 +88,32 @@ public partial class @this
     private Type? _type;
     private Actor.Context.@this? _context;
 
+    /// <summary>Fired by Variables.Set() when this Data is replaced — passes old and new Data.</summary>
+    public event Action<@this, @this>? OnChange;
+
+    /// <summary>Fired when variable is first created in the store — passes the Data.</summary>
+    public event Action<@this>? OnCreate;
+
+    /// <summary>Fired by Variables.Remove() before deletion — passes the Data.</summary>
+    public event Action<@this>? OnDelete;
+
+    /// <summary>Copies event handlers from another Data (used when replacing in variable store).</summary>
+    public void CopyEventsFrom(@this other)
+    {
+        if (other.OnCreate != null) OnCreate += other.OnCreate;
+        if (other.OnChange != null) OnChange += other.OnChange;
+        if (other.OnDelete != null) OnDelete += other.OnDelete;
+    }
+
+    /// <summary>Fires the OnChange event. Called by Variables.Set() when replacing.</summary>
+    public void FireOnChange(@this newData) => OnChange?.Invoke(this, newData);
+
+    /// <summary>Fires the OnCreate event.</summary>
+    public void FireOnCreate() => OnCreate?.Invoke(this);
+
+    /// <summary>Fires the OnDelete event.</summary>
+    public void FireOnDelete() => OnDelete?.Invoke(this);
+
     /// <summary>
     /// When true, Value resolves %variable% references on access.
     /// Set for .pr parameter Data — their values contain %var% references.
@@ -285,6 +311,7 @@ public partial class @this
 
     public static @this Null(string name = "") => new(name, null);
     public static @this NotFound(string name = "") => new(name, null) { IsInitialized = false };
+    public static @this Uninitialized(string name) => new(name, null) { IsInitialized = false };
 
     /// <summary>
     /// Converts this Data to a Data&lt;T&gt; by converting the inner Value.

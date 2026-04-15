@@ -65,6 +65,17 @@ public class @this
                 dv.Name = name;
                 if (type != null) dv.Type = type;
                 dv.Context = _context;
+
+                if (_variables.TryGetValue(name, out var prev))
+                {
+                    prev.FireOnChange(dv);
+                    dv.CopyEventsFrom(prev);
+                }
+                else
+                {
+                    dv.FireOnCreate();
+                }
+
                 _variables[name] = dv;
                 return;
             }
@@ -79,6 +90,7 @@ public class @this
             {
                 var data = new Data.@this(name, value, type);
                 data.Context = _context;
+                data.FireOnCreate();
                 _variables[name] = data;
             }
             return;

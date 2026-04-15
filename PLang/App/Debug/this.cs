@@ -32,9 +32,11 @@ public sealed class @this
     public int? Step { get; set; }
 
     /// <summary>
-    /// Explicit variables to watch. Printed in every step debug output.
+    /// Variables to watch. Each can optionally track events (OnCreate/OnChange/OnDelete).
+    /// Variables without Event set are displayed at step boundaries.
+    /// Set via: --debug={"variables":[{"name":"trace","event":"onchange"}]}
     /// </summary>
-    public List<string>? Variables { get; set; }
+    public List<DebugVariable>? Variables { get; set; }
 
     /// <summary>
     /// Max characters per line before truncation. Default 500.
@@ -58,6 +60,7 @@ public sealed class @this
     /// </summary>
     public bool Verbose { get; set; }
 
+
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
 
@@ -75,7 +78,24 @@ public sealed class @this
 
         // Strip % from variable names
         if (Variables != null)
-            Variables = Variables.Select(v => v.Trim('%')).ToList();
+        {
+            foreach (var v in Variables)
+                v.Name = v.Name.Trim('%');
+
+            // Create placeholder Data with event handlers for watched variables
+            var vars = _engine.User.Context.Variables;
+            foreach (var v in Variables.Where(v => v.Event.HasValue))
+            {
+                var placeholder = Data.@this.Uninitialized(v.Name);
+                if (v.Event == DebugEvent.OnCreate)
+                    placeholder.OnCreate += (data) => LogEvent(v.Name, "CREATED", data);
+                if (v.Event == DebugEvent.OnChange)
+                    placeholder.OnChange += (oldData, newData) => LogMutation(v.Name, oldData, newData);
+                if (v.Event == DebugEvent.OnDelete)
+                    placeholder.OnDelete += (data) => LogEvent(v.Name, "DELETED", data);
+                vars.Put(placeholder);
+            }
+        }
 
         // Build grep regex
         if (!string.IsNullOrEmpty(Grep))
@@ -125,6 +145,38 @@ public sealed class @this
         }
     }
 
+
+    public void LogMutation(string name, Data.@this oldData, Data.@this newData)
+    {
+        var context = _engine.User.Context;
+        var goalName = context?.Goal?.Name ?? "?";
+        var stepIndex = context?.Step?.Index.ToString() ?? "?";
+        var stepText = context?.Step?.Text;
+        if (stepText != null && stepText.Length > 60) stepText = stepText[..60];
+        var stack = new System.Diagnostics.StackTrace(2, true);
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"=== WATCH [{name}] CHANGED ===");
+        sb.AppendLine($"  Goal: {goalName}[{stepIndex}] {stepText ?? "?"}");
+        sb.AppendLine($"  Type: {oldData.Value?.GetType().Name ?? "null"} → {newData.Value?.GetType().Name ?? "null"}");
+        for (int i = 0; i < Math.Min(5, stack.FrameCount); i++)
+        {
+            var frame = stack.GetFrame(i);
+            if (frame?.GetMethod() != null)
+                sb.AppendLine($"  at {frame.GetMethod()!.DeclaringType?.Name}.{frame.GetMethod()!.Name}:{frame.GetFileLineNumber()}");
+        }
+        sb.AppendLine("==============================");
+        Console.Error.Write(sb.ToString());
+    }
+
+    public void LogEvent(string name, string eventType, Data.@this data)
+    {
+        var context = _engine.User.Context;
+        var goalName = context?.Goal?.Name ?? "?";
+        var stepIndex = context?.Step?.Index.ToString() ?? "?";
+
+        Console.Error.WriteLine($"=== WATCH [{name}] {eventType} in {goalName}[{stepIndex}] type={data.Value?.GetType().Name ?? "null"} ===");
+    }
 
     private static Task<Data.@this> BeforeStepHandler(Actor.Context.@this context, int? stepFilter)
     {
@@ -296,7 +348,7 @@ public sealed class @this
         var watchVars = context.App?.Debug.Variables;
         if (watchVars != null)
             foreach (var v in watchVars)
-                varNames.Add(v);
+                varNames.Add(v.Name);
 
         if (varNames.Count == 0) return;
 
@@ -405,4 +457,12 @@ public sealed class @this
         var str = value.ToString() ?? "?";
         return str.Length > max ? $"{str[..max]}...[{str.Length - max} more chars]" : str;
     }
+}
+
+public enum DebugEvent { OnCreate, OnChange, OnDelete }
+
+public class DebugVariable
+{
+    public string Name { get; set; } = "";
+    public DebugEvent? Event { get; set; }
 }
