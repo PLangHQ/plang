@@ -1023,6 +1023,91 @@ public class VariablesAccessorTests
         // The retrieved Data's Value should BE the Goal (same object)
         await Assert.That(object.ReferenceEquals(retrieved!.Value, goal)).IsTrue();
     }
+
+    // --- ResolveDeep tests ---
+
+    [Test]
+    public async Task ResolveDeep_String_ResolvesVariable()
+    {
+        var stack = new Variables();
+        stack.Set("name", "Alice");
+
+        var result = stack.ResolveDeep("%name%");
+
+        await Assert.That(result).IsEqualTo("Alice");
+    }
+
+    [Test]
+    public async Task ResolveDeep_ListOfStrings_ResolvesVariables()
+    {
+        var stack = new Variables();
+        stack.Set("greeting", "hello");
+
+        var list = new List<object?> { "%greeting%", "world" };
+        var result = stack.ResolveDeep(list) as List<object?>;
+
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result![0]).IsEqualTo("hello");
+        await Assert.That(result[1]).IsEqualTo("world");
+    }
+
+    [Test]
+    public async Task ResolveDeep_DictOfStrings_ResolvesVariables()
+    {
+        var stack = new Variables();
+        stack.Set("prompt", "You are a compiler");
+
+        var dict = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
+        var result = stack.ResolveDeep(dict) as Dictionary<string, object?>;
+
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!["content"]).IsEqualTo("You are a compiler");
+    }
+
+    [Test]
+    public async Task ResolveDeep_TypedObject_ResolvesStringProperties()
+    {
+        var stack = new Variables();
+        stack.Set("systemPrompt", "You are a compiler");
+        stack.Set("userInput", "Build this goal");
+
+        var msg = new global::App.modules.llm.LlmMessage
+        {
+            Role = "system",
+            Content = "%systemPrompt%"
+        };
+
+        var result = stack.ResolveDeep(msg);
+
+        // The typed object should have its Content property resolved
+        var resolved = result as global::App.modules.llm.LlmMessage;
+        await Assert.That(resolved).IsNotNull();
+        await Assert.That(resolved!.Content).IsEqualTo("You are a compiler");
+    }
+
+    [Test]
+    public async Task ResolveDeep_ListOfTypedObjects_ResolvesStringProperties()
+    {
+        var stack = new Variables();
+        stack.Set("systemPrompt", "You are a compiler");
+        stack.Set("goalText", "Start\n- read file test.txt");
+
+        var messages = new List<object?>
+        {
+            new global::App.modules.llm.LlmMessage { Role = "system", Content = "%systemPrompt%" },
+            new global::App.modules.llm.LlmMessage { Role = "user", Content = "%goalText%" }
+        };
+
+        var result = stack.ResolveDeep(messages) as List<object?>;
+
+        await Assert.That(result).IsNotNull();
+        var msg0 = result![0] as global::App.modules.llm.LlmMessage;
+        var msg1 = result[1] as global::App.modules.llm.LlmMessage;
+        await Assert.That(msg0).IsNotNull();
+        await Assert.That(msg0!.Content).IsEqualTo("You are a compiler");
+        await Assert.That(msg1).IsNotNull();
+        await Assert.That(msg1!.Content).IsEqualTo("Start\n- read file test.txt");
+    }
 }
 
 // --- Test helper classes for Set dot-path tests ---
