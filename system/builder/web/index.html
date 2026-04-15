@@ -378,13 +378,29 @@ function sizeLabel(val) {
 
 async function poll() {
   try {
-    const r = await fetch(`${TRACE_BASE}/build-run.json`, { cache: 'no-store' });
-    if (!r.ok) { setMeta('no data', false); return; }
-    const text = await r.text();
-    const h = hashStr(text);
-    if (h === lastHash) return; // unchanged
+    // Try API first (dynamic server), fall back to build-run.json (static)
+    let goals = [];
+    const apiR = await fetch('/api/traces', { cache: 'no-store' }).catch(() => null);
+    if (apiR?.ok) {
+      const files = await apiR.json();
+      const traces = await Promise.all(files.map(async f => {
+        try {
+          const r = await fetch(`/api/traces/${f}`, { cache: 'no-store' });
+          return r.ok ? await r.json() : null;
+        } catch { return null; }
+      }));
+      goals = traces.filter(Boolean).map(traceToGoal);
+    } else {
+      const r = await fetch(`${TRACE_BASE}/build-run.json`, { cache: 'no-store' });
+      if (!r.ok) { setMeta('no data', false); return; }
+      const data = JSON.parse(await r.text());
+      goals = data.goals || [];
+    }
+
+    const h = hashStr(JSON.stringify(goals.map(g => g.name)));
+    if (h === lastHash) return;
     lastHash = h;
-    buildRun = JSON.parse(text);
+    buildRun = { goalCount: goals.length, timestamp: new Date().toISOString(), goals };
     setMeta(`${buildRun.goalCount} goals | ${buildRun.timestamp?.substring(0,19).replace('T',' ')}`, true);
     renderGoalList();
     if (selectedGoalIndex === null && buildRun.goals.length > 0) {
@@ -395,6 +411,31 @@ async function poll() {
   } catch(e) {
     setMeta('error: ' + e.message, false);
   }
+}
+
+function traceToGoal(trace) {
+  const pass1 = trace.pass1 || {};
+  const resp = pass1.response || {};
+  const steps = (resp.steps || []).map(s => ({
+    index: s.index,
+    text: s.guidance || '',
+    finalLevel: s.level || 'high',
+    finalConfidence: s.confidence || 0,
+    actions: s.actions || [],
+    flow: [
+      { phase: 'buildGoal', level: s.level || 'high', confidence: s.confidence || 0, guidance: s.guidance || '' },
+      { phase: 'validate', status: (s.actions?.length > 0) ? 'pass' : 'error' },
+      { phase: 'applyStep', status: 'merged' }
+    ]
+  }));
+  return {
+    name: trace.goal || '?',
+    path: '', status: 'ok',
+    timestamp: trace.timestamp || '',
+    stepCount: steps.length,
+    buildGoal: { system: pass1.system || '', user: pass1.user || '', response: JSON.stringify(resp, null, 2) },
+    steps
+  };
 }
 
 function setMeta(text, live) {
