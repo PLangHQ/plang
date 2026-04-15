@@ -18,6 +18,15 @@ public sealed class ObjectNavigator : INavigator
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
         if (prop == null) return Data.@this.NotFound(key);
 
-        return new Data.@this(key, prop.GetValue(value), parent: data);
+        try
+        {
+            return new Data.@this(key, prop.GetValue(value), parent: data);
+        }
+        catch (TargetInvocationException ex)
+        {
+            return Data.@this.FromError(new Errors.ServiceError(
+                $"Failed to read '{key}' on {value.GetType().Name}: {(ex.InnerException ?? ex).Message}",
+                "NavigationError", 500) { Exception = ex });
+        }
     }
 }

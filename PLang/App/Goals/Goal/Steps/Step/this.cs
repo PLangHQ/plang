@@ -65,7 +65,7 @@ public sealed partial class @this : modules.IDataWrappable
     public Actions.@this Actions
     {
         get { _actions.Step = this; return _actions; }
-        set => _actions = value;
+        set => _actions = value ?? new();
     }
 
     /// <summary>
