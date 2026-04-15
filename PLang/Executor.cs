@@ -61,6 +61,13 @@ namespace PLang
 			}
 
 			// Set the goal file on system context — Start() reads it
+			// Test mode routes to system test runner instead of Start.goal
+			if (engine.Testing.IsEnabled && goalFile == "Start.goal")
+			{
+				engine.System.Context.Variables.Set("goalFile", "/system/.build/test.pr");
+				return await engine.Start();
+			}
+
 			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
 			if (!prPath.StartsWith(".build"))
 				prPath = ".build/" + prPath;

@@ -1,15 +1,38 @@
 {
   "name": "Test",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "RunTest writes a status message including %testFile% and then runs the provided goal call via app.run.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = \u0027.\u0027",
+      "text": "set default %path% = '.'",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Discovers and runs *.test.goal files. Results collected in %!test.results%.",
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%path%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": ".",
+              "type": "string"
+            },
+            {
+              "name": "AsDefault",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -18,11 +41,51 @@
     },
     {
       "index": 1,
-      "text": "find files \u0027*.test.goal\u0027 in %path% recursive, write to %testFiles%",
+      "text": "find files '*.test.goal' in %path% recursive, write to %testFiles%",
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "file",
+          "action": "list",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%path%",
+              "type": "path"
+            },
+            {
+              "name": "Pattern",
+              "value": "*.test.goal",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%testFiles%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -31,11 +94,29 @@
     },
     {
       "index": 2,
-      "text": "write out \u0027Found %testFiles.Length% test files\u0027",
+      "text": "write out 'Found %testFiles.Length% test files'",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Found %testFiles.Length% test files",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -48,7 +129,46 @@
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%testFiles%",
+              "type": "object"
+            },
+            {
+              "name": "ItemName",
+              "value": "testFile",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "RunTest",
+                "parameters": [
+                  {
+                    "name": "item",
+                    "value": "%testFile%",
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -61,7 +181,25 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%!test.summary%",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -77,11 +215,29 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0027Running %testFile%\u0027",
+          "text": "write out 'Running %testFile%'",
           "lineNumber": 11,
           "indent": 0,
           "comment": "Runs a single test goal through the full RunStep pipeline",
-          "actions": [],
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "Running %testFile%",
+                  "type": "tstring"
+                },
+                {
+                  "name": "Channels",
+                  "value": "this",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -94,7 +250,20 @@
           "lineNumber": 12,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "app",
+              "action": "run",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": "%testFile.GoalCall%",
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -104,25 +273,25 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/PlangConsole/bin/Debug/net10.0/system/test.goal",
-      "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/test.pr",
+      "path": "/system/test.goal",
+      "prPath": "/system/.build/test.pr",
       "hash": "ae5bce1e279ac96e4c5d3fba0b76e62b45c714ad612346556f3f0ee0e2b49a2c",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     }
   ],
   "visibility": 1,
-  "path": "/PlangConsole/bin/Debug/net10.0/system/test.goal",
-  "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/test.pr",
+  "path": "/system/test.goal",
+  "prPath": "/system/.build/test.pr",
   "hash": "76976193577f6cb787f8e0ab91b7d639c06b17b280fd964e789a0ca75dc7134e",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
-  "isSystem": false,
+  "isSystem": true,
   "isTest": false,
   "inputParameters": null
 }
