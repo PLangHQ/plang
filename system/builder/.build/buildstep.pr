@@ -1,6 +1,6 @@
 {
   "name": "BuildStep",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Writes a build-step error message to output, then throws the provided error object.",
   "comment": null,
   "steps": [
     {
@@ -8,21 +8,21 @@
       "text": "set %step% = %goal.Steps[stepResult.index]%",
       "lineNumber": 4,
       "indent": 0,
-      "comment": "Builds a step that needs detailed action info\nAction suggestions (module \u002B action) already on step from BuildGoal",
+      "comment": "Builds a step that needs detailed action info\nAction suggestions (module + action) already on step from BuildGoal",
       "actions": [
         {
-          "module": "variable",
-          "action": "set",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "Name",
-              "value": "%step%",
-              "type": "string"
+              "name": "Data",
+              "value": "Build step error: %!error.Message%",
+              "type": "tstring"
             },
             {
-              "name": "Value",
-              "value": "%goal.Steps[stepResult.index]%",
-              "type": "object"
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
             }
           ],
           "defaults": null
@@ -36,20 +36,47 @@
     },
     {
       "index": 1,
-      "text": "render template \u0022/system/builder/templates/v2/stepForLlm.template\u0022, write to %stepForLlm%",
+      "text": "render template \"/system/builder/templates/v2/stepForLlm.template\", write to %stepForLlm%",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "%!error%",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "render template \u0022/system/builder/templates/v2/stepActionDetails.template\u0022, write to %actionDetails%",
+      "text": "render template \"/system/builder/templates/v2/stepActionDetails.template\", write to %actionDetails%",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -97,7 +124,7 @@
     },
     {
       "index": 3,
-      "text": "render template \u0022/system/builder/llm/BuildStep.llm\u0022, write to %buildStepPrompt%",
+      "text": "render template \"/system/builder/llm/BuildStep.llm\", write to %buildStepPrompt%",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -170,7 +197,7 @@
             },
             {
               "name": "Schema",
-              "value": "{\u0022errors\u0022:[{\u0022key\u0022:\u0022string\u0022,\u0022message\u0022:\u0022string\u0022}],\u0022warnings\u0022:[{\u0022key\u0022:\u0022string\u0022,\u0022message\u0022:\u0022string\u0022}],\u0022actions\u0022:[{\u0022module\u0022:\u0022string\u0022,\u0022action\u0022:\u0022string\u0022,\u0022parameters\u0022:[{\u0022name\u0022:\u0022string\u0022,\u0022value\u0022:\u0022object\u0022,\u0022type\u0022:\u0022string\u0022}],\u0022errors\u0022:[{\u0022key\u0022:\u0022string\u0022,\u0022message\u0022:\u0022string\u0022}],\u0022warnings\u0022:[{\u0022key\u0022:\u0022string\u0022,\u0022message\u0022:\u0022string\u0022}]}]}",
+              "value": "{\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}],\"actions\":[{\"module\":\"string\",\"action\":\"string\",\"parameters\":[{\"name\":\"string\",\"value\":\"object\",\"type\":\"string\"}],\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}]}]}",
               "type": "string"
             },
             {
@@ -275,7 +302,14 @@
             },
             {
               "name": "Value",
-              "value": "{\u0022stepIndex\u0022:\u0022%stepResult.index%\u0022,\u0022stepText\u0022:\u0022%step.Text%\u0022,\u0022level\u0022:\u0022%stepResult.level%\u0022,\u0022system\u0022:\u0022%buildStepPrompt%\u0022,\u0022user\u0022:\u0022%stepForLlm%\u0022,\u0022response\u0022:\u0022%result%\u0022}",
+              "value": {
+                "stepIndex": "%stepResult.index%",
+                "stepText": "%step.Text%",
+                "level": "%stepResult.level%",
+                "system": "%buildStepPrompt%",
+                "user": "%stepForLlm%",
+                "response": "%result%"
+              },
               "type": "json"
             }
           ],
@@ -290,7 +324,7 @@
     },
     {
       "index": 6,
-      "text": "save %trace% to file \u0027/.build/traces/%goal.Name%.json\u0027",
+      "text": "save %trace% to file '/.build/traces/%goal.Name%.json'",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -417,7 +451,49 @@
           "lineNumber": 17,
           "indent": 0,
           "comment": "Check for top-level and action-level errors from the BuildStep LLM",
-          "actions": [],
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%result.errors%",
+                  "type": "object"
+                },
+                {
+                  "name": "Operator",
+                  "value": "isempty",
+                  "type": "string"
+                },
+                {
+                  "name": "Right",
+                  "value": false,
+                  "type": "bool"
+                },
+                {
+                  "name": "Negate",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "ThrowBuildStepErrors"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -430,7 +506,46 @@
           "lineNumber": 18,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "loop",
+              "action": "foreach",
+              "parameters": [
+                {
+                  "name": "Collection",
+                  "value": "%result.actions%",
+                  "type": "object"
+                },
+                {
+                  "name": "ItemName",
+                  "value": "action",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "ValidateActionErrors",
+                    "parameters": [
+                      {
+                        "name": "item",
+                        "value": "%action%",
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -457,11 +572,24 @@
       "steps": [
         {
           "index": 0,
-          "text": "throw error \u0022BuildStep failed for step \u0027%step.Text%\u0027: %result.errors%\u0022",
+          "text": "throw error \"BuildStep failed for step '%step.Text%': %result.errors%\"",
           "lineNumber": 21,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "error",
+              "action": "throw",
+              "parameters": [
+                {
+                  "name": "Message",
+                  "value": "BuildStep failed for step '%step.Text%': %result.errors%",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -492,7 +620,61 @@
           "lineNumber": 24,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%action.errors%",
+                  "type": "object"
+                },
+                {
+                  "name": "Operator",
+                  "value": "isempty",
+                  "type": "string"
+                },
+                {
+                  "name": "Right",
+                  "value": false,
+                  "type": "bool"
+                },
+                {
+                  "name": "Negate",
+                  "value": false,
+                  "type": "bool"
+                },
+                {
+                  "name": "Step",
+                  "value": {
+                    "name": "call ThrowActionErrors",
+                    "description": "",
+                    "comment": "",
+                    "visibility": "public",
+                    "inputParameters": {}
+                  },
+                  "type": "this"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "ThrowActionErrors",
+                    "parameters": []
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -519,11 +701,24 @@
       "steps": [
         {
           "index": 0,
-          "text": "throw error \u0022Action %action.module%.%action.action% failed for step \u0027%step.Text%\u0027: %action.errors%\u0022",
+          "text": "throw error \"Action %action.module%.%action.action% failed for step '%step.Text%': %action.errors%\"",
           "lineNumber": 27,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "error",
+              "action": "throw",
+              "parameters": [
+                {
+                  "name": "Message",
+                  "value": "Action %action.module%.%action.action% failed for step '%step.Text%': %action.errors%",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -550,11 +745,29 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0022  Build step error: %!error.Message%\u0022",
+          "text": "write out \"  Build step error: %!error.Message%\"",
           "lineNumber": 30,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "  Build step error: %!error.Message%",
+                  "type": "tstring"
+                },
+                {
+                  "name": "Channels",
+                  "value": "this",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -567,7 +780,25 @@
           "lineNumber": 31,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "error",
+              "action": "throw",
+              "parameters": [
+                {
+                  "name": "Message",
+                  "value": "%!error%",
+                  "type": "string"
+                },
+                {
+                  "name": "StatusCode",
+                  "value": 500,
+                  "type": "int"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -591,7 +822,7 @@
   "visibility": 1,
   "path": "/PlangConsole/bin/Debug/net10.0/system/builder/BuildStep.goal",
   "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/buildstep.pr",
-  "hash": "4c0558bb2435802665a9636aa8bf6acf9df7412935b7d60802771492a2e57fb7",
+  "hash": "e4f449a0b74636aa488e2d3a4b64ba321fe8e6514d4ba5f06805aa57cc2717ec",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
