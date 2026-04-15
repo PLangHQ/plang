@@ -674,7 +674,17 @@
                 },
                 {
                   "name": "Value",
-                  "value": "{\"id\":\"%traceId%\",\"goal\":\"%goal.Name%\",\"timestamp\":\"%Now%\",\"pass1\":{\"system\":\"%buildGoalPrompt%\",\"user\":\"%goalForLlm%\",\"response\":\"%stepResults%\"},\"detailPasses\":[]}",
+                  "value": {
+                    "id": "%traceId%",
+                    "goal": "%goal.Name%",
+                    "timestamp": "%Now%",
+                    "pass1": {
+                      "system": "%buildGoalPrompt%",
+                      "user": "%goalForLlm%",
+                      "response": "%stepResults%"
+                    },
+                    "detailPasses": []
+                  },
                   "type": "json"
                 }
               ],
