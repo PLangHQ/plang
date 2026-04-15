@@ -1,4 +1,6 @@
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
@@ -68,6 +70,56 @@ public static class Json
 
             if (!hasStore)
                 prop.ShouldSerialize = (_, _) => false;
+        }
+    }
+    /// <summary>
+    /// Escapes unescaped control characters inside JSON string values.
+    /// Walks the string tracking quote boundaries; replaces raw \n \r \t with escape sequences.
+    /// </summary>
+    internal static string FixJsonStringValues(string json)
+    {
+        var sb = new StringBuilder(json.Length);
+        bool inString = false;
+        for (int i = 0; i < json.Length; i++)
+        {
+            char c = json[i];
+            if (c == '"' && (i == 0 || json[i - 1] != '\\'))
+            {
+                inString = !inString;
+                sb.Append(c);
+            }
+            else if (inString && c == '\n') sb.Append("\\n");
+            else if (inString && c == '\r') sb.Append("\\r");
+            else if (inString && c == '\t') sb.Append("\\t");
+            else sb.Append(c);
+        }
+        return sb.ToString();
+    }
+}
+
+/// <summary>
+/// Extension methods for JSON conversion. OBP: the string owns its conversion.
+/// </summary>
+public static class JsonExtensions
+{
+    /// <summary>
+    /// Parses the string as JSON. If parsing fails, attempts to fix common issues
+    /// (unescaped newlines/tabs in string values) and retries. Returns error if both fail.
+    /// </summary>
+    public static (JsonNode? result, Errors.IError? error) ToJson(this string str)
+    {
+        try { return (JsonNode.Parse(str), null); }
+        catch (JsonException) { }
+
+        try
+        {
+            var fixedJson = Json.FixJsonStringValues(str);
+            return (JsonNode.Parse(fixedJson), null);
+        }
+        catch (JsonException ex)
+        {
+            return (null, new Errors.ActionError(
+                $"Invalid JSON: {ex.Message}", "JsonParseError", 400) { Exception = ex });
         }
     }
 }

@@ -603,7 +603,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
         sb.AppendLine("                return __FormatValue(__r?.Value);");
         sb.AppendLine("            });");
-        sb.AppendLine("            return new App.Data.@this(name, interpolated);");
+        sb.AppendLine("            return new App.Data.@this(name, interpolated, data.Type);");
         sb.AppendLine("        }");
         sb.AppendLine("        data.Context ??= Context;");
         sb.AppendLine("        data.NeedsResolution = true;");

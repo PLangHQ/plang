@@ -348,6 +348,14 @@ public static class TypeMapping
         if (underlying != null)
             return TryConvertTo(value, underlying);
 
+        // String → JsonNode: use ToJson() extension with fix-and-retry
+        if (targetType == typeof(System.Text.Json.Nodes.JsonNode) && value is string jsonNodeStr)
+        {
+            var (node, jsonError) = jsonNodeStr.ToJson();
+            if (jsonError is Errors.Error err) return (null, err);
+            return (node, null);
+        }
+
         // String → complex type: try JSON deserialization before list handling
         // (e.g., file.read of .pr returns JSON string → Goal)
         if (value is string jsonStr && !targetType.IsPrimitive && targetType != typeof(string))
