@@ -11,22 +11,17 @@
       "comment": "Builds a step that needs detailed action info\nAction suggestions (module + action) already on step from BuildGoal",
       "actions": [
         {
-          "module": "condition",
-          "action": "if",
+          "module": "variable",
+          "action": "set",
           "parameters": [
             {
-              "name": "Left",
-              "value": "%step.actions%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": "isempty",
+              "name": "Name",
+              "value": "%step%",
               "type": "string"
             },
             {
-              "name": "Right",
-              "value": null,
+              "name": "Value",
+              "value": "%goal.Steps[stepResult.index]%",
               "type": "object"
             }
           ],
@@ -47,18 +42,40 @@
       "comment": null,
       "actions": [
         {
-          "module": "error",
-          "action": "throw",
+          "module": "ui",
+          "action": "render",
           "parameters": [
             {
-              "name": "Message",
-              "value": "Step at index %step.index% has no actions. Every step must include actions with module and action filled in.",
-              "type": "tstring"
+              "name": "Template",
+              "value": "/system/builder/templates/v2/stepForLlm.template",
+              "type": "string"
             },
             {
-              "name": "StatusCode",
-              "value": 500,
-              "type": "int"
+              "name": "Parameters",
+              "value": [],
+              "type": "list"
+            },
+            {
+              "name": "IsFile",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%stepForLlm%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -87,12 +104,39 @@
       "comment": null,
       "actions": [
         {
-          "module": "builder",
-          "action": "validate",
+          "module": "ui",
+          "action": "render",
           "parameters": [
             {
-              "name": "Actions",
-              "value": "%step.actions%",
+              "name": "Template",
+              "value": "/system/builder/templates/v2/stepActionDetails.template",
+              "type": "string"
+            },
+            {
+              "name": "Parameters",
+              "value": [],
+              "type": "list"
+            },
+            {
+              "name": "IsFile",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%actionDetails%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
               "type": "object"
             }
           ],

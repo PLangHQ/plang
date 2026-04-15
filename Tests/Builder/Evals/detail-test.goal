@@ -1,0 +1,11 @@
+Start
+- set %name% = "PLang"
+- write out "Hello %name%"
+- read file 'config.json', write to %config%
+- if %config.debug% is true
+    - write out "Debug mode enabled"
+- foreach %config.items%, call ProcessItem item=%item%
+- save %config% to file 'output.json'
+
+ProcessItem
+- write out "Processing: %item.name%"

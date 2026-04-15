@@ -64,7 +64,7 @@ public class @this
             {
                 var stored = dv;
                 if (!string.Equals(dv.Name, name, StringComparison.OrdinalIgnoreCase))
-                    stored = dv.Clone();
+                    stored = dv.ShallowClone();
                 stored.Name = name;
                 if (type != null) stored.Type = type;
                 stored.Context = _context;

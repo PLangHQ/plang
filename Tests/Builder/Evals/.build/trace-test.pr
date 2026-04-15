@@ -53,7 +53,7 @@
             {
               "name": "Channels",
               "value": "this",
-              "type": "string"
+              "type": "this"
             }
           ],
           "defaults": null
@@ -107,7 +107,25 @@
           "lineNumber": 7,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "Greetings from sub-goal!",
+                  "type": "tstring"
+                },
+                {
+                  "name": "Channels",
+                  "value": "this",
+                  "type": "this"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,

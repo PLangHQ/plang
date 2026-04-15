@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Reads test.txt and writes its contents into %content%.",
+  "description": "Reads test.txt and writes its contents into %content% (null/empty target assignment).",
   "comment": null,
   "steps": [
     {
@@ -18,11 +18,6 @@
               "name": "Path",
               "value": "test.txt",
               "type": "path"
-            },
-            {
-              "name": "ResolveVariables",
-              "value": false,
-              "type": "bool"
             }
           ],
           "defaults": null
