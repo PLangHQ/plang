@@ -18,8 +18,11 @@ plang '--debug={"goal":"BuildGoal"}'
 # Debug a specific step index within a goal
 plang '--debug={"goal":"BuildGoal","step":3}'
 
-# Watch specific variables
-plang '--debug={"variables":["%response%","%goal%"]}'
+# Watch specific variables (display at step boundaries)
+plang '--debug={"variables":[{"name":"response"},{"name":"goal"}]}'
+
+# Track variable mutations (logs every change with goal, step, type, stack trace)
+plang '--debug={"variables":[{"name":"trace","event":"onchange"}]}'
 
 # Set max line length (default 500)
 plang '--debug={"maxLength":2000}'
@@ -37,7 +40,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["%actions%"],"maxLength
 |----------|------|---------|-------------|
 | `goal` | string | null | Filter to a specific goal name. Null = all goals. |
 | `step` | int | null | Filter to a specific step index. Null = all steps. |
-| `variables` | string[] | null | Variables to watch in every step output (with or without `%`). |
+| `variables` | DebugVariable[] | null | Variables to watch. Each entry has `name` and optional `event`. |
 | `maxLength` | int | 500 | Max characters per line before truncation. |
 | `grep` | string | null | Regex pattern to filter output lines (case-insensitive). |
 | `level` | string | "step" | Detail level: `"step"` (per step) or `"action"` (per action within steps). |
@@ -107,3 +110,58 @@ plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"goal":"Bu
 ```
 
 The `cache:false` option bypasses the LLM cache, forcing a fresh LLM call.
+
+## Variable Watch
+
+The `variables` property accepts objects with `name` and optional `event`:
+
+```json
+{"name": "trace", "event": "onchange"}
+```
+
+### Events
+
+| Event | Description |
+|-------|-------------|
+| (none) | Display variable at step boundaries only (default) |
+| `oncreate` | Log when the variable is first created in the store |
+| `onchange` | Log every time the variable is replaced with a new value |
+| `ondelete` | Log when the variable is removed from the store |
+
+### How it works
+
+The debugger creates placeholder Data objects in the variable store with event handlers attached. When the runtime creates or replaces the variable, events fire and the handler logs:
+- Goal name and step index
+- Old and new value types
+- C# stack trace (top 5 frames)
+
+Events are copied when a variable is replaced, so the handler survives across reassignments.
+
+### Example: Track type mutations
+
+```bash
+plang build '--build={"files":"myfile.goal","cache":false}' \
+  '--debug={"variables":[{"name":"trace","event":"onchange"}]}'
+```
+
+Output:
+```
+=== WATCH [trace] CHANGED ===
+  Goal: BuildGoalCore[8] set %trace% = {"id": "%traceId%"...
+  Type: null → String
+  at this.FireOnChange:109
+  at this.Set:71
+  at Set.Run:52
+==============================
+```
+
+### Example: Detect variable creation
+
+```bash
+plang '--debug={"variables":[{"name":"config","event":"oncreate"}]}'
+```
+
+Output:
+```
+=== WATCH [config] CREATED in Start[2] type=Dictionary`2 ===
+```
