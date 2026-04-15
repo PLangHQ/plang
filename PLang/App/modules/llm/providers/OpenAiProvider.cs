@@ -34,11 +34,13 @@ public sealed class OpenAiProvider : ILlmProvider
     // Hard safety limit — prevent infinite loops from burning API credits
     // TODO: remove once proper retry/circuit-breaker is in place
     private static int _requestCount;
-    private const int MaxRequestsPerProcess = 50;
+    private const int MaxRequestsPerProcess = 500;
 
     public async Task<Data.@this> Query(query action)
     {
-        if (Interlocked.Increment(ref _requestCount) > MaxRequestsPerProcess)
+        // Safety limit — skip during testing (tests use mocked LLM calls)
+        if (!action.Context.App.Testing.IsEnabled
+            && Interlocked.Increment(ref _requestCount) > MaxRequestsPerProcess)
             return App.Data.@this.FromError(new Errors.ActionError(
                 $"LLM request limit reached ({MaxRequestsPerProcess}). Possible infinite loop. Restart to reset.",
                 "RequestLimitExceeded", 429));

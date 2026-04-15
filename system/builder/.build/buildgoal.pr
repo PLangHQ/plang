@@ -1184,7 +1184,7 @@
                     },
                     {
                       "role": "user",
-                      "content": "Your previous response had an error: %!error.Message%. The developer's PLang code is:\n%goalForLlm%\n\nYour previous answer:\n%stepResults%\n\nFix the error and return the correct response."
+                      "content": "Your previous response had validation errors:\n%!error.Message%\n\nThe PLang code to build:\n%goalForLlm%\n\nFix the errors listed above and return the complete corrected response."
                     }
                   ],
                   "type": "list<llmmessage>"
