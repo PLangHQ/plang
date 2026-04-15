@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Reads test.txt and writes its contents to %content%.",
+  "description": "Reads test.txt and writes its contents into %content%.",
   "comment": null,
   "steps": [
     {
