@@ -87,6 +87,7 @@ public partial class @this
     private Func<object?>? _valueFactory;
     private Type? _type;
     private Actor.Context.@this? _context;
+    private bool _resolved;
 
     [JsonPropertyName("name")]
     public string Name { get; set; }
@@ -150,12 +151,19 @@ public partial class @this
                 _value = _valueFactory();
                 _valueFactory = null;
             }
+            if (_value != null && !_resolved && _context?.Variables != null
+                && (_value is System.Collections.IList || _value is System.Collections.IDictionary))
+            {
+                _value = _context.Variables.ResolveDeep(_value);
+                _resolved = true;
+            }
             return _value;
         }
         set
         {
             _value = UnwrapJsonElement(value);
             _valueFactory = null;
+            _resolved = false;
             Updated = System.DateTime.UtcNow;
             IsInitialized = true;
             _type = null;

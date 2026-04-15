@@ -605,6 +605,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("            });");
         sb.AppendLine("            return new App.Data.@this(name, interpolated);");
         sb.AppendLine("        }");
+        sb.AppendLine("        data.Context ??= Context;");
         sb.AppendLine("        return data;");
         sb.AppendLine("    }");
         sb.AppendLine();

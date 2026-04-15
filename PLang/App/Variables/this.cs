@@ -353,9 +353,31 @@ public class @this
     /// Lists: resolves each element. Dicts: resolves each value.
     /// Non-string primitives pass through unchanged.
     /// </summary>
+    [ThreadStatic] private static int _resolveDepth;
+
     public object? ResolveDeep(object? value)
     {
         if (value == null) return null;
+
+        _resolveDepth++;
+        if (_resolveDepth > 50)
+        {
+            var valueType = value?.GetType().FullName ?? "null";
+            Console.Error.WriteLine($"ResolveDeep depth={_resolveDepth}, type={valueType}, value={value?.ToString()?[..Math.Min(value.ToString()!.Length, 100)]}");
+            if (_resolveDepth > 100)
+            {
+                Console.Error.WriteLine("ResolveDeep OVERFLOW — aborting");
+                _resolveDepth--;
+                return value;
+            }
+        }
+        try
+        {
+
+        // Don't recurse into Data objects — their Value getter calls ResolveDeep itself
+        if (value is Data.@this) return value;
+        // Don't recurse into JsonElement — it's immutable and doesn't contain %var% references
+        if (value is System.Text.Json.JsonElement) return value;
 
         if (value is string str)
         {
@@ -378,6 +400,14 @@ public class @this
             return result;
         }
 
+        // Typed lists (e.g., List<LlmMessage>) — resolve each item in place
+        if (value is System.Collections.IList typedList && value is not string)
+        {
+            for (int i = 0; i < typedList.Count; i++)
+                ResolveDeep(typedList[i]);
+            return value;
+        }
+
         if (value is IDictionary<string, object?> dict)
         {
             var result = new Dictionary<string, object?>(dict.Count, StringComparer.OrdinalIgnoreCase);
@@ -386,7 +416,7 @@ public class @this
             return result;
         }
 
-        // Typed objects: resolve %var% in string properties, recurse into list/object properties
+        // Typed objects: resolve %var% only in string properties (no deep recursion to avoid cycles)
         var type = value.GetType();
         if (!type.IsPrimitive && type != typeof(decimal) && type != typeof(DateTime)
             && type != typeof(DateTimeOffset) && type != typeof(Guid) && !type.IsEnum)
@@ -394,17 +424,21 @@ public class @this
             foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
             {
                 if (!prop.CanRead || !prop.CanWrite) continue;
+                if (prop.PropertyType != typeof(string)) continue;
 
-                var propValue = prop.GetValue(value);
-                if (propValue == null) continue;
+                var strValue = prop.GetValue(value) as string;
+                if (strValue == null || !strValue.Contains('%')) continue;
 
-                var resolved = ResolveDeep(propValue);
-                if (!ReferenceEquals(resolved, propValue))
+                var resolved = ResolveDeep(strValue);
+                if (!ReferenceEquals(resolved, strValue))
                     prop.SetValue(value, resolved);
             }
         }
 
         return value;
+
+        }
+        finally { _resolveDepth--; }
     }
 
     /// <summary>
