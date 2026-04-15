@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Writes the provided text to output.",
   "comment": null,
   "steps": [
     {
@@ -18,6 +18,11 @@
               "name": "Data",
               "value": "hello world",
               "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
             }
           ],
           "defaults": null

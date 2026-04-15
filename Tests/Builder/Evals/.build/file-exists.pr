@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Checks whether file \u0027test.txt\u0027 exists and writes the result to %info%.",
   "comment": null,
   "steps": [
     {

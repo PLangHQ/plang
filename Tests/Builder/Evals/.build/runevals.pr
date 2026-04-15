@@ -1,6 +1,6 @@
 {
   "name": "RunEvals",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Maps EvalCase steps to engine actions: compute %prPath%, read golden/actual files, compare expected vs actual into %diff%, then append %diff% to %results%.",
   "comment": null,
   "steps": [
     {
@@ -62,7 +62,25 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goldens%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "[]",
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -87,8 +105,8 @@
             },
             {
               "name": "Value",
-              "value": [],
-              "type": "list"
+              "value": "[]",
+              "type": "json"
             }
           ],
           "defaults": null
@@ -120,9 +138,16 @@
               "name": "ItemName",
               "value": "file",
               "type": "string"
-            },
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
             {
-              "name": "Step",
+              "name": "GoalName",
               "value": {
                 "name": "CheckGolden",
                 "parameters": [
@@ -133,7 +158,7 @@
                   }
                 ]
               },
-              "type": "object"
+              "type": "goal.call"
             }
           ],
           "defaults": null
@@ -165,9 +190,16 @@
               "name": "ItemName",
               "value": "golden",
               "type": "string"
-            },
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
             {
-              "name": "Step",
+              "name": "GoalName",
               "value": {
                 "name": "EvalCase",
                 "parameters": [
@@ -178,7 +210,7 @@
                   }
                 ]
               },
-              "type": "object"
+              "type": "goal.call"
             }
           ],
           "defaults": null
@@ -239,7 +271,7 @@
             },
             {
               "name": "Channels",
-              "value": "out",
+              "value": "this",
               "type": "string"
             }
           ],
@@ -265,7 +297,30 @@
           "lineNumber": 11,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%file%",
+                  "type": "string"
+                },
+                {
+                  "name": "Operator",
+                  "value": "contains",
+                  "type": "string"
+                },
+                {
+                  "name": "Right",
+                  "value": ".golden",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -296,7 +351,30 @@
           "lineNumber": 14,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "list",
+              "action": "add",
+              "parameters": [
+                {
+                  "name": "ListName",
+                  "value": "%goldens%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%file%",
+                  "type": "object"
+                },
+                {
+                  "name": "AtIndex",
+                  "value": -1,
+                  "type": "int"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -327,7 +405,25 @@
           "lineNumber": 17,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%prPath%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": ".build/%golden.replace(\u0022.golden\u0022, \u0022.pr\u0022)%",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -340,7 +436,42 @@
           "lineNumber": 18,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "file",
+              "action": "read",
+              "parameters": [
+                {
+                  "name": "Path",
+                  "value": "%golden%",
+                  "type": "path"
+                },
+                {
+                  "name": "ResolveVariables",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%expected%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -353,7 +484,42 @@
           "lineNumber": 19,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "file",
+              "action": "read",
+              "parameters": [
+                {
+                  "name": "Path",
+                  "value": "%prPath%",
+                  "type": "path"
+                },
+                {
+                  "name": "ResolveVariables",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%actual%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -366,7 +532,47 @@
           "lineNumber": 20,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "condition",
+              "action": "compare",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%expected%",
+                  "type": "object"
+                },
+                {
+                  "name": "Operator",
+                  "value": "==",
+                  "type": "string"
+                },
+                {
+                  "name": "Right",
+                  "value": "%actual%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%diff%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -379,7 +585,30 @@
           "lineNumber": 21,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "list",
+              "action": "add",
+              "parameters": [
+                {
+                  "name": "ListName",
+                  "value": "%results%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%diff%",
+                  "type": "object"
+                },
+                {
+                  "name": "AtIndex",
+                  "value": -1,
+                  "type": "int"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,

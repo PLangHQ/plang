@@ -1,0 +1,159 @@
+{
+  "name": "Start",
+  "description": "Sub-goal writes a greeting message to output.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %name% = \u0022PLang\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "PLang",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out \u0022Hello %name%\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Hello %name%",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "this"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "call Greet",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "Greet",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "Greet",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out \u0022Greetings from sub-goal!\u0022",
+          "lineNumber": 7,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "Greetings from sub-goal!",
+                  "type": "tstring"
+                },
+                {
+                  "name": "Channels",
+                  "value": "this",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Tests/Builder/Evals/trace-test.goal",
+      "prPath": "/Tests/Builder/Evals/.build/trace-test.pr",
+      "hash": "728afb4bd911ab9e954fcd0e87d891f2cff313ed49e9bd9f807ed6867f16b784",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/Tests/Builder/Evals/trace-test.goal",
+  "prPath": "/Tests/Builder/Evals/.build/trace-test.pr",
+  "hash": "43d86c4222f39e58321a64599380af3fcb58dffb0070b9d1de1857e80b3d98e9",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

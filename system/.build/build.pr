@@ -1,6 +1,6 @@
 {
   "name": "Build",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Calls the goal /builder/Build with GoalName set to %goal.call% and Actor set to %actor%, using cache=0ms and onError retry=0 order=1.",
   "comment": null,
   "steps": [
     {
@@ -17,18 +17,21 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "Build",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": null
+                "name": "/builder/Build",
+                "parameters": [
+                  {
+                    "name": "GoalName",
+                    "value": "%goal.call%",
+                    "type": "string"
+                  },
+                  {
+                    "name": "Actor",
+                    "value": "%actor%",
+                    "type": "actor(user|service|system)"
+                  }
+                ]
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "%actor%",
-              "type": "actor"
             }
           ],
           "defaults": null
@@ -40,14 +43,14 @@
         "retryCount": 0,
         "retryOverMs": null,
         "order": 1,
-        "ignoreError": false,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
       },
       "cache": {
         "durationMs": 0,
-        "sliding": false,
+        "sliding": null,
         "key": null,
         "location": null
       },
@@ -57,13 +60,13 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/PlangConsole/bin/Debug/net10.0/system/Build.goal",
-  "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/build.pr",
+  "path": "/system/Build.goal",
+  "prPath": "/system/.build/build.pr",
   "hash": "c73e799da0870eabbaaaabffa1683b9e654da2b41f5984db5efda0d76f46d30c",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
-  "isSystem": false,
+  "isSystem": true,
   "isTest": false,
   "inputParameters": null
 }

@@ -1,0 +1,7 @@
+Start
+- set %name% = "PLang"
+- write out "Hello %name%"
+- call Greet
+
+Greet
+- write out "Greetings from sub-goal!"
