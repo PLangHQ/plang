@@ -581,21 +581,24 @@
         },
         {
           "index": 6,
-          "text": "call ValidateBuildResponse, on error call LlmFixer",
+          "text": "builder.validateResponse stepResults=%stepResults%, goal=%goal%, on error call LlmFixer",
           "lineNumber": 21,
           "indent": 0,
           "comment": null,
           "actions": [
             {
-              "module": "goal",
-              "action": "call",
+              "module": "builder",
+              "action": "validateResponse",
               "parameters": [
                 {
-                  "name": "GoalName",
-                  "value": {
-                    "name": "ValidateBuildResponse"
-                  },
-                  "type": "goal.call"
+                  "name": "StepResults",
+                  "value": "%stepResults%",
+                  "type": "object"
+                },
+                {
+                  "name": "Goal",
+                  "value": "%goal%",
+                  "type": "object"
                 }
               ],
               "defaults": null
