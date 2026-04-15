@@ -172,7 +172,7 @@ actions: [
 - Omit nullable parameters (types ending ?) when not applicable.
 - \%variable\% references resolve at runtime. Never pre-evaluate.
 - Literal JSON types: `true`/`false` (boolean), numbers unquoted, strings quoted. `type` field must match.
-- When `set \%var\% = {key: value, ...}` contains an inline object (curly braces), the Value parameter must use `"type": "json"` and the value must be **valid JSON** — quoted keys, quoted string values. Example: `{"name": "Value", "value": "{\"id\": \"\%x\%\", \"items\": []}", "type": "json"}`.
+- When `set \%var\% = {key: value, ...}` contains an inline object (curly braces), the Value parameter must use `"type": "json"` and the value must be a **JSON object** (not a string containing JSON). Example: `{"name": "Value", "value": {"id": "\%x\%", "items": []}, "type": "json"}`.
 - `missingVariable` is ALWAYS a warning — variables can be set by called goals.
 - NEVER alter literal values. You are a compiler, not an editor.
 - `on error` MUST produce `onError` on the step. Missing onError is a build-breaking bug.
