@@ -1,6 +1,6 @@
 {
   "name": "Build",
-  "description": "Mapped PLang goal ValidateStep into exactly one engine step per each \u0027- \u0027 line in the provided code, including the onError modifier on the error.throw step.",
+  "description": "Compiles the provided Build goal steps into engine actions, including required variable assignments for \u0027write to %var%\u0027 patterns and foreach\u002Bcall pairing.",
   "comment": null,
   "steps": [
     {
@@ -26,8 +26,40 @@
             },
             {
               "name": "Right",
-              "value": null,
+              "value": "%step.actions%",
               "type": "object"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%path%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": ".",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string?"
+            },
+            {
+              "name": "AsDefault",
+              "value": true,
+              "type": "bool"
             }
           ],
           "defaults": null
@@ -59,6 +91,38 @@
               "name": "StatusCode",
               "value": 500,
               "type": "int"
+            },
+            {
+              "name": "Key",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%!build.cache%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string?"
+            },
+            {
+              "name": "AsDefault",
+              "value": false,
+              "type": "bool"
             }
           ],
           "defaults": null
@@ -97,6 +161,33 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%traceGoals%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": null,
+              "type": "string?"
+            },
+            {
+              "name": "AsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -124,7 +215,7 @@
             {
               "name": "Channels",
               "value": "object",
-              "type": "object"
+              "type": "this"
             }
           ],
           "defaults": null
@@ -168,6 +259,16 @@
               "name": "Value",
               "value": "%__data__%",
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": null,
+              "type": "string?"
+            },
+            {
+              "name": "AsDefault",
+              "value": false,
+              "type": "bool"
             }
           ],
           "defaults": null
@@ -211,6 +312,16 @@
               "name": "Value",
               "value": "%__data__%",
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": null,
+              "type": "string?"
+            },
+            {
+              "name": "AsDefault",
+              "value": false,
+              "type": "bool"
             }
           ],
           "defaults": null
@@ -241,7 +352,7 @@
             {
               "name": "Channels",
               "value": "this",
-              "type": "string"
+              "type": "this"
             }
           ],
           "defaults": null

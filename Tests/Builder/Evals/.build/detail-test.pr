@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Writes a processing message using the current loop item name.",
+  "description": "ProcessItem: outputs a processing message using the current loop item name.",
   "comment": null,
   "steps": [
     {
@@ -53,7 +53,7 @@
             {
               "name": "Channels",
               "value": "this",
-              "type": "this"
+              "type": "string"
             }
           ],
           "defaults": null
@@ -80,11 +80,6 @@
               "name": "Path",
               "value": "config.json",
               "type": "path"
-            },
-            {
-              "name": "ResolveVariables",
-              "value": false,
-              "type": "bool"
             }
           ],
           "defaults": null
@@ -147,7 +142,7 @@
             {
               "name": "Step",
               "value": "this",
-              "type": "this"
+              "type": "string"
             }
           ],
           "defaults": null
@@ -178,7 +173,7 @@
             {
               "name": "Channels",
               "value": "this",
-              "type": "this"
+              "type": "string"
             }
           ],
           "defaults": null
@@ -299,7 +294,7 @@
                 {
                   "name": "Channels",
                   "value": "this",
-                  "type": "this"
+                  "type": "string"
                 }
               ],
               "defaults": null

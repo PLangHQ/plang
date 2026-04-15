@@ -1,6 +1,6 @@
 {
   "name": "ApplyStep",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "HandleValidationError goal: outputs a validation error message, stores the error on the specific step\u0027s validationError field, then calls BuildStep.",
   "comment": null,
   "steps": [
     {
@@ -35,14 +35,14 @@
         "retryCount": 0,
         "retryOverMs": null,
         "order": 0,
-        "ignoreError": false,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
       },
       "cache": {
         "durationMs": 0,
-        "sliding": false,
+        "sliding": null,
         "key": null,
         "location": null
       },
@@ -72,6 +72,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goal.Steps[stepResult.index]%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -86,14 +103,14 @@
         "retryCount": 0,
         "retryOverMs": null,
         "order": 0,
-        "ignoreError": false,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
       },
       "cache": {
         "durationMs": 0,
-        "sliding": false,
+        "sliding": null,
         "key": null,
         "location": null
       },
@@ -102,7 +119,7 @@
     },
     {
       "index": 2,
-      "text": "if %stepResult.level% != \"high\", call BuildStep",
+      "text": "if %stepResult.level% != \u0022high\u0022, call BuildStep",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -171,7 +188,7 @@
         "retryCount": 0,
         "retryOverMs": null,
         "order": 0,
-        "ignoreError": false,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -194,7 +211,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \"  Validation error: %!error.Message%\"",
+          "text": "write out \u0022  Validation error: %!error.Message%\u0022",
           "lineNumber": 10,
           "indent": 0,
           "comment": null,
@@ -211,7 +228,7 @@
                 {
                   "name": "Channels",
                   "value": "this",
-                  "type": "string"
+                  "type": "this"
                 }
               ],
               "defaults": null
@@ -285,25 +302,25 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/PlangConsole/bin/Debug/net10.0/system/builder/ApplyStep.goal",
-      "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/applystep.pr",
+      "path": "/system/builder/ApplyStep.goal",
+      "prPath": "/system/builder/.build/applystep.pr",
       "hash": "d44ef719ec271b3d4a9ab83019aa388ac185a38f3b7d3808dd9e7949b348d70c",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     }
   ],
   "visibility": 1,
-  "path": "/PlangConsole/bin/Debug/net10.0/system/builder/ApplyStep.goal",
-  "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/applystep.pr",
+  "path": "/system/builder/ApplyStep.goal",
+  "prPath": "/system/builder/.build/applystep.pr",
   "hash": "0a4adb1a2d4f3ffed41d973b310a73183f5f1482681194a20b452484d7dc4e22",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
-  "isSystem": false,
+  "isSystem": true,
   "isTest": false,
   "inputParameters": null
 }

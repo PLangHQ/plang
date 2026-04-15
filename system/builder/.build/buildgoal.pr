@@ -338,7 +338,7 @@
                 },
                 {
                   "name": "IsFile",
-                  "value": null,
+                  "value": true,
                   "type": "bool?"
                 }
               ],
@@ -391,7 +391,7 @@
                 },
                 {
                   "name": "IsFile",
-                  "value": null,
+                  "value": true,
                   "type": "bool?"
                 }
               ],
@@ -444,7 +444,7 @@
                 },
                 {
                   "name": "IsFile",
-                  "value": null,
+                  "value": true,
                   "type": "bool?"
                 }
               ],
@@ -503,7 +503,7 @@
                 },
                 {
                   "name": "Schema",
-                  "value": "{\"description\":\"string\",\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}],\"steps\":[{\"index\":\"int\",\"guidance\":\"string\",\"actions\":[{\"module\":\"string\",\"action\":\"string\",\"parameters\":[{\"name\":\"string\",\"value\":\"object?\",\"type\":\"string?\"}],\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}]}],\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}],\"cache\":{\"durationMs\":\"long\",\"sliding\":\"bool?\",\"key\":\"string?\"},\"onError\":{\"ignoreError\":\"bool?\",\"goal\":{\"name\":\"string\"},\"retryCount\":\"int?\",\"retryOverMs\":\"int?\",\"order\":\"string?\",\"message\":\"string?\"},\"level\":\"string\",\"confidence\":\"int\"}]}",
+                  "value": "{\"description\":\"string\",\"errors\":[{\"key\":\"string\",\"message\":\"string\"}]?,\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}]?,\"steps\":[{\"index\":\"int\",\"guidance\":\"string\",\"actions\":[{\"module\":\"string\",\"action\":\"string\",\"parameters\":[{\"name\":\"string\",\"value\":\"object\"? ,\"type\":\"string\"?}]?,\"errors\":[{\"key\":\"string\",\"message\":\"string\"}]?,\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}]?}]?,\"errors\":[{\"key\":\"string\",\"message\":\"string\"}]?,\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}]?}],\"errors\":[{\"key\":\"string\",\"message\":\"string\"}]?,\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}]?,\"cache\":{\"durationMs\":\"long\",\"sliding\":\"bool\"? ,\"key\":\"string\"}? ,\"onError\":{\"ignoreError\":\"bool\"? ,\"goal\":{\"name\":\"string\"}? ,\"retryCount\":\"int\"? ,\"retryOverMs\":\"int\"? ,\"order\":\"string\"? ,\"message\":\"string\"}? ,\"level\":\"string\",\"confidence\":\"int\"}",
                   "type": "string"
                 },
                 {
@@ -541,7 +541,7 @@
               "parameters": null,
               "prPath": null
             },
-            "retryCount": 3,
+            "retryCount": null,
             "retryOverMs": null,
             "order": null,
             "ignoreError": null,
@@ -587,7 +587,7 @@
               "parameters": null,
               "prPath": null
             },
-            "retryCount": 3,
+            "retryCount": null,
             "retryOverMs": null,
             "order": null,
             "ignoreError": null,
@@ -881,11 +881,6 @@
                   "name": "Value",
                   "value": "%subGoal%",
                   "type": "object"
-                },
-                {
-                  "name": "Type",
-                  "value": "object",
-                  "type": "string"
                 }
               ],
               "defaults": null
@@ -916,7 +911,7 @@
                 {
                   "name": "Channels",
                   "value": "this",
-                  "type": "object"
+                  "type": "string"
                 }
               ],
               "defaults": null
@@ -993,13 +988,16 @@
                 },
                 {
                   "name": "Operator",
-                  "value": "==",
+                  "value": "in",
                   "type": "string"
                 },
                 {
                   "name": "Right",
-                  "value": "low",
-                  "type": "string"
+                  "value": [
+                    "low",
+                    "medium"
+                  ],
+                  "type": "object"
                 }
               ],
               "defaults": null
@@ -1152,7 +1150,7 @@
                 {
                   "name": "Channels",
                   "value": "this",
-                  "type": "string"
+                  "type": "this"
                 }
               ],
               "defaults": null
@@ -1166,7 +1164,7 @@
         },
         {
           "index": 1,
-          "text": "llm.query system=%buildGoalPrompt%, user=\"Your previous response had an error: %!error.Message%. The developer's PLang code is:\\n%goalForLlm%\\n\\nYour previous answer:\\n%stepResults%\\n\\nFix the error and return the correct response.\", scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, cache=%!build.cache%, write to %stepResults%",
+          "text": "llm.query system=%buildGoalPrompt%, user=\"Your previous response had validation errors:\\n%!error.Message%\\n\\nThe PLang code to build:\\n%goalForLlm%\\n\\nFix the errors listed above and return the complete corrected response.\", scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, cache=%!build.cache%, write to %stepResults%",
           "lineNumber": 50,
           "indent": 0,
           "comment": null,
@@ -1180,18 +1178,20 @@
                   "value": [
                     {
                       "role": "system",
-                      "content": "%buildGoalPrompt%"
+                      "content": "%buildGoalPrompt%",
+                      "images": []
                     },
                     {
                       "role": "user",
-                      "content": "Your previous response had validation errors:\n%!error.Message%\n\nThe PLang code to build:\n%goalForLlm%\n\nFix the errors listed above and return the complete corrected response."
+                      "content": "Your previous response had validation errors:\n%!error.Message%\n\nThe PLang code to build:\n%goalForLlm%\n\nFix the errors listed above and return the complete corrected response.",
+                      "images": []
                     }
                   ],
                   "type": "list<llmmessage>"
                 },
                 {
                   "name": "Schema",
-                  "value": "{\"description\":\"string\",\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}],\"steps\":[{\"index\":\"int\",\"guidance\":\"string\",\"actions\":[{\"module\":\"string\",\"action\":\"string\",\"parameters\":[{\"name\":\"string\",\"value\":\"object\",\"type\":\"string\"}],\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}]}],\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}],\"cache\":{\"durationMs\":\"long\",\"sliding\":\"bool\",\"key\":\"string\"},\"onError\":{\"ignoreError\":\"bool\",\"goal\":{\"name\":\"string\"},\"retryCount\":\"int\",\"retryOverMs\":\"int\",\"order\":\"string\",\"message\":\"string\"},\"level\":\"string\",\"confidence\":\"int\"}],\"cache\":{\"durationMs\":\"long\",\"sliding\":\"bool\",\"key\":\"string\"},\"onError\":{\"ignoreError\":\"bool\",\"goal\":{\"name\":\"string\"},\"retryCount\":\"int\",\"retryOverMs\":\"int\",\"order\":\"string\",\"message\":\"string\"},\"level\":\"string\",\"confidence\":\"int\"}",
+                  "value": "{\"description\":\"string\",\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}],\"steps\":[{\"index\":\"int\",\"guidance\":\"string\",\"actions\":[{\"module\":\"string\",\"action\":\"string\",\"parameters\":[{\"name\":\"string\",\"value\":\"object?\",\"type\":\"string?\"}],\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}]}],\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}],\"cache\":{\"durationMs\":\"long\",\"sliding\":\"bool?\",\"key\":\"string?\"},\"onError\":{\"ignoreError\":\"bool?\",\"goal\":{\"name\":\"string\"},\"retryCount\":\"int?\",\"retryOverMs\":\"int?\",\"order\":\"string?\",\"message\":\"string?\"},\"level\":\"string\",\"confidence\":\"int\"}],\"errors\":[{\"key\":\"string\",\"message\":\"string\"}],\"warnings\":[{\"key\":\"string\",\"message\":\"string\"}]}",
                   "type": "string"
                 },
                 {
@@ -1264,7 +1264,7 @@
       "visibility": 0,
       "path": "/system/builder/BuildGoal.goal",
       "prPath": "/system/builder/.build/buildgoal.pr",
-      "hash": "dd63724fb36571705afc8daac49914441df5662dae5d6726cc56313a298a3700",
+      "hash": "cfad24f933fba40c377367a3df0978b014149f8217e1f9ee4cd96561cedaca0a",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,

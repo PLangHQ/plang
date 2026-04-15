@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Reads test.txt and writes its contents into %content% (null/empty target assignment).",
+  "description": "Reads test.txt and writes its contents into %content% (null marker ignored).",
   "comment": null,
   "steps": [
     {

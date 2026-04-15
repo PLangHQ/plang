@@ -1,6 +1,6 @@
 {
   "name": "ValidateBuildResponse",
-  "description": "Validates a single LLM response step: checks for empty actions, throws an error if missing, then runs builder.validate on the provided actions.",
+  "description": "Validates a single step from the LLM response: checks for empty actions, throws an error if missing, then validates the provided actions via builder.validate.",
   "comment": null,
   "steps": [
     {

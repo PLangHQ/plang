@@ -213,14 +213,16 @@
               "value": [
                 {
                   "role": "system",
-                  "content": "%buildStepPrompt%"
+                  "content": "%buildStepPrompt%",
+                  "images": []
                 },
                 {
                   "role": "user",
-                  "content": "%stepForLlm%"
+                  "content": "%stepForLlm%",
+                  "images": []
                 }
               ],
-              "type": "list"
+              "type": "list<llmmessage>"
             },
             {
               "name": "Schema",
@@ -248,23 +250,7 @@
               "type": "bool"
             }
           ],
-          "defaults": [
-            {
-              "name": "maxtokens",
-              "value": 4000,
-              "type": "int"
-            },
-            {
-              "name": "maxtoolcalls",
-              "value": 10,
-              "type": "int"
-            },
-            {
-              "name": "maxvalidationretries",
-              "value": 0,
-              "type": "int"
-            }
-          ]
+          "defaults": null
         },
         {
           "module": "variable",
@@ -281,13 +267,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -302,7 +282,7 @@
         "retryCount": 3,
         "retryOverMs": null,
         "order": 0,
-        "ignoreError": false,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -394,7 +374,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ValidateBuildStepResult"
+                "name": "ValidateBuildStepResult",
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -502,6 +483,11 @@
                   "name": "Negate",
                   "value": false,
                   "type": "bool"
+                },
+                {
+                  "name": "Step",
+                  "value": null,
+                  "type": "object?"
                 }
               ],
               "defaults": null
@@ -513,14 +499,10 @@
                 {
                   "name": "GoalName",
                   "value": {
-                    "name": "ThrowBuildStepErrors"
+                    "name": "ThrowBuildStepErrors",
+                    "parameters": []
                   },
                   "type": "goal.call"
-                },
-                {
-                  "name": "Actor",
-                  "value": "this",
-                  "type": "actor(user|service|system)"
                 }
               ],
               "defaults": null
@@ -573,11 +555,6 @@
                     ]
                   },
                   "type": "goal.call"
-                },
-                {
-                  "name": "Actor",
-                  "value": "this",
-                  "type": "actor(user|service|system)"
                 }
               ],
               "defaults": null
@@ -679,7 +656,7 @@
                 },
                 {
                   "name": "Negate",
-                  "value": false,
+                  "value": true,
                   "type": "bool"
                 }
               ],
@@ -739,16 +716,6 @@
                   "name": "Message",
                   "value": "Action %action.module%.%action.action% failed for step '%step.Text%': %action.errors%",
                   "type": "string"
-                },
-                {
-                  "name": "StatusCode",
-                  "value": 500,
-                  "type": "int"
-                },
-                {
-                  "name": "Key",
-                  "value": null,
-                  "type": "string?"
                 }
               ],
               "defaults": null
