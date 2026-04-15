@@ -86,6 +86,7 @@ public class DefaultFileProvider : IFileProvider
             EnsureDirectory(fs, fs.Path.GetDirectoryName(path.Absolute));
 
             var value = action.Value?.Value;
+
             if (value is byte[] bytes)
                 await fs.File.WriteAllBytesAsync(path.Absolute, bytes);
             else if (value is string str)

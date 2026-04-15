@@ -41,7 +41,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         try:
             with open(path, encoding='utf-8') as f:
-                data = json.load(f)
+                raw = f.read()
+            data = json.loads(raw, strict=False)
             self.send_json(data)
         except json.JSONDecodeError:
             self.send_error(400, 'Invalid JSON in trace file')
