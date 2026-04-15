@@ -378,16 +378,10 @@ public class @this
         if (value == null) return null;
 
         _resolveDepth++;
-        if (_resolveDepth > 50)
+        if (_resolveDepth > 100)
         {
-            var valueType = value?.GetType().FullName ?? "null";
-            Console.Error.WriteLine($"ResolveDeep depth={_resolveDepth}, type={valueType}, value={value?.ToString()?[..Math.Min(value.ToString()!.Length, 100)]}");
-            if (_resolveDepth > 100)
-            {
-                Console.Error.WriteLine("ResolveDeep OVERFLOW — aborting");
-                _resolveDepth--;
-                return value;
-            }
+            _resolveDepth--;
+            return value;
         }
         try
         {
