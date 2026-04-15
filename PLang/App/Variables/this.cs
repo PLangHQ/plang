@@ -386,6 +386,24 @@ public class @this
             return result;
         }
 
+        // Typed objects: resolve %var% in string properties, recurse into list/object properties
+        var type = value.GetType();
+        if (!type.IsPrimitive && type != typeof(decimal) && type != typeof(DateTime)
+            && type != typeof(DateTimeOffset) && type != typeof(Guid) && !type.IsEnum)
+        {
+            foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+            {
+                if (!prop.CanRead || !prop.CanWrite) continue;
+
+                var propValue = prop.GetValue(value);
+                if (propValue == null) continue;
+
+                var resolved = ResolveDeep(propValue);
+                if (!ReferenceEquals(resolved, propValue))
+                    prop.SetValue(value, resolved);
+            }
+        }
+
         return value;
     }
 
