@@ -60,6 +60,13 @@ public sealed class @this
     /// </summary>
     public bool Verbose { get; set; }
 
+    /// <summary>
+    /// When true, logs every ResolveDeep call with input/output types.
+    /// Useful for tracing where %variable% resolution changes types.
+    /// Set via: --debug={"resolveTrace":true}
+    /// </summary>
+    public bool ResolveTrace { get; set; }
+
 
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
@@ -93,6 +100,13 @@ public sealed class @this
                     placeholder.OnChange += (oldData, newData) => LogMutation(v.Name, oldData, newData);
                 if (v.Event == DebugEvent.OnDelete)
                     placeholder.OnDelete += (data) => LogEvent(v.Name, "DELETED", data);
+                if (v.Event == DebugEvent.OnTypeChange)
+                    placeholder.OnChange += (oldData, newData) =>
+                    {
+                        var oldType = oldData.RawValue?.GetType().Name;
+                        var newType = newData.RawValue?.GetType().Name;
+                        if (oldType != newType) LogMutation(v.Name, oldData, newData);
+                    };
                 vars.Put(placeholder);
             }
         }
@@ -461,7 +475,7 @@ public sealed class @this
     }
 }
 
-public enum DebugEvent { OnCreate, OnChange, OnDelete }
+public enum DebugEvent { OnCreate, OnChange, OnDelete, OnTypeChange }
 
 public class DebugVariable
 {

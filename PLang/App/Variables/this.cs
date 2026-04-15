@@ -374,6 +374,9 @@ public class @this
     {
         if (value == null) return null;
 
+        var traceResolve = _context?.App?.Debug?.ResolveTrace == true;
+        var inputType = traceResolve ? value.GetType().Name : null;
+
         _resolveDepth++;
         if (_resolveDepth > 50)
         {
@@ -401,7 +404,12 @@ public class @this
             // Full match: %varName% → return the actual object (not stringified)
             var fullMatch = Regex.Match(str, @"^%([^%]+)%$");
             if (fullMatch.Success)
-                return Get(fullMatch.Groups[1].Value)?.Value;
+            {
+                var resolved = Get(fullMatch.Groups[1].Value)?.Value;
+                if (traceResolve)
+                    Console.Error.WriteLine($"  [ResolveDeep] %{fullMatch.Groups[1].Value}% → {resolved?.GetType().Name ?? "null"} (depth={_resolveDepth})");
+                return resolved;
+            }
 
             // Partial match: "hello %name%" → string interpolation
             return Resolve(str);
@@ -448,6 +456,13 @@ public class @this
                 if (!ReferenceEquals(resolved, strValue))
                     prop.SetValue(value, resolved);
             }
+        }
+
+        if (traceResolve)
+        {
+            var outputType = value?.GetType().Name ?? "null";
+            if (inputType != outputType)
+                Console.Error.WriteLine($"  [ResolveDeep] {inputType} → {outputType} (depth={_resolveDepth})");
         }
 
         return value;

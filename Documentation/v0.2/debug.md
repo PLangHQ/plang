@@ -44,6 +44,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["%actions%"],"maxLength
 | `maxLength` | int | 500 | Max characters per line before truncation. |
 | `grep` | string | null | Regex pattern to filter output lines (case-insensitive). |
 | `level` | string | "step" | Detail level: `"step"` (per step) or `"action"` (per action within steps). |
+| `resolveTrace` | bool | false | Log every `%variable%` resolution with resolved type and depth. |
 
 ## Detail Levels
 
@@ -127,6 +128,7 @@ The `variables` property accepts objects with `name` and optional `event`:
 | `oncreate` | Log when the variable is first created in the store |
 | `onchange` | Log every time the variable is replaced with a new value |
 | `ondelete` | Log when the variable is removed from the store |
+| `ontypechange` | Log only when the value's CLR type changes (e.g., Dictionary → String) |
 
 ### How it works
 
@@ -148,12 +150,15 @@ Output:
 ```
 === WATCH [trace] CHANGED ===
   Goal: BuildGoalCore[8] set %trace% = {"id": "%traceId%"...
-  Type: null → String
+  Raw: null → Dictionary`2
+  Resolved: null → Dictionary`2
   at this.FireOnChange:109
   at this.Set:71
   at Set.Run:52
 ==============================
 ```
+
+The output shows both `Raw` (the stored `_value` field) and `Resolved` (what `.Value` returns after NeedsResolution). If Raw shows a type but Resolved shows null, the issue is in variable resolution. If Raw shows null, the Data itself has no value.
 
 ### Example: Detect variable creation
 
@@ -165,3 +170,38 @@ Output:
 ```
 === WATCH [config] CREATED in Start[2] type=Dictionary`2 ===
 ```
+
+### Example: Catch type changes only
+
+Use `ontypechange` to filter out noise — only fires when the CLR type of the value changes:
+
+```bash
+plang build '--build={"files":"myfile.goal","cache":false}' \
+  '--debug={"variables":[{"name":"trace","event":"ontypechange"}]}'
+```
+
+Only fires for mutations like `null → Dictionary`, `Dictionary → String`, not `Dictionary → Dictionary`.
+
+## Resolve Tracing
+
+Trace every `%variable%` resolution with the resolved type. Useful for understanding how values flow through the system.
+
+```bash
+plang build '--build={"files":"myfile.goal","cache":false}' \
+  '--debug={"resolveTrace":true}'
+```
+
+Output:
+```
+  [ResolveDeep] %buildGoalPrompt% → String (depth=3)
+  [ResolveDeep] %goalForLlm% → String (depth=3)
+  [ResolveDeep] %traceId% → String (depth=2)
+  [ResolveDeep] %goal.Name% → String (depth=2)
+  [ResolveDeep] %Now% → DateTimeOffset (depth=2)
+  [ResolveDeep] %stepResults% → Dictionary`2 (depth=2)
+```
+
+Each line shows:
+- The variable name being resolved
+- The CLR type it resolved to
+- The nesting depth (how deep in the object tree the resolution is happening)
