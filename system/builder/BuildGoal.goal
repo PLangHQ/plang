@@ -19,6 +19,10 @@ BuildGoal
 - save %trace% to file '/.build/traces/%traceId%.json'
 - add %traceId% to %traceGoals%
 - set %goal.Version% = "0.2.1"
+- set %parentGoal% = %goal%
+- if %parentGoal.Goals.Count% > 0
+    - foreach %parentGoal.Goals%, call BuildGoal item=%goal%
+- set %goal% = %parentGoal%
 - call SaveGoal %goal%
 
 

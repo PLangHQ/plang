@@ -668,8 +668,149 @@
     },
     {
       "index": 15,
-      "text": "call SaveGoal %goal%",
+      "text": "set %parentGoal% = %goal%",
       "lineNumber": 22,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%parentGoal%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%goal%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 16,
+      "text": "if %parentGoal.Goals.Count% > 0",
+      "lineNumber": 23,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%parentGoal.Goals.Count%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": ">",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 17,
+      "text": "foreach %parentGoal.Goals%, call BuildGoal item=%goal%",
+      "lineNumber": 24,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "List",
+              "value": "%parentGoal.Goals%",
+              "type": "object"
+            },
+            {
+              "name": "VariableName",
+              "value": "%goal%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "BuildGoal",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 18,
+      "text": "set %goal% = %parentGoal%",
+      "lineNumber": 25,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goal%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%parentGoal%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 19,
+      "text": "call SaveGoal %goal%",
+      "lineNumber": 26,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -800,7 +941,7 @@
       "visibility": 0,
       "path": "/PlangConsole/bin/Debug/net10.0/system/builder/BuildGoal.goal",
       "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/buildgoal.pr",
-      "hash": "71030d318fe02bdcd57261d01dc4d89bc4080323e1eba3dc257b09539722d916",
+      "hash": "dd63724fb36571705afc8daac49914441df5662dae5d6726cc56313a298a3700",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -856,7 +997,7 @@
   "visibility": 1,
   "path": "/PlangConsole/bin/Debug/net10.0/system/builder/BuildGoal.goal",
   "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/buildgoal.pr",
-  "hash": "d8a4b9b3ae924ae32fc4dc778a35d32c694ac764d9ebb751010561f2bebc5051",
+  "hash": "acc1eb62fa1b73600849fe0b7dfccf7f60c837918e172ab79bf75227f45c2f2c",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

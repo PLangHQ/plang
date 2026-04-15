@@ -182,7 +182,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         var context = action.Context;
         var modules = app.Modules;
 
-        if (action.Actions?.Value == null || action.Actions.Value.Count == 0)
+        if (action.Actions?.Value == null)
             return Data.@this.Ok(true);
 
         var actions = action.Actions!.Value!;
