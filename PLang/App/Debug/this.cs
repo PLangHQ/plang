@@ -158,7 +158,9 @@ public sealed class @this
         var sb = new StringBuilder();
         sb.AppendLine($"=== WATCH [{name}] CHANGED ===");
         sb.AppendLine($"  Goal: {goalName}[{stepIndex}] {stepText ?? "?"}");
-        sb.AppendLine($"  Type: {oldData.Value?.GetType().Name ?? "null"} → {newData.Value?.GetType().Name ?? "null"}");
+        sb.AppendLine($"  Raw: {oldData.RawValue?.GetType().Name ?? "null"} → {newData.RawValue?.GetType().Name ?? "null"}");
+        sb.AppendLine($"  Resolved: {oldData.Value?.GetType().Name ?? "null"} → {newData.Value?.GetType().Name ?? "null"}");
+        sb.AppendLine($"  NeedsRes: {newData.NeedsResolution}, HasCtx: {newData.Context != null}");
         for (int i = 0; i < Math.Min(5, stack.FrameCount); i++)
         {
             var frame = stack.GetFrame(i);

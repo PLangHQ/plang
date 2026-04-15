@@ -48,7 +48,6 @@ public partial class Set : IContext, IBuildValidatable
                 return Task.FromResult(Data());
         }
 
-        Value.Name = Name;
         Context.Variables.Set(Name, Value,
             Type?.Value != null ? App.Data.Type.FromName(Type.Value) : null);
 

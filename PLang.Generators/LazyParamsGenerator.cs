@@ -403,6 +403,16 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        var app = __app!;");
         sb.AppendLine("        __resolutionError = null;");
         sb.AppendLine("        __paramData = new(StringComparer.OrdinalIgnoreCase);");
+        // Reset property backing fields so each execution resolves fresh from __action
+        // Skip if action is null (direct construction via init — keep init-set values)
+        sb.AppendLine("        if (action != null)");
+        sb.AppendLine("        {");
+        foreach (var prop in info.Properties.Where(p => !p.IsProvider))
+        {
+            sb.AppendLine($"            __{prop.Name}_backing = default;");
+            sb.AppendLine($"            __{prop.Name}_set = false;");
+        }
+        sb.AppendLine("        }");
         sb.AppendLine("        var __step = __action?.Step;");
         sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<App.CallStack.CallFrame>)System.Array.Empty<App.CallStack.CallFrame>();");
 
@@ -605,7 +615,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("            });");
         sb.AppendLine("            return new App.Data.@this(name, interpolated, data.Type);");
         sb.AppendLine("        }");
-        sb.AppendLine("        data.Context ??= Context;");
+        sb.AppendLine("        data.Context = Context;");
         sb.AppendLine("        data.NeedsResolution = true;");
         sb.AppendLine("        return data;");
         sb.AppendLine("    }");

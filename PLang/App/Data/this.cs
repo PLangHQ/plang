@@ -309,6 +309,10 @@ public partial class @this
     public bool IsEmpty => !IsInitialized || _value == null ||
         (_value is string s && string.IsNullOrEmpty(s));
 
+    /// <summary>Returns the raw stored value without triggering NeedsResolution or factory.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public object? RawValue => _value;
+
     public static @this Null(string name = "") => new(name, null);
     public static @this NotFound(string name = "") => new(name, null) { IsInitialized = false };
     public static @this Uninitialized(string name) => new(name, null) { IsInitialized = false };
@@ -392,6 +396,7 @@ public partial class @this
             Properties = Properties.Clone()
         };
         clone.Context = _context;
+        clone.NeedsResolution = NeedsResolution;
         return clone;
     }
 

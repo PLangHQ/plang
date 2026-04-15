@@ -59,24 +59,27 @@ public class @this
         // Simple case: no dot/bracket path — set the root variable directly
         if (rootName == name)
         {
-            // Store Data values directly — rename to match the variable name
+            // Store Data values directly — clone if name differs to avoid mutating shared parameter Data
             if (value is Data.@this dv)
             {
-                dv.Name = name;
-                if (type != null) dv.Type = type;
-                dv.Context = _context;
+                var stored = dv;
+                if (!string.Equals(dv.Name, name, StringComparison.OrdinalIgnoreCase))
+                    stored = dv.Clone();
+                stored.Name = name;
+                if (type != null) stored.Type = type;
+                stored.Context = _context;
 
                 if (_variables.TryGetValue(name, out var prev))
                 {
-                    prev.FireOnChange(dv);
-                    dv.CopyEventsFrom(prev);
+                    prev.FireOnChange(stored);
+                    stored.CopyEventsFrom(prev);
                 }
                 else
                 {
-                    dv.FireOnCreate();
+                    stored.FireOnCreate();
                 }
 
-                _variables[name] = dv;
+                _variables[name] = stored;
                 return;
             }
 
