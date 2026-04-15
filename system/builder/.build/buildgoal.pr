@@ -1,14 +1,14 @@
 {
   "name": "BuildGoal",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
       "text": "write out \u0022Building goal: %goal.Name%\u0022",
-      "lineNumber": 7,
+      "lineNumber": 5,
       "indent": 0,
-      "comment": null,
+      "comment": "Builds a single goal and its sub-goals\nDelegates LLM pass to BuildGoalCore, then handles version + sub-goals + save",
       "actions": [
         {
           "module": "output",
@@ -36,11 +36,26 @@
     },
     {
       "index": 1,
-      "text": "builder.actions, write to %actions%",
-      "lineNumber": 8,
+      "text": "call BuildGoalCore",
+      "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "BuildGoalCore"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -49,596 +64,8 @@
     },
     {
       "index": 2,
-      "text": "builder.types, write to %typeInfo%",
-      "lineNumber": 9,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "builder",
-          "action": "types",
-          "parameters": [],
-          "defaults": null
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%typeInfo%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%__data__%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "render template \u0022/system/actions/v2/summary.md\u0022, write to %actionSummary%",
-      "lineNumber": 10,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "ui",
-          "action": "render",
-          "parameters": [
-            {
-              "name": "Template",
-              "value": "/system/actions/v2/summary.md",
-              "type": "string"
-            },
-            {
-              "name": "Parameters",
-              "value": [],
-              "type": "list"
-            },
-            {
-              "name": "IsFile",
-              "value": true,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%actionSummary%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%__data__%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 4,
-      "text": "render template \u0022/system/builder/templates/v2/goalFormatForLlm.template\u0022, write to %goalForLlm%",
-      "lineNumber": 11,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "ui",
-          "action": "render",
-          "parameters": [
-            {
-              "name": "Template",
-              "value": "/system/builder/templates/v2/goalFormatForLlm.template",
-              "type": "string"
-            },
-            {
-              "name": "Parameters",
-              "value": [],
-              "type": "list"
-            },
-            {
-              "name": "IsFile",
-              "value": true,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%goalForLlm%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%__data__%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 5,
-      "text": "render template \u0022/system/builder/llm/BuildGoal.llm\u0022, write to %buildGoalPrompt%",
-      "lineNumber": 12,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "ui",
-          "action": "render",
-          "parameters": [
-            {
-              "name": "Template",
-              "value": "/system/builder/llm/BuildGoal.llm",
-              "type": "string"
-            },
-            {
-              "name": "IsFile",
-              "value": true,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%buildGoalPrompt%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%__data__%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 6,
-      "text": "llm.query system=%buildGoalPrompt%, user=%goalForLlm%, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, cache=%!build.cache%, on error HandleBuildGoalFailure, write to %stepResults%",
-      "lineNumber": 13,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "llm",
-          "action": "query",
-          "parameters": [
-            {
-              "name": "Messages",
-              "value": [
-                {
-                  "role": "system",
-                  "content": "%buildGoalPrompt%"
-                },
-                {
-                  "role": "user",
-                  "content": "%goalForLlm%"
-                }
-              ],
-              "type": "list"
-            },
-            {
-              "name": "Schema",
-              "value": "{description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}",
-              "type": "string"
-            },
-            {
-              "name": "Format",
-              "value": "json",
-              "type": "string"
-            },
-            {
-              "name": "Model",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "ContinuePreviousConversation",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Temperature",
-              "value": 0,
-              "type": "double"
-            },
-            {
-              "name": "MaxTokens",
-              "value": 4000,
-              "type": "int"
-            },
-            {
-              "name": "MaxToolCalls",
-              "value": 10,
-              "type": "int"
-            },
-            {
-              "name": "MaxValidationRetries",
-              "value": 2,
-              "type": "int"
-            },
-            {
-              "name": "Cache",
-              "value": "%!build.cache%",
-              "type": "bool"
-            },
-            {
-              "name": "MaxToolCalls",
-              "value": 10,
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%stepResults%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%__data__%",
-              "type": "string"
-            }
-          ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
-        }
-      ],
-      "intent": null,
-      "onError": {
-        "goal": {
-          "name": "HandleBuildGoalFailure",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": 0,
-        "retryOverMs": null,
-        "order": 0,
-        "ignoreError": false,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 7,
-      "text": "call ValidateBuildResponse, on error call LlmFixer",
-      "lineNumber": 14,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "name": "GoalName",
-              "value": {
-                "name": "ValidateBuildResponse"
-              },
-              "type": "goal.call"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": {
-        "goal": {
-          "name": "LlmFixer",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": 0,
-        "retryOverMs": null,
-        "order": 0,
-        "ignoreError": false,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 8,
-      "text": "set %traceId% = %Now.Ticks%_%goal.Name%",
-      "lineNumber": 15,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%traceId%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%Now.Ticks%_%goal.Name%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 9,
-      "text": "set %trace% = {\u0022id\u0022: \u0022%traceId%\u0022, \u0022goal\u0022: \u0022%goal.Name%\u0022, \u0022timestamp\u0022: \u0022%Now%\u0022, \u0022pass1\u0022: {\u0022system\u0022: \u0022%buildGoalPrompt%\u0022, \u0022user\u0022: \u0022%goalForLlm%\u0022, \u0022response\u0022: \u0022%stepResults%\u0022}, \u0022detailPasses\u0022: []}, type=json",
-      "lineNumber": 16,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%trace%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "{\u0022id\u0022:\u0022%traceId%\u0022,\u0022goal\u0022:\u0022%goal.Name%\u0022,\u0022timestamp\u0022:\u0022%Now%\u0022,\u0022pass1\u0022:{\u0022system\u0022:\u0022%buildGoalPrompt%\u0022,\u0022user\u0022:\u0022%goalForLlm%\u0022,\u0022response\u0022:\u0022%stepResults%\u0022},\u0022detailPasses\u0022:[]}",
-              "type": "json"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 10,
-      "text": "group %stepResults.steps% by \u0022level\u0022, write to %groupedSteps%",
-      "lineNumber": 17,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "group",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%stepResults.steps%",
-              "type": "string"
-            },
-            {
-              "name": "Key",
-              "value": "level",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%groupedSteps%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%__data__%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 11,
-      "text": "loop.foreach %groupedSteps%, goal.call ProcessGroup item=%group%",
-      "lineNumber": 18,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "loop",
-          "action": "foreach",
-          "parameters": [
-            {
-              "name": "Collection",
-              "value": "%groupedSteps%",
-              "type": "string"
-            },
-            {
-              "name": "ItemName",
-              "value": "group",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "name": "GoalName",
-              "value": {
-                "Name": "ProcessGroup",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": null
-              },
-              "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this?(user|service|system)",
-              "type": "actor"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 12,
-      "text": "save %trace% to file \u0027/.build/traces/%traceId%.json\u0027",
-      "lineNumber": 19,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "file",
-          "action": "save",
-          "parameters": [
-            {
-              "name": "Path",
-              "value": "/.build/traces/%traceId%.json",
-              "type": "path"
-            },
-            {
-              "name": "Value",
-              "value": "%trace%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 13,
-      "text": "add %traceId% to %traceGoals%",
-      "lineNumber": 20,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "add",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%traceGoals%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%traceId%",
-              "type": "object?"
-            },
-            {
-              "name": "AtIndex",
-              "value": -1,
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 14,
       "text": "set %goal.Version% = \u00220.2.1\u0022",
-      "lineNumber": 21,
+      "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -667,9 +94,9 @@
       "waitForExecution": true
     },
     {
-      "index": 15,
+      "index": 3,
       "text": "set %parentGoal% = %goal%",
-      "lineNumber": 22,
+      "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -698,46 +125,10 @@
       "waitForExecution": true
     },
     {
-      "index": 16,
-      "text": "if %parentGoal.Goals.Count% > 0",
-      "lineNumber": 23,
+      "index": 4,
+      "text": "foreach %parentGoal.Goals%, call BuildSubGoal item=%subGoal%",
+      "lineNumber": 9,
       "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%parentGoal.Goals.Count%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": ">",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": 0,
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 17,
-      "text": "foreach %parentGoal.Goals%, call BuildGoal item=%goal%",
-      "lineNumber": 24,
-      "indent": 1,
       "comment": null,
       "actions": [
         {
@@ -745,13 +136,13 @@
           "action": "foreach",
           "parameters": [
             {
-              "name": "List",
+              "name": "Collection",
               "value": "%parentGoal.Goals%",
-              "type": "object"
+              "type": "string"
             },
             {
-              "name": "VariableName",
-              "value": "%goal%",
+              "name": "ItemName",
+              "value": "subGoal",
               "type": "string"
             }
           ],
@@ -762,9 +153,11 @@
           "action": "call",
           "parameters": [
             {
-              "name": "Name",
-              "value": "BuildGoal",
-              "type": "string"
+              "name": "GoalName",
+              "value": {
+                "name": "BuildSubGoal"
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null
@@ -777,9 +170,9 @@
       "waitForExecution": true
     },
     {
-      "index": 18,
+      "index": 5,
       "text": "set %goal% = %parentGoal%",
-      "lineNumber": 25,
+      "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -808,9 +201,9 @@
       "waitForExecution": true
     },
     {
-      "index": 19,
+      "index": 6,
       "text": "call SaveGoal %goal%",
-      "lineNumber": 26,
+      "lineNumber": 11,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -836,16 +229,753 @@
   ],
   "goals": [
     {
+      "name": "BuildGoalCore",
+      "description": null,
+      "comment": "Core LLM build pass \u2014 shared by top-level goals and sub-goals\nSends goal text + action summary to LLM, validates, applies steps, saves trace",
+      "steps": [
+        {
+          "index": 0,
+          "text": "builder.actions, write to %actions%",
+          "lineNumber": 15,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "builder",
+              "action": "actions",
+              "parameters": [],
+              "defaults": null
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%actions%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "builder.types, write to %typeInfo%",
+          "lineNumber": 16,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "builder",
+              "action": "types",
+              "parameters": [],
+              "defaults": null
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%typeInfo%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "render template \u0022/system/actions/v2/summary.md\u0022, write to %actionSummary%",
+          "lineNumber": 17,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "ui",
+              "action": "render",
+              "parameters": [
+                {
+                  "name": "Template",
+                  "value": "/system/actions/v2/summary.md",
+                  "type": "string"
+                },
+                {
+                  "name": "Parameters",
+                  "value": [],
+                  "type": "list"
+                },
+                {
+                  "name": "IsFile",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%actionSummary%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 3,
+          "text": "render template \u0022/system/builder/templates/v2/goalFormatForLlm.template\u0022, write to %goalForLlm%",
+          "lineNumber": 18,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "ui",
+              "action": "render",
+              "parameters": [
+                {
+                  "name": "Template",
+                  "value": "/system/builder/templates/v2/goalFormatForLlm.template",
+                  "type": "string"
+                },
+                {
+                  "name": "Parameters",
+                  "value": [],
+                  "type": "list"
+                },
+                {
+                  "name": "IsFile",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%goalForLlm%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 4,
+          "text": "render template \u0022/system/builder/llm/BuildGoal.llm\u0022, write to %buildGoalPrompt%",
+          "lineNumber": 19,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "ui",
+              "action": "render",
+              "parameters": [
+                {
+                  "name": "Template",
+                  "value": "/system/builder/llm/BuildGoal.llm",
+                  "type": "string"
+                },
+                {
+                  "name": "IsFile",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%buildGoalPrompt%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 5,
+          "text": "llm.query system=%buildGoalPrompt%, user=%goalForLlm%, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, cache=%!build.cache%, on error HandleBuildGoalFailure, write to %stepResults%",
+          "lineNumber": 20,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "llm",
+              "action": "query",
+              "parameters": [
+                {
+                  "name": "Messages",
+                  "value": [
+                    {
+                      "role": "system",
+                      "content": "%buildGoalPrompt%"
+                    },
+                    {
+                      "role": "user",
+                      "content": "%goalForLlm%"
+                    }
+                  ],
+                  "type": "list"
+                },
+                {
+                  "name": "Schema",
+                  "value": "{description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}",
+                  "type": "string"
+                },
+                {
+                  "name": "Format",
+                  "value": "json",
+                  "type": "string"
+                },
+                {
+                  "name": "Model",
+                  "value": "",
+                  "type": "string"
+                },
+                {
+                  "name": "ContinuePreviousConversation",
+                  "value": false,
+                  "type": "bool"
+                },
+                {
+                  "name": "Temperature",
+                  "value": 0,
+                  "type": "double"
+                },
+                {
+                  "name": "MaxTokens",
+                  "value": 4000,
+                  "type": "int"
+                },
+                {
+                  "name": "MaxToolCalls",
+                  "value": 10,
+                  "type": "int"
+                },
+                {
+                  "name": "MaxValidationRetries",
+                  "value": 2,
+                  "type": "int"
+                },
+                {
+                  "name": "Cache",
+                  "value": "%!build.cache%",
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%stepResults%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "string"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ]
+            }
+          ],
+          "intent": null,
+          "onError": {
+            "goal": {
+              "name": "HandleBuildGoalFailure",
+              "description": null,
+              "parallel": false,
+              "parameters": null,
+              "prPath": null
+            },
+            "retryCount": 0,
+            "retryOverMs": null,
+            "order": 0,
+            "ignoreError": false,
+            "message": null,
+            "statusCode": null,
+            "key": null
+          },
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 6,
+          "text": "call ValidateBuildResponse, on error call LlmFixer",
+          "lineNumber": 21,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "ValidateBuildResponse"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": {
+            "goal": {
+              "name": "LlmFixer",
+              "description": null,
+              "parallel": false,
+              "parameters": null,
+              "prPath": null
+            },
+            "retryCount": 0,
+            "retryOverMs": null,
+            "order": 0,
+            "ignoreError": false,
+            "message": null,
+            "statusCode": null,
+            "key": null
+          },
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 7,
+          "text": "set %traceId% = %Now.Ticks%_%goal.Name%",
+          "lineNumber": 22,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%traceId%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%Now.Ticks%_%goal.Name%",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 8,
+          "text": "set %trace% = {\u0022id\u0022: \u0022%traceId%\u0022, \u0022goal\u0022: \u0022%goal.Name%\u0022, \u0022timestamp\u0022: \u0022%Now%\u0022, \u0022pass1\u0022: {\u0022system\u0022: \u0022%buildGoalPrompt%\u0022, \u0022user\u0022: \u0022%goalForLlm%\u0022, \u0022response\u0022: \u0022%stepResults%\u0022}, \u0022detailPasses\u0022: []}, type=json",
+          "lineNumber": 23,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%trace%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "{\u0022id\u0022:\u0022%traceId%\u0022,\u0022goal\u0022:\u0022%goal.Name%\u0022,\u0022timestamp\u0022:\u0022%Now%\u0022,\u0022pass1\u0022:{\u0022system\u0022:\u0022%buildGoalPrompt%\u0022,\u0022user\u0022:\u0022%goalForLlm%\u0022,\u0022response\u0022:\u0022%stepResults%\u0022},\u0022detailPasses\u0022:[]}",
+                  "type": "json"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 9,
+          "text": "group %stepResults.steps% by \u0022level\u0022, write to %groupedSteps%",
+          "lineNumber": 24,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "list",
+              "action": "group",
+              "parameters": [
+                {
+                  "name": "ListName",
+                  "value": "%stepResults.steps%",
+                  "type": "string"
+                },
+                {
+                  "name": "Key",
+                  "value": "level",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%groupedSteps%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 10,
+          "text": "loop.foreach %groupedSteps%, goal.call ProcessGroup item=%group%",
+          "lineNumber": 25,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "loop",
+              "action": "foreach",
+              "parameters": [
+                {
+                  "name": "Collection",
+                  "value": "%groupedSteps%",
+                  "type": "string"
+                },
+                {
+                  "name": "ItemName",
+                  "value": "group",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "ProcessGroup"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 11,
+          "text": "save %trace% to file \u0027/.build/traces/%traceId%.json\u0027",
+          "lineNumber": 26,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "file",
+              "action": "save",
+              "parameters": [
+                {
+                  "name": "Path",
+                  "value": "/.build/traces/%traceId%.json",
+                  "type": "path"
+                },
+                {
+                  "name": "Value",
+                  "value": "%trace%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 12,
+          "text": "add %traceId% to %traceGoals%",
+          "lineNumber": 27,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "list",
+              "action": "add",
+              "parameters": [
+                {
+                  "name": "ListName",
+                  "value": "%traceGoals%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%traceId%",
+                  "type": "object?"
+                },
+                {
+                  "name": "AtIndex",
+                  "value": -1,
+                  "type": "int"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/PlangConsole/bin/Debug/net10.0/system/builder/BuildGoal.goal",
+      "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/buildgoal.pr",
+      "hash": null,
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "BuildSubGoal",
+      "description": null,
+      "comment": "Builds a single sub-goal \u2014 no version, no sub-goal recursion, no save",
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %goal% = %subGoal%",
+          "lineNumber": 31,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%goal%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%subGoal%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "write out \u0022  Building sub-goal: %goal.Name%\u0022",
+          "lineNumber": 32,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "  Building sub-goal: %goal.Name%",
+                  "type": "tstring"
+                },
+                {
+                  "name": "Channels",
+                  "value": "this",
+                  "type": "string"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "call BuildGoalCore",
+          "lineNumber": 33,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "BuildGoalCore"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/PlangConsole/bin/Debug/net10.0/system/builder/BuildGoal.goal",
+      "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/buildgoal.pr",
+      "hash": null,
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
       "name": "ProcessGroup",
       "description": null,
-      "comment": null,
+      "comment": "Process a group of steps with the same confidence level",
       "steps": [
         {
           "index": 0,
           "text": "if %group.steps[0].level% is \u0022low\u0022 or \u0022medium\u0022",
-          "lineNumber": 27,
+          "lineNumber": 37,
           "indent": 0,
-          "comment": "Process a group of steps with the same confidence level",
+          "comment": null,
           "actions": [],
           "intent": null,
           "onError": null,
@@ -856,7 +986,7 @@
         {
           "index": 1,
           "text": "foreach %group.steps%, call BuildStep item=%stepResult%",
-          "lineNumber": 28,
+          "lineNumber": 38,
           "indent": 1,
           "comment": null,
           "actions": [],
@@ -869,7 +999,7 @@
         {
           "index": 2,
           "text": "foreach %group.steps%, call ApplyStep item=%stepResult%",
-          "lineNumber": 29,
+          "lineNumber": 39,
           "indent": 0,
           "comment": null,
           "actions": [],
@@ -884,7 +1014,7 @@
       "visibility": 0,
       "path": "/PlangConsole/bin/Debug/net10.0/system/builder/BuildGoal.goal",
       "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/buildgoal.pr",
-      "hash": "582acfb210dc8941bc2ebe5f3de71bbd321ad2ebf738392fa0a5b23adb7fbf72",
+      "hash": null,
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -895,14 +1025,14 @@
     {
       "name": "LlmFixer",
       "description": null,
-      "comment": null,
+      "comment": "LLM produced invalid output \u2014 retry with error context",
       "steps": [
         {
           "index": 0,
           "text": "write out \u0022  Validation failed: %!error.Message% \u2014 retrying...\u0022",
-          "lineNumber": 34,
+          "lineNumber": 43,
           "indent": 0,
-          "comment": "LLM produced invalid output \u2014 retry with error context",
+          "comment": null,
           "actions": [],
           "intent": null,
           "onError": null,
@@ -913,7 +1043,7 @@
         {
           "index": 1,
           "text": "llm.query system=%buildGoalPrompt%, user=\u0022Your previous response had an error: %!error.Message%. The developer\u0027s PLang code is:\\n%goalForLlm%\\n\\nYour previous answer:\\n%stepResults%\\n\\nFix the error and return the correct response.\u0022, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, cache=%!build.cache%, write to %stepResults%",
-          "lineNumber": 35,
+          "lineNumber": 44,
           "indent": 0,
           "comment": null,
           "actions": [],
@@ -926,7 +1056,7 @@
         {
           "index": 2,
           "text": "call ValidateBuildResponse",
-          "lineNumber": 36,
+          "lineNumber": 45,
           "indent": 0,
           "comment": null,
           "actions": [],
@@ -941,7 +1071,7 @@
       "visibility": 0,
       "path": "/PlangConsole/bin/Debug/net10.0/system/builder/BuildGoal.goal",
       "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/buildgoal.pr",
-      "hash": "dd63724fb36571705afc8daac49914441df5662dae5d6726cc56313a298a3700",
+      "hash": null,
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -957,7 +1087,7 @@
         {
           "index": 0,
           "text": "write out \u0022  Build error: %!error.Message%\u0022",
-          "lineNumber": 40,
+          "lineNumber": 48,
           "indent": 0,
           "comment": null,
           "actions": [],
@@ -970,7 +1100,7 @@
         {
           "index": 1,
           "text": "throw %!error%",
-          "lineNumber": 41,
+          "lineNumber": 49,
           "indent": 0,
           "comment": null,
           "actions": [],
@@ -985,7 +1115,7 @@
       "visibility": 0,
       "path": "/PlangConsole/bin/Debug/net10.0/system/builder/BuildGoal.goal",
       "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/buildgoal.pr",
-      "hash": "70a36b1a0b46c871ffa13a2735f15d1aa779c2f96d9fa41296fea7942be3ada3",
+      "hash": null,
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -997,7 +1127,7 @@
   "visibility": 1,
   "path": "/PlangConsole/bin/Debug/net10.0/system/builder/BuildGoal.goal",
   "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/buildgoal.pr",
-  "hash": "acc1eb62fa1b73600849fe0b7dfccf7f60c837918e172ab79bf75227f45c2f2c",
+  "hash": null,
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
