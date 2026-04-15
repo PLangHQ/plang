@@ -1,3 +1,4 @@
+using App.Attributes;
 using App.Variables;
 
 namespace App.modules.variable;
@@ -7,6 +8,9 @@ namespace App.modules.variable;
 /// When AsDefault is true, only sets if the variable doesn't already exist.
 /// </summary>
 [Action("set", Cacheable = false)]
+[Example(
+    "set %data% = {\"name\": \"%user%\", \"age\": 30}, type=json",
+    "{\"module\":\"variable\",\"action\":\"set\",\"parameters\":[{\"name\":\"Name\",\"value\":\"%data%\",\"type\":\"string\"},{\"name\":\"Value\",\"value\":{\"name\":\"%user%\",\"age\":30},\"type\":\"json\"}]}")]
 public partial class Set : IContext, IBuildValidatable
 {
     public static string? ValidateBuild(List<Data.@this> parameters)
