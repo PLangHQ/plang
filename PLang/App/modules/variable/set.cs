@@ -48,20 +48,6 @@ public partial class Set : IContext, IBuildValidatable
                 return Task.FromResult(Data());
         }
 
-        // Convert value to declared type (e.g., json → JsonNode, goal.call → GoalCall)
-        var typeName = Type?.Value ?? Value.Type?.Value;
-        if (typeName != null && Value.Value != null)
-        {
-            var targetType = Utils.TypeMapping.GetType(typeName);
-            if (targetType != null && !targetType.IsInstanceOfType(Value.Value))
-            {
-                var (converted, error) = Utils.TypeMapping.TryConvertTo(Value.Value, targetType);
-                if (error != null)
-                    return Task.FromResult(Error(error));
-                Value.Value = converted;
-            }
-        }
-
         Value.Name = Name;
         Context.Variables.Set(Name, Value,
             Type?.Value != null ? App.Data.Type.FromName(Type.Value) : null);
