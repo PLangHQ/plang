@@ -1,0 +1,243 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-builder-plan",
+  "timestamp": "2026-04-16T17:30:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "http-transport",
+      "exposure": "HTTP client handles responses from arbitrary external servers — downloads, API responses, SSE streams",
+      "trust_boundary": "Every HTTP response body, header, and stream chunk is untrusted external data",
+      "mitigations": [
+        "100MB size limit on in-memory response reads (ReadLimitedStringAsync/ReadLimitedBytesAsync)",
+        "CancellationToken-based timeout on requests",
+        "CRLF stripping on outbound headers",
+        "Signing integration for authenticated requests"
+      ],
+      "gaps": [
+        "File downloads (StreamWithProgressAsync) have NO size limit — writes unbounded to disk",
+        "SSE buffer clears on overflow but keeps connection open — repeated 10MB allocations",
+        "No per-read timeout — slow-loris attacks bypass overall timeout",
+        "No URL scheme validation — file://, gopher:// accepted"
+      ]
+    },
+    {
+      "area": "template-rendering",
+      "exposure": "Fluid templates render with full access to app object graph via UnsafeMemberAccessStrategy",
+      "trust_boundary": "Template content and variable values — if any come from external sources, attacker controls template expressions",
+      "mitigations": [
+        "MaxSteps = 100,000 prevents infinite template loops",
+        "MaxRecursion = 100 prevents deep include chains",
+        "ValidatePath on include file resolution"
+      ],
+      "gaps": [
+        "UnsafeMemberAccessStrategy allows access to ALL public properties including app.System.SettingsStore",
+        "callGoal tag can execute arbitrary goals from template expressions",
+        "AmbientValues expose full App and Actor.Context objects",
+        "NullEncoder.Default means no output encoding (XSS if rendered in browser)"
+      ]
+    },
+    {
+      "area": "json-deserialization",
+      "exposure": "Data navigators parse JSON strings from HTTP responses, file reads, and variable resolution",
+      "trust_boundary": "JSON content from external APIs stored in variables, then navigated via dot notation",
+      "mitigations": [
+        "10MB size limit on JsonStringNavigator",
+        "JsonDocument.Parse default depth limit of 64",
+        "Data.UnwrapJsonElement has explicit MaxJsonDepth=128"
+      ],
+      "gaps": [
+        "No element count limit — 10MB of small items creates millions of objects",
+        "JsonStringNavigator.UnwrapElement has no explicit depth guard (relies on JsonDocument default)"
+      ]
+    },
+    {
+      "area": "signing-verification",
+      "exposure": "Ed25519 signature verification for Data integrity and identity",
+      "trust_boundary": "Signed data arrives over transport — signature, nonce, headers are attacker-controlled until verified",
+      "mitigations": [
+        "Ed25519 signature verification (cryptographically strong)",
+        "Nonce replay detection via cache",
+        "Hash verification of signed data",
+        "Contract matching"
+      ],
+      "gaps": [
+        "Header value comparison uses non-constant-time string.Equals (timing side-channel)",
+        "Nonce cache is in-memory only — server restart allows replay"
+      ]
+    },
+    {
+      "area": "variable-resolution",
+      "exposure": "Variable resolution processes values that may originate from external data (HTTP responses stored in variables)",
+      "trust_boundary": "Values stored in MemoryStack from external sources, then resolved recursively",
+      "mitigations": [
+        "ResolveDeep depth guard at 100",
+        "Circular reference detection via thread-static visited set",
+        "Infrastructure variable filtering (skipInfrastructure)",
+        "AsyncLocal context isolation"
+      ],
+      "gaps": [
+        "No breadth guard — wide nested structures cause O(N*M) allocations"
+      ]
+    },
+    {
+      "area": "file-operations",
+      "exposure": "File read/write/copy/move/delete with path validation",
+      "trust_boundary": "File paths resolved from user variables — if variables contain external data, paths are attacker-influenced",
+      "mitigations": [
+        "ValidatePath checks path starts with RootDirectory",
+        "IPLangFileSystem abstraction prevents direct System.IO usage"
+      ],
+      "gaps": [
+        "Error messages expose absolute paths (information disclosure)"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "high",
+      "category": "resource-exhaustion",
+      "vector": "HTTP file download via StreamWithProgressAsync writes to disk with no size limit. The 100MB DefaultMaxResponseSize only applies to in-memory reads (ReadLimitedStringAsync/ReadLimitedBytesAsync), not to file downloads.",
+      "preconditions": "User's PLang app downloads a file from an attacker-controlled or compromised server",
+      "impact": "Disk exhaustion — attacker serves multi-GB response, fills disk, causes DoS for the entire system",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "exploit_sketch": "1. PLang app has step: download 'http://external-api.com/data.csv' to 'output.csv'\n2. Attacker compromises external-api.com or MITM\n3. Server responds with Content-Length: 100GB (or chunked transfer with no end)\n4. StreamWithProgressAsync (line 911-948) reads 8KB chunks indefinitely, writing to disk\n5. No size check — only CancellationToken timeout applies, but timeout may be long\n6. Disk fills up, system crashes",
+      "proposed_fix": "Add maxBytes parameter to StreamWithProgressAsync, default to DefaultMaxResponseSize. Check totalRead against limit after each chunk write, throw if exceeded. Allow user override via download action parameter.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "high",
+      "category": "resource-exhaustion",
+      "vector": "SSE stream handler clears buffer on overflow but keeps connection open. Attacker can repeatedly send 10MB SSE events, each causing allocation + clear cycle, consuming memory and CPU indefinitely.",
+      "preconditions": "User's PLang app connects to SSE endpoint controlled by attacker",
+      "impact": "Memory pressure via repeated allocation/deallocation cycles. Connection never terminates — GC pressure causes performance degradation or OOM if GC can't keep up.",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "exploit_sketch": "1. PLang app subscribes to SSE: http request 'http://attacker.com/events' stream\n2. Attacker sends: data: [10MB payload]\\n\\n repeatedly without blank line boundary\n3. Line 828: dataBuffer.Length + data.Length > maxBufferSize triggers\n4. Line 834: dataBuffer.Clear() — deallocates but continues\n5. Line 835: continue — loops back, reads next 10MB event\n6. Repeat indefinitely — each cycle allocates ~10MB, clears it, allocates again",
+      "proposed_fix": "Add overflow counter. After N consecutive overflows (e.g., 3), disconnect the SSE stream and return error. This prevents sustained memory pressure from malicious servers.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "high",
+      "category": "resource-exhaustion",
+      "vector": "HTTP stream reads (ReadLimitedStringAsync, ReadLimitedBytesAsync, StreamWithProgressAsync) use await stream.ReadAsync() with no per-read timeout. A slow-loris attack sends 1 byte per interval, keeping the connection alive indefinitely while consuming a thread.",
+      "preconditions": "User's PLang app makes HTTP request to attacker-controlled server",
+      "impact": "Thread exhaustion / connection pool exhaustion. The CancellationToken timeout applies to the overall request, but if data trickles in, ReadAsync returns successfully with 1 byte each time, resetting any implicit timeout.",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "exploit_sketch": "1. PLang app: http request to 'http://attacker.com/api'\n2. Server sends HTTP 200 with Transfer-Encoding: chunked\n3. Server sends 1 byte every 29 seconds (just under typical timeouts)\n4. ReadAsync at line 294 returns successfully each time with bytesRead=1\n5. totalRead never exceeds maxBytes (stays under 100MB)\n6. Connection held open for hours/days, consuming thread and connection slot",
+      "proposed_fix": "Add minimum throughput check: track bytes_per_second over a sliding window. If throughput drops below a threshold (e.g., 1KB/sec for 30 seconds), abort the connection. This is how production HTTP clients defend against slow-loris.",
+      "status": "open"
+    },
+    {
+      "id": 4,
+      "severity": "high",
+      "category": "code-execution",
+      "vector": "FluidProvider uses UnsafeMemberAccessStrategy, exposes app and context in AmbientValues, and registers callGoal tag. If external data flows into template variables, an attacker can navigate the full object graph and execute arbitrary goals.",
+      "preconditions": "Template content or variable values include data from external sources (HTTP response, user input, database). This is the accepted-risk SSTI vector from prior audits — re-confirmed present on this branch.",
+      "impact": "Information disclosure (read settings, keys via app.System.SettingsStore). Goal execution via callGoal tag. Full object graph traversal via dot navigation.",
+      "affected_files": ["PLang/App/modules/ui/providers/FluidProvider.cs"],
+      "exploit_sketch": "1. PLang app stores HTTP response in variable: set %userData% = %response.body%\n2. App renders template with that variable: render 'template.liquid' with %userData%\n3. If attacker controls response.body, they inject: {{ app.System.SettingsStore }}\n4. Line 69: UnsafeMemberAccessStrategy allows access to ALL public properties\n5. Line 81: app is in AmbientValues — full object graph accessible\n6. Line 24: callGoal tag registered — {{ callGoal 'malicious-goal' }} executes goals",
+      "proposed_fix": "This is an accepted risk from prior audit (template content is user-authored). Document clearly that template variables from external sources must be sanitized. Consider adding a SafeMemberAccessStrategy option for templates that render external data.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 5,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "JsonStringNavigator unwraps JSON objects and arrays without element count limits. A 10MB JSON payload with millions of tiny items (e.g., {\"a\":1,\"b\":2,...} with 500K keys) creates millions of Dictionary entries, consuming far more memory than the original JSON.",
+      "preconditions": "External JSON data stored in a PLang variable, then navigated via dot notation",
+      "impact": "OOM — JSON amplification attack. 10MB of JSON can expand to 50-100MB of .NET objects (Dictionary overhead per entry is ~80 bytes).",
+      "affected_files": ["PLang/App/Data/Navigators/JsonStringNavigator.cs"],
+      "exploit_sketch": "1. HTTP response contains 10MB JSON: {\"k1\":1,\"k2\":2,...,\"k500000\":500000}\n2. PLang stores in variable: set %data% = %response.body%\n3. User navigates: %data.k1% triggers JsonStringNavigator.Navigate()\n4. Line 33: UnwrapElement parses entire document\n5. Line 59-66: UnwrapObject creates Dictionary with 500K entries\n6. Each entry: ~80 bytes overhead → 40MB+ heap allocation from 10MB input",
+      "proposed_fix": "Add MaxElementCount constant (e.g., 100,000). In UnwrapObject/UnwrapArray, check count during iteration and throw if exceeded.",
+      "status": "open"
+    },
+    {
+      "id": 6,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "JsonStringNavigator.UnwrapElement() recurses without an explicit depth guard. It relies on JsonDocument.Parse() default depth limit of 64, but this is implicit — if JsonDocumentOptions are ever customized, the guard disappears.",
+      "preconditions": "External JSON with deep nesting stored in PLang variable",
+      "impact": "StackOverflowException if depth exceeds CLR stack limit. Currently mitigated by JsonDocument default, but fragile.",
+      "affected_files": ["PLang/App/Data/Navigators/JsonStringNavigator.cs"],
+      "exploit_sketch": "Currently mitigated by JsonDocument.Parse default MaxDepth=64. But if anyone adds JsonDocumentOptions with higher depth, UnwrapElement has no safety net.",
+      "proposed_fix": "Add depth parameter to UnwrapElement/UnwrapObject/UnwrapArray, matching the pattern in Data.UnwrapJsonElement (which already has MaxJsonDepth=128). Defensive-in-depth.",
+      "status": "open"
+    },
+    {
+      "id": 7,
+      "severity": "medium",
+      "category": "injection",
+      "vector": "Ed25519Provider header verification at line 104 uses string.Equals with StringComparison.Ordinal — this is NOT constant-time. An attacker can measure response time differences to brute-force header values character by character.",
+      "preconditions": "Attacker can make repeated verification requests and measure timing with microsecond precision. Requires network proximity or many samples.",
+      "impact": "Header value brute-force. If headers contain secrets (API keys, tokens), attacker can extract them. The signature itself uses SequenceEqual on Span<byte> which IS constant-time, so the core signature verification is safe.",
+      "affected_files": ["PLang/App/modules/signing/providers/Ed25519Provider.cs"],
+      "exploit_sketch": "1. Attacker sends signed data with header 'X-Token: A...' and measures response time\n2. string.Equals returns false faster when first char mismatches vs later chars\n3. Attacker iterates: 'A' (fast fail) → 'B' (fast fail) → ... → 'T' (slower fail = first char matches)\n4. Continue for each position to extract full header value\n5. Requires ~256 * N requests where N = header value length",
+      "proposed_fix": "Use CryptographicOperations.FixedTimeEquals() on header value bytes, or compare all headers and bitwise-OR the results before returning.",
+      "status": "open"
+    },
+    {
+      "id": 8,
+      "severity": "medium",
+      "category": "injection",
+      "vector": "Nonce replay protection uses in-memory cache (app.Cache.TryAddAsync). If the process restarts, cache is cleared, and previously used nonces can be replayed.",
+      "preconditions": "Attacker captures a valid signed request. Process restarts (crash, deployment, etc.).",
+      "impact": "Replay attack — attacker re-submits a previously valid signed request. The signature is still valid, the nonce check passes because cache is empty.",
+      "affected_files": ["PLang/App/modules/signing/providers/Ed25519Provider.cs"],
+      "exploit_sketch": "1. Attacker intercepts valid signed request with nonce 'abc123'\n2. Request is processed, nonce 'abc123' added to in-memory cache\n3. Server restarts (deployment, crash, OOM from finding #1-3)\n4. Attacker replays the exact same request\n5. Cache is empty — nonce 'abc123' not found — request accepted",
+      "proposed_fix": "Persist nonce cache to disk or use timestamp-based nonce expiry (reject nonces older than N minutes regardless of cache state). This bounds the replay window.",
+      "status": "open"
+    },
+    {
+      "id": 9,
+      "severity": "medium",
+      "category": "info-disclosure",
+      "vector": "DefaultFileProvider error messages include absolute filesystem paths in error responses (lines 39, 76, 207). Attacker can probe file operations to map the server's directory structure.",
+      "preconditions": "Attacker can trigger file operations that fail (e.g., reading non-existent files) and observe error messages",
+      "impact": "Information disclosure — attacker learns absolute paths like /home/user/plang-app/files/..., revealing OS, username, directory structure",
+      "affected_files": ["PLang/App/modules/file/providers/DefaultFileProvider.cs"],
+      "exploit_sketch": "1. PLang app exposes file read via HTTP API\n2. Attacker requests non-existent file\n3. Error response: 'File not found: ../secret ({path.Absolute})'\n4. Absolute path reveals: /home/plang-user/myapp/files/../secret\n5. Attacker maps directory structure through repeated probes",
+      "proposed_fix": "Only include path.Raw (relative path) in error messages, never path.Absolute. Log the absolute path server-side for debugging.",
+      "status": "open"
+    },
+    {
+      "id": 10,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "Variables.ResolveDeep() has depth guard (100) but no breadth guard. A variable containing a wide nested structure (e.g., list of 1000 items, each with a list of 1000 items) causes O(N*M) recursive processing without limit.",
+      "preconditions": "External data stored in PLang variable with deeply nested but wide structure, then variable is resolved",
+      "impact": "CPU and memory exhaustion. 1000x1000 = 1M ResolveDeep calls, each allocating new objects.",
+      "affected_files": ["PLang/App/Variables/this.cs"],
+      "exploit_sketch": "1. HTTP response: JSON array of 1000 objects, each with array of 1000 items\n2. Stored in %data% variable\n3. Variable resolution triggers ResolveDeep\n4. Depth stays under 100 (only 2 levels deep), but breadth = 1000*1000\n5. 1M items processed, each cloned via MemberwiseClone",
+      "proposed_fix": "Add breadth counter (total items processed). If exceeds threshold (e.g., 100,000), return value unresolved with warning.",
+      "status": "open"
+    },
+    {
+      "id": 11,
+      "severity": "low",
+      "category": "injection",
+      "vector": "HTTP module URL resolution accepts any URL scheme. file://, gopher://, dict:// schemes pass through to HttpClient, which may handle them or throw — but the attempt is made.",
+      "preconditions": "User's PLang app makes HTTP request with attacker-influenced URL",
+      "impact": "Low — HttpClient rejects most non-HTTP schemes. But file:// may work on some platforms, enabling local file read via SSRF.",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "exploit_sketch": "1. PLang variable %apiUrl% comes from external source\n2. Step: http request to %apiUrl%\n3. Attacker sets %apiUrl% = 'file:///etc/passwd'\n4. HttpClient may attempt local file read (platform-dependent)",
+      "proposed_fix": "Validate URL scheme after resolution. Only allow http:// and https://. Reject all other schemes with clear error.",
+      "status": "open"
+    },
+    {
+      "id": 12,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "ObjectNavigator error messages expose internal .NET type names via value.GetType().Name in error string at line 28",
+      "preconditions": "Attacker can trigger navigation errors on Data objects and observe error messages",
+      "impact": "Minor information disclosure — attacker learns internal type names (e.g., 'Failed to read key on Dictionary`2: ...')",
+      "affected_files": ["PLang/App/Data/Navigators/ObjectNavigator.cs"],
+      "exploit_sketch": "Probe dot navigation on variables to trigger errors, observe type names in error messages",
+      "proposed_fix": "Use generic error message without type name, or sanitize to friendly type names",
+      "status": "open"
+    }
+  ],
+  "summary": "12 findings after threat-model filtering. 4 HIGH (3 resource exhaustion in HTTP module, 1 accepted-risk SSTI), 6 MEDIUM (2 crypto, 2 resource exhaustion, 1 info disclosure, 1 deserialization defense-in-depth), 2 LOW. The HTTP module is the primary concern — its core job is safe external data handling, and it has gaps in download size limits, SSE overflow handling, and slow-loris protection. The crypto timing side-channel on header comparison is a real but hard-to-exploit vector. Overall security posture is solid for a user-sovereign runtime — the main risks are from malicious external servers, not from the user's own code."
+}

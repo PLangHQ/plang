@@ -349,6 +349,67 @@
         "health": "APPROVED — 2085/2086 pass, 9 findings (0 critical)",
         "notes": "Coder fixes correct. New finding: JsonElement path in validateResponse untested. Suggest running security analyst next."
       }
+    },
+    {
+      "id": "sec-v1-2026-04-16-full-audit",
+      "bot": "security",
+      "timestamp_start": "2026-04-16T17:00:00Z",
+      "timestamp_end": null,
+      "intent": "Full security audit of runtime2-builder-plan branch — blue team + red team",
+      "before": {
+        "assumptions": "147 runtime source files changed. Major areas: Data/Navigators, variable resolution, builder pipeline, HTTP/file/crypto/LLM modules, engine/goal/step execution, actor/config/cache/utils. Multiple coder sessions, 2085/2086 tests passing.",
+        "risk": "Analysis only — no code changes. Risk is in missing security issues."
+      },
+      "plan": "Blue team: map attack surface across 147 changed files via 6 parallel agents (Data/Navigators, Variables, Builder, HTTP/File/Crypto/LLM, Engine/Goal/Step/Event, Actor/Config/Cache/Utils). Red team: exploit sketches for each finding. Filter through PLang threat model (user-sovereign, external data is the real attack surface).",
+      "actions": [
+        {
+          "paths": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "3 HIGH findings: download no size limit (line 911-948), SSE buffer overflow (828-835), slow-loris no per-read timeout (290-330)"
+        },
+        {
+          "paths": ["PLang/App/modules/signing/providers/Ed25519Provider.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "2 MEDIUM findings: timing side-channel on header comparison (line 104), nonce replay after restart (85-89)"
+        },
+        {
+          "paths": ["PLang/App/Data/Navigators/JsonStringNavigator.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "2 MEDIUM findings: no element count limit (59-76), no explicit depth guard (45-56)"
+        },
+        {
+          "paths": ["PLang/App/modules/file/providers/DefaultFileProvider.cs", "PLang/App/Data/Navigators/ObjectNavigator.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Info disclosure: absolute paths in error messages (39, 76), type names in errors (28)"
+        },
+        {
+          "paths": ["PLang/App/Variables/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "MEDIUM: ResolveDeep no breadth guard (412-434)"
+        },
+        {
+          "paths": ["PLang/App/modules/ui/providers/FluidProvider.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Accepted risk SSTI: UnsafeMemberAccessStrategy + callGoal + app in AmbientValues. Confirmed MaxSteps now configured (100K)"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — 3 HIGH open in HTTP module, 6 MEDIUM, 2 LOW",
+        "notes": "12 findings after threat-model filtering. HTTP module is the primary concern — its core job is safe external data handling. Send to coder for HTTP fixes."
+      }
     }
   ]
 }
