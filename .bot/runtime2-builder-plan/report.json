@@ -471,6 +471,60 @@
         "health": "green — 2085/2086 pass (1 pre-existing)",
         "notes": "All 11 open findings fixed. F4 (Fluid SSTI) accepted-risk, skipped. Ready for security re-audit."
       }
+    },
+    {
+      "id": "sec-v2-2026-04-16-reaudit",
+      "bot": "security",
+      "timestamp_start": "2026-04-16T19:00:00Z",
+      "timestamp_end": "2026-04-16T19:30:00Z",
+      "intent": "Re-audit after coder fixed all 11 open security findings — verify fixes + fresh-eyes scan",
+      "before": {
+        "assumptions": "Coder fixed all 11 open findings from security v1. Changes in 6 files: DefaultHttpProvider, Ed25519Provider, JsonStringNavigator, DefaultFileProvider, Variables, ObjectNavigator.",
+        "risk": "Analysis only — no code changes"
+      },
+      "plan": "1. Verify all 11 fixes by reading actual code (not just diff). 2. Fresh-eyes scan: HTTP SSRF/redirects/Content-Type, variable resolution ThreadStatic/injection/skipInfra, action dispatch type safety. 3. Write updated security-report.json + verdict.",
+      "actions": [
+        {
+          "paths": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1/F2/F3/F11 fixes verified correct. Fresh scan: no new HIGH. Low: throughput threshold generous, no SSRF IP filtering."
+        },
+        {
+          "paths": ["PLang/App/modules/signing/providers/Ed25519Provider.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F7/F8 fixes verified correct. FixedTimeEquals + nonce bounded by timeout."
+        },
+        {
+          "paths": ["PLang/App/Data/Navigators/JsonStringNavigator.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F5/F6 fixes verified correct. MaxElementCount + MaxDepth with proper threading."
+        },
+        {
+          "paths": ["PLang/App/Variables/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F10 fix verified. New finding: ResolveDeep lacks skipInfrastructure (F13 MEDIUM)."
+        },
+        {
+          "paths": ["PLang/App/Modules/this.cs", "PLang/App/Goals/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Action dispatch verified secure: string lookup, no type injection, whitelist types."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — 0 critical/high open, 1 medium, 2 low, 1 accepted-risk",
+        "notes": "All v1 fixes correct. 3 new findings (F13-F15). Recommend auditor next."
+      }
     }
   ]
 }
