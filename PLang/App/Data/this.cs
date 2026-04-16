@@ -191,8 +191,8 @@ public partial class @this
             if (NeedsResolution && _value != null && _context?.Variables != null
                 && (_value is System.Collections.IList || _value is System.Collections.IDictionary))
             {
+                NeedsResolution = false; // set before resolve to prevent concurrent double-resolution
                 _value = _context.Variables.ResolveDeep(_value);
-                NeedsResolution = false;
             }
             return _value;
         }
@@ -445,6 +445,7 @@ public partial class @this
             Signature = Signature,
             Properties = Properties
         };
+        clone._valueFactory = _valueFactory;
         clone.Context = _context;
         clone.NeedsResolution = NeedsResolution;
         return clone;
@@ -463,6 +464,7 @@ public partial class @this
             Signature = Signature,
             Properties = Properties.Clone()
         };
+        clone._valueFactory = _valueFactory;
         clone.Context = _context;
         clone.NeedsResolution = NeedsResolution;
         return clone;
