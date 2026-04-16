@@ -295,7 +295,7 @@ public class IdentityErrorPathTests
         var result = await new Get { Context = Ctx, Name = "weird" }.Run();
         // Identity deserializes but has empty PublicKey — valid but useless
         await Assert.That(result.Success).IsTrue();
-        var identity = result as Identity;
+        var identity = result.Value as Identity;
         await Assert.That(identity!.PublicKey).IsEqualTo("");
     }
 
@@ -315,9 +315,9 @@ public class IdentityErrorPathTests
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 
-        var list = result as global::App.Data.@this<List<Identity>>;
+        var list = result.Value as List<Identity>;
         // Both deserialize as Identity — no type filtering anymore
-        await Assert.That(list!.Value!.Count).IsEqualTo(2);
+        await Assert.That(list!.Count).IsEqualTo(2);
     }
 
     // --- Helpers ---

@@ -660,4 +660,47 @@ public class TypeMappingTests
         await Assert.That(error).IsNull();
         await Assert.That(result).IsNull();
     }
+
+    // --- Data<T> unwrapping ---
+
+    [Test]
+    public async Task GetTypeName_DataOfPath_ReturnsPath()
+    {
+        var name = TypeMapping.GetTypeName(typeof(global::App.Data.@this<global::App.FileSystem.Path>));
+
+        await Assert.That(name).IsEqualTo("path");
+    }
+
+    [Test]
+    public async Task GetTypeName_DataOfBool_ReturnsBool()
+    {
+        var name = TypeMapping.GetTypeName(typeof(global::App.Data.@this<bool>));
+
+        await Assert.That(name).IsEqualTo("bool");
+    }
+
+    [Test]
+    public async Task GetTypeName_DataOfListString_ReturnsListString()
+    {
+        var name = TypeMapping.GetTypeName(typeof(global::App.Data.@this<List<string>>));
+
+        await Assert.That(name).IsEqualTo("list<string>");
+    }
+
+    [Test]
+    public async Task GetTypeName_PlainData_ReturnsObject()
+    {
+        var name = TypeMapping.GetTypeName(typeof(Data));
+
+        await Assert.That(name).IsEqualTo("object");
+    }
+
+    [Test]
+    public async Task GetValidValues_DataOfActor_ReturnsValues()
+    {
+        var values = TypeMapping.GetValidValues(typeof(global::App.Data.@this<global::App.Actor.@this>));
+
+        await Assert.That(values).IsNotNull();
+        await Assert.That(values!.Length).IsGreaterThan(0);
+    }
 }

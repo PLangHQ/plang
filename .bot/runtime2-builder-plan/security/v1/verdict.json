@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "3 HIGH open findings in HTTP module (download size limit, SSE overflow, slow-loris) — the module's core responsibility is safe external data handling" }

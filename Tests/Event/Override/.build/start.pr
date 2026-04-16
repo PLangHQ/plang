@@ -1,0 +1,136 @@
+{
+  "name": "Start",
+  "description": "Sets up an event hook to intercept file.read before a specific action, then reads a nonexistent file into %content%, then writes %content% to output.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "before action file.read call OverrideFileRead",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "event",
+          "action": "on",
+          "parameters": [
+            {
+              "name": "Type",
+              "value": "BeforeAction",
+              "type": "string"
+            },
+            {
+              "name": "GoalToCall",
+              "value": {
+                "name": "goal.call",
+                "parameters": []
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "file.read",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "read file \u0022nonexistent.json\u0022, write to %content%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "nonexistent.json",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%content%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out %content%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%content%",
+              "type": "object"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Event/Override/Start.goal",
+  "prPath": "/Tests/Event/Override/.build/start.pr",
+  "hash": "b5448c4b88812ee808ca3e3226b391e13d998e31b7122a00fc59a57b61676944",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -1,5 +1,3 @@
-using App.Variables;
-
 namespace App.modules.list;
 
 [Action("last")]
@@ -10,9 +8,14 @@ public partial class Last : IContext
 
     public Task<Data.@this> Run()
     {
-        var existing = Context.Variables.Get(ListName).Value;
-        if (existing is System.Collections.IList list && list.Count > 0)
-            return Task.FromResult(Data(list[list.Count - 1]));
+        var data = Context.Variables.Get(ListName);
+        var countData = data.GetChild("Count");
+
+        if (countData.IsInitialized && countData.Value is int count && count > 0)
+        {
+            var last = data.GetChild($"[{count - 1}]");
+            if (last.IsInitialized) return Task.FromResult(Data(last.Value));
+        }
 
         return Task.FromResult(Data());
     }

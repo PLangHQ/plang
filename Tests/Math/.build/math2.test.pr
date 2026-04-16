@@ -1,0 +1,169 @@
+{
+  "name": "Start",
+  "description": "Generates a random integer between 1 and 100, stores it in %rand%, then asserts it is not null and within (0, 101).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "get random number between 1 and 100, write to %rand%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: math.random returns a value in range",
+      "actions": [
+        {
+          "module": "math",
+          "action": "random",
+          "parameters": [
+            {
+              "name": "Min",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Max",
+              "value": 100,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%rand%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %rand% is not null",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%rand%",
+              "type": "object?"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %rand% is greater than 0",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "greaterThan",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%rand%",
+              "type": "object?"
+            },
+            {
+              "name": "B",
+              "value": 0,
+              "type": "object?"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %rand% is less than 101",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "lessThan",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%rand%",
+              "type": "object?"
+            },
+            {
+              "name": "B",
+              "value": 101,
+              "type": "object?"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Math/Math2.test.goal",
+  "prPath": "/Tests/Math/.build/math2.test.pr",
+  "hash": "fa123a37c45747945d534f0a00a80b415559cc9573b17c86afbfdea054107e04",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -1,0 +1,49 @@
+{
+  "name": "HandleFalse",
+  "description": "Maps HandleFalse step to a variable assignment for %result% with the string value \u0022false-branch\u0022.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022false-branch\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "false-branch",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Condition/Falsy/HandleFalse.goal",
+  "prPath": "/Tests/Condition/Falsy/.build/handlefalse.pr",
+  "hash": "661aa8ff41aeda89a2c135d3233173c7404c02fb01a82652306063cd4cf53ff3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

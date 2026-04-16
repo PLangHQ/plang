@@ -1,0 +1,1069 @@
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %myList% = [10, 20, 30]",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": [
+                10,
+                20,
+                30
+              ],
+              "type": "list"
+            },
+            {
+              "name": "Type",
+              "value": "list",
+              "type": "string"
+            },
+            {
+              "name": "AsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "add 40 to %myList%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "get count of %myList%, write to %count%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "count",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %count% equals 4, \u0022list should have 4 items after add\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 4,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%count%",
+              "type": "int"
+            },
+            {
+              "name": "Message",
+              "value": "list should have 4 items after add",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "get first item from %myList%, write to %first%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "first",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %first% equals 10",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%first%",
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "get last item from %myList%, write to %last%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "last",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %last% equals 40",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 40,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%last%",
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "check if %myList% contains 20, write to %has20%",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 20,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "assert %has20% is true, \u0022list should contain 20\u0022",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%has20%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "list should contain 20",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "join %myList% with separator \u0022, \u0022, write to %joined%",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "join",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Separator",
+              "value": ", ",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "assert %joined% contains \u002210\u0022",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%joined%",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "10",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "assert %joined% contains \u002240\u0022",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%joined%",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "40",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "split \u0022a-b-c\u0022 by \u0022-\u0022, write to %parts%",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "split",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "a-b-c",
+              "type": "string"
+            },
+            {
+              "name": "Separator",
+              "value": "-",
+              "type": "string"
+            },
+            {
+              "name": "RemoveEmpty",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 14,
+      "text": "get count of %parts%, write to %partsCount%",
+      "lineNumber": 16,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "count",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%parts%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 15,
+      "text": "assert %partsCount% equals 3",
+      "lineNumber": 17,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%partsCount%",
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 16,
+      "text": "get item at index 1 from %myList%, write to %second%",
+      "lineNumber": 19,
+      "indent": 0,
+      "comment": "get by index",
+      "actions": [
+        {
+          "module": "list",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Index",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 17,
+      "text": "assert %second% equals 20",
+      "lineNumber": 20,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 20,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%second%",
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 18,
+      "text": "remove 20 from %myList%",
+      "lineNumber": 22,
+      "indent": 0,
+      "comment": "remove",
+      "actions": [
+        {
+          "module": "list",
+          "action": "remove",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 20,
+              "type": "object"
+            },
+            {
+              "name": "AtIndex",
+              "value": -1,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 19,
+      "text": "check if %myList% contains 20, write to %still20%",
+      "lineNumber": 23,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 20,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 20,
+      "text": "assert %still20% is false",
+      "lineNumber": 24,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isFalse",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%still20%",
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 21,
+      "text": "get index of 30 in %myList%, write to %idx%",
+      "lineNumber": 26,
+      "indent": 0,
+      "comment": "indexOf",
+      "actions": [
+        {
+          "module": "list",
+          "action": "indexof",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 30,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 22,
+      "text": "assert %idx% is greater than -1, \u0022indexOf should find the item\u0022",
+      "lineNumber": 27,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "greaterThan",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%idx%",
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": -1,
+              "type": "int"
+            },
+            {
+              "name": "Message",
+              "value": "indexOf should find the item",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 23,
+      "text": "set %unsorted% = [3, 1, 2]",
+      "lineNumber": 29,
+      "indent": 0,
+      "comment": "sort",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%unsorted%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": [
+                3,
+                1,
+                2
+              ],
+              "type": "list"
+            },
+            {
+              "name": "Type",
+              "value": "list",
+              "type": "string"
+            },
+            {
+              "name": "AsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 24,
+      "text": "sort %unsorted%",
+      "lineNumber": 30,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "sort",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%unsorted%",
+              "type": "string"
+            },
+            {
+              "name": "Descending",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 25,
+      "text": "get first item from %unsorted%, write to %sortFirst%",
+      "lineNumber": 31,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "first",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%unsorted%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 26,
+      "text": "assert %sortFirst% equals 1",
+      "lineNumber": 32,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%sortFirst%",
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 27,
+      "text": "reverse %unsorted%",
+      "lineNumber": 34,
+      "indent": 0,
+      "comment": "reverse",
+      "actions": [
+        {
+          "module": "list",
+          "action": "reverse",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%unsorted%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 28,
+      "text": "get first item from %unsorted%, write to %revFirst%",
+      "lineNumber": 35,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "first",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%unsorted%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 29,
+      "text": "assert %revFirst% equals 3",
+      "lineNumber": 36,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%revFirst%",
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 30,
+      "text": "set %dupes% = [1, 2, 2, 3, 3, 3]",
+      "lineNumber": 38,
+      "indent": 0,
+      "comment": "unique",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%dupes%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": [
+                1,
+                2,
+                2,
+                3,
+                3,
+                3
+              ],
+              "type": "list"
+            },
+            {
+              "name": "Type",
+              "value": "list",
+              "type": "string"
+            },
+            {
+              "name": "AsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 31,
+      "text": "get unique items from %dupes%, write to %uniq%",
+      "lineNumber": 39,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "unique",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%dupes%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 32,
+      "text": "get count of %uniq%, write to %uniqCount%",
+      "lineNumber": 40,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "count",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%uniq%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 33,
+      "text": "assert %uniqCount% equals 3",
+      "lineNumber": 41,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%uniqCount%",
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/ListOps/ListOps.test.goal",
+  "prPath": "/Tests/Runtime2/ListOps/.build/listops.test.pr",
+  "hash": "0a2b147ff098cb5191b32dd87445311e6626f78f3349a3dab5c2cada908e879a",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

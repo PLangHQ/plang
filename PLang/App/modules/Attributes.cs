@@ -68,6 +68,20 @@ public sealed class IsInitiatedAttribute : Attribute { }
 public sealed class IsNotNullAttribute : Attribute { }
 
 /// <summary>
+/// Action classes that implement this interface can validate LLM-generated parameters
+/// during the build. The builder calls ValidateBuild after the LLM produces parameters,
+/// returning errors that the LLM can use to self-correct.
+/// </summary>
+public interface IBuildValidatable
+{
+    /// <summary>
+    /// Validates LLM-generated parameters. Returns null if valid,
+    /// or an error message describing what's wrong so the LLM can fix it.
+    /// </summary>
+    static abstract string? ValidateBuild(List<Data.@this> parameters);
+}
+
+/// <summary>
 /// Provides a PLang step example and its expected parameter mapping for the builder.
 /// Multiple examples per action help the LLM map natural language to the correct parameters.
 /// </summary>

@@ -9,10 +9,10 @@ namespace App.Goals.Goal.Steps.Step;
 /// <summary>
 /// Represents a step within a goal for App.
 /// </summary>
-public sealed partial class @this : Data.@this<@this>
+public sealed partial class @this : modules.IDataWrappable
 {
     [JsonIgnore]
-    public new Actor.Context.@this? Context { get; set; }
+    public Actor.Context.@this? Context { get; set; }
 
     /// <summary>
     /// Whether this step is disabled for the current execution.
@@ -65,7 +65,7 @@ public sealed partial class @this : Data.@this<@this>
     public Actions.@this Actions
     {
         get { _actions.Step = this; return _actions; }
-        set => _actions = value;
+        set => _actions = value ?? new();
     }
 
     /// <summary>
@@ -174,7 +174,7 @@ public sealed partial class @this : Data.@this<@this>
         {
             context.CancellationToken.ThrowIfCancellationRequested();
             result = await action.RunAsync(context);
-            if (!result.Success) break;
+            if (!result.Success || result.Handled) break;
         }
         return result;
     }
@@ -184,7 +184,7 @@ public sealed partial class @this : Data.@this<@this>
         var handler = OnError!;
 
         // Ignore — swallow error
-        if (handler.IgnoreError)
+        if (handler.IgnoreError == true)
             return Data.@this.Ok();
 
         var app = context.App!;
@@ -242,6 +242,20 @@ public sealed partial class @this : Data.@this<@this>
         return await app.RunGoalAsync(handler.Goal, context);
     }
 
+    /// <summary>
+    /// OBP: Step is responsible for its own Data representation.
+    /// Returns a cached per-execution Data&lt;Step&gt; wrapper from the context.
+    /// </summary>
+    public Data.@this AsData(Actor.Context.@this context)
+    {
+        return context.GetOrCreate(this, () =>
+        {
+            var data = new Data.@this<@this>("", this);
+            data.Context = context;
+            return data;
+        });
+    }
+
     public @this Clone()
     {
         return new @this
@@ -256,7 +270,6 @@ public sealed partial class @this : Data.@this<@this>
                 Module = a.Module,
                 ActionName = a.ActionName,
                 Parameters = new List<Data.@this>(a.Parameters),
-                Return = a.Return != null ? new List<Data.@this>(a.Return) : null,
                 Defaults = a.Defaults != null ? new List<Data.@this>(a.Defaults) : null,
                 Errors = new List<Info>(a.Errors),
                 Warnings = new List<Info>(a.Warnings)

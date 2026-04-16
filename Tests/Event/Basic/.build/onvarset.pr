@@ -1,0 +1,49 @@
+{
+  "name": "OnVarSet",
+  "description": "OnVarSet: write an output message when the variable set event fires.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Variable set event fired\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Variable set event fired",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Event/Basic/OnVarSet.goal",
+  "prPath": "/Tests/Event/Basic/.build/onvarset.pr",
+  "hash": "e9c1424776fed3cdb7b488dfc0049fee3947aab5b236818c90ca3969358a5367",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

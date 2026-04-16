@@ -1,0 +1,133 @@
+{
+  "name": "Start",
+  "description": "Sets %name%, renders an inline template with substitution into %result%, then asserts the rendered output equals \u0027Hello World!\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %name% = \u0027World\u0027",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: render inline template content with variable substitution",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "World",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "render \u0027Hello {{ name }}!\u0027, write to %result%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "ui",
+          "action": "render",
+          "parameters": [
+            {
+              "name": "Template",
+              "value": "Hello {{ name }}!",
+              "type": "string"
+            },
+            {
+              "name": "IsFile",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %result% equals \u0027Hello World!\u0027",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "Hello World!",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %result% to equal \u0027Hello World!\u0027",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Ui/RenderInline/RenderInline.test.goal",
+  "prPath": "/Tests/Ui/RenderInline/.build/renderinline.test.pr",
+  "hash": "7972161a6d5fa7ca9f24db193bba0b27b0ba42e02d48402f58c503c2bc0aad36",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

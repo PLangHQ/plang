@@ -13,7 +13,7 @@ public class LlmMessage
     public string Role { get; set; } = "";
 
     [Store, LlmBuilder]
-    public string? Text { get; set; }
+    public string? Content { get; set; }
 
     [Store, LlmBuilder]
     public List<string>? Images { get; set; }

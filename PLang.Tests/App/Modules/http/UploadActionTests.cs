@@ -71,7 +71,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = "Hello upload",
+            Content = new global::App.Data.@this("", "Hello upload"),
             As = ContentAs.Text,
             Unsigned = true
         };
@@ -94,7 +94,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = "upload.txt",
+            Content = new global::App.Data.@this("", "upload.txt"),
             As = ContentAs.File,
             Unsigned = true
         };
@@ -116,7 +116,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = b64,
+            Content = new global::App.Data.@this("", b64),
             As = ContentAs.Base64,
             Unsigned = true
         };
@@ -138,7 +138,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = "auto.txt",
+            Content = new global::App.Data.@this("", "auto.txt"),
             Unsigned = true
         };
 
@@ -157,7 +157,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = "just a string, not a file path",
+            Content = new global::App.Data.@this("", "just a string, not a file path"),
             Unsigned = true
         };
 
@@ -175,7 +175,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = "data",
+            Content = new global::App.Data.@this("", "data"),
             Method = HttpMethod.PUT,
             As = ContentAs.Text,
             Unsigned = true
@@ -199,7 +199,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = "data",
+            Content = new global::App.Data.@this("", "data"),
             As = ContentAs.Text,
             Unsigned = true
         };
@@ -222,7 +222,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new Dictionary<string, object> { ["name"] = "Alice", ["age"] = "30" },
+            Content = new global::App.Data.@this("", new Dictionary<string, object> { ["name"] = "Alice", ["age"] = "30" }),
             Unsigned = true
         };
 
@@ -246,7 +246,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new Dictionary<string, object> { ["field1"] = "value1" },
+            Content = new global::App.Data.@this("", new Dictionary<string, object> { ["field1"] = "value1" }),
             As = ContentAs.Form,
             Unsigned = true
         };
@@ -273,7 +273,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" },
+            Content = new global::App.Data.@this("", new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" }),
             As = ContentAs.Form,
             Unsigned = true
         };
@@ -307,7 +307,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new List<string> { "a", "b", "c" },
+            Content = new global::App.Data.@this("", new List<string> { "a", "b", "c" }),
             Unsigned = true
         };
 

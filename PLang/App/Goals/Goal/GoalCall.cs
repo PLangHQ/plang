@@ -44,6 +44,7 @@ public sealed class GoalCall : modules.IEvent
     public async Task<Data.@this> GetGoalAsync(App.@this app, Actor.Context.@this context)
     {
         // PrPath is authoritative — load from file, no name-based search
+        // PrPath is authoritative — load from file, no name-based search
         if (!string.IsNullOrEmpty(PrPath))
             return await LoadFromFile(PrPath, app, context);
 
@@ -94,7 +95,7 @@ public sealed class GoalCall : modules.IEvent
         var readAction = new modules.file.Read
         {
             Context = context,
-            Path = FileSystem.Path.Resolve(prPath, context)
+            Path = Data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(prPath, context))
         };
         var result = await app.RunAction(readAction, context);
         if (!result.Success) return result;

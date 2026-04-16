@@ -9,7 +9,7 @@ namespace App.modules.condition;
 public partial class Compare : IContext
 {
     public partial Data.@this? Left { get; init; }
-    public partial Operator Operator { get; init; }
+    public partial Data.@this<Operator> Operator { get; init; }
     public partial Data.@this? Right { get; init; }
 
     [Provider]

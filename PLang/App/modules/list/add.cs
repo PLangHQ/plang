@@ -7,9 +7,9 @@ public partial class Add : IContext
 {
     [VariableName]
     public partial string ListName { get; init; }
-    public partial object? Value { get; init; }
+    public partial Data.@this Value { get; init; }
     [Default(-1)]
-    public partial int AtIndex { get; init; }
+    public partial Data.@this<int> AtIndex { get; init; }
 
     public Task<Data.@this> Run()
     {
@@ -36,10 +36,10 @@ public partial class Add : IContext
             Context.Variables.Set(ListName, list);
         }
 
-        if (AtIndex >= 0 && AtIndex <= list.Count)
-            list.Insert(AtIndex, Value);
+        if (AtIndex.Value >= 0 && AtIndex.Value <= list.Count)
+            list.Insert(AtIndex.Value, Value.Value);
         else
-            list.Add(Value);
+            list.Add(Value.Value);
 
         return Task.FromResult(Data(new types.list { count = list.Count, value = list }, App.Data.Type.FromName("list")));
     }

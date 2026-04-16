@@ -12,12 +12,12 @@ public sealed class DefaultEvaluator : IEvaluator
     {
         try
         {
-            bool result = action.Operator.Evaluate(action.Left, action.Right);
+            bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
             return App.Data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
-            return EvaluationError(action.Left, action.Operator, action.Right, ex);
+            return EvaluationError(action.Left, action.Operator.Value, action.Right, ex);
         }
     }
 
@@ -25,12 +25,12 @@ public sealed class DefaultEvaluator : IEvaluator
     {
         try
         {
-            bool result = action.Operator.Evaluate(action.Left, action.Right);
+            bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
             return App.Data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
-            return EvaluationError(action.Left, action.Operator, action.Right, ex);
+            return EvaluationError(action.Left, action.Operator.Value, action.Right, ex);
         }
     }
 

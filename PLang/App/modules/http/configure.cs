@@ -12,32 +12,32 @@ namespace App.modules.http;
 public partial class configure : IContext, IConfigure<Config>
 {
     /// <summary>Default request timeout in seconds.</summary>
-    public partial int? TimeoutInSec { get; init; }
+    public partial Data.@this<int>? TimeoutInSec { get; init; }
 
     /// <summary>Base URL for resolving relative request URLs.</summary>
-    public partial string? BaseUrl { get; init; }
+    public partial Data.@this<string>? BaseUrl { get; init; }
 
     /// <summary>Default headers merged into every request.</summary>
-    public partial Dictionary<string, object>? DefaultHeaders { get; init; }
+    public partial Data.@this<Dictionary<string, object>>? DefaultHeaders { get; init; }
 
     /// <summary>Default Content-Type for request bodies.</summary>
-    public partial string? ContentType { get; init; }
+    public partial Data.@this<string>? ContentType { get; init; }
 
     /// <summary>Default character encoding for request bodies.</summary>
-    public partial string? Encoding { get; init; }
+    public partial Data.@this<string>? Encoding { get; init; }
 
     /// <summary>When true, disables request signing by default.</summary>
-    public partial bool? Unsigned { get; init; }
+    public partial Data.@this<bool>? Unsigned { get; init; }
 
     /// <summary>Whether to follow HTTP redirects. Default: true.</summary>
-    public partial bool? FollowRedirects { get; init; }
+    public partial Data.@this<bool>? FollowRedirects { get; init; }
 
     /// <summary>Maximum number of redirects to follow. Default: 10.</summary>
-    public partial int? MaxRedirects { get; init; }
+    public partial Data.@this<int>? MaxRedirects { get; init; }
 
     /// <summary>When true, writes config to app-wide default scope instead of current scope.</summary>
     [Default(false)]
-    public partial bool Default { get; init; }
+    public partial Data.@this<bool> Default { get; init; }
 
     [Provider]
     public partial IHttpProvider Http { get; }

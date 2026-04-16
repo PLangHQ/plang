@@ -109,7 +109,16 @@ public class GoalSerializationTests
                             Module = "http",
                             ActionName = "get",
                             Parameters = new List<Data> { new Data("url", "https://api.example.com") },
-                            Return = new List<Data> { new Data("response") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new List<Data>
+                            {
+                                new Data("Name", "response"),
+                                new Data("Value", "%__data__%")
+                            }
                         }
                     }
                 }
@@ -128,9 +137,11 @@ public class GoalSerializationTests
         await Assert.That(step.Comment).IsEqualTo("step comment");
         await Assert.That(step.WaitForExecution).IsFalse();
         await Assert.That(step.Timeout).IsEqualTo(30);
-        await Assert.That(step.Actions.Count).IsEqualTo(1);
+        await Assert.That(step.Actions.Count).IsEqualTo(2);
         await Assert.That(step.Actions[0].Module).IsEqualTo("http");
         await Assert.That(step.Actions[0].ActionName).IsEqualTo("get");
+        await Assert.That(step.Actions[1].Module).IsEqualTo("variable");
+        await Assert.That(step.Actions[1].ActionName).IsEqualTo("set");
     }
 
     [Test]

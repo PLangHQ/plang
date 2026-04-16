@@ -31,11 +31,11 @@ public class FileHandlerTests : IDisposable
     private string TempPath(string relativePath) =>
         _fs.Path.Combine(_tempDir, relativePath);
 
-    private PLangPath MakePath(string relativePath) =>
-        new PLangPath(TempPath(relativePath)) { Context = _app.Context };
+    private global::App.Data.@this<PLangPath> MakePath(string relativePath) =>
+        new("", new PLangPath(TempPath(relativePath)) { Context = _app.Context });
 
-    private PLangPath MakeAbsPath(string absolutePath) =>
-        new PLangPath(absolutePath) { Context = _app.Context };
+    private global::App.Data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
+        new("", new PLangPath(absolutePath) { Context = _app.Context });
 
     // --- Save ---
 
@@ -46,7 +46,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PLangPath;
+        var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Absolute).IsEqualTo(TempPath("test.txt"));
         await Assert.That(f.Relative).IsEqualTo("test.txt");
@@ -72,9 +72,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PLangPath;
-        await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Relative).IsEqualTo("read.txt");
+        await Assert.That(result.Value).IsEqualTo("content here");
     }
 
     [Test]
@@ -84,9 +82,8 @@ public class FileHandlerTests : IDisposable
 
         var action = new Read { Context = _app.Context, Path = MakePath("lazy.txt") };
         var result = await action.Run();
-        var f = result as PLangPath;
 
-        await Assert.That(f!.Value).IsEqualTo("lazy content");
+        await Assert.That(result.Value).IsEqualTo("lazy content");
     }
 
     [Test]
@@ -109,7 +106,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PLangPath;
+        var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Source).IsNotNull();
         await Assert.That(f.Relative).IsEqualTo("dst.txt");
@@ -149,7 +146,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PLangPath;
+        var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Source).IsNotNull();
         await Assert.That(f.Relative).IsEqualTo("move_dst.txt");
@@ -190,7 +187,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PLangPath;
+        var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Exists).IsFalse();
     }
@@ -238,7 +235,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PLangPath;
+        var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Exists).IsTrue();
     }
@@ -250,7 +247,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result as PLangPath;
+        var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Exists).IsFalse();
     }
@@ -328,9 +325,8 @@ public class FileHandlerTests : IDisposable
 
         var action = new Read { Context = _app.Context, Path = MakePath("doc.md") };
         var result = await action.Run();
-        var f = result as PLangPath;
 
-        await Assert.That(f!.MimeType).IsEqualTo("text/markdown");
+        await Assert.That(result.Type!.Value).IsEqualTo("text/markdown");
     }
 
     [Test]
@@ -340,9 +336,9 @@ public class FileHandlerTests : IDisposable
 
         var action = new Read { Context = _app.Context, Path = MakePath("sized.txt") };
         var result = await action.Run();
-        var f = result as PLangPath;
+        var content = result.Value as string;
 
-        await Assert.That(f!.Size).IsEqualTo(5);
+        await Assert.That(content!.Length).IsEqualTo(5);
     }
 
     [Test]
@@ -352,9 +348,8 @@ public class FileHandlerTests : IDisposable
 
         var action = new Read { Context = _app.Context, Path = MakePath("tostring.txt") };
         var result = await action.Run();
-        var f = result as PLangPath;
 
-        await Assert.That(f!.ToString()).IsEqualTo("file-content");
+        await Assert.That(result.Value!.ToString()).IsEqualTo("file-content");
     }
 
     // --- Integration: file.exists -> Variables -> output.write ---
@@ -387,8 +382,16 @@ public class FileHandlerTests : IDisposable
                             ActionName = "exists",
                             Parameters = new System.Collections.Generic.List<global::App.Data.@this>
                                 { new global::App.Data.@this("path", TempPath("real.txt")) },
-                            Return = new System.Collections.Generic.List<global::App.Data.@this>
-                                { new global::App.Data.@this("fileResult") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new System.Collections.Generic.List<global::App.Data.@this>
+                            {
+                                new global::App.Data.@this("Name", "fileResult"),
+                                new global::App.Data.@this("Value", "%__data__%")
+                            }
                         }
                     }
                 },
@@ -417,7 +420,7 @@ public class FileHandlerTests : IDisposable
 
         var fileData = context.Variables.Get("fileResult");
         await Assert.That(fileData).IsNotNull();
-        var fileObj = fileData as PLangPath;
+        var fileObj = fileData!.Value as PLangPath;
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(fileObj!.Exists).IsTrue();
 
@@ -456,8 +459,16 @@ public class FileHandlerTests : IDisposable
                             ActionName = "exists",
                             Parameters = new System.Collections.Generic.List<global::App.Data.@this>
                                 { new global::App.Data.@this("path", TempPath("ghost.txt")) },
-                            Return = new System.Collections.Generic.List<global::App.Data.@this>
-                                { new global::App.Data.@this("fileResult") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new System.Collections.Generic.List<global::App.Data.@this>
+                            {
+                                new global::App.Data.@this("Name", "fileResult"),
+                                new global::App.Data.@this("Value", "%__data__%")
+                            }
                         }
                     }
                 },

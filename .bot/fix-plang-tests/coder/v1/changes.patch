@@ -1,0 +1,905 @@
+diff --git a/PLang.Tests/App/Core/EngineTests.cs b/PLang.Tests/App/Core/EngineTests.cs
+index 8239d9a5..1bcfa161 100644
+--- a/PLang.Tests/App/Core/EngineTests.cs
++++ b/PLang.Tests/App/Core/EngineTests.cs
+@@ -20,8 +20,7 @@ public class EngineTests
+                     ActionName = method,
+                     Parameters = parameters is IDictionary<string, object?> dict
+                         ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
+-                        : new List<Data>(),
+-                    Return = null
++                        : new List<Data>()
+                 }
+             }
+         };
+diff --git a/PLang.Tests/App/Core/StartGoalTests.cs b/PLang.Tests/App/Core/StartGoalTests.cs
+index 1730c0f7..b10d2113 100644
+--- a/PLang.Tests/App/Core/StartGoalTests.cs
++++ b/PLang.Tests/App/Core/StartGoalTests.cs
+@@ -56,41 +56,6 @@ public class StartGoalTests
+ 
+     #endregion
+ 
+-    #region Load from .pr.json
+-
+-    [Test]
+-    public async Task StartGoal_LoadFromPrJson_SetsVariablesAndWritesOutput()
+-    {
+-        await using var engine = new global::App.@this("/app");
+-
+-        // Replace output.write with capturing version
+-        var capture = new CapturingWriteHandler();
+-        engine.Modules.Register("output", "write", capture);
+-
+-        // Find the .pr.json file and set FileSystem root to repo root so it's accessible
+-        var prJsonPath = FindPrJsonPath();
+-        var repoRoot = Path.GetDirectoryName(Path.GetDirectoryName(prJsonPath))!; // parent of Tests/Builder
+-        engine.FileSystem = new global::App.FileSystem.Default.PLangFileSystem(repoRoot, "");
+-
+-        var loadResult = await engine.Goals.LoadFromFileAsync(engine,prJsonPath);
+-        await Assert.That(loadResult.Success).IsTrue();
+-
+-        var context = engine.Context;
+-        var result = await engine.RunGoalAsync(new GoalCall { Name = "Start" }, context);
+-
+-        await Assert.That(result.Success).IsTrue();
+-
+-        // Check variables
+-        await Assert.That(context.Variables.GetValue("name")).IsEqualTo("Plang");
+-        await Assert.That(context.Variables.GetValue("newVarName")).IsEqualTo("Plang");
+-
+-        // Check output
+-        await Assert.That(capture.Lines).Contains("Plang");
+-        await Assert.That(capture.Lines).Contains("NewVar: Plang");
+-    }
+-
+-    #endregion
+-
+     #region Variable Resolution Unit Tests
+ 
+     [Test]
+@@ -351,33 +316,12 @@ public class StartGoalTests
+                     Module = actionClass,
+                     ActionName = method,
+                     Parameters = parameters.Select(kv => new Data(kv.Key, kv.Value)).ToList(),
+-                    Defaults = defaults?.Select(kv => new Data(kv.Key, kv.Value)).ToList(),
+-                    Return = null
++                    Defaults = defaults?.Select(kv => new Data(kv.Key, kv.Value)).ToList()
+                 }
+             }
+         };
+     }
+ 
+-    private static string FindPrJsonPath()
+-    {
+-        // Walk up from test output directory to find the repo root
+-        var dir = AppContext.BaseDirectory;
+-        while (dir != null)
+-        {
+-            var candidate = Path.Combine(dir, "Tests", "Builder", "Start.pr.json");
+-            if (File.Exists(candidate))
+-                return candidate;
+-            dir = Directory.GetParent(dir)?.FullName;
+-        }
+-
+-        // Fallback: try relative to working directory
+-        var fallback = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "Tests", "Builder", "Start.pr.json"));
+-        if (File.Exists(fallback))
+-            return fallback;
+-
+-        throw new FileNotFoundException("Could not find Tests/Builder/Start.pr.json");
+-    }
+-
+     /// <summary>
+     /// A test handler that captures written content instead of writing to Console.
+     /// Implements IAction + ICodeGenerated manually since the source generator doesn't run on test projects.
+diff --git a/PLang.Tests/App/Memory/VariablesTests.cs b/PLang.Tests/App/Memory/VariablesTests.cs
+index 413043ab..baed7223 100644
+--- a/PLang.Tests/App/Memory/VariablesTests.cs
++++ b/PLang.Tests/App/Memory/VariablesTests.cs
+@@ -1085,6 +1085,32 @@ public class VariablesAccessorTests
+         await Assert.That(resolved!.Content).IsEqualTo("You are a compiler");
+     }
+ 
++    [Test]
++    public async Task ResolveDeep_TypedObject_DoesNotMutateOriginal()
++    {
++        var stack = new Variables();
++        stack.Set("systemPrompt", "You are a compiler");
++
++        var original = new global::App.modules.llm.LlmMessage
++        {
++            Role = "system",
++            Content = "%systemPrompt%"
++        };
++
++        var result = stack.ResolveDeep(original);
++
++        // Resolved copy should have the resolved value
++        var resolved = result as global::App.modules.llm.LlmMessage;
++        await Assert.That(resolved).IsNotNull();
++        await Assert.That(resolved!.Content).IsEqualTo("You are a compiler");
++
++        // Original must NOT be mutated — it still has the template
++        await Assert.That(original.Content).IsEqualTo("%systemPrompt%");
++
++        // They should be different object instances
++        await Assert.That(object.ReferenceEquals(original, resolved)).IsFalse();
++    }
++
+     [Test]
+     public async Task ResolveDeep_ListOfTypedObjects_ResolvesStringProperties()
+     {
+diff --git a/PLang.Tests/App/Modules/condition/IfHandlerTests.cs b/PLang.Tests/App/Modules/condition/IfHandlerTests.cs
+index ce67f7cc..de3e3887 100644
+--- a/PLang.Tests/App/Modules/condition/IfHandlerTests.cs
++++ b/PLang.Tests/App/Modules/condition/IfHandlerTests.cs
+@@ -362,6 +362,78 @@ public class IfHandlerTests : IDisposable
+         await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
+         await Assert.That(result.Error!.Message).Contains("does not support comparison");
+     }
++
++    /// <summary>
++    /// Simulates: outer goal has if/else → then-branch calls inner goal →
++    /// inner goal also has if/else. The inner condition must orchestrate independently.
++    /// Bug: shared guard variable on Context.Variables blocks inner orchestration.
++    /// </summary>
++    [Test]
++    public async Task Run_InnerGoalCondition_OrchestatesIndependently()
++    {
++        var captureStream = new System.IO.MemoryStream();
++        _app.User.Channels.Register(new Channel(
++            EngineChannels.Default, captureStream,
++            ChannelDirection.Output, ownsStream: true)
++        { ContentType = "text/plain" });
++
++        // --- Inner goal: if true → write "inner-then", else → write "inner-else" ---
++        var innerCondAction = new Action
++        {
++            Module = "condition", ActionName = "if",
++            Parameters = new List<Data>
++            {
++                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
++            }
++        };
++        var innerThenAction = new Action
++        {
++            Module = "output", ActionName = "write",
++            Parameters = new List<Data> { new Data("Data", "inner-then") }
++        };
++        var innerElseCondAction = new Action
++        {
++            Module = "condition", ActionName = "if",
++            Parameters = new List<Data>
++            {
++                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
++            }
++        };
++        var innerElseAction = new Action
++        {
++            Module = "output", ActionName = "write",
++            Parameters = new List<Data> { new Data("Data", "inner-else") }
++        };
++
++        var innerStep = new Step
++        {
++            Index = 0, Text = "if true write inner-then, else write inner-else",
++            Actions = new StepActions { innerCondAction, innerThenAction, innerElseCondAction, innerElseAction }
++        };
++        innerCondAction.Step = innerStep;
++
++        // Simulate the bug: the outer goal's condition has already set the guard
++        // on the SAME context (because RunGoalAsync passes context by reference).
++        // With the buggy code (Variables-based guard), the inner condition sees it
++        // and skips orchestration — actions run sequentially instead of branched.
++        var context = _app.Context;
++        context.Variables.Put(new Data("__condition_orchestrating__", true));
++
++        // Run the inner step (which shares the same context as the outer)
++        var result = await innerStep.RunAsync(context);
++
++        await Assert.That(result.Success).IsTrue();
++
++        captureStream.Position = 0;
++        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
++
++        // The inner if is true, so "inner-then" should appear.
++        // With the bug: orchestration is skipped, step runs actions sequentially,
++        // condition returns true (Handled=false), then output.write runs "inner-then",
++        // BUT the else condition also runs and writes "inner-else" too.
++        // With the fix: orchestration works, only "inner-then" is written.
++        await Assert.That(output).IsEqualTo("inner-then" + System.Environment.NewLine);
++    }
+ }
+ 
+ public class TestData : Data
+diff --git a/PLang.Tests/App/Modules/loop/ForeachTests.cs b/PLang.Tests/App/Modules/loop/ForeachTests.cs
+index 748a9f7f..8b3bfcfe 100644
+--- a/PLang.Tests/App/Modules/loop/ForeachTests.cs
++++ b/PLang.Tests/App/Modules/loop/ForeachTests.cs
+@@ -124,6 +124,42 @@ public class ForeachTests
+         await Assert.That(result.Success).IsTrue();
+     }
+ 
++    [Test]
++    public async Task Foreach_Dictionary_KeyIsStringNotIndex()
++    {
++        var context = _app.Context;
++        // Use single-entry dict so final state = only iteration
++        var dict = new Dictionary<string, object?> { ["greeting"] = "hello" };
++        context.Variables.Set("dict", dict);
++
++        var goal = new Goal { Name = "Noop", Path = "/Noop.goal", Steps = new GoalSteps() };
++        _app.Goals.Add(goal);
++
++        var foreachAction = TestAction.Create("loop", "foreach",
++            ("collection", "%dict%"), ("itemname", "%val%"), ("keyname", "%key%"));
++        var goalCallAction = TestAction.Create("goal", "call",
++            ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" }));
++
++        var step = new Step
++        {
++            Index = 0,
++            Text = "foreach %dict%, call Noop",
++            Actions = new StepActions { foreachAction, goalCallAction }
++        };
++        foreachAction.Step = step;
++        goalCallAction.Step = step;
++
++        var result = await step.RunAsync(context);
++
++        await Assert.That(result.Success).IsTrue();
++        // %key% should be the dictionary key (string "greeting"), not numeric index (0)
++        var key = context.Variables.GetValue("key");
++        await Assert.That(key).IsEqualTo("greeting");
++        // %val% should be the value ("hello"), not a KeyValuePair struct
++        var val = context.Variables.GetValue("val");
++        await Assert.That(val).IsEqualTo("hello");
++    }
++
+     [Test]
+     public async Task Foreach_NullCollection_ReturnsZeroCount()
+     {
+diff --git a/PLang.Tests/App/Modules/ui/RenderTests.cs b/PLang.Tests/App/Modules/ui/RenderTests.cs
+index 65b3fe5e..b47b9bb1 100644
+--- a/PLang.Tests/App/Modules/ui/RenderTests.cs
++++ b/PLang.Tests/App/Modules/ui/RenderTests.cs
+@@ -702,8 +702,7 @@ public class RenderTests : IDisposable
+                     ActionName = method,
+                     Parameters = parameters is IDictionary<string, object?> dict
+                         ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
+-                        : new List<Data>(),
+-                    Return = null
++                        : new List<Data>()
+                 }
+             }
+         };
+diff --git a/PLang/App/Data/this.cs b/PLang/App/Data/this.cs
+index 1714a243..843c9c0a 100644
+--- a/PLang/App/Data/this.cs
++++ b/PLang/App/Data/this.cs
+@@ -88,6 +88,10 @@ public partial class @this
+     private Type? _type;
+     private Actor.Context.@this? _context;
+ 
++    /// <summary>Cache for As&lt;T&gt;() Resolve method lookups — avoids per-call reflection.</summary>
++    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?>
++        ResolveMethodCache = new();
++
+     /// <summary>Fired by Variables.Set() when this Data is replaced — passes old and new Data.</summary>
+     public event Action<@this, @this>? OnChange;
+ 
+@@ -186,7 +190,10 @@ public partial class @this
+             }
+             if (NeedsResolution && _value != null && _context?.Variables != null
+                 && (_value is System.Collections.IList || _value is System.Collections.IDictionary))
+-                return _context.Variables.ResolveDeep(_value);
++            {
++                _value = _context.Variables.ResolveDeep(_value);
++                NeedsResolution = false;
++            }
+             return _value;
+         }
+         set
+@@ -305,6 +312,45 @@ public partial class @this
+         return Array.Empty<object>();
+     }
+ 
++    /// <summary>
++    /// Enumerates as (key, value) Data pairs. Data owns the knowledge of how to iterate:
++    /// dictionaries yield (dictKey, dictValue), lists yield (index, element),
++    /// single values yield (0, value). All results are Data — callers never see raw objects.
++    /// </summary>
++    public IEnumerable<(@this key, @this value)> EnumerateItems()
++    {
++        if (_value is IDictionary<string, object?> typedDict)
++        {
++            foreach (var kvp in typedDict)
++                yield return (new @this("", kvp.Key) { Context = _context },
++                              WrapItem(kvp.Value));
++            yield break;
++        }
++
++        if (_value is System.Collections.IDictionary untypedDict)
++        {
++            foreach (System.Collections.DictionaryEntry entry in untypedDict)
++                yield return (new @this("", entry.Key) { Context = _context },
++                              WrapItem(entry.Value));
++            yield break;
++        }
++
++        int index = 0;
++        if (_value is System.Collections.IEnumerable enumerable and not string)
++        {
++            foreach (var item in enumerable)
++                yield return (new @this("", index++) { Context = _context },
++                              WrapItem(item));
++            yield break;
++        }
++
++        if (_value != null)
++            yield return (new @this("", 0) { Context = _context }, this);
++    }
++
++    private @this WrapItem(object? item) =>
++        item is @this data ? data : new @this("", item) { Context = _context };
++
+     [JsonIgnore]
+     public bool IsEmpty => !IsInitialized || _value == null ||
+         (_value is string s && string.IsNullOrEmpty(s));
+@@ -338,9 +384,10 @@ public partial class @this
+         // Context-resolvable types: if T has static Resolve(string, Context) and Value is string
+         if (Value is string strVal && ctx != null)
+         {
+-            var resolveMethod = typeof(T).GetMethod("Resolve",
+-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+-                null, new[] { typeof(string), typeof(Actor.Context.@this) }, null);
++            var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
++                t.GetMethod("Resolve",
++                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
++                    null, new[] { typeof(string), typeof(Actor.Context.@this) }, null));
+             if (resolveMethod != null)
+             {
+                 var resolved = resolveMethod.Invoke(null, new object[] { strVal, ctx });
+diff --git a/PLang/App/Debug/this.cs b/PLang/App/Debug/this.cs
+index f0e55bc9..911e1bdd 100644
+--- a/PLang/App/Debug/this.cs
++++ b/PLang/App/Debug/this.cs
+@@ -249,11 +249,6 @@ public sealed class @this
+                 sb.AppendLine($"    {p.Name} = {FormatValue(p.Value, context)}");
+             }
+ 
+-            if (action.Return != null && action.Return.Count > 0)
+-            {
+-                var returnStr = string.Join(", ", action.Return.Select(r => $"%{r.Name}%"));
+-                sb.AppendLine($"  Return: {returnStr}");
+-            }
+         }
+ 
+         var callStack = context.CallStack;
+@@ -376,15 +371,6 @@ public sealed class @this
+ 
+         foreach (var action in step.Actions)
+         {
+-            if (action.Return != null)
+-            {
+-                foreach (var r in action.Return)
+-                {
+-                    if (!string.IsNullOrEmpty(r.Name))
+-                        varNames.Add(r.Name);
+-                }
+-            }
+-
+             foreach (var p in action.Parameters)
+             {
+                 if (p.Value is string s)
+diff --git a/PLang/App/Goals/Goal/Methods.cs b/PLang/App/Goals/Goal/Methods.cs
+index bf090ea9..1ab20267 100644
+--- a/PLang/App/Goals/Goal/Methods.cs
++++ b/PLang/App/Goals/Goal/Methods.cs
+@@ -84,8 +84,7 @@ public sealed partial class @this
+ 						{
+ 							module = a.Module,
+ 							action = a.ActionName,
+-							parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Value }),
+-							@return = a.Return?.Select(r => new { name = r.Name })
++							parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Value })
+ 						})
+ 					}, jsonOpts)
+ 				: "null";
+diff --git a/PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs b/PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs
+index 238e8ce7..4f997ebd 100644
+--- a/PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs
++++ b/PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs
+@@ -37,10 +37,6 @@ public sealed partial class @this : modules.IDataWrappable
+     [Store, LlmBuilder, Debug, Default]
+     public List<Data.@this> Parameters { get; init; } = new();
+ 
+-    // Return is deprecated — use variable.set action with %__data__% instead
+-    [JsonIgnore]
+-    public List<Data.@this>? Return { get; init; }
+-
+     [Store, Debug, Default]
+     public List<Data.@this>? Defaults { get; set; }
+ 
+diff --git a/PLang/App/Variables/this.cs b/PLang/App/Variables/this.cs
+index eaffb580..4a912e76 100644
+--- a/PLang/App/Variables/this.cs
++++ b/PLang/App/Variables/this.cs
+@@ -433,22 +433,40 @@ public class @this
+             return result;
+         }
+ 
+-        // Typed objects: resolve %var% only in string properties (no deep recursion to avoid cycles)
++        // Typed objects: resolve %var% in string properties.
++        // Clone first to avoid mutating the original (which may be shared .pr template data).
+         var type = value.GetType();
+         if (!type.IsPrimitive && type != typeof(decimal) && type != typeof(DateTime)
+             && type != typeof(DateTimeOffset) && type != typeof(Guid) && !type.IsEnum)
+         {
++            var needsClone = false;
+             foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+             {
+                 if (!prop.CanRead || !prop.CanWrite) continue;
+                 if (prop.PropertyType != typeof(string)) continue;
+-
+                 var strValue = prop.GetValue(value) as string;
+-                if (strValue == null || !strValue.Contains('%')) continue;
++                if (strValue != null && strValue.Contains('%')) { needsClone = true; break; }
++            }
++
++            if (needsClone)
++            {
++                var clone = type.GetMethod("MemberwiseClone",
++                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
++                    .Invoke(value, null)!;
+ 
+-                var resolved = ResolveDeep(strValue);
+-                if (!ReferenceEquals(resolved, strValue))
+-                    prop.SetValue(value, resolved);
++                foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
++                {
++                    if (!prop.CanRead || !prop.CanWrite) continue;
++                    if (prop.PropertyType != typeof(string)) continue;
++
++                    var strValue = prop.GetValue(clone) as string;
++                    if (strValue == null || !strValue.Contains('%')) continue;
++
++                    var resolved = ResolveDeep(strValue);
++                    if (!ReferenceEquals(resolved, strValue))
++                        prop.SetValue(clone, resolved);
++                }
++                return clone;
+             }
+         }
+ 
+diff --git a/PLang/App/modules/builder/providers/DefaultBuilderProvider.cs b/PLang/App/modules/builder/providers/DefaultBuilderProvider.cs
+index 00ad4f40..cd9550c4 100644
+--- a/PLang/App/modules/builder/providers/DefaultBuilderProvider.cs
++++ b/PLang/App/modules/builder/providers/DefaultBuilderProvider.cs
+@@ -373,6 +373,9 @@ public class DefaultBuilderProvider : IBuilderProvider
+     {
+         if (step is IDictionary<string, object?> dict)
+             dict[key] = value;
++        // JsonElement is immutable — log a warning since the value can't be set
++        else if (step is JsonElement)
++            Console.Error.WriteLine($"  Warning: Cannot set '{key}' on JsonElement step — expected IDictionary");
+     }
+ 
+     /// <summary>
+diff --git a/PLang/App/modules/condition/if.cs b/PLang/App/modules/condition/if.cs
+index fc4bd299..f8e19280 100644
+--- a/PLang/App/modules/condition/if.cs
++++ b/PLang/App/modules/condition/if.cs
+@@ -42,13 +42,17 @@ public partial class If : IContext, IStep
+             }
+         }
+ 
+-        // Orchestrate if/elseif/else when there are multiple actions in this step
++        // Orchestrate if/elseif/else when there are multiple actions in this step.
++        // Guard is step-scoped on Context._data (not Variables) so:
++        //   1. PLang developers can't accidentally override it
++        //   2. Inner goals called from branches get their own guard keys
+         var actions = userStep?.Actions;
+-        var alreadyOrchestrating = Context.Variables.Get("__condition_orchestrating__")?.Value is true;
++        var guardKey = $"__condition_orchestrating_{userStep?.GetHashCode()}__";
++        var alreadyOrchestrating = Context.Get<bool>(guardKey);
+ 
+         if (!alreadyOrchestrating && actions != null && actions.Count > 1)
+         {
+-            Context.Variables.Put(new Data.@this("__condition_orchestrating__", true));
++            Context.Set(guardKey, true);
+             try
+             {
+                 var result = await Orchestrate(actions, conditionResult);
+@@ -57,7 +61,7 @@ public partial class If : IContext, IStep
+             }
+             finally
+             {
+-                Context.Variables.Remove("__condition_orchestrating__");
++                Context[guardKey] = null;
+             }
+         }
+ 
+diff --git a/PLang/App/modules/list/any.cs b/PLang/App/modules/list/any.cs
+index 5f5848bb..8b652be5 100644
+--- a/PLang/App/modules/list/any.cs
++++ b/PLang/App/modules/list/any.cs
+@@ -1,5 +1,3 @@
+-using App.Variables;
+-
+ namespace App.modules.list;
+ 
+ /// <summary>
+@@ -20,36 +18,16 @@ public partial class Any : IContext
+     public Task<Data.@this> Run()
+     {
+         var data = Context.Variables.Get(ListName);
+-        if (data.Value is not System.Collections.IList rawList)
+-            return Task.FromResult(Error(
+-                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
++        var key = Key.Value!;
++        var right = Value.Value != null ? new Data.@this("", Value.Value) : null;
+ 
+-        foreach (var item in rawList)
++        foreach (var (_, item) in data.EnumerateItems())
+         {
+-            var propValue = ExtractProperty(item, Key.Value!);
+-            var left = propValue != null ? new Data.@this("", propValue) : null;
+-            var right = Value.Value != null ? new Data.@this("", Value.Value) : null;
+-
++            var left = item.GetChild(key);
+             if (Operator.Value!.Evaluate(left, right))
+                 return Task.FromResult(Data(true, App.Data.Type.FromName("bool")));
+         }
+ 
+         return Task.FromResult(Data(false, App.Data.Type.FromName("bool")));
+     }
+-
+-    private static object? ExtractProperty(object? item, string key)
+-    {
+-        if (item is IDictionary<string, object?> dict && dict.TryGetValue(key, out var val))
+-            return val;
+-        if (item is System.Text.Json.JsonElement je && je.TryGetProperty(key, out var prop))
+-            return prop.ValueKind switch
+-            {
+-                System.Text.Json.JsonValueKind.String => prop.GetString(),
+-                System.Text.Json.JsonValueKind.Number => prop.GetInt64(),
+-                System.Text.Json.JsonValueKind.True => true,
+-                System.Text.Json.JsonValueKind.False => false,
+-                _ => prop.ToString()
+-            };
+-        return null;
+-    }
+ }
+diff --git a/PLang/App/modules/list/contains.cs b/PLang/App/modules/list/contains.cs
+index 05c68d15..4c416148 100644
+--- a/PLang/App/modules/list/contains.cs
++++ b/PLang/App/modules/list/contains.cs
+@@ -1,5 +1,3 @@
+-using App.Variables;
+-
+ namespace App.modules.list;
+ 
+ [Action("contains")]
+@@ -11,11 +9,14 @@ public partial class Contains : IContext
+ 
+     public Task<Data.@this> Run()
+     {
+-        var existing = Context.Variables.Get(ListName).Value;
+-        if (existing is System.Collections.IList list)
+-            return Task.FromResult(Data(list.Contains(Value.Value)));
+-        if (existing is System.Collections.IDictionary dict && Value.Value is string key)
+-            return Task.FromResult(Data(dict.Contains(key)));
++        var data = Context.Variables.Get(ListName);
++        var target = Value.Value;
++
++        foreach (var (_, item) in data.EnumerateItems())
++        {
++            if (Equals(item.Value, target))
++                return Task.FromResult(Data(true));
++        }
+ 
+         return Task.FromResult(Data(false));
+     }
+diff --git a/PLang/App/modules/list/count.cs b/PLang/App/modules/list/count.cs
+index cabe7f3e..aa260a30 100644
+--- a/PLang/App/modules/list/count.cs
++++ b/PLang/App/modules/list/count.cs
+@@ -1,5 +1,3 @@
+-using App.Variables;
+-
+ namespace App.modules.list;
+ 
+ [Action("count")]
+@@ -10,12 +8,15 @@ public partial class Count : IContext
+ 
+     public Task<Data.@this> Run()
+     {
+-        var existing = Context.Variables.Get(ListName).Value;
+-        if (existing is System.Collections.IList list)
+-            return Task.FromResult(Data(list.Count));
+-        if (existing is System.Collections.IDictionary dict)
+-            return Task.FromResult(Data(dict.Count));
++        var data = Context.Variables.Get(ListName);
++        var countData = data.GetChild("Count");
++
++        if (countData.IsInitialized && countData.Value is int c)
++            return Task.FromResult(Data(c));
+ 
+-        return Task.FromResult(Data(0));
++        // Fallback: enumerate
++        int count = 0;
++        foreach (var _ in data.EnumerateItems()) count++;
++        return Task.FromResult(Data(count));
+     }
+ }
+diff --git a/PLang/App/modules/list/first.cs b/PLang/App/modules/list/first.cs
+index 61f2c248..1acbe935 100644
+--- a/PLang/App/modules/list/first.cs
++++ b/PLang/App/modules/list/first.cs
+@@ -1,5 +1,3 @@
+-using App.Variables;
+-
+ namespace App.modules.list;
+ 
+ [Action("first")]
+@@ -10,10 +8,9 @@ public partial class First : IContext
+ 
+     public Task<Data.@this> Run()
+     {
+-        var existing = Context.Variables.Get(ListName).Value;
+-        if (existing is System.Collections.IList list && list.Count > 0)
+-            return Task.FromResult(Data(list[0]));
++        var data = Context.Variables.Get(ListName);
++        var first = data.GetChild("[0]");
+ 
+-        return Task.FromResult(Data());
++        return Task.FromResult(first.IsInitialized ? Data(first.Value) : Data());
+     }
+ }
+diff --git a/PLang/App/modules/list/get.cs b/PLang/App/modules/list/get.cs
+index 08be318a..8ac16a08 100644
+--- a/PLang/App/modules/list/get.cs
++++ b/PLang/App/modules/list/get.cs
+@@ -1,5 +1,3 @@
+-using App.Variables;
+-
+ namespace App.modules.list;
+ 
+ [Action("get")]
+@@ -11,15 +9,13 @@ public partial class Get : IContext
+ 
+     public Task<Data.@this> Run()
+     {
+-        var existing = Context.Variables.Get(ListName).Value;
+-        if (existing is not System.Collections.IList list)
+-            return Task.FromResult(Error(
+-                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
++        var data = Context.Variables.Get(ListName);
++        var item = data.GetChild($"[{Index.Value}]");
+ 
+-        if (Index.Value < 0 || Index.Value >= list.Count)
++        if (!item.IsInitialized)
+             return Task.FromResult(Error(
+-                new App.Errors.ValidationError($"Index {Index.Value} out of range (0..{list.Count - 1})")));
++                new App.Errors.ValidationError($"Index {Index.Value} out of range for '{ListName}'")));
+ 
+-        return Task.FromResult(Data(list[Index.Value]));
++        return Task.FromResult(Data(item.Value));
+     }
+ }
+diff --git a/PLang/App/modules/list/group.cs b/PLang/App/modules/list/group.cs
+index 825ad55e..9382ad25 100644
+--- a/PLang/App/modules/list/group.cs
++++ b/PLang/App/modules/list/group.cs
+@@ -1,5 +1,3 @@
+-using App.Variables;
+-
+ namespace App.modules.list;
+ 
+ [Action("group")]
+@@ -13,20 +11,19 @@ public partial class Group : IContext
+     public Task<Data.@this> Run()
+     {
+         var data = Context.Variables.Get(ListName);
+-        if (data.Value is not System.Collections.IList rawList)
+-            return Task.FromResult(Error(
+-                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
++        var key = Key.Value!;
+ 
+         var groups = new Dictionary<string, List<object?>>();
+-        foreach (var item in rawList)
++        foreach (var (_, item) in data.EnumerateItems())
+         {
+-            var keyValue = ExtractKey(item, Key.Value!) ?? "";
++            var keyData = item.GetChild(key);
++            var keyValue = keyData.IsInitialized ? keyData.Value?.ToString() ?? "" : "";
+             if (!groups.TryGetValue(keyValue, out var group))
+             {
+                 group = new List<object?>();
+                 groups[keyValue] = group;
+             }
+-            group.Add(item);
++            group.Add(item.Value);
+         }
+ 
+         var result = groups.Select(g => new Dictionary<string, object?>
+@@ -37,13 +34,4 @@ public partial class Group : IContext
+ 
+         return Task.FromResult(Data(result, App.Data.Type.FromName("list")));
+     }
+-
+-    private static string? ExtractKey(object? item, string key)
+-    {
+-        if (item is IDictionary<string, object?> dict && dict.TryGetValue(key, out var val))
+-            return val?.ToString();
+-        if (item is System.Text.Json.JsonElement je && je.TryGetProperty(key, out var prop))
+-            return prop.GetString();
+-        return null;
+-    }
+ }
+diff --git a/PLang/App/modules/list/indexof.cs b/PLang/App/modules/list/indexof.cs
+index 775cabac..1dc1c42d 100644
+--- a/PLang/App/modules/list/indexof.cs
++++ b/PLang/App/modules/list/indexof.cs
+@@ -1,5 +1,3 @@
+-using App.Variables;
+-
+ namespace App.modules.list;
+ 
+ [Action("indexof")]
+@@ -11,9 +9,14 @@ public partial class IndexOf : IContext
+ 
+     public Task<Data.@this> Run()
+     {
+-        var existing = Context.Variables.Get(ListName).Value;
+-        if (existing is System.Collections.IList list)
+-            return Task.FromResult(Data(list.IndexOf(Value.Value)));
++        var data = Context.Variables.Get(ListName);
++        var target = Value.Value;
++
++        foreach (var (key, item) in data.EnumerateItems())
++        {
++            if (Equals(item.Value, target))
++                return Task.FromResult(Data(key.Value));
++        }
+ 
+         return Task.FromResult(Data(-1));
+     }
+diff --git a/PLang/App/modules/list/join.cs b/PLang/App/modules/list/join.cs
+index 69b27100..63fab9c8 100644
+--- a/PLang/App/modules/list/join.cs
++++ b/PLang/App/modules/list/join.cs
+@@ -1,5 +1,3 @@
+-using App.Variables;
+-
+ namespace App.modules.list;
+ 
+ [Action("join")]
+@@ -12,14 +10,11 @@ public partial class Join : IContext
+ 
+     public Task<Data.@this> Run()
+     {
+-        var existing = Context.Variables.Get(ListName).Value;
+-        if (existing is not System.Collections.IList list)
+-            return Task.FromResult(Error(
+-                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
+-
++        var data = Context.Variables.Get(ListName);
+         var strings = new List<string>();
+-        foreach (var item in list)
+-            strings.Add(item?.ToString() ?? "");
++
++        foreach (var (_, item) in data.EnumerateItems())
++            strings.Add(item.Value?.ToString() ?? "");
+ 
+         var result = string.Join(Separator.Value!, strings);
+         return Task.FromResult(Data(result, App.Data.Type.String));
+diff --git a/PLang/App/modules/list/last.cs b/PLang/App/modules/list/last.cs
+index 42ccdbdd..0fbd873f 100644
+--- a/PLang/App/modules/list/last.cs
++++ b/PLang/App/modules/list/last.cs
+@@ -1,5 +1,3 @@
+-using App.Variables;
+-
+ namespace App.modules.list;
+ 
+ [Action("last")]
+@@ -10,9 +8,14 @@ public partial class Last : IContext
+ 
+     public Task<Data.@this> Run()
+     {
+-        var existing = Context.Variables.Get(ListName).Value;
+-        if (existing is System.Collections.IList list && list.Count > 0)
+-            return Task.FromResult(Data(list[list.Count - 1]));
++        var data = Context.Variables.Get(ListName);
++        var countData = data.GetChild("Count");
++
++        if (countData.IsInitialized && countData.Value is int count && count > 0)
++        {
++            var last = data.GetChild($"[{count - 1}]");
++            if (last.IsInitialized) return Task.FromResult(Data(last.Value));
++        }
+ 
+         return Task.FromResult(Data());
+     }
+diff --git a/PLang/App/modules/loop/foreach.cs b/PLang/App/modules/loop/foreach.cs
+index 3b665109..3f2e4026 100644
+--- a/PLang/App/modules/loop/foreach.cs
++++ b/PLang/App/modules/loop/foreach.cs
+@@ -32,17 +32,20 @@ public partial class Foreach : IContext, IStep
+         // Find remaining actions in this step (the loop body)
+         var bodyActions = GetBodyActions();
+ 
+-        foreach (var item in Collection.AsEnumerable())
++        // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element)
++        foreach (var (key, item) in Collection.EnumerateItems())
+         {
+             if (Context.CancellationToken.IsCancellationRequested)
+                 return Data(new types.loop { itemCount = count, completed = false });
+ 
+-            Context.Variables.Set(variableName, item);
+-
++            item.Name = variableName;
++            Context.Variables.Put(item);
+             if (KeyName != null)
+-                Context.Variables.Set(KeyName, count);
++            {
++                key.Name = KeyName;
++                Context.Variables.Put(key);
++            }
+ 
+-            // Run each body action for this item
+             foreach (var action in bodyActions)
+             {
+                 var result = await action.RunAsync(Context);
+diff --git a/PLang/App/this.cs b/PLang/App/this.cs
+index 5eb01324..0074f8e0 100644
+--- a/PLang/App/this.cs
++++ b/PLang/App/this.cs
+@@ -179,6 +179,11 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
+     /// </summary>
+     public Build.@this Building { get; }
+ 
++    /// <summary>
++    /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
++    /// </summary>
++    public bool Create { get; set; }
++
+     /// <summary>
+     /// Centralized type knowledge: PLang names ↔ CLR types, file extensions → Kind/MIME, compressibility.
+     /// </summary>
+@@ -391,10 +396,15 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
+         // Building → PLang builder (runs as User — user is building their code)
+         if (Building.IsEnabled)
+         {
+-            // Safety check: confirm new app creation if no app.pr exists
++            // Safety check: confirm new app creation if no app.pr exists.
++            // --app={"create":true} skips the prompt. Headless/CI defaults to "no".
+             var appPrPath = FileSystem.ValidatePath(".build/app.pr");
+-            if (!FileSystem.File.Exists(appPrPath))
++            if (!FileSystem.File.Exists(appPrPath) && !Create)
+             {
++                if (Console.IsInputRedirected)
++                    return Data.@this.FromError(new Errors.ServiceError(
++                        $"No app found at {AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
++
+                 Console.Write($"No app found at {AbsolutePath}. Create new app? (y/n): ");
+                 var answer = Console.ReadLine()?.Trim().ToLowerInvariant();
+                 if (answer != "y" && answer != "yes")
+diff --git a/PLang/Executor.cs b/PLang/Executor.cs
+index 1d720302..59e9856d 100644
+--- a/PLang/Executor.cs
++++ b/PLang/Executor.cs
+@@ -46,6 +46,10 @@ namespace PLang
+ 					userVars.Set("path", fileSystem.RootDirectory);
+ 			}
+ 
++			// App settings (--app={"create":true})
++			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
++				TypeMapping.Populate(engine, appDict);
++
+ 			// Build mode
+ 			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
+ 			{

@@ -1,0 +1,164 @@
+{
+  "name": "Start",
+  "description": "Saves a file, checks existence, conditionally calls ProcessFile when the file exists, then asserts the expected result.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "file save \u0022testfile.txt\u0022, content \u0022hello\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: multi-action condition \u2014 file.exists produces bool, condition.if branches on it",
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "testfile.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "hello",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if testfile.txt exists, call ProcessFile",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "exists",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "testfile.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%__data__%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": {
+                "name": "call-ProcessFile",
+                "description": "",
+                "comment": "",
+                "visibility": "public",
+                "inputParameters": {}
+              },
+              "type": "this"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ProcessFile",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %result% equals \u0022file-processed\u0022, \u0022GoalIfTrue should run when file exists\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "file-processed",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "GoalIfTrue should run when file exists",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Condition/FileExists/ConditionFileExists.test.goal",
+  "prPath": "/Tests/Condition/FileExists/.build/conditionfileexists.test.pr",
+  "hash": "21b50d07eca29a81b2dac983c8fe78b09fa0195b1841ddcd8c8da5fb3e4feb35",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

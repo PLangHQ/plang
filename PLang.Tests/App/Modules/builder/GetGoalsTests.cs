@@ -134,6 +134,96 @@ public class GetGoalsTests
     }
 
     [Test]
+    public async Task GetGoals_FilesFilter_ReturnsOnlyMatchingGoals()
+    {
+        // Write two .goal files
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(_tempDir, "Start.goal"),
+            "Start\n- write out 'hello'");
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(_tempDir, "Other.goal"),
+            "Other\n- write out 'other'");
+
+        // Set files filter to only build Start.goal
+        _app.Building.Files.Add(new global::App.FileSystem.Path("Start.goal"));
+
+        var action = new goals { Context = _app.Context, Path = "." };
+        var result = await _app.RunAction(action, _app.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var goals = result.Value as List<Goal>;
+        await Assert.That(goals).IsNotNull();
+        await Assert.That(goals!.Count).IsEqualTo(1);
+        await Assert.That(goals[0].Name).IsEqualTo("Start");
+    }
+
+    [Test]
+    public async Task GetGoals_FilesFilter_CaseInsensitive()
+    {
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(_tempDir, "MyGoal.goal"),
+            "MyGoal\n- step one");
+
+        // Filter with different casing
+        _app.Building.Files.Add(new global::App.FileSystem.Path("mygoal.goal"));
+
+        var action = new goals { Context = _app.Context, Path = "." };
+        var result = await _app.RunAction(action, _app.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var goals = result.Value as List<Goal>;
+        await Assert.That(goals).IsNotNull();
+        await Assert.That(goals!.Count).IsEqualTo(1);
+        await Assert.That(goals[0].Name).IsEqualTo("MyGoal");
+    }
+
+    [Test]
+    public async Task GetGoals_FilesFilter_NoMatch_ReturnsEmptyList()
+    {
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(_tempDir, "Start.goal"),
+            "Start\n- write out 'hello'");
+
+        // Filter for a file that doesn't exist
+        _app.Building.Files.Add(new global::App.FileSystem.Path("NonExistent.goal"));
+
+        var action = new goals { Context = _app.Context, Path = "." };
+        var result = await _app.RunAction(action, _app.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var goals = result.Value as List<Goal>;
+        await Assert.That(goals).IsNotNull();
+        await Assert.That(goals!.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task GetGoals_FilesFilter_MultipleFiles()
+    {
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(_tempDir, "First.goal"),
+            "First\n- step one");
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(_tempDir, "Second.goal"),
+            "Second\n- step two");
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(_tempDir, "Third.goal"),
+            "Third\n- step three");
+
+        _app.Building.Files.Add(new global::App.FileSystem.Path("First.goal"));
+        _app.Building.Files.Add(new global::App.FileSystem.Path("Third.goal"));
+
+        var action = new goals { Context = _app.Context, Path = "." };
+        var result = await _app.RunAction(action, _app.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var goals = result.Value as List<Goal>;
+        await Assert.That(goals).IsNotNull();
+        await Assert.That(goals!.Count).IsEqualTo(2);
+        await Assert.That(goals.Any(g => g.Name == "First")).IsTrue();
+        await Assert.That(goals.Any(g => g.Name == "Third")).IsTrue();
+    }
+
+    [Test]
     public async Task GetGoals_EmptyFolder_ReturnsEmptyList()
     {
         var action = new goals { Context = _app.Context, Path = "." };

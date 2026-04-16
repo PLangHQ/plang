@@ -1,0 +1,254 @@
+{
+  "name": "Start",
+  "description": "Tests basic CRUD operations on settings: set, get, update, remove.",
+  "comment": "Tests basic CRUD operations on settings: set, get, update, remove",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set settings \u0027TestApiKey\u0027 = \u0027sk-test-12345\u0027",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Set initial value",
+      "actions": [
+        {
+          "module": "settings",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "TestApiKey",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "sk-test-12345",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "get settings \u0027TestApiKey\u0027, write to %apiKey%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "TestApiKey",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%apiKey%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %apiKey% equals \u0022sk-test-12345\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "sk-test-12345",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%apiKey%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set settings \u0027TestApiKey\u0027 = \u0027sk-updated-99999\u0027",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "TestApiKey",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "sk-updated-99999",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "get settings \u0027TestApiKey\u0027, write to %updatedKey%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "TestApiKey",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%updatedKey%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %updatedKey% equals \u0022sk-updated-99999\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "sk-updated-99999",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%updatedKey%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "remove settings \u0027TestApiKey\u0027",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "remove",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "TestApiKey",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Settings/SettingsCrud/Start.test.goal",
+  "prPath": "/Tests/Settings/SettingsCrud/.build/start.test.pr",
+  "hash": "b1b13f160e7dc9e4284b0988418d73bfa908b2cfd342f0e147e9b9cf5a41b1bd",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

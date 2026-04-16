@@ -67,7 +67,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "What's the weather?" }
+                new LlmMessage { Role = "user", Content = "What's the weather?" }
             },
             Tools = new List<GoalCall>
             {
@@ -106,7 +106,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "do both" }
+                new LlmMessage { Role = "user", Content = "do both" }
             },
             Tools = new List<GoalCall>
             {
@@ -143,7 +143,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "do both parallel" }
+                new LlmMessage { Role = "user", Content = "do both parallel" }
             },
             Tools = new List<GoalCall>
             {
@@ -180,7 +180,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "mixed" }
+                new LlmMessage { Role = "user", Content = "mixed" }
             },
             Tools = new List<GoalCall>
             {
@@ -218,7 +218,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "call failing tool" }
+                new LlmMessage { Role = "user", Content = "call failing tool" }
             },
             Tools = new List<GoalCall>
             {
@@ -254,7 +254,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "call unknown" }
+                new LlmMessage { Role = "user", Content = "call unknown" }
             },
             Tools = new List<GoalCall>
             {
@@ -284,7 +284,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "loop forever" }
+                new LlmMessage { Role = "user", Content = "loop forever" }
             },
             Tools = new List<GoalCall>
             {
@@ -324,7 +324,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Tools = new List<GoalCall>
             {
@@ -359,7 +359,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Tools = new List<GoalCall>
             {
@@ -392,7 +392,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Tools = new List<GoalCall>
             {
@@ -437,7 +437,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "Weather in London?" }
+                new LlmMessage { Role = "user", Content = "Weather in London?" }
             },
             Tools = new List<GoalCall>
             {
@@ -479,7 +479,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Tools = new List<GoalCall>
             {
@@ -536,7 +536,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "mixed types" }
+                new LlmMessage { Role = "user", Content = "mixed types" }
             },
             Tools = new List<GoalCall>
             {
@@ -579,7 +579,7 @@ public class QueryToolTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "parallel" }
+                new LlmMessage { Role = "user", Content = "parallel" }
             },
             Tools = new List<GoalCall>
             {

@@ -16,7 +16,25 @@ public class DefaultFileProvider : IFileProvider
     public Data.@this Read(Read action)
     {
         var fs = action.Context.App.FileSystem;
-        var path = action.Path;
+        var path = action.Path.Value!;
+        // During build: use snapshotted .pr content to avoid reading overwritten files
+        if (action.Context.App.Building.IsEnabled && path.Extension == ".pr")
+        {
+            var snapshot = action.Context.App.Building.GetPrSnapshot(path.Absolute);
+            if (snapshot != null)
+            {
+                var snapshotType = Data.Type.FromMime(TypeMapping.GetMimeType(path.Extension));
+                var snapshotClr = snapshotType.ClrType;
+                if (snapshotClr != null && snapshotClr != typeof(string))
+                {
+                    var (converted, _) = TypeMapping.TryConvertTo(snapshot, snapshotClr);
+                    if (converted != null)
+                        return new App.Data.@this(path.Raw, converted, snapshotType);
+                }
+                return new App.Data.@this(path.Raw, snapshot, snapshotType);
+            }
+        }
+
         if (!fs.File.Exists(path.Absolute))
             return App.Data.@this.FromError(new ServiceError($"File not found: {path.Raw}", "NotFound", 404));
 
@@ -33,6 +51,11 @@ public class DefaultFileProvider : IFileProvider
             else
             {
                 var text = fs.File.ReadAllText(path.Absolute);
+
+                // During build: snapshot .pr file content on first read
+                if (action.Context.App.Building.IsEnabled && path.Extension == ".pr")
+                    action.Context.App.Building.SnapshotPrFile(path.Absolute, text);
+
                 var clr = type.ClrType;
                 // If the type has a CLR mapping (not just string), deserialize
                 if (clr != null && clr != typeof(string))
@@ -46,7 +69,7 @@ public class DefaultFileProvider : IFileProvider
                 }
             }
 
-            return new FileSystem.Path(path.Absolute, content) { Context = action.Context };
+            return new App.Data.@this(path.Raw, content, Data.Type.FromMime(mime));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -57,12 +80,13 @@ public class DefaultFileProvider : IFileProvider
     public async Task<Data.@this> Save(Save action)
     {
         var fs = action.Context.App.FileSystem;
-        var path = action.Path;
+        var path = action.Path.Value!;
         try
         {
             EnsureDirectory(fs, fs.Path.GetDirectoryName(path.Absolute));
 
             var value = action.Value?.Value;
+
             if (value is byte[] bytes)
                 await fs.File.WriteAllBytesAsync(path.Absolute, bytes);
             else if (value is string str)
@@ -74,7 +98,8 @@ public class DefaultFileProvider : IFileProvider
                     { Stream = stream, Data = value, Extension = path.Extension });
             }
 
-            return new FileSystem.Path(path.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(path.Absolute) { Context = action.Context };
+            return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -89,23 +114,24 @@ public class DefaultFileProvider : IFileProvider
     public Data.@this Delete(Delete action)
     {
         var fs = action.Context.App.FileSystem;
-        var path = action.Path;
+        var path = action.Path.Value!;
         try
         {
             if (fs.File.Exists(path.Absolute))
                 fs.File.Delete(path.Absolute);
             else if (fs.Directory.Exists(path.Absolute))
             {
-                if (!action.Recursive && fs.Directory.GetFileSystemEntries(path.Absolute).Length > 0)
+                if (!action.Recursive.Value && fs.Directory.GetFileSystemEntries(path.Absolute).Length > 0)
                     return App.Data.@this.FromError(new ServiceError(
                         $"Directory is not empty: {path.Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
 
-                fs.Directory.Delete(path.Absolute, action.Recursive);
+                fs.Directory.Delete(path.Absolute, action.Recursive.Value);
             }
-            else if (!action.IgnoreIfNotFound)
+            else if (!action.IgnoreIfNotFound.Value)
                 return App.Data.@this.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
 
-            return new FileSystem.Path(path.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(path.Absolute) { Context = action.Context };
+            return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -116,21 +142,23 @@ public class DefaultFileProvider : IFileProvider
     public Data.@this Copy(Copy action)
     {
         var fs = action.Context.App.FileSystem;
-        var source = action.Source;
+        var source = action.Source.Value!;
         if (!source.Exists)
             return App.Data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
 
         try
         {
-            var destPath = ResolveDestinationPath(fs, source, action.Destination);
+            var destination = action.Destination.Value!;
+            var destPath = ResolveDestinationPath(fs, source, destination);
             EnsureDirectory(fs, fs.Path.GetDirectoryName(destPath));
 
             if (fs.File.Exists(source.Absolute))
-                fs.File.Copy(source.Absolute, destPath, action.Overwrite);
+                fs.File.Copy(source.Absolute, destPath, action.Overwrite.Value);
             else
-                CopyDirectory(fs, source.Absolute, destPath, action.Overwrite, action.IncludeSubfolders);
+                CopyDirectory(fs, source.Absolute, destPath, action.Overwrite.Value, action.IncludeSubfolders.Value);
 
-            return new FileSystem.Path(destPath, source: source.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(destPath, source: source.Absolute) { Context = action.Context };
+            return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -141,26 +169,28 @@ public class DefaultFileProvider : IFileProvider
     public Data.@this Move(Move action)
     {
         var fs = action.Context.App.FileSystem;
-        var source = action.Source;
+        var source = action.Source.Value!;
         if (!source.Exists)
             return App.Data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
 
         try
         {
-            var destPath = ResolveDestinationPath(fs, source, action.Destination);
+            var destination = action.Destination.Value!;
+            var destPath = ResolveDestinationPath(fs, source, destination);
             EnsureDirectory(fs, fs.Path.GetDirectoryName(destPath));
 
             if (fs.File.Exists(source.Absolute))
-                fs.File.Move(source.Absolute, destPath, action.Overwrite);
+                fs.File.Move(source.Absolute, destPath, action.Overwrite.Value);
             else
             {
-                if (action.Overwrite && fs.Directory.Exists(destPath))
+                if (action.Overwrite.Value && fs.Directory.Exists(destPath))
                     fs.Directory.Delete(destPath, recursive: true);
 
                 fs.Directory.Move(source.Absolute, destPath);
             }
 
-            return new FileSystem.Path(destPath, source: source.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(destPath, source: source.Absolute) { Context = action.Context };
+            return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -171,14 +201,14 @@ public class DefaultFileProvider : IFileProvider
     public Data.@this List(List action)
     {
         var fs = action.Context.App.FileSystem;
-        var path = action.Path;
+        var path = action.Path.Value!;
         if (!fs.Directory.Exists(path.Absolute))
             return App.Data.@this.FromError(new ServiceError($"Directory not found: {path.Raw}", "NotFound", 404));
 
         try
         {
-            var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            var files = fs.Directory.GetFiles(path.Absolute, action.Pattern, option)
+            var option = action.Recursive.Value ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            var files = fs.Directory.GetFiles(path.Absolute, action.Pattern.Value!, option)
                 .Select(f => new FileSystem.Path(f) { Context = action.Context })
                 .ToArray();
             return App.Data.@this.Ok(files);
@@ -189,9 +219,11 @@ public class DefaultFileProvider : IFileProvider
         }
     }
 
-    public FileSystem.Path Exists(Exists action)
+    public Data.@this Exists(Exists action)
     {
-        return new FileSystem.Path(action.Path.Absolute) { Context = action.Context };
+        var path = action.Path.Value!;
+        var result = new FileSystem.Path(path.Absolute) { Context = action.Context };
+        return Data.@this<FileSystem.Path>.Ok(result);
     }
 
     // --- Helpers ---

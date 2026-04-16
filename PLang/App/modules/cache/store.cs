@@ -47,19 +47,7 @@ public partial class Store : IContext
 
     private App.Data.@this CollectReturnVariables()
     {
-        var entry = App.Data.@this.Ok();
-        foreach (var action in Step.Actions)
-        {
-            if (action.Return == null) continue;
-            foreach (var returnVar in action.Return)
-            {
-                var data = Context.Variables.Get(returnVar.Name);
-                if (data != null)
-                {
-                    entry.Properties[returnVar.Name] = data;
-                }
-            }
-        }
-        return entry;
+        // __data__ holds the last action's result — that's what we cache
+        return Context.Variables.Get("__data__") ?? App.Data.@this.Ok();
     }
 }

@@ -318,7 +318,7 @@ public class GoalTests
     }
 
     [Test]
-    public async Task FormatForLlm_WithReturn_IncludesReturn()
+    public async Task FormatForLlm_WithVariableSet_IncludesSetAction()
     {
         var goal = new Goal
         {
@@ -336,7 +336,16 @@ public class GoalTests
                             Module = "db",
                             ActionName = "select",
                             Parameters = new List<Data> { new("sql", "select * from users") },
-                            Return = new List<Data> { new("users") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new List<Data>
+                            {
+                                new("Name", "users"),
+                                new("Value", "%__data__%")
+                            }
                         }
                     })
                 }
@@ -345,7 +354,8 @@ public class GoalTests
 
         var result = await goal.FormatForLlm();
 
-        await Assert.That(result).Contains("\"return\":[{\"name\":\"users\"}]");
+        await Assert.That(result).Contains("\"module\":\"variable\"");
+        await Assert.That(result).Contains("\"action\":\"set\"");
     }
 
     [Test]

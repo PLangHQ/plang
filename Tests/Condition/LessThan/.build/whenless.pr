@@ -1,0 +1,49 @@
+{
+  "name": "WhenLess",
+  "description": "Maps the step \u0027WhenLess\u0027 to a variable assignment setting %result% to the string \u0027less\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022less\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "less",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Condition/LessThan/WhenLess.goal",
+  "prPath": "/Tests/Condition/LessThan/.build/whenless.pr",
+  "hash": "8ca0e5ed7d68a2df01d2bf088104851e5201618bc638a3ad359a4642b468c13f",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

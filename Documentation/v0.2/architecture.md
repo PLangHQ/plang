@@ -147,11 +147,11 @@ RunSteps(steps, context)
       Run(action, context)
         -> Modules.GetCodeGenerated(action)
         -> handler.ExecuteAsync(action, context)
-        -> if action.Return: context.Variables.Put(result)
+        -> result stored as %__data__% on context.Variables
     
     sub-step control:
-      if condition returned false && next step is indented
-        -> skip indented children
+      condition.if sets step.Disabled on indented children
+        -> disabled steps are skipped by the runner
 ```
 
 ### Dispatch kernel
@@ -161,9 +161,9 @@ Run(action, context)
   var executor = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
   var result = await executor.ExecuteAsync(action, this, context);
   
-  if (action.Return != null)
-      foreach (var returnVar in action.Return)
-          context.Variables.Put(result with Name = returnVar.Name);
+  // Result stored as %__data__% — available to the next action or variable.set
+  result.Name = "__data__";
+  context.Variables.Put(result);
   
   return result;
 ```
@@ -204,7 +204,6 @@ Action
   .Module         "file", "variable", "http", etc.
   .ActionName     "read", "set", "request", etc.
   .Parameters     List<Data> (named inputs)
-  .Return         List<Data>? (return variable names)
   .Step           back-reference
 ```
 

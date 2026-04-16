@@ -12,9 +12,14 @@
           "action": "read",
           "parameters": [
             { "name": "path", "value": "testdata.txt" }
-          ],
-          "return": [
-            { "name": "content" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "content" },
+            { "name": "Value", "value": "%__data__%" }
           ]
         }
       ]

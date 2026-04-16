@@ -12,5 +12,5 @@ public interface IFileProvider : IProvider
     Data.@this Copy(Copy action);
     Data.@this Move(Move action);
     Data.@this List(List action);
-    FileSystem.Path Exists(Exists action);
+    Data.@this Exists(Exists action);
 }

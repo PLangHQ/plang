@@ -19,46 +19,47 @@ public partial class On : IContext
 {
     /// <summary>Event type: BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction.</summary>
     [IsNotNull]
-    public partial string Type { get; init; }
+    public partial Data.@this<string> Type { get; init; }
     /// <summary>Goal to execute when the event fires.</summary>
-    public partial GoalCall GoalToCall { get; init; }
+    public partial Data.@this<GoalCall> GoalToCall { get; init; }
     /// <summary>Glob or regex pattern to match goal names. Null matches all goals.</summary>
-    public partial string? GoalPattern { get; init; }
+    public partial Data.@this<string>? GoalPattern { get; init; }
     /// <summary>Glob or regex pattern to match step text. Only for step-level events.</summary>
-    public partial string? StepPattern { get; init; }
+    public partial Data.@this<string>? StepPattern { get; init; }
     /// <summary>Glob or regex pattern to match action names (e.g., "http.*"). Only for action-level events.</summary>
-    public partial string? ActionPattern { get; init; }
+    public partial Data.@this<string>? ActionPattern { get; init; }
     /// <summary>When true, patterns are treated as regular expressions instead of glob patterns.</summary>
     [Default(false)]
-    public partial bool IsRegex { get; init; }
+    public partial Data.@this<bool> IsRegex { get; init; }
     /// <summary>Execution priority — higher values run first. Default is 0.</summary>
     [Default(0)]
-    public partial int Priority { get; init; }
+    public partial Data.@this<int> Priority { get; init; }
 
     /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
-    public partial Actor.@this? Actor { get; init; }
+    public partial Data.@this<Actor.@this>? Actor { get; init; }
 
     public Task<Data.@this> Run()
     {
-        if (!Enum.TryParse<EventType>(Type, ignoreCase: true, out var eventType))
+        if (!Enum.TryParse<EventType>(Type.Value!, ignoreCase: true, out var eventType))
             return Task.FromResult(Error(
-                new Errors.ValidationError($"Unknown event type: '{Type}'", "InvalidEventType", 400)));
+                new Errors.ValidationError($"Unknown event type: '{Type.Value}'", "InvalidEventType", 400)));
 
         // Resolve target actor — default to current context's actor
-        var targetActor = Actor ?? Context.Actor ?? Context.App!.User;
+        var targetActor = Actor?.Value ?? Context.Actor ?? Context.App!.User;
 
+        var goalToCall = GoalToCall.Value!;
         Func<Actor.Context.@this, Task<Data.@this>> handler = async ctx =>
-            await ctx.App!.RunGoalAsync(GoalToCall, targetActor.Context, ctx.CancellationToken);
+            await ctx.App!.RunGoalAsync(goalToCall, targetActor.Context, ctx.CancellationToken);
 
         var binding = new EventBinding(
             eventType,
             handler,
-            goalNamePattern: GoalPattern,
-            stepPattern: StepPattern,
-            actionPattern: ActionPattern,
-            priority: Priority,
-            isRegex: IsRegex,
-            goalToCall: GoalToCall);
+            goalNamePattern: GoalPattern?.Value,
+            stepPattern: StepPattern?.Value,
+            actionPattern: ActionPattern?.Value,
+            priority: Priority.Value,
+            isRegex: IsRegex.Value,
+            goalToCall: goalToCall);
 
         // Register on the target actor's event scope
         targetActor.Context.Events.Register(binding);

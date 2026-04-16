@@ -1,0 +1,290 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-builder-plan",
+  "timestamp": "2026-04-16T19:00:00Z",
+  "phase": "both",
+  "version": "v2",
+  "attack_surface": [
+    {
+      "area": "http-transport",
+      "exposure": "HTTP client handles responses from arbitrary external servers — downloads, API responses, SSE streams",
+      "trust_boundary": "Every HTTP response body, header, and stream chunk is untrusted external data",
+      "mitigations": [
+        "100MB size limit on in-memory response reads (ReadLimitedStringAsync/ReadLimitedBytesAsync)",
+        "Configurable MaxDownloadSize on file downloads (StreamWithProgressAsync)",
+        "SSE buffer overflow disconnect after 3 consecutive overflows",
+        "Minimum throughput check (1KB/sec over 30s) on all stream reads",
+        "URL scheme validation — only http:// and https:// allowed",
+        "CancellationToken-based timeout on requests",
+        "CRLF stripping on outbound headers",
+        "Signing integration for authenticated requests"
+      ],
+      "gaps": [
+        "No SSRF protection against internal IP ranges (127.0.0.1, 169.254.x.x, 10.x.x.x)",
+        "Throughput threshold (1KB/sec) is generous — allows 86MB/day per connection",
+        "Deserialization of application/plang responses occurs before signature verification"
+      ]
+    },
+    {
+      "area": "template-rendering",
+      "exposure": "Fluid templates render with full access to app object graph via UnsafeMemberAccessStrategy",
+      "trust_boundary": "Template content and variable values — if any come from external sources, attacker controls template expressions",
+      "mitigations": [
+        "MaxSteps = 100,000 prevents infinite template loops",
+        "MaxRecursion = 100 prevents deep include chains",
+        "ValidatePath on include file resolution"
+      ],
+      "gaps": [
+        "UnsafeMemberAccessStrategy allows access to ALL public properties (accepted risk)",
+        "callGoal tag can execute arbitrary goals from template expressions (accepted risk)"
+      ]
+    },
+    {
+      "area": "json-deserialization",
+      "exposure": "Data navigators parse JSON strings from HTTP responses, file reads, and variable resolution",
+      "trust_boundary": "JSON content from external APIs stored in variables, then navigated via dot notation",
+      "mitigations": [
+        "10MB size limit on JsonStringNavigator",
+        "MaxElementCount = 100,000 prevents object amplification",
+        "MaxDepth = 64 explicit depth guard on UnwrapElement",
+        "JsonDocument.Parse default depth limit of 64"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "signing-verification",
+      "exposure": "Ed25519 signature verification for Data integrity and identity",
+      "trust_boundary": "Signed data arrives over transport — signature, nonce, headers are attacker-controlled until verified",
+      "mitigations": [
+        "Ed25519 signature verification (cryptographically strong)",
+        "Nonce replay detection via cache with TTL matching signature timeout",
+        "Constant-time header comparison via CryptographicOperations.FixedTimeEquals",
+        "Hash verification of signed data",
+        "Contract matching"
+      ],
+      "gaps": [
+        "Nonce cache is in-memory — bounded by timeout check, but window exists during restart"
+      ]
+    },
+    {
+      "area": "variable-resolution",
+      "exposure": "Variable resolution processes values that may originate from external data (HTTP responses stored in variables)",
+      "trust_boundary": "Values stored in MemoryStack from external sources, then resolved recursively",
+      "mitigations": [
+        "ResolveDeep depth guard at 100",
+        "ResolveDeep breadth guard at 100,000 items",
+        "Circular reference detection via thread-static visited set",
+        "Infrastructure variable filtering (skipInfrastructure) on Resolve()",
+        "AsyncLocal context isolation"
+      ],
+      "gaps": [
+        "ResolveDeep() has no skipInfrastructure parameter — always resolves %!var% infrastructure variables"
+      ]
+    },
+    {
+      "area": "file-operations",
+      "exposure": "File read/write/copy/move/delete with path validation",
+      "trust_boundary": "File paths resolved from user variables — if variables contain external data, paths are attacker-influenced",
+      "mitigations": [
+        "ValidatePath checks path starts with RootDirectory",
+        "IPLangFileSystem abstraction prevents direct System.IO usage",
+        "Error messages use path.Raw (user-provided), not absolute paths"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "action-dispatch",
+      "exposure": "Module and action resolution from .pr file JSON",
+      "trust_boundary": ".pr files are LLM-generated and considered trusted (trust boundary)",
+      "mitigations": [
+        "String-based lookup against curated module registry — no arbitrary type instantiation",
+        "Parameter conversion uses whitelist of ~50 safe types",
+        "JSON deserialization is strongly typed (no $type polymorphism)",
+        "Event bindings resolve to registered goal names only"
+      ],
+      "gaps": [
+        "module.add/provider.load use Assembly.LoadFrom without path boundary check (accepted risk — .pr is trust boundary)"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "high",
+      "category": "resource-exhaustion",
+      "vector": "HTTP file download via StreamWithProgressAsync writes to disk with no size limit.",
+      "preconditions": "User's PLang app downloads a file from an attacker-controlled or compromised server",
+      "impact": "Disk exhaustion — attacker serves multi-GB response, fills disk",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "proposed_fix": "Add maxBytes parameter to StreamWithProgressAsync, default to DefaultMaxResponseSize.",
+      "status": "fixed",
+      "fix_verification": "maxBytes parameter added (line 957), checked after each chunk (line 976). Configurable via MaxDownloadSize config key (line 188). Correct."
+    },
+    {
+      "id": 2,
+      "severity": "high",
+      "category": "resource-exhaustion",
+      "vector": "SSE stream handler clears buffer on overflow but keeps connection open — repeated 10MB allocations.",
+      "preconditions": "User's PLang app connects to SSE endpoint controlled by attacker",
+      "impact": "Memory pressure via repeated allocation/deallocation cycles.",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "proposed_fix": "Add overflow counter, disconnect after N consecutive overflows.",
+      "status": "fixed",
+      "fix_verification": "consecutiveOverflows counter (line 847), disconnects after 3 overflows (line 867). Resets on successful event (line 885). Correct."
+    },
+    {
+      "id": 3,
+      "severity": "high",
+      "category": "resource-exhaustion",
+      "vector": "HTTP stream reads with no per-read timeout — slow-loris attack sends 1 byte per interval.",
+      "preconditions": "User's PLang app makes HTTP request to attacker-controlled server",
+      "impact": "Thread/connection exhaustion via indefinitely held connections.",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "proposed_fix": "Add minimum throughput check: 1KB/sec over 30s sliding window.",
+      "status": "fixed",
+      "fix_verification": "Throughput check in ReadLimitedStringAsync (line 307), ReadLimitedBytesAsync (line 340), StreamWithProgressAsync (line 984). All three use 30s window with 1KB/sec threshold. Correct."
+    },
+    {
+      "id": 4,
+      "severity": "high",
+      "category": "code-execution",
+      "vector": "FluidProvider UnsafeMemberAccessStrategy + callGoal tag + app in AmbientValues = SSTI if external data enters templates.",
+      "preconditions": "Template variables include data from external sources.",
+      "impact": "Information disclosure, goal execution via callGoal.",
+      "affected_files": ["PLang/App/modules/ui/providers/FluidProvider.cs"],
+      "proposed_fix": "Document risk. Consider SafeMemberAccessStrategy for external-data templates.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 5,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "JsonStringNavigator unwraps JSON without element count limits — millions of tiny items amplify memory.",
+      "preconditions": "External JSON data stored in a PLang variable, then navigated",
+      "impact": "OOM via JSON amplification.",
+      "affected_files": ["PLang/App/Data/Navigators/JsonStringNavigator.cs"],
+      "proposed_fix": "Add MaxElementCount constant with counter.",
+      "status": "fixed",
+      "fix_verification": "MaxElementCount = 100,000 (line 12), ref counter passed through UnwrapElement/UnwrapObject/UnwrapArray. Throws JsonException on exceed. Correct."
+    },
+    {
+      "id": 6,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "JsonStringNavigator.UnwrapElement() recurses without explicit depth guard.",
+      "preconditions": "External JSON with deep nesting",
+      "impact": "StackOverflowException if depth exceeds CLR stack limit.",
+      "affected_files": ["PLang/App/Data/Navigators/JsonStringNavigator.cs"],
+      "proposed_fix": "Add depth parameter to UnwrapElement/UnwrapObject/UnwrapArray.",
+      "status": "fixed",
+      "fix_verification": "MaxDepth = 64 (line 13), depth parameter threaded through all three methods, checked at entry of UnwrapElement (line 50). Correct."
+    },
+    {
+      "id": 7,
+      "severity": "medium",
+      "category": "injection",
+      "vector": "Ed25519Provider header verification uses non-constant-time string.Equals — timing side-channel.",
+      "preconditions": "Attacker can make repeated verification requests and measure timing",
+      "impact": "Header value brute-force if headers contain secrets.",
+      "affected_files": ["PLang/App/modules/signing/providers/Ed25519Provider.cs"],
+      "proposed_fix": "Use CryptographicOperations.FixedTimeEquals() on header value bytes.",
+      "status": "fixed",
+      "fix_verification": "UTF-8 encode both values (lines 110-111), compare via CryptographicOperations.FixedTimeEquals (line 112). Correct."
+    },
+    {
+      "id": 8,
+      "severity": "medium",
+      "category": "injection",
+      "vector": "Nonce replay protection uses in-memory cache — process restart allows replay.",
+      "preconditions": "Attacker captures valid signed request, process restarts.",
+      "impact": "Replay attack within timeout window after restart.",
+      "affected_files": ["PLang/App/modules/signing/providers/Ed25519Provider.cs"],
+      "proposed_fix": "Bound replay window via timestamp check.",
+      "status": "fixed",
+      "fix_verification": "Cache TTL = effectiveTimeout (line 89). Timestamp check (step 2, line 78) rejects signatures older than effectiveTimeout. After restart, only signatures within the timeout window could replay. Comment documents this (lines 85-86). Correct."
+    },
+    {
+      "id": 9,
+      "severity": "medium",
+      "category": "info-disclosure",
+      "vector": "DefaultFileProvider error messages include absolute filesystem paths.",
+      "preconditions": "Attacker can trigger file operations that fail and observe error messages",
+      "impact": "Attacker learns absolute paths, OS, username, directory structure.",
+      "affected_files": ["PLang/App/modules/file/providers/DefaultFileProvider.cs"],
+      "proposed_fix": "Use path.Raw instead of path.Absolute in error messages.",
+      "status": "fixed",
+      "fix_verification": "Line 39: 'File not found: {path.Raw}' — no absolute path. Correct."
+    },
+    {
+      "id": 10,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "ResolveDeep has no breadth guard — wide nested structures cause O(N*M) allocations.",
+      "preconditions": "External data with many keys stored in PLang variable, then resolved",
+      "impact": "CPU/memory exhaustion via wide object graphs.",
+      "affected_files": ["PLang/App/Variables/this.cs"],
+      "proposed_fix": "Add breadth counter with MaxResolveItems limit.",
+      "status": "fixed",
+      "fix_verification": "MaxResolveItems = 100,000 (line 377), _resolveItemCount incremented per item (line 394), resets at top-level call (line 384). Returns value unchanged when exceeded (soft limit). Correct."
+    },
+    {
+      "id": 11,
+      "severity": "low",
+      "category": "injection",
+      "vector": "HTTP URL resolution accepts any URL scheme — file://, gopher://, dict:// pass through to HttpClient.",
+      "preconditions": "User's PLang app makes HTTP request with attacker-influenced URL",
+      "impact": "Local file read via SSRF on platforms where HttpClient supports file://.",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "proposed_fix": "Validate URL scheme — only allow http:// and https://.",
+      "status": "fixed",
+      "fix_verification": "Uri.TryCreate + scheme check (lines 488-493). Blocks all non-http/https schemes. Correct."
+    },
+    {
+      "id": 12,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "ObjectNavigator error messages expose CLR type names via GetType().Name.",
+      "preconditions": "Attacker can trigger navigation errors and observe error messages",
+      "impact": "Minor info disclosure — attacker learns internal type structure.",
+      "affected_files": ["PLang/App/Data/Navigators/ObjectNavigator.cs"],
+      "proposed_fix": "Remove GetType().Name from error message.",
+      "status": "fixed",
+      "fix_verification": "Line 28: 'Failed to read '{key}': {message}' — no type name. Correct."
+    },
+    {
+      "id": 13,
+      "severity": "medium",
+      "category": "info-disclosure",
+      "vector": "ResolveDeep() has no skipInfrastructure parameter — always resolves %!var% infrastructure variables even on values from external data. If HTTP response body contains '%!app.System.SettingsStore%' and is stored in a variable, subsequent ResolveDeep call would resolve it.",
+      "preconditions": "External data (HTTP response, file content) stored in variable contains %!varName% patterns, and that variable is later passed through ResolveDeep",
+      "impact": "Information disclosure — attacker-controlled strings can read infrastructure state including settings, engine internals.",
+      "affected_files": ["PLang/App/Variables/this.cs"],
+      "exploit_sketch": "1. HTTP response contains string: '%!app.System.SettingsStore%'\n2. PLang app stores: set %data% = %response.body%\n3. Later step resolves %data% — ResolveDeep hits the string\n4. Pattern ^%([^%]+)%$ matches, resolves %!app.System.SettingsStore%\n5. Infrastructure guard only exists in Resolve(), not ResolveDeep()",
+      "proposed_fix": "Add skipInfrastructure parameter to ResolveDeep(). Default true when resolving values that originated from external sources.",
+      "status": "open"
+    },
+    {
+      "id": 14,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Slow-loris throughput threshold (1KB/sec) is generous — allows connections held open at very low data rates. At 1KB/sec, a 100MB download takes ~28 hours.",
+      "preconditions": "Attacker sends data just above 1KB/sec threshold",
+      "impact": "Connection slot exhaustion with small number of slow connections.",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "proposed_fix": "Consider making the throughput threshold configurable. Document the default.",
+      "status": "open"
+    },
+    {
+      "id": 15,
+      "severity": "low",
+      "category": "injection",
+      "vector": "No SSRF protection against internal IP ranges. http://169.254.169.254 (cloud metadata), http://127.0.0.1, http://10.x.x.x all pass URL scheme check.",
+      "preconditions": "Attacker controls URL variable, PLang app runs in cloud environment",
+      "impact": "Cloud metadata theft, internal service discovery.",
+      "affected_files": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+      "proposed_fix": "Add optional SSRF IP filtering (default off for user-sovereign model, available as config for server-mode apps).",
+      "status": "open"
+    }
+  ],
+  "summary": "All 11 open findings from v1 have been correctly fixed. 3 new findings from fresh-eyes scan: 1 MEDIUM (ResolveDeep infrastructure variable leak), 2 LOW (throughput threshold, SSRF IP filtering). No critical or high findings remain open. Security posture is strong."
+}

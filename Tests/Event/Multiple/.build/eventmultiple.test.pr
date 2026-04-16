@@ -1,0 +1,244 @@
+{
+  "name": "Start",
+  "description": "Sets two flags false, registers two event handlers on the same hook (BeforeAction) that write via output.write, then writes \u0027trigger\u0027 and asserts both flags became true.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %eventA% = false",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "two events on same hook both fire",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%eventA%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %eventB% = false",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%eventB%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "before action output.write call HandlerA",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "event",
+          "action": "on",
+          "parameters": [
+            {
+              "name": "Type",
+              "value": "BeforeAction",
+              "type": "string"
+            },
+            {
+              "name": "GoalToCall",
+              "value": {
+                "name": "HandlerA"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "before action output.write call HandlerB",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "event",
+          "action": "on",
+          "parameters": [
+            {
+              "name": "Type",
+              "value": "BeforeAction",
+              "type": "string"
+            },
+            {
+              "name": "GoalToCall",
+              "value": {
+                "name": "HandlerB"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "write out \u0022trigger\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "trigger",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %eventA% equals true",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%eventA%",
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %eventB% equals true",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%eventB%",
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Event/Multiple/EventMultiple.test.goal",
+  "prPath": "/Tests/Event/Multiple/.build/eventmultiple.test.pr",
+  "hash": "f3a3f71fd38fe36b01abc8f0cea55fd758d7d86630f1325642df123175142de9",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

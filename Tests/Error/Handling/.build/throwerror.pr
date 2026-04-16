@@ -1,0 +1,31 @@
+{
+  "name": "ThrowError",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022something went wrong\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Error/Handling/ThrowError.goal",
+  "prPath": "/Tests/Runtime2/Error/Handling/.build/throwerror.pr",
+  "hash": "760733522882f786b33a29656b13a929e3aabde1a27dbce83d60c95e0290a596",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

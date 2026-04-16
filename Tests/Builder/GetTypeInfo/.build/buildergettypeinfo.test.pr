@@ -1,0 +1,86 @@
+{
+  "name": "Start",
+  "description": "Calls builder.types to obtain type info, stores it in %typeInfo%, then asserts the result is not null.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "get type info, write to %typeInfo%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test that builder.getTypeInfo returns PLang type names and complex type schemas",
+      "actions": [
+        {
+          "module": "builder",
+          "action": "types",
+          "parameters": [],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%typeInfo%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %typeInfo% is not empty, \u0022getTypeInfo should return type mapping data\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%typeInfo%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "getTypeInfo should return type mapping data",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal",
+  "prPath": "/Tests/Builder/GetTypeInfo/.build/buildergettypeinfo.test.pr",
+  "hash": "a77d1e5bda9da96cdb0552988db174a880b44a971dde6f8a784826ac06f79b56",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

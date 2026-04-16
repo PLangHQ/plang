@@ -109,8 +109,8 @@ internal static class LlmTestHelper
             Context = ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "system", Text = systemText },
-                new LlmMessage { Role = "user", Text = userText }
+                new LlmMessage { Role = "system", Content = systemText },
+                new LlmMessage { Role = "user", Content = userText }
             }
         };
     }

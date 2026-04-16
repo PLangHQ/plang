@@ -1,0 +1,245 @@
+{
+  "name": "Start",
+  "description": "Sets flag and inner variables, conditionally runs indented set steps when %flag% is true, then asserts the indented steps executed.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %flag% = true",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: sub-steps under a true condition execute",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%flag%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %innerRan% = false",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerRan%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "if %flag%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%flag%",
+              "type": "bool"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %innerRan% = true",
+      "lineNumber": 6,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerRan%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "set %innerValue% = \u0022executed\u0022",
+      "lineNumber": 7,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerValue%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "executed",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %innerRan% is true, \u0022indented steps should execute when condition is true\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%innerRan%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "indented steps should execute when condition is true",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %innerValue% equals \u0022executed\u0022, \u0022indented set should have run\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "executed",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%innerValue%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "indented set should have run",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Condition/SubStepsTrue/ConditionSubStepsTrue.test.goal",
+  "prPath": "/Tests/Condition/SubStepsTrue/.build/conditionsubstepstrue.test.pr",
+  "hash": "eea24c21cb5c72743bd936eef55669c6a34a956ccc23930f100498a728220900",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

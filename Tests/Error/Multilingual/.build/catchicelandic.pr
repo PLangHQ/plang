@@ -1,0 +1,49 @@
+{
+  "name": "CatchIcelandic",
+  "description": "Set %caughtIcelandic% to true using variable.set.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %caughtIcelandic% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%caughtIcelandic%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Error/Multilingual/CatchIcelandic.goal",
+  "prPath": "/Tests/Error/Multilingual/.build/catchicelandic.pr",
+  "hash": "6344b0e654e98037daab29cea8946dd188c6aa4167017e8e0008457d04b8af37",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

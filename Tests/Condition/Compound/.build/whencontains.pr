@@ -1,0 +1,49 @@
+{
+  "name": "WhenContains",
+  "description": "Maps the step \u0027set %containsResult% = \u0022yes\u0022\u0027 to a variable.set action.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %containsResult% = \u0022yes\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%containsResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "yes",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Condition/Compound/WhenContains.goal",
+  "prPath": "/Tests/Condition/Compound/.build/whencontains.pr",
+  "hash": "d9bad68c8fdb8b9b379af9b0ec70c8a42ed1dd448dceb087b33fd894d34dca9c",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

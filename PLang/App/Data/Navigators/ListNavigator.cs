@@ -16,7 +16,7 @@ public sealed class ListNavigator : INavigator
         var value = data.Value;
         var list = value as IList ?? WrapGenericList(value);
         if (list == null || list.Count == 0)
-            return Data.@this.Null(key);
+            return Data.@this.NotFound(key);
 
         // Special accessors
         if (string.Equals(key, "count", StringComparison.OrdinalIgnoreCase) ||
@@ -37,7 +37,7 @@ public sealed class ListNavigator : INavigator
         {
             if (index >= 0 && index < list.Count)
                 return new Data.@this(key, list[index], parent: data);
-            return Data.@this.Null(key);
+            return Data.@this.NotFound(key);
         }
 
         // Implicit first: delegate to first element's navigator

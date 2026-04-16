@@ -1,0 +1,62 @@
+{
+  "name": "TestGoal",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "step one",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "step one",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "step two",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Builder/ParseGoal/parse_test/Test.goal",
+  "prPath": "/Tests/Runtime2/Builder/ParseGoal/parse_test/.build/test.pr",
+  "hash": "a61e4828752e9706c892324fac9ff77098e3301722657cac993ddb5c405a5191",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

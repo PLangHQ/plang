@@ -150,7 +150,6 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "subdata.txt") },
-                            Return = new List<Data> { new Data("content") }
                         }
                     }
                 }
@@ -163,7 +162,7 @@ public class PrPipelineTests
 
         // File found — relative resolves to {root}/sub/subdata.txt (goal folder)
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("content")!.ToString()).IsEqualTo("Hello from subfolder");
+        await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from subfolder");
     }
 
     [Test]
@@ -190,7 +189,6 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "../testdata.txt") },
-                            Return = new List<Data> { new Data("fromParent") }
                         }
                     }
                 }
@@ -202,7 +200,7 @@ public class PrPipelineTests
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("fromParent")!.ToString()).IsEqualTo("Hello from test file");
+        await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from test file");
     }
 
     [Test]
@@ -229,7 +227,6 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "../sub/subdata.txt") },
-                            Return = new List<Data> { new Data("backAndDown") }
                         }
                     }
                 }
@@ -241,7 +238,7 @@ public class PrPipelineTests
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("backAndDown")!.ToString()).IsEqualTo("Hello from subfolder");
+        await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from subfolder");
     }
 
     [Test]
@@ -268,7 +265,6 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "nonexistent.txt") },
-                            Return = new List<Data> { new Data("content") }
                         }
                     }
                 }
@@ -308,7 +304,6 @@ public class PrPipelineTests
                             Module = "file",
                             ActionName = "read",
                             Parameters = new List<Data> { new Data("path", "../../etc/passwd") },
-                            Return = new List<Data> { new Data("content") }
                         }
                     }
                 }

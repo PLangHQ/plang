@@ -6,14 +6,14 @@ namespace App.modules.mock;
 [Action("reset", Cacheable = false)]
 public partial class Reset : IContext
 {
-    public partial types.MockHandle? Mock { get; init; }
+    public partial Data.@this<types.MockHandle>? Mock { get; init; }
 
     public Task<Data.@this> Run()
     {
-        if (Mock != null)
+        if (Mock?.Value != null)
         {
-            Context.Events.Unregister(Mock.EventBindingId);
-            Mock.Calls.Clear();
+            Context.Events.Unregister(Mock.Value.EventBindingId);
+            Mock.Value.Calls.Clear();
         }
         else
         {

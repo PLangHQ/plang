@@ -9,14 +9,14 @@ namespace App.modules.error;
 public partial class Throw : IContext
 {
     [IsNotNull]
-    public partial string Message { get; init; }
+    public partial Data.@this<string> Message { get; init; }
     [Default(500)]
-    public partial int StatusCode { get; init; }
-    public partial string? Key { get; init; }
+    public partial Data.@this<int> StatusCode { get; init; }
+    public partial Data.@this<string>? Key { get; init; }
 
     public Task<Data.@this> Run()
     {
         return Task.FromResult(Error(
-            new ServiceError(Message, Key ?? "UserError", StatusCode)));
+            new ServiceError(Message.Value!, Key?.Value ?? "UserError", StatusCode.Value)));
     }
 }

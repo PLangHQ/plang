@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using NSec.Cryptography;
 using App.Errors;
 using App.Variables;
@@ -26,10 +27,10 @@ public class Ed25519Provider : ISigningProvider
         // Get identity
         var identityResult = await app.RunAction<identity.Get>(new identity.Get(), action.Context);
         if (!identityResult.Success) return identityResult;
-        var identity = (Identity)identityResult;
+        var identity = (Identity)identityResult.Value!;
 
         // Hash the data
-        var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = "keccak256" }, action.Context);
+        var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new Data.@this<string>("", "keccak256") }, action.Context);
         if (!hash.Success) return hash;
 
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
@@ -41,9 +42,9 @@ public class Ed25519Provider : ISigningProvider
             Algorithm = Name,
             Nonce = nonce,
             Created = now,
-            Expires = action.ExpiresInMs.HasValue ? now.AddMilliseconds(action.ExpiresInMs.Value) : null,
-            Contracts = action.Contracts,
-            Headers = action.Headers,
+            Expires = action.ExpiresInMs?.Value is int expiryMs ? now.AddMilliseconds(expiryMs) : null,
+            Contracts = action.Contracts?.Value,
+            Headers = action.Headers?.Value,
             Hash = hash
         };
 
@@ -66,7 +67,7 @@ public class Ed25519Provider : ISigningProvider
         var app = action.Context.App;
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
         var signingSettings = app.Config.For<Config>(action.Context);
-        var effectiveTimeout = action.TimeoutMs ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
+        var effectiveTimeout = action.TimeoutMs?.Value ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
 
         // 1. Type check
         if (signedData.Type != "signature")
@@ -82,6 +83,8 @@ public class Ed25519Provider : ISigningProvider
             return App.Data.@this.FromError(new ActionError("Signature has expired", "Expired", 400));
 
         // 4. Nonce replay check
+        // Cache TTL matches effectiveTimeout. After restart, the timeout check (step 2)
+        // rejects signatures older than effectiveTimeout, so nonce replay is bounded.
         var nonceCacheKey = $"nonce:{signedData.Nonce}";
         var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
         var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, App.Data.@this.Ok(true), cacheSettings);
@@ -89,19 +92,24 @@ public class Ed25519Provider : ISigningProvider
             return App.Data.@this.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
         // 5. Contract matching
-        if (!ContractsMatch(signedData.Contracts, action.Contracts))
+        if (!ContractsMatch(signedData.Contracts, action.Contracts?.Value))
             return App.Data.@this.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
         // 6. Header matching
-        if (action.Headers != null)
+        if (action.Headers?.Value != null)
         {
             if (signedData.Headers == null)
                 return App.Data.@this.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
 
-            foreach (var kvp in action.Headers)
+            foreach (var kvp in action.Headers.Value)
             {
-                if (!signedData.Headers.TryGetValue(kvp.Key, out var signedValue) ||
-                    !string.Equals(signedValue?.ToString(), kvp.Value?.ToString(), StringComparison.Ordinal))
+                if (!signedData.Headers.TryGetValue(kvp.Key, out var signedValue))
+                    return App.Data.@this.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
+
+                // Constant-time comparison to prevent timing side-channel attacks
+                var expectedBytes = System.Text.Encoding.UTF8.GetBytes(kvp.Value?.ToString() ?? "");
+                var actualBytes = System.Text.Encoding.UTF8.GetBytes(signedValue?.ToString() ?? "");
+                if (!CryptographicOperations.FixedTimeEquals(expectedBytes, actualBytes))
                     return App.Data.@this.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
             }
         }
@@ -113,7 +121,7 @@ public class Ed25519Provider : ISigningProvider
         if (action.Data?.Value != null)
         {
             var rehash = await app.RunAction<Hash>(
-                new Hash { Data = action.Data, Algorithm = signedData.Hash!.Type?.Value ?? "keccak256" }, action.Context);
+                new Hash { Data = action.Data, Algorithm = new Data.@this<string>("", signedData.Hash!.Type?.Value ?? "keccak256") }, action.Context);
             if (!rehash.Success) return rehash;
             if (rehash.Value is not byte[] rehashBytes || !rehashBytes.AsSpan().SequenceEqual(storedHash))
                 return App.Data.@this.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));

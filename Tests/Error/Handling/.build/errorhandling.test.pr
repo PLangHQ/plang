@@ -1,0 +1,83 @@
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %beforeError% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %beforeError% is true",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "call ThrowError, on error ignore",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %afterIgnored% = true",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %afterIgnored% is true, \u0022execution should continue after ignored error\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Error/Handling/ErrorHandling.test.goal",
+  "prPath": "/Tests/Runtime2/Error/Handling/.build/errorhandling.test.pr",
+  "hash": "3938eb9898b665be96567a7b91672ba3b3c2138e5e05336b8afa3cfc1d653daf",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

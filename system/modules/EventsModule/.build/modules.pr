@@ -1,0 +1,31 @@
+{
+  "name": "Modules",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Modules\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/PlangConsole/bin/Debug/net10.0/system/modules/EventsModule/Modules.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/modules/EventsModule/.build/modules.pr",
+  "hash": "d9ae021d55a04cc401e05bf2e64d969ae3269a6329a8e88f83fc2c9a836e6f83",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

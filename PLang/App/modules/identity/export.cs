@@ -11,7 +11,7 @@ namespace App.modules.identity;
 [Action("export")]
 public partial class Export : IContext
 {
-    public partial string? Name { get; init; }
+    public partial Data.@this<string>? Name { get; init; }
 
     [Provider]
     public partial IIdentityProvider Identity { get; }

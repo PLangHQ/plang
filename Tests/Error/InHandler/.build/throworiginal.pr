@@ -1,0 +1,44 @@
+{
+  "name": "ThrowOriginal",
+  "description": "Throws an error with message set to the literal string \u0022original error\u0022 using error.throw.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022original error\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "original error",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Error/InHandler/ThrowOriginal.goal",
+  "prPath": "/Tests/Error/InHandler/.build/throworiginal.pr",
+  "hash": "9dbe60fc7451268112efa128e62230ccb7b045feed3ae32b253cd3de24f820a3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

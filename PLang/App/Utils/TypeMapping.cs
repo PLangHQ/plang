@@ -205,6 +205,8 @@ public static class TypeMapping
         if (type.IsGenericType)
         {
             var generic = type.GetGenericTypeDefinition();
+            if (generic == typeof(Data.@this<>))
+                return GetTypeName(type.GetGenericArguments()[0]);
             if (generic == typeof(List<>) || generic == typeof(IList<>))
             {
                 return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
@@ -215,6 +217,10 @@ public static class TypeMapping
                 return $"dict<{GetTypeName(args[0])},{GetTypeName(args[1])}>";
             }
         }
+
+        // Plain Data.@this (non-generic) — universal wrapper, maps to object
+        if (type == typeof(Data.@this))
+            return "object";
 
         // Handle arrays
         if (type.IsArray)
@@ -252,6 +258,19 @@ public static class TypeMapping
     /// </summary>
     public static string[]? GetValidValues(Type type)
     {
+        // Unwrap nullable
+        var underlying = Nullable.GetUnderlyingType(type);
+        if (underlying != null) type = underlying;
+
+        // Unwrap Data<T>
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Data.@this<>))
+            type = type.GetGenericArguments()[0];
+
+        // Enums: return all enum names
+        if (type.IsEnum)
+            return Enum.GetNames(type);
+
+        // Convention: static ValidValues property
         var prop = type.GetProperty("ValidValues",
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
         if (prop != null && prop.PropertyType == typeof(string[]))
@@ -290,11 +309,28 @@ public static class TypeMapping
     }
 
     /// <summary>
+    /// Populates an object's public writable properties from a dictionary.
+    /// Keys are matched case-insensitively to property names. Values are converted via ConvertTo.
+    /// </summary>
+    public static void Populate(object target, IDictionary<string, object?> values)
+    {
+        foreach (var kvp in values)
+        {
+            var prop = target.GetType().GetProperty(kvp.Key,
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            if (prop?.CanWrite != true) continue;
+            var converted = ConvertTo(kvp.Value, prop.PropertyType);
+            if (converted != null) prop.SetValue(target, converted);
+        }
+    }
+
+    /// <summary>
     /// Attempts to convert a value to the specified type.
     /// Returns the converted value and null error on success,
     /// or null value and an Error describing what went wrong.
     /// </summary>
-    public static (object? Value, Errors.Error? Error) TryConvertTo(object? value, Type targetType)
+    public static (object? Value, Errors.Error? Error) TryConvertTo(object? value, Type targetType,
+        Actor.Context.@this? context = null)
     {
         if (value == null)
             return (targetType.IsValueType ? Activator.CreateInstance(targetType) : null, null);
@@ -311,6 +347,14 @@ public static class TypeMapping
         var underlying = Nullable.GetUnderlyingType(targetType);
         if (underlying != null)
             return TryConvertTo(value, underlying);
+
+        // String → JsonNode: use ToJson() extension with fix-and-retry
+        if (targetType == typeof(System.Text.Json.Nodes.JsonNode) && value is string jsonNodeStr)
+        {
+            var (node, jsonError) = jsonNodeStr.ToJson();
+            if (jsonError is Errors.Error err) return (null, err);
+            return (node, null);
+        }
 
         // String → complex type: try JSON deserialization before list handling
         // (e.g., file.read of .pr returns JSON string → Goal)
@@ -422,6 +466,35 @@ public static class TypeMapping
             }
         }
 
+        // Types with a constructor that accepts a single string (may have optional params)
+        if (value is string ctorStr)
+        {
+            var ctor = targetType.GetConstructors()
+                .FirstOrDefault(c =>
+                {
+                    var ps = c.GetParameters();
+                    return ps.Length >= 1
+                        && ps[0].ParameterType == typeof(string)
+                        && ps.Skip(1).All(p => p.IsOptional);
+                });
+            if (ctor != null)
+            {
+                try
+                {
+                    var ps = ctor.GetParameters();
+                    var args = new object?[ps.Length];
+                    args[0] = ctorStr;
+                    for (int ci = 1; ci < ps.Length; ci++)
+                        args[ci] = ps[ci].DefaultValue;
+                    return (ctor.Invoke(args), null);
+                }
+                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+                {
+                    return (null, new Errors.Error(ex.InnerException?.Message ?? ex.Message, "ConstructorFailed", 400));
+                }
+            }
+        }
+
         // Handle enum types
         if (targetType.IsEnum)
         {
@@ -501,18 +574,33 @@ public static class TypeMapping
         // Complex types: dict/JsonElement/list → serialize to JSON → deserialize to target type
         if (value is IDictionary<string, object?> or System.Text.Json.JsonElement or System.Collections.IList)
         {
+            string json = "";
             try
             {
-                var json = System.Text.Json.JsonSerializer.Serialize(value);
+                json = System.Text.Json.JsonSerializer.Serialize(value);
                 var result = System.Text.Json.JsonSerializer.Deserialize(json, targetType, Json.CaseInsensitiveRead);
                 return (result, null);
             }
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
+                // Extract byte position from error message and show JSON around it
+                string jsonPreview;
+                var posMatch = System.Text.RegularExpressions.Regex.Match(ex.Message, @"BytePositionInLine: (\d+)");
+                if (posMatch.Success && int.TryParse(posMatch.Groups[1].Value, out var bytePos) && bytePos < json.Length)
+                {
+                    var start = Math.Max(0, bytePos - 100);
+                    var end = Math.Min(json.Length, bytePos + 100);
+                    jsonPreview = $"...{json[start..end]}...";
+                }
+                else
+                {
+                    var maxLen = context?.App?.Debug?.MaxLength ?? 500;
+                    jsonPreview = json.Length > maxLen ? json[..maxLen] + $"... ({json.Length} chars)" : json;
+                }
                 return (null, new Errors.Error(
                     $"Failed to deserialize {sourceType.Name} to {targetType.Name}: {ex.Message}",
                     "DeserializationFailed", 400)
-                    { FixSuggestion = $"Source: {sourceType.FullName}, Target: {targetType.FullName}" });
+                    { FixSuggestion = $"JSON around error: {jsonPreview}" });
             }
         }
 
@@ -575,11 +663,26 @@ public static class TypeMapping
     }
 
     /// <summary>
-    /// Returns schemas for complex types (goal.call, etc.) based on [LlmBuilder] attributes.
+    /// Returns schemas for complex types based on [LlmBuilder] attributes.
+    /// Includes types registered in NameToType only. Use the overload with AppModules
+    /// to auto-discover types from action parameters.
     /// </summary>
     public static Dictionary<string, string> GetComplexTypeSchemas()
     {
-        var schemas = new Dictionary<string, string>();
+        return GetComplexTypeSchemas(null);
+    }
+
+    /// <summary>
+    /// Returns schemas for complex types based on [LlmBuilder] attributes.
+    /// When modules is provided, also discovers complex types used in action parameters
+    /// (e.g., List&lt;LlmMessage&gt; → LlmMessage schema). No manual registration needed.
+    /// </summary>
+    public static Dictionary<string, string> GetComplexTypeSchemas(App.Modules.@this? modules)
+    {
+        var schemas = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var seen = new HashSet<System.Type>();
+
+        // 1. Registered types from NameToType
         foreach (var kvp in NameToType)
         {
             var name = kvp.Key;
@@ -588,15 +691,74 @@ public static class TypeMapping
             if (type.IsArray || type.IsGenericType) continue;
             if (GetValidValues(type) != null) continue;
 
-            var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.CanRead && p.Name != "EqualityContract")
-                .Where(p => Attribute.IsDefined(p, typeof(LlmBuilderAttribute)))
-                .Where(p => !Attribute.IsDefined(p, typeof(JsonIgnoreAttribute)))
-                .Select(p => $"{char.ToLower(p.Name[0]) + p.Name[1..]}: {GetTypeName(p.PropertyType)}");
-
-            if (props.Any())
-                schemas[name] = $"{{ {string.Join(", ", props)} }}";
+            TryAddSchema(schemas, seen, type, name);
         }
+
+        // 2. Discover types from action parameters
+        if (modules != null)
+        {
+            foreach (var ns in modules.Names)
+            {
+                foreach (var actionName in modules.GetActions(ns))
+                {
+                    var actionType = modules.GetActionType(ns, actionName);
+                    if (actionType == null) continue;
+
+                    foreach (var prop in actionType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                    {
+                        if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
+                        var paramType = UnwrapType(prop.PropertyType);
+                        if (paramType == null || IsPrimitive(paramType) || paramType == typeof(object)) continue;
+                        if (seen.Contains(paramType)) continue;
+
+                        var typeName = GetTypeName(paramType);
+                        TryAddSchema(schemas, seen, paramType, typeName);
+                    }
+                }
+            }
+        }
+
         return schemas;
+    }
+
+    /// <summary>
+    /// Unwraps generic wrappers (List&lt;T&gt;, Nullable&lt;T&gt;) to get the inner type.
+    /// </summary>
+    private static System.Type? UnwrapType(System.Type type)
+    {
+        var underlying = Nullable.GetUnderlyingType(type);
+        if (underlying != null) return UnwrapType(underlying);
+
+        if (type.IsGenericType)
+        {
+            var generic = type.GetGenericTypeDefinition();
+            if (generic == typeof(Data.@this<>))
+                return UnwrapType(type.GetGenericArguments()[0]);
+            if (generic == typeof(List<>) || generic == typeof(IList<>))
+                return UnwrapType(type.GetGenericArguments()[0]);
+            if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>))
+                return null; // dict values are too generic
+        }
+
+        if (type.IsArray)
+            return UnwrapType(type.GetElementType()!);
+
+        if (IsPrimitive(type)) return null;
+        return type;
+    }
+
+    private static void TryAddSchema(Dictionary<string, string> schemas, HashSet<System.Type> seen, System.Type type, string name)
+    {
+        if (!seen.Add(type)) return;
+
+        var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanRead && p.Name != "EqualityContract")
+            .Where(p => Attribute.IsDefined(p, typeof(LlmBuilderAttribute)))
+            .Where(p => !Attribute.IsDefined(p, typeof(JsonIgnoreAttribute)))
+            .Select(p => $"{char.ToLower(p.Name[0]) + p.Name[1..]}: {GetTypeName(p.PropertyType)}");
+
+        var propList = props.ToList();
+        if (propList.Count > 0)
+            schemas[name] = $"{{ {string.Join(", ", propList)} }}";
     }
 }

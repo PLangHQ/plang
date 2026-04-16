@@ -1,0 +1,128 @@
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: verify with wrong contracts fails",
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "create identity testSigner",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \u0022payload\u0022: \u0022test\u0022 }",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "sign %data% with contracts [\u0027C0\u0027]",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "verify %data% with contracts [\u0027C1\u0027], on error call HandleContractError",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %contractFailed% is true, \u0022contract mismatch should fail verification\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "HandleContractError",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %contractFailed% = true",
+          "lineNumber": 11,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Tests/Runtime2/Signing/ContractMismatch/SigningContractMismatch.test.goal",
+      "prPath": "/Tests/Runtime2/Signing/ContractMismatch/.build/signingcontractmismatch.test.pr",
+      "hash": "99dd5b372171f6680daa623bfc32ffd105f72a65ded41bf6ade7d30c5f3ac5dc",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Signing/ContractMismatch/SigningContractMismatch.test.goal",
+  "prPath": "/Tests/Runtime2/Signing/ContractMismatch/.build/signingcontractmismatch.test.pr",
+  "hash": "3325faee58ffe24790ef7f130503f8686ecddfd687e6ad126101c530a8ac6d70",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

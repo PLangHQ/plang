@@ -102,8 +102,8 @@ public sealed class @this : IAsyncDisposable
         {
             var provider = app.Providers.Get<IIdentityProvider>();
             if (!provider.Success) return null;
-            var identity = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = app.Context }).GetAwaiter().GetResult();
-            return identity.Success ? identity : null;
+            var result = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = app.Context }).GetAwaiter().GetResult();
+            return result.Success ? result.Value as Identity : null;
         }));
     }
 

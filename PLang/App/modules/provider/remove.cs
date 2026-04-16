@@ -10,17 +10,17 @@ namespace App.modules.provider;
 public partial class remove : IContext
 {
     /// <summary>Name of the provider to remove.</summary>
-    public partial string Name { get; init; }
+    public partial Data.@this<string> Name { get; init; }
 
     /// <summary>Provider type name (e.g., "signing", "crypto", "identity", "key").</summary>
-    public partial string? Type { get; init; }
+    public partial Data.@this<string>? Type { get; init; }
 
     public async Task<Data.@this> Run()
     {
-        var providerType = Context.App.Providers.ResolveType(Type);
+        var providerType = Context.App.Providers.ResolveType(Type?.Value);
         if (providerType == null)
-            return Error(new Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
+            return Error(new Errors.ActionError($"Unknown provider type '{Type?.Value}'", "UnknownType", 400));
 
-        return Context.App.Providers.Remove(providerType, Name);
+        return Context.App.Providers.Remove(providerType, Name.Value!);
     }
 }

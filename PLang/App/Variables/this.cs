@@ -59,6 +59,30 @@ public class @this
         // Simple case: no dot/bracket path — set the root variable directly
         if (rootName == name)
         {
+            // Store Data values directly — clone if name differs to avoid mutating shared parameter Data
+            if (value is Data.@this dv)
+            {
+                var stored = dv;
+                if (!string.Equals(dv.Name, name, StringComparison.OrdinalIgnoreCase))
+                    stored = dv.ShallowClone();
+                stored.Name = name;
+                if (type != null) stored.Type = type;
+                stored.Context = _context;
+
+                if (_variables.TryGetValue(name, out var prev))
+                {
+                    prev.FireOnChange(stored);
+                    stored.CopyEventsFrom(prev);
+                }
+                else
+                {
+                    stored.FireOnCreate();
+                }
+
+                _variables[name] = stored;
+                return;
+            }
+
             if (_variables.TryGetValue(name, out var existing))
             {
                 existing.Value = value;
@@ -69,12 +93,13 @@ public class @this
             {
                 var data = new Data.@this(name, value, type);
                 data.Context = _context;
+                data.FireOnCreate();
                 _variables[name] = data;
             }
             return;
         }
 
-        // Dot/bracket path: navigate to the parent object, then set the final property
+        // Dot/bracket path: navigate to the parent object, set the property with raw value
         if (!_variables.TryGetValue(rootName, out var root))
         {
             // Root doesn't exist — create it as a dictionary so dot-path properties work
@@ -106,8 +131,15 @@ public class @this
 
         if (!parent.IsInitialized && parent.Value == null) return;
 
-        var result = SetValueOnObject(parent.Value, propertyName, value);
-        if (!ReferenceEquals(result, parent.Value))
+        // Lazy convert if parent is a typed string (e.g., json) — must happen before navigation
+        parent.ConvertValue();
+
+        // For dot-path, extract raw value from Data — we're setting a property on a C# object
+        var rawValue = value is Data.@this dv2 ? dv2.Value : value;
+        var target = parent.Value;
+        if (target == null) return;
+        var result = SetValueOnObject(target, propertyName, rawValue);
+        if (!ReferenceEquals(result, target))
             parent.Value = result;
     }
 
@@ -128,17 +160,67 @@ public class @this
             return target;
         }
 
-        // CLR object — try writable property first
-        var prop = target.GetType().GetProperty(propertyName,
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (prop != null && prop.CanWrite)
+        // Handle bracket indexing: "Steps[0]" → property "Steps", index 0
+        var bracketIdx = propertyName.IndexOf('[');
+        if (bracketIdx > 0)
         {
-            if (value != null && !prop.PropertyType.IsAssignableFrom(value.GetType()))
+            var baseProp = propertyName[..bracketIdx];
+            var indexStr = propertyName[(bracketIdx + 1)..].TrimEnd(']');
+            var prop = target.GetType().GetProperty(baseProp,
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+            if (prop != null)
             {
-                var (typedValue, _) = Utils.TypeMapping.TryConvertTo(value, prop.PropertyType);
+                var collection = prop.GetValue(target);
+                if (collection is System.Collections.IList list && int.TryParse(indexStr, out var idx) && idx >= 0 && idx < list.Count)
+                {
+                    if (value != null)
+                    {
+                        var elementType = list.GetType().IsGenericType
+                            ? list.GetType().GetGenericArguments()[0]
+                            : typeof(object);
+                        if (!elementType.IsAssignableFrom(value.GetType()))
+                        {
+                            var (typedValue, _) = Utils.TypeMapping.TryConvertTo(value, elementType);
+                            if (typedValue != null) value = typedValue;
+                        }
+                    }
+                    list[idx] = value;
+                    return target;
+                }
+                // Generic IList<T> (e.g., Steps.@this, Actions.@this) — use indexer via reflection
+                else if (collection != null && int.TryParse(indexStr, out var gIdx) && gIdx >= 0)
+                {
+                    var indexer = collection.GetType().GetProperty("Item");
+                    var countProp = collection.GetType().GetProperty("Count");
+                    if (indexer != null && countProp != null)
+                    {
+                        var count = (int)countProp.GetValue(collection)!;
+                        if (gIdx < count)
+                        {
+                            if (value != null && !indexer.PropertyType.IsAssignableFrom(value.GetType()))
+                            {
+                                var (typedValue, _) = Utils.TypeMapping.TryConvertTo(value, indexer.PropertyType);
+                                if (typedValue != null) value = typedValue;
+                            }
+                            indexer.SetValue(collection, value, new object[] { gIdx });
+                            return target;
+                        }
+                    }
+                }
+            }
+        }
+
+        // CLR object — try writable property first
+        var clrProp = target.GetType().GetProperty(propertyName,
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        if (clrProp != null && clrProp.CanWrite)
+        {
+            if (value != null && !clrProp.PropertyType.IsAssignableFrom(value.GetType()))
+            {
+                var (typedValue, _) = Utils.TypeMapping.TryConvertTo(value, clrProp.PropertyType);
                 if (typedValue != null) value = typedValue;
             }
-            prop.SetValue(target, value);
+            clrProp.SetValue(target, value);
             return target;
         }
 
@@ -157,6 +239,7 @@ public class @this
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         foreach (var prop in props)
         {
+            if (prop.GetIndexParameters().Length > 0) continue; // skip indexers
             dict[prop.Name] = prop.GetValue(obj);
         }
         // Primitive/value type with no navigable properties — preserve original value
@@ -171,7 +254,7 @@ public class @this
     public Data.@this Get(string name)
     {
         if (string.IsNullOrEmpty(name))
-            return Data.@this.Null(name ?? "");
+            return Data.@this.NotFound(name ?? "");
 
         name = CleanName(name);
 
@@ -197,7 +280,7 @@ public class @this
 
         if (!_variables.TryGetValue(rootName, out var root))
         {
-            return Data.@this.Null(name);
+            return Data.@this.NotFound(name);
         }
 
         if (string.IsNullOrEmpty(remaining))
@@ -284,10 +367,38 @@ public class @this
     /// Strings: full-match (%var%) returns the actual value, mixed ("hello %name%") interpolates.
     /// Lists: resolves each element. Dicts: resolves each value.
     /// Non-string primitives pass through unchanged.
+    /// Guarded by depth limit (100 levels) and breadth limit (100,000 items) to prevent
+    /// runaway resolution on deeply nested or very large structures.
     /// </summary>
+    [ThreadStatic] private static int _resolveDepth;
+    [ThreadStatic] private static int _resolveItemCount;
+
+    /// <summary>Fired during ResolveDeep for %variable% full-match resolutions. Args: varName, resolvedValue, depth.</summary>
+    public event Action<string, object?, int>? OnResolveTrace;
+
+    private const int MaxResolveItems = 100_000;
+
     public object? ResolveDeep(object? value)
     {
         if (value == null) return null;
+
+        _resolveDepth++;
+        if (_resolveDepth == 1) _resolveItemCount = 0; // reset at top-level call
+        if (_resolveDepth > 100)
+        {
+            _resolveDepth--;
+            return value;
+        }
+        try
+        {
+        // Breadth guard: stop resolving if too many items processed
+        if (_resolveItemCount > MaxResolveItems) return value;
+        _resolveItemCount++;
+
+        // Don't recurse into Data objects — their Value getter calls ResolveDeep itself
+        if (value is Data.@this) return value;
+        // Don't recurse into JsonElement — it's immutable and doesn't contain %var% references
+        if (value is System.Text.Json.JsonElement) return value;
 
         if (value is string str)
         {
@@ -296,7 +407,12 @@ public class @this
             // Full match: %varName% → return the actual object (not stringified)
             var fullMatch = Regex.Match(str, @"^%([^%]+)%$");
             if (fullMatch.Success)
-                return Get(fullMatch.Groups[1].Value)?.Value;
+            {
+                var varName = fullMatch.Groups[1].Value;
+                var resolved = Get(varName)?.Value;
+                OnResolveTrace?.Invoke(varName, resolved, _resolveDepth);
+                return resolved;
+            }
 
             // Partial match: "hello %name%" → string interpolation
             return Resolve(str);
@@ -310,6 +426,14 @@ public class @this
             return result;
         }
 
+        // Typed lists (e.g., List<LlmMessage>) — resolve each item in place
+        if (value is System.Collections.IList typedList && value is not string)
+        {
+            for (int i = 0; i < typedList.Count; i++)
+                ResolveDeep(typedList[i]);
+            return value;
+        }
+
         if (value is IDictionary<string, object?> dict)
         {
             var result = new Dictionary<string, object?>(dict.Count, StringComparer.OrdinalIgnoreCase);
@@ -318,7 +442,47 @@ public class @this
             return result;
         }
 
+        // Typed objects: resolve %var% in string properties.
+        // Clone first to avoid mutating the original (which may be shared .pr template data).
+        var type = value.GetType();
+        if (!type.IsPrimitive && type != typeof(decimal) && type != typeof(DateTime)
+            && type != typeof(DateTimeOffset) && type != typeof(Guid) && !type.IsEnum)
+        {
+            var needsClone = false;
+            foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+            {
+                if (!prop.CanRead || !prop.CanWrite) continue;
+                if (prop.PropertyType != typeof(string)) continue;
+                var strValue = prop.GetValue(value) as string;
+                if (strValue != null && strValue.Contains('%')) { needsClone = true; break; }
+            }
+
+            if (needsClone)
+            {
+                var clone = type.GetMethod("MemberwiseClone",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                    .Invoke(value, null)!;
+
+                foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                {
+                    if (!prop.CanRead || !prop.CanWrite) continue;
+                    if (prop.PropertyType != typeof(string)) continue;
+
+                    var strValue = prop.GetValue(clone) as string;
+                    if (strValue == null || !strValue.Contains('%')) continue;
+
+                    var resolved = ResolveDeep(strValue);
+                    if (!ReferenceEquals(resolved, strValue))
+                        prop.SetValue(clone, resolved);
+                }
+                return clone;
+            }
+        }
+
         return value;
+
+        }
+        finally { _resolveDepth--; }
     }
 
     /// <summary>

@@ -1,0 +1,54 @@
+{
+  "name": "ThrowUserError",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022user error\u0022 key=\u0022TestKey\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "user error",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            },
+            {
+              "name": "Key",
+              "value": "TestKey",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Error/Types/ThrowUserError.goal",
+  "prPath": "/Tests/Runtime2/Error/Types/.build/throwusererror.pr",
+  "hash": "ea9ddd08e494e52118b430af4ba6e52104efe7321bf5bbfd891ce7101fb8c920",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -88,7 +88,7 @@ public class QueryCacheTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "same question" }
+                new LlmMessage { Role = "user", Content = "same question" }
             },
             Cache = false
         };
@@ -110,7 +110,7 @@ public class QueryCacheTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "use tools" }
+                new LlmMessage { Role = "user", Content = "use tools" }
             },
             Cache = true,
             Tools = new List<GoalCall>
@@ -141,8 +141,8 @@ public class QueryCacheTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "system", Text = "You are helpful" },
-                new LlmMessage { Role = "user", Text = "same" }
+                new LlmMessage { Role = "system", Content = "You are helpful" },
+                new LlmMessage { Role = "user", Content = "same" }
             },
             Model = "gpt-4o"
         };

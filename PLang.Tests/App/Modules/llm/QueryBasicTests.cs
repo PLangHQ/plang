@@ -95,7 +95,7 @@ public class QueryBasicTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Temperature = 0.7,
             MaxTokens = 2000

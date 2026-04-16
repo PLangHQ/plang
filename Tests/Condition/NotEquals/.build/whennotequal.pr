@@ -1,0 +1,49 @@
+{
+  "name": "WhenNotEqual",
+  "description": "Maps the step \u0027WhenNotEqual\u0027 to a variable assignment setting %result% to the string \u0027not-equal\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022not-equal\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "not-equal",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Condition/NotEquals/WhenNotEqual.goal",
+  "prPath": "/Tests/Condition/NotEquals/.build/whennotequal.pr",
+  "hash": "9bc3d19b23c5f3af2f7ff1fa39c16e7cdfa6de4c161b5376ce1d779e368fde14",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

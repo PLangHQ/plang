@@ -59,8 +59,8 @@ public class QueryFormatTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "system", Text = "analyze" },
-                new LlmMessage { Role = "user", Text = "I love this" }
+                new LlmMessage { Role = "system", Content = "analyze" },
+                new LlmMessage { Role = "user", Content = "I love this" }
             },
             Schema = "{sentiment: string}"
         };
@@ -107,7 +107,7 @@ public class QueryFormatTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Schema = "{sentiment: string, score: number}"
         };
@@ -132,7 +132,7 @@ public class QueryFormatTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Schema = "{result: string}"
         };
@@ -154,7 +154,7 @@ public class QueryFormatTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Schema = "{answer: int}"
         };
@@ -179,7 +179,7 @@ public class QueryFormatTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "write hello world" }
+                new LlmMessage { Role = "user", Content = "write hello world" }
             },
             Format = "python"
         };
@@ -201,7 +201,7 @@ public class QueryFormatTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "write markdown" }
+                new LlmMessage { Role = "user", Content = "write markdown" }
             },
             Format = "md"
         };
@@ -222,7 +222,7 @@ public class QueryFormatTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Format = "python"
         };
@@ -251,8 +251,8 @@ public class QueryFormatTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "system", Text = "You are a helpful assistant" },
-                new LlmMessage { Role = "user", Text = "test" }
+                new LlmMessage { Role = "system", Content = "You are a helpful assistant" },
+                new LlmMessage { Role = "user", Content = "test" }
             },
             Schema = "{ok: bool}"
         };

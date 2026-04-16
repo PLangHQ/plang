@@ -140,7 +140,7 @@ try {
 ExecuteActions iterates step.Actions
   Each action runs via app.Run(action, User.Context)
   Handler resolves %variables% from User.Variables
-  Return variables are Put() onto User.Variables
+  Result stored as %__data__% on User.Variables
 ```
 
 ### After the switch (back to System context)

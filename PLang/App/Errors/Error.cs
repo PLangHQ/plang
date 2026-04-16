@@ -23,6 +23,13 @@ public class Error : IError
     public Goal? Goal { get; set; }
     public IReadOnlyList<CallFrame> CallFrames { get; set; } = Array.Empty<CallFrame>();
     public Dictionary<string, string> Variables { get; set; } = new();
+
+    /// <summary>
+    /// The execution context where this error occurred. Used by verbose debug to dump variables.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public Actor.Context.@this? Context { get; set; }
+
     public virtual ErrorCategory Category => StatusCode < 500 ? ErrorCategory.Application : ErrorCategory.Runtime;
 
     /// <summary>
@@ -63,6 +70,7 @@ public class Error : IError
         : this(message, context.Step, key, statusCode)
     {
         Goal = context.Goal;
+        Context = context;
         CallFrames = context.CallStack?.GetFrames() ?? (IReadOnlyList<CallFrame>)Array.Empty<CallFrame>();
     }
 
@@ -176,6 +184,28 @@ public class Error : IError
             }
         }
 
+        // Verbose variable dump — shows all variables in scope at point of failure
+        var app = error.Goal?.App ?? error.Step?.Goal?.App;
+        if (app?.Debug?.Verbose == true)
+        {
+            var errorContext = (error as Error)?.Context;
+            var fallbackContext = app.Context;
+            var ctx = errorContext ?? fallbackContext;
+            var allVars = ctx?.Variables?.GetAll();
+            if (allVars != null)
+            {
+                var ctxId = ctx?.Id ?? "?";
+                var ctxSource = errorContext != null ? "error context" : "app context (error context not captured)";
+                sb.AppendLine();
+                sb.AppendLine($"{indent}📋 Variables in scope ({ctxSource}, id={ctxId}):");
+                foreach (var v in allVars)
+                {
+                    var val = FormatVerboseValue(v.Value);
+                    sb.AppendLine($"{indent}    %{v.Name}% = {val} ({v.Type?.Value ?? "?"})");
+                }
+            }
+        }
+
         // Error source (ActionError overrides FormatExtra)
         if (error is Error e)
             e.FormatExtra(sb, indent);
@@ -202,6 +232,24 @@ public class Error : IError
                 }
             }
         }
+    }
+
+    private static string FormatVerboseValue(object? value)
+    {
+        if (value == null) return "(null)";
+        if (value is string s)
+            return s.Length > 200 ? $"\"{s[..200]}...\" ({s.Length} chars)" : $"\"{s}\"";
+        if (value is System.Collections.IDictionary or System.Collections.IList)
+        {
+            try
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(value);
+                return json.Length > 300 ? json[..300] + $"... ({json.Length} chars)" : json;
+            }
+            catch { return value.ToString() ?? "?"; }
+        }
+        var str = value.ToString() ?? "?";
+        return str.Length > 200 ? $"{str[..200]}... ({str.Length} chars)" : str;
     }
 
     protected virtual void FormatExtra(StringBuilder sb, string indent) { }

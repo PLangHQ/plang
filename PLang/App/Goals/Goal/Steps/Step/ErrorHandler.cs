@@ -27,7 +27,7 @@ public sealed class ErrorHandler
     public ErrorOrder? Order { get; init; }
 
     [Store]
-    public bool IgnoreError { get; init; }
+    public bool? IgnoreError { get; init; }
 
     [Store]
     public string? Message { get; init; }

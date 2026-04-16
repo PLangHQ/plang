@@ -11,7 +11,7 @@ namespace App.modules.identity;
 [Action("unarchive", Cacheable = false)]
 public partial class Unarchive : IContext
 {
-    public partial string Name { get; init; }
+    public partial Data.@this<string> Name { get; init; }
 
     [Provider]
     public partial IIdentityProvider Identity { get; }

@@ -1,0 +1,282 @@
+{
+  "name": "Start",
+  "description": "Test: archive identity, create identity, set payload, sign it, then assert SignedData properties via dot navigation.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: access SignedData properties via dot navigation",
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "create identity testSigner",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "Provider",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \u0022payload\u0022: \u0022nav\u0022 }",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "nav"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "sign %data%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object?"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %data.Signature.Algorithm% equals \u0027ed25519\u0027, \u0022algorithm should be ed25519\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "ed25519",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%data.Signature.Algorithm%",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "algorithm should be ed25519",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %data.Signature.Type% equals \u0027signature\u0027, \u0022type should be signature\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "signature",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%data.Signature.Type%",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "type should be signature",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %data.Signature.Identity% is not empty, \u0022identity should be public key\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%data.Signature.Identity%",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "identity should be public key",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %data.Signature.Nonce% is not empty, \u0022nonce should be present\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%data.Signature.Nonce%",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "nonce should be present",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Signing/DotNavigation/SigningDotNavigation.test.goal",
+  "prPath": "/Tests/Signing/DotNavigation/.build/signingdotnavigation.test.pr",
+  "hash": "6dbb1c5e18774987285f6d2743ed655f4001e37fe71e9d40cf80427196afa971",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

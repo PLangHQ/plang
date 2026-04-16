@@ -9,13 +9,13 @@ namespace App.modules.file;
 [Action("delete", Cacheable = false)]
 public partial class Delete : IContext
 {
-    public partial FileSystem.Path Path { get; init; }
+    public partial Data.@this<FileSystem.Path> Path { get; init; }
 
     [Default(false)]
-    public partial bool IgnoreIfNotFound { get; init; }
+    public partial Data.@this<bool> IgnoreIfNotFound { get; init; }
 
     [Default(false)]
-    public partial bool Recursive { get; init; }
+    public partial Data.@this<bool> Recursive { get; init; }
 
     [Provider]
     public partial IFileProvider Files { get; }

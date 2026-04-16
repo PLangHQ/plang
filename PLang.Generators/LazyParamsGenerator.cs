@@ -85,6 +85,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
             i.Name == "IStep"
             && i.ContainingNamespace.ToDisplayString() == "App.modules");
 
+        // Check if it implements IStatic
+        var implementsIStatic = classSymbol.AllInterfaces.Any(i =>
+            i.Name == "IStatic"
+            && i.ContainingNamespace.ToDisplayString() == "App.modules");
+
         // Find partial properties (declared by author, needing generated implementation)
         var properties = new List<ActionPropertyInfo>();
         foreach (var member in classSymbol.GetMembers())
@@ -146,6 +151,14 @@ public class LazyParamsGenerator : IIncrementalGenerator
                         i.Name == "IEvent"
                         && i.ContainingNamespace.ToDisplayString() == "App.modules");
 
+                // Check if type is Data<T> (App.Data.@this<T>)
+                // Roslyn symbol name is "this" (without the @ verbatim prefix)
+                var isDataWrapped = prop.Type is INamedTypeSymbol dataType
+                    && dataType.IsGenericType
+                    && (dataType.OriginalDefinition.Name == "this" || dataType.OriginalDefinition.Name == "@this")
+                    && dataType.OriginalDefinition.ContainingNamespace.ToDisplayString() == "App.Data";
+
+
                 properties.Add(new ActionPropertyInfo(
                     prop.Name,
                     prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -157,7 +170,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     isProvider,
                     isInitiated,
                     isNotNull,
-                    implementsIEvent));
+                    implementsIEvent,
+                    isDataWrapped));
             }
         }
 
@@ -169,6 +183,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
             implementsIChannel,
             implementsIAction,
             implementsIStep,
+            implementsIStatic,
             properties);
     }
 
@@ -213,6 +228,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
         if (info.ImplementsIStep)
         {
             sb.AppendLine("    public App.Goals.Goal.Steps.Step.@this Step { get; set; } = null!;");
+            sb.AppendLine();
+        }
+
+        // IStatic auto-provision
+        if (info.ImplementsIStatic)
+        {
+            sb.AppendLine("    public System.Collections.Concurrent.ConcurrentDictionary<string, object?> Static { get; set; } = null!;");
             sb.AppendLine();
         }
 
@@ -261,7 +283,48 @@ public class LazyParamsGenerator : IIncrementalGenerator
             // Build the get expression
             var paramName = prop.Name.ToLowerInvariant();
             string resolveExpr;
-            if (prop.IsAppResolvable)
+            if (prop.IsDataWrapped)
+            {
+                // Data<T> property — resolve via __ResolveData, then As<T> to convert
+                // Extract the inner type T from the type name: "global::App.Data.@this<global::App.FileSystem.Path>" → inner part
+                var typeName = prop.TypeName;
+                var ltIdx = typeName.IndexOf('<');
+                var innerType = ltIdx >= 0 ? typeName.Substring(ltIdx + 1, typeName.Length - ltIdx - 2) : "object";
+                sb.AppendLine($"    public partial {prop.TypeName} {prop.Name}");
+                sb.AppendLine("    {");
+                if (prop.IsNullable)
+                {
+                    // Nullable Data<T>? — if no parameter found, stay null
+                    sb.AppendLine($"        get {{ if ({backingField} == null && !{setFlag}) {{ var __d = __ResolveData(\"{paramName}\"); {backingField} = __d.IsEmpty ? null : __d.As<{innerType}>(Context); {setFlag} = true; }} return {backingField}; }}");
+                }
+                else if (prop.DefaultValue != null)
+                {
+                    // Non-nullable Data<T> with [Default] — use default when not found
+                    sb.AppendLine($"        get {{ if ({backingField} == null) {{ var __d = __ResolveData(\"{paramName}\"); {backingField} = __d.IsEmpty ? new App.Data.@this<{innerType}>(\"{paramName}\", ({innerType}){prop.DefaultValue}) : __d.As<{innerType}>(Context); }} return {backingField}!; }}");
+                }
+                else
+                {
+                    resolveExpr = $"__ResolveData(\"{paramName}\").As<{innerType}>(Context)";
+                    sb.AppendLine($"        get {{ if ({backingField} == null) {{ {backingField} = {resolveExpr}; }} return {backingField}!; }}");
+                }
+                sb.AppendLine($"        init {{ {backingField} = value; {setFlag} = true; }}");
+                sb.AppendLine("    }");
+                sb.AppendLine();
+                continue;
+            }
+            else if (prop.TypeName.Contains("App.Data.@this") && !prop.TypeName.Contains("<"))
+            {
+                // Plain Data.@this — use __ResolveData which returns Data directly (preserves null Value)
+                resolveExpr = $"__ResolveData(\"{paramName}\")";
+                sb.AppendLine($"    public partial {prop.TypeName} {prop.Name}");
+                sb.AppendLine("    {");
+                sb.AppendLine($"        get {{ if (!{setFlag}) {{ {backingField} = {resolveExpr}; {setFlag} = true; }} return {backingField}!; }}");
+                sb.AppendLine($"        init {{ {backingField} = value; {setFlag} = true; }}");
+                sb.AppendLine("    }");
+                sb.AppendLine();
+                continue;
+            }
+            else if (prop.IsAppResolvable)
             {
                 // Context-resolvable types: resolve raw string then call Type.Resolve(string, Context)
                 var rawStr = $"__Resolve<string>(\"{paramName}\")";
@@ -299,7 +362,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
             sb.AppendLine($"    public partial {prop.TypeName} {prop.Name}");
             sb.AppendLine("    {");
-            sb.AppendLine($"        get => {setFlag} ? {backingField}! : {resolveExpr};");
+            sb.AppendLine($"        get {{ if (!{setFlag}) {{ {backingField} = {resolveExpr}; {setFlag} = true; }} return {backingField}!; }}");
             sb.AppendLine($"        init {{ {backingField} = value; {setFlag} = true; }}");
             sb.AppendLine("    }");
             sb.AppendLine();
@@ -340,6 +403,16 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        var app = __app!;");
         sb.AppendLine("        __resolutionError = null;");
         sb.AppendLine("        __paramData = new(StringComparer.OrdinalIgnoreCase);");
+        // Reset property backing fields so each execution resolves fresh from __action
+        // Skip if action is null (direct construction via init — keep init-set values)
+        sb.AppendLine("        if (action != null)");
+        sb.AppendLine("        {");
+        foreach (var prop in info.Properties.Where(p => !p.IsProvider))
+        {
+            sb.AppendLine($"            __{prop.Name}_backing = default;");
+            sb.AppendLine($"            __{prop.Name}_set = false;");
+        }
+        sb.AppendLine("        }");
         sb.AppendLine("        var __step = __action?.Step;");
         sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<App.CallStack.CallFrame>)System.Array.Empty<App.CallStack.CallFrame>();");
 
@@ -358,6 +431,14 @@ public class LazyParamsGenerator : IIncrementalGenerator
         if (info.ImplementsIStep)
         {
             sb.AppendLine("        Step = __action?.Step;");
+        }
+        if (info.ImplementsIStatic)
+        {
+            // Module namespace: e.g., "App.modules.timer" → "timer"
+            var moduleNs = info.Namespace;
+            var prefix = "App.modules.";
+            var moduleName = moduleNs.StartsWith(prefix) ? moduleNs.Substring(prefix.Length).Split('.')[0] : moduleNs;
+            sb.AppendLine($"        Static = context.GetModuleStatic(\"{moduleName}\");");
         }
 
         // Push callstack frame for this action (only when dispatched from .pr)
@@ -400,7 +481,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // Validate non-nullable, non-defaulted properties
         foreach (var prop in info.Properties)
         {
-            if (prop.IsNullable || prop.DefaultValue != null || prop.IsAppResolvable || prop.IsProvider)
+            if (prop.IsNullable || prop.DefaultValue != null || prop.IsAppResolvable || prop.IsProvider || prop.IsDataWrapped)
+                continue;
+            // Plain Data.@this properties can wrap null values — only [IsNotNull] should reject that
+            if (prop.TypeName.Contains("App.Data.@this"))
                 continue;
 
             if (!prop.IsValueType)
@@ -413,8 +497,16 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 {
                     sb.AppendLine($"        if ({prop.Name} == null)");
                 }
-                sb.AppendLine($"            return App.Data.@this.FromError(new App.Errors.ServiceError(");
-                sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' is required\", __step, __callFrames, \"MissingParameter\", 400));");
+                sb.AppendLine("            {");
+                sb.AppendLine($"                if (__resolutionError != null) {{ context.Step = __previousStep; context.Goal = __previousGoal; return __resolutionError; }}");
+                sb.AppendLine($"                var __prValue = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{prop.Name}\", System.StringComparison.OrdinalIgnoreCase))?.Value?.ToString() ?? \"(unknown)\";");
+                sb.AppendLine($"                var __stepText = __step?.Text ?? \"(unknown step)\";");
+                sb.AppendLine($"                if (__stepText.Length > 80) __stepText = __stepText[..80] + \"...\";");
+                sb.AppendLine($"                var __err = new App.Errors.ServiceError(");
+                sb.AppendLine($"                    $\"'{{__prValue}}' is empty — nothing to use as '{prop.Name.ToLowerInvariant()}' in step: {{__stepText}}\", __step, __callFrames, \"MissingParameter\", 400);");
+                sb.AppendLine($"                __err.Context = context;");
+                sb.AppendLine($"                return App.Data.@this.FromError(__err);");
+                sb.AppendLine("            }");
             }
         }
 
@@ -440,15 +532,6 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        if (__resolutionError != null) { context.Step = __previousStep; context.Goal = __previousGoal; return __resolutionError; }");
         sb.AppendLine();
 
-        // Actor switching — if the class has an Actor property, wrap Run() with save/switch/restore
-        var hasActorProperty = info.Properties.Any(p => p.Name == "Actor" && p.TypeName.Contains("Actor"));
-        if (hasActorProperty)
-        {
-            sb.AppendLine("        var __previousActor = app.CurrentActor;");
-            sb.AppendLine("        if (Actor != null && Actor != context.Actor)");
-            sb.AppendLine("            app.CurrentActor = Actor;");
-        }
-
         sb.AppendLine("        try");
         sb.AppendLine("        {");
         sb.AppendLine("            return await Run();");
@@ -460,10 +543,6 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine("        finally");
         sb.AppendLine("        {");
-        if (hasActorProperty)
-        {
-            sb.AppendLine("            app.CurrentActor = __previousActor;");
-        }
         sb.AppendLine("            __frame?.SnapshotVariables(context.Variables);");
         sb.AppendLine("            if (context.CallStack != null) context.CallStack.PopAsync().GetAwaiter().GetResult();");
         sb.AppendLine("            context.Step = __previousStep;");
@@ -492,6 +571,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("                    __resolutionError = __resolved;");
         sb.AppendLine("                    return default;");
         sb.AppendLine("                }");
+        sb.AppendLine("                if (__resolved is T __asT) return __asT;");
         sb.AppendLine("                return __TryConvert<T>(__resolved?.Value, name);");
         sb.AppendLine("            }");
         sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
@@ -514,9 +594,36 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("            : default;");
         sb.AppendLine("    }");
         sb.AppendLine();
+
+        // __ResolveData — returns Data directly for Data<T> properties
+        sb.AppendLine("    private App.Data.@this __ResolveData(string name)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        var data = __action?.Parameters?.FirstOrDefault(");
+        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine("        data ??= __action?.Defaults?.FirstOrDefault(");
+        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine("        if (data == null) return App.Data.@this.NotFound(name);");
+        sb.AppendLine("        if (data.Value is string str && str.Contains('%'))");
+        sb.AppendLine("        {");
+        sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
+        sb.AppendLine("            if (fullMatch.Success)");
+        sb.AppendLine("                return __variables!.Get(fullMatch.Groups[1].Value);");
+        sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
+        sb.AppendLine("                var __r = __variables!.Get(m.Groups[1].Value);");
+        sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
+        sb.AppendLine("                return __FormatValue(__r?.Value);");
+        sb.AppendLine("            });");
+        sb.AppendLine("            return new App.Data.@this(name, interpolated, data.Type);");
+        sb.AppendLine("        }");
+        sb.AppendLine("        data.Context = Context;");
+        sb.AppendLine("        data.NeedsResolution = true;");
+        sb.AppendLine("        return data;");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+
         sb.AppendLine("    private T? __TryConvert<T>(object? value, string paramName)");
         sb.AppendLine("    {");
-        sb.AppendLine("        var (__result, __error) = App.Utils.TypeMapping.TryConvertTo(value, typeof(T));");
+        sb.AppendLine("        var (__result, __error) = App.Utils.TypeMapping.TryConvertTo(value, typeof(T), Context);");
         sb.AppendLine("        if (__error != null)");
         sb.AppendLine("        {");
         sb.AppendLine("            __resolutionError = App.Data.@this.FromError(");
@@ -573,10 +680,12 @@ internal class ActionClassInfo
     public bool ImplementsIChannel { get; }
     public bool ImplementsIAction { get; }
     public bool ImplementsIStep { get; }
+    public bool ImplementsIStatic { get; }
     public List<ActionPropertyInfo> Properties { get; }
 
     public ActionClassInfo(string ns, string className, string fullName,
-        bool implementsIContext, bool implementsIChannel, bool implementsIAction, bool implementsIStep, List<ActionPropertyInfo> properties)
+        bool implementsIContext, bool implementsIChannel, bool implementsIAction, bool implementsIStep,
+        bool implementsIStatic, List<ActionPropertyInfo> properties)
     {
         Namespace = ns;
         ClassName = className;
@@ -585,6 +694,7 @@ internal class ActionClassInfo
         ImplementsIChannel = implementsIChannel;
         ImplementsIAction = implementsIAction;
         ImplementsIStep = implementsIStep;
+        ImplementsIStatic = implementsIStatic;
         Properties = properties;
     }
 }
@@ -602,11 +712,13 @@ internal class ActionPropertyInfo
     public bool IsInitiated { get; }
     public bool IsNotNull { get; }
     public bool ImplementsIEvent { get; }
+    public bool IsDataWrapped { get; }
 
     public ActionPropertyInfo(string name, string typeName, bool isNullable,
         bool isValueType, string? defaultValue, bool isVariableName = false,
         bool isAppResolvable = false, bool isProvider = false,
-        bool isInitiated = false, bool isNotNull = false, bool implementsIEvent = false)
+        bool isInitiated = false, bool isNotNull = false, bool implementsIEvent = false,
+        bool isDataWrapped = false)
     {
         Name = name;
         TypeName = typeName;
@@ -619,5 +731,6 @@ internal class ActionPropertyInfo
         IsInitiated = isInitiated;
         IsNotNull = isNotNull;
         ImplementsIEvent = implementsIEvent;
+        IsDataWrapped = isDataWrapped;
     }
 }

@@ -13,13 +13,13 @@ public partial class verify : IContext
     public partial Data.@this? Data { get; init; }
 
     /// <summary>Required contracts for verification.</summary>
-    public partial List<string>? Contracts { get; init; }
+    public partial Data.@this<List<string>>? Contracts { get; init; }
 
     /// <summary>Expected headers to match against signed headers.</summary>
-    public partial Dictionary<string, object>? Headers { get; init; }
+    public partial Data.@this<Dictionary<string, object>>? Headers { get; init; }
 
     /// <summary>Optional timeout override in milliseconds.</summary>
-    public partial long? TimeoutMs { get; init; }
+    public partial Data.@this<long>? TimeoutMs { get; init; }
 
     [Provider]
     public partial ISigningProvider Signer { get; }

@@ -61,24 +61,24 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
 
-        var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
-        var contentType = action.ContentType ?? config.Resolve("ContentType", "application/json");
-        var encoding = action.Encoding ?? config.Resolve("Encoding", "utf-8");
+        var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
+        var timeout = action.TimeoutInSec.Value > 0 ? action.TimeoutInSec.Value : config.Resolve("TimeoutInSec", 30);
+        var contentType = action.ContentType.Value ?? config.Resolve("ContentType", "application/json");
+        var encoding = action.Encoding.Value ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl(action.Url, config);
+        var urlResult = ResolveUrl(action.Url.Value!, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
-        var headers = MergeHeaders(action.Headers, config);
+        var headers = MergeHeaders(action.Headers?.Value, config);
 
         // Build body
         HttpContent? httpContent = null;
         string? bodyString = null;
-        if (action.Body != null)
+        if (action.Body?.Value != null)
         {
             if (contentType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
-                && action.Body is Dictionary<string, object> formDict)
+                && action.Body.Value is Dictionary<string, object> formDict)
             {
                 var formValues = new Dictionary<string, string>();
                 foreach (var kvp in formDict)
@@ -87,24 +87,24 @@ public sealed class DefaultHttpProvider : IHttpProvider
             }
             else
             {
-                bodyString = action.Body is string s ? s : JsonSerializer.Serialize(action.Body);
+                bodyString = action.Body.Value is string s ? s : JsonSerializer.Serialize(action.Body.Value);
                 var enc = Encoding.GetEncoding(encoding);
                 httpContent = new StringContent(bodyString, enc, contentType);
             }
         }
 
-        var httpMethod = ToSystemMethod(action.Method);
+        var httpMethod = ToSystemMethod(action.Method.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions, bodyString, resolvedUrl, httpMethod.Method);
+        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions?.Value, bodyString, resolvedUrl, httpMethod.Method);
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
             ApplySignature(requestMessage, signResult);
         }
 
-        var completionOption = action.OnStream != null
+        var completionOption = action.OnStream?.Value != null
             ? HttpCompletionOption.ResponseHeadersRead
             : HttpCompletionOption.ResponseContentRead;
 
@@ -113,11 +113,11 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         var response = await SendHttpAsync(requestMessage, completionOption, config, cts.Token);
 
-        if (action.OnStream != null)
+        if (action.OnStream?.Value != null)
         {
             var maxSSEBuffer = config.Resolve("MaxSSEBufferSize", 10L * 1024 * 1024);
             return await HandleStreamingAsync(
-                response, requestMessage, action.OnStream, action.StreamAs,
+                response, requestMessage, action.OnStream.Value, action.StreamAs?.Value,
                 unsigned, app, action.Context, maxSSEBuffer, cts.Token);
         }
 
@@ -135,34 +135,34 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var config = app.Config.For<Config>(action.Context);
         var fs = app.FileSystem;
 
-        var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
-        var urlResult = ResolveUrl(action.Url, config);
+        var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
+        var timeout = action.TimeoutInSec.Value > 0 ? action.TimeoutInSec.Value : config.Resolve("TimeoutInSec", 30);
+        var urlResult = ResolveUrl(action.Url.Value!, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
-        var savePath = fs.ValidatePath(action.SaveTo);
+        var savePath = fs.ValidatePath(action.SaveTo.Value!);
 
         // File existence check
         if (fs.File.Exists(savePath))
         {
-            switch (action.IfExists)
+            switch (action.IfExists.Value)
             {
                 case FileExists.Error:
                     return App.Data.@this.FromError(new ServiceError(
-                        $"File already exists: {action.SaveTo}", "FileExists", 409));
+                        $"File already exists: {action.SaveTo.Value}", "FileExists", 409));
                 case FileExists.Skip:
-                    return App.Data.@this.Ok(action.SaveTo);
+                    return App.Data.@this.Ok(action.SaveTo.Value);
                 case FileExists.Overwrite:
                     break;
             }
         }
 
-        var headers = MergeHeaders(action.Headers, config);
+        var headers = MergeHeaders(action.Headers?.Value, config);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions, null, resolvedUrl, "GET");
+        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions?.Value, null, resolvedUrl, "GET");
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
@@ -185,13 +185,14 @@ public sealed class DefaultHttpProvider : IHttpProvider
             fs.Directory.CreateDirectory(dir);
 
         var totalBytes = response.Content.Headers.ContentLength;
+        var maxDownloadSize = config.Resolve("MaxDownloadSize", DefaultMaxResponseSize);
         using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
         using var fileStream = fs.File.Create(savePath);
 
         await StreamWithProgressAsync(
-            responseStream, fileStream, totalBytes, action.OnProgress, app, action.Context, cts.Token);
+            responseStream, fileStream, totalBytes, maxDownloadSize, action.OnProgress?.Value, app, action.Context, cts.Token);
 
-        return App.Data.@this.Ok(action.SaveTo);
+        return App.Data.@this.Ok(action.SaveTo.Value);
     });
 
     public Task<Data.@this> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
@@ -200,19 +201,19 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var config = app.Config.For<Config>(action.Context);
         var fs = app.FileSystem;
 
-        var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
-        var encoding = action.Encoding ?? config.Resolve("Encoding", "utf-8");
+        var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
+        var timeout = action.TimeoutInSec.Value > 0 ? action.TimeoutInSec.Value : config.Resolve("TimeoutInSec", 30);
+        var encoding = action.Encoding.Value ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl(action.Url, config);
+        var urlResult = ResolveUrl(action.Url.Value!, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
-        var headers = MergeHeaders(action.Headers, config);
+        var headers = MergeHeaders(action.Headers?.Value, config);
 
         var httpContent = await ResolveUploadContentAsync(action, fs, encoding);
 
-        var httpMethod = ToSystemMethod(action.Method);
+        var httpMethod = ToSystemMethod(action.Method.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
 
@@ -220,7 +221,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         if (httpContent is StringContent sc)
             bodyString = await sc.ReadAsStringAsync();
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions, bodyString, resolvedUrl, httpMethod.Method);
+        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions?.Value, bodyString, resolvedUrl, httpMethod.Method);
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
@@ -239,12 +240,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
     public Data.@this Configure(configure action)
     {
         // Redirect config can't change after first request (SocketsHttpHandler is immutable)
-        if (_client != null && (action.FollowRedirects.HasValue || action.MaxRedirects.HasValue))
+        if (_client != null && (action.FollowRedirects?.Value != null || action.MaxRedirects?.Value != null))
             return App.Data.@this.FromError(new ServiceError(
                 "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
                 "ConfigLocked", 409));
 
-        action.Context.App.Config.Apply<Config>(action, action.Context, action.Default);
+        action.Context.App.Config.Apply<Config>(action, action.Context, action.Default.Value);
         return App.Data.@this.Ok();
     }
 
@@ -290,6 +291,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var buffer = new byte[8192];
         long totalRead = 0;
         int bytesRead;
+        var throughputStart = DateTimeOffset.UtcNow;
+        long throughputBytes = 0;
 
         while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
         {
@@ -298,6 +301,17 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 throw new InvalidOperationException(
                     $"Response body exceeds maximum size of {FormatBytes(maxBytes)}");
             limited.Write(buffer, 0, bytesRead);
+
+            // Slow-loris protection: abort if throughput drops below 1KB/sec for 30s
+            throughputBytes += bytesRead;
+            var elapsed = (DateTimeOffset.UtcNow - throughputStart).TotalSeconds;
+            if (elapsed >= 30)
+            {
+                if (throughputBytes / elapsed < 1024)
+                    throw new InvalidOperationException("Response too slow — possible slow-loris attack");
+                throughputStart = DateTimeOffset.UtcNow;
+                throughputBytes = 0;
+            }
         }
 
         limited.Position = 0;
@@ -316,6 +330,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var buffer = new byte[8192];
         long totalRead = 0;
         int bytesRead;
+        var throughputStart = DateTimeOffset.UtcNow;
+        long throughputBytes = 0;
 
         while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
         {
@@ -324,6 +340,16 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 throw new InvalidOperationException(
                     $"Response body exceeds maximum size of {FormatBytes(maxBytes)}");
             limited.Write(buffer, 0, bytesRead);
+
+            throughputBytes += bytesRead;
+            var elapsed = (DateTimeOffset.UtcNow - throughputStart).TotalSeconds;
+            if (elapsed >= 30)
+            {
+                if (throughputBytes / elapsed < 1024)
+                    throw new InvalidOperationException("Response too slow — possible slow-loris attack");
+                throughputStart = DateTimeOffset.UtcNow;
+                throughputBytes = 0;
+            }
         }
 
         return limited.ToArray();
@@ -374,11 +400,11 @@ public sealed class DefaultHttpProvider : IHttpProvider
         {
             Context = context,
             Data = new Data.@this("", bodyContent ?? ""),
-            Headers = new Dictionary<string, object>
+            Headers = new Data.@this<Dictionary<string, object>>("", new Dictionary<string, object>
             {
                 ["url"] = url,
                 ["method"] = method
-            },
+            }),
             Contracts = signOptions?.Contracts,
             ExpiresInMs = signOptions?.ExpiresInMs
         };
@@ -457,6 +483,15 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         if (!url.Contains("://"))
             url = "https://" + url;
+
+        // Security: only allow http/https schemes (blocks file://, gopher://, etc.)
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            if (uri.Scheme != "http" && uri.Scheme != "https")
+                return Data.@this<string>.FromError(new ServiceError(
+                    $"Only http:// and https:// URLs are allowed, got {uri.Scheme}://",
+                    "InvalidUrlScheme", 400));
+        }
 
         return Data.@this<string>.Ok(url);
     }
@@ -809,6 +844,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
         var dataBuffer = new StringBuilder();
+        int consecutiveOverflows = 0;
+        const int maxConsecutiveOverflows = 3;
 
         while (!ct.IsCancellationRequested)
         {
@@ -827,6 +864,11 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 // Guard against unbounded SSE messages (no blank-line boundary)
                 if (dataBuffer.Length + data.Length + 1 > maxBufferSize)
                 {
+                    consecutiveOverflows++;
+                    if (consecutiveOverflows >= maxConsecutiveOverflows)
+                        throw new InvalidOperationException(
+                            $"SSE stream disconnected after {maxConsecutiveOverflows} consecutive buffer overflows — possible attack");
+
                     await app.Channels.WriteAsync(AppChannels.StdErr,
                         App.Data.@this.FromError(new ServiceError(
                             $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
@@ -840,6 +882,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             }
             else if (line.Length == 0 && dataBuffer.Length > 0)
             {
+                consecutiveOverflows = 0; // successful event resets counter
                 await RunCallbackAsync(onStream, dataBuffer.ToString(), PlangType.String, "chunk", app, context, ct);
                 dataBuffer.Clear();
             }
@@ -912,6 +955,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         Stream source,
         Stream destination,
         long? totalBytes,
+        long maxBytes,
         GoalCall? onProgress,
         AppType app,
         Actor.Context.@this context,
@@ -920,12 +964,33 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var buffer = new byte[8192];
         long bytesTransferred = 0;
         var lastReport = DateTimeOffset.UtcNow;
+        var throughputStart = DateTimeOffset.UtcNow;
+        long throughputBytes = 0;
 
         int bytesRead;
         while ((bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
         {
-            await destination.WriteAsync(buffer, 0, bytesRead, ct);
             bytesTransferred += bytesRead;
+
+            // F1: size limit on file downloads
+            if (bytesTransferred > maxBytes)
+                throw new InvalidOperationException(
+                    $"Download exceeds maximum size of {FormatBytes(maxBytes)}");
+
+            await destination.WriteAsync(buffer, 0, bytesRead, ct);
+
+            // F3: slow-loris throughput check
+            throughputBytes += bytesRead;
+            var elapsed = (DateTimeOffset.UtcNow - throughputStart).TotalSeconds;
+            if (elapsed >= 30)
+            {
+                var bytesPerSec = throughputBytes / elapsed;
+                if (bytesPerSec < 1024) // < 1KB/sec for 30s
+                    throw new InvalidOperationException(
+                        $"Transfer too slow ({bytesPerSec:F0} bytes/sec) — possible slow-loris attack");
+                throughputStart = DateTimeOffset.UtcNow;
+                throughputBytes = 0;
+            }
 
             if (onProgress != null)
             {
@@ -952,28 +1017,29 @@ public sealed class DefaultHttpProvider : IHttpProvider
     private static async Task<HttpContent> ResolveUploadContentAsync(
         upload action, App.FileSystem.IPLangFileSystem fs, string encoding)
     {
-        if (action.As.HasValue)
+        var content = action.Content.Value;
+        if (action.As?.Value is ContentAs contentAs)
         {
-            return action.As.Value switch
+            return contentAs switch
             {
-                ContentAs.File => await CreateFileContentAsync(fs, action.Content.ToString()!),
-                ContentAs.Base64 => CreateBase64Content(action.Content.ToString()!),
-                ContentAs.Form => await CreateFormContentAsync(fs, action.Content),
+                ContentAs.File => await CreateFileContentAsync(fs, content!.ToString()!),
+                ContentAs.Base64 => CreateBase64Content(content!.ToString()!),
+                ContentAs.Form => await CreateFormContentAsync(fs, content!),
                 ContentAs.Text => new StringContent(
-                    action.Content is string s ? s : JsonSerializer.Serialize(action.Content),
+                    content is string s ? s : JsonSerializer.Serialize(content),
                     Encoding.GetEncoding(encoding)),
-                _ => new StringContent(action.Content.ToString()!, Encoding.GetEncoding(encoding))
+                _ => new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding))
             };
         }
 
         // Auto-detect
-        if (action.Content is Dictionary<string, object> ||
-            action.Content is JsonElement je && je.ValueKind == JsonValueKind.Object)
+        if (content is Dictionary<string, object> ||
+            content is JsonElement je && je.ValueKind == JsonValueKind.Object)
         {
-            return await CreateFormContentAsync(fs, action.Content);
+            return await CreateFormContentAsync(fs, content);
         }
 
-        if (action.Content is string str)
+        if (content is string str)
         {
             var path = fs.ValidatePath(str);
             if (fs.File.Exists(path))
@@ -983,7 +1049,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         }
 
         return new StringContent(
-            JsonSerializer.Serialize(action.Content),
+            JsonSerializer.Serialize(content),
             Encoding.GetEncoding(encoding),
             "application/json");
     }

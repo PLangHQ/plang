@@ -9,7 +9,7 @@ namespace App.modules.assert;
 public partial class IsFalse : IContext
 {
     public partial Data.@this? Value { get; init; }
-    public partial string? Message { get; init; }
+    public partial Data.@this<string>? Message { get; init; }
 
     [Provider]
     public partial IAssertProvider Assert { get; }

@@ -7,9 +7,9 @@ public partial class Remove : IContext
 {
     [VariableName]
     public partial string ListName { get; init; }
-    public partial object? Value { get; init; }
+    public partial Data.@this Value { get; init; }
     [Default(-1)]
-    public partial int AtIndex { get; init; }
+    public partial Data.@this<int> AtIndex { get; init; }
 
     public Task<Data.@this> Run()
     {
@@ -18,14 +18,14 @@ public partial class Remove : IContext
             return Task.FromResult(Error(
                 new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
-        if (AtIndex >= 0)
+        if (AtIndex.Value >= 0)
         {
-            if (AtIndex < list.Count)
-                list.RemoveAt(AtIndex);
+            if (AtIndex.Value < list.Count)
+                list.RemoveAt(AtIndex.Value);
         }
         else
         {
-            list.Remove(Value);
+            list.Remove(Value.Value);
         }
 
         return Task.FromResult(Data(new types.list { count = list.Count, value = list }, App.Data.Type.FromName("list")));

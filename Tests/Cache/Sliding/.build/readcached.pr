@@ -1,0 +1,71 @@
+{
+  "name": "ReadCached",
+  "description": "Reads cacheslide.txt with sliding cache for 60 seconds and writes the result to %cachedValue%.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027cacheslide.txt\u0027, cache for 60 seconds, write to %cachedValue%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "cacheslide.txt",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%cachedValue%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": {
+        "durationMs": 60000,
+        "sliding": true,
+        "key": null,
+        "location": null
+      },
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Cache/Sliding/ReadCached.goal",
+  "prPath": "/Tests/Cache/Sliding/.build/readcached.pr",
+  "hash": "a42f6e6232c2cd7c67fa24f0938f74634d8cc0e4552c9b7a94d54e1cd2563268",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

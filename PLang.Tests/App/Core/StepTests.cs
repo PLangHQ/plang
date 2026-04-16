@@ -22,7 +22,6 @@ public class StepTests
                     Module = "http",
                     ActionName = "get",
                     Parameters = new List<Data> { new Data("url", "https://api.example.com") },
-                    Return = new List<Data> { new Data("response") }
                 }
             },
             WaitForExecution = false
@@ -139,7 +138,6 @@ public class StepTests
                     Module = "variable",
                     ActionName = "set",
                     Parameters = new List<Data> { new Data("name", "test") },
-                    Return = new List<Data> { new Data("result") }
                 }
             },
             WaitForExecution = false,

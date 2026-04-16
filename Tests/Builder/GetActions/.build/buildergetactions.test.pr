@@ -1,0 +1,57 @@
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "get all actions, write to %actions%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test that builder.getActions returns a list of all registered module actions",
+      "actions": [
+        {
+          "module": "provider",
+          "action": "list",
+          "parameters": [
+            {
+              "name": "Type",
+              "value": "module.actions",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %actions% is not empty, \u0022getActions should return registered module actions\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Runtime2/Builder/GetActions/BuilderGetActions.test.goal",
+  "prPath": "/Tests/Runtime2/Builder/GetActions/.build/buildergetactions.test.pr",
+  "hash": "e869f3b74ac66066a95d87bdd8ca6509fd6644f16c306f1b781c7c751cb86109",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

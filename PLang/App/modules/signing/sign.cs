@@ -14,13 +14,13 @@ public partial class sign : IContext
     public partial Data.@this? Data { get; init; }
 
     /// <summary>Contracts for this signature. Default: ["C0"].</summary>
-    public partial List<string>? Contracts { get; init; }
+    public partial Data.@this<List<string>>? Contracts { get; init; }
 
     /// <summary>Optional headers to include in the signature envelope.</summary>
-    public partial Dictionary<string, object>? Headers { get; init; }
+    public partial Data.@this<Dictionary<string, object>>? Headers { get; init; }
 
     /// <summary>Optional TTL in milliseconds. If set, Expires = Created + ExpiresInMs.</summary>
-    public partial int? ExpiresInMs { get; init; }
+    public partial Data.@this<int>? ExpiresInMs { get; init; }
 
     [Provider]
     public partial ISigningProvider Signer { get; }

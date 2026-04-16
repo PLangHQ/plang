@@ -1,0 +1,368 @@
+{
+  "name": "Start",
+  "description": "Sets the %timedOut% flag to true (null comparison noted in source, but value assigned is true).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: verify fails when Created is older than timeout setting",
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "create identity testSigner",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \u0022payload\u0022: \u0022old\u0022 }",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "old"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "sign %data%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "set signing timeout to 50",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "signing.timeout",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 50,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "wait for 60 ms",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "timer",
+          "action": "start",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "wait-60ms",
+              "type": "string"
+            },
+            {
+              "name": "Scope",
+              "value": "goal",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "verify %data% with contracts [\u0027C0\u0027], on error call HandleTimedOut",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "C0"
+              ],
+              "type": "list"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%timedOut%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": {
+        "goal": {
+          "name": "HandleTimedOut",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": null,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %timedOut% is true, \u0022signature older than timeout should fail\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%timedOut%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "signature older than timeout should fail",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "HandleTimedOut",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %timedOut% = true",
+          "lineNumber": 13,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%timedOut%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            }
+          ],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Tests/Signing/TimedOut/SigningTimedOut.test.goal",
+      "prPath": "/Tests/Signing/TimedOut/.build/signingtimedout.test.pr",
+      "hash": "3be0880cb8dae8a7f44bb51e2c80c3c576792515de5a75b8341f6ad1fc33a1a4",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/Tests/Signing/TimedOut/SigningTimedOut.test.goal",
+  "prPath": "/Tests/Signing/TimedOut/.build/signingtimedout.test.pr",
+  "hash": "b5caa9d5e8e99346073de3e01bee8e7bef3106cdf4ad8f654d870bc4250b4832",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

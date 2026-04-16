@@ -1,0 +1,49 @@
+{
+  "name": "ProcessItem",
+  "description": "Maps ProcessItem step to a variable.set action; however the expression uses an unsupported operator form (\u003C= null) and is likely invalid PLang syntax for this compiler.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %count% = %count% \u002B 1",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%count%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%count% \u002B 1  \u003C= null",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Foreach/Empty/ProcessItem.goal",
+  "prPath": "/Tests/Foreach/Empty/.build/processitem.pr",
+  "hash": "2aaee77697119c328a1838907e034bdc41b7dceeed31c45f74f611dc2244e69b",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

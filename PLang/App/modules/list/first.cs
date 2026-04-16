@@ -1,5 +1,3 @@
-using App.Variables;
-
 namespace App.modules.list;
 
 [Action("first")]
@@ -10,10 +8,9 @@ public partial class First : IContext
 
     public Task<Data.@this> Run()
     {
-        var existing = Context.Variables.Get(ListName).Value;
-        if (existing is System.Collections.IList list && list.Count > 0)
-            return Task.FromResult(Data(list[0]));
+        var data = Context.Variables.Get(ListName);
+        var first = data.GetChild("[0]");
 
-        return Task.FromResult(Data());
+        return Task.FromResult(first.IsInitialized ? Data(first.Value) : Data());
     }
 }
