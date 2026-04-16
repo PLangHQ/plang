@@ -53,6 +53,17 @@ Registered as `DynamicData` (computed on each access):
 | `NowUtc` | Current UTC time | `DateTime.UtcNow` |
 | `GUID` | New unique identifier | `Guid.NewGuid().ToString()` |
 
+### Action Result Variable
+
+Every action stores its result as `%__data__%` on the context's Variables after execution. This is how data flows between actions in a step:
+
+```plang
+- read file 'config.json'         / result → %__data__%
+- set %config% = %__data__%       / variable.set reads %__data__% from previous action
+```
+
+The builder produces a `variable.set` action whenever a step needs to capture a result into a named variable. The `%__data__%` variable is overwritten by each action, so it always holds the most recent result.
+
 ### Code Examples
 
 ```csharp

@@ -367,6 +367,8 @@ public class @this
     /// Strings: full-match (%var%) returns the actual value, mixed ("hello %name%") interpolates.
     /// Lists: resolves each element. Dicts: resolves each value.
     /// Non-string primitives pass through unchanged.
+    /// Guarded by depth limit (100 levels) and breadth limit (100,000 items) to prevent
+    /// runaway resolution on deeply nested or very large structures.
     /// </summary>
     [ThreadStatic] private static int _resolveDepth;
     [ThreadStatic] private static int _resolveItemCount;

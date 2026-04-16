@@ -426,12 +426,10 @@ public partial class @this
     }
 
     /// <summary>
-    /// Virtual so subclasses can override with proper cloning.
-    /// SettingsVariable and DynamicData should not be cloned — they are stateless/factory-based.
-    /// </summary>
-    /// <summary>
     /// Creates a new Data wrapper around the same value (no deep copy).
     /// Use when renaming — the value stays shared so mutations propagate.
+    /// Events (OnChange/OnCreate/OnDelete) are intentionally not copied —
+    /// clones that go through Variables.Set() get events wired at storage time.
     /// </summary>
     public @this ShallowClone()
     {
@@ -451,6 +449,10 @@ public partial class @this
         return clone;
     }
 
+    /// <summary>
+    /// Deep-clones this Data including its value. Events are intentionally not copied —
+    /// clones that go through Variables.Set() get events wired at storage time.
+    /// </summary>
     public virtual @this Clone()
     {
         var clonedValue = _value.DeepClone();

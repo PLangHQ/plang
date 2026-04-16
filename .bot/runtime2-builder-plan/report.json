@@ -683,6 +683,60 @@
         "health": "Branch is safe to proceed. Major finding (NeedsResolution race) is a trivial 2-line swap.",
         "notes": "Recommend running docs bot next."
       }
+    },
+    {
+      "id": "34713140-11f1-4ba4-bbc6-4932a204c507",
+      "bot": "docs",
+      "timestamp_start": "2026-04-16T21:00:00Z",
+      "timestamp_end": "2026-04-16T21:35:00Z",
+      "intent": "Documentation review and gap-filling for runtime2-builder-plan branch",
+      "before": {
+        "assumptions": "Coder v7 (security fixes), auditor v1 PASS, tester v8 APPROVED, security v2 PASS. No prior docs bot run.",
+        "risk": "Large branch with many changes \u2014 stale docs likely in architecture.md, execution-flow.md, goals-steps.md around Return removal and condition orchestration"
+      },
+      "plan": "Update 5 stale architecture docs (goals-steps, architecture, execution-flow, good_to_know, variables) for __data__ flow, condition orchestration, step.Disabled. Add XML docs on JsonStringNavigator limits, Data.Clone() events, ResolveDeep guards. Add Data.Compare and security hardening docs.",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/goals-steps.md",
+            "Documentation/v0.2/architecture.md",
+            "Documentation/v0.2/execution-flow.md",
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/variables.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated stale references to Return property, added __data__ flow, condition orchestration, security hardening sections"
+        },
+        {
+          "paths": [
+            "PLang/App/Data/Navigators/JsonStringNavigator.cs",
+            "PLang/App/Data/this.cs",
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added XML doc comments on security guards and Clone() event semantics"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-plan/docs-report.json",
+            ".bot/runtime2-builder-plan/docs/v1/verdict.json",
+            ".bot/runtime2-builder-plan/docs/v1/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Final reports and verdict"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS \u2014 all 10 gaps filled",
+        "notes": "Ready to merge"
+      }
     }
   ]
 }

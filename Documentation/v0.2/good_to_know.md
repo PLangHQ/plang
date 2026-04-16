@@ -178,15 +178,72 @@ See `Step/Methods.cs:HandleErrorAsync()` for the implementation.
 
 Indented steps (sub-steps) default to NOT executing. They must be "proven true" by a parent condition step. The mechanism:
 
-1. `condition.if` evaluates its condition and returns `Data.Ok(bool)` as the step result.
-2. `Steps.RunAsync` checks each step that has indented children: if `IsConditionStep(step)` and `stepResult.Value is bool condition && !condition`, it sets `skipBelowIndent` to the step's indent level — all deeper steps are skipped.
-3. No Variables signal is used. The result flows directly through the step's return value.
+1. `condition.if` evaluates its condition.
+2. It walks the goal's step list from its own index forward, setting `step.Disabled = !conditionResult` on all steps with deeper indent.
+3. `Step.Disabled` is a context-backed property — the value is stored on `Context._data` using a key like `step:{prPath}:{index}:disabled`. This keeps the disabled state per-execution, not on the shared Step object.
+4. The step runner skips any step where `Disabled == true`.
 
-**Thread safety:** `skipBelowIndent` is a local variable in `Steps.RunAsync` — each concurrent request gets its own copy. Step objects are never mutated.
+**Thread safety:** The disabled state lives on the actor's Context data store, not on the Step object itself. Each execution context has its own copy.
 
-**Non-condition steps with indented children:** Only steps using the `condition` module (i.e., `condition.if`) can trigger sub-step skipping. A `variable.set` step returning Data with `Value=false` does NOT skip its children. The runner checks `IsConditionStep()` to enforce this — it verifies the step's first action has `Module == "condition"` (case-insensitive).
+**Nesting:** Works at arbitrary depth. When an inner `if` evaluates false, only its immediate indented children are disabled. The outer condition's children at the parent indent level continue normally.
 
-**Nesting:** Works at arbitrary depth. When an inner `if` returns false, only its immediate indented children are skipped. The outer condition's children at the parent indent level continue executing normally.
+## Condition Orchestration — if/elseif/else in One Step
+
+When a step contains multiple actions and the first is `condition.if`, the condition module orchestrates all actions in the step as branches:
+
+```
+Step: "if %x% > 5 set %b% = 4, else set %b% = 0"
+Actions: [condition.if, variable.set, condition.if, variable.set]
+         ├─ branch 1: condition.if → variable.set (then)
+         └─ branch 2: condition.if → variable.set (else)
+```
+
+The `Orchestrate()` method:
+1. Groups actions into branches: each branch starts with a `condition.if` action, followed by body actions.
+2. The last branch with no condition action is the else branch.
+3. Evaluates branches in order. The first branch whose condition is true runs its body actions.
+4. Returns the result of the matching branch, or `Data(false)` if no branch matched.
+
+**Guard against recursion:** A step-scoped guard key (`__condition_orchestrating_{hashCode}__`) is stored on `Context._data` (not Variables) to prevent the elseif condition evaluations from re-entering orchestration. Inner goal calls from branches get their own guard keys.
+
+---
+
+## Data.Compare — Structural JSON Diff
+
+`Data.Compare(other)` compares two Data objects by serializing both to JSON and walking the tree. Returns a Data whose Value is a dictionary with:
+- `match` (bool) — whether the two objects are structurally equal
+- `fields` — per-field comparison results (for objects)
+- `items` — per-element comparison results (for arrays)
+- `missingFields` / `extraFields` — fields present in one but not the other
+
+Comparison rules:
+- Numbers compared as `decimal` to avoid int/long/double boxing mismatches
+- Keys are case-insensitive
+- Null and missing (Undefined) are treated as equivalent
+- Strings compared with `StringComparison.Ordinal`
+
+Used by the builder eval runner to compare `.pr` output against `.golden` files.
+
+---
+
+## Security Hardening — Defense-in-Depth Limits
+
+Several subsystems have resource limits to prevent abuse:
+
+| Subsystem | Guard | Limit |
+|-----------|-------|-------|
+| **HTTP downloads** | `MaxDownloadSize` | 100MB (configurable) |
+| **HTTP in-memory reads** | `ReadLimitedStringAsync` / `ReadLimitedBytesAsync` | 100MB |
+| **HTTP SSE** | Consecutive overflow counter | Disconnect after 3 |
+| **HTTP all streams** | Throughput floor | 1KB/sec over 30s (slow-loris protection) |
+| **HTTP URL scheme** | `ResolveUrl` | Only `http://` and `https://` |
+| **JSON navigation** | `MaxElementCount` | 100,000 elements |
+| **JSON navigation** | `MaxDepth` | 64 levels |
+| **JSON string parse** | `MaxJsonStringSize` | 10MB |
+| **Variable resolution** | `ResolveDeep` breadth | 100,000 items |
+| **Variable resolution** | `ResolveDeep` depth | 100 levels |
+| **Ed25519 verification** | Header comparison | Constant-time via `CryptographicOperations.FixedTimeEquals` |
+| **File errors** | Error messages | No absolute paths exposed |
 
 ---
 

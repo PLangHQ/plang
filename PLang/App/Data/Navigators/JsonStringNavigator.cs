@@ -9,7 +9,11 @@ namespace App.Data.Navigators;
 public sealed class JsonStringNavigator : INavigator
 {
     private const int MaxJsonStringSize = 10 * 1024 * 1024; // 10MB
+
+    /// <summary>Maximum number of JSON elements (objects, arrays, values) allowed during unwrap. Prevents object amplification attacks.</summary>
     private const int MaxElementCount = 100_000;
+
+    /// <summary>Maximum nesting depth for JSON unwrap. Defense-in-depth alongside JsonDocument's own depth limit.</summary>
     private const int MaxDepth = 64;
 
     public bool CanNavigate(Data.@this data)
