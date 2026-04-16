@@ -1,6 +1,6 @@
 {
   "name": "TargetGoal",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %dynamicResult% to the string \u0022reached\u0022 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/GoalCall/Dynamic/TargetGoal.goal",
-  "prPath": "/Tests/Runtime2/GoalCall/Dynamic/.build/targetgoal.pr",
+  "path": "/Tests/GoalCall/Dynamic/TargetGoal.goal",
+  "prPath": "/Tests/GoalCall/Dynamic/.build/targetgoal.pr",
   "hash": "2ec9c541c0798889c270f82e43e32097396653042f614f189331cbc6904717c0",
   "builderVersion": null,
   "isSetup": false,

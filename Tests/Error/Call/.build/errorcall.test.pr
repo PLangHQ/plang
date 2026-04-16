@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %caughtMessage% to empty, calls ThrowTestError with on-error redirect to CatchError, then asserts %caughtMessage% equals \u0027test error\u0027.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,22 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ThrowTestError"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": {
         "goal": {
@@ -96,8 +111,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Call/ErrorCall.test.goal",
-  "prPath": "/Tests/Runtime2/Error/Call/.build/errorcall.test.pr",
+  "path": "/Tests/Error/Call/ErrorCall.test.goal",
+  "prPath": "/Tests/Error/Call/.build/errorcall.test.pr",
   "hash": "8c21fb451d36f668ff578e8d092ed6e203cfced3aa3ec24de873a6fafb88d34d",
   "builderVersion": null,
   "isSetup": false,

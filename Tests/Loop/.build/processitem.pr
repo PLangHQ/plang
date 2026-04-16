@@ -1,6 +1,6 @@
 {
   "name": "ProcessItem",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "ProcessItem writes an output line including the current loop variable %item%.",
   "comment": null,
   "steps": [
     {
@@ -9,7 +9,25 @@
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Item: %item%",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -19,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Loop/ProcessItem.goal",
-  "prPath": "/Tests/Runtime2/Loop/.build/processitem.pr",
+  "path": "/Tests/Loop/ProcessItem.goal",
+  "prPath": "/Tests/Loop/.build/processitem.pr",
   "hash": "cfeb4d0ddd62c20bc3ca1f0a7102830269241c0d6547c72d7e16db832eae042d",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "HandleMissing",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %missingCaught% to true in HandleMissing.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,7 @@
               "type": "bool"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -43,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/GoalCall/Missing/HandleMissing.goal",
-  "prPath": "/Tests/Runtime2/GoalCall/Missing/.build/handlemissing.pr",
+  "path": "/Tests/GoalCall/Missing/HandleMissing.goal",
+  "prPath": "/Tests/GoalCall/Missing/.build/handlemissing.pr",
   "hash": "6bfa3e52f470dc006286a5418d0a9270a4a8225a172661b024816e0ad2084865",
   "builderVersion": null,
   "isSetup": false,

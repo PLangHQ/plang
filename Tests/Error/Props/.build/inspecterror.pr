@@ -1,6 +1,6 @@
 {
   "name": "InspectError",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets error-related variables from the current %!error.*% context, each defaulting to null.",
   "comment": null,
   "steps": [
     {
@@ -9,7 +9,30 @@
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%errorMessage%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%!error.Message%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -22,7 +45,30 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%errorKey%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%!error.Key%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -35,7 +81,30 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%errorStatusCode%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%!error.StatusCode%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -45,8 +114,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Props/InspectError.goal",
-  "prPath": "/Tests/Runtime2/Error/Props/.build/inspecterror.pr",
+  "path": "/Tests/Error/Props/InspectError.goal",
+  "prPath": "/Tests/Error/Props/.build/inspecterror.pr",
   "hash": "a04c978e2dcf88fd3ad7c3ff05b8361a9e019e3440c9bbfcef137a4260d21a14",
   "builderVersion": null,
   "isSetup": false,

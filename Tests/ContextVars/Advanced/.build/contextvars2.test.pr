@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Asserts that goal name, step, context, fileSystem, and callStack are accessible via special variables in the Start goal.",
   "comment": null,
   "steps": [
     {
@@ -45,7 +45,25 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": "Test: step is accessible",
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%!step%",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -148,8 +166,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/ContextVars/Advanced/ContextVars2.test.goal",
-  "prPath": "/Tests/Runtime2/ContextVars/Advanced/.build/contextvars2.test.pr",
+  "path": "/Tests/ContextVars/Advanced/ContextVars2.test.goal",
+  "prPath": "/Tests/ContextVars/Advanced/.build/contextvars2.test.pr",
   "hash": "85619f863448eb43ec701fc1850de420df2fea3a522ce131303290d8f6ae53de",
   "builderVersion": null,
   "isSetup": false,

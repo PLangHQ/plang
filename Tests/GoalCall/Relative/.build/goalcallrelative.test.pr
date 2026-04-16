@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Calls sub/SubGoal and then asserts that %subResult% equals \u0022from sub\u0022.",
   "comment": null,
   "steps": [
     {
@@ -18,10 +18,7 @@
               "name": "GoalName",
               "value": {
                 "name": "sub/SubGoal",
-                "description": null,
-                "parallel": false,
-                "parameters": null,
-                "prPath": "/sub/.build/subgoal.pr"
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -41,7 +38,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "from sub",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%subResult%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -51,8 +66,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/GoalCall/Relative/GoalCallRelative.test.goal",
-  "prPath": "/Tests/Runtime2/GoalCall/Relative/.build/goalcallrelative.test.pr",
+  "path": "/Tests/GoalCall/Relative/GoalCallRelative.test.goal",
+  "prPath": "/Tests/GoalCall/Relative/.build/goalcallrelative.test.pr",
   "hash": "cb01eef210fee7de682ba2b2518a19d73b1aea2dc6f39fb6b7de168b0414c8b0",
   "builderVersion": null,
   "isSetup": false,

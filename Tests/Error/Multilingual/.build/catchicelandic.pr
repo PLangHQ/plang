@@ -1,6 +1,6 @@
 {
   "name": "CatchIcelandic",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Set %caughtIcelandic% to true using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Multilingual/CatchIcelandic.goal",
-  "prPath": "/Tests/Runtime2/Error/Multilingual/.build/catchicelandic.pr",
+  "path": "/Tests/Error/Multilingual/CatchIcelandic.goal",
+  "prPath": "/Tests/Error/Multilingual/.build/catchicelandic.pr",
   "hash": "6344b0e654e98037daab29cea8946dd188c6aa4167017e8e0008457d04b8af37",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets JSON body, POSTs to httpbin with unsigned request and stores response, then conditionally writes messages based on whether response is empty and whether response.StatusCode equals 200.",
   "comment": null,
   "steps": [
     {
@@ -25,7 +25,7 @@
                 "name": "Alice",
                 "age": 30
               },
-              "type": "object"
+              "type": "json"
             }
           ],
           "defaults": null
@@ -43,7 +43,57 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "http",
+          "action": "request",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "https://httpbin.org/post",
+              "type": "string"
+            },
+            {
+              "name": "Method",
+              "value": "POST",
+              "type": "httpmethod"
+            },
+            {
+              "name": "Body",
+              "value": "%body%",
+              "type": "object"
+            },
+            {
+              "name": "Unsigned",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "ContentType",
+              "value": "application/json",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -64,7 +114,7 @@
             {
               "name": "Left",
               "value": "%response%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -73,8 +123,8 @@
             },
             {
               "name": "Right",
-              "value": "false",
-              "type": "string"
+              "value": false,
+              "type": "bool"
             },
             {
               "name": "Negate",
@@ -105,7 +155,7 @@
             {
               "name": "Data",
               "value": "POST request returned data",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -131,7 +181,7 @@
             {
               "name": "Left",
               "value": "%response.StatusCode%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -140,17 +190,16 @@
             },
             {
               "name": "Right",
-              "value": "200",
-              "type": "string"
-            }
-          ],
-          "defaults": [
+              "value": 200,
+              "type": "int"
+            },
             {
-              "name": "negate",
+              "name": "Negate",
               "value": false,
               "type": "bool"
             }
-          ]
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -173,7 +222,7 @@
             {
               "name": "Data",
               "value": "Status code is 200",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -188,8 +237,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Http/PostRequest/PostRequest.test.goal",
-  "prPath": "/Tests/Runtime2/Http/PostRequest/.build/postrequest.test.pr",
+  "path": "/Tests/Http/PostRequest/PostRequest.test.goal",
+  "prPath": "/Tests/Http/PostRequest/.build/postrequest.test.pr",
   "hash": "298d57e541ec98d2f01de92eb72a3556d3f89683fa40cc83d6232a37786ff99b",
   "builderVersion": null,
   "isSetup": false,

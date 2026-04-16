@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Maps two tests: (1) retry exhaustion with ignore continues execution, (2) retry exhaustion then calls HandleRetryError and sets a flag for assertion.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,7 @@
               "type": "bool"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -46,7 +40,20 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%beforeRetry%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -83,7 +90,7 @@
         "goal": null,
         "retryCount": 2,
         "retryOverMs": null,
-        "order": null,
+        "order": 1,
         "ignoreError": true,
         "message": null,
         "statusCode": null,
@@ -115,13 +122,7 @@
               "type": "bool"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -144,7 +145,7 @@
             {
               "name": "Value",
               "value": "%afterRetryIgnore%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
@@ -203,7 +204,7 @@
         "retryCount": 1,
         "retryOverMs": null,
         "order": 1,
-        "ignoreError": false,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -226,7 +227,7 @@
             {
               "name": "Value",
               "value": "%retryErrorHandled%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
@@ -246,8 +247,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Retry/Retry.test.goal",
-  "prPath": "/Tests/Runtime2/Retry/.build/retry.test.pr",
+  "path": "/Tests/Retry/Retry.test.goal",
+  "prPath": "/Tests/Retry/.build/retry.test.pr",
   "hash": "daa61c8cd8de798605b131e658ccad57e85fe7626e33908e4a8bdd2502745ce8",
   "builderVersion": null,
   "isSetup": false,

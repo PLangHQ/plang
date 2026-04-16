@@ -1,6 +1,6 @@
 {
   "name": "CatchJapanese",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets the %caughtJapanese% variable to true.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,7 @@
               "type": "bool"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -43,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Multilingual/CatchJapanese.goal",
-  "prPath": "/Tests/Runtime2/Error/Multilingual/.build/catchjapanese.pr",
+  "path": "/Tests/Error/Multilingual/CatchJapanese.goal",
+  "prPath": "/Tests/Error/Multilingual/.build/catchjapanese.pr",
   "hash": "60c802606c976f152d5f57bca81d0e5a510c3c76a762e5b2835c240434bcdc3c",
   "builderVersion": null,
   "isSetup": false,

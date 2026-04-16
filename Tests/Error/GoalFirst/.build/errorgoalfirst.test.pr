@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets up flags/counters, calls AlwaysFails with GoalFirst error handling (call GoalFirstHandler first, then retry 2 times), and asserts the handler was invoked.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalFirstAttempts%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -61,7 +79,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "AlwaysFails"
+                "name": "AlwaysFails",
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -81,7 +100,7 @@
         "retryCount": 2,
         "retryOverMs": null,
         "order": 0,
-        "ignoreError": false,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -109,7 +128,7 @@
             {
               "name": "Message",
               "value": "error goal should be called in GoalFirst order",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -124,8 +143,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/GoalFirst/ErrorGoalFirst.test.goal",
-  "prPath": "/Tests/Runtime2/Error/GoalFirst/.build/errorgoalfirst.test.pr",
+  "path": "/Tests/Error/GoalFirst/ErrorGoalFirst.test.goal",
+  "prPath": "/Tests/Error/GoalFirst/.build/errorgoalfirst.test.pr",
   "hash": "e7fff35aa8b251b0726e792f79f6f003fbed9f55b66ef9d316cfb0b40b541245",
   "builderVersion": null,
   "isSetup": false,

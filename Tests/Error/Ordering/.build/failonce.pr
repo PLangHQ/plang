@@ -1,6 +1,6 @@
 {
   "name": "FailOnce",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Throws an error with message \u0022fail\u0022.",
   "comment": null,
   "steps": [
     {
@@ -32,8 +32,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Ordering/FailOnce.goal",
-  "prPath": "/Tests/Runtime2/Error/Ordering/.build/failonce.pr",
+  "path": "/Tests/Error/Ordering/FailOnce.goal",
+  "prPath": "/Tests/Error/Ordering/.build/failonce.pr",
   "hash": "f1648733b8656221b79a27895b2aaed27dd6586ca475761244b73193182e4865",
   "builderVersion": null,
   "isSetup": false,

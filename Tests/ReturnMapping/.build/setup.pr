@@ -1,6 +1,6 @@
 {
   "name": "Setup",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Saves testfile.txt with the provided content to the given path.",
   "comment": null,
   "steps": [
     {
@@ -15,12 +15,12 @@
           "action": "save",
           "parameters": [
             {
-              "name": "path",
-              "value": "testfile.txt",
+              "name": "Path",
+              "value": "%path%/testfile.txt",
               "type": "path"
             },
             {
-              "name": "data",
+              "name": "Value",
               "value": "hello from file",
               "type": "string"
             }
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/ReturnMapping/Setup.goal",
-  "prPath": "/Tests/Runtime2/ReturnMapping/.build/setup.pr",
+  "path": "/Tests/ReturnMapping/Setup.goal",
+  "prPath": "/Tests/ReturnMapping/.build/setup.pr",
   "hash": "2c022edab6fb626a0fb9f0b1b49add805a4ec157f31803644cdb9e8b665e23c6",
   "builderVersion": null,
   "isSetup": true,

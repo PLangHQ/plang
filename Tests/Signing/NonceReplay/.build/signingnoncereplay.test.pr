@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %replayed% to true.",
   "comment": null,
   "steps": [
     {
@@ -9,9 +9,36 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: verify same signed data twice, second fails as nonce replay",
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -22,7 +49,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "SetAsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -35,7 +80,27 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "once"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -48,7 +113,37 @@
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -61,7 +156,44 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "C0"
+              ],
+              "type": "list"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%verifyResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -74,7 +206,25 @@
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%verifyResult.Success%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "first verify should succeed",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -87,9 +237,44 @@
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "C0"
+              ],
+              "type": "list"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": {
+          "name": "HandleReplay",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": null,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -100,7 +285,25 @@
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%replayed%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "second verify with same nonce should fail",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -120,7 +323,25 @@
           "lineNumber": 13,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%replayed%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -130,8 +351,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/Tests/Runtime2/Signing/NonceReplay/SigningNonceReplay.test.goal",
-      "prPath": "/Tests/Runtime2/Signing/NonceReplay/.build/signingnoncereplay.test.pr",
+      "path": "/Tests/Signing/NonceReplay/SigningNonceReplay.test.goal",
+      "prPath": "/Tests/Signing/NonceReplay/.build/signingnoncereplay.test.pr",
       "hash": "0d0968836e63dedc2bca964b43df164f083f986f0e8df8f2c7686a90597b9e3b",
       "builderVersion": null,
       "isSetup": false,
@@ -142,8 +363,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Signing/NonceReplay/SigningNonceReplay.test.goal",
-  "prPath": "/Tests/Runtime2/Signing/NonceReplay/.build/signingnoncereplay.test.pr",
+  "path": "/Tests/Signing/NonceReplay/SigningNonceReplay.test.goal",
+  "prPath": "/Tests/Signing/NonceReplay/.build/signingnoncereplay.test.pr",
   "hash": "da4cf32ee8edd5de4b62e4f96b52b4de2146f4e77ef052f66cf140cc6fb35db3",
   "builderVersion": null,
   "isSetup": false,

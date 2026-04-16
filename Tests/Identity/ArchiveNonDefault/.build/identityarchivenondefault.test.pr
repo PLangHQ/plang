@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Archives two non-default identities (ignoring errors), recreates them with one set as default, verifies the default identity name remains unchanged, then archives the default identity.",
   "comment": null,
   "steps": [
     {
@@ -49,7 +49,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "TestArcNonDefB",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": {
         "goal": null,
@@ -177,7 +195,7 @@
             {
               "name": "Message",
               "value": "Assert that %MyIdentity.Name% equals \u0027TestArcNonDefA\u0027",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -223,8 +241,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Identity/ArchiveNonDefault/IdentityArchiveNonDefault.test.goal",
-  "prPath": "/Tests/Runtime2/Identity/ArchiveNonDefault/.build/identityarchivenondefault.test.pr",
+  "path": "/Tests/Identity/ArchiveNonDefault/IdentityArchiveNonDefault.test.goal",
+  "prPath": "/Tests/Identity/ArchiveNonDefault/.build/identityarchivenondefault.test.pr",
   "hash": "f6d88eca3e736a50bda37421822e158daa419d631c08afd7a5448ac284fc83f9",
   "builderVersion": null,
   "isSetup": false,

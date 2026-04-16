@@ -1,6 +1,6 @@
 {
   "name": "BadHandler",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "BadHandler throws an error with message \u0022handler error\u0022.",
   "comment": null,
   "steps": [
     {
@@ -32,8 +32,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/InHandler/BadHandler.goal",
-  "prPath": "/Tests/Runtime2/Error/InHandler/.build/badhandler.pr",
+  "path": "/Tests/Error/InHandler/BadHandler.goal",
+  "prPath": "/Tests/Error/InHandler/.build/badhandler.pr",
   "hash": "4a219d8c94d25f14b8b0a5c33a9b4ae0aa0948114da0df9b0ac04a0d7e9cbbe8",
   "builderVersion": null,
   "isSetup": false,

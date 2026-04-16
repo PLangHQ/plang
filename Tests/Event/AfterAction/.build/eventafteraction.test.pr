@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %actionFired% to false, then writes out a captured output from a called CaptureWrite goal, writes \u0027hello world\u0027, and finally asserts %actionFired% equals true.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,23 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "CaptureWrite",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -61,6 +77,11 @@
             {
               "name": "Data",
               "value": "hello world",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
               "type": "string"
             }
           ],
@@ -107,8 +128,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Event/AfterAction/EventAfterAction.test.goal",
-  "prPath": "/Tests/Runtime2/Event/AfterAction/.build/eventafteraction.test.pr",
+  "path": "/Tests/Event/AfterAction/EventAfterAction.test.goal",
+  "prPath": "/Tests/Event/AfterAction/.build/eventafteraction.test.pr",
   "hash": "318f15a4a1a1834bc5ac96a70ab0c1bacd7c13c7e815934b8aa612fe13535290",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Calls a non-existent goal to trigger an error, then calls HandleMissing via onError, and finally asserts that %missingCaught% was set to true.",
   "comment": null,
   "steps": [
     {
@@ -17,7 +17,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "NonExistentGoal"
+                "name": "NonExistentGoal",
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -34,10 +35,10 @@
           "parameters": null,
           "prPath": null
         },
-        "retryCount": null,
+        "retryCount": 0,
         "retryOverMs": null,
-        "order": null,
-        "ignoreError": false,
+        "order": 0,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -52,7 +53,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%missingCaught%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -62,8 +81,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/GoalCall/Missing/GoalCallMissing.test.goal",
-  "prPath": "/Tests/Runtime2/GoalCall/Missing/.build/goalcallmissing.test.pr",
+  "path": "/Tests/GoalCall/Missing/GoalCallMissing.test.goal",
+  "prPath": "/Tests/GoalCall/Missing/.build/goalcallmissing.test.pr",
   "hash": "42ff00589e01e37c2a08137308ad6fc27dc45b3a0b3cd118fb5496c7fc4978f7",
   "builderVersion": null,
   "isSetup": false,

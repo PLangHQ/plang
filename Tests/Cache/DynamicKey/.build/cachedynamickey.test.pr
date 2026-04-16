@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Compiles the provided Start goal into engine actions. Note: the goal text indicates a known behavior about cache keys using literal step text; this compilation does not add/modify caching because no cache modifiers are present in the steps.",
   "comment": null,
   "steps": [
     {
@@ -15,12 +15,12 @@
           "action": "save",
           "parameters": [
             {
-              "name": "path",
+              "name": "Path",
               "value": "dynkey1.txt",
               "type": "path"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": "content1",
               "type": "string"
             }
@@ -40,7 +40,25 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "dynkey2.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "content2",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -59,12 +77,12 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%fileName%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": "dynkey1.txt",
               "type": "string"
             }
@@ -90,8 +108,11 @@
           "action": "call",
           "parameters": [
             {
-              "name": "goalName",
-              "value": "ReadDynamic",
+              "name": "GoalName",
+              "value": {
+                "name": "ReadDynamic",
+                "parameters": []
+              },
               "type": "goal.call"
             }
           ],
@@ -116,12 +137,12 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%result1%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": "%dynContent%",
               "type": "string"
             }
@@ -147,12 +168,12 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%fileName%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": "dynkey2.txt",
               "type": "string"
             }
@@ -178,8 +199,11 @@
           "action": "call",
           "parameters": [
             {
-              "name": "goalName",
-              "value": "ReadDynamic",
+              "name": "GoalName",
+              "value": {
+                "name": "ReadDynamic",
+                "parameters": []
+              },
               "type": "goal.call"
             }
           ],
@@ -204,12 +228,12 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%result2%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": "%dynContent%",
               "type": "string"
             }
@@ -235,12 +259,12 @@
           "action": "equals",
           "parameters": [
             {
-              "name": "expected",
+              "name": "Expected",
               "value": "content1",
               "type": "string"
             },
             {
-              "name": "actual",
+              "name": "Actual",
               "value": "%result1%",
               "type": "string"
             }
@@ -266,12 +290,12 @@
           "action": "equals",
           "parameters": [
             {
-              "name": "expected",
+              "name": "Expected",
               "value": "content1",
               "type": "string"
             },
             {
-              "name": "actual",
+              "name": "Actual",
               "value": "%result2%",
               "type": "string"
             }
@@ -297,17 +321,17 @@
           "action": "delete",
           "parameters": [
             {
-              "name": "path",
+              "name": "Path",
               "value": "dynkey1.txt",
               "type": "path"
             },
             {
-              "name": "ignoreIfNotFound",
+              "name": "IgnoreIfNotFound",
               "value": false,
               "type": "bool"
             },
             {
-              "name": "recursive",
+              "name": "Recursive",
               "value": false,
               "type": "bool"
             }
@@ -333,17 +357,17 @@
           "action": "delete",
           "parameters": [
             {
-              "name": "path",
+              "name": "Path",
               "value": "dynkey2.txt",
               "type": "path"
             },
             {
-              "name": "ignoreIfNotFound",
+              "name": "IgnoreIfNotFound",
               "value": false,
               "type": "bool"
             },
             {
-              "name": "recursive",
+              "name": "Recursive",
               "value": false,
               "type": "bool"
             }
@@ -360,8 +384,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Cache/DynamicKey/CacheDynamicKey.test.goal",
-  "prPath": "/Tests/Runtime2/Cache/DynamicKey/.build/cachedynamickey.test.pr",
+  "path": "/Tests/Cache/DynamicKey/CacheDynamicKey.test.goal",
+  "prPath": "/Tests/Cache/DynamicKey/.build/cachedynamickey.test.pr",
   "hash": "13f312f74552bfeb9448e45b2104ffac76a37407485677b97967d9971d05669f",
   "builderVersion": null,
   "isSetup": false,

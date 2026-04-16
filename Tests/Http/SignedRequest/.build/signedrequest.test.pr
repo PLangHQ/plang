@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Fetches headers from httpbin, stores the response in %response%, checks that %response% is not empty, and writes an output message when the check passes.",
   "comment": null,
   "steps": [
     {
@@ -23,41 +23,26 @@
               "name": "Method",
               "value": "GET",
               "type": "httpmethod"
-            },
-            {
-              "name": "OnStream",
-              "value": {
-                "name": "",
-                "description": null,
-                "parallel": false,
-                "parameters": null,
-                "prPath": null
-              },
-              "type": "goal.call"
             }
           ],
-          "defaults": [
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
             {
-              "name": "contenttype",
-              "value": "application/json",
+              "name": "Name",
+              "value": "%response%",
               "type": "string"
             },
             {
-              "name": "encoding",
-              "value": "utf-8",
-              "type": "string"
-            },
-            {
-              "name": "timeoutinsec",
-              "value": 30,
-              "type": "int"
-            },
-            {
-              "name": "unsigned",
-              "value": false,
-              "type": "bool"
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
-          ]
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -72,7 +57,35 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%response%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "isempty",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Negate",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -93,6 +106,11 @@
             {
               "name": "Data",
               "value": "Signed request returned data",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
               "type": "string"
             }
           ],
@@ -108,8 +126,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Http/SignedRequest/SignedRequest.test.goal",
-  "prPath": "/Tests/Runtime2/Http/SignedRequest/.build/signedrequest.test.pr",
+  "path": "/Tests/Http/SignedRequest/SignedRequest.test.goal",
+  "prPath": "/Tests/Http/SignedRequest/.build/signedrequest.test.pr",
   "hash": "c616554ac67fad8477f13b1a065394cf31a6a95d3fb9d94fab8083f8e575088d",
   "builderVersion": null,
   "isSetup": false,

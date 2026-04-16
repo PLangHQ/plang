@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Compiles a sequence of assertions: not-equals, is-false, is-null, greater-than, and less-than, with explicit variable.set steps for the null/false values.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,25 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": "isFalse",
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%flag%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -195,8 +213,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Assert/Assert.test.goal",
-  "prPath": "/Tests/Runtime2/Assert/.build/assert.test.pr",
+  "path": "/Tests/Assert/Assert.test.goal",
+  "prPath": "/Tests/Assert/.build/assert.test.pr",
   "hash": "1815c780867821a77fd6445aa08ecd27f6d5d34e0c875d967718c63ab3d7e4b6",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Archives old/new identities, recreates old as default, renames it to new, asserts the identity name matches, then archives the new identity. All steps ignore errors as specified.",
   "comment": null,
   "steps": [
     {
@@ -49,7 +49,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "TestRenameNew",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": {
         "goal": null,
@@ -228,8 +246,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Identity/Rename/IdentityRename.test.goal",
-  "prPath": "/Tests/Runtime2/Identity/Rename/.build/identityrename.test.pr",
+  "path": "/Tests/Identity/Rename/IdentityRename.test.goal",
+  "prPath": "/Tests/Identity/Rename/.build/identityrename.test.pr",
   "hash": "66c4243ac1f1cba0369638c94312b07722ff908760c88e9afe0c19363a53e9c1",
   "builderVersion": null,
   "isSetup": false,

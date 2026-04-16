@@ -1,6 +1,6 @@
 {
   "name": "HandleTrue",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %result% to the string \u0022true-branch\u0022 in HandleTrue.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/Falsy/HandleTrue.goal",
-  "prPath": "/Tests/Runtime2/Condition/Falsy/.build/handletrue.pr",
+  "path": "/Tests/Condition/Falsy/HandleTrue.goal",
+  "prPath": "/Tests/Condition/Falsy/.build/handletrue.pr",
   "hash": "49e7d4ae7739c7c8735ca92768d80236a99551c8e9a5f12a70a412e97d782cd2",
   "builderVersion": null,
   "isSetup": false,

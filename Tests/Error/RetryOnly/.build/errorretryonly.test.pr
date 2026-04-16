@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Compiles a test flow that verifies bare retry exhaustion propagates to the caller, and that timed retry (retry over milliseconds) also propagates after retries are exhausted.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%bareRetryAttempts%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -62,8 +80,6 @@
               "name": "GoalName",
               "value": {
                 "name": "BareRetryGoal",
-                "description": "",
-                "parallel": false,
                 "parameters": []
               },
               "type": "goal.call"
@@ -84,7 +100,7 @@
         "retryCount": 2,
         "retryOverMs": null,
         "order": 1,
-        "ignoreError": false,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -112,7 +128,7 @@
             {
               "name": "Message",
               "value": "bare retry exhaustion should propagate error to caller",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -148,7 +164,7 @@
             {
               "name": "Message",
               "value": "should have 1 initial \u002B 2 retries = 3 attempts",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -235,20 +251,11 @@
           "parameters": [
             {
               "name": "GoalName",
-              "value": "TimedRetryGoal",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "name": "GoalName",
-              "value": "TimedRetryCatcher",
-              "type": "string"
+              "value": {
+                "name": "TimedRetryGoal",
+                "parameters": []
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null
@@ -266,7 +273,7 @@
         "retryCount": 2,
         "retryOverMs": 500,
         "order": 1,
-        "ignoreError": false,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -294,7 +301,7 @@
             {
               "name": "Message",
               "value": "timed retry exhaustion should propagate error to caller",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -330,7 +337,7 @@
             {
               "name": "Message",
               "value": "timed retry should have 1 initial \u002B 2 retries = 3 attempts",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -345,8 +352,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/RetryOnly/ErrorRetryOnly.test.goal",
-  "prPath": "/Tests/Runtime2/Error/RetryOnly/.build/errorretryonly.test.pr",
+  "path": "/Tests/Error/RetryOnly/ErrorRetryOnly.test.goal",
+  "prPath": "/Tests/Error/RetryOnly/.build/errorretryonly.test.pr",
   "hash": "96a26b749f43cc186e430e26b98692236ef09efc220d4930e9241da1aa50525d",
   "builderVersion": null,
   "isSetup": false,

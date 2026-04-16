@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets variables and conditionally calls goals based on greater-than, less-than, equality, inequality, string containment, and a false condition (if/else). Then asserts expected results.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,42 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%x%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": {
+                "name": "WhenGreater"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -66,7 +101,7 @@
             {
               "name": "Actual",
               "value": "%greaterResult%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -123,7 +158,7 @@
             {
               "name": "Left",
               "value": "%y%",
-              "type": "data"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -136,7 +171,12 @@
               "type": "int"
             },
             {
-              "name": "GoalIfTrue",
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
               "value": {
                 "name": "WhenLess"
               },
@@ -171,7 +211,7 @@
             {
               "name": "Actual",
               "value": "%lessResult%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -228,7 +268,7 @@
             {
               "name": "Left",
               "value": "%z%",
-              "type": "data"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -241,7 +281,12 @@
               "type": "int"
             },
             {
-              "name": "GoalIfTrue",
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
               "value": {
                 "name": "WhenEqual"
               },
@@ -276,7 +321,7 @@
             {
               "name": "Actual",
               "value": "%equalResult%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -333,7 +378,7 @@
             {
               "name": "Left",
               "value": "%a%",
-              "type": "data"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -346,7 +391,12 @@
               "type": "int"
             },
             {
-              "name": "GoalIfTrue",
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
               "value": {
                 "name": "WhenNotEqual"
               },
@@ -381,7 +431,7 @@
             {
               "name": "Actual",
               "value": "%notEqualResult%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -438,7 +488,7 @@
             {
               "name": "Left",
               "value": "%name%",
-              "type": "data"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -451,7 +501,12 @@
               "type": "string"
             },
             {
-              "name": "GoalIfTrue",
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
               "value": {
                 "name": "WhenContains"
               },
@@ -486,7 +541,7 @@
             {
               "name": "Actual",
               "value": "%containsResult%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -543,7 +598,7 @@
             {
               "name": "Left",
               "value": "%b%",
-              "type": "data"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -556,14 +611,46 @@
               "type": "int"
             },
             {
-              "name": "GoalIfTrue",
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
               "value": {
                 "name": "WhenGreater"
               },
               "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%b%",
+              "type": "object"
             },
             {
-              "name": "GoalIfFalse",
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 100,
+              "type": "int"
+            },
+            {
+              "name": "Negate",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
               "value": {
                 "name": "WhenFalse"
               },
@@ -598,7 +685,7 @@
             {
               "name": "Actual",
               "value": "%falseResult%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -613,8 +700,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/Compound/ConditionCompound.test.goal",
-  "prPath": "/Tests/Runtime2/Condition/Compound/.build/conditioncompound.test.pr",
+  "path": "/Tests/Condition/Compound/ConditionCompound.test.goal",
+  "prPath": "/Tests/Condition/Compound/.build/conditioncompound.test.pr",
   "hash": "9b189b9e28d5b45c9a83ddf05681b7b878ce40779e9bde3e606bf33dccdd647e",
   "builderVersion": null,
   "isSetup": false,

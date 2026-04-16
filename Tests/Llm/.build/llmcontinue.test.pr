@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Runs two llm.query calls: first stores the response in %first%, second continues the previous conversation and stores the response in %second%, then asserts both are not null.",
   "comment": null,
   "steps": [
     {
@@ -18,15 +18,17 @@
               "name": "Messages",
               "value": [
                 {
-                  "Role": "system",
-                  "Text": "You are a helpful assistant"
+                  "role": "system",
+                  "content": "You are a helpful assistant",
+                  "images": []
                 },
                 {
-                  "Role": "user",
-                  "Text": "My favorite color is blue. Remember that."
+                  "role": "user",
+                  "content": "My favorite color is blue. Remember that.",
+                  "images": []
                 }
               ],
-              "type": "list"
+              "type": "list\u003Cllmmessage\u003E"
             },
             {
               "name": "ContinuePreviousConversation",
@@ -37,6 +39,23 @@
               "name": "Cache",
               "value": true,
               "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%first%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -54,7 +73,58 @@
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "llm",
+          "action": "query",
+          "parameters": [
+            {
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "You are a helpful assistant",
+                  "images": []
+                },
+                {
+                  "role": "user",
+                  "content": "What is my favorite color?",
+                  "images": []
+                }
+              ],
+              "type": "list\u003Cllmmessage\u003E"
+            },
+            {
+              "name": "ContinuePreviousConversation",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%second%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -116,8 +186,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Llm/LlmContinue.test.goal",
-  "prPath": "/Tests/Runtime2/Llm/.build/llmcontinue.test.pr",
+  "path": "/Tests/Llm/LlmContinue.test.goal",
+  "prPath": "/Tests/Llm/.build/llmcontinue.test.pr",
   "hash": "37b7d06e17c11310edbcf0336bb934cc32b507e0f2f8677603fa4f1f3dbf0202",
   "builderVersion": null,
   "isSetup": false,

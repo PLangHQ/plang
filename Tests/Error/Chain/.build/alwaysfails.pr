@@ -1,6 +1,6 @@
 {
   "name": "AlwaysFails",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "AlwaysFails goal throws an error with message \u0027always fails\u0027.",
   "comment": null,
   "steps": [
     {
@@ -32,8 +32,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Chain/AlwaysFails.goal",
-  "prPath": "/Tests/Runtime2/Error/Chain/.build/alwaysfails.pr",
+  "path": "/Tests/Error/Chain/AlwaysFails.goal",
+  "prPath": "/Tests/Error/Chain/.build/alwaysfails.pr",
   "hash": "a91369207d3e67d7d3fbc2cc7a0fc4e6f2a7558d1ae6c543d01237f04ad35098",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Saves a file, calls ReadCached to read a cached value with sliding cache, verifies the cached value remains \u0027original\u0027 after the file content changes, then deletes the file.",
   "comment": null,
   "steps": [
     {
@@ -22,7 +22,7 @@
             {
               "name": "Value",
               "value": "original",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -40,10 +40,31 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ReadCached",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
-      "cache": null,
+      "cache": {
+        "durationMs": 300000,
+        "sliding": true,
+        "key": null,
+        "location": null
+      },
       "timeout": null,
       "waitForExecution": true
     },
@@ -67,6 +88,11 @@
               "name": "Actual",
               "value": "%cachedValue%",
               "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
           "defaults": null
@@ -97,7 +123,7 @@
             {
               "name": "Value",
               "value": "changed",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -123,7 +149,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ReadCached"
+                "name": "ReadCached",
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -133,7 +160,12 @@
       ],
       "intent": null,
       "onError": null,
-      "cache": null,
+      "cache": {
+        "durationMs": 300000,
+        "sliding": true,
+        "key": null,
+        "location": null
+      },
       "timeout": null,
       "waitForExecution": true
     },
@@ -157,6 +189,11 @@
               "name": "Actual",
               "value": "%cachedValue%",
               "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
           "defaults": null
@@ -207,8 +244,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Cache/Sliding/CacheSliding.test.goal",
-  "prPath": "/Tests/Runtime2/Cache/Sliding/.build/cachesliding.test.pr",
+  "path": "/Tests/Cache/Sliding/CacheSliding.test.goal",
+  "prPath": "/Tests/Cache/Sliding/.build/cachesliding.test.pr",
   "hash": "5746e3ed1dfeb8d5dc758b25c0986c2556f4c15eda96239852399d32274fdf50",
   "builderVersion": null,
   "isSetup": false,

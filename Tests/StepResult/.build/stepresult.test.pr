@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %x% to \u0027hello\u0027, then asserts the current step result (%__stepResult%) is not null.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -46,7 +40,20 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%__stepResult%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -56,8 +63,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/StepResult/StepResult.test.goal",
-  "prPath": "/Tests/Runtime2/StepResult/.build/stepresult.test.pr",
+  "path": "/Tests/StepResult/StepResult.test.goal",
+  "prPath": "/Tests/StepResult/.build/stepresult.test.pr",
   "hash": "b71f60b0189a659c5e43ef9ecd9485a0a5080816955af1c03f29c1fe7810af59",
   "builderVersion": null,
   "isSetup": false,

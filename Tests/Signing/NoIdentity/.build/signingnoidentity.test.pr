@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %noIdentity% to true (null condition in source maps to boolean true).",
   "comment": null,
   "steps": [
     {
@@ -9,7 +9,27 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: sign without creating identity first, should error",
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "unsigned"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -22,9 +42,37 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": {
+          "name": "HandleNoIdentity",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": 0,
+        "ignoreError": null,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -35,7 +83,25 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%noIdentity%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "sign without identity should fail",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -55,7 +121,25 @@
           "lineNumber": 8,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%noIdentity%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -65,8 +149,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/Tests/Runtime2/Signing/NoIdentity/SigningNoIdentity.test.goal",
-      "prPath": "/Tests/Runtime2/Signing/NoIdentity/.build/signingnoidentity.test.pr",
+      "path": "/Tests/Signing/NoIdentity/SigningNoIdentity.test.goal",
+      "prPath": "/Tests/Signing/NoIdentity/.build/signingnoidentity.test.pr",
       "hash": "78852fea53a9ef8e4d8aafea747e5b552909c12a5b36a3c4b8824e5ff13ea63c",
       "builderVersion": null,
       "isSetup": false,
@@ -77,8 +161,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Signing/NoIdentity/SigningNoIdentity.test.goal",
-  "prPath": "/Tests/Runtime2/Signing/NoIdentity/.build/signingnoidentity.test.pr",
+  "path": "/Tests/Signing/NoIdentity/SigningNoIdentity.test.goal",
+  "prPath": "/Tests/Signing/NoIdentity/.build/signingnoidentity.test.pr",
   "hash": "75ae4cb14e476c542ca21c5a53af118b078854e7561b17caf91d6b3c05f3b80f",
   "builderVersion": null,
   "isSetup": false,

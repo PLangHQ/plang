@@ -1,6 +1,6 @@
 {
   "name": "WhenGTE",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Maps the step \u0027WhenGTE\u0027 to a variable assignment setting %result% to the string \u0027gte\u0027.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/GTE/WhenGTE.goal",
-  "prPath": "/Tests/Runtime2/Condition/GTE/.build/whengte.pr",
+  "path": "/Tests/Condition/GTE/WhenGTE.goal",
+  "prPath": "/Tests/Condition/GTE/.build/whengte.pr",
   "hash": "beb3790989e3cd356f51555827b10c86bff35ea07dcd4df208b06eddb0f787aa",
   "builderVersion": null,
   "isSetup": false,

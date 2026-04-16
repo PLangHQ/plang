@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %writeCount% to 0, writes to an event-bound output channel via Counter, verifies it increments once, removes the event binding, then writes again and verifies the counter did not increment further.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,42 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%__data__%",
+              "type": "object"
+            },
+            {
+              "name": "Channels",
+              "value": "%eventBinding%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%eventBinding%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -200,8 +235,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Event/Remove/EventRemove.test.goal",
-  "prPath": "/Tests/Runtime2/Event/Remove/.build/eventremove.test.pr",
+  "path": "/Tests/Event/Remove/EventRemove.test.goal",
+  "prPath": "/Tests/Event/Remove/.build/eventremove.test.pr",
   "hash": "c1aab1a156ef3b1154f5aa41533b3d21f86b54d517cced7f67aee12e06b04fc5",
   "builderVersion": null,
   "isSetup": false,

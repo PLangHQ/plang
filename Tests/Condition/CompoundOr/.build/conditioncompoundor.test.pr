@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %a% and %b%, evaluates a compound OR condition (a==1 OR b==2) and calls DoThing when true, then asserts %result% equals \u0022or-true\u0022.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%b%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 2,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -61,7 +79,7 @@
             {
               "name": "Left",
               "value": "%a%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -72,15 +90,19 @@
               "name": "Right",
               "value": 1,
               "type": "int"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "negate",
+              "name": "Negate",
               "value": false,
               "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": "%__conditionReturn1__%",
+              "type": "object"
             }
-          ]
+          ],
+          "defaults": null
         },
         {
           "module": "condition",
@@ -89,7 +111,7 @@
             {
               "name": "Left",
               "value": "%b%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -100,15 +122,19 @@
               "name": "Right",
               "value": 2,
               "type": "int"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "negate",
+              "name": "Negate",
               "value": false,
               "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": "%__conditionReturn2__%",
+              "type": "object"
             }
-          ]
+          ],
+          "defaults": null
         },
         {
           "module": "condition",
@@ -130,24 +156,32 @@
               "type": "bool"
             },
             {
-              "name": "GoalIfTrue",
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": "%__conditionReturn3__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
               "value": {
                 "name": "DoThing",
-                "description": null,
-                "parallel": false,
-                "parameters": null,
-                "prPath": null
+                "parameters": []
               },
               "type": "goal.call"
             }
           ],
-          "defaults": [
-            {
-              "name": "negate",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -175,7 +209,7 @@
             {
               "name": "Actual",
               "value": "%result%",
-              "type": "data"
+              "type": "object"
             },
             {
               "name": "Message",
@@ -195,8 +229,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/CompoundOr/ConditionCompoundOr.test.goal",
-  "prPath": "/Tests/Runtime2/Condition/CompoundOr/.build/conditioncompoundor.test.pr",
+  "path": "/Tests/Condition/CompoundOr/ConditionCompoundOr.test.goal",
+  "prPath": "/Tests/Condition/CompoundOr/.build/conditioncompoundor.test.pr",
   "hash": "6c6289984cfa2e19a7b7e38b91b7484f35053cc39a507882b9ee29cd5163698c",
   "builderVersion": null,
   "isSetup": false,

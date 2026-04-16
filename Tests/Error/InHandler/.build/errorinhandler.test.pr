@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %outerHandled% to false, calls ThrowWithBadHandler with an on-error handler that calls OuterHandler, then asserts %outerHandled% becomes true.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,28 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ThrowWithBadHandler",
+                "parameters": []
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "actor(user|service|system)"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": {
         "goal": {
@@ -52,8 +73,8 @@
         },
         "retryCount": null,
         "retryOverMs": null,
-        "order": null,
-        "ignoreError": false,
+        "order": 0,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -96,8 +117,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/InHandler/ErrorInHandler.test.goal",
-  "prPath": "/Tests/Runtime2/Error/InHandler/.build/errorinhandler.test.pr",
+  "path": "/Tests/Error/InHandler/ErrorInHandler.test.goal",
+  "prPath": "/Tests/Error/InHandler/.build/errorinhandler.test.pr",
   "hash": "ac84eb8f196a13e591d4c452ae6710b5c53c7d96d635bf06dba62927d1efa8da",
   "builderVersion": null,
   "isSetup": false,

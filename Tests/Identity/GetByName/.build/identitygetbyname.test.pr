@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Archives an identity (ignoring errors), creates it as default, then asserts the identity name matches and that a public key exists, and finally archives the identity again.",
   "comment": null,
   "steps": [
     {
@@ -49,7 +49,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "TestGetByName",
+              "type": "string"
+            },
+            {
+              "name": "SetAsDefault",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -147,8 +165,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Identity/GetByName/IdentityGetByName.test.goal",
-  "prPath": "/Tests/Runtime2/Identity/GetByName/.build/identitygetbyname.test.pr",
+  "path": "/Tests/Identity/GetByName/IdentityGetByName.test.goal",
+  "prPath": "/Tests/Identity/GetByName/.build/identitygetbyname.test.pr",
   "hash": "3a52cacb10b52640c3baf3853e282e78aa53f36096be52879bb8e1c267de6a45",
   "builderVersion": null,
   "isSetup": false,

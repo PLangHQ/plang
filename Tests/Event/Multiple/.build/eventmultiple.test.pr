@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets two flags false, registers two event handlers on the same hook (BeforeAction) that write via output.write, then writes \u0027trigger\u0027 and asserts both flags became true.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%eventB%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -66,11 +84,7 @@
             {
               "name": "GoalToCall",
               "value": {
-                "name": "HandlerA",
-                "description": null,
-                "parallel": false,
-                "parameters": null,
-                "prPath": "/.build/handlera.pr"
+                "name": "HandlerA"
               },
               "type": "goal.call"
             },
@@ -80,18 +94,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "isregex",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "priority",
-              "value": 0,
-              "type": "int"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -119,11 +122,7 @@
             {
               "name": "GoalToCall",
               "value": {
-                "name": "HandlerB",
-                "description": null,
-                "parallel": false,
-                "parameters": null,
-                "prPath": "/.build/handlerb.pr"
+                "name": "HandlerB"
               },
               "type": "goal.call"
             },
@@ -133,18 +132,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "isregex",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "priority",
-              "value": 0,
-              "type": "int"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -244,8 +232,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Event/Multiple/EventMultiple.test.goal",
-  "prPath": "/Tests/Runtime2/Event/Multiple/.build/eventmultiple.test.pr",
+  "path": "/Tests/Event/Multiple/EventMultiple.test.goal",
+  "prPath": "/Tests/Event/Multiple/.build/eventmultiple.test.pr",
   "hash": "f3a3f71fd38fe36b01abc8f0cea55fd758d7d86630f1325642df123175142de9",
   "builderVersion": null,
   "isSetup": false,

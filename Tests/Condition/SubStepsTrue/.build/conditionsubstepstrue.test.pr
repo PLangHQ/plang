@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets flag and inner variables, conditionally runs indented set steps when %flag% is true, then asserts the indented steps executed.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,7 @@
               "type": "bool"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -46,7 +40,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerRan%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -80,13 +92,7 @@
               "type": "bool"
             }
           ],
-          "defaults": [
-            {
-              "name": "negate",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -117,13 +123,7 @@
               "type": "bool"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -154,13 +154,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -183,12 +177,12 @@
             {
               "name": "Value",
               "value": "%innerRan%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "indented steps should execute when condition is true",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -219,12 +213,12 @@
             {
               "name": "Actual",
               "value": "%innerValue%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "indented set should have run",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -239,8 +233,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/SubStepsTrue/ConditionSubStepsTrue.test.goal",
-  "prPath": "/Tests/Runtime2/Condition/SubStepsTrue/.build/conditionsubstepstrue.test.pr",
+  "path": "/Tests/Condition/SubStepsTrue/ConditionSubStepsTrue.test.goal",
+  "prPath": "/Tests/Condition/SubStepsTrue/.build/conditionsubstepstrue.test.pr",
   "hash": "eea24c21cb5c72743bd936eef55669c6a34a956ccc23930f100498a728220900",
   "builderVersion": null,
   "isSetup": false,

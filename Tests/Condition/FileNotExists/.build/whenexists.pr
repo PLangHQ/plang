@@ -1,6 +1,6 @@
 {
   "name": "WhenExists",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "WhenExists step sets %result% to the string \u0022exists\u0022 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/FileNotExists/WhenExists.goal",
-  "prPath": "/Tests/Runtime2/Condition/FileNotExists/.build/whenexists.pr",
+  "path": "/Tests/Condition/FileNotExists/WhenExists.goal",
+  "prPath": "/Tests/Condition/FileNotExists/.build/whenexists.pr",
   "hash": "06288c6029e1a4704f721e5d1c84cbdb25f97a6c9fc8ba8dde4833e738b8e4a4",
   "builderVersion": null,
   "isSetup": false,

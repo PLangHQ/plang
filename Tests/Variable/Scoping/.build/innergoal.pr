@@ -1,6 +1,6 @@
 {
   "name": "InnerGoal",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "InnerGoal sets variable %x% to the string \u0022modified\u0022 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Variable/Scoping/InnerGoal.goal",
-  "prPath": "/Tests/Runtime2/Variable/Scoping/.build/innergoal.pr",
+  "path": "/Tests/Variable/Scoping/InnerGoal.goal",
+  "prPath": "/Tests/Variable/Scoping/.build/innergoal.pr",
   "hash": "f825cd12443c1cd65525ad125c97678711c27853132279ce31186940caf5795e",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Calls ThrowError with on-error handlers in multiple languages, then asserts each corresponding caught flag is true.",
   "comment": null,
   "steps": [
     {
@@ -17,7 +17,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowError"
+                "name": "ThrowError",
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -36,8 +37,8 @@
         },
         "retryCount": null,
         "retryOverMs": null,
-        "order": null,
-        "ignoreError": false,
+        "order": 0,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -52,7 +53,23 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ThrowError",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": {
         "goal": {
@@ -88,7 +105,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowError"
+                "name": "ThrowError",
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -107,8 +125,8 @@
         },
         "retryCount": null,
         "retryOverMs": null,
-        "order": null,
-        "ignoreError": false,
+        "order": 0,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -131,7 +149,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowError"
+                "name": "ThrowError",
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -150,8 +169,8 @@
         },
         "retryCount": null,
         "retryOverMs": null,
-        "order": null,
-        "ignoreError": false,
+        "order": 0,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -174,7 +193,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowError"
+                "name": "ThrowError",
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -193,8 +213,8 @@
         },
         "retryCount": null,
         "retryOverMs": null,
-        "order": null,
-        "ignoreError": false,
+        "order": 0,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -217,7 +237,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowError"
+                "name": "ThrowError",
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -236,8 +257,8 @@
         },
         "retryCount": null,
         "retryOverMs": null,
-        "order": null,
-        "ignoreError": false,
+        "order": 0,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -265,7 +286,7 @@
             {
               "name": "Actual",
               "value": "%caughtEnglish%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -296,7 +317,7 @@
             {
               "name": "Actual",
               "value": "%caughtIcelandic%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -327,7 +348,7 @@
             {
               "name": "Actual",
               "value": "%caughtJapanese%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -358,7 +379,7 @@
             {
               "name": "Actual",
               "value": "%caughtArabic%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -389,7 +410,7 @@
             {
               "name": "Actual",
               "value": "%caughtKorean%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -420,7 +441,7 @@
             {
               "name": "Actual",
               "value": "%caughtSwahili%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -435,8 +456,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Multilingual/OnErrorMultilingual.test.goal",
-  "prPath": "/Tests/Runtime2/Error/Multilingual/.build/onerrormultilingual.test.pr",
+  "path": "/Tests/Error/Multilingual/OnErrorMultilingual.test.goal",
+  "prPath": "/Tests/Error/Multilingual/.build/onerrormultilingual.test.pr",
   "hash": "48d8307d0169dee45cba2008e65a433ffb654403b5852a5c70533bb382d7d543",
   "builderVersion": null,
   "isSetup": false,

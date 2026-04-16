@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Asserts that %MyIdentity% (an identitydata variable) exists and that its Name field is not null, covering the case where no identities exist and a default identity is auto-created.",
   "comment": null,
   "steps": [
     {
@@ -17,7 +17,7 @@
             {
               "name": "Value",
               "value": "%MyIdentity%",
-              "type": "identitydata"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -35,7 +35,20 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%MyIdentity.Name%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -45,8 +58,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Identity/AutoCreate/IdentityAutoCreate.test.goal",
-  "prPath": "/Tests/Runtime2/Identity/AutoCreate/.build/identityautocreate.test.pr",
+  "path": "/Tests/Identity/AutoCreate/IdentityAutoCreate.test.goal",
+  "prPath": "/Tests/Identity/AutoCreate/.build/identityautocreate.test.pr",
   "hash": "153fa75d2609153132a67b1d80f090a0b6f9ced940f1a62e514bf3835b590fe1",
   "builderVersion": null,
   "isSetup": false,

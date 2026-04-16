@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Archives an identity, creates it, sets signing payload data, signs it with custom contracts, verifies with matching contracts while writing the result to %verifyResult%, then asserts verification success. Error on archive is ignored.",
   "comment": null,
   "steps": [
     {
@@ -49,7 +49,20 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -103,7 +116,7 @@
             {
               "name": "Data",
               "value": "%data%",
-              "type": "json"
+              "type": "object"
             },
             {
               "name": "Contracts",
@@ -137,7 +150,7 @@
             {
               "name": "Data",
               "value": "%data%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Contracts",
@@ -146,6 +159,23 @@
                 "C1"
               ],
               "type": "list\u003Cobject\u003E"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%verifyResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -176,7 +206,7 @@
             {
               "name": "Message",
               "value": "matching custom contracts should verify",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -191,8 +221,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Signing/CustomContracts/SigningCustomContracts.test.goal",
-  "prPath": "/Tests/Runtime2/Signing/CustomContracts/.build/signingcustomcontracts.test.pr",
+  "path": "/Tests/Signing/CustomContracts/SigningCustomContracts.test.goal",
+  "prPath": "/Tests/Signing/CustomContracts/.build/signingcustomcontracts.test.pr",
   "hash": "101bf6af9ada83955301485d3735405d1c5b454422f1b27e656a79d4e98d48b0",
   "builderVersion": null,
   "isSetup": false,

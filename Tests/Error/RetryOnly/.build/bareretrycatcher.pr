@@ -1,6 +1,6 @@
 {
   "name": "BareRetryCatcher",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %bareRetryCaught% to true using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/RetryOnly/BareRetryCatcher.goal",
-  "prPath": "/Tests/Runtime2/Error/RetryOnly/.build/bareretrycatcher.pr",
+  "path": "/Tests/Error/RetryOnly/BareRetryCatcher.goal",
+  "prPath": "/Tests/Error/RetryOnly/.build/bareretrycatcher.pr",
   "hash": "721530b5266483f76149d388538696506be500e36c0e32b9216a91de8f854701",
   "builderVersion": null,
   "isSetup": false,

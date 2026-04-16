@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Test flow: create a file, download with IfExists=Skip, read back content, assert skip worked via conditional output, then delete the file.",
   "comment": null,
   "steps": [
     {
@@ -22,7 +22,7 @@
             {
               "name": "Value",
               "value": "existing content",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -40,7 +40,35 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "http",
+          "action": "download",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "https://httpbin.org/bytes/100",
+              "type": "string"
+            },
+            {
+              "name": "SaveTo",
+              "value": "skip-test.txt",
+              "type": "path"
+            },
+            {
+              "name": "IfExists",
+              "value": "Skip",
+              "type": "fileexists"
+            },
+            {
+              "name": "Unsigned",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -59,14 +87,31 @@
           "action": "read",
           "parameters": [
             {
-              "name": "path",
+              "name": "Path",
               "value": "skip-test.txt",
-              "type": "string"
+              "type": "path"
             },
             {
               "name": "ResolveVariables",
               "value": false,
               "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%content%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -92,7 +137,7 @@
             {
               "name": "Left",
               "value": "%content%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -102,16 +147,10 @@
             {
               "name": "Right",
               "value": "existing content",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": [
-            {
-              "name": "negate",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -134,7 +173,12 @@
             {
               "name": "Data",
               "value": "File was not re-downloaded (skip worked)",
-              "type": "string"
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -185,8 +229,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Http/DownloadSkip/DownloadSkip.test.goal",
-  "prPath": "/Tests/Runtime2/Http/DownloadSkip/.build/downloadskip.test.pr",
+  "path": "/Tests/Http/DownloadSkip/DownloadSkip.test.goal",
+  "prPath": "/Tests/Http/DownloadSkip/.build/downloadskip.test.pr",
   "hash": "2d89ef5b3ef512867d5fc30a7d644804f499d4a3accbfa8de1e9c5c187211799",
   "builderVersion": null,
   "isSetup": false,

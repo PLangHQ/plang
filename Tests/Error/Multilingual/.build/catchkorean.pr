@@ -1,6 +1,6 @@
 {
   "name": "CatchKorean",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Set %caughtKorean% to true using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Multilingual/CatchKorean.goal",
-  "prPath": "/Tests/Runtime2/Error/Multilingual/.build/catchkorean.pr",
+  "path": "/Tests/Error/Multilingual/CatchKorean.goal",
+  "prPath": "/Tests/Error/Multilingual/.build/catchkorean.pr",
   "hash": "287ada7e401dad5112bfcbd604fa2f11d75a5f355c734fcd157d75eeb32937d2",
   "builderVersion": null,
   "isSetup": false,

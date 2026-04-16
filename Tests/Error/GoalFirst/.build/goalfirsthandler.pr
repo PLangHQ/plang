@@ -1,6 +1,6 @@
 {
   "name": "GoalFirstHandler",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %goalFirstHandled% to true using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/GoalFirst/GoalFirstHandler.goal",
-  "prPath": "/Tests/Runtime2/Error/GoalFirst/.build/goalfirsthandler.pr",
+  "path": "/Tests/Error/GoalFirst/GoalFirstHandler.goal",
+  "prPath": "/Tests/Error/GoalFirst/.build/goalfirsthandler.pr",
   "hash": "2b7ff65f48a8799450de40bf1ac28c41b8556607bbbc18e685f8f69d90ab6108",
   "builderVersion": null,
   "isSetup": false,

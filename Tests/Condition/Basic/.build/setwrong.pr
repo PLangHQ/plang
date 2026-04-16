@@ -1,6 +1,6 @@
 {
   "name": "SetWrong",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "SetWrong: set %wasWrong% to true using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/Basic/SetWrong.goal",
-  "prPath": "/Tests/Runtime2/Condition/Basic/.build/setwrong.pr",
+  "path": "/Tests/Condition/Basic/SetWrong.goal",
+  "prPath": "/Tests/Condition/Basic/.build/setwrong.pr",
   "hash": "9a328158bcd3fea39002d861281fa7b89be9c46b471209ab9cc3349558a60267",
   "builderVersion": null,
   "isSetup": false,

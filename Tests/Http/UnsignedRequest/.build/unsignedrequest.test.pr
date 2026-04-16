@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Makes an unsigned HTTP GET request to httpbin headers, stores the response in %response%, checks that %response% is not empty, and writes an output message if it contains data.",
   "comment": null,
   "steps": [
     {
@@ -22,7 +22,7 @@
             {
               "name": "Method",
               "value": "GET",
-              "type": "string"
+              "type": "httpmethod"
             },
             {
               "name": "Unsigned",
@@ -30,23 +30,24 @@
               "type": "bool"
             }
           ],
-          "defaults": [
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
             {
-              "name": "contenttype",
-              "value": "application/json",
+              "name": "Name",
+              "value": "%response%",
               "type": "string"
             },
             {
-              "name": "encoding",
-              "value": "utf-8",
-              "type": "string"
-            },
-            {
-              "name": "timeoutinsec",
-              "value": 30,
-              "type": "int"
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
-          ]
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -61,7 +62,35 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%response%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "isempty",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "",
+              "type": "object"
+            },
+            {
+              "name": "Negate",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -82,6 +111,11 @@
             {
               "name": "Data",
               "value": "Unsigned request returned data",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
               "type": "string"
             }
           ],
@@ -97,8 +131,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Http/UnsignedRequest/UnsignedRequest.test.goal",
-  "prPath": "/Tests/Runtime2/Http/UnsignedRequest/.build/unsignedrequest.test.pr",
+  "path": "/Tests/Http/UnsignedRequest/UnsignedRequest.test.goal",
+  "prPath": "/Tests/Http/UnsignedRequest/.build/unsignedrequest.test.pr",
   "hash": "93d478c76da1827002e3bf624afce0f87d3f47ac47759ec7ca8de40d20cdac33",
   "builderVersion": null,
   "isSetup": false,

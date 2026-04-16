@@ -1,6 +1,6 @@
 {
   "name": "WhenFalse",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "WhenFalse step sets %result% to \u0022negated\u0022 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/Not/WhenFalse.goal",
-  "prPath": "/Tests/Runtime2/Condition/Not/.build/whenfalse.pr",
+  "path": "/Tests/Condition/Not/WhenFalse.goal",
+  "prPath": "/Tests/Condition/Not/.build/whenfalse.pr",
   "hash": "04427d0c9df712277476d5458f5462b724ffe2a212e88b0db99e6edb0d710010",
   "builderVersion": null,
   "isSetup": false,

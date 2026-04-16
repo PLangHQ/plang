@@ -82,11 +82,6 @@
               "name": "Value",
               "value": "%result%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null
@@ -101,8 +96,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Llm/LlmFormat.test.goal",
-  "prPath": "/Tests/Runtime2/Llm/.build/llmformat.test.pr",
+  "path": "/Tests/Llm/LlmFormat.test.goal",
+  "prPath": "/Tests/Llm/.build/llmformat.test.pr",
   "hash": "a572581de9026488973df4f3364f5d6ea4b68fd7482a223ed3b438130aad6304",
   "builderVersion": null,
   "isSetup": false,

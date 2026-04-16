@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Writes call stack depth before calling Inner, calls Inner, writes depth after, then calls Inner again.",
   "comment": null,
   "steps": [
     {
@@ -17,7 +17,7 @@
             {
               "name": "Data",
               "value": "Depth before: %!callStack.Depth%\\n",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -40,7 +40,23 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "Inner",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -61,7 +77,7 @@
             {
               "name": "Data",
               "value": "Depth after: %!callStack.Depth%\\n",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -93,10 +109,7 @@
               "name": "GoalName",
               "value": {
                 "name": "Inner",
-                "description": null,
-                "parallel": false,
-                "parameters": null,
-                "prPath": "/.build/inner.pr"
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -113,8 +126,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/CallStack/Start.goal",
-  "prPath": "/Tests/Runtime2/CallStack/.build/start.pr",
+  "path": "/Tests/CallStack/Start.goal",
+  "prPath": "/Tests/CallStack/.build/start.pr",
   "hash": "c823029a7220b2924dd7dd88f2761ae549afeb98a81f218f1ecb566f4b49f315",
   "builderVersion": null,
   "isSetup": false,

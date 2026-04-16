@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Calls AlwaysFails with retry-on-error then calls HandleError; finally asserts %errorHandled% is true.",
   "comment": null,
   "steps": [
     {
@@ -17,7 +17,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "AlwaysFails"
+                "name": "AlwaysFails",
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -37,7 +38,7 @@
         "retryCount": 2,
         "retryOverMs": null,
         "order": 1,
-        "ignoreError": false,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -52,7 +53,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%errorHandled%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -62,8 +81,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Chain/ErrorChain.test.goal",
-  "prPath": "/Tests/Runtime2/Error/Chain/.build/errorchain.test.pr",
+  "path": "/Tests/Error/Chain/ErrorChain.test.goal",
+  "prPath": "/Tests/Error/Chain/.build/errorchain.test.pr",
   "hash": "fe394c1e28a212a2da3fad3d2b54cf60555891dbbec803be12826c75c4875960",
   "builderVersion": null,
   "isSetup": false,

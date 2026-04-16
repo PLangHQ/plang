@@ -1,6 +1,6 @@
 {
   "name": "TimedRetryGoal",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "TimedRetryGoal: increments %timedRetryAttempts% by 1, stores it back, then throws an error \u0027timed fail\u0027.",
   "comment": null,
   "steps": [
     {
@@ -38,17 +38,11 @@
             },
             {
               "name": "Value",
-              "value": "%pr%",
-              "type": "string"
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -63,7 +57,20 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "timed fail",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -73,8 +80,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/RetryOnly/TimedRetryGoal.goal",
-  "prPath": "/Tests/Runtime2/Error/RetryOnly/.build/timedretrygoal.pr",
+  "path": "/Tests/Error/RetryOnly/TimedRetryGoal.goal",
+  "prPath": "/Tests/Error/RetryOnly/.build/timedretrygoal.pr",
   "hash": "c3682ca3c59a1d65c0fcf535415978b1d1d02bc7019282c388101c838ccf5612",
   "builderVersion": null,
   "isSetup": false,

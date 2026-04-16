@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Configures HTTP base URL, requests a relative path, conditionally writes output based on response emptiness and status code.",
   "comment": null,
   "steps": [
     {
@@ -35,7 +35,52 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "http",
+          "action": "request",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "/get",
+              "type": "string"
+            },
+            {
+              "name": "Method",
+              "value": "GET",
+              "type": "string"
+            },
+            {
+              "name": "Body",
+              "value": null,
+              "type": "object?"
+            },
+            {
+              "name": "Unsigned",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -56,7 +101,7 @@
             {
               "name": "Left",
               "value": "%response%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -65,17 +110,16 @@
             },
             {
               "name": "Right",
-              "value": "false",
-              "type": "string"
-            }
-          ],
-          "defaults": [
-            {
-              "name": "negate",
               "value": false,
               "type": "bool"
+            },
+            {
+              "name": "Negate",
+              "value": true,
+              "type": "bool"
             }
-          ]
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -98,7 +142,7 @@
             {
               "name": "Data",
               "value": "Relative URL with base URL worked",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -129,7 +173,7 @@
             {
               "name": "Left",
               "value": "%response.StatusCode%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -142,13 +186,7 @@
               "type": "int"
             }
           ],
-          "defaults": [
-            {
-              "name": "negate",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -171,6 +209,11 @@
             {
               "name": "Data",
               "value": "Status code is 200",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
               "type": "string"
             }
           ],
@@ -186,8 +229,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal",
-  "prPath": "/Tests/Runtime2/Http/ConfigBaseUrl/.build/configbaseurl.test.pr",
+  "path": "/Tests/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal",
+  "prPath": "/Tests/Http/ConfigBaseUrl/.build/configbaseurl.test.pr",
   "hash": "01dc137ea19f5d3c1b5db93b973fbe773de24f7bea80089d8d558bf792d295d9",
   "builderVersion": null,
   "isSetup": false,

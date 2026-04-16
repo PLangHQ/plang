@@ -1,6 +1,6 @@
 {
   "name": "CaptureItem",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Set %captured% by appending the current %item% to the existing %captured% string.",
   "comment": null,
   "steps": [
     {
@@ -21,7 +21,7 @@
             },
             {
               "name": "Value",
-              "value": "\u0022%captured%,%item%\u0022",
+              "value": "%captured%,%item%",
               "type": "string"
             }
           ],
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Variable/Scoping/CaptureItem.goal",
-  "prPath": "/Tests/Runtime2/Variable/Scoping/.build/captureitem.pr",
+  "path": "/Tests/Variable/Scoping/CaptureItem.goal",
+  "prPath": "/Tests/Variable/Scoping/.build/captureitem.pr",
   "hash": "51b9279b30e920ef717ea10f7f9f2c21ea4d5604e161a72cd24f8983e791f068",
   "builderVersion": null,
   "isSetup": false,

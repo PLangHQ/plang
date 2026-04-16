@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Performs basic math operations (add/subtract/multiply/divide/abs/round/min/max/random) and writes formatted results to output, storing each computed value into the specified variables.",
   "comment": null,
   "steps": [
     {
@@ -26,6 +26,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%sum%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -40,7 +57,25 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "5 \u002B 3 = %sum%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -70,6 +105,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%diff%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -93,6 +145,11 @@
               "name": "Data",
               "value": "10 - 3 = %diff%",
               "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -127,6 +184,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%product%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -150,6 +224,11 @@
               "name": "Data",
               "value": "6 * 7 = %product%",
               "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -184,6 +263,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%quotient%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -207,6 +303,11 @@
               "name": "Data",
               "value": "10 / 3 = %quotient%",
               "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -236,6 +337,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%absVal%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -259,6 +377,11 @@
               "name": "Data",
               "value": "abs(-42) = %absVal%",
               "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -293,6 +416,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%rounded%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -316,6 +456,11 @@
               "name": "Data",
               "value": "round(3.14159, 2) = %rounded%",
               "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -350,6 +495,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%minimum%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -373,6 +535,11 @@
               "name": "Data",
               "value": "min(5, 3) = %minimum%",
               "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -407,6 +574,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%maximum%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -430,6 +614,11 @@
               "name": "Data",
               "value": "max(5, 3) = %maximum%",
               "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -464,6 +653,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%rand%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -487,6 +693,11 @@
               "name": "Data",
               "value": "random: %rand%",
               "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -501,8 +712,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Math/Start.goal",
-  "prPath": "/Tests/Runtime2/Math/.build/start.pr",
+  "path": "/Tests/Math/Start.goal",
+  "prPath": "/Tests/Math/.build/start.pr",
   "hash": "e92b5952596a1ac057a67614002052ab2e129c4e884bf4b570c8aa5ac3a5e0c0",
   "builderVersion": null,
   "isSetup": false,

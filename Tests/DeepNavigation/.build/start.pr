@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets nested JSON into %deep%, writes a deep property, sets a JSON list into %list%, then writes two indexed nested values.",
   "comment": null,
   "steps": [
     {
@@ -35,13 +35,7 @@
               "type": "json"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -56,7 +50,25 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%deep.a.b.c.d.e%",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -103,13 +115,7 @@
               "type": "json"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -183,8 +189,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/DeepNavigation/Start.goal",
-  "prPath": "/Tests/Runtime2/DeepNavigation/.build/start.pr",
+  "path": "/Tests/DeepNavigation/Start.goal",
+  "prPath": "/Tests/DeepNavigation/.build/start.pr",
   "hash": "1644ef9b76a8754de5c93c9e0d607d7c1810d5f5fd2c3048f58495fb0c2a560b",
   "builderVersion": null,
   "isSetup": false,

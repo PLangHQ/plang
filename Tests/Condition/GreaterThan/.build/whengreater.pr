@@ -1,6 +1,6 @@
 {
   "name": "WhenGreater",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Maps the step \u0027WhenGreater\u0027 to a variable.set action for %result% with value \u0027greater\u0027.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/GreaterThan/WhenGreater.goal",
-  "prPath": "/Tests/Runtime2/Condition/GreaterThan/.build/whengreater.pr",
+  "path": "/Tests/Condition/GreaterThan/WhenGreater.goal",
+  "prPath": "/Tests/Condition/GreaterThan/.build/whengreater.pr",
   "hash": "8549bd74cad02b311cec50cff51455adff0761b51391d3756636c7d5678e7de5",
   "builderVersion": null,
   "isSetup": false,

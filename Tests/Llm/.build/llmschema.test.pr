@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Runs an llm.query with JSON schema, writes the parsed result to %result%, then asserts the result and its sentiment field are not null.",
+  "description": "Runs an llm.query with JSON schema, writes the parsed response to %result%, then asserts %result% and %result.sentiment% are not null.",
   "comment": null,
   "steps": [
     {
@@ -19,11 +19,13 @@
               "value": [
                 {
                   "role": "system",
-                  "content": "You analyze sentiment. Respond in JSON only."
+                  "content": "You analyze sentiment. Respond in JSON only.",
+                  "images": []
                 },
                 {
                   "role": "user",
-                  "content": "Analyze: I love sunny days"
+                  "content": "Analyze: I love sunny days",
+                  "images": []
                 }
               ],
               "type": "list\u003Cllmmessage\u003E"
@@ -80,11 +82,6 @@
               "name": "Value",
               "value": "%result%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null
@@ -111,11 +108,6 @@
               "name": "Value",
               "value": "%result.sentiment%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null
@@ -130,8 +122,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Llm/LlmSchema.test.goal",
-  "prPath": "/Tests/Runtime2/Llm/.build/llmschema.test.pr",
+  "path": "/Tests/Llm/LlmSchema.test.goal",
+  "prPath": "/Tests/Llm/.build/llmschema.test.pr",
   "hash": "57b6e9dc25ee4a37ebd54ad85cf6fb41fd0ae25e07784ca813a0088d059a06c4",
   "builderVersion": null,
   "isSetup": false,

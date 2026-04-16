@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Initializes %stepCount%, calls TrackStep before the step, sets %value% and %value2%, then asserts %stepCount% \u003E 0.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,22 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "TrackStep"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -123,7 +138,7 @@
             {
               "name": "A",
               "value": "%stepCount%",
-              "type": "data"
+              "type": "object"
             },
             {
               "name": "B",
@@ -143,8 +158,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Event/BeforeStep/EventBeforeStep.test.goal",
-  "prPath": "/Tests/Runtime2/Event/BeforeStep/.build/eventbeforestep.test.pr",
+  "path": "/Tests/Event/BeforeStep/EventBeforeStep.test.goal",
+  "prPath": "/Tests/Event/BeforeStep/.build/eventbeforestep.test.pr",
   "hash": "f7979e6fe8bbab5ed06f5d99fc9b24ca57c52fd14f8fbd6d2521a75d765bede8",
   "builderVersion": null,
   "isSetup": false,

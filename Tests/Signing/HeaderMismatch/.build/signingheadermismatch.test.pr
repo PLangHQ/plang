@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Set %headerFailed% to true in HandleHeaderError.",
   "comment": null,
   "steps": [
     {
@@ -9,9 +9,36 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: verify fails when expected headers don\u0027t match signed headers",
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -22,7 +49,20 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -35,7 +75,27 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "body": "content"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -48,7 +108,28 @@
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%signHeaders%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "method": "POST",
+                "url": "/api/send"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -61,7 +142,25 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "Headers",
+              "value": "%signHeaders%",
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -74,7 +173,28 @@
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%wrongHeaders%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "method": "GET",
+                "url": "/api/send"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -87,9 +207,49 @@
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "C0"
+              ],
+              "type": "list\u003Cstring\u003E"
+            },
+            {
+              "name": "Headers",
+              "value": "%wrongHeaders%",
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": {
+          "name": "HandleHeaderError",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": null,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -100,7 +260,25 @@
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%headerFailed%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "header mismatch should fail verification",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -120,7 +298,25 @@
           "lineNumber": 13,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%headerFailed%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -130,8 +326,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/Tests/Runtime2/Signing/HeaderMismatch/SigningHeaderMismatch.test.goal",
-      "prPath": "/Tests/Runtime2/Signing/HeaderMismatch/.build/signingheadermismatch.test.pr",
+      "path": "/Tests/Signing/HeaderMismatch/SigningHeaderMismatch.test.goal",
+      "prPath": "/Tests/Signing/HeaderMismatch/.build/signingheadermismatch.test.pr",
       "hash": "7563068bd6895c224b7083ab5ba33d7087c80cdc9a9c7a9102100d85dc81f3b0",
       "builderVersion": null,
       "isSetup": false,
@@ -142,8 +338,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Signing/HeaderMismatch/SigningHeaderMismatch.test.goal",
-  "prPath": "/Tests/Runtime2/Signing/HeaderMismatch/.build/signingheadermismatch.test.pr",
+  "path": "/Tests/Signing/HeaderMismatch/SigningHeaderMismatch.test.goal",
+  "prPath": "/Tests/Signing/HeaderMismatch/.build/signingheadermismatch.test.pr",
   "hash": "ca2988229674c2ef237cfe215b1ea2279eb19ec83ba354a6ae4ab5493842011d",
   "builderVersion": null,
   "isSetup": false,

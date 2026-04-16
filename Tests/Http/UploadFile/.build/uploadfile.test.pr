@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Saves a test file, uploads it to httpbin, verifies the response is non-empty, checks StatusCode == 200, writes outputs, then deletes the test file.",
   "comment": null,
   "steps": [
     {
@@ -22,7 +22,7 @@
             {
               "name": "Value",
               "value": "test upload content",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null
@@ -40,7 +40,57 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "http",
+          "action": "upload",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "https://httpbin.org/post",
+              "type": "string"
+            },
+            {
+              "name": "Content",
+              "value": "upload-test.txt",
+              "type": "object"
+            },
+            {
+              "name": "Method",
+              "value": "POST",
+              "type": "httpmethod"
+            },
+            {
+              "name": "Unsigned",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "As",
+              "value": "File",
+              "type": "contentas"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -61,7 +111,7 @@
             {
               "name": "Left",
               "value": "%response%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -71,7 +121,7 @@
             {
               "name": "Right",
               "value": "",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Negate",
@@ -102,7 +152,7 @@
             {
               "name": "Data",
               "value": "Upload returned response",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -133,7 +183,7 @@
             {
               "name": "Left",
               "value": "%response.StatusCode%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -142,17 +192,11 @@
             },
             {
               "name": "Right",
-              "value": "200",
-              "type": "string"
+              "value": 200,
+              "type": "int"
             }
           ],
-          "defaults": [
-            {
-              "name": "negate",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -175,7 +219,7 @@
             {
               "name": "Data",
               "value": "Status code is 200",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -207,6 +251,16 @@
               "name": "Path",
               "value": "upload-test.txt",
               "type": "path"
+            },
+            {
+              "name": "IgnoreIfNotFound",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Recursive",
+              "value": false,
+              "type": "bool"
             }
           ],
           "defaults": null
@@ -221,8 +275,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Http/UploadFile/UploadFile.test.goal",
-  "prPath": "/Tests/Runtime2/Http/UploadFile/.build/uploadfile.test.pr",
+  "path": "/Tests/Http/UploadFile/UploadFile.test.goal",
+  "prPath": "/Tests/Http/UploadFile/.build/uploadfile.test.pr",
   "hash": "296a21da8725826befc0761f8b8d175e1122aceea3e22c7e3717225ef9afa0d2",
   "builderVersion": null,
   "isSetup": false,

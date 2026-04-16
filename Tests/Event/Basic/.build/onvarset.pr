@@ -1,6 +1,6 @@
 {
   "name": "OnVarSet",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "OnVarSet: write an output message when the variable set event fires.",
   "comment": null,
   "steps": [
     {
@@ -17,6 +17,11 @@
             {
               "name": "Data",
               "value": "Variable set event fired",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
               "type": "string"
             }
           ],
@@ -32,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Event/Basic/OnVarSet.goal",
-  "prPath": "/Tests/Runtime2/Event/Basic/.build/onvarset.pr",
+  "path": "/Tests/Event/Basic/OnVarSet.goal",
+  "prPath": "/Tests/Event/Basic/.build/onvarset.pr",
   "hash": "e9c1424776fed3cdb7b488dfc0049fee3947aab5b236818c90ca3969358a5367",
   "builderVersion": null,
   "isSetup": false,

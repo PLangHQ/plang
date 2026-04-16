@@ -1,6 +1,6 @@
 {
   "name": "HandleMockPost",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Compiles HandleMockPost step to skip an event action with a fixed value.",
   "comment": null,
   "steps": [
     {
@@ -32,8 +32,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Mock/HandleMockPost.goal",
-  "prPath": "/Tests/Runtime2/Mock/.build/handlemockpost.pr",
+  "path": "/Tests/Mock/HandleMockPost.goal",
+  "prPath": "/Tests/Mock/.build/handlemockpost.pr",
   "hash": "d6c74eaca521f70aff90f198c9f46034e43d7bf98ecdf1feb9ae3475701d6fd3",
   "builderVersion": null,
   "isSetup": false,

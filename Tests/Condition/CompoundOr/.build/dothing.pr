@@ -1,6 +1,6 @@
 {
   "name": "DoThing",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %result% to the string \u0022or-true\u0022 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/CompoundOr/DoThing.goal",
-  "prPath": "/Tests/Runtime2/Condition/CompoundOr/.build/dothing.pr",
+  "path": "/Tests/Condition/CompoundOr/DoThing.goal",
+  "prPath": "/Tests/Condition/CompoundOr/.build/dothing.pr",
   "hash": "d2b74b329a943baecc77a760819ad11f1c52335964c1e8876c0c1b03fb3d8fea",
   "builderVersion": null,
   "isSetup": false,

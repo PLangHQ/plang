@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %goalName% to \u0027TargetGoal\u0027, calls the goal referenced by %goalName%, then asserts %dynamicResult% equals \u0027reached\u0027.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,20 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": "%goalName%",
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -81,8 +94,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/GoalCall/Dynamic/GoalCallDynamic.test.goal",
-  "prPath": "/Tests/Runtime2/GoalCall/Dynamic/.build/goalcalldynamic.test.pr",
+  "path": "/Tests/GoalCall/Dynamic/GoalCallDynamic.test.goal",
+  "prPath": "/Tests/GoalCall/Dynamic/.build/goalcalldynamic.test.pr",
   "hash": "be5fdfa8098f28bad9b07b1562a74bea782e882575a057eeae821965441a287a",
   "builderVersion": null,
   "isSetup": false,

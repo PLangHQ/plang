@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Asserts that %setupDone% is true before continuing.",
   "comment": null,
   "steps": [
     {
@@ -27,7 +27,7 @@
             {
               "name": "Message",
               "value": "Setup must be completed before continuing.",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -42,8 +42,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/SetupGoal/Start.test.goal",
-  "prPath": "/Tests/Runtime2/SetupGoal/.build/start.test.pr",
+  "path": "/Tests/SetupGoal/Start.test.goal",
+  "prPath": "/Tests/SetupGoal/.build/start.test.pr",
   "hash": "fa49b68d53b55f33ebb24be2f988c37237b82090570fa53a6ff4a13711001f40",
   "builderVersion": null,
   "isSetup": false,

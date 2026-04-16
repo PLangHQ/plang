@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Builds and mutates %myList%, then outputs the list, count, first/last elements, containment check, joined string, and split parts into variables with corresponding outputs.",
   "comment": null,
   "steps": [
     {
@@ -54,7 +54,30 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "list",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 40,
+              "type": "object"
+            },
+            {
+              "name": "AtIndex",
+              "value": -1,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -107,6 +130,23 @@
               "name": "ListName",
               "value": "%myList%",
               "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%count%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -163,7 +203,24 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "list"
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%first%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -190,6 +247,11 @@
               "name": "Data",
               "value": "First: %first%",
               "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
             }
           ],
           "defaults": null
@@ -215,7 +277,24 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "list"
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%last%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -272,11 +351,28 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "list"
+              "type": "string"
             },
             {
               "name": "Value",
               "value": 20,
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%has20%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
               "type": "object"
             }
           ],
@@ -334,12 +430,29 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "list"
+              "type": "string"
             },
             {
               "name": "Separator",
               "value": ", ",
               "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%joined%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -410,6 +523,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%parts%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -452,8 +582,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/ListOps/Start.goal",
-  "prPath": "/Tests/Runtime2/ListOps/.build/start.pr",
+  "path": "/Tests/ListOps/Start.goal",
+  "prPath": "/Tests/ListOps/.build/start.pr",
   "hash": "ee8e3b0c0bf597ba573709e7b7cb784ef470689d932ba99d6c8d3f433e9ff251",
   "builderVersion": null,
   "isSetup": false,

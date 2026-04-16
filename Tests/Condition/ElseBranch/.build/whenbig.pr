@@ -1,6 +1,6 @@
 {
   "name": "WhenBig",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Maps the step \u0027WhenBig - set %result% = \u0022big\u0022\u0027 to a variable.set action.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/ElseBranch/WhenBig.goal",
-  "prPath": "/Tests/Runtime2/Condition/ElseBranch/.build/whenbig.pr",
+  "path": "/Tests/Condition/ElseBranch/WhenBig.goal",
+  "prPath": "/Tests/Condition/ElseBranch/.build/whenbig.pr",
   "hash": "3dffbc0e1cdf035691216d1a5708f49cd6c5dcd74c5e886b58fb647d91f19719",
   "builderVersion": null,
   "isSetup": false,

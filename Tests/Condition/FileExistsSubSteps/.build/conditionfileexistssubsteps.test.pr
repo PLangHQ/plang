@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Creates a file, initializes an inner flag, checks file existence with a condition, sets the flag in the true branch, then asserts the flag value.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerRan%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "no",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -55,25 +73,13 @@
       "comment": null,
       "actions": [
         {
-          "module": "file",
-          "action": "exists",
-          "parameters": [
-            {
-              "name": "Path",
-              "value": "testfile.txt",
-              "type": "path"
-            }
-          ],
-          "defaults": null
-        },
-        {
           "module": "condition",
           "action": "if",
           "parameters": [
             {
               "name": "Left",
               "value": "%fileInfo.Exists%",
-              "type": "bool"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -86,13 +92,7 @@
               "type": "bool"
             }
           ],
-          "defaults": [
-            {
-              "name": "negate",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -123,13 +123,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -177,8 +171,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/FileExistsSubSteps/ConditionFileExistsSubSteps.test.goal",
-  "prPath": "/Tests/Runtime2/Condition/FileExistsSubSteps/.build/conditionfileexistssubsteps.test.pr",
+  "path": "/Tests/Condition/FileExistsSubSteps/ConditionFileExistsSubSteps.test.goal",
+  "prPath": "/Tests/Condition/FileExistsSubSteps/.build/conditionfileexistssubsteps.test.pr",
   "hash": "d420210fbe207ea104aa6663b47743ef3fd803669e8b75f2f608316b10da4d95",
   "builderVersion": null,
   "isSetup": false,

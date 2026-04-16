@@ -1,6 +1,6 @@
 {
   "name": "ComputeAnswer",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %result% to integer 42 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/GoalCall/Return/ComputeAnswer.goal",
-  "prPath": "/Tests/Runtime2/GoalCall/Return/.build/computeanswer.pr",
+  "path": "/Tests/GoalCall/Return/ComputeAnswer.goal",
+  "prPath": "/Tests/GoalCall/Return/.build/computeanswer.pr",
   "hash": "5083bb9723ee51750c5ab45c04f13185987ba5e20161b05bfb2124d45b62ea8a",
   "builderVersion": null,
   "isSetup": false,

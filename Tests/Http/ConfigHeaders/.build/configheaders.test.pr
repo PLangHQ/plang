@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Configures default HTTP headers, requests httpbin headers endpoint, conditionally checks response is not empty, then writes an output message.",
   "comment": null,
   "steps": [
     {
@@ -19,7 +19,7 @@
               "value": {
                 "X-Test-Header": "plang-test"
               },
-              "type": "dictionary"
+              "type": "json"
             },
             {
               "name": "Default",
@@ -42,7 +42,47 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "http",
+          "action": "request",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "https://httpbin.org/headers",
+              "type": "string"
+            },
+            {
+              "name": "Method",
+              "value": "GET",
+              "type": "httpmethod"
+            },
+            {
+              "name": "Unsigned",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -104,7 +144,7 @@
             {
               "name": "Data",
               "value": "Request with default headers returned data",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -124,8 +164,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Http/ConfigHeaders/ConfigHeaders.test.goal",
-  "prPath": "/Tests/Runtime2/Http/ConfigHeaders/.build/configheaders.test.pr",
+  "path": "/Tests/Http/ConfigHeaders/ConfigHeaders.test.goal",
+  "prPath": "/Tests/Http/ConfigHeaders/.build/configheaders.test.pr",
   "hash": "29e2997537ad66df7ec3cd4beb455913b7a6be87f3b2955e8024beda9cffaa69",
   "builderVersion": null,
   "isSetup": false,

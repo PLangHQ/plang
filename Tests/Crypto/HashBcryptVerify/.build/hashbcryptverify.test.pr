@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets a password, hashes it with bcrypt, verifies the hash against the original password, then asserts the verification result is true.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -46,7 +40,42 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "crypto",
+          "action": "hash",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%password%",
+              "type": "object"
+            },
+            {
+              "name": "Algorithm",
+              "value": "bcrypt",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%hashed%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -67,7 +96,7 @@
             {
               "name": "Data",
               "value": "%password%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Hash",
@@ -78,6 +107,23 @@
               "name": "Algorithm",
               "value": "bcrypt",
               "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%isValid%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -103,12 +149,12 @@
             {
               "name": "Value",
               "value": "%isValid%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "bcrypt verify should return true for correct password",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -123,8 +169,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Crypto/HashBcryptVerify/HashBcryptVerify.test.goal",
-  "prPath": "/Tests/Runtime2/Crypto/HashBcryptVerify/.build/hashbcryptverify.test.pr",
+  "path": "/Tests/Crypto/HashBcryptVerify/HashBcryptVerify.test.goal",
+  "prPath": "/Tests/Crypto/HashBcryptVerify/.build/hashbcryptverify.test.pr",
   "hash": "ea4ef9d721512fe5c8172833d5ef04ae86edbd498b5aef2b2c081c9a9464c146",
   "builderVersion": null,
   "isSetup": false,

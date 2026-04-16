@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Calls ThrowCustomError with an error handler that calls InspectError, then asserts error-related variables (message, key, status code).",
   "comment": null,
   "steps": [
     {
@@ -9,9 +9,40 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": "error variables accessible in handler",
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ThrowCustomError",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": {
+          "name": "InspectError",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": 0,
+        "ignoreError": null,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -22,7 +53,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "bad thing",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%errorMessage%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -35,7 +84,25 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "CustomKey",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%errorKey%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -48,7 +115,25 @@
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 422,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%errorStatusCode%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -58,8 +143,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Props/ErrorProps.test.goal",
-  "prPath": "/Tests/Runtime2/Error/Props/.build/errorprops.test.pr",
+  "path": "/Tests/Error/Props/ErrorProps.test.goal",
+  "prPath": "/Tests/Error/Props/.build/errorprops.test.pr",
   "hash": "24caa6948f23774e4754f2c176f0c61f3b842b279bc512ccff461edfb54c66ee",
   "builderVersion": null,
   "isSetup": false,

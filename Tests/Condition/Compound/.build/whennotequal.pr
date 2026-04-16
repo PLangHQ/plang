@@ -1,6 +1,6 @@
 {
   "name": "WhenNotEqual",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Maps the step \u0027WhenNotEqual - set %notEqualResult% = \u0022yes\u0022\u0027 to a variable.set action.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/Compound/WhenNotEqual.goal",
-  "prPath": "/Tests/Runtime2/Condition/Compound/.build/whennotequal.pr",
+  "path": "/Tests/Condition/Compound/WhenNotEqual.goal",
+  "prPath": "/Tests/Condition/Compound/.build/whennotequal.pr",
   "hash": "63094fc1d603d21557ff55e1e388dea437e0804ccd1f0fa964903093d823e476",
   "builderVersion": null,
   "isSetup": false,

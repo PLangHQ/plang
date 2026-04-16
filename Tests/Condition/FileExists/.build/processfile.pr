@@ -1,6 +1,6 @@
 {
   "name": "ProcessFile",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %result% to the string \u0022file-processed\u0022 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/FileExists/ProcessFile.goal",
-  "prPath": "/Tests/Runtime2/Condition/FileExists/.build/processfile.pr",
+  "path": "/Tests/Condition/FileExists/ProcessFile.goal",
+  "prPath": "/Tests/Condition/FileExists/.build/processfile.pr",
   "hash": "de74721257b7b3cbcfc6a02231e7105327cb697bc519f4b0492da5bee42c9e63",
   "builderVersion": null,
   "isSetup": false,

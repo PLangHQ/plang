@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets afterCount to 0, calls TrackAfterStep after-step hook, sets value and value2, then asserts afterCount \u003E 0.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,22 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "TrackAfterStep"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -123,7 +138,7 @@
             {
               "name": "A",
               "value": "%afterCount%",
-              "type": "data"
+              "type": "object"
             },
             {
               "name": "B",
@@ -143,8 +158,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Event/AfterStep/EventAfterStep.test.goal",
-  "prPath": "/Tests/Runtime2/Event/AfterStep/.build/eventafterstep.test.pr",
+  "path": "/Tests/Event/AfterStep/EventAfterStep.test.goal",
+  "prPath": "/Tests/Event/AfterStep/.build/eventafterstep.test.pr",
   "hash": "3539e45c2d574207fd135c411c007376e343d558d9548e18408da02f8fa1dc3b",
   "builderVersion": null,
   "isSetup": false,

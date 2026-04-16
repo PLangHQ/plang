@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %z% to 5, conditionally calls WhenEqual when %z% == 5, then asserts %result% equals \u0022equal\u0022.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,50 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%z%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "WhenEqual",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -66,7 +109,7 @@
             {
               "name": "Actual",
               "value": "%result%",
-              "type": "data"
+              "type": "object"
             },
             {
               "name": "Message",
@@ -86,8 +129,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/Equals/ConditionEquals.test.goal",
-  "prPath": "/Tests/Runtime2/Condition/Equals/.build/conditionequals.test.pr",
+  "path": "/Tests/Condition/Equals/ConditionEquals.test.goal",
+  "prPath": "/Tests/Condition/Equals/.build/conditionequals.test.pr",
   "hash": "d07f25e0cc5c2de3e3f762de7a372d5b7787bd72a0e29c9b75b4a7bf230c5aca",
   "builderVersion": null,
   "isSetup": false,

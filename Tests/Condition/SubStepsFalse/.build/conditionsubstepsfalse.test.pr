@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets a false flag, attempts to set an inner variable under a false condition, then asserts the inner variable was not changed (indented steps skipped).",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerRan%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "no",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -105,13 +123,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -159,8 +171,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/SubStepsFalse/ConditionSubStepsFalse.test.goal",
-  "prPath": "/Tests/Runtime2/Condition/SubStepsFalse/.build/conditionsubstepsfalse.test.pr",
+  "path": "/Tests/Condition/SubStepsFalse/ConditionSubStepsFalse.test.goal",
+  "prPath": "/Tests/Condition/SubStepsFalse/.build/conditionsubstepsfalse.test.pr",
   "hash": "aba9fc62f9d3e416c4db1f905ff96240e82c5cf5dcb2427bde91772360352467",
   "builderVersion": null,
   "isSetup": false,

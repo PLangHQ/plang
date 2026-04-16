@@ -1,6 +1,6 @@
 {
   "name": "WhenFalse",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "WhenFalse step sets %falseResult% to the string \u0022no\u0022 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/Compound/WhenFalse.goal",
-  "prPath": "/Tests/Runtime2/Condition/Compound/.build/whenfalse.pr",
+  "path": "/Tests/Condition/Compound/WhenFalse.goal",
+  "prPath": "/Tests/Condition/Compound/.build/whenfalse.pr",
   "hash": "7c617b7b5fbe2dcd7405ecf9e67a688c9149e29fd43e9a15425794ded6050900",
   "builderVersion": null,
   "isSetup": false,

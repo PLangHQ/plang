@@ -1,6 +1,6 @@
 {
   "name": "ThrowCustomError",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "ThrowCustomError maps to error.throw with message, key, and status code.",
   "comment": null,
   "steps": [
     {
@@ -9,7 +9,30 @@
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "bad thing",
+              "type": "string"
+            },
+            {
+              "name": "Key",
+              "value": "CustomKey",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 422,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -19,8 +42,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Props/ThrowCustomError.goal",
-  "prPath": "/Tests/Runtime2/Error/Props/.build/throwcustomerror.pr",
+  "path": "/Tests/Error/Props/ThrowCustomError.goal",
+  "prPath": "/Tests/Error/Props/.build/throwcustomerror.pr",
   "hash": "8e10bd9f6f672d9297e03b262e092f9742b07097098c01f7ea73cd6c11e48d99",
   "builderVersion": null,
   "isSetup": false,

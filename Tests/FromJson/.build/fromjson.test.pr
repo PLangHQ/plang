@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Parse JSON strings into %obj% and %arr% variables, then assert nested fields and array elements match expected values.",
   "comment": null,
   "steps": [
     {
@@ -33,7 +33,7 @@
                   "data": null
                 }
               },
-              "type": "dict\u003Cstring,object\u003E"
+              "type": "json"
             },
             {
               "name": "Type",
@@ -41,13 +41,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -62,7 +56,25 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "test",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%obj.name%",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -93,7 +105,7 @@
             {
               "name": "Message",
               "value": "Assert %obj.values[0]% equals 1",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -129,7 +141,7 @@
             {
               "name": "Message",
               "value": "Assert %obj.values[2]% equals 3",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -155,12 +167,12 @@
             {
               "name": "Value",
               "value": "%obj.nested.flag%",
-              "type": "string"
+              "type": "bool"
             },
             {
               "name": "Message",
               "value": "Expected %obj.nested.flag% to be true",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -190,8 +202,15 @@
             },
             {
               "name": "Value",
-              "value": "[{\u0022id\u0022:1},{\u0022id\u0022:2}]",
-              "type": "string"
+              "value": [
+                {
+                  "id": 1
+                },
+                {
+                  "id": 2
+                }
+              ],
+              "type": "json"
             },
             {
               "name": "Type",
@@ -199,13 +218,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -269,7 +282,7 @@
             {
               "name": "Message",
               "value": "Assert %arr[1].id% equals 2",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -284,8 +297,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/FromJson/FromJson.test.goal",
-  "prPath": "/Tests/Runtime2/FromJson/.build/fromjson.test.pr",
+  "path": "/Tests/FromJson/FromJson.test.goal",
+  "prPath": "/Tests/FromJson/.build/fromjson.test.pr",
   "hash": "540d36f1967a04f469ee86b23b670503759d2a9e035b2b8c9154fef7f45e8ebe",
   "builderVersion": null,
   "isSetup": false,

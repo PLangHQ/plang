@@ -1,6 +1,6 @@
 {
   "name": "WhenSmall",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Maps the step \u0027set %result% = \u0022small\u0022\u0027 to a variable.set action.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/ElseBranch/WhenSmall.goal",
-  "prPath": "/Tests/Runtime2/Condition/ElseBranch/.build/whensmall.pr",
+  "path": "/Tests/Condition/ElseBranch/WhenSmall.goal",
+  "prPath": "/Tests/Condition/ElseBranch/.build/whensmall.pr",
   "hash": "b78a89b034c5389d7f2ad908f0dcb266f543b5c1700219da912e6bf2a4c4029f",
   "builderVersion": null,
   "isSetup": false,

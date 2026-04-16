@@ -1,6 +1,6 @@
 {
   "name": "DoThing",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %result% to the string \u0022both-true\u0022 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -43,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/CompoundAnd/DoThing.goal",
-  "prPath": "/Tests/Runtime2/Condition/CompoundAnd/.build/dothing.pr",
+  "path": "/Tests/Condition/CompoundAnd/DoThing.goal",
+  "prPath": "/Tests/Condition/CompoundAnd/.build/dothing.pr",
   "hash": "c9ef2a4feef41411dca98e9dfc8891e7c57d1b2cd95a3e7d46290e11d80adbac",
   "builderVersion": null,
   "isSetup": false,

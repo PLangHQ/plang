@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Archives an identity, creates a signer identity, sets JSON data, signs it, verifies it against contract C0, and asserts verification success (ignoring errors on archive).",
   "comment": null,
   "steps": [
     {
@@ -49,7 +49,20 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -103,7 +116,24 @@
             {
               "name": "Data",
               "value": "%data%",
-              "type": "json"
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%__data__%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -129,14 +159,31 @@
             {
               "name": "Data",
               "value": "%data%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Contracts",
               "value": [
                 "C0"
               ],
-              "type": "list\u003Cobject\u003E"
+              "type": "list\u003Cstring\u003E"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%verifyResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -182,8 +229,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Signing/Roundtrip/SigningRoundtrip.test.goal",
-  "prPath": "/Tests/Runtime2/Signing/Roundtrip/.build/signingroundtrip.test.pr",
+  "path": "/Tests/Signing/Roundtrip/SigningRoundtrip.test.goal",
+  "prPath": "/Tests/Signing/Roundtrip/.build/signingroundtrip.test.pr",
   "hash": "94f05c75792f560c2ef8c029b3472270819e94560e27d9ee253b0b34c3271cfe",
   "builderVersion": null,
   "isSetup": false,

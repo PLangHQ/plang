@@ -1,6 +1,6 @@
 {
   "name": "LogAfter",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Writes an output message after the goal fires.",
   "comment": null,
   "steps": [
     {
@@ -17,6 +17,11 @@
             {
               "name": "Data",
               "value": "After goal fired",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
               "type": "string"
             }
           ],
@@ -32,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Event/Basic/LogAfter.goal",
-  "prPath": "/Tests/Runtime2/Event/Basic/.build/logafter.pr",
+  "path": "/Tests/Event/Basic/LogAfter.goal",
+  "prPath": "/Tests/Event/Basic/.build/logafter.pr",
   "hash": "ea6677a703fee4aed0ba733c92880c1782fbed2062186f21b978fb10dce3bf0c",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %corrupted% to true (null comparison noted in source, but value is explicitly true).",
   "comment": null,
   "steps": [
     {
@@ -9,9 +9,36 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: corrupt signature field, verify fails",
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -22,7 +49,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "SetAsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -35,7 +80,27 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "corrupt"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -48,7 +113,37 @@
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -61,7 +156,25 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data.Signature.Signature%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "AAAA/corrupted\u002Bbase64==",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -74,9 +187,44 @@
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "C0"
+              ],
+              "type": "list"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": {
+          "name": "HandleCorrupt",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": null,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -87,7 +235,25 @@
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%corrupted%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "corrupted signature should fail verification",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -107,7 +273,25 @@
           "lineNumber": 12,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%corrupted%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -117,8 +301,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/Tests/Runtime2/Signing/CorruptedSignature/SigningCorruptedSignature.test.goal",
-      "prPath": "/Tests/Runtime2/Signing/CorruptedSignature/.build/signingcorruptedsignature.test.pr",
+      "path": "/Tests/Signing/CorruptedSignature/SigningCorruptedSignature.test.goal",
+      "prPath": "/Tests/Signing/CorruptedSignature/.build/signingcorruptedsignature.test.pr",
       "hash": "46b4cf7c1a1a90aff7fbaf9d7b18ba8e6e15ee23d063ffb081a2351e4012d4c6",
       "builderVersion": null,
       "isSetup": false,
@@ -129,8 +313,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Signing/CorruptedSignature/SigningCorruptedSignature.test.goal",
-  "prPath": "/Tests/Runtime2/Signing/CorruptedSignature/.build/signingcorruptedsignature.test.pr",
+  "path": "/Tests/Signing/CorruptedSignature/SigningCorruptedSignature.test.goal",
+  "prPath": "/Tests/Signing/CorruptedSignature/.build/signingcorruptedsignature.test.pr",
   "hash": "7d053c94ed66d5724020a7c14963e1222e05b6cf4f7bcc08f5c83ecfcd79d0ab",
   "builderVersion": null,
   "isSetup": false,

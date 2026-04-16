@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets up two mocks via mock.intercept, asserts initial mock state, reads a file to exercise the intercepted action, verifies call count, then resets the mock and verifies call count is cleared.",
   "comment": null,
   "steps": [
     {
@@ -23,16 +23,23 @@
               "name": "ReturnValue",
               "value": "mocked content",
               "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%mockRead%",
+              "type": "string"
             },
             {
-              "name": "GoalToCall",
-              "value": null,
-              "type": "goal.call"
-            },
-            {
-              "name": "Parameters",
-              "value": {},
-              "type": "dict"
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -50,7 +57,30 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%mockRead.callCount%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "mock should start with 0 calls",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -76,12 +106,12 @@
             {
               "name": "Actual",
               "value": "%mockRead.actionPattern%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "Assert the mock actionPattern is \u0027file.read\u0027.",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -112,12 +142,12 @@
             {
               "name": "Actual",
               "value": "%mockRead.isSpy%",
-              "type": "bool"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "Assert the mock isSpy flag is false initially.",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -144,27 +174,23 @@
               "name": "ActionPattern",
               "value": "output.write",
               "type": "string"
-            },
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
             {
-              "name": "ReturnValue",
-              "value": "",
+              "name": "Name",
+              "value": "%spyWrite%",
               "type": "string"
             },
             {
-              "name": "GoalToCall",
-              "value": {
-                "name": "",
-                "description": null,
-                "parallel": false,
-                "parameters": null,
-                "prPath": null
-              },
-              "type": "goal.call"
-            },
-            {
-              "name": "Parameters",
-              "value": {},
-              "type": "dict"
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null
@@ -195,12 +221,12 @@
             {
               "name": "Actual",
               "value": "%spyWrite.isSpy%",
-              "type": "bool"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "Assert the output.write mock is marked as a spy (isSpy == true).",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -235,6 +261,23 @@
             }
           ],
           "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%mockResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
         }
       ],
       "intent": null,
@@ -262,12 +305,12 @@
             {
               "name": "Actual",
               "value": "%mockRead.callCount%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "callCount should increment after mock intercept",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -293,7 +336,7 @@
             {
               "name": "Mock",
               "value": "%mockRead%",
-              "type": "string"
+              "type": "mockhandle"
             },
             {
               "name": "ExpectedCount",
@@ -329,7 +372,7 @@
             {
               "name": "Mock",
               "value": "%mockRead%",
-              "type": "string"
+              "type": "mockhandle"
             }
           ],
           "defaults": null
@@ -360,12 +403,12 @@
             {
               "name": "Actual",
               "value": "%mockRead.callCount%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "reset should clear callCount",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -380,8 +423,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Mock/Mock.test.goal",
-  "prPath": "/Tests/Runtime2/Mock/.build/mock.test.pr",
+  "path": "/Tests/Mock/Mock.test.goal",
+  "prPath": "/Tests/Mock/.build/mock.test.pr",
   "hash": "f1cf4d4b7f07539b7158e8373bae9c4eb7a2e4f483e6c13cc31ab3407db8c7f3",
   "builderVersion": null,
   "isSetup": false,

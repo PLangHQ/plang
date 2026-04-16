@@ -1,6 +1,6 @@
 {
   "name": "TrackStep",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Increment %stepCount% by 1 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -22,16 +22,10 @@
             {
               "name": "Value",
               "value": "%stepCount% \u002B 1",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -43,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Event/BeforeStep/TrackStep.goal",
-  "prPath": "/Tests/Runtime2/Event/BeforeStep/.build/trackstep.pr",
+  "path": "/Tests/Event/BeforeStep/TrackStep.goal",
+  "prPath": "/Tests/Event/BeforeStep/.build/trackstep.pr",
   "hash": "c5d70fc9604bbaee15d05956d88bfac675ad138a291bd2c7e52117ee714c547a",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "LogBefore",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Logs a message before the goal fires using output.write.",
   "comment": null,
   "steps": [
     {
@@ -17,6 +17,11 @@
             {
               "name": "Data",
               "value": "Before goal fired",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
               "type": "string"
             }
           ],
@@ -32,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Event/Basic/LogBefore.goal",
-  "prPath": "/Tests/Runtime2/Event/Basic/.build/logbefore.pr",
+  "path": "/Tests/Event/Basic/LogBefore.goal",
+  "prPath": "/Tests/Event/Basic/.build/logbefore.pr",
   "hash": "ff2d9efb308f929f0169f1f99de06b84fead72adec1f946ce37abf5fdefcd280",
   "builderVersion": null,
   "isSetup": false,

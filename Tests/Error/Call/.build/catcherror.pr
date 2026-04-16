@@ -1,6 +1,6 @@
 {
   "name": "CatchError",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "CatchError step sets %caughtMessage% to the caught error message.",
   "comment": null,
   "steps": [
     {
@@ -30,13 +30,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -48,8 +42,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Call/CatchError.goal",
-  "prPath": "/Tests/Runtime2/Error/Call/.build/catcherror.pr",
+  "path": "/Tests/Error/Call/CatchError.goal",
+  "prPath": "/Tests/Error/Call/.build/catcherror.pr",
   "hash": "e0c6c59c2f69f86595162877a2a5796ede74af5a3074201db9a8dd56c0c7fa4d",
   "builderVersion": null,
   "isSetup": false,

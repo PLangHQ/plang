@@ -1,6 +1,6 @@
 {
   "name": "WhenMissing",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "WhenMissing step sets %result% to the string \u0022missing\u0022 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/FileNotExists/WhenMissing.goal",
-  "prPath": "/Tests/Runtime2/Condition/FileNotExists/.build/whenmissing.pr",
+  "path": "/Tests/Condition/FileNotExists/WhenMissing.goal",
+  "prPath": "/Tests/Condition/FileNotExists/.build/whenmissing.pr",
   "hash": "7d583ce279569ddf336cbb7c7453473420e4935986969420c7206fd300c1c73c",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Runs an llm.query with system\u002Buser messages, writes the response to %result%, then asserts %result% is not null.",
+  "description": "Runs an LLM system\u002Buser query, writes the response to %result%, then asserts %result% is not null.",
   "comment": null,
   "steps": [
     {
@@ -91,8 +91,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Llm/LlmQuery.test.goal",
-  "prPath": "/Tests/Runtime2/Llm/.build/llmquery.test.pr",
+  "path": "/Tests/Llm/LlmQuery.test.goal",
+  "prPath": "/Tests/Llm/.build/llmquery.test.pr",
   "hash": "f11c540d089de04a68ed7e629c194f6d38f0885fc58e6044eca4d6ccb258f64b",
   "builderVersion": null,
   "isSetup": false,

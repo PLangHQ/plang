@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Compiles two assert steps: first checks %!engine.Name% is not null with a message; second asserts %!engine.Name% equals the literal \u0022!engine\u0022 (the \u0022\u003C= null\u0022 part is treated as a comment/invalid fragment and not mapped).",
   "comment": null,
   "steps": [
     {
@@ -22,7 +22,7 @@
             {
               "name": "Message",
               "value": "engine name should be set",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null
@@ -40,7 +40,25 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "!engine",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%!engine.Name%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -50,8 +68,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/ContextVars/Basic/ContextVars.test.goal",
-  "prPath": "/Tests/Runtime2/ContextVars/Basic/.build/contextvars.test.pr",
+  "path": "/Tests/ContextVars/Basic/ContextVars.test.goal",
+  "prPath": "/Tests/ContextVars/Basic/.build/contextvars.test.pr",
   "hash": "ca47ce4d3665204a26fbccee465d9e04c75fe96e1ecd2049930b79ceade0d054",
   "builderVersion": null,
   "isSetup": false,

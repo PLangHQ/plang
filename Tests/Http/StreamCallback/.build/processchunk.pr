@@ -1,6 +1,6 @@
 {
   "name": "ProcessChunk",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Writes an output message for each received stream chunk.",
   "comment": null,
   "steps": [
     {
@@ -17,6 +17,11 @@
             {
               "name": "Data",
               "value": "Received chunk: %!data%",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
               "type": "string"
             }
           ],
@@ -32,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Http/StreamCallback/ProcessChunk.goal",
-  "prPath": "/Tests/Runtime2/Http/StreamCallback/.build/processchunk.pr",
+  "path": "/Tests/Http/StreamCallback/ProcessChunk.goal",
+  "prPath": "/Tests/Http/StreamCallback/.build/processchunk.pr",
   "hash": "04c66cdf7538158f70ec86f58de4129957c80656d1b317866d3bab22ac2a7fca",
   "builderVersion": null,
   "isSetup": false,

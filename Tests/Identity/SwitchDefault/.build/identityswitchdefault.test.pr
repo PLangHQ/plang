@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Archives two identities, creates them (setting TestSwitchA as default), switches default to TestSwitchB, verifies %MyIdentity.Name% reflects the new default, then archives both identities.",
   "comment": null,
   "steps": [
     {
@@ -49,7 +49,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "TestSwitchB",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": {
         "goal": null,
@@ -244,8 +262,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Identity/SwitchDefault/IdentitySwitchDefault.test.goal",
-  "prPath": "/Tests/Runtime2/Identity/SwitchDefault/.build/identityswitchdefault.test.pr",
+  "path": "/Tests/Identity/SwitchDefault/IdentitySwitchDefault.test.goal",
+  "prPath": "/Tests/Identity/SwitchDefault/.build/identityswitchdefault.test.pr",
   "hash": "1eaecb5ae8da6ca43025d48fe7d6293e88f02c3cf44315f4bd39675cad6ea31e",
   "builderVersion": null,
   "isSetup": false,

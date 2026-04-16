@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %noSig% to true (null comparison noted in source, but compiler maps to the explicit assignment).",
   "comment": null,
   "steps": [
     {
@@ -9,7 +9,27 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: verify data that was never signed",
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "unsigned"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -22,9 +42,44 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "crypto",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "C0"
+              ],
+              "type": "list\u003Cstring\u003E"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": {
+          "name": "HandleNoSig",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": 0,
+        "ignoreError": null,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -35,7 +90,25 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%noSig%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "verify unsigned data should fail",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -55,7 +128,25 @@
           "lineNumber": 8,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%noSig%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -65,8 +156,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/Tests/Runtime2/Signing/VerifyUnsigned/SigningVerifyUnsigned.test.goal",
-      "prPath": "/Tests/Runtime2/Signing/VerifyUnsigned/.build/signingverifyunsigned.test.pr",
+      "path": "/Tests/Signing/VerifyUnsigned/SigningVerifyUnsigned.test.goal",
+      "prPath": "/Tests/Signing/VerifyUnsigned/.build/signingverifyunsigned.test.pr",
       "hash": "1ec51f17dad756518684dd77191f698253104090941c18b8159abae87a2310fb",
       "builderVersion": null,
       "isSetup": false,
@@ -77,8 +168,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Signing/VerifyUnsigned/SigningVerifyUnsigned.test.goal",
-  "prPath": "/Tests/Runtime2/Signing/VerifyUnsigned/.build/signingverifyunsigned.test.pr",
+  "path": "/Tests/Signing/VerifyUnsigned/SigningVerifyUnsigned.test.goal",
+  "prPath": "/Tests/Signing/VerifyUnsigned/.build/signingverifyunsigned.test.pr",
   "hash": "ff337cd6a33b420d9649fef0fec77910e00acbd9ee5037fe17efb1b750aa106d",
   "builderVersion": null,
   "isSetup": false,

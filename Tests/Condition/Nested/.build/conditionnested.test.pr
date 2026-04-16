@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets x/y and flags, then uses nested condition.if steps to ensure inner false skips only inner block while outer continues; asserts innerRan remains \u0027no\u0027 and outerAfterRan becomes \u0027yes\u0027.",
   "comment": null,
   "steps": [
     {
@@ -40,7 +40,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%y%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -164,7 +182,7 @@
             {
               "name": "Left",
               "value": "%y%",
-              "type": "string"
+              "type": "int"
             },
             {
               "name": "Operator",
@@ -213,13 +231,7 @@
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null
         }
       ],
       "intent": null,
@@ -278,7 +290,7 @@
             {
               "name": "Actual",
               "value": "%innerRan%",
-              "type": "data"
+              "type": "object"
             },
             {
               "name": "Message",
@@ -314,7 +326,7 @@
             {
               "name": "Actual",
               "value": "%outerAfterRan%",
-              "type": "data"
+              "type": "object"
             },
             {
               "name": "Message",
@@ -334,8 +346,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/Nested/ConditionNested.test.goal",
-  "prPath": "/Tests/Runtime2/Condition/Nested/.build/conditionnested.test.pr",
+  "path": "/Tests/Condition/Nested/ConditionNested.test.goal",
+  "prPath": "/Tests/Condition/Nested/.build/conditionnested.test.pr",
   "hash": "fa1b29070a16b3c7970d353c4240aa79f32eb16faa7ed137f08e0c200504cbb0",
   "builderVersion": null,
   "isSetup": false,

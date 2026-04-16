@@ -1,6 +1,6 @@
 {
   "name": "WhenLess",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "WhenLess step sets %lessResult% to \u0022yes\u0022 using variable.set.",
   "comment": null,
   "steps": [
     {
@@ -37,8 +37,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Condition/Compound/WhenLess.goal",
-  "prPath": "/Tests/Runtime2/Condition/Compound/.build/whenless.pr",
+  "path": "/Tests/Condition/Compound/WhenLess.goal",
+  "prPath": "/Tests/Condition/Compound/.build/whenless.pr",
   "hash": "428a59343c2ef05617772887e106049b900979acae829a08f03039b4122c9886",
   "builderVersion": null,
   "isSetup": false,

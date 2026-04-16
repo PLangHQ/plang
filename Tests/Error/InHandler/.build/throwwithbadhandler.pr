@@ -1,6 +1,6 @@
 {
   "name": "ThrowWithBadHandler",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Calls ThrowOriginal; if it throws, calls BadHandler (handler also throws).",
   "comment": null,
   "steps": [
     {
@@ -17,7 +17,8 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowOriginal"
+                "name": "ThrowOriginal",
+                "parameters": []
               },
               "type": "goal.call"
             }
@@ -36,8 +37,8 @@
         },
         "retryCount": null,
         "retryOverMs": null,
-        "order": null,
-        "ignoreError": false,
+        "order": 0,
+        "ignoreError": null,
         "message": null,
         "statusCode": null,
         "key": null
@@ -49,8 +50,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/InHandler/ThrowWithBadHandler.goal",
-  "prPath": "/Tests/Runtime2/Error/InHandler/.build/throwwithbadhandler.pr",
+  "path": "/Tests/Error/InHandler/ThrowWithBadHandler.goal",
+  "prPath": "/Tests/Error/InHandler/.build/throwwithbadhandler.pr",
   "hash": "010dce8d9abce373be533dc95dd11a5dabefdaf8f05787372c28dd8580f1cee7",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Set %expired% to true (null comparison result indicated by \u003C= null in the goal step).",
   "comment": null,
   "steps": [
     {
@@ -9,9 +9,36 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: sign with short TTL, wait, verify fails as expired",
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": null,
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": true,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -22,7 +49,25 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "SetAsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -35,7 +80,27 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "expiring"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -48,7 +113,25 @@
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "ExpiresInMs",
+              "value": 50,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -61,7 +144,37 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "timer",
+          "action": "start",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "wait60ms",
+              "type": "string"
+            },
+            {
+              "name": "Scope",
+              "value": "goal",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "timer",
+          "action": "end",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "wait60ms",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -74,9 +187,44 @@
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "C0"
+              ],
+              "type": "list\u003Cstring\u003E"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
-      "onError": null,
+      "onError": {
+        "goal": {
+          "name": "HandleExpired",
+          "description": null,
+          "parallel": false,
+          "parameters": null,
+          "prPath": null
+        },
+        "retryCount": null,
+        "retryOverMs": null,
+        "order": null,
+        "ignoreError": null,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
       "cache": null,
       "timeout": null,
       "waitForExecution": true
@@ -87,7 +235,25 @@
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%expired%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "expired signature should fail verification",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null
+        }
+      ],
       "intent": null,
       "onError": null,
       "cache": null,
@@ -107,7 +273,25 @@
           "lineNumber": 12,
           "indent": 0,
           "comment": null,
-          "actions": [],
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%expired%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null
+            }
+          ],
           "intent": null,
           "onError": null,
           "cache": null,
@@ -117,8 +301,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/Tests/Runtime2/Signing/Expired/SigningExpired.test.goal",
-      "prPath": "/Tests/Runtime2/Signing/Expired/.build/signingexpired.test.pr",
+      "path": "/Tests/Signing/Expired/SigningExpired.test.goal",
+      "prPath": "/Tests/Signing/Expired/.build/signingexpired.test.pr",
       "hash": "3e0fc6cf0fa6e675dbbfea3a6d897c5c4a85e1c7f461196245524e9be0d0f3d3",
       "builderVersion": null,
       "isSetup": false,
@@ -129,8 +313,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Signing/Expired/SigningExpired.test.goal",
-  "prPath": "/Tests/Runtime2/Signing/Expired/.build/signingexpired.test.pr",
+  "path": "/Tests/Signing/Expired/SigningExpired.test.goal",
+  "prPath": "/Tests/Signing/Expired/.build/signingexpired.test.pr",
   "hash": "591ebadbc139923b807bd95182cb82c57c4f7953f95524214e0762af5608e7d4",
   "builderVersion": null,
   "isSetup": false,
