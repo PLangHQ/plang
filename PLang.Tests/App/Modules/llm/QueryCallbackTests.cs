@@ -200,7 +200,9 @@ public class QueryCallbackTests
 
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error?.Message).Contains("Validation failed after 3 retries");
+        // Validation goal doesn't exist → file-not-found error on each retry
+        // After max retries, returns "LLM validation failed: <last error>"
+        await Assert.That(result.Error?.Message).Contains("LLM validation failed");
     }
 
     [Test]

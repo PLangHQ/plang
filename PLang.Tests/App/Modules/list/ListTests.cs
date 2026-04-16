@@ -294,6 +294,164 @@ public class ListTests
         await Assert.That(listResult!.count).IsEqualTo(5);
     }
 
+    // --- Any ---
+
+    [Test]
+    public async Task Any_MatchFound_ReturnsTrue()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("items", new List<object?>
+        {
+            new Dictionary<string, object?> { ["level"] = "low" },
+            new Dictionary<string, object?> { ["level"] = "high" }
+        });
+
+        var action = new Any
+        {
+            Context = context,
+            ListName = "items",
+            Key = "level",
+            Operator = new global::App.modules.condition.Operator("=="),
+            Value = new global::App.Data.@this("", "high")
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo(true);
+    }
+
+    [Test]
+    public async Task Any_NoMatch_ReturnsFalse()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("items", new List<object?>
+        {
+            new Dictionary<string, object?> { ["level"] = "low" },
+            new Dictionary<string, object?> { ["level"] = "medium" }
+        });
+
+        var action = new Any
+        {
+            Context = context,
+            ListName = "items",
+            Key = "level",
+            Operator = new global::App.modules.condition.Operator("=="),
+            Value = new global::App.Data.@this("", "high")
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo(false);
+    }
+
+    [Test]
+    public async Task Any_EmptyList_ReturnsFalse()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("items", new List<object?>());
+
+        var action = new Any
+        {
+            Context = context,
+            ListName = "items",
+            Key = "level",
+            Operator = new global::App.modules.condition.Operator("=="),
+            Value = new global::App.Data.@this("", "high")
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo(false);
+    }
+
+    [Test]
+    public async Task Any_NotEquals_ReturnsTrue()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("items", new List<object?>
+        {
+            new Dictionary<string, object?> { ["status"] = "active" },
+            new Dictionary<string, object?> { ["status"] = "inactive" }
+        });
+
+        var action = new Any
+        {
+            Context = context,
+            ListName = "items",
+            Key = "status",
+            Operator = new global::App.modules.condition.Operator("!="),
+            Value = new global::App.Data.@this("", "active")
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo(true);
+    }
+
+    // --- Group ---
+
+    [Test]
+    public async Task Group_GroupsByKey()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("orders", new List<object?>
+        {
+            new Dictionary<string, object?> { ["customer"] = "Alice", ["total"] = 50 },
+            new Dictionary<string, object?> { ["customer"] = "Bob", ["total"] = 30 },
+            new Dictionary<string, object?> { ["customer"] = "Alice", ["total"] = 20 }
+        });
+
+        var action = new Group { Context = context, ListName = "orders", Key = "customer" };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var groups = result.Value as List<Dictionary<string, object?>>;
+        await Assert.That(groups).IsNotNull();
+        await Assert.That(groups!.Count).IsEqualTo(2);
+
+        var alice = groups.First(g => g["key"]?.ToString() == "Alice");
+        var aliceItems = alice["steps"] as List<object?>;
+        await Assert.That(aliceItems!.Count).IsEqualTo(2);
+
+        var bob = groups.First(g => g["key"]?.ToString() == "Bob");
+        var bobItems = bob["steps"] as List<object?>;
+        await Assert.That(bobItems!.Count).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task Group_EmptyList_ReturnsEmpty()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("items", new List<object?>());
+
+        var action = new Group { Context = context, ListName = "items", Key = "category" };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var groups = result.Value as List<Dictionary<string, object?>>;
+        await Assert.That(groups!.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Group_MissingKey_GroupsUnderEmpty()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("items", new List<object?>
+        {
+            new Dictionary<string, object?> { ["name"] = "Alice" },
+            new Dictionary<string, object?> { ["name"] = "Bob" }
+        });
+
+        var action = new Group { Context = context, ListName = "items", Key = "category" };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var groups = result.Value as List<Dictionary<string, object?>>;
+        // All items grouped under empty key since "category" doesn't exist
+        await Assert.That(groups!.Count).IsEqualTo(1);
+        await Assert.That(groups[0]["key"]).IsEqualTo("");
+    }
+
     // --- Flatten ---
 
     [Test]
