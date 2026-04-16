@@ -369,15 +369,19 @@ public class @this
     /// Non-string primitives pass through unchanged.
     /// </summary>
     [ThreadStatic] private static int _resolveDepth;
+    [ThreadStatic] private static int _resolveItemCount;
 
     /// <summary>Fired during ResolveDeep for %variable% full-match resolutions. Args: varName, resolvedValue, depth.</summary>
     public event Action<string, object?, int>? OnResolveTrace;
+
+    private const int MaxResolveItems = 100_000;
 
     public object? ResolveDeep(object? value)
     {
         if (value == null) return null;
 
         _resolveDepth++;
+        if (_resolveDepth == 1) _resolveItemCount = 0; // reset at top-level call
         if (_resolveDepth > 100)
         {
             _resolveDepth--;
@@ -385,6 +389,9 @@ public class @this
         }
         try
         {
+        // Breadth guard: stop resolving if too many items processed
+        if (_resolveItemCount > MaxResolveItems) return value;
+        _resolveItemCount++;
 
         // Don't recurse into Data objects — their Value getter calls ResolveDeep itself
         if (value is Data.@this) return value;

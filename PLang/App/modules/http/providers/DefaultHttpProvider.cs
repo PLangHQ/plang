@@ -185,11 +185,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
             fs.Directory.CreateDirectory(dir);
 
         var totalBytes = response.Content.Headers.ContentLength;
+        var maxDownloadSize = config.Resolve("MaxDownloadSize", DefaultMaxResponseSize);
         using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
         using var fileStream = fs.File.Create(savePath);
 
         await StreamWithProgressAsync(
-            responseStream, fileStream, totalBytes, action.OnProgress?.Value, app, action.Context, cts.Token);
+            responseStream, fileStream, totalBytes, maxDownloadSize, action.OnProgress?.Value, app, action.Context, cts.Token);
 
         return App.Data.@this.Ok(action.SaveTo.Value);
     });
@@ -290,6 +291,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var buffer = new byte[8192];
         long totalRead = 0;
         int bytesRead;
+        var throughputStart = DateTimeOffset.UtcNow;
+        long throughputBytes = 0;
 
         while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
         {
@@ -298,6 +301,17 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 throw new InvalidOperationException(
                     $"Response body exceeds maximum size of {FormatBytes(maxBytes)}");
             limited.Write(buffer, 0, bytesRead);
+
+            // Slow-loris protection: abort if throughput drops below 1KB/sec for 30s
+            throughputBytes += bytesRead;
+            var elapsed = (DateTimeOffset.UtcNow - throughputStart).TotalSeconds;
+            if (elapsed >= 30)
+            {
+                if (throughputBytes / elapsed < 1024)
+                    throw new InvalidOperationException("Response too slow — possible slow-loris attack");
+                throughputStart = DateTimeOffset.UtcNow;
+                throughputBytes = 0;
+            }
         }
 
         limited.Position = 0;
@@ -316,6 +330,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var buffer = new byte[8192];
         long totalRead = 0;
         int bytesRead;
+        var throughputStart = DateTimeOffset.UtcNow;
+        long throughputBytes = 0;
 
         while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
         {
@@ -324,6 +340,16 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 throw new InvalidOperationException(
                     $"Response body exceeds maximum size of {FormatBytes(maxBytes)}");
             limited.Write(buffer, 0, bytesRead);
+
+            throughputBytes += bytesRead;
+            var elapsed = (DateTimeOffset.UtcNow - throughputStart).TotalSeconds;
+            if (elapsed >= 30)
+            {
+                if (throughputBytes / elapsed < 1024)
+                    throw new InvalidOperationException("Response too slow — possible slow-loris attack");
+                throughputStart = DateTimeOffset.UtcNow;
+                throughputBytes = 0;
+            }
         }
 
         return limited.ToArray();
@@ -457,6 +483,15 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         if (!url.Contains("://"))
             url = "https://" + url;
+
+        // Security: only allow http/https schemes (blocks file://, gopher://, etc.)
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            if (uri.Scheme != "http" && uri.Scheme != "https")
+                return Data.@this<string>.FromError(new ServiceError(
+                    $"Only http:// and https:// URLs are allowed, got {uri.Scheme}://",
+                    "InvalidUrlScheme", 400));
+        }
 
         return Data.@this<string>.Ok(url);
     }
@@ -809,6 +844,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
         var dataBuffer = new StringBuilder();
+        int consecutiveOverflows = 0;
+        const int maxConsecutiveOverflows = 3;
 
         while (!ct.IsCancellationRequested)
         {
@@ -827,6 +864,11 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 // Guard against unbounded SSE messages (no blank-line boundary)
                 if (dataBuffer.Length + data.Length + 1 > maxBufferSize)
                 {
+                    consecutiveOverflows++;
+                    if (consecutiveOverflows >= maxConsecutiveOverflows)
+                        throw new InvalidOperationException(
+                            $"SSE stream disconnected after {maxConsecutiveOverflows} consecutive buffer overflows — possible attack");
+
                     await app.Channels.WriteAsync(AppChannels.StdErr,
                         App.Data.@this.FromError(new ServiceError(
                             $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
@@ -840,6 +882,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             }
             else if (line.Length == 0 && dataBuffer.Length > 0)
             {
+                consecutiveOverflows = 0; // successful event resets counter
                 await RunCallbackAsync(onStream, dataBuffer.ToString(), PlangType.String, "chunk", app, context, ct);
                 dataBuffer.Clear();
             }
@@ -912,6 +955,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         Stream source,
         Stream destination,
         long? totalBytes,
+        long maxBytes,
         GoalCall? onProgress,
         AppType app,
         Actor.Context.@this context,
@@ -920,12 +964,33 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var buffer = new byte[8192];
         long bytesTransferred = 0;
         var lastReport = DateTimeOffset.UtcNow;
+        var throughputStart = DateTimeOffset.UtcNow;
+        long throughputBytes = 0;
 
         int bytesRead;
         while ((bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
         {
-            await destination.WriteAsync(buffer, 0, bytesRead, ct);
             bytesTransferred += bytesRead;
+
+            // F1: size limit on file downloads
+            if (bytesTransferred > maxBytes)
+                throw new InvalidOperationException(
+                    $"Download exceeds maximum size of {FormatBytes(maxBytes)}");
+
+            await destination.WriteAsync(buffer, 0, bytesRead, ct);
+
+            // F3: slow-loris throughput check
+            throughputBytes += bytesRead;
+            var elapsed = (DateTimeOffset.UtcNow - throughputStart).TotalSeconds;
+            if (elapsed >= 30)
+            {
+                var bytesPerSec = throughputBytes / elapsed;
+                if (bytesPerSec < 1024) // < 1KB/sec for 30s
+                    throw new InvalidOperationException(
+                        $"Transfer too slow ({bytesPerSec:F0} bytes/sec) — possible slow-loris attack");
+                throughputStart = DateTimeOffset.UtcNow;
+                throughputBytes = 0;
+            }
 
             if (onProgress != null)
             {

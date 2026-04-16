@@ -25,7 +25,7 @@ public sealed class ObjectNavigator : INavigator
         catch (TargetInvocationException ex)
         {
             return Data.@this.FromError(new Errors.ServiceError(
-                $"Failed to read '{key}' on {value.GetType().Name}: {(ex.InnerException ?? ex).Message}",
+                $"Failed to read '{key}': {(ex.InnerException ?? ex).Message}",
                 "NavigationError", 500) { Exception = ex });
         }
     }

@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using NSec.Cryptography;
 using App.Errors;
 using App.Variables;
@@ -82,6 +83,8 @@ public class Ed25519Provider : ISigningProvider
             return App.Data.@this.FromError(new ActionError("Signature has expired", "Expired", 400));
 
         // 4. Nonce replay check
+        // Cache TTL matches effectiveTimeout. After restart, the timeout check (step 2)
+        // rejects signatures older than effectiveTimeout, so nonce replay is bounded.
         var nonceCacheKey = $"nonce:{signedData.Nonce}";
         var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
         var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, App.Data.@this.Ok(true), cacheSettings);
@@ -100,8 +103,13 @@ public class Ed25519Provider : ISigningProvider
 
             foreach (var kvp in action.Headers.Value)
             {
-                if (!signedData.Headers.TryGetValue(kvp.Key, out var signedValue) ||
-                    !string.Equals(signedValue?.ToString(), kvp.Value?.ToString(), StringComparison.Ordinal))
+                if (!signedData.Headers.TryGetValue(kvp.Key, out var signedValue))
+                    return App.Data.@this.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
+
+                // Constant-time comparison to prevent timing side-channel attacks
+                var expectedBytes = System.Text.Encoding.UTF8.GetBytes(kvp.Value?.ToString() ?? "");
+                var actualBytes = System.Text.Encoding.UTF8.GetBytes(signedValue?.ToString() ?? "");
+                if (!CryptographicOperations.FixedTimeEquals(expectedBytes, actualBytes))
                     return App.Data.@this.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
             }
         }

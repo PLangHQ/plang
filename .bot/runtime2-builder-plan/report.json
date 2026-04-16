@@ -410,6 +410,67 @@
         "health": "FAIL — 3 HIGH open in HTTP module, 6 MEDIUM, 2 LOW",
         "notes": "12 findings after threat-model filtering. HTTP module is the primary concern — its core job is safe external data handling. Send to coder for HTTP fixes."
       }
+    },
+    {
+      "id": "c0d3r-v7-security-2026-04-16",
+      "bot": "coder",
+      "timestamp_start": "2026-04-16T18:00:00Z",
+      "timestamp_end": "2026-04-16T18:30:00Z",
+      "intent": "Fix all 11 open security findings from audit v1",
+      "before": {
+        "assumptions": "Security audit found 12 findings (1 accepted-risk). 3 HIGH in HTTP module, 6 MEDIUM, 2 LOW. All have clear fix proposals.",
+        "risk": "Medium — touching HTTP transport, crypto verification, JSON parsing, and variable resolution. All fixes are additive guards."
+      },
+      "plan": "Fix F1 (download size limit), F2 (SSE overflow counter), F3 (slow-loris throughput), F11 (URL scheme), F7 (constant-time headers), F8 (nonce TTL documentation), F5 (JSON element count), F6 (JSON depth guard), F9 (path disclosure), F10 (ResolveDeep breadth), F12 (type name disclosure).",
+      "actions": [
+        {
+          "paths": ["PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1: maxBytes param on StreamWithProgressAsync. F2: consecutiveOverflows counter in SSE. F3: throughput check in all read methods. F11: URL scheme validation in ResolveUrl."
+        },
+        {
+          "paths": ["PLang/App/modules/signing/providers/Ed25519Provider.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F7: CryptographicOperations.FixedTimeEquals for header comparison. F8: documented existing timeout bounds nonce replay."
+        },
+        {
+          "paths": ["PLang/App/Data/Navigators/JsonStringNavigator.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F5: MaxElementCount=100K with ref counter. F6: depth parameter with MaxDepth=64."
+        },
+        {
+          "paths": ["PLang/App/modules/file/providers/DefaultFileProvider.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F9: removed path.Absolute from error message"
+        },
+        {
+          "paths": ["PLang/App/Variables/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F10: _resolveItemCount breadth guard at 100K"
+        },
+        {
+          "paths": ["PLang/App/Data/Navigators/ObjectNavigator.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F12: removed GetType().Name from error message"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green — 2085/2086 pass (1 pre-existing)",
+        "notes": "All 11 open findings fixed. F4 (Fluid SSTI) accepted-risk, skipped. Ready for security re-audit."
+      }
     }
   ]
 }

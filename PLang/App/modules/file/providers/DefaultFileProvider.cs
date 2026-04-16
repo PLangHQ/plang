@@ -36,7 +36,7 @@ public class DefaultFileProvider : IFileProvider
         }
 
         if (!fs.File.Exists(path.Absolute))
-            return App.Data.@this.FromError(new ServiceError($"File not found: {path.Raw} ({path.Absolute})", "NotFound", 404));
+            return App.Data.@this.FromError(new ServiceError($"File not found: {path.Raw}", "NotFound", 404));
 
         try
         {
