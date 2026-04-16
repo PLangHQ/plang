@@ -373,6 +373,9 @@ public class DefaultBuilderProvider : IBuilderProvider
     {
         if (step is IDictionary<string, object?> dict)
             dict[key] = value;
+        // JsonElement is immutable — log a warning since the value can't be set
+        else if (step is JsonElement)
+            Console.Error.WriteLine($"  Warning: Cannot set '{key}' on JsonElement step — expected IDictionary");
     }
 
     /// <summary>

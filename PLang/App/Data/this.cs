@@ -88,6 +88,10 @@ public partial class @this
     private Type? _type;
     private Actor.Context.@this? _context;
 
+    /// <summary>Cache for As&lt;T&gt;() Resolve method lookups — avoids per-call reflection.</summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?>
+        ResolveMethodCache = new();
+
     /// <summary>Fired by Variables.Set() when this Data is replaced — passes old and new Data.</summary>
     public event Action<@this, @this>? OnChange;
 
@@ -186,7 +190,10 @@ public partial class @this
             }
             if (NeedsResolution && _value != null && _context?.Variables != null
                 && (_value is System.Collections.IList || _value is System.Collections.IDictionary))
-                return _context.Variables.ResolveDeep(_value);
+            {
+                _value = _context.Variables.ResolveDeep(_value);
+                NeedsResolution = false;
+            }
             return _value;
         }
         set
@@ -305,6 +312,45 @@ public partial class @this
         return Array.Empty<object>();
     }
 
+    /// <summary>
+    /// Enumerates as (key, value) Data pairs. Data owns the knowledge of how to iterate:
+    /// dictionaries yield (dictKey, dictValue), lists yield (index, element),
+    /// single values yield (0, value). All results are Data — callers never see raw objects.
+    /// </summary>
+    public IEnumerable<(@this key, @this value)> EnumerateItems()
+    {
+        if (_value is IDictionary<string, object?> typedDict)
+        {
+            foreach (var kvp in typedDict)
+                yield return (new @this("", kvp.Key) { Context = _context },
+                              WrapItem(kvp.Value));
+            yield break;
+        }
+
+        if (_value is System.Collections.IDictionary untypedDict)
+        {
+            foreach (System.Collections.DictionaryEntry entry in untypedDict)
+                yield return (new @this("", entry.Key) { Context = _context },
+                              WrapItem(entry.Value));
+            yield break;
+        }
+
+        int index = 0;
+        if (_value is System.Collections.IEnumerable enumerable and not string)
+        {
+            foreach (var item in enumerable)
+                yield return (new @this("", index++) { Context = _context },
+                              WrapItem(item));
+            yield break;
+        }
+
+        if (_value != null)
+            yield return (new @this("", 0) { Context = _context }, this);
+    }
+
+    private @this WrapItem(object? item) =>
+        item is @this data ? data : new @this("", item) { Context = _context };
+
     [JsonIgnore]
     public bool IsEmpty => !IsInitialized || _value == null ||
         (_value is string s && string.IsNullOrEmpty(s));
@@ -338,9 +384,10 @@ public partial class @this
         // Context-resolvable types: if T has static Resolve(string, Context) and Value is string
         if (Value is string strVal && ctx != null)
         {
-            var resolveMethod = typeof(T).GetMethod("Resolve",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
-                null, new[] { typeof(string), typeof(Actor.Context.@this) }, null);
+            var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
+                t.GetMethod("Resolve",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                    null, new[] { typeof(string), typeof(Actor.Context.@this) }, null));
             if (resolveMethod != null)
             {
                 var resolved = resolveMethod.Invoke(null, new object[] { strVal, ctx });

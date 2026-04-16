@@ -46,6 +46,10 @@ namespace PLang
 					userVars.Set("path", fileSystem.RootDirectory);
 			}
 
+			// App settings (--app={"create":true})
+			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
+				TypeMapping.Populate(engine, appDict);
+
 			// Build mode
 			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
 			{

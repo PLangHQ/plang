@@ -42,13 +42,17 @@ public partial class If : IContext, IStep
             }
         }
 
-        // Orchestrate if/elseif/else when there are multiple actions in this step
+        // Orchestrate if/elseif/else when there are multiple actions in this step.
+        // Guard is step-scoped on Context._data (not Variables) so:
+        //   1. PLang developers can't accidentally override it
+        //   2. Inner goals called from branches get their own guard keys
         var actions = userStep?.Actions;
-        var alreadyOrchestrating = Context.Variables.Get("__condition_orchestrating__")?.Value is true;
+        var guardKey = $"__condition_orchestrating_{userStep?.GetHashCode()}__";
+        var alreadyOrchestrating = Context.Get<bool>(guardKey);
 
         if (!alreadyOrchestrating && actions != null && actions.Count > 1)
         {
-            Context.Variables.Put(new Data.@this("__condition_orchestrating__", true));
+            Context.Set(guardKey, true);
             try
             {
                 var result = await Orchestrate(actions, conditionResult);
@@ -57,7 +61,7 @@ public partial class If : IContext, IStep
             }
             finally
             {
-                Context.Variables.Remove("__condition_orchestrating__");
+                Context[guardKey] = null;
             }
         }
 

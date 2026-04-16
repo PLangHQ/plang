@@ -1,5 +1,3 @@
-using App.Variables;
-
 namespace App.modules.list;
 
 [Action("contains")]
@@ -11,11 +9,14 @@ public partial class Contains : IContext
 
     public Task<Data.@this> Run()
     {
-        var existing = Context.Variables.Get(ListName).Value;
-        if (existing is System.Collections.IList list)
-            return Task.FromResult(Data(list.Contains(Value.Value)));
-        if (existing is System.Collections.IDictionary dict && Value.Value is string key)
-            return Task.FromResult(Data(dict.Contains(key)));
+        var data = Context.Variables.Get(ListName);
+        var target = Value.Value;
+
+        foreach (var (_, item) in data.EnumerateItems())
+        {
+            if (Equals(item.Value, target))
+                return Task.FromResult(Data(true));
+        }
 
         return Task.FromResult(Data(false));
     }

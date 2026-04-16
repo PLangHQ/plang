@@ -1,5 +1,3 @@
-using App.Variables;
-
 namespace App.modules.list;
 
 [Action("group")]
@@ -13,20 +11,19 @@ public partial class Group : IContext
     public Task<Data.@this> Run()
     {
         var data = Context.Variables.Get(ListName);
-        if (data.Value is not System.Collections.IList rawList)
-            return Task.FromResult(Error(
-                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
+        var key = Key.Value!;
 
         var groups = new Dictionary<string, List<object?>>();
-        foreach (var item in rawList)
+        foreach (var (_, item) in data.EnumerateItems())
         {
-            var keyValue = ExtractKey(item, Key.Value!) ?? "";
+            var keyData = item.GetChild(key);
+            var keyValue = keyData.IsInitialized ? keyData.Value?.ToString() ?? "" : "";
             if (!groups.TryGetValue(keyValue, out var group))
             {
                 group = new List<object?>();
                 groups[keyValue] = group;
             }
-            group.Add(item);
+            group.Add(item.Value);
         }
 
         var result = groups.Select(g => new Dictionary<string, object?>
@@ -36,14 +33,5 @@ public partial class Group : IContext
         }).ToList();
 
         return Task.FromResult(Data(result, App.Data.Type.FromName("list")));
-    }
-
-    private static string? ExtractKey(object? item, string key)
-    {
-        if (item is IDictionary<string, object?> dict && dict.TryGetValue(key, out var val))
-            return val?.ToString();
-        if (item is System.Text.Json.JsonElement je && je.TryGetProperty(key, out var prop))
-            return prop.GetString();
-        return null;
     }
 }
