@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "3 critical behavioral issues: foreach drops dictionary support silently, ResolveDeep mutates shared templates, old .pr files lose Return mappings with no migration. 8 should-fix findings including broadened Handled semantics, uncached reflection, and CI-blocking Console.ReadLine." }

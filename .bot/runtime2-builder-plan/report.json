@@ -81,6 +81,67 @@
         "health": "green — 2062/2064 tests pass (2 pre-existing failures)",
         "notes": "Ready for end-to-end verification with plang build"
       }
+    },
+    {
+      "id": "ca-v1-2026-04-16-analysis",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-16T12:00:00Z",
+      "timestamp_end": "2026-04-16T13:00:00Z",
+      "intent": "Full 5-pass code analysis of all runtime changes on the branch",
+      "before": {
+        "assumptions": "Branch has ~200 changed files implementing Data<T> composition, return removal, condition orchestration, foreach inline, builder eval suite. Multiple coder sessions completed.",
+        "risk": "Analysis only — no code changes"
+      },
+      "plan": "5-pass analysis (OBP, Simplification, Readability, Behavioral, Deletion) on all changed C# runtime files. Focus on behavioral corners where the architectural changes could silently break existing PLang programs.",
+      "actions": [
+        {
+          "paths": ["PLang/App/Data/this.cs", "PLang/App/Data/this.Compare.cs", "PLang/App/Data/this.Navigation.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Core Data changes: events, NeedsResolution, Value factory, AsEnumerable, As<T>, ShallowClone, ToBoolean, implicit operator"
+        },
+        {
+          "paths": ["PLang/App/Variables/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Variables: Data-aware Set, ResolveDeep depth guard + typed object mutation, bracket indexing"
+        },
+        {
+          "paths": ["PLang/App/modules/condition/if.cs", "PLang/App/modules/loop/foreach.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Condition orchestration and foreach inline body — the two major behavioral changes"
+        },
+        {
+          "paths": ["PLang/App/modules/builder/providers/DefaultBuilderProvider.cs", "PLang/App/modules/builder/validateResponse.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Builder: PromoteGroups, validation suggestions, IBuildValidatable, Data<T> parameter wrapping"
+        },
+        {
+          "paths": ["PLang.Generators/LazyParamsGenerator.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Source generator: Data<T> support, IStatic, field reset, __ResolveData"
+        },
+        {
+          "paths": ["PLang/App/Goals/Goal/this.cs", "PLang/App/Goals/Goal/Steps/Step/this.cs", "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Entity hierarchy: IDataWrappable, Return removal, Handled break, AsData()"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — 3 critical findings, 8 should-fix",
+        "notes": "23 total findings. Critical: foreach drops dict support, ResolveDeep mutates shared templates, old .pr Return silently lost. Architecture direction is excellent OBP — issues are in migration edges."
+      }
     }
   ]
 }
