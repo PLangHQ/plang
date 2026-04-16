@@ -351,18 +351,14 @@ Blocks on Console.ReadLine in a potentially headless/CI environment. No timeout.
 
 ---
 
-### 19. Action.Return Now `[JsonIgnore]` — Old .pr Files Silently Drop Returns
+### 19. Action.Return Now `[JsonIgnore]` — Intentional, No Backward Compat Needed
 
 **File**: `PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs:40`
 **Pass**: 4
 
-`Return` changed from `[Store, LlmBuilder, Debug, Default]` to `[JsonIgnore]`. Old .pr files that contain `"return": [...]` will have the Return property silently ignored during deserialization (JsonIgnore means it's not read). The runtime will then store results as `%__data__%` only.
+`Return` changed from `[Store, LlmBuilder, Debug, Default]` to `[JsonIgnore]`. This is intentional — return is removed by design, replaced by `variable.set` + `%__data__%`. Old .pr files must be rebuilt. No backward compatibility needed.
 
-This is by design (the migration to `variable.set` + `%__data__%`), but there's no GoalMapper migration or version check. Old .pr files just silently change behavior — return variables aren't set, only `%__data__%` is.
-
-PLang code like `read file 'x.txt', write to %content%` that relied on `Return` to set `%content%` will now only set `%__data__%`. If the builder isn't re-run, the old .pr's return mappings are lost.
-
-**Severity**: HIGH — silent migration break for unrebuilt .pr files
+**Severity**: NOT AN ISSUE — by design
 
 ---
 
@@ -437,15 +433,14 @@ The entire PromoteGroups method (group-level promotion for builder pass 2) has n
 | OBP Violations | 3 | 0 |
 | Simplification | 3 | 0 |
 | Readability | 2 | 0 |
-| Behavioral | 12 | 3 |
+| Behavioral | 12 | 2 |
 | Deletion Test | 3 | 0 |
-| **Total** | **23** | **3** |
+| **Total** | **23** | **2** |
 
 ### Critical (Must Fix Before Merge)
 
 1. **Finding #1**: Foreach dictionary support silently dropped — `%key%` is now loop index, `%item%` is KVP struct
 2. **Finding #5**: ResolveDeep mutates shared CLR object properties — template contamination
-3. **Finding #19**: Old .pr files silently lose Return mappings — no migration path
 
 ### Should Fix
 
