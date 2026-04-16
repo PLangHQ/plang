@@ -1,0 +1,49 @@
+{
+  "name": "BareRetryCatcher",
+  "description": "Sets %bareRetryCaught% to true using variable.set.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %bareRetryCaught% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%bareRetryCaught%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Error/RetryOnly/BareRetryCatcher.goal",
+  "prPath": "/Tests/Error/RetryOnly/.build/bareretrycatcher.pr",
+  "hash": "721530b5266483f76149d388538696506be500e36c0e32b9216a91de8f854701",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -1,2 +1,0 @@
-Start
-- call DoWork, エラー時に HandleError を呼ぶ

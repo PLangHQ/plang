@@ -1,0 +1,49 @@
+{
+  "name": "WhenGreater",
+  "description": "Maps the step \u0027WhenGreater\u0027 to a variable.set action for %result% with value \u0027greater\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022greater\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "greater",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Condition/GreaterThan/WhenGreater.goal",
+  "prPath": "/Tests/Condition/GreaterThan/.build/whengreater.pr",
+  "hash": "8549bd74cad02b311cec50cff51455adff0761b51391d3756636c7d5678e7de5",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -433,22 +433,40 @@ public class @this
             return result;
         }
 
-        // Typed objects: resolve %var% only in string properties (no deep recursion to avoid cycles)
+        // Typed objects: resolve %var% in string properties.
+        // Clone first to avoid mutating the original (which may be shared .pr template data).
         var type = value.GetType();
         if (!type.IsPrimitive && type != typeof(decimal) && type != typeof(DateTime)
             && type != typeof(DateTimeOffset) && type != typeof(Guid) && !type.IsEnum)
         {
+            var needsClone = false;
             foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
             {
                 if (!prop.CanRead || !prop.CanWrite) continue;
                 if (prop.PropertyType != typeof(string)) continue;
-
                 var strValue = prop.GetValue(value) as string;
-                if (strValue == null || !strValue.Contains('%')) continue;
+                if (strValue != null && strValue.Contains('%')) { needsClone = true; break; }
+            }
 
-                var resolved = ResolveDeep(strValue);
-                if (!ReferenceEquals(resolved, strValue))
-                    prop.SetValue(value, resolved);
+            if (needsClone)
+            {
+                var clone = type.GetMethod("MemberwiseClone",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                    .Invoke(value, null)!;
+
+                foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                {
+                    if (!prop.CanRead || !prop.CanWrite) continue;
+                    if (prop.PropertyType != typeof(string)) continue;
+
+                    var strValue = prop.GetValue(clone) as string;
+                    if (strValue == null || !strValue.Contains('%')) continue;
+
+                    var resolved = ResolveDeep(strValue);
+                    if (!ReferenceEquals(resolved, strValue))
+                        prop.SetValue(clone, resolved);
+                }
+                return clone;
             }
         }
 

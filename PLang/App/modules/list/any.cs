@@ -1,5 +1,3 @@
-using App.Variables;
-
 namespace App.modules.list;
 
 /// <summary>
@@ -20,36 +18,16 @@ public partial class Any : IContext
     public Task<Data.@this> Run()
     {
         var data = Context.Variables.Get(ListName);
-        if (data.Value is not System.Collections.IList rawList)
-            return Task.FromResult(Error(
-                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
+        var key = Key.Value!;
+        var right = Value.Value != null ? new Data.@this("", Value.Value) : null;
 
-        foreach (var item in rawList)
+        foreach (var (_, item) in data.EnumerateItems())
         {
-            var propValue = ExtractProperty(item, Key.Value!);
-            var left = propValue != null ? new Data.@this("", propValue) : null;
-            var right = Value.Value != null ? new Data.@this("", Value.Value) : null;
-
+            var left = item.GetChild(key);
             if (Operator.Value!.Evaluate(left, right))
                 return Task.FromResult(Data(true, App.Data.Type.FromName("bool")));
         }
 
         return Task.FromResult(Data(false, App.Data.Type.FromName("bool")));
-    }
-
-    private static object? ExtractProperty(object? item, string key)
-    {
-        if (item is IDictionary<string, object?> dict && dict.TryGetValue(key, out var val))
-            return val;
-        if (item is System.Text.Json.JsonElement je && je.TryGetProperty(key, out var prop))
-            return prop.ValueKind switch
-            {
-                System.Text.Json.JsonValueKind.String => prop.GetString(),
-                System.Text.Json.JsonValueKind.Number => prop.GetInt64(),
-                System.Text.Json.JsonValueKind.True => true,
-                System.Text.Json.JsonValueKind.False => false,
-                _ => prop.ToString()
-            };
-        return null;
     }
 }

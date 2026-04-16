@@ -1,0 +1,102 @@
+{
+  "name": "CachedGoal",
+  "description": "CachedGoal reads testdata.txt into %cachedMsg% with a 5-minute cache, then writes an output message including the cached content. If called twice, the second call should hit the cache for the file.read step.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027testdata.txt\u0027, write to %cachedMsg%\ncache for 5 minutes",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Called twice from Start - second call should hit cache",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "testdata.txt",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%cachedMsg%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": {
+        "durationMs": 300000,
+        "sliding": null,
+        "key": null,
+        "location": null
+      },
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out \u0022  CachedGoal read: %cachedMsg%\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "CachedGoal read: %cachedMsg%",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Cache/Basic/CachedGoal.goal",
+  "prPath": "/Tests/Cache/Basic/.build/cachedgoal.pr",
+  "hash": "530633b1822355ea48057798a87c093a26b5085baac91fec508af31e03850a85",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

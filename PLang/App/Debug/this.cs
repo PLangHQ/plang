@@ -249,11 +249,6 @@ public sealed class @this
                 sb.AppendLine($"    {p.Name} = {FormatValue(p.Value, context)}");
             }
 
-            if (action.Return != null && action.Return.Count > 0)
-            {
-                var returnStr = string.Join(", ", action.Return.Select(r => $"%{r.Name}%"));
-                sb.AppendLine($"  Return: {returnStr}");
-            }
         }
 
         var callStack = context.CallStack;
@@ -376,15 +371,6 @@ public sealed class @this
 
         foreach (var action in step.Actions)
         {
-            if (action.Return != null)
-            {
-                foreach (var r in action.Return)
-                {
-                    if (!string.IsNullOrEmpty(r.Name))
-                        varNames.Add(r.Name);
-                }
-            }
-
             foreach (var p in action.Parameters)
             {
                 if (p.Value is string s)

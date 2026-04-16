@@ -56,41 +56,6 @@ public class StartGoalTests
 
     #endregion
 
-    #region Load from .pr.json
-
-    [Test]
-    public async Task StartGoal_LoadFromPrJson_SetsVariablesAndWritesOutput()
-    {
-        await using var engine = new global::App.@this("/app");
-
-        // Replace output.write with capturing version
-        var capture = new CapturingWriteHandler();
-        engine.Modules.Register("output", "write", capture);
-
-        // Find the .pr.json file and set FileSystem root to repo root so it's accessible
-        var prJsonPath = FindPrJsonPath();
-        var repoRoot = Path.GetDirectoryName(Path.GetDirectoryName(prJsonPath))!; // parent of Tests/Builder
-        engine.FileSystem = new global::App.FileSystem.Default.PLangFileSystem(repoRoot, "");
-
-        var loadResult = await engine.Goals.LoadFromFileAsync(engine,prJsonPath);
-        await Assert.That(loadResult.Success).IsTrue();
-
-        var context = engine.Context;
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "Start" }, context);
-
-        await Assert.That(result.Success).IsTrue();
-
-        // Check variables
-        await Assert.That(context.Variables.GetValue("name")).IsEqualTo("Plang");
-        await Assert.That(context.Variables.GetValue("newVarName")).IsEqualTo("Plang");
-
-        // Check output
-        await Assert.That(capture.Lines).Contains("Plang");
-        await Assert.That(capture.Lines).Contains("NewVar: Plang");
-    }
-
-    #endregion
-
     #region Variable Resolution Unit Tests
 
     [Test]
@@ -351,31 +316,10 @@ public class StartGoalTests
                     Module = actionClass,
                     ActionName = method,
                     Parameters = parameters.Select(kv => new Data(kv.Key, kv.Value)).ToList(),
-                    Defaults = defaults?.Select(kv => new Data(kv.Key, kv.Value)).ToList(),
-                    Return = null
+                    Defaults = defaults?.Select(kv => new Data(kv.Key, kv.Value)).ToList()
                 }
             }
         };
-    }
-
-    private static string FindPrJsonPath()
-    {
-        // Walk up from test output directory to find the repo root
-        var dir = AppContext.BaseDirectory;
-        while (dir != null)
-        {
-            var candidate = Path.Combine(dir, "Tests", "Builder", "Start.pr.json");
-            if (File.Exists(candidate))
-                return candidate;
-            dir = Directory.GetParent(dir)?.FullName;
-        }
-
-        // Fallback: try relative to working directory
-        var fallback = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "Tests", "Builder", "Start.pr.json"));
-        if (File.Exists(fallback))
-            return fallback;
-
-        throw new FileNotFoundException("Could not find Tests/Builder/Start.pr.json");
     }
 
     /// <summary>

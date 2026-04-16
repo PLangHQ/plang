@@ -32,17 +32,20 @@ public partial class Foreach : IContext, IStep
         // Find remaining actions in this step (the loop body)
         var bodyActions = GetBodyActions();
 
-        foreach (var item in Collection.AsEnumerable())
+        // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element)
+        foreach (var (key, item) in Collection.EnumerateItems())
         {
             if (Context.CancellationToken.IsCancellationRequested)
                 return Data(new types.loop { itemCount = count, completed = false });
 
-            Context.Variables.Set(variableName, item);
-
+            item.Name = variableName;
+            Context.Variables.Put(item);
             if (KeyName != null)
-                Context.Variables.Set(KeyName, count);
+            {
+                key.Name = KeyName;
+                Context.Variables.Put(key);
+            }
 
-            // Run each body action for this item
             foreach (var action in bodyActions)
             {
                 var result = await action.RunAsync(Context);

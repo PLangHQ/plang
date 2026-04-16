@@ -1086,6 +1086,32 @@ public class VariablesAccessorTests
     }
 
     [Test]
+    public async Task ResolveDeep_TypedObject_DoesNotMutateOriginal()
+    {
+        var stack = new Variables();
+        stack.Set("systemPrompt", "You are a compiler");
+
+        var original = new global::App.modules.llm.LlmMessage
+        {
+            Role = "system",
+            Content = "%systemPrompt%"
+        };
+
+        var result = stack.ResolveDeep(original);
+
+        // Resolved copy should have the resolved value
+        var resolved = result as global::App.modules.llm.LlmMessage;
+        await Assert.That(resolved).IsNotNull();
+        await Assert.That(resolved!.Content).IsEqualTo("You are a compiler");
+
+        // Original must NOT be mutated — it still has the template
+        await Assert.That(original.Content).IsEqualTo("%systemPrompt%");
+
+        // They should be different object instances
+        await Assert.That(object.ReferenceEquals(original, resolved)).IsFalse();
+    }
+
+    [Test]
     public async Task ResolveDeep_ListOfTypedObjects_ResolvesStringProperties()
     {
         var stack = new Variables();

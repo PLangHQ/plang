@@ -17,6 +17,9 @@ public sealed class DictionaryNavigator : INavigator
 
         if (value is IDictionary<string, object?> generic)
         {
+            if (string.Equals(key, "Count", StringComparison.OrdinalIgnoreCase))
+                return new Data.@this(key, generic.Count, parent: data);
+
             foreach (var kvp in generic)
             {
                 if (string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
@@ -27,6 +30,9 @@ public sealed class DictionaryNavigator : INavigator
 
         if (value is IDictionary dict)
         {
+            if (string.Equals(key, "Count", StringComparison.OrdinalIgnoreCase))
+                return new Data.@this(key, dict.Count, parent: data);
+
             foreach (DictionaryEntry entry in dict)
             {
                 if (entry.Key is string k && string.Equals(k, key, StringComparison.OrdinalIgnoreCase))

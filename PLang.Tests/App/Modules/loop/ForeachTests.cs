@@ -125,6 +125,42 @@ public class ForeachTests
     }
 
     [Test]
+    public async Task Foreach_Dictionary_KeyIsStringNotIndex()
+    {
+        var context = _app.Context;
+        // Use single-entry dict so final state = only iteration
+        var dict = new Dictionary<string, object?> { ["greeting"] = "hello" };
+        context.Variables.Set("dict", dict);
+
+        var goal = new Goal { Name = "Noop", Path = "/Noop.goal", Steps = new GoalSteps() };
+        _app.Goals.Add(goal);
+
+        var foreachAction = TestAction.Create("loop", "foreach",
+            ("collection", "%dict%"), ("itemname", "%val%"), ("keyname", "%key%"));
+        var goalCallAction = TestAction.Create("goal", "call",
+            ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" }));
+
+        var step = new Step
+        {
+            Index = 0,
+            Text = "foreach %dict%, call Noop",
+            Actions = new StepActions { foreachAction, goalCallAction }
+        };
+        foreachAction.Step = step;
+        goalCallAction.Step = step;
+
+        var result = await step.RunAsync(context);
+
+        await Assert.That(result.Success).IsTrue();
+        // %key% should be the dictionary key (string "greeting"), not numeric index (0)
+        var key = context.Variables.GetValue("key");
+        await Assert.That(key).IsEqualTo("greeting");
+        // %val% should be the value ("hello"), not a KeyValuePair struct
+        var val = context.Variables.GetValue("val");
+        await Assert.That(val).IsEqualTo("hello");
+    }
+
+    [Test]
     public async Task Foreach_NullCollection_ReturnsZeroCount()
     {
         var context = _app.Context;

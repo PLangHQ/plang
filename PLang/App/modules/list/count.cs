@@ -1,5 +1,3 @@
-using App.Variables;
-
 namespace App.modules.list;
 
 [Action("count")]
@@ -10,12 +8,15 @@ public partial class Count : IContext
 
     public Task<Data.@this> Run()
     {
-        var existing = Context.Variables.Get(ListName).Value;
-        if (existing is System.Collections.IList list)
-            return Task.FromResult(Data(list.Count));
-        if (existing is System.Collections.IDictionary dict)
-            return Task.FromResult(Data(dict.Count));
+        var data = Context.Variables.Get(ListName);
+        var countData = data.GetChild("Count");
 
-        return Task.FromResult(Data(0));
+        if (countData.IsInitialized && countData.Value is int c)
+            return Task.FromResult(Data(c));
+
+        // Fallback: enumerate
+        int count = 0;
+        foreach (var _ in data.EnumerateItems()) count++;
+        return Task.FromResult(Data(count));
     }
 }

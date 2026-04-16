@@ -37,10 +37,6 @@ public sealed partial class @this : modules.IDataWrappable
     [Store, LlmBuilder, Debug, Default]
     public List<Data.@this> Parameters { get; init; } = new();
 
-    // Return is deprecated — use variable.set action with %__data__% instead
-    [JsonIgnore]
-    public List<Data.@this>? Return { get; init; }
-
     [Store, Debug, Default]
     public List<Data.@this>? Defaults { get; set; }
 

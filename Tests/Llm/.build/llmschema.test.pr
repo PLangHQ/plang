@@ -1,0 +1,134 @@
+{
+  "name": "Start",
+  "description": "Runs an llm.query with JSON schema, writes the parsed response to %result%, then asserts %result% and %result.sentiment% are not null.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "[llm] system: \u0027You analyze sentiment. Respond in JSON only.\u0027\nuser: \u0027Analyze: I love sunny days\u0027\nscheme: {sentiment:string, score:number}\nwrite to %result%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Query with JSON schema \u2014 verify response is parsed and dot-navigable",
+      "actions": [
+        {
+          "module": "llm",
+          "action": "query",
+          "parameters": [
+            {
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "You analyze sentiment. Respond in JSON only.",
+                  "images": []
+                },
+                {
+                  "role": "user",
+                  "content": "Analyze: I love sunny days",
+                  "images": []
+                }
+              ],
+              "type": "list\u003Cllmmessage\u003E"
+            },
+            {
+              "name": "Schema",
+              "value": "{\u0022sentiment\u0022:\u0022string\u0022,\u0022score\u0022:\u0022number\u0022}",
+              "type": "string"
+            },
+            {
+              "name": "Cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %result% is not null",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%result%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %result.sentiment% is not null",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%result.sentiment%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Llm/LlmSchema.test.goal",
+  "prPath": "/Tests/Llm/.build/llmschema.test.pr",
+  "hash": "57b6e9dc25ee4a37ebd54ad85cf6fb41fd0ae25e07784ca813a0088d059a06c4",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

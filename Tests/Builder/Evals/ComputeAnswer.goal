@@ -1,3 +1,0 @@
-ComputeAnswer
-- set %answer% = 42
-- return %answer%

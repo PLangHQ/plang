@@ -1,5 +1,3 @@
-using App.Variables;
-
 namespace App.modules.list;
 
 [Action("get")]
@@ -11,15 +9,13 @@ public partial class Get : IContext
 
     public Task<Data.@this> Run()
     {
-        var existing = Context.Variables.Get(ListName).Value;
-        if (existing is not System.Collections.IList list)
-            return Task.FromResult(Error(
-                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
+        var data = Context.Variables.Get(ListName);
+        var item = data.GetChild($"[{Index.Value}]");
 
-        if (Index.Value < 0 || Index.Value >= list.Count)
+        if (!item.IsInitialized)
             return Task.FromResult(Error(
-                new App.Errors.ValidationError($"Index {Index.Value} out of range (0..{list.Count - 1})")));
+                new App.Errors.ValidationError($"Index {Index.Value} out of range for '{ListName}'")));
 
-        return Task.FromResult(Data(list[Index.Value]));
+        return Task.FromResult(Data(item.Value));
     }
 }

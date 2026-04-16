@@ -362,6 +362,78 @@ public class IfHandlerTests : IDisposable
         await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
         await Assert.That(result.Error!.Message).Contains("does not support comparison");
     }
+
+    /// <summary>
+    /// Simulates: outer goal has if/else → then-branch calls inner goal →
+    /// inner goal also has if/else. The inner condition must orchestrate independently.
+    /// Bug: shared guard variable on Context.Variables blocks inner orchestration.
+    /// </summary>
+    [Test]
+    public async Task Run_InnerGoalCondition_OrchestatesIndependently()
+    {
+        var captureStream = new System.IO.MemoryStream();
+        _app.User.Channels.Register(new Channel(
+            EngineChannels.Default, captureStream,
+            ChannelDirection.Output, ownsStream: true)
+        { ContentType = "text/plain" });
+
+        // --- Inner goal: if true → write "inner-then", else → write "inner-else" ---
+        var innerCondAction = new Action
+        {
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
+            {
+                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
+            }
+        };
+        var innerThenAction = new Action
+        {
+            Module = "output", ActionName = "write",
+            Parameters = new List<Data> { new Data("Data", "inner-then") }
+        };
+        var innerElseCondAction = new Action
+        {
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
+            {
+                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
+            }
+        };
+        var innerElseAction = new Action
+        {
+            Module = "output", ActionName = "write",
+            Parameters = new List<Data> { new Data("Data", "inner-else") }
+        };
+
+        var innerStep = new Step
+        {
+            Index = 0, Text = "if true write inner-then, else write inner-else",
+            Actions = new StepActions { innerCondAction, innerThenAction, innerElseCondAction, innerElseAction }
+        };
+        innerCondAction.Step = innerStep;
+
+        // Simulate the bug: the outer goal's condition has already set the guard
+        // on the SAME context (because RunGoalAsync passes context by reference).
+        // With the buggy code (Variables-based guard), the inner condition sees it
+        // and skips orchestration — actions run sequentially instead of branched.
+        var context = _app.Context;
+        context.Variables.Put(new Data("__condition_orchestrating__", true));
+
+        // Run the inner step (which shares the same context as the outer)
+        var result = await innerStep.RunAsync(context);
+
+        await Assert.That(result.Success).IsTrue();
+
+        captureStream.Position = 0;
+        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+
+        // The inner if is true, so "inner-then" should appear.
+        // With the bug: orchestration is skipped, step runs actions sequentially,
+        // condition returns true (Handled=false), then output.write runs "inner-then",
+        // BUT the else condition also runs and writes "inner-else" too.
+        // With the fix: orchestration works, only "inner-then" is written.
+        await Assert.That(output).IsEqualTo("inner-then" + System.Environment.NewLine);
+    }
 }
 
 public class TestData : Data

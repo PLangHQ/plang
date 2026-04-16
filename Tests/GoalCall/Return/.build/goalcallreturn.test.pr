@@ -1,0 +1,78 @@
+{
+  "name": "Start",
+  "description": "Calls ComputeAnswer, writes its result to %answer%, then asserts %answer% is not null.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call ComputeAnswer, write to %answer%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "goal call with return value",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ComputeAnswer",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %answer% is not null",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%answer%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/GoalCall/Return/GoalCallReturn.test.goal",
+  "prPath": "/Tests/GoalCall/Return/.build/goalcallreturn.test.pr",
+  "hash": "94a30b6d4f5165265be44710715f8d0ca7ff094e2f4ab1d33abd61d10bc2bb8b",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -1,0 +1,49 @@
+{
+  "name": "WhenLTE",
+  "description": "Maps the step \u0027WhenLTE\u0027 to a variable assignment setting %result% to the string \u0027lte\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022lte\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "lte",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Condition/LTE/WhenLTE.goal",
+  "prPath": "/Tests/Condition/LTE/.build/whenlte.pr",
+  "hash": "6f6d08cdd0d061b9851262b738c479468c504dc7a9f1d895452abcf4f2d3d7c1",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

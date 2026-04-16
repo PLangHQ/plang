@@ -1,0 +1,49 @@
+{
+  "name": "WildcardHandler",
+  "description": "Maps the step to a variable.set that increments %matchCount% by 1.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %matchCount% = %matchCount% \u002B 1",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%matchCount%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%matchCount% \u002B 1",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Event/Wildcard/WildcardHandler.goal",
+  "prPath": "/Tests/Event/Wildcard/.build/wildcardhandler.pr",
+  "hash": "2a9513cfc493396e6d0768080e72679fa0eb256c7f02b9410676b28c35a2a3fe",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

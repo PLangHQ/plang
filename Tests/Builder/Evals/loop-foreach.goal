@@ -1,2 +1,0 @@
-Start
-- foreach %items%, call ProcessItem item=%item%

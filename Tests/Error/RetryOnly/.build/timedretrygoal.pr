@@ -1,0 +1,92 @@
+{
+  "name": "TimedRetryGoal",
+  "description": "TimedRetryGoal: increments %timedRetryAttempts% by 1, stores it back, then throws an error \u0027timed fail\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "add 1 to %timedRetryAttempts%, write to %timedRetryAttempts%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%timedRetryAttempts%",
+              "type": "string"
+            },
+            {
+              "name": "B",
+              "value": 1,
+              "type": "long"
+            }
+          ],
+          "defaults": null
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%timedRetryAttempts%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "throw error \u0022timed fail\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "timed fail",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Error/RetryOnly/TimedRetryGoal.goal",
+  "prPath": "/Tests/Error/RetryOnly/.build/timedretrygoal.pr",
+  "hash": "c3682ca3c59a1d65c0fcf535415978b1d1d02bc7019282c388101c838ccf5612",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

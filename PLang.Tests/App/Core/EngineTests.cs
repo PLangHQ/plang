@@ -20,8 +20,7 @@ public class EngineTests
                     ActionName = method,
                     Parameters = parameters is IDictionary<string, object?> dict
                         ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
-                        : new List<Data>(),
-                    Return = null
+                        : new List<Data>()
                 }
             }
         };

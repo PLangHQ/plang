@@ -1,0 +1,49 @@
+{
+  "name": "ProcessChunk",
+  "description": "Writes an output message for each received stream chunk.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0027Received chunk: %!data%\u0027",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Called per stream chunk",
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Received chunk: %!data%",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Http/StreamCallback/ProcessChunk.goal",
+  "prPath": "/Tests/Http/StreamCallback/.build/processchunk.pr",
+  "hash": "04c66cdf7538158f70ec86f58de4129957c80656d1b317866d3bab22ac2a7fca",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

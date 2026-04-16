@@ -1,3 +1,0 @@
-Setup
-- create datasource 'mydb'
-- Create table users, columns name(not null), email(not null)

@@ -180,6 +180,11 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     public Build.@this Building { get; }
 
     /// <summary>
+    /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
+    /// </summary>
+    public bool Create { get; set; }
+
+    /// <summary>
     /// Centralized type knowledge: PLang names ↔ CLR types, file extensions → Kind/MIME, compressibility.
     /// </summary>
     public Types.@this Types { get; }
@@ -391,10 +396,15 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         // Building → PLang builder (runs as User — user is building their code)
         if (Building.IsEnabled)
         {
-            // Safety check: confirm new app creation if no app.pr exists
+            // Safety check: confirm new app creation if no app.pr exists.
+            // --app={"create":true} skips the prompt. Headless/CI defaults to "no".
             var appPrPath = FileSystem.ValidatePath(".build/app.pr");
-            if (!FileSystem.File.Exists(appPrPath))
+            if (!FileSystem.File.Exists(appPrPath) && !Create)
             {
+                if (Console.IsInputRedirected)
+                    return Data.@this.FromError(new Errors.ServiceError(
+                        $"No app found at {AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
+
                 Console.Write($"No app found at {AbsolutePath}. Create new app? (y/n): ");
                 var answer = Console.ReadLine()?.Trim().ToLowerInvariant();
                 if (answer != "y" && answer != "yes")

@@ -84,7 +84,8 @@ public class DefaultBuilderProvider : IBuilderProvider
 
             files = files.Where(f =>
                 buildFiles.Any(bf => f.FileName.Equals(bf.FileName, StringComparison.OrdinalIgnoreCase)
-                    || f.Relative.EndsWith(bf.Relative, StringComparison.OrdinalIgnoreCase)))
+                    || f.Relative.EndsWith(bf.Relative, StringComparison.OrdinalIgnoreCase)
+                    || f.Relative.StartsWith(bf.Relative, StringComparison.OrdinalIgnoreCase)))
                 .ToArray();
             if (files.Length == 0)
                 return Data.@this.Ok(new List<Goal>());
@@ -372,6 +373,9 @@ public class DefaultBuilderProvider : IBuilderProvider
     {
         if (step is IDictionary<string, object?> dict)
             dict[key] = value;
+        // JsonElement is immutable — log a warning since the value can't be set
+        else if (step is JsonElement)
+            Console.Error.WriteLine($"  Warning: Cannot set '{key}' on JsonElement step — expected IDictionary");
     }
 
     /// <summary>

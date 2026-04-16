@@ -1,0 +1,225 @@
+{
+  "name": "Start",
+  "description": "Compiles a sequence of assertions: not-equals, is-false, is-null, greater-than, and less-than, with explicit variable.set steps for the null/false values.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "assert 5 not equals 10",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "notEquals",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "notEquals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": 5,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %flag% = false",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "isFalse",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%flag%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %flag% is false",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isFalse",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%flag%",
+              "type": "bool"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %nothing% = null",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": "isNull",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%nothing%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": null,
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %nothing% is null",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%nothing%",
+              "type": "object"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert 10 is greater than 5",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": "greaterThan",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "greaterThan",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 5,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert 3 is less than 7",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": "lessThan",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "lessThan",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 7,
+              "type": "int"
+            }
+          ],
+          "defaults": null
+        }
+      ],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Assert/Assert.test.goal",
+  "prPath": "/Tests/Assert/.build/assert.test.pr",
+  "hash": "1815c780867821a77fd6445aa08ecd27f6d5d34e0c875d967718c63ab3d7e4b6",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}
