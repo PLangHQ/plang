@@ -131,6 +131,66 @@
       "suggestion": "Add: boolean mismatch test, type-kind mismatch test, nested diff structure inspection, case-insensitive field matching test"
     },
     {
+      "id": 16,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/loop/ForeachTests.cs",
+      "code_file": "PLang/App/modules/loop/foreach.cs",
+      "issue": "Foreach_IteratesDictionary test only asserts result.Success — never checks what %key% and %val% actually contain. On current (unfixed) code: %val% = KeyValuePair struct (not value), %key% = loop index (not dict key). Test passes green despite variables being completely wrong.",
+      "impact": "Dict iteration is silently broken: PLang programs using foreach on dictionaries get KeyValuePair structs instead of values and numeric indices instead of keys",
+      "suggestion": "Assert actual variable values: key should be dict key string, val should be dict value. Fix from fix-plang-tests branch (Data.EnumerateItems) needs integration."
+    },
+    {
+      "id": 17,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/Goals/Goal/Steps/Step/this.cs",
+      "issue": "Step.RunActions() Handled break (line 177: if result.Handled break) has zero direct tests. Only 4 condition orchestration tests exist, all with 2-action steps. No test for 3+ actions, no test for elseif, no test for all-false branches, no test that Handled flag is actually set.",
+      "impact": "Multi-action condition orchestration (the core new feature) is barely tested. Elseif branches, multi-action bodies, and error handling within orchestration are all untested.",
+      "suggestion": "Add: 3+ action step with Handled break, elseif test with 3 conditions, all-false test, error-in-branch test, assert result.Handled==true"
+    },
+    {
+      "id": 18,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/Data/this.cs",
+      "issue": "Data.ToBoolean(), Data.As<T>(), and Data.ShallowClone() have zero direct tests. ToBoolean is core truthiness logic (null, false, empty string, 0). As<T> is type conversion. ShallowClone is used by Variables.Set().",
+      "impact": "Core Data API methods used throughout the runtime are completely untested. ToBoolean bugs would break all condition evaluation.",
+      "suggestion": "Add tests for ToBoolean edge cases (null, false, '', 0, 0.0m), As<T> type conversions, ShallowClone property preservation"
+    },
+    {
+      "id": 19,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+      "issue": "IBuildValidatable.ValidateBuild() — two implementations (variable.set and llm.query) have zero tests. Reflection-based invocation in Validate() action is untested.",
+      "impact": "Custom validation for variable.set and LLM query parameters could silently pass invalid data",
+      "suggestion": "Test both ValidateBuild implementations with valid and invalid inputs"
+    },
+    {
+      "id": 20,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+      "issue": "Return removal backward compatibility: old .pr files with 'return' property silently lose return mapping. No test verifies old .pr deserialization or documents migration path.",
+      "impact": "Existing PLang programs with old .pr files will silently stop returning values from actions",
+      "suggestion": "Add test loading old .pr with Return property, verify deserialization doesn't crash, document migration to variable.set %__data__%"
+    },
+    {
+      "id": 21,
+      "severity": "major",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/list/ListTests.cs",
+      "code_file": "PLang/App/modules/list/",
+      "issue": "List tests largely check only Success, not actual values. Missing: empty list edge cases for First/Last/Count/Join, Remove with out-of-range index, Sort descending, Range with negative step, Contains on dict. Silent fallbacks (returns false/0) untested.",
+      "impact": "List operations could return wrong values or silently swallow errors while tests stay green",
+      "suggestion": "Add value assertions to existing tests, add empty list tests, add edge case tests for each operation"
+    },
+    {
       "id": 12,
       "severity": "minor",
       "type": "missing-coverage",
@@ -172,5 +232,5 @@
     }
   ],
   "verdict": "needs-fixes",
-  "summary": "2065/2069 C# tests pass (2-4 non-deterministic failures in LLM callback and actor settings tests). Coverage is strong overall (139/145 changed files have data), but 4 critical gaps exist: validateResponse.cs (106 lines, 0%), list.any (55 lines, 0%), list.group (50 lines, 0%), and promoteGroups.cs (0%). The builder validation code is the most concerning — it's the LLM response gatekeeper with zero tests. Two test failures are real bugs: Query_OnValidateResponse_MaxRetries hits a file-not-found instead of testing retry logic, and UserActor_DuringBuilding shows settings leaking across engine instances. Data.Compare tests are decent but missing boolean mismatch, type-kind mismatch, and nested diff structure verification."
+  "summary": "2065/2069 C# tests pass (2-4 non-deterministic failures). 21 findings: 6 critical, 9 major, 6 minor. CRITICAL: (1) validateResponse.cs 0% — LLM gatekeeper untested; (2) promoteGroups 0%; (3) list.any/group 0%; (4) foreach dict iteration is a FALSE GREEN — test passes but variables contain wrong types (KeyValuePair struct + loop index); (5) Handled break + condition orchestration barely tested (4 tests, no elseif, no multi-action bodies). MAJOR: Data.ToBoolean/As<T>/ShallowClone 0%, IBuildValidatable 0%, Return removal backward compat untested, list tests lack value assertions, 3 broken/flaky tests (LLM retry, actor settings, tool call). Send to coder."
 }
