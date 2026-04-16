@@ -1,2 +1,0 @@
-Start
-- foreach %empty%, call DoThing item=%item%

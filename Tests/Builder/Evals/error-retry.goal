@@ -1,2 +1,0 @@
-Start
-- call DoWork, on error retry 3 times

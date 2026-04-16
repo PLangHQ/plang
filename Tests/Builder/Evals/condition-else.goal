@@ -1,2 +1,0 @@
-Start
-- if %x% > 5, call WhenBig, else call WhenSmall
