@@ -142,6 +142,53 @@
         "health": "FAIL — 3 critical findings, 8 should-fix",
         "notes": "23 total findings. Critical: foreach drops dict support, ResolveDeep mutates shared templates, old .pr Return silently lost. Architecture direction is excellent OBP — issues are in migration edges."
       }
+    },
+    {
+      "id": "ca-v2-2026-04-16-rereview",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-16T14:00:00Z",
+      "timestamp_end": "2026-04-16T14:30:00Z",
+      "intent": "Re-review coder's fixes for v1 findings",
+      "before": {
+        "assumptions": "Coder addressed 10 of 13 v1 findings in commit db09e0f4 on fix-plang-tests. Changes span 28 files.",
+        "risk": "Analysis only — no code changes"
+      },
+      "plan": "5-pass analysis on coder's fix commit. Verify each fix against original finding. Check for new issues introduced by the fixes.",
+      "actions": [
+        {
+          "paths": ["PLang/App/Data/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "EnumerateItems(), Value caching, As<T> cache — all verified correct"
+        },
+        {
+          "paths": ["PLang/App/Variables/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "ResolveDeep clone via MemberwiseClone — verified safe for string-only mutation"
+        },
+        {
+          "paths": ["PLang/App/modules/condition/if.cs", "PLang/App/modules/loop/foreach.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Condition guard moved to Context._data, foreach uses EnumerateItems"
+        },
+        {
+          "paths": ["PLang/App/modules/list/any.cs", "PLang/App/modules/list/contains.cs", "PLang/App/modules/list/count.cs", "PLang/App/modules/list/first.cs", "PLang/App/modules/list/get.cs", "PLang/App/modules/list/group.cs", "PLang/App/modules/list/indexof.cs", "PLang/App/modules/list/join.cs", "PLang/App/modules/list/last.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "7 list modules rewritten to use Data.EnumerateItems/GetChild — excellent OBP"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all critical fixes verified correct, 1 new LOW finding",
+        "notes": "All 10 fixes correctly resolve v1 findings. 1 new LOW: count.cs dict count is O(n). 3 carried from v1 unaddressed. Ready for tester."
+      }
     }
   ]
 }
