@@ -1,0 +1,176 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-builder-plan",
+  "timestamp": "2026-04-16T14:00:00Z",
+  "tested_version": "v6",
+  "test_run": {
+    "csharp": { "total": 2069, "passed": 2065, "failed": 4, "skipped": 0 },
+    "plang": { "total": 0, "passed": 0, "failed": 0, "skipped": 0, "note": "No PLang tests on this branch - eval suite uses builder pipeline, not runtime test runner" }
+  },
+  "coverage": {
+    "changed_files_covered": 139,
+    "changed_files_total": 145,
+    "uncovered_files": [
+      "PLang.Generators/LazyParamsGenerator.cs",
+      "PLang/App/modules/IDataWrappable.cs",
+      "PLang/App/modules/IStatic.cs",
+      "PLang/App/modules/builder/providers/IBuilderProvider.cs",
+      "PLang/App/modules/file/providers/IFileProvider.cs",
+      "PLang/App/modules/identity/providers/IIdentityProvider.cs"
+    ]
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/builder/validateResponse.cs",
+      "issue": "New 106-line file with complex validation logic (JSON parsing, step count, index validation) has 0% test coverage",
+      "impact": "LLM response validation could silently accept malformed responses or reject valid ones. This is the gatekeeper for builder correctness.",
+      "suggestion": "Write tests: null inputs, step count mismatch, missing indexes, duplicate indexes, empty actions, JsonElement vs dictionary paths"
+    },
+    {
+      "id": 2,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/builder/promoteGroups.cs",
+      "issue": "New builder action delegating to Builder.PromoteGroups() has 0% coverage. PromoteGroups logic in DefaultBuilderProvider is also untested.",
+      "impact": "Group promotion (grouping steps for the builder) could silently produce wrong structure",
+      "suggestion": "Test PromoteGroups with various step group configurations"
+    },
+    {
+      "id": 3,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/list/any.cs",
+      "issue": "New 55-line list.any action with operator evaluation and property extraction has 0% test coverage",
+      "impact": "list.any could return wrong results for any/all operator+property combinations. ExtractProperty handles dict and JsonElement separately — both paths untested.",
+      "suggestion": "Test with dict items, JsonElement items, matching/non-matching conditions, missing properties, empty lists"
+    },
+    {
+      "id": 4,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/list/group.cs",
+      "issue": "New 50-line list.group action has 0% test coverage",
+      "impact": "Grouping by key could silently produce wrong groups or lose items",
+      "suggestion": "Test with dict items, multiple groups, missing key, empty list"
+    },
+    {
+      "id": 5,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/timer/start.cs",
+      "issue": "New timer module (start.cs + end.cs) has 0% test coverage",
+      "impact": "Timer could silently fail or produce wrong elapsed times",
+      "suggestion": "Test timer start/end lifecycle, default vs named timers, scope parameter"
+    },
+    {
+      "id": 6,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/cache/store.cs",
+      "issue": "cache.store modified to collect __data__ instead of Return — 0% coverage",
+      "impact": "Cache store could silently fail to cache action results after Return removal",
+      "suggestion": "Test cache.store with the new __data__ collection path"
+    },
+    {
+      "id": 7,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/llm/QueryCallbackTests.cs",
+      "code_file": "PLang/App/modules/llm/query.cs",
+      "issue": "Query_OnValidateResponse_MaxRetries_ReturnsError fails: expects 'Validation failed after 3 retries' but gets 'File not found: .build/alwaysfails.pr'. The validation goal can't be loaded, so the test hits a different error path than intended.",
+      "impact": "The actual max-retries-exceeded error message is untested. If the retry counting logic is broken, this test would not catch it.",
+      "suggestion": "Set up a real .pr file for AlwaysFails goal that returns error, or mock goal resolution to simulate validation failure"
+    },
+    {
+      "id": 8,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/llm/LlmIntegrationTests.cs",
+      "code_file": "PLang/App/modules/llm/query.cs",
+      "issue": "Query_ToolCall_LlmRequestsToolAndHandlesError intermittently fails with empty string assertion. Test depends on snapshot data that may not be reliably set up.",
+      "impact": "Tool call error handling path is flaky — might pass without actually testing the error handling",
+      "suggestion": "Investigate snapshot setup reliability, ensure the test deterministically produces a non-empty response"
+    },
+    {
+      "id": 9,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Context/ActorSettingsStoreTests.cs",
+      "code_file": "PLang/App/Actor/Context/this.cs",
+      "issue": "UserActor_DuringBuilding_DoesNotPersistAcrossEngineInstances fails intermittently: settings value 'temporary' persists when it shouldn't. Non-deterministic — likely SQLite file not cleaned up between runs.",
+      "impact": "Builder settings isolation may be broken — build-time settings could leak into runtime",
+      "suggestion": "Ensure test temp directory is unique and fully cleaned up. Check if SettingsStore uses shared SQLite file."
+    },
+    {
+      "id": 10,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/Utils/ReservedKeywords.cs",
+      "issue": "Modified file with 0% coverage",
+      "impact": "Reserved keyword changes could silently break variable name validation",
+      "suggestion": "Add tests for reserved keyword detection"
+    },
+    {
+      "id": 11,
+      "severity": "major",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Memory/DataCompareTests.cs",
+      "code_file": "PLang/App/Data/this.Compare.cs",
+      "issue": "Compare_BooleanValues_MatchTrue only tests true==true. No test for true!=false. Compare_NestedObjects_DeepDiff only checks top-level match=false without inspecting nested diff structure. No test for type-kind mismatch (object vs array).",
+      "impact": "Boolean comparison operator could be flipped, nested diff structure could be corrupted, and type mismatches could be unreported — all would pass current tests",
+      "suggestion": "Add: boolean mismatch test, type-kind mismatch test, nested diff structure inspection, case-insensitive field matching test"
+    },
+    {
+      "id": 12,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/Data/Navigators/JsonStringNavigator.cs",
+      "issue": "14.3% line coverage — most navigation paths untested",
+      "impact": "JSON string navigation could silently fail for certain access patterns",
+      "suggestion": "Test GetChild, EnumerateItems, indexing on JSON string values"
+    },
+    {
+      "id": 13,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/Cache/MemoryStepCache.cs",
+      "issue": "40.9% line coverage — cache hit/miss paths partially tested",
+      "impact": "Cache invalidation or retrieval bugs could cause stale data",
+      "suggestion": "Test cache hit, miss, expiry, and the __data__ collection change"
+    },
+    {
+      "id": 14,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/App/modules/ui/render.cs",
+      "issue": "0% coverage — UI rendering not tested",
+      "impact": "Low impact — UI tests are inherently harder and may be covered by integration tests",
+      "suggestion": "Add basic rendering test if feasible"
+    },
+    {
+      "id": 15,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/App/Memory/DataCompareTests.cs",
+      "code_file": "PLang/App/Data/this.Compare.cs",
+      "issue": "No test for empty object {} vs empty object {}, empty array vs empty array, or array where actual is longer than expected",
+      "impact": "Edge cases in array/object comparison could silently fail",
+      "suggestion": "Add empty collection and reverse-length array tests"
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "2065/2069 C# tests pass (2-4 non-deterministic failures in LLM callback and actor settings tests). Coverage is strong overall (139/145 changed files have data), but 4 critical gaps exist: validateResponse.cs (106 lines, 0%), list.any (55 lines, 0%), list.group (50 lines, 0%), and promoteGroups.cs (0%). The builder validation code is the most concerning — it's the LLM response gatekeeper with zero tests. Two test failures are real bugs: Query_OnValidateResponse_MaxRetries hits a file-not-found instead of testing retry logic, and UserActor_DuringBuilding shows settings leaking across engine instances. Data.Compare tests are decent but missing boolean mismatch, type-kind mismatch, and nested diff structure verification."
+}
