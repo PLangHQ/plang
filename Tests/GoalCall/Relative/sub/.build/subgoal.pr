@@ -1,0 +1,47 @@
+{
+  "name": "SubGoal",
+  "description": "Sets %subResult% to the string \u0022from sub\u0022 (the \u0022\u003C= null\u0022 part is ignored by the engine mapping).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %subResult% = \u0022from sub\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%subResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "from sub",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/sub/SubGoal.goal",
+  "prPath": "/sub/.build/subgoal.pr",
+  "hash": "270b6886e3dfae13e16ba4bcc2d9703db915d0231c5cb5ccf125bb14f91238f3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

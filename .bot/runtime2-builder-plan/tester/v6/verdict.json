@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "21 findings (6 critical, 9 major, 6 minor). Foreach dict iteration is a false green (variables contain wrong types). Condition orchestration barely tested. validateResponse/list.any/list.group at 0%. Data.ToBoolean/As<T>/ShallowClone untested. 3 broken tests." }

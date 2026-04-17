@@ -1,0 +1,57 @@
+{
+  "name": "MapVariables",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file MapVariablesSystem.llm, write to %system%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "[llm] system: %system%\nuser: %parameters%\nscheme: [{ variableSyntax:string, type:parameter|return, name:string, \nvariablePaths:[{name:string, pipeline:[{action:string, parameters:object}]]\n}]\nwrite to %mappedVariables%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "return %mappedVariables%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/PlangConsole/bin/Debug/net10.0/system/modules/MapVariables.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/modules/.build/mapvariables.pr",
+  "hash": "14837bcfab7b3c3428f981f50caaae97d15b8b251da4d9a3d3b61889ab5bcac4",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

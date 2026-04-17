@@ -1,18 +1,21 @@
 using App;
 using App.Variables;
+using Action = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace App.modules.loop;
 
 /// <summary>
-/// Iterates over a collection, calling a goal for each item.
+/// Iterates over a collection, running the remaining actions in the step for each item.
 /// Supports dictionaries (key/value), lists (index/value), and any IEnumerable.
 /// Respects goal.return (Returned flag) and cancellation.
 /// </summary>
+[Example("foreach %items%, call ProcessItem item=%item%", "Collection=%items%, ItemName=item (+ goal.call action)")]
+[Example("foreach %files%, read file %file%, write to %content%", "Collection=%files%, ItemName=file (+ file.read + variable.set actions)")]
+[Example("foreach %users%, write out %user.name%", "Collection=%users%, ItemName=user (+ output.write action)")]
 [Action("foreach")]
-public partial class Foreach : IContext
+public partial class Foreach : IContext, IStep
 {
-    public partial object? Collection { get; init; }
-    public partial GoalCall GoalName { get; init; }
+    public partial Data.@this Collection { get; init; }
     [VariableName]
     public partial string? ItemName { get; init; }
     [VariableName]
@@ -20,58 +23,64 @@ public partial class Foreach : IContext
 
     public async Task<Data.@this> Run()
     {
-        if (Collection == null)
+        if (Collection.Value == null)
             return Data(new types.loop { itemCount = 0, completed = true });
 
-        var app = Context.App!;
         var variableName = ItemName ?? "item";
         int count = 0;
 
-        // Iterate lazily — respects custom enumerators (e.g. GoalSteps skipping disabled steps)
-        foreach (var (key, value) in EnumerateCollection())
+        // Find remaining actions in this step (the loop body)
+        var bodyActions = GetBodyActions();
+
+        // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element)
+        foreach (var (key, item) in Collection.EnumerateItems())
         {
             if (Context.CancellationToken.IsCancellationRequested)
                 return Data(new types.loop { itemCount = count, completed = false });
 
-            Context.Variables.Set(variableName, value);
-
+            item.Name = variableName;
+            Context.Variables.Put(item);
             if (KeyName != null)
-                Context.Variables.Set(KeyName, key);
+            {
+                key.Name = KeyName;
+                Context.Variables.Put(key);
+            }
 
-            var result = await app.RunGoalAsync(GoalName, Context, Context.CancellationToken);
-            if (result.Returned) return result;
-            if (!result.Success && !result.Handled) return result;
+            foreach (var action in bodyActions)
+            {
+                var result = await action.RunAsync(Context);
+                if (result.Returned) return result;
+                if (!result.Success && !result.Handled) return result;
+            }
             count++;
         }
 
-        return Data(new types.loop { itemCount = count, completed = true });
+        var loopResult = Data(new types.loop { itemCount = count, completed = true });
+        if (bodyActions.Count > 0)
+            loopResult.Handled = true;
+        return loopResult;
     }
 
-    private IEnumerable<(object? key, object? value)> EnumerateCollection()
+    /// <summary>
+    /// Gets the actions after this foreach in the same step — they form the loop body.
+    /// </summary>
+    private List<Action> GetBodyActions()
     {
-        var collection = Collection;
+        var actions = Step?.Actions;
+        if (actions == null || __action == null) return new List<Action>();
 
-        if (collection is IDictionary<string, object?> dict)
+        int myIndex = -1;
+        for (int i = 0; i < actions.Count; i++)
         {
-            foreach (var kvp in dict)
-                yield return (kvp.Key, kvp.Value);
-            yield break;
+            if (ReferenceEquals(actions[i], __action))
+            {
+                myIndex = i;
+                break;
+            }
         }
 
-        if (collection is System.Collections.IDictionary rawDict)
-        {
-            foreach (System.Collections.DictionaryEntry entry in rawDict)
-                yield return (entry.Key, entry.Value);
-            yield break;
-        }
+        if (myIndex < 0 || myIndex + 1 >= actions.Count) return new List<Action>();
 
-        // For all other enumerables (including IList, GoalSteps, etc.)
-        // iterate lazily through the collection's own enumerator
-        if (collection is System.Collections.IEnumerable enumerable and not string)
-        {
-            int idx = 0;
-            foreach (var item in enumerable)
-                yield return (idx++, item);
-        }
+        return actions.Skip(myIndex + 1).ToList();
     }
 }

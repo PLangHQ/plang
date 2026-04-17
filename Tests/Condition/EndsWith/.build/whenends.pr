@@ -1,0 +1,47 @@
+{
+  "name": "WhenEnds",
+  "description": "Sets %result% to the string \u0022ends\u0022 (the \u0022\u003C= null\u0022 part is ignored by the compiler since it is not a supported action parameter).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022ends\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "ends",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/WhenEnds.goal",
+  "prPath": "/.build/whenends.pr",
+  "hash": "f4fd7cb239d7a64097e22225328efa4ce8b427d4a057f3d194c36dc2155b401f",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

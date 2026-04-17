@@ -67,7 +67,7 @@ public class QueryCallbackTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "use tool" }
+                new LlmMessage { Role = "user", Content = "use tool" }
             },
             Tools = new List<GoalCall>
             {
@@ -107,7 +107,7 @@ public class QueryCallbackTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "get data" }
+                new LlmMessage { Role = "user", Content = "get data" }
             },
             Tools = new List<GoalCall>
             {
@@ -164,7 +164,7 @@ public class QueryCallbackTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "validate me" }
+                new LlmMessage { Role = "user", Content = "validate me" }
             },
             OnValidateResponse = new GoalCall { Name = "NonExistentValidator" },
             MaxValidationRetries = 2
@@ -192,7 +192,7 @@ public class QueryCallbackTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "validate" }
+                new LlmMessage { Role = "user", Content = "validate" }
             },
             OnValidateResponse = new GoalCall { Name = "AlwaysFails" },
             MaxValidationRetries = 3
@@ -200,7 +200,9 @@ public class QueryCallbackTests
 
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error?.Message).Contains("Validation failed after 3 retries");
+        // Validation goal doesn't exist → file-not-found error on each retry
+        // After max retries, returns "LLM validation failed: <last error>"
+        await Assert.That(result.Error?.Message).Contains("LLM validation failed");
     }
 
     [Test]
@@ -223,7 +225,7 @@ public class QueryCallbackTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "tools then validate" }
+                new LlmMessage { Role = "user", Content = "tools then validate" }
             },
             Tools = new List<GoalCall>
             {
@@ -258,7 +260,7 @@ public class QueryCallbackTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "stream test" }
+                new LlmMessage { Role = "user", Content = "stream test" }
             },
             OnStream = new GoalCall { Name = "HandleChunk" }
         };
@@ -285,7 +287,7 @@ public class QueryCallbackTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "stream" }
+                new LlmMessage { Role = "user", Content = "stream" }
             },
             OnStream = new GoalCall { Name = "StreamHandler" }
         };

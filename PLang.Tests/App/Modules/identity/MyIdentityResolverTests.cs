@@ -59,8 +59,7 @@ public class MyIdentityResolverTests
     public async Task MyIdentity_DotNotation_PublicKey()
     {
         var data = _app.System.Context.Variables.Get("MyIdentity");
-        var identity = data!.Value as Identity;
-        var child = identity!.GetChild("PublicKey");
+        var child = data!.GetChild("PublicKey");
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Value?.ToString()).IsNotNull();
 

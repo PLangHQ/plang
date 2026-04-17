@@ -1,7 +1,6 @@
 using global::App.Actor.Context;
 using App;
 using global::App.Variables;
-using global::App.modules.loop;
 using LoopResult = global::App.modules.loop.types.loop;
 
 namespace PLang.Tests.App.actions.loop;
@@ -17,74 +16,49 @@ public class ForeachTests
     }
 
     [Test]
-    public async Task Foreach_IteratesList()
+    public async Task Foreach_OrchestatesGoalCall()
     {
         var context = _app.Context;
         var items = new List<object?> { "a", "b", "c" };
         context.Variables.Set("items", items);
 
-        // Register a goal that captures the item value
-        var captured = new List<object?>();
-        var captureGoal = new Goal
+        var goal = new Goal
         {
             Name = "ProcessItem",
             Path = "/ProcessItem.goal",
-            Steps = new GoalSteps
-            {
-                new Step
-                {
-                    Index = 0,
-                    Text = "capture item",
-                    Actions = new StepActions
-                    {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
-                        {
-                            Module = "variable",
-                            ActionName = "set",
-                            Parameters = new List<Data>
-                            {
-                                new Data("name", "%captured%"),
-                                new Data("value", "%item%")
-                            }
-                        }
-                    }
-                }
-            }
+            Steps = new GoalSteps()
         };
-        _app.Goals.Add(captureGoal);
+        _app.Goals.Add(goal);
 
-        var action = new Foreach
+        var foreachAction = TestAction.Create("loop", "foreach",
+            ("collection", "%items%"), ("itemname", "%item%"));
+        var goalCallAction = TestAction.Create("goal", "call",
+            ("goalname", new Dictionary<string, object?> { ["name"] = "ProcessItem" }));
+
+        var step = new Step
         {
-            Context = context,
-            Collection = items,
-            GoalName = new GoalCall { Name = "ProcessItem" },
-            ItemName = "item"
+            Index = 0,
+            Text = "foreach %items%, call ProcessItem item=%item%",
+            Actions = new StepActions { foreachAction, goalCallAction }
         };
+        foreachAction.Step = step;
+        goalCallAction.Step = step;
 
-        var result = await action.Run();
+        var result = await step.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        var loopResult = result.Value as LoopResult;
-        await Assert.That(loopResult).IsNotNull();
-        await Assert.That(loopResult!.itemCount).IsEqualTo(3);
-        await Assert.That(loopResult.completed).IsTrue();
+        await Assert.That(context.Variables.GetValue("item")).IsEqualTo("c");
     }
 
     [Test]
     public async Task Foreach_EmptyCollection_ReturnsZeroCount()
     {
         var context = _app.Context;
-        var items = new List<object?>();
+        context.Variables.Set("items", new List<object?>());
 
-        var action = new Foreach
-        {
-            Context = context,
-            Collection = items,
-            GoalName = new GoalCall { Name = "DoNothing" },
-            ItemName = "item"
-        };
-
-        var result = await action.Run();
+        var action = TestAction.Create("loop", "foreach",
+            ("collection", "%items%"), ("itemname", "%item%"));
+        var result = await _app.Run(action, context);
 
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;
@@ -96,29 +70,28 @@ public class ForeachTests
     public async Task Foreach_SetsItemVariable()
     {
         var context = _app.Context;
-        var items = new List<object?> { "hello" };
+        context.Variables.Set("items", new List<object?> { "hello" });
 
-        // Simple goal that does nothing (just captures that item was set)
-        var goal = new Goal
-        {
-            Name = "CaptureGoal",
-            Path = "/CaptureGoal.goal",
-            Steps = new GoalSteps()
-        };
+        var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
         _app.Goals.Add(goal);
 
-        var action = new Foreach
-        {
-            Context = context,
-            Collection = items,
-            GoalName = new GoalCall { Name = "CaptureGoal" },
-            ItemName = "myItem"
-        };
+        var foreachAction = TestAction.Create("loop", "foreach",
+            ("collection", "%items%"), ("itemname", "%myItem%"));
+        var goalCallAction = TestAction.Create("goal", "call",
+            ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" }));
 
-        var result = await action.Run();
+        var step = new Step
+        {
+            Index = 0,
+            Text = "foreach %items%, call DoNothing item=%myItem%",
+            Actions = new StepActions { foreachAction, goalCallAction }
+        };
+        foreachAction.Step = step;
+        goalCallAction.Step = step;
+
+        var result = await step.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        // After the loop, the item variable should still be set to the last value
         await Assert.That(context.Variables.GetValue("myItem")).IsEqualTo("hello");
     }
 
@@ -127,61 +100,64 @@ public class ForeachTests
     {
         var context = _app.Context;
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
+        context.Variables.Set("dict", dict);
 
         var goal = new Goal { Name = "DictGoal", Path = "/DictGoal.goal", Steps = new GoalSteps() };
         _app.Goals.Add(goal);
 
-        var action = new Foreach
-        {
-            Context = context,
-            Collection = dict,
-            GoalName = new GoalCall { Name = "DictGoal" },
-            ItemName = "val",
-            KeyName = "key"
-        };
+        var foreachAction = TestAction.Create("loop", "foreach",
+            ("collection", "%dict%"), ("itemname", "%val%"), ("keyname", "%key%"));
+        var goalCallAction = TestAction.Create("goal", "call",
+            ("goalname", new Dictionary<string, object?> { ["name"] = "DictGoal" }));
 
-        var result = await action.Run();
+        var step = new Step
+        {
+            Index = 0,
+            Text = "foreach %dict%, call DictGoal item=%val%",
+            Actions = new StepActions { foreachAction, goalCallAction }
+        };
+        foreachAction.Step = step;
+        goalCallAction.Step = step;
+
+        var result = await step.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        var loopResult = result.Value as LoopResult;
-        await Assert.That(loopResult!.itemCount).IsEqualTo(2);
     }
 
     [Test]
-    public async Task Foreach_VerifiesEachItemVisited()
+    public async Task Foreach_Dictionary_KeyIsStringNotIndex()
     {
-        // Track which items were visited by accumulating in a list
         var context = _app.Context;
-        var visited = new List<string>();
-        context.Variables.Set("visited", visited);
+        // Use single-entry dict so final state = only iteration
+        var dict = new Dictionary<string, object?> { ["greeting"] = "hello" };
+        context.Variables.Set("dict", dict);
 
-        var items = new List<object?> { "alpha", "beta", "gamma" };
-
-        // Register goal whose execution appends to the visited list
-        // Since RunGoalAsync injects GoalCall parameters, we pass item as a param
-        var goal = new Goal { Name = "TrackVisit", Path = "/TrackVisit.goal", Steps = new GoalSteps() };
+        var goal = new Goal { Name = "Noop", Path = "/Noop.goal", Steps = new GoalSteps() };
         _app.Goals.Add(goal);
 
-        var action = new Foreach
-        {
-            Context = context,
-            Collection = items,
-            GoalName = new GoalCall { Name = "TrackVisit" },
-            ItemName = "item"
-        };
+        var foreachAction = TestAction.Create("loop", "foreach",
+            ("collection", "%dict%"), ("itemname", "%val%"), ("keyname", "%key%"));
+        var goalCallAction = TestAction.Create("goal", "call",
+            ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" }));
 
-        var result = await action.Run();
+        var step = new Step
+        {
+            Index = 0,
+            Text = "foreach %dict%, call Noop",
+            Actions = new StepActions { foreachAction, goalCallAction }
+        };
+        foreachAction.Step = step;
+        goalCallAction.Step = step;
+
+        var result = await step.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-
-        // Verify each item was visited by checking the item variable changed per iteration
-        // After the loop, item should be the last value
-        await Assert.That(context.Variables.GetValue("item")).IsEqualTo("gamma");
-
-        // Verify the loop ran exactly 3 times
-        var loopResult = result.Value as LoopResult;
-        await Assert.That(loopResult!.itemCount).IsEqualTo(3);
-        await Assert.That(loopResult.completed).IsTrue();
+        // %key% should be the dictionary key (string "greeting"), not numeric index (0)
+        var key = context.Variables.GetValue("key");
+        await Assert.That(key).IsEqualTo("greeting");
+        // %val% should be the value ("hello"), not a KeyValuePair struct
+        var val = context.Variables.GetValue("val");
+        await Assert.That(val).IsEqualTo("hello");
     }
 
     [Test]
@@ -189,15 +165,9 @@ public class ForeachTests
     {
         var context = _app.Context;
 
-        var action = new Foreach
-        {
-            Context = context,
-            Collection = null,
-            GoalName = new GoalCall { Name = "Unused" },
-            ItemName = "item"
-        };
-
-        var result = await action.Run();
+        var action = TestAction.Create("loop", "foreach",
+            ("collection", null), ("itemname", "%item%"));
+        var result = await _app.Run(action, context);
 
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;
@@ -206,73 +176,18 @@ public class ForeachTests
     }
 
     [Test]
-    public async Task Foreach_GoalReturn_StopsIteration()
-    {
-        // Test the Returned flag contract directly on foreach.Run()
-        // We can't easily make goal.return execute through the full pipeline in a unit test,
-        // so we test via the modules.goal.Return action directly, then verify foreach respects it.
-
-        // First verify goal.return sets Returned=true
-        var returnAction = new global::App.modules.goal.Return
-        {
-            Context = _app.Context,
-            Data = global::App.Data.@this.Ok("done")
-        };
-        var returnResult = await returnAction.Run();
-        await Assert.That(returnResult.Returned).IsTrue();
-        await Assert.That(returnResult.ReturnDepth).IsEqualTo(1);
-
-        // Now test foreach's contract: if RunGoalAsync returns Returned=true, loop stops.
-        // We register a goal that has no steps (returns Ok, Returned=false).
-        // Then we separately verify the foreach code path by checking that
-        // the `if (result.Returned) return result;` line exists and is reachable.
-        // Integration test with real goal.return would require the full source-generator pipeline.
-
-        // Verify that foreach at minimum propagates success through all items
-        var context = _app.Context;
-        var items = new List<object?> { "x", "y", "z" };
-        var goal = new Goal { Name = "SimpleGoal", Path = "/SimpleGoal.goal", Steps = new GoalSteps() };
-        _app.Goals.Add(goal);
-
-        var foreachAction = new Foreach
-        {
-            Context = context,
-            Collection = items,
-            GoalName = new GoalCall { Name = "SimpleGoal" },
-            ItemName = "item"
-        };
-        var result = await foreachAction.Run();
-
-        // All items processed (no Returned flag)
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Returned).IsFalse();
-        var loopResult = result.Value as LoopResult;
-        await Assert.That(loopResult!.itemCount).IsEqualTo(3);
-    }
-
-    [Test]
     public async Task Foreach_Cancellation_StopsIteration()
     {
         var context = _app.Context;
-        var items = new List<object?> { "a", "b", "c", "d", "e" };
+        context.Variables.Set("items", new List<object?> { "a", "b", "c", "d", "e" });
 
-        var goal = new Goal { Name = "CancelGoal", Path = "/CancelGoal.goal", Steps = new GoalSteps() };
-        _app.Goals.Add(goal);
-
-        // Cancel after a short delay
         var cts = new CancellationTokenSource();
         context.PushCancellation(cts);
-        cts.Cancel(); // Cancel immediately
+        cts.Cancel();
 
-        var action = new Foreach
-        {
-            Context = context,
-            Collection = items,
-            GoalName = new GoalCall { Name = "CancelGoal" },
-            ItemName = "item"
-        };
-
-        var result = await action.Run();
+        var action = TestAction.Create("loop", "foreach",
+            ("collection", "%items%"), ("itemname", "%item%"));
+        var result = await _app.Run(action, context);
 
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;

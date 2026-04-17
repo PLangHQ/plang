@@ -1,10 +1,13 @@
+using System.Collections.Concurrent;
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using App.Actor.Context;
 using App.Settings;
 using App.Errors;
 using App.Variables;
 using App.modules;
 using Goal = App.Goals.Goal.@this;
-using System.Globalization;
 
 namespace App;
 
@@ -28,31 +31,31 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// <summary>
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
     /// </summary>
-    [global::System.Text.Json.Serialization.JsonPropertyName("id")]
+    [JsonPropertyName("id")]
     public string Id { get; set; }
 
     /// <summary>
     /// Name of this app.
     /// </summary>
-    [global::System.Text.Json.Serialization.JsonPropertyName("name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; }
 
     /// <summary>
     /// When the app was first created.
     /// </summary>
-    [global::System.Text.Json.Serialization.JsonPropertyName("created")]
+    [JsonPropertyName("created")]
     public DateTime Created { get; set; }
 
     /// <summary>
     /// When the app was last updated.
     /// </summary>
-    [global::System.Text.Json.Serialization.JsonPropertyName("updated")]
+    [JsonPropertyName("updated")]
     public DateTime Updated { get; set; }
 
     /// <summary>
     /// Version of the builder used.
     /// </summary>
-    [global::System.Text.Json.Serialization.JsonPropertyName("version")]
+    [JsonPropertyName("version")]
     public string? Version { get; set; }
 
     /// <summary>
@@ -97,6 +100,14 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// Cancellation token for graceful shutdown.
     /// </summary>
     public CancellationToken ShutdownToken => _shutdownCts.Token;
+
+    /// <summary>
+    /// App-scoped static storage for modules. Persists for the lifetime of the app.
+    /// TODO: Replace with goal-backed dynamic property (see todos.md).
+    /// </summary>
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, object?>> _statics = new();
+    internal ConcurrentDictionary<string, object?> GetStatic(string key) =>
+        _statics.GetOrAdd(key, _ => new ConcurrentDictionary<string, object?>(StringComparer.OrdinalIgnoreCase));
 
     /// <summary>
     /// Global event collection for the application.
@@ -167,6 +178,11 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// Builder mode controller. When enabled, actors use in-memory datasources.
     /// </summary>
     public Build.@this Building { get; }
+
+    /// <summary>
+    /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
+    /// </summary>
+    public bool Create { get; set; }
 
     /// <summary>
     /// Centralized type knowledge: PLang names ↔ CLR types, file extensions → Kind/MIME, compressibility.
@@ -297,7 +313,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         if (string.IsNullOrWhiteSpace(json)) return;
         try
         {
-            using var doc = global::System.Text.Json.JsonDocument.Parse(json);
+            using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
             if (root.TryGetProperty("id", out var idProp)) Id = idProp.GetString() ?? Id;
             if (root.TryGetProperty("name", out var nameProp)) Name = nameProp.GetString() ?? Name;
@@ -305,7 +321,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
             if (root.TryGetProperty("updated", out var updatedProp) && updatedProp.TryGetDateTime(out var updated)) Updated = updated;
             if (root.TryGetProperty("version", out var versionProp)) Version = versionProp.GetString();
         }
-        catch (global::System.Text.Json.JsonException) { /* corrupt app.pr — keep generated identity */ }
+        catch (JsonException) { /* corrupt app.pr — keep generated identity */ }
     }
 
     /// <summary>
@@ -315,7 +331,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     {
         Updated = DateTime.UtcNow;
         if (Created == default) Created = Updated;
-        var json = global::System.Text.Json.JsonSerializer.Serialize(
+        var json = JsonSerializer.Serialize(
             new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
             Utils.Json.CamelCaseIndented);
         var path = FileSystem.ValidatePath(".build/app.pr");
@@ -377,11 +393,28 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         context ??= System.Context;
         CurrentActor = System;
 
-        // Building → PLang builder
+        // Building → PLang builder (runs as User — user is building their code)
         if (Building.IsEnabled)
         {
+            // Safety check: confirm new app creation if no app.pr exists.
+            // --app={"create":true} skips the prompt. Headless/CI defaults to "no".
+            var appPrPath = FileSystem.ValidatePath(".build/app.pr");
+            if (!FileSystem.File.Exists(appPrPath) && !Create)
+            {
+                if (Console.IsInputRedirected)
+                    return Data.@this.FromError(new Errors.ServiceError(
+                        $"No app found at {AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
+
+                Console.Write($"No app found at {AbsolutePath}. Create new app? (y/n): ");
+                var answer = Console.ReadLine()?.Trim().ToLowerInvariant();
+                if (answer != "y" && answer != "yes")
+                    return Data.@this.FromError(new Errors.ServiceError(
+                        "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
+            }
+
+            CurrentActor = User;
             var buildCall = new GoalCall { Name = "Build", PrPath = "/system/builder/.build/build.pr" };
-            return await RunGoalAsync(buildCall, context);
+            return await RunGoalAsync(buildCall, User.Context);
         }
 
         // Resolve goal file

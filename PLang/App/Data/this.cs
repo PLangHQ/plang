@@ -58,6 +58,21 @@ public sealed class Type
     public static Type FromName(string typeName) => new(typeName);
 
     public override string ToString() => Value;
+
+    /// <summary>
+    /// Converts a raw string value to the appropriate object based on this type.
+    /// Returns null if no conversion is needed or possible.
+    /// Called lazily on first navigation into a string-typed Data.
+    /// </summary>
+    public object? Convert(string raw)
+    {
+        return Value.ToLowerInvariant() switch
+        {
+            "json" => JsonSerializer.Deserialize<Dictionary<string, object?>>(raw,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }),
+            _ => TypeMapping.TryConvertTo(raw, ClrType ?? typeof(object)).Value
+        };
+    }
 }
 
 /// <summary>
@@ -69,8 +84,48 @@ public sealed class Type
 public partial class @this
 {
     private object? _value;
+    private object? _rawValue; // preserved pre-resolution value for re-resolution
+    private Func<object?>? _valueFactory;
     private Type? _type;
     private Actor.Context.@this? _context;
+
+    /// <summary>Cache for As&lt;T&gt;() Resolve method lookups — avoids per-call reflection.</summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?>
+        ResolveMethodCache = new();
+
+    /// <summary>Fired by Variables.Set() when this Data is replaced — passes old and new Data.</summary>
+    public event Action<@this, @this>? OnChange;
+
+    /// <summary>Fired when variable is first created in the store — passes the Data.</summary>
+    public event Action<@this>? OnCreate;
+
+    /// <summary>Fired by Variables.Remove() before deletion — passes the Data.</summary>
+    public event Action<@this>? OnDelete;
+
+    /// <summary>Copies event handlers from another Data (used when replacing in variable store).</summary>
+    public void CopyEventsFrom(@this other)
+    {
+        if (other.OnCreate != null) OnCreate += other.OnCreate;
+        if (other.OnChange != null) OnChange += other.OnChange;
+        if (other.OnDelete != null) OnDelete += other.OnDelete;
+    }
+
+    /// <summary>Fires the OnChange event. Called by Variables.Set() when replacing.</summary>
+    public void FireOnChange(@this newData) => OnChange?.Invoke(this, newData);
+
+    /// <summary>Fires the OnCreate event.</summary>
+    public void FireOnCreate() => OnCreate?.Invoke(this);
+
+    /// <summary>Fires the OnDelete event.</summary>
+    public void FireOnDelete() => OnDelete?.Invoke(this);
+
+    /// <summary>
+    /// When true, Value resolves %variable% references on access.
+    /// Set for .pr parameter Data — their values contain %var% references.
+    /// Not set for variable.set Data — their values are already final.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool NeedsResolution { get; set; }
 
     [JsonPropertyName("name")]
     public string Name { get; set; }
@@ -83,6 +138,8 @@ public partial class @this
         {
             _context = value;
             if (_type != null) _type.Context = value;
+            if (_value is modules.IContext contextual && value != null)
+                contextual.Context = value;
         }
     }
 
@@ -95,6 +152,21 @@ public partial class @this
 
     [JsonIgnore]
     public bool IsInitialized { get; private set; }
+
+    /// <summary>
+    /// True when the raw _value is a %variable% reference (starts and ends with %).
+    /// Used to skip build-time validation on values that resolve at runtime.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsVariable => _value is string s && s.StartsWith('%') && s.EndsWith('%') && s.Length > 2;
+
+    /// <summary>
+    /// True when the raw _value contains any %variable% reference anywhere.
+    /// IsVariable is "%name%" (the whole value IS a variable).
+    /// HasVariableReference is "%count% + 1", "hello %name%", etc. (contains one or more).
+    /// </summary>
+    [JsonIgnore]
+    public bool HasVariableReference => _value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, @"%[^%]+%");
 
     [JsonIgnore]
     public DateTime Created { get; }
@@ -114,7 +186,7 @@ public partial class @this
         _type = type;
         Parent = parent;
         Path = BuildPath(parent, Name);
-        IsInitialized = _value != null;
+        IsInitialized = true;
         Created = System.DateTime.UtcNow;
         Updated = Created;
         Properties = new Properties();
@@ -125,14 +197,57 @@ public partial class @this
     [JsonPropertyName("value")]
     public virtual object? Value
     {
-        get => _value;
+        get
+        {
+            if (_valueFactory != null)
+            {
+                _value = _valueFactory();
+                _valueFactory = null;
+            }
+            if (NeedsResolution && _value != null && _context?.Variables != null
+                && (_value is System.Collections.IList || _value is System.Collections.IDictionary))
+            {
+                // Preserve raw value so ResetResolution can re-resolve on subsequent calls.
+                _rawValue ??= _value;
+                _value = _context.Variables.ResolveDeep(_rawValue);
+            }
+            return _value;
+        }
         set
         {
             _value = UnwrapJsonElement(value);
+            _rawValue = null; // new raw value — clear preserved copy
+            _valueFactory = null;
             Updated = System.DateTime.UtcNow;
             IsInitialized = true;
             _type = null;
+            if (_value is modules.IContext contextual && _context != null)
+                contextual.Context = _context;
         }
+    }
+
+    /// <summary>
+    /// Sets a lazy value factory. Invoked on first Value access, then cached.
+    /// </summary>
+    public void SetValue(Func<object?> factory)
+    {
+        _valueFactory = factory;
+        _value = null;
+        IsInitialized = true;
+    }
+
+    /// <summary>
+    /// Lazily converts the value based on its Type.
+    /// Called on first navigation into the value — if the value is a string
+    /// and the Type knows how to convert it, replaces the value with the converted object.
+    /// Only converts once — subsequent accesses use the converted value directly.
+    /// </summary>
+    public void ConvertValue()
+    {
+        if (_value is not string raw || _type == null) return;
+        var converted = _type.Convert(raw);
+        if (converted != null)
+            SetValueDirect(converted);
     }
 
     /// <summary>
@@ -199,22 +314,162 @@ public partial class @this
         return TypeMapping.ConvertTo(_value, targetType);
     }
 
+    /// <summary>
+    /// Enumerates the inner value. If Value is enumerable, delegates to it.
+    /// If Value is a single non-enumerable item, yields it as a one-element sequence.
+    /// </summary>
+    public System.Collections.IEnumerable AsEnumerable()
+    {
+        if (_value is System.Collections.IEnumerable enumerable and not string)
+            return enumerable;
+
+        // Single value — treat as a list of one
+        if (_value != null)
+            return new[] { _value };
+
+        return Array.Empty<object>();
+    }
+
+    /// <summary>
+    /// Enumerates as (key, value) Data pairs. Data owns the knowledge of how to iterate:
+    /// dictionaries yield (dictKey, dictValue), lists yield (index, element),
+    /// single values yield (0, value). All results are Data — callers never see raw objects.
+    /// </summary>
+    public IEnumerable<(@this key, @this value)> EnumerateItems()
+    {
+        if (_value is IDictionary<string, object?> typedDict)
+        {
+            foreach (var kvp in typedDict)
+                yield return (new @this("", kvp.Key) { Context = _context },
+                              WrapItem(kvp.Value));
+            yield break;
+        }
+
+        if (_value is System.Collections.IDictionary untypedDict)
+        {
+            foreach (System.Collections.DictionaryEntry entry in untypedDict)
+                yield return (new @this("", entry.Key) { Context = _context },
+                              WrapItem(entry.Value));
+            yield break;
+        }
+
+        int index = 0;
+        if (_value is System.Collections.IEnumerable enumerable and not string)
+        {
+            foreach (var item in enumerable)
+                yield return (new @this("", index++) { Context = _context },
+                              WrapItem(item));
+            yield break;
+        }
+
+        if (_value != null)
+            yield return (new @this("", 0) { Context = _context }, this);
+    }
+
+    private @this WrapItem(object? item) =>
+        item is @this data ? data : new @this("", item) { Context = _context };
+
     [JsonIgnore]
     public bool IsEmpty => !IsInitialized || _value == null ||
         (_value is string s && string.IsNullOrEmpty(s));
 
+    /// <summary>Returns the raw stored value without triggering NeedsResolution or factory.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public object? RawValue => _value;
+
     public static @this Null(string name = "") => new(name, null);
+    public static @this NotFound(string name = "") => new(name, null) { IsInitialized = false };
+    public static @this Uninitialized(string name) => new(name, null) { IsInitialized = false };
+
+    /// <summary>
+    /// Converts this Data to a Data&lt;T&gt; by converting the inner Value.
+    /// OBP: Data owns its own conversion — it has the Value, the Type, and the Context.
+    /// Returns this if Value is already T. Otherwise uses TypeMapping.
+    /// </summary>
+    public @this<T> As<T>(Actor.Context.@this? context = null)
+    {
+        // Already a Data<T> with correct type — return directly
+        if (this is @this<T> typed && typed.Value is T)
+            return typed;
+
+        // Value is already the right type — wrap
+        if (Value is T already)
+            return new @this<T>(Name, already, _type, Parent) { Context = context ?? _context };
+
+        // Convert using TypeMapping
+        var ctx = context ?? _context;
+
+        // Context-resolvable types: if T has static Resolve(string, Context) and Value is string
+        if (Value is string strVal && ctx != null)
+        {
+            var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
+                t.GetMethod("Resolve",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                    null, new[] { typeof(string), typeof(Actor.Context.@this) }, null));
+            if (resolveMethod != null)
+            {
+                var resolved = resolveMethod.Invoke(null, new object[] { strVal, ctx });
+                if (resolved is T result)
+                    return new @this<T>(Name, result, _type, Parent) { Context = ctx };
+            }
+        }
+
+        var (converted, error) = TypeMapping.TryConvertTo(Value, typeof(T), ctx);
+        if (error != null)
+            return @this<T>.FromError(error);
+
+        return new @this<T>(Name, (T?)converted, _type, Parent) { Context = ctx };
+    }
 
     /// <summary>
     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.
     /// The natural boolean meaning of this Data.
-    /// Default: IsInitialized. Subtypes override (e.g., Path → Exists).
+    /// Follows common language conventions: null, false, 0, "" are falsy. Everything else is truthy.
     /// </summary>
-    public virtual bool ToBoolean() => IsInitialized;
+    public virtual bool ToBoolean()
+    {
+        if (!IsInitialized) return false;
+        var val = Value;
+        if (val == null) return false;
+        if (val is bool b) return b;
+        if (val is string s) return s.Length > 0;
+        if (val is int i) return i != 0;
+        if (val is long l) return l != 0;
+        if (val is double d) return d != 0;
+        if (val is float f) return f != 0;
+        if (val is decimal dec) return dec != 0;
+        if (val is short sh) return sh != 0;
+        if (val is byte by) return by != 0;
+        return true;
+    }
 
     /// <summary>
-    /// Virtual so subclasses can override with proper cloning.
-    /// SettingsVariable and DynamicData should not be cloned — they are stateless/factory-based.
+    /// Creates a new Data wrapper around the same value (no deep copy).
+    /// Use when renaming — the value stays shared so mutations propagate.
+    /// Events (OnChange/OnCreate/OnDelete) are intentionally not copied —
+    /// clones that go through Variables.Set() get events wired at storage time.
+    /// </summary>
+    public @this ShallowClone()
+    {
+        var clone = new @this(Name, _value, _type)
+        {
+            Error = Error,
+            Handled = Handled,
+            Returned = Returned,
+            ReturnDepth = ReturnDepth,
+            Warnings = Warnings != null ? new List<Info>(Warnings) : null,
+            Signature = Signature,
+            Properties = Properties
+        };
+        clone._valueFactory = _valueFactory;
+        clone.Context = _context;
+        clone.NeedsResolution = NeedsResolution;
+        return clone;
+    }
+
+    /// <summary>
+    /// Deep-clones this Data including its value. Events are intentionally not copied —
+    /// clones that go through Variables.Set() get events wired at storage time.
     /// </summary>
     public virtual @this Clone()
     {
@@ -229,7 +484,9 @@ public partial class @this
             Signature = Signature,
             Properties = Properties.Clone()
         };
+        clone._valueFactory = _valueFactory;
         clone.Context = _context;
+        clone.NeedsResolution = NeedsResolution;
         return clone;
     }
 
@@ -356,6 +613,9 @@ public class @this<T> : @this
 
     public static @this<T> Ok(T value, Type? type = null) => new("", value, type);
     public new static @this<T> FromError(IError error) => new() { Error = error };
+
+    /// <summary>Allows direct assignment of T values to Data.@this&lt;T&gt; properties.</summary>
+    public static implicit operator @this<T>(T value) => new("", value);
 }
 
 /// <summary>

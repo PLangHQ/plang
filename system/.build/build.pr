@@ -1,11 +1,14 @@
 {
   "name": "Build",
+  "description": "Calls the goal /builder/Build with the provided goal.call payload, with cache disabled (0ms) and specified onError retry/order settings.",
+  "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "call goal /system/builder/Build",
+      "text": "call goal /builder/Build",
       "lineNumber": 2,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "goal",
@@ -14,31 +17,51 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "Build",
-                "prPath": "/system/builder/.build/build.pr"
+                "name": "/builder/Build",
+                "parameters": [
+                  {
+                    "name": "GoalName",
+                    "value": "[goal.call]",
+                    "type": "goal.call"
+                  }
+                ]
               },
               "type": "goal.call"
             }
           ],
-          "errors": [],
-          "warnings": []
+          "defaults": null
         }
       ],
-      "errors": [],
-      "warnings": [],
+      "intent": null,
+      "onError": {
+        "goal": null,
+        "retryCount": 0,
+        "retryOverMs": null,
+        "order": 1,
+        "ignoreError": null,
+        "message": null,
+        "statusCode": null,
+        "key": null
+      },
+      "cache": {
+        "durationMs": 0,
+        "sliding": null,
+        "key": null,
+        "location": null
+      },
+      "timeout": null,
       "waitForExecution": true
     }
   ],
-  "subGoals": [],
+  "goals": [],
   "visibility": 1,
   "path": "/system/Build.goal",
   "prPath": "/system/.build/build.pr",
-  "hash": "",
+  "hash": "c73e799da0870eabbaaaabffa1683b9e654da2b41f5984db5efda0d76f46d30c",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
   "isTest": false,
-  "errors": [],
-  "warnings": [],
-  "fullPath": "Build"
+  "inputParameters": null
 }

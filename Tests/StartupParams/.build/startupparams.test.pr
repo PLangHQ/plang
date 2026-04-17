@@ -1,0 +1,134 @@
+{
+  "name": "Start",
+  "description": "Sets %name% and %greeting% variables, then asserts they match expected values and that %greeting% contains the injected name.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %name% = \u0022TestUser\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "StartupParams tests that variables can be set and used\n(CLI param injection is tested via manual run: plang p Start.goal name=World)",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "TestUser",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %name% equals \u0022TestUser\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "TestUser",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%name%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %greeting% = \u0022Hello %name%\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%greeting%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "Hello %name%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %greeting% contains \u0022TestUser\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "TestUser",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "%greeting%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/StartupParams.test.goal",
+  "prPath": "/.build/startupparams.test.pr",
+  "hash": "ed30f6b09a8d3799b77316af181bc24671d3f3cb2df0c1bd2ac3df3f6b7479cb",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

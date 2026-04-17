@@ -70,19 +70,17 @@ public class GoalSerializationTests
     [Test]
     public async Task ErrorOrder_SerializesAsCamelCaseString()
     {
-        var handler = new ErrorHandler { Order = ErrorOrder.GoalFirst };
-        var json = JsonSerializer.Serialize(handler, JsonOptions);
+        var json = JsonSerializer.Serialize(ErrorOrder.GoalFirst, JsonOptions);
 
-        await Assert.That(json).Contains("\"goalFirst\"");
+        await Assert.That(json).IsEqualTo("\"goalFirst\"");
     }
 
     [Test]
     public async Task ErrorOrder_RetryFirst_SerializesCorrectly()
     {
-        var handler = new ErrorHandler { Order = ErrorOrder.RetryFirst };
-        var json = JsonSerializer.Serialize(handler, JsonOptions);
+        var json = JsonSerializer.Serialize(ErrorOrder.RetryFirst, JsonOptions);
 
-        await Assert.That(json).Contains("\"retryFirst\"");
+        await Assert.That(json).IsEqualTo("\"retryFirst\"");
     }
 
     [Test]
@@ -101,7 +99,6 @@ public class GoalSerializationTests
                     Indent = 2,
                     Comment = "step comment",
                     WaitForExecution = false,
-                    Timeout = 30,
                     Actions = new StepActions
                     {
                         new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
@@ -109,7 +106,16 @@ public class GoalSerializationTests
                             Module = "http",
                             ActionName = "get",
                             Parameters = new List<Data> { new Data("url", "https://api.example.com") },
-                            Return = new List<Data> { new Data("response") }
+                        },
+                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "variable",
+                            ActionName = "set",
+                            Parameters = new List<Data>
+                            {
+                                new Data("Name", "response"),
+                                new Data("Value", "%__data__%")
+                            }
                         }
                     }
                 }
@@ -127,84 +133,11 @@ public class GoalSerializationTests
         await Assert.That(step.Indent).IsEqualTo(2);
         await Assert.That(step.Comment).IsEqualTo("step comment");
         await Assert.That(step.WaitForExecution).IsFalse();
-        await Assert.That(step.Timeout).IsEqualTo(30);
-        await Assert.That(step.Actions.Count).IsEqualTo(1);
+        await Assert.That(step.Actions.Count).IsEqualTo(2);
         await Assert.That(step.Actions[0].Module).IsEqualTo("http");
         await Assert.That(step.Actions[0].ActionName).IsEqualTo("get");
-    }
-
-    [Test]
-    public async Task Roundtrip_ErrorHandler_Preserved()
-    {
-        var goal = new Goal
-        {
-            Name = "TestGoal",
-            Steps = new GoalSteps
-            {
-                new Step
-                {
-                    Index = 0,
-                    Text = "step",
-                    OnError = new ErrorHandler
-                    {
-                        Goal = new GoalCall { Name = "HandleError", Parameters = new List<Data> { new Data("msg", "oops") } },
-                        RetryCount = 3,
-                        RetryOverMs = 60000,
-                        Order = ErrorOrder.RetryFirst,
-                        IgnoreError = false,
-                        Message = "Something failed",
-                        StatusCode = 500,
-                        Key = "err1"
-                    }
-                }
-            }
-        };
-
-        var json = JsonSerializer.Serialize(goal, JsonOptions);
-        var deserialized = JsonSerializer.Deserialize<Goal>(json, JsonOptions)!;
-
-        var err = deserialized.Steps[0].OnError!;
-        await Assert.That(err.Goal!.Name).IsEqualTo("HandleError");
-        await Assert.That(err.RetryCount).IsEqualTo(3);
-        await Assert.That(err.RetryOverMs).IsEqualTo(60000);
-        await Assert.That(err.Order).IsEqualTo(ErrorOrder.RetryFirst);
-        await Assert.That(err.IgnoreError).IsFalse();
-        await Assert.That(err.Message).IsEqualTo("Something failed");
-        await Assert.That(err.StatusCode).IsEqualTo(500);
-        await Assert.That(err.Key).IsEqualTo("err1");
-    }
-
-    [Test]
-    public async Task Roundtrip_CacheSettings_Preserved()
-    {
-        var goal = new Goal
-        {
-            Name = "TestGoal",
-            Steps = new GoalSteps
-            {
-                new Step
-                {
-                    Index = 0,
-                    Text = "step",
-                    Cache = new CacheSettings
-                    {
-                        DurationMs = 600_000,
-                        Sliding = true,
-                        Key = "cache1",
-                        Location = "memory"
-                    }
-                }
-            }
-        };
-
-        var json = JsonSerializer.Serialize(goal, JsonOptions);
-        var deserialized = JsonSerializer.Deserialize<Goal>(json, JsonOptions)!;
-
-        var cache = deserialized.Steps[0].Cache!;
-        await Assert.That(cache.DurationMs).IsEqualTo(600_000);
-        await Assert.That(cache.Sliding).IsTrue();
-        await Assert.That(cache.Key).IsEqualTo("cache1");
-        await Assert.That(cache.Location).IsEqualTo("memory");
+        await Assert.That(step.Actions[1].Module).IsEqualTo("variable");
+        await Assert.That(step.Actions[1].ActionName).IsEqualTo("set");
     }
 
     [Test]

@@ -109,7 +109,7 @@ public class SensitivePropertyFilterTests
         // End-to-end: create real identity, serialize, verify PrivateKey absent
         var create = new Create { Context = _app.System.Context, Name = "e2e", SetAsDefault = true };
         var result = await create.Run();
-        var identity = result as Identity;
+        var identity = result.Value as Identity;
 
         var serializer = new JsonStreamSerializer();
         var json = serializer.Serialize(identity);

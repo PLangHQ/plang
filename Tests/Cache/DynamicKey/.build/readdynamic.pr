@@ -1,0 +1,74 @@
+{
+  "name": "ReadDynamic",
+  "description": "Reads a file whose path is provided by %fileName%, caches the read for 60 seconds, and stores the read result into %dynContent%.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file %fileName%, cache for 60 seconds, write to %dynContent%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%fileName%",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "cache",
+              "action": "wrap",
+              "parameters": [
+                {
+                  "name": "DurationMs",
+                  "value": 60000,
+                  "type": "long"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%dynContent%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ReadDynamic.goal",
+  "prPath": "/.build/readdynamic.pr",
+  "hash": "1d2fc1baf5a29a95b92c6b8a05ae6c56d673344239838f118ca4d323eea31eb4",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

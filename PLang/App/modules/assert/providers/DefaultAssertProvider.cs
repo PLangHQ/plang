@@ -14,7 +14,7 @@ public class DefaultAssertProvider : IAssertProvider
         if (AreEqual(action.Expected?.Value, action.Actual?.Value))
             return App.Data.@this.Ok(true);
 
-        return App.Data.@this.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value, action.Message));
+        return App.Data.@this.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value, action.Message?.Value));
     }
 
     public Data.@this NotEquals(NotEquals action)
@@ -23,7 +23,7 @@ public class DefaultAssertProvider : IAssertProvider
             return App.Data.@this.Ok(true);
 
         return App.Data.@this.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value,
-            action.Message ?? "Values should not be equal"));
+            action.Message?.Value ?? "Values should not be equal"));
     }
 
     public Data.@this IsTrue(IsTrue action)
@@ -32,7 +32,7 @@ public class DefaultAssertProvider : IAssertProvider
             return App.Data.@this.Ok(true);
 
         return App.Data.@this.FromError(new AssertionError(true, action.Value?.Value,
-            action.Message ?? "Expected truthy value"));
+            action.Message?.Value ?? "Expected truthy value"));
     }
 
     public Data.@this IsFalse(IsFalse action)
@@ -41,7 +41,7 @@ public class DefaultAssertProvider : IAssertProvider
             return App.Data.@this.Ok(true);
 
         return App.Data.@this.FromError(new AssertionError(false, action.Value?.Value,
-            action.Message ?? "Expected falsy value"));
+            action.Message?.Value ?? "Expected falsy value"));
     }
 
     public Data.@this IsNull(IsNull action)
@@ -50,7 +50,7 @@ public class DefaultAssertProvider : IAssertProvider
             return App.Data.@this.Ok(true);
 
         return App.Data.@this.FromError(new AssertionError(null, action.Value?.Value,
-            action.Message ?? "Expected null"));
+            action.Message?.Value ?? "Expected null"));
     }
 
     public Data.@this IsNotNull(IsNotNull action)
@@ -59,7 +59,7 @@ public class DefaultAssertProvider : IAssertProvider
             return App.Data.@this.Ok(true);
 
         return App.Data.@this.FromError(new AssertionError("(not null)", null,
-            action.Message ?? "Expected non-null value"));
+            action.Message?.Value ?? "Expected non-null value"));
     }
 
     public Data.@this Contains(Contains action)
@@ -69,7 +69,7 @@ public class DefaultAssertProvider : IAssertProvider
 
         return App.Data.@this.FromError(new AssertionError(
             FormatValue(action.Container?.Value), action.Value?.Value,
-            action.Message ?? "Container does not contain value"));
+            action.Message?.Value ?? "Container does not contain value"));
     }
 
     public Data.@this GreaterThan(GreaterThan action)
@@ -79,7 +79,7 @@ public class DefaultAssertProvider : IAssertProvider
 
         return App.Data.@this.FromError(new AssertionError(
             $"> {FormatValue(action.B?.Value)}", action.A?.Value,
-            action.Message ?? $"Expected {FormatValue(action.A?.Value)} > {FormatValue(action.B?.Value)}"));
+            action.Message?.Value ?? $"Expected {FormatValue(action.A?.Value)} > {FormatValue(action.B?.Value)}"));
     }
 
     public Data.@this LessThan(LessThan action)
@@ -89,7 +89,7 @@ public class DefaultAssertProvider : IAssertProvider
 
         return App.Data.@this.FromError(new AssertionError(
             $"< {FormatValue(action.B?.Value)}", action.A?.Value,
-            action.Message ?? $"Expected {FormatValue(action.A?.Value)} < {FormatValue(action.B?.Value)}"));
+            action.Message?.Value ?? $"Expected {FormatValue(action.A?.Value)} < {FormatValue(action.B?.Value)}"));
     }
 
     // --- Comparison helpers ---

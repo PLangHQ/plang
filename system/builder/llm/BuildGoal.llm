@@ -15,12 +15,12 @@ The engine does: find class → set properties → call Run().
 
 ## Available Actions
 
-%actionSummary%
+{{ actionSummary }}
 
 ## Type Information
 
-Valid types: %typeInfo.TypeNames%
-%typeInfo.TypeSchemas%
+Valid types: {{ typeInfo.TypeNames }}
+{{ typeInfo.TypeSchemas }}
 
 ## Response Format
 
@@ -47,20 +47,6 @@ Group when:
 
 Do NOT group unrelated steps. Steps without a group are processed individually. Use short descriptive names: "file-processing", "auth-flow", "data-transform", etc.
 
-## Step Modifiers
-
-These are step-level properties, NOT actions:
-
-Cache: `cache for 5 minutes` → `"cache": {"durationMs": 300000}`
-Cache sliding: `cache for 5 minutes sliding` → `"cache": {"durationMs": 300000, "sliding": true}`
-
-Error handling:
-- `on error ignore` → `"onError": {"ignoreError": true}`
-- `on error call HandleIt` → `"onError": {"goal": {"name": "HandleIt"}}`
-- `on error retry 3 times` → `"onError": {"retryCount": 3}`
-- `on error retry 3 times, then call HandleIt` → `"onError": {"retryCount": 3, "order": "RetryFirst", "goal": {"name": "HandleIt"}}`
-- `on error call HandleIt, then retry 3 times` → `"onError": {"retryCount": 3, "order": "GoalFirst", "goal": {"name": "HandleIt"}}`
-
 ## Example
 
 Goal:
@@ -71,13 +57,14 @@ Start
     cache for 5 minutes
 - if %config.debug% is true
     - write out "debug mode"
+- foreach %config.items%, call ProcessItem item=%item%
 - call Save, on error retry 2 times, then call HandleError
 ```
 
 Response:
 ```json
 {
-  "description": "Calls Greet, reads cached config, conditional debug output, saves with retry.",
+  "description": "Calls Greet, reads cached config, conditional debug output, iterates items, saves with retry.",
   "steps": [
     {
       "index": 0,
@@ -87,9 +74,12 @@ Response:
     },
     {
       "index": 1,
-      "guidance": "file.read with path, cache modifier 5 min = 300000ms. Grouped with condition that uses config.",
-      "actions": [{"module": "file", "action": "read", "parameters": [{"name": "Path", "value": "config.json", "type": "path"}], "return": [{"name": "config"}]}],
-      "cache": {"durationMs": 300000},
+      "guidance": "file.read with cache.wrap modifier (5 min = 300000ms), then variable.set to capture %config%. The cache.wrap modifier wraps only the file.read, not the variable.set.",
+      "actions": [
+        {"module": "file", "action": "read", "parameters": [{"name": "Path", "value": "config.json", "type": "path"}]},
+        {"module": "cache", "action": "wrap", "parameters": [{"name": "DurationMs", "value": 300000, "type": "long"}]},
+        {"module": "variable", "action": "set", "parameters": [{"name": "Name", "value": "%config%", "type": "string"}, {"name": "Value", "value": "%__data__%", "type": "object"}]}
+      ],
       "group": "config-check",
       "level": "high", "confidence": 95
     },
@@ -109,26 +99,73 @@ Response:
     },
     {
       "index": 4,
-      "guidance": "goal.call to Save with retry+goal error handling",
-      "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "Save"}, "type": "goal.call"}]}],
-      "onError": {"retryCount": 2, "order": "RetryFirst", "goal": {"name": "HandleError"}},
+      "guidance": "loop.foreach iterates collection, goal.call is the loop body — two separate actions, orchestrator runs goal.call per item",
+      "actions": [{"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%config.items%", "type": "object"}, {"name": "ItemName", "value": "item", "type": "string"}]}, {"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "ProcessItem"}, "type": "goal.call"}]}],
+      "level": "high", "confidence": 95
+    },
+    {
+      "index": 5,
+      "guidance": "goal.call to Save with error.handle modifier for retry + error goal. The modifier wraps the goal.call.",
+      "actions": [
+        {"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "Save"}, "type": "goal.call"}]},
+        {"module": "error", "action": "handle", "parameters": [{"name": "RetryCount", "value": 2, "type": "int"}, {"name": "Order", "value": "RetryFirst", "type": "string"}, {"name": "Goal", "value": {"name": "HandleError"}, "type": "goal.call"}]}
+      ],
       "level": "high", "confidence": 95
     }
   ]
 }
 ```
 
+## Multi-Action Patterns (CRITICAL)
+
+These patterns ALWAYS produce multiple actions in one step. Missing the second action is a build-breaking bug.
+
+**"write to \%var\%"** → TWO actions: the main action PLUS `variable.set`
+```
+step: "render template 'foo.md', write to %result%"
+actions: [
+  {"module": "ui", "action": "render", "parameters": [...]},
+  {"module": "variable", "action": "set", "parameters": [{"name": "Name", "value": "%result%"}, {"name": "Value", "value": "%__data__%"}]}
+]
+```
+The engine stores each action's result as \%__data__\%. The variable.set reads it. This applies to EVERY step containing "write to \%var\%" — file.read, builder.actions, builder.types, ui.render, llm.query, list.group, etc. If the step text contains "write to", you MUST produce a variable.set action. No exceptions.
+
+**"foreach \%list\%, call GoalName"** → TWO actions: `loop.foreach` PLUS `goal.call`
+```
+step: "foreach %items%, call ProcessItem item=%item%"
+actions: [
+  {"module": "loop", "action": "foreach", "parameters": [{"name": "Collection", "value": "%items%"}, {"name": "ItemName", "value": "item"}]},
+  {"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "ProcessItem"}, "type": "goal.call"}]}
+]
+```
+The foreach iterates, the goal.call runs per item. Both actions are required.
+
+**"llm.query system=..., user=..."** → Messages is `list<llmmessage>`, map shorthand to message objects
+```
+step: "llm.query system=%prompt%, user=%input%, schema={result: string}, write to %answer%"
+actions: [
+  {"module": "llm", "action": "query", "parameters": [
+    {"name": "Messages", "value": [{"Role": "system", "Content": "%prompt%"}, {"Role": "user", "Content": "%input%"}], "type": "list<llmmessage>"},
+    {"name": "Schema", "value": "{\"result\":\"string\"}", "type": "string"}
+  ]},
+  {"module": "variable", "action": "set", "parameters": [{"name": "Name", "value": "%answer%"}, {"name": "Value", "value": "%__data__%"}]}
+]
+```
+`system=` becomes `{"Role": "system", "Content": "..."}`, `user=` becomes `{"Role": "user", "Content": "..."}`. Always build the Messages list from these. The `schema=` shorthand maps to the `Schema` string parameter.
+
 ## Rules
 
 - Step count in response MUST match step count in goal. Comments (/) are NOT steps. `on error` is part of its step, not separate.
 - Comments are documentation only — never influence action mapping.
 - Variables use \%name\% syntax — preserve literally.
-- `write to \%var\%` maps to `"return": [{"name": "var"}]` on the action — NOT a separate variable.set step. Return names omit \% signs (e.g., "config" not "\%config\%").
+- NEVER use `"return"` on actions. There is no return property. Variable assignment is always an explicit `variable.set` action.
 - For `goal.call`: simple = `{"name": "GoalName"}`, with params = `{"name": "GoalName", "parameters": [{"name": "key", "value": "val", "type": "string"}]}`.
 - Omit nullable parameters (types ending ?) when not applicable.
 - \%variable\% references resolve at runtime. Never pre-evaluate.
 - Literal JSON types: `true`/`false` (boolean), numbers unquoted, strings quoted. `type` field must match.
+- When `set \%var\% = {key: value, ...}` contains an inline object (curly braces), the Value parameter must use `"type": "json"` and the value must be a **JSON object** (not a string containing JSON). Example: `{"name": "Value", "value": {"id": "\%x\%", "items": []}, "type": "json"}`.
 - `missingVariable` is ALWAYS a warning — variables can be set by called goals.
 - NEVER alter literal values. You are a compiler, not an editor.
-- `on error` MUST produce `onError` on the step. Missing onError is a build-breaking bug.
-- Actions within a step execute in order. Later actions can reference earlier return variables.
+- Action modifiers — any step text expressing cross-cutting behavior around an action (error handling, caching, deadlines) MUST produce a modifier action right after the action it applies to. Modifier actions today: `error.handle` (on-error / retry / ignore / error-goal), `cache.wrap` (cache for X), `timeout.after` (deadline). The builder groups these onto the preceding executable action. Missing a modifier when the step text implies one is a build-breaking bug.
+- Actions within a step execute in order. Each action's result is available as \%__data__\% to the next action.
+- When a step combines a condition with another action (e.g., `if X, call GoalName` or `if X, set %y% = 1`), produce multiple actions in the same step: `condition.if` first, then the conditional action(s). The orchestrator handles running or skipping them.

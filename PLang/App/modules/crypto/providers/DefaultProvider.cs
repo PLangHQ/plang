@@ -16,7 +16,7 @@ public class DefaultCryptoProvider : ICryptoProvider
     {
         var value = action.Data.Value;
         var bytes = value is byte[] raw ? raw : Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value));
-        var algorithm = action.Algorithm.ToLowerInvariant();
+        var algorithm = action.Algorithm.Value!.ToLowerInvariant();
         byte[]? hashBytes = algorithm switch
         {
             "keccak256" => new Sha3Keccack().CalculateHash(bytes),
@@ -25,7 +25,7 @@ public class DefaultCryptoProvider : ICryptoProvider
         };
 
         if (hashBytes == null)
-            return App.Data.@this.FromError(new ActionError($"Algorithm '{action.Algorithm}' is not supported", "UnsupportedAlgorithm", 400));
+            return App.Data.@this.FromError(new ActionError($"Algorithm '{action.Algorithm.Value}' is not supported", "UnsupportedAlgorithm", 400));
 
         return App.Data.@this.Ok(hashBytes, Data.Type.FromName(algorithm));
     }
@@ -33,7 +33,7 @@ public class DefaultCryptoProvider : ICryptoProvider
     public Data.@this Verify(Verify action)
     {
         byte[] expectedHash;
-        try { expectedHash = Convert.FromBase64String(action.Hash); }
+        try { expectedHash = Convert.FromBase64String(action.Hash.Value!); }
         catch (FormatException) { return App.Data.@this.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
 
         var hashResult = Hash(new Hash { Context = action.Context, Data = action.Data, Algorithm = action.Algorithm });

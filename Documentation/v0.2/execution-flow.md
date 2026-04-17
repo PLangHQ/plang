@@ -49,20 +49,15 @@ RunGoal
 
 RunStep
   ├─ foreach before events                    ← PLang loop over registered events
-  ├─ cache check %step% → %data%
-  ├─ if %data% == false
-  │   ├─ execute %step% as "user" → %data%   ← CONTEXT SWITCH happens here
-  │   └─ cache store %step% %data%
-  ├─ check %data% %step%                      ← error.check
+  ├─ execute %step% as "user" → %data%        ← CONTEXT SWITCH happens here
   └─ foreach after events                     ← PLang loop over registered events
 ```
 
 ### Key insight: RunStep is PLang, not C#
 
-Events, caching, and error checking all happen in PLang code. The C# `app.execute` action only handles the raw step dispatch. This means:
+Step-level events run in PLang. The C# `app.execute` action handles step dispatch — including the per-action modifier fold that implements caching, timeouts, and error handling:
 - **Events run in PLang** — they're `foreach` loops calling `goal.call`
-- **Error checking runs in PLang** — the `error.check` module action
-- **Caching runs in PLang** — `cache.check` and `cache.store` actions
+- **Per-action modifiers run in C#** — `cache.wrap`, `timeout.after`, and `error.handle` are `[Modifier]`-attributed actions on `Action.Modifiers`, folded right-to-left around the action's dispatch (see [architecture.md](architecture.md#action-modifiers))
 
 ---
 
@@ -140,7 +135,7 @@ try {
 ExecuteActions iterates step.Actions
   Each action runs via app.Run(action, User.Context)
   Handler resolves %variables% from User.Variables
-  Return variables are Put() onto User.Variables
+  Result stored as %__data__% on User.Variables
 ```
 
 ### After the switch (back to System context)
@@ -148,7 +143,7 @@ ExecuteActions iterates step.Actions
 ```
 app.execute returns Data result to run.pr
   run.pr stores it as %data% on System.Variables
-  run.pr continues: error.check, after events, etc.
+  run.pr continues: after events, etc.
 ```
 
 ### Diagram
@@ -167,7 +162,6 @@ app.execute returns Data result to run.pr
         │←────┘                          │
         │                                │
         │ %data% = result                │
-        │ error.check %data%             │
         │ foreach after events           │
 ```
 
@@ -237,28 +231,39 @@ This is the one place where "everything in PLang" is hard — the action dispatc
 
 ## 6. Error Flow
 
-### error.check (PLang)
+### error.handle (per-action modifier)
 
-After `app.execute` returns `%data%`, run.pr calls:
-```
-check %data% %step%
-```
+Error handling is **per action, not per step**. When an action's step text carries `on error ...`, the builder attaches an `error.handle` modifier to that action's `Modifiers` collection. At runtime the modifier fold wraps the action's dispatch: if the inner `next()` returns a failed `Data`, `error.handle.Wrap` matches filters (StatusCode/Key/Message), optionally retries, optionally calls an error goal, and optionally ignores.
 
-This is the `error.check` module action. It examines `data.Success` and `step.OnError` configuration. If there's an error and an error handler goal, it calls that goal. If the error is unhandled, it propagates up.
+```csharp
+// error/handle.cs (simplified)
+return async () =>
+{
+    var result = await next();
+    if (result.Success) return result;
+    if (!MatchesError(result.Error)) return result;
+
+    // retry and/or call error goal, per Order
+    // IgnoreError is the final fallback
+    ...
+};
+```
 
 ### Error propagation
 
 ```
-app.execute returns Data { Success=false, Error=... }
-  → run.pr stores as %data%
-  → error.check examines %data%
-    → if step has onError handler → call error goal
-    → if no handler → Data propagates up through foreach → RunGoal → caller
+action.RunAsync returns Data { Success=false, Error=... }
+  → error.handle modifier (if present on that action) processes it
+    → filter match? retry? error goal? ignore?
+    → if all exhausted, returns the failure unchanged
+  → if no modifier caught it, Step.RunAsync returns the failure
+  → Goal.RunAsync sees the failure, passes it up to the caller
+  → if the caller has no on error, Data propagates through foreach → RunGoal → caller
 ```
 
-### app.execute marks Handled
+### Step-level catch — the last line of defence
 
-`ExecuteActions` sets `result.Handled = true` before returning. This prevents the calling foreach from short-circuiting — the error is "acknowledged" and run.pr's error.check gets a chance to handle it.
+`Step.RunAsync` wraps its action loop in a `try/catch` that converts any unexpected exception (anything that isn't `OperationCanceledException`, `OutOfMemoryException`, or `StackOverflowException`) into a `StepError`. This is belt-and-braces: handlers should always convert exceptions into `Data.FromError`, but if one slips through, the step still returns a well-formed failed `Data` instead of bubbling a raw exception.
 
 ---
 

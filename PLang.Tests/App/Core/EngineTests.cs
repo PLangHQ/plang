@@ -20,8 +20,7 @@ public class EngineTests
                     ActionName = method,
                     Parameters = parameters is IDictionary<string, object?> dict
                         ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
-                        : new List<Data>(),
-                    Return = null
+                        : new List<Data>()
                 }
             }
         };
@@ -42,7 +41,16 @@ public class EngineTests
                     Parameters = parameters is IDictionary<string, object?> dict
                         ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
                         : new List<Data>(),
-                    Return = new List<Data> { new Data(returnVarName) }
+                },
+                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                {
+                    Module = "variable",
+                    ActionName = "set",
+                    Parameters = new List<Data>
+                    {
+                        new Data("Name", returnVarName),
+                        new Data("Value", "%__data__%")
+                    }
                 }
             }
         };

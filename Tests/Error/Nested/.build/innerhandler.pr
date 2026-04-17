@@ -1,0 +1,47 @@
+{
+  "name": "InnerHandler",
+  "description": "Sets %innerErrorHandled% to true.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %innerErrorHandled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerErrorHandled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/InnerHandler.goal",
+  "prPath": "/.build/innerhandler.pr",
+  "hash": "dd5be9a4665106e1df91cb580cec1e0ef0640e82a8c7e88b24bdc562ab4e8d43",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

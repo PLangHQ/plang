@@ -1,0 +1,89 @@
+{
+  "name": "Hello",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Hello plang world\u0022, type = warning",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "This is a comment",
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call goal Bye",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "Bye",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "read file.txt, set as \u0022bye (not found)\u0022 if no file, write to %content%, remove on first usage",
+          "lineNumber": 7,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "write out \u0022%content% | osPath:%!plang.osPath% | %!plang.rootPath%\u0027",
+          "lineNumber": 8,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/os/apps/Plang/Hello.goal",
+      "prPath": "/os/apps/Plang/.build/hello.pr",
+      "hash": "f40ea09a55f9bdc221c68298b1debd93075daba0702e325c739470cabff38c7f",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/os/apps/Plang/Hello.goal",
+  "prPath": "/os/apps/Plang/.build/hello.pr",
+  "hash": "de021a1ddf25fecb875e755f0d2b44777d0f24ecbcf1237fd646e34b55525035",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

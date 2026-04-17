@@ -1,0 +1,53 @@
+{
+  "name": "ProcessItem",
+  "description": "Maps ProcessItem step to incrementing %count% by 1 using variable.set (note: the provided step includes \u0027\u003C= null\u0027, which is not a valid action modifier in the available engine actions).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %count% = %count% \u002B 1",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%count%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%count% \u002B 1",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ProcessItem.goal",
+  "prPath": "/.build/processitem.pr",
+  "hash": "2aaee77697119c328a1838907e034bdc41b7dceeed31c45f74f611dc2244e69b",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -83,7 +83,7 @@ Cancel **User** -> only user context stops, System and Service keep running.
 Cancel **System** -> cascades to User and Service (everything stops).
 `app.RequestShutdown()` -> cancels the root, cascades through everything.
 
-Step-level timeouts layer on top via a push/pop stack on Context — they create a linked CancellationTokenSource for the step's duration without affecting the actor token.
+Per-action timeouts layer on top via a push/pop stack on Context — the `timeout.after` modifier creates a linked CancellationTokenSource for the wrapped action's duration without affecting the actor token.
 
 ---
 
@@ -147,11 +147,11 @@ RunSteps(steps, context)
       Run(action, context)
         -> Modules.GetCodeGenerated(action)
         -> handler.ExecuteAsync(action, context)
-        -> if action.Return: context.Variables.Put(result)
+        -> result stored as %__data__% on context.Variables
     
     sub-step control:
-      if condition returned false && next step is indented
-        -> skip indented children
+      condition.if sets step.Disabled on indented children
+        -> disabled steps are skipped by the runner
 ```
 
 ### Dispatch kernel
@@ -161,9 +161,9 @@ Run(action, context)
   var executor = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
   var result = await executor.ExecuteAsync(action, this, context);
   
-  if (action.Return != null)
-      foreach (var returnVar in action.Return)
-          context.Variables.Put(result with Name = returnVar.Name);
+  // Result stored as %__data__% — available to the next action or variable.set
+  result.Name = "__data__";
+  context.Variables.Put(result);
   
   return result;
 ```
@@ -195,16 +195,13 @@ Step
   .Actions        Actions collection
   .Index          position in goal
   .Indent         sub-step nesting level
-  .Timeout        milliseconds (pushes CTS on context)
-  .OnError        error handling (retry, goal call)
-  .Cache          step result caching
   .Goal           back-reference
 
 Action
   .Module         "file", "variable", "http", etc.
   .ActionName     "read", "set", "request", etc.
   .Parameters     List<Data> (named inputs)
-  .Return         List<Data>? (return variable names)
+  .Modifiers      Modifiers collection — per-action wrappers (cache/timeout/error)
   .Step           back-reference
 ```
 
@@ -243,6 +240,66 @@ public interface ICodeGenerated
 ```
 
 All handlers implement this. No fallback path.
+
+---
+
+## Action Modifiers
+
+Modifiers wrap a single action with cross-cutting behavior — caching, timeouts, error handling — without touching the action's own logic. They are regular actions whose handlers implement `IModifier` and carry a `[Modifier(Order = N)]` attribute.
+
+### Shape
+
+A modifier is an action that appears in an action's `Modifiers` collection (not in the step's `Actions` list) in the `.pr` file. At build time, modifier actions are grouped onto the preceding executable action and sorted by `Order`.
+
+```
+Step
+  Actions: [
+    Action("file", "read") {
+      Modifiers: [
+        Action("timeout", "after") { Ms = 1000 },   // Order = 1 (outermost)
+        Action("cache",   "wrap")  { DurationMs = 60000 }, // Order = 2
+        Action("error",   "handle") { RetryCount = 3 }     // Order = 3 (innermost)
+      ]
+    }
+  ]
+```
+
+### Runtime: right-to-left fold
+
+`Action.RunAsync` builds an innermost dispatch delegate and asks its `Modifiers` collection to fold the list around it:
+
+```csharp
+Func<Task<Data>> dispatch = () => context.App!.Run(this, context);
+var result = await Modifiers.RunAsync(dispatch, context);
+```
+
+`Modifiers.RunAsync` walks the list right-to-left. Each action resolves its own handler via `Action.WrapAround`, which populates the source-generated parameters and returns the wrapped delegate. First in the list = outermost wrapper.
+
+### IModifier
+
+One contract:
+
+```csharp
+public interface IModifier
+{
+    Func<Task<Data>> Wrap(Func<Task<Data>> next, Context context);
+}
+```
+
+- `cache.wrap` (Order = 2) — check the cache before `next`; store the result after if it succeeded.
+- `timeout.after` (Order = 1) — cap `next` with a CTS on the context's cancellation stack.
+- `error.handle` (Order = 3) — await `next`; on failure, match filters → retry → call error goal → ignore.
+
+### Builder grouping
+
+The LLM returns a flat action list. `Actions.GroupModifiers(modules)` walks that list and attaches every modifier action (any action whose handler carries `[Modifier]`) to the nearest preceding executable action. Inside each action, modifiers are sorted by `Order` so runtime gets a pre-ordered fold input. A leading modifier with no preceding executable is dropped and recorded as a `DroppedLeadingModifier` warning on the step.
+
+### Adding a modifier
+
+1. Write a handler class with `[Modifier(Order = N)]` and implement `IModifier.Wrap`.
+2. Give it an `[Action(...)]` name so it registers through normal module discovery.
+
+No Step changes, no runtime changes, no prompt changes — the new modifier appears in the action registry and the LLM can pick it like any other action.
 
 ---
 
@@ -357,7 +414,7 @@ Each `CallFrame` captures: Action (navigate trace on demand: `action.Step.Goal.P
 
 Can be disabled for performance (`IsEnabled = false`). When disabled, zero overhead on happy path — error frames are created on demand via `PushError()`.
 
-`%!error%` is not a context variable — it's passed as a parameter to the error goal via `onError.Goal.Parameters`.
+`%!error%` is not a context variable — it's passed as a parameter to the error goal via the `error.handle` modifier's `Goal.Parameters`.
 
 ---
 
@@ -382,7 +439,7 @@ Error hierarchy: `Error` -> `ActionError`, `StepError`, `GoalError`, `ServiceErr
 - Constructor / void -> throw
 - `string` / `Type?` -> null
 
-Steps can configure error handling via `ErrorHandler`: retry count, retry interval, error goal to call, ignore flag.
+Error handling is a per-action **modifier** (`error.handle`), written as `on error ...` in the step text. Each modifier carries its own match filters (StatusCode/Key/Message), retry count, retry budget, error-goal call, and ignore flag. Multiple actions in the same step can have independent handlers.
 
 When an error goal is called, the error is passed as `%!error%` parameter to the goal call — it flows in as data, not as context state. After the error goal returns, `%!error%` is scoped to that goal's variables.
 

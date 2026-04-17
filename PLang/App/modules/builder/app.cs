@@ -7,7 +7,7 @@ namespace App.modules.builder;
 public partial class app : IContext
 {
     [Default(".")]
-    public partial string Path { get; init; }
+    public partial Data.@this<string> Path { get; init; }
 
     [Provider]
     public partial IBuilderProvider Builder { get; }

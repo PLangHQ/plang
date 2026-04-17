@@ -79,7 +79,7 @@ public class QueryEdgeCaseTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "multi tools" }
+                new LlmMessage { Role = "user", Content = "multi tools" }
             },
             Tools = new List<GoalCall>
             {
@@ -124,7 +124,7 @@ public class QueryEdgeCaseTests
             Context = Ctx,
             Messages = new List<LlmMessage>
             {
-                new LlmMessage { Role = "user", Text = "null args" }
+                new LlmMessage { Role = "user", Content = "null args" }
             },
             Tools = new List<GoalCall>
             {

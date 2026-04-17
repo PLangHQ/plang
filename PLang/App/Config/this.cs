@@ -86,10 +86,11 @@ public sealed class @this
         {
             if (!configProps.Contains(prop.Name)) continue;
 
-            var value = prop.GetValue(source);
+            // Action properties are Data<T> — unwrap to plain value for the scope chain
+            var raw = prop.GetValue(source);
+            var value = raw is Data.@this data ? data.Value : raw;
             if (value == null) continue;
 
-            // For nullable value types, HasValue is already checked by the null check above
             Set($"{prefix}.{prop.Name}", value, context, isDefault);
         }
     }

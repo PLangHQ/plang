@@ -1,0 +1,53 @@
+{
+  "name": "WildcardHandler",
+  "description": "WildcardHandler step: increment %matchCount% by 1 and assign the result to %matchCount%. The provided expression includes \u0027\u003C= null\u0027, which is not a valid mapping to the available variable.set/condition actions as written.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %matchCount% = %matchCount% \u002B 1",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%matchCount%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%matchCount% \u002B 1",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/WildcardHandler.goal",
+  "prPath": "/.build/wildcardhandler.pr",
+  "hash": "2a9513cfc493396e6d0768080e72679fa0eb256c7f02b9410676b28c35a2a3fe",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

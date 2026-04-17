@@ -12,7 +12,7 @@ public partial class Hash : IContext
     public partial Data.@this Data { get; init; }
 
     [Default("keccak256")]
-    public partial string Algorithm { get; init; }
+    public partial Data.@this<string> Algorithm { get; init; }
 
     [Provider]
     public partial ICryptoProvider Crypto { get; }

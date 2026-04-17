@@ -55,7 +55,7 @@ public sealed class @this : IDisposable
     private readonly Stack<CancellationTokenSource> _cancellationStack = new();
 
     /// <summary>
-    /// Pushes a timeout CTS so all sub-calls use it. Called by app.execute for step.Timeout.
+    /// Pushes a timeout CTS so all sub-calls use it. Used by the timeout.after modifier.
     /// </summary>
     public void PushCancellation(CancellationTokenSource cts) => _cancellationStack.Push(cts);
 
@@ -209,6 +209,34 @@ public sealed class @this : IDisposable
     public bool ContainsKey(string key) => _data.ContainsKey(key);
 
     /// <summary>
+    /// Gets the module-scoped static dictionary for the given module namespace.
+    /// Created on first access, persists for the lifetime of this context.
+    /// Used by IStatic — actions in the same module share the same dictionary.
+    /// </summary>
+    public ConcurrentDictionary<string, object?> GetModuleStatic(string moduleNamespace)
+    {
+        var key = $"__static_{moduleNamespace}__";
+        return (ConcurrentDictionary<string, object?>)_data.GetOrAdd(key,
+            _ => new ConcurrentDictionary<string, object?>(StringComparer.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Gets module static at the specified scope level.
+    /// step = step-local (caller manages cleanup), goal = goal-scoped (default),
+    /// context = context lifetime, app = app lifetime.
+    /// </summary>
+    public ConcurrentDictionary<string, object?> GetModuleStatic(string moduleNamespace, string scope)
+    {
+        var key = $"__static_{moduleNamespace}__";
+        return scope.ToLowerInvariant() switch
+        {
+            "app" => App.GetStatic(key),
+            _ => (ConcurrentDictionary<string, object?>)_data.GetOrAdd(key,
+                _ => new ConcurrentDictionary<string, object?>(StringComparer.OrdinalIgnoreCase))
+        };
+    }
+
+    /// <summary>
     /// Creates a child context for nested execution.
     /// </summary>
     public @this CreateChild(Variables.@this? variables = null)
@@ -234,6 +262,20 @@ public sealed class @this : IDisposable
         }
 
         return clone;
+    }
+
+    // --- Data wrapper cache for structural types (Goal, Step, Action) ---
+    // Per-execution: same domain object → same Data wrapper within this context.
+    private readonly ConcurrentDictionary<object, Data.@this> _wrapperCache = new();
+
+    /// <summary>
+    /// Gets or creates a cached Data&lt;T&gt; wrapper for a structural domain object.
+    /// Ensures identity: same object → same wrapper within this execution context.
+    /// </summary>
+    public Data.@this<T> GetOrCreate<T>(T key, Func<Data.@this<T>> factory) where T : class
+    {
+        var data = _wrapperCache.GetOrAdd(key, _ => factory());
+        return (Data.@this<T>)data;
     }
 
     private readonly ConcurrentDictionary<object, object> _eventContainers = new();

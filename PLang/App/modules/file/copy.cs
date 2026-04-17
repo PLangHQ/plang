@@ -8,14 +8,14 @@ namespace App.modules.file;
 [Action("copy", Cacheable = false)]
 public partial class Copy : IContext
 {
-    public partial FileSystem.Path Source { get; init; }
-    public partial FileSystem.Path Destination { get; init; }
+    public partial Data.@this<FileSystem.Path> Source { get; init; }
+    public partial Data.@this<FileSystem.Path> Destination { get; init; }
 
     [Default(false)]
-    public partial bool Overwrite { get; init; }
+    public partial Data.@this<bool> Overwrite { get; init; }
 
     [Default(true)]
-    public partial bool IncludeSubfolders { get; init; }
+    public partial Data.@this<bool> IncludeSubfolders { get; init; }
 
     [Provider]
     public partial IFileProvider Files { get; }

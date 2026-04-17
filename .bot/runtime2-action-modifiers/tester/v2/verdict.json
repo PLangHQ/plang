@@ -1,0 +1,1 @@
+{"verdict":"FAIL","reason":"New code at 0% coverage: Data.IsVariable, Data.HasVariableReference (commit ad03aead), and variable.set.ValidateBuild() — build-time validation with 3 untested paths. v1 error.handle gap is fixed.","tests_total":2128,"tests_pass":2127,"tests_fail":1,"modifier_tests":49,"modifier_pass":49,"v1_items_fixed":7,"must_fix":3}

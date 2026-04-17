@@ -5,26 +5,26 @@ namespace App.modules.list;
 [Action("range")]
 public partial class Range : IContext
 {
-    public partial int Start { get; init; }
-    public partial int End { get; init; }
+    public partial Data.@this<int> Start { get; init; }
+    public partial Data.@this<int> End { get; init; }
     [Default(1)]
-    public partial int Step { get; init; }
+    public partial Data.@this<int> Step { get; init; }
 
     public Task<Data.@this> Run()
     {
-        if (Step == 0)
+        if (Step.Value == 0)
             return Task.FromResult(Error(
                 new App.Errors.ValidationError("Step cannot be zero", "InvalidStep")));
 
         var list = new List<object?>();
-        if (Step > 0)
+        if (Step.Value > 0)
         {
-            for (int i = Start; i <= End; i += Step)
+            for (int i = Start.Value; i <= End.Value; i += Step.Value)
                 list.Add(i);
         }
         else
         {
-            for (int i = Start; i >= End; i += Step)
+            for (int i = Start.Value; i >= End.Value; i += Step.Value)
                 list.Add(i);
         }
 

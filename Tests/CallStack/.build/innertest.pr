@@ -1,0 +1,76 @@
+{
+  "name": "InnerTest",
+  "description": "Sets %innerDepth% from call stack depth and asserts it is not null.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %innerDepth% = %!callStack.Depth%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerDepth%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%!callStack.Depth%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %innerDepth% is not null, \u0022inner depth should be set\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%innerDepth%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "inner depth should be set",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/InnerTest.goal",
+  "prPath": "/.build/innertest.pr",
+  "hash": "93454595bee652bda5232f333572f109bb040b75c4ef64ed133b4a605287523a",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

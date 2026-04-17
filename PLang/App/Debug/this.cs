@@ -21,6 +21,63 @@ public sealed class @this
     /// </summary>
     public bool IsEnabled { get; set; }
 
+    /// <summary>
+    /// Filter to a specific goal name. Null = all goals.
+    /// </summary>
+    public string? Goal { get; set; }
+
+    /// <summary>
+    /// Filter to a specific step index. Null = all steps.
+    /// </summary>
+    public int? Step { get; set; }
+
+    /// <summary>
+    /// Variables to watch. Each can optionally track events (OnCreate/OnChange/OnDelete).
+    /// Variables without Event set are displayed at step boundaries.
+    /// Set via: --debug={"variables":[{"name":"trace","event":"onchange"}]}
+    /// </summary>
+    public List<DebugVariable>? Variables { get; set; }
+
+    /// <summary>
+    /// Max characters per line before truncation. Default 500.
+    /// </summary>
+    public int MaxLength { get; set; } = 500;
+
+    /// <summary>
+    /// Regex string to filter debug output lines.
+    /// </summary>
+    public string? Grep { get; set; }
+
+    /// <summary>
+    /// Debug detail level. "step" (default) or "action" (shows state between actions).
+    /// </summary>
+    public string Level { get; set; } = "step";
+
+    /// <summary>
+    /// When true, errors include a dump of all available variables at the point of failure.
+    /// Useful for diagnosing missing variables in foreach/goal.call chains.
+    /// Set via: --debug={"verbose":true}
+    /// </summary>
+    public bool Verbose { get; set; }
+
+    /// <summary>
+    /// When true, logs the resolved LLM messages before each API call.
+    /// Shows the actual content sent to the LLM, not the raw %var% references.
+    /// Set via: --debug={"llmTrace":true}
+    /// </summary>
+    public bool LlmTrace { get; set; }
+
+    /// <summary>
+    /// When true, logs every ResolveDeep call with input/output types.
+    /// Useful for tracing where %variable% resolution changes types.
+    /// Set via: --debug={"resolveTrace":true}
+    /// </summary>
+    public bool ResolveTrace { get; set; }
+
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    private Regex? _grepRegex;
+
     public @this(App.@this engine)
     {
         _engine = engine;
@@ -30,88 +87,146 @@ public sealed class @this
     {
         IsEnabled = true;
 
-        string? goalFilter = null;
-        int? stepFilter = null;
-
         if (debugValue is IDictionary<string, object?> dict)
+            App.Utils.TypeMapping.Populate(this, dict);
+
+        // Strip % from variable names
+        if (Variables != null)
         {
-            ParseJsonFilter(dict, out goalFilter, out stepFilter);
+            foreach (var v in Variables)
+                v.Name = v.Name.Trim('%');
+
+            // Create placeholder Data with event handlers for watched variables
+            var vars = _engine.User.Context.Variables;
+            foreach (var v in Variables.Where(v => v.Event.HasValue))
+            {
+                var placeholder = Data.@this.Uninitialized(v.Name);
+                if (v.Event == DebugEvent.OnCreate)
+                    placeholder.OnCreate += (data) => LogEvent(v.Name, "CREATED", data);
+                if (v.Event == DebugEvent.OnChange)
+                    placeholder.OnChange += (oldData, newData) => LogMutation(v.Name, oldData, newData);
+                if (v.Event == DebugEvent.OnDelete)
+                    placeholder.OnDelete += (data) => LogEvent(v.Name, "DELETED", data);
+                if (v.Event == DebugEvent.OnTypeChange)
+                    placeholder.OnChange += (oldData, newData) =>
+                    {
+                        var oldType = oldData.RawValue?.GetType().Name;
+                        var newType = newData.RawValue?.GetType().Name;
+                        if (oldType != newType) LogMutation(v.Name, oldData, newData);
+                    };
+                vars.Put(placeholder);
+            }
         }
-        else if (debugValue is not true and not false)
+
+        // Subscribe to LLM message tracing
+        if (LlmTrace)
         {
-            var converted = ToDictionary(debugValue);
-            if (converted != null)
-                ParseJsonFilter(converted, out goalFilter, out stepFilter);
+            var provider = _engine.Providers.Get<modules.llm.providers.ILlmProvider>();
+            if (provider.Success && provider.Value is modules.llm.providers.OpenAiProvider oai)
+            {
+                oai.OnBeforeRequest += (messages) =>
+                {
+                    var sb = new StringBuilder();
+                    sb.AppendLine("=== LLM REQUEST ===");
+                    foreach (var msg in messages)
+                    {
+                        var content = msg.Content ?? "(null)";
+                        sb.AppendLine($"  [{msg.Role}] {content}");
+                    }
+                    sb.AppendLine("=== END LLM REQUEST ===");
+                    WriteFiltered(sb, _engine.User.Context);
+                };
+            }
+        }
+
+        // Subscribe to resolve tracing
+        if (ResolveTrace)
+        {
+            _engine.User.Context.Variables.OnResolveTrace += (varName, resolved, depth) =>
+                Console.Error.WriteLine($"  [ResolveDeep] %{varName}% → {resolved?.GetType().Name ?? "null"} (depth={depth})");
+        }
+
+        // Build grep regex
+        if (!string.IsNullOrEmpty(Grep))
+        {
+            try { _grepRegex = new Regex(Grep, RegexOptions.IgnoreCase); }
+            catch { _grepRegex = new Regex(Regex.Escape(Grep), RegexOptions.IgnoreCase); }
         }
 
         var events = _engine.Context.Events;
 
         events.Register(new EventBinding(
             EventType.BeforeStep,
-            context => BeforeStepHandler(context, stepFilter),
-            goalNamePattern: goalFilter ?? "*",
+            context => BeforeStepHandler(context, Step),
+            goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
 
         events.Register(new EventBinding(
             EventType.AfterStep,
-            context => AfterStepHandler(context, stepFilter),
-            goalNamePattern: goalFilter ?? "*",
+            context => AfterStepHandler(context, Step),
+            goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
 
         events.Register(new EventBinding(
             EventType.AfterGoal,
             AfterGoalHandler,
-            goalNamePattern: goalFilter ?? "*",
+            goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
+
+        if (string.Equals(Level, "action", StringComparison.OrdinalIgnoreCase))
+        {
+            events.Register(new EventBinding(
+                EventType.BeforeAction,
+                context => BeforeActionHandler(context, Step),
+                goalNamePattern: Goal ?? "*",
+                priority: int.MaxValue,
+                stopOnError: false));
+
+            events.Register(new EventBinding(
+                EventType.AfterAction,
+                context => AfterActionHandler(context, Step),
+                goalNamePattern: Goal ?? "*",
+                priority: int.MaxValue,
+                stopOnError: false));
+        }
     }
 
-    private static IDictionary<string, object?>? ToDictionary(object value)
+
+    public void LogMutation(string name, Data.@this oldData, Data.@this newData)
     {
-        // Handle Newtonsoft JObject and similar dictionary-like types
-        if (value is System.Collections.IDictionary rawDict)
-        {
-            var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-            foreach (System.Collections.DictionaryEntry entry in rawDict)
-                result[entry.Key.ToString()!] = entry.Value;
-            return result;
-        }
+        var context = _engine.User.Context;
+        var goalName = context?.Goal?.Name ?? "?";
+        var stepIndex = context?.Step?.Index.ToString() ?? "?";
+        var stepText = context?.Step?.Text;
+        if (stepText != null && stepText.Length > 60) stepText = stepText[..60];
+        var stack = new System.Diagnostics.StackTrace(2, true);
 
-        // Try indexer pattern (JObject implements this)
-        var type = value.GetType();
-        var indexer = type.GetProperty("Item", new[] { typeof(string) });
-        if (indexer == null) return null;
-
-        var result2 = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        // Try known property names
-        foreach (var name in new[] { "goal", "step", "goals", "verbose" })
+        var sb = new StringBuilder();
+        sb.AppendLine($"=== WATCH [{name}] CHANGED ===");
+        sb.AppendLine($"  Goal: {goalName}[{stepIndex}] {stepText ?? "?"}");
+        sb.AppendLine($"  Raw: {oldData.RawValue?.GetType().Name ?? "null"} → {newData.RawValue?.GetType().Name ?? "null"}");
+        sb.AppendLine($"  Resolved: {oldData.Value?.GetType().Name ?? "null"} → {newData.Value?.GetType().Name ?? "null"}");
+        sb.AppendLine($"  NeedsRes: {newData.NeedsResolution}, HasCtx: {newData.Context != null}");
+        for (int i = 0; i < Math.Min(5, stack.FrameCount); i++)
         {
-            try
-            {
-                var val = indexer.GetValue(value, new object[] { name });
-                if (val != null) result2[name] = val.ToString();
-            }
-            catch { }
+            var frame = stack.GetFrame(i);
+            if (frame?.GetMethod() != null)
+                sb.AppendLine($"  at {frame.GetMethod()!.DeclaringType?.Name}.{frame.GetMethod()!.Name}:{frame.GetFileLineNumber()}");
         }
-        return result2.Count > 0 ? result2 : null;
+        sb.AppendLine("==============================");
+        Console.Error.Write(sb.ToString());
     }
 
-    private static void ParseJsonFilter(IDictionary<string, object?> dict, out string? goalFilter, out int? stepFilter)
+    public void LogEvent(string name, string eventType, Data.@this data)
     {
-        goalFilter = null;
-        stepFilter = null;
+        var context = _engine.User.Context;
+        var goalName = context?.Goal?.Name ?? "?";
+        var stepIndex = context?.Step?.Index.ToString() ?? "?";
 
-        if (dict.TryGetValue("goal", out var goalVal) && goalVal is string g && !string.IsNullOrEmpty(g))
-            goalFilter = g;
-
-        if (dict.TryGetValue("step", out var stepVal))
-        {
-            if (stepVal is int i) stepFilter = i;
-            else if (stepVal is long l) stepFilter = (int)l;
-            else if (stepVal is string s && int.TryParse(s, out var parsed)) stepFilter = parsed;
-        }
+        Console.Error.WriteLine($"=== WATCH [{name}] {eventType} in {goalName}[{stepIndex}] type={data.Value?.GetType().Name ?? "null"} ===");
     }
 
     private static Task<Data.@this> BeforeStepHandler(Actor.Context.@this context, int? stepFilter)
@@ -134,11 +249,6 @@ public sealed class @this
                 sb.AppendLine($"    {p.Name} = {FormatValue(p.Value, context)}");
             }
 
-            if (action.Return != null && action.Return.Count > 0)
-            {
-                var returnStr = string.Join(", ", action.Return.Select(r => $"%{r.Name}%"));
-                sb.AppendLine($"  Return: {returnStr}");
-            }
         }
 
         var callStack = context.CallStack;
@@ -178,8 +288,9 @@ public sealed class @this
 
     private static void WriteFiltered(StringBuilder sb, Actor.Context.@this context)
     {
-        var maxLen = GetMaxLength(context);
-        var grep = GetGrepPattern(context);
+        var debug = context.App?.Debug;
+        var maxLen = debug?.MaxLength ?? 500;
+        var grep = debug?._grepRegex;
         var output = sb.ToString();
 
         // Grep first on full content
@@ -217,20 +328,36 @@ public sealed class @this
         return Task.FromResult(App.Data.@this.Ok());
     }
 
-    private static int GetMaxLength(Actor.Context.@this context)
+    private static Task<Data.@this> BeforeActionHandler(Actor.Context.@this context, int? stepFilter)
     {
-        var val = context.Variables.GetValue("!debug.maxLength");
-        if (val is int i) return i;
-        if (val is long l) return (int)l;
-        return 500; // default
+        var step = context.Step;
+        if (step == null) return Task.FromResult(App.Data.@this.Ok());
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return Task.FromResult(App.Data.@this.Ok());
+
+        var goalName = context.Goal?.Name ?? "?";
+        var sb = new StringBuilder();
+        sb.AppendLine($"  --- ACTION [BEFORE] in Step [{step.Index}] of {goalName} ---");
+
+        AppendStepVariables(sb, context);
+
+        WriteFiltered(sb, context);
+        return Task.FromResult(App.Data.@this.Ok());
     }
 
-    private static Regex? GetGrepPattern(Actor.Context.@this context)
+    private static Task<Data.@this> AfterActionHandler(Actor.Context.@this context, int? stepFilter)
     {
-        var val = context.Variables.GetValue("!debug.grep");
-        if (val is not string pattern || string.IsNullOrEmpty(pattern)) return null;
-        try { return new Regex(pattern, RegexOptions.IgnoreCase); }
-        catch { return new Regex(Regex.Escape(pattern), RegexOptions.IgnoreCase); }
+        var step = context.Step;
+        if (step == null) return Task.FromResult(App.Data.@this.Ok());
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return Task.FromResult(App.Data.@this.Ok());
+
+        var goalName = context.Goal?.Name ?? "?";
+        var sb = new StringBuilder();
+        sb.AppendLine($"  --- ACTION [AFTER] in Step [{step.Index}] of {goalName} ---");
+
+        AppendStepVariables(sb, context);
+
+        WriteFiltered(sb, context);
+        return Task.FromResult(App.Data.@this.Ok());
     }
 
     private static readonly Regex VarRefPattern = new(@"%([^%]+)%", RegexOptions.Compiled);
@@ -244,15 +371,6 @@ public sealed class @this
 
         foreach (var action in step.Actions)
         {
-            if (action.Return != null)
-            {
-                foreach (var r in action.Return)
-                {
-                    if (!string.IsNullOrEmpty(r.Name))
-                        varNames.Add(r.Name);
-                }
-            }
-
             foreach (var p in action.Parameters)
             {
                 if (p.Value is string s)
@@ -262,6 +380,12 @@ public sealed class @this
                 }
             }
         }
+
+        // Add explicitly watched variables
+        var watchVars = context.App?.Debug.Variables;
+        if (watchVars != null)
+            foreach (var v in watchVars)
+                varNames.Add(v.Name);
 
         if (varNames.Count == 0) return;
 
@@ -366,8 +490,16 @@ public sealed class @this
     private static string TruncateToString(object? value, int max)
     {
         if (value == null) return "null";
-        if (value is string s) return s.Length > max ? $"\"{s[..max]}...\"" : $"\"{s}\"";
+        if (value is string s) return s.Length > max ? $"\"{s[..max]}...[{s.Length - max} more chars]\"" : $"\"{s}\"";
         var str = value.ToString() ?? "?";
-        return str.Length > max ? $"{str[..max]}..." : str;
+        return str.Length > max ? $"{str[..max]}...[{str.Length - max} more chars]" : str;
     }
+}
+
+public enum DebugEvent { OnCreate, OnChange, OnDelete, OnTypeChange }
+
+public class DebugVariable
+{
+    public string Name { get; set; } = "";
+    public DebugEvent? Event { get; set; }
 }

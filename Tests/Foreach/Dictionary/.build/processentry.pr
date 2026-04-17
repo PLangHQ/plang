@@ -1,0 +1,53 @@
+{
+  "name": "ProcessEntry",
+  "description": "Maps the step to a variable.set action that increments %count% by 1. The \u0027\u003C= null\u0027 part is treated as an invalid/unsupported expression in the engine action set.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %count% = %count% \u002B 1",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%count%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%count% \u002B 1",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ProcessEntry.goal",
+  "prPath": "/.build/processentry.pr",
+  "hash": "dc96c15ea16a565a1b88c77e9bf16abae3a520483ad152b7209fef323c228525",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

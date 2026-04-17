@@ -95,16 +95,14 @@ static Goal NotFound(string name)
 | `Actions` | `Actions` | Yes | Action bindings for this step |
 | `Hash` | `string?` | Yes | Content hash |
 | `Intent` | `string?` | Yes | LLM-inferred intent |
-| `OnError` | `ErrorHandler?` | Yes | Error handling configuration |
-| `Cache` | `CacheSettings?` | Yes | Caching configuration |
-| `Timeout` | `int?` | Yes | Timeout in milliseconds |
 | `Errors` | `List<Info>` | Yes | Build errors |
 | `Warnings` | `List<Info>` | Yes | Build warnings |
 | `WaitForExecution` | `bool` | Yes | Whether to await completion |
+| `Disabled` | `bool` | No | Set by `condition.if` on indented sub-steps (`[JsonIgnore]`, context-backed) |
 | `Goal` | `Goal?` | No | Parent goal (`[JsonIgnore]`) |
 | `Events` | `EntityEvents` | No | Before/After × Load/Run event lists |
 
-**Important:** Steps do NOT have `ModuleName` or `MethodName` directly. The module/method binding is on each `Action` within the step's `Actions` collection.
+**Important:** Steps do NOT have `ModuleName` or `MethodName` directly. The module/method binding is on each `Action` within the step's `Actions` collection. Error handling, caching, and timeouts are **not** step-level properties either — they're `[Modifier]`-attributed actions attached to individual actions via `Action.Modifiers`. See [architecture.md](architecture.md#action-modifiers).
 
 ### Methods (StepMethods.cs)
 
@@ -135,7 +133,7 @@ Step Clone()
 | `Class` | `string` | Yes | `"action"` | Handler class name |
 | `Method` | `string` | Yes | `"method"` | Handler method name |
 | `Parameters` | `List<Data>` | Yes | `"parameters"` | Input parameters |
-| `Return` | `List<Data>?` | Yes | `"return"` | Return variable mappings |
+| `Modifiers` | `Modifiers` | Yes | `"modifiers"` | Wrapper actions (cache/timeout/error) folded around this action at runtime |
 | `Errors` | `List<Info>` | Yes | | Build errors |
 | `Warnings` | `List<Info>` | Yes | | Build warnings |
 | `Events` | `EntityEvents` | No | | Entity events (`[JsonIgnore]`) |
@@ -153,7 +151,7 @@ Task<Data> RunAsync(App app, PLangContext context, CancellationToken ct = defaul
 **Run sequence:**
 1. `Libraries.GetCodeGenerated(Module, ActionName)` — find handler
 2. `ICodeGenerated.CodeGeneratedExecuteAsync(Parameters, app, context)`
-3. Store `Return` variables in `Variables`
+3. Store result as `%__data__%` on `context.Variables` — available to the next action or caller
 
 ---
 
@@ -223,7 +221,7 @@ App.RunGoalAsync(goalName, context)
         │       │   └── foreach action in Actions
         │       │       ├── Libraries.GetCodeGenerated(action.Module, action.ActionName)
         │       │       ├── ICodeGenerated.CodeGeneratedExecuteAsync(params, app, context)
-        │       │       └── Store Return vars in Variables
+        │       │       └── Store result as %__data__% in Variables
         │       └── After.Run events
         ├── After.Run events
         └── CallStack.Pop()

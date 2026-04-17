@@ -7,6 +7,7 @@ global using Step = App.Goals.Goal.Steps.Step.@this;
 global using ErrorOrder = App.Goals.Goal.Steps.Step.ErrorOrder;
 global using CacheSettings = App.Goals.Goal.Steps.Step.CacheSettings;
 global using StepActions = App.Goals.Goal.Steps.Step.Actions.@this;
+global using ActionModifiers = App.Goals.Goal.Steps.Step.Actions.Action.Modifiers.@this;
 
 // Event types
 global using AppEvents = App.Events.@this;
@@ -66,5 +67,4 @@ global using Testing = App.Test.@this;
 // Types WITH v1 conflicts — require per-file handling:
 // Goal: use Goals.Goal.@this or per-file alias
 // Visibility: use Goals.Goal.Visibility
-// ErrorHandler: use Goals.Goal.Steps.Step.ErrorHandler
 // Action: can't global alias (System.Action conflict), use per-file alias

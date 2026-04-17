@@ -57,7 +57,8 @@ public class IdentityDataTests
     public async Task DotNavigation_PublicKey_ReturnsPublicKey()
     {
         var identity = CreateTestIdentity();
-        var child = identity.GetChild("PublicKey");
+        var data = new Data("test", identity);
+        var child = data.GetChild("PublicKey");
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Value?.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ==");
     }
@@ -73,7 +74,8 @@ public class IdentityDataTests
     public async Task DotNavigation_IsArchived_ReturnsIsArchived()
     {
         var identity = CreateTestIdentity();
-        var child = identity.GetChild("IsArchived");
+        var data = new Data("test", identity);
+        var child = data.GetChild("IsArchived");
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Value).IsEqualTo(false);
     }
@@ -82,7 +84,8 @@ public class IdentityDataTests
     public async Task DotNavigation_IsDefault_ReturnsIsDefault()
     {
         var identity = CreateTestIdentity();
-        var child = identity.GetChild("IsDefault");
+        var data = new Data("test", identity);
+        var child = data.GetChild("IsDefault");
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Value).IsEqualTo(true);
     }
@@ -92,7 +95,8 @@ public class IdentityDataTests
     {
         // [Sensitive] is serialization only, not access control — dot navigation works
         var identity = CreateTestIdentity();
-        var child = identity.GetChild("PrivateKey");
+        var data = new Data("test", identity);
+        var child = data.GetChild("PrivateKey");
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Value?.ToString()).IsEqualTo("dGVzdHByaXZhdGVrZXk=");
     }

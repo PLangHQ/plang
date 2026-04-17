@@ -6,17 +6,17 @@ namespace App.modules.mock;
 [Action("verify", Cacheable = false)]
 public partial class Verify : IContext
 {
-    public partial types.MockHandle Mock { get; init; }
-    public partial int ExpectedCount { get; init; }
-    public partial string? Message { get; init; }
+    public partial Data.@this<types.MockHandle> Mock { get; init; }
+    public partial Data.@this<int> ExpectedCount { get; init; }
+    public partial Data.@this<string>? Message { get; init; }
 
     public Task<Data.@this> Run()
     {
-        if (Mock.CallCount != ExpectedCount)
+        if (Mock.Value!.CallCount != ExpectedCount.Value)
         {
             return Task.FromResult(Error(new AssertionError(
-                ExpectedCount, Mock.CallCount,
-                Message ?? $"Expected {Mock.ActionPattern} to be called {ExpectedCount} time(s), but was called {Mock.CallCount} time(s)")));
+                ExpectedCount.Value, Mock.Value!.CallCount,
+                Message?.Value ?? $"Expected {Mock.Value!.ActionPattern} to be called {ExpectedCount.Value} time(s), but was called {Mock.Value!.CallCount} time(s)")));
         }
 
         return Task.FromResult(Data(true));

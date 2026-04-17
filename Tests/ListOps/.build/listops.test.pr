@@ -1,0 +1,358 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %myList% = [10, 20, 30]",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "add 40 to %myList%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "get count of %myList%, write to %count%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %count% equals 4, \u0022list should have 4 items after add\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "get first item from %myList%, write to %first%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %first% equals 10",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "get last item from %myList%, write to %last%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %last% equals 40",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "check if %myList% contains 20, write to %has20%",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "assert %has20% is true, \u0022list should contain 20\u0022",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "join %myList% with separator \u0022, \u0022, write to %joined%",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "assert %joined% contains \u002210\u0022",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "assert %joined% contains \u002240\u0022",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "split \u0022a-b-c\u0022 by \u0022-\u0022, write to %parts%",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 14,
+      "text": "get count of %parts%, write to %partsCount%",
+      "lineNumber": 16,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 15,
+      "text": "assert %partsCount% equals 3",
+      "lineNumber": 17,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 16,
+      "text": "get item at index 1 from %myList%, write to %second%",
+      "lineNumber": 19,
+      "indent": 0,
+      "comment": "get by index",
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 17,
+      "text": "assert %second% equals 20",
+      "lineNumber": 20,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 18,
+      "text": "remove 20 from %myList%",
+      "lineNumber": 22,
+      "indent": 0,
+      "comment": "remove",
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 19,
+      "text": "check if %myList% contains 20, write to %still20%",
+      "lineNumber": 23,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 20,
+      "text": "assert %still20% is false",
+      "lineNumber": 24,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 21,
+      "text": "get index of 30 in %myList%, write to %idx%",
+      "lineNumber": 26,
+      "indent": 0,
+      "comment": "indexOf",
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 22,
+      "text": "assert %idx% is greater than -1, \u0022indexOf should find the item\u0022",
+      "lineNumber": 27,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 23,
+      "text": "set %unsorted% = [3, 1, 2]",
+      "lineNumber": 29,
+      "indent": 0,
+      "comment": "sort",
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 24,
+      "text": "sort %unsorted%",
+      "lineNumber": 30,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 25,
+      "text": "get first item from %unsorted%, write to %sortFirst%",
+      "lineNumber": 31,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 26,
+      "text": "assert %sortFirst% equals 1",
+      "lineNumber": 32,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 27,
+      "text": "reverse %unsorted%",
+      "lineNumber": 34,
+      "indent": 0,
+      "comment": "reverse",
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 28,
+      "text": "get first item from %unsorted%, write to %revFirst%",
+      "lineNumber": 35,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 29,
+      "text": "assert %revFirst% equals 3",
+      "lineNumber": 36,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 30,
+      "text": "set %dupes% = [1, 2, 2, 3, 3, 3]",
+      "lineNumber": 38,
+      "indent": 0,
+      "comment": "unique",
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 31,
+      "text": "get unique items from %dupes%, write to %uniq%",
+      "lineNumber": 39,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 32,
+      "text": "get count of %uniq%, write to %uniqCount%",
+      "lineNumber": 40,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 33,
+      "text": "assert %uniqCount% equals 3",
+      "lineNumber": 41,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ListOps.test.goal",
+  "prPath": "/.build/listops.test.pr",
+  "hash": "0a2b147ff098cb5191b32dd87445311e6626f78f3349a3dab5c2cada908e879a",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

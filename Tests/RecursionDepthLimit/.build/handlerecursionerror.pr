@@ -1,0 +1,53 @@
+{
+  "name": "HandleRecursionError",
+  "description": "Sets %recursionErrorCaught% to true (null comparison implied by the step text).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %recursionErrorCaught% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%recursionErrorCaught%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/HandleRecursionError.goal",
+  "prPath": "/.build/handlerecursionerror.pr",
+  "hash": "7d9197b2497918381632906e8e31c73da05c829a8754cc0a88820b5cf741e6f6",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

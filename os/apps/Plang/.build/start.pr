@@ -1,0 +1,31 @@
+{
+  "name": "Start",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022This is plang. You can run \u0060plang /apps/Plang/Gui\u0060 or \u0060plang /apps/Plang/DbModel\u0060\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/os/apps/Plang/Start.goal",
+  "prPath": "/os/apps/Plang/.build/start.pr",
+  "hash": "184fa40567f49961d819cfd212dc304e6f99059d800dacea4e326c696993e22f",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

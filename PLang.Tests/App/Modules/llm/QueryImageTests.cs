@@ -57,7 +57,7 @@ public class QueryImageTests
                 new LlmMessage
                 {
                     Role = "user",
-                    Text = "What's in this image?",
+                    Content = "What's in this image?",
                     Images = new List<string> { "https://example.com/photo.jpg" }
                 }
             }
@@ -90,7 +90,7 @@ public class QueryImageTests
                 new LlmMessage
                 {
                     Role = "user",
-                    Text = "Describe this",
+                    Content = "Describe this",
                     Images = new List<string> { imagePath }
                 }
             }
@@ -122,7 +122,7 @@ public class QueryImageTests
                 new LlmMessage
                 {
                     Role = "user",
-                    Text = "What is this?",
+                    Content = "What is this?",
                     Images = new List<string> { imagePath }
                 }
             }
@@ -151,7 +151,7 @@ public class QueryImageTests
                 new LlmMessage
                 {
                     Role = "user",
-                    Text = "Describe",
+                    Content = "Describe",
                     Images = new List<string> { base64Image }
                 }
             }
@@ -178,7 +178,7 @@ public class QueryImageTests
                 new LlmMessage
                 {
                     Role = "user",
-                    Text = "Compare these",
+                    Content = "Compare these",
                     Images = new List<string>
                     {
                         "https://example.com/image1.jpg",

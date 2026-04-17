@@ -6,14 +6,14 @@ namespace App.modules.math;
 public partial class Random : IContext
 {
     [Default(0)]
-    public partial int Min { get; init; }
+    public partial Data.@this<int> Min { get; init; }
     [Default(100)]
-    public partial int Max { get; init; }
+    public partial Data.@this<int> Max { get; init; }
 
     public Task<Data.@this> Run()
     {
         var rng = System.Random.Shared;
-        var result = rng.Next(Min, Max + 1);
+        var result = rng.Next(Min.Value, Max.Value + 1);
         return Task.FromResult(Data(result));
     }
 }

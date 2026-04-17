@@ -1,0 +1,47 @@
+{
+  "name": "DoThing",
+  "description": "Sets %result% to the string \u0022or-true\u0022 (the \u003C= null part is ignored by the compiler since no engine action supports that syntax).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022or-true\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "or-true",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/DoThing.goal",
+  "prPath": "/.build/dothing.pr",
+  "hash": "d2b74b329a943baecc77a760819ad11f1c52335964c1e8876c0c1b03fb3d8fea",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

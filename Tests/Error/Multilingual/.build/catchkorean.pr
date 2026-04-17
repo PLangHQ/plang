@@ -1,0 +1,53 @@
+{
+  "name": "CatchKorean",
+  "description": "Sets %caughtKorean% to true (the step text indicates a null comparison, but the assignment value is explicitly true).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %caughtKorean% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%caughtKorean%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/CatchKorean.goal",
+  "prPath": "/.build/catchkorean.pr",
+  "hash": "287ada7e401dad5112bfcbd604fa2f11d75a5f355c734fcd157d75eeb32937d2",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

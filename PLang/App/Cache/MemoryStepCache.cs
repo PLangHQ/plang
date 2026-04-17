@@ -17,7 +17,7 @@ public sealed class MemoryStepCache : ICache
     public Task SetAsync(string key, Data.@this value, CacheSettings settings, CancellationToken ct = default)
     {
         var policy = new CacheItemPolicy();
-        if (settings.Sliding)
+        if (settings.Sliding == true)
             policy.SlidingExpiration = TimeSpan.FromMilliseconds(settings.DurationMs);
         else
             policy.AbsoluteExpiration = DateTimeOffset.UtcNow.AddMilliseconds(settings.DurationMs);
@@ -35,7 +35,7 @@ public sealed class MemoryStepCache : ICache
     public Task<bool> TryAddAsync(string key, Data.@this value, CacheSettings settings, CancellationToken ct = default)
     {
         var policy = new CacheItemPolicy();
-        if (settings.Sliding)
+        if (settings.Sliding == true)
             policy.SlidingExpiration = TimeSpan.FromMilliseconds(settings.DurationMs);
         else
             policy.AbsoluteExpiration = DateTimeOffset.UtcNow.AddMilliseconds(settings.DurationMs);

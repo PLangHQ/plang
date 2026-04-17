@@ -1,0 +1,47 @@
+{
+  "name": "HandlerB",
+  "description": "Sets %eventB% to true (the \u0027\u003C= null\u0027 appears to be a comment/annotation and is ignored by the engine mapping).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %eventB% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%eventB%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/HandlerB.goal",
+  "prPath": "/.build/handlerb.pr",
+  "hash": "8cfd03ac6a23b4f83837d3718155d2368047235954a80fae85e0c161db4fa210",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

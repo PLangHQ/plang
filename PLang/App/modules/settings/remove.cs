@@ -9,16 +9,16 @@ namespace App.modules.settings;
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
-    public partial string Key { get; init; }
+    public partial Data.@this<string> Key { get; init; }
 
     public async Task<Data.@this> Run()
     {
         var store = Context.App.System.SettingsStore;
-        var result = await store.Remove("settings", Key);
+        var result = await store.Remove("settings", Key.Value!);
 
         if (!result.Success)
             return result;
 
-        return Data(new types.setting { key = Key });
+        return Data(new types.setting { key = Key.Value! });
     }
 }

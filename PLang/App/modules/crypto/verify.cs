@@ -12,10 +12,10 @@ public partial class Verify : IContext
     public partial Data.@this Data { get; init; }
 
     [IsNotNull]
-    public partial string Hash { get; init; }
+    public partial Data.@this<string> Hash { get; init; }
 
     [Default("keccak256")]
-    public partial string Algorithm { get; init; }
+    public partial Data.@this<string> Algorithm { get; init; }
 
     [Provider]
     public partial ICryptoProvider Crypto { get; }

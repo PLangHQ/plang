@@ -1,0 +1,53 @@
+{
+  "name": "WhenContains",
+  "description": "Maps a single step that sets %containsResult% to the string \u0022yes\u0022 (the \u0022\u003C= null\u0022 part is treated as an invalid/ambiguous constraint).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %containsResult% = \u0022yes\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%containsResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "yes",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/WhenContains.goal",
+  "prPath": "/.build/whencontains.pr",
+  "hash": "d9bad68c8fdb8b9b379af9b0ec70c8a42ed1dd448dceb087b33fd894d34dca9c",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

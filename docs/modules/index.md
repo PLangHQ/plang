@@ -29,7 +29,18 @@ You don't need to know the module name — just write what you want and the LLM 
 | [condition](condition.md) | If/else branching | if |
 | [loop](loop.md) | Iterate over collections | foreach |
 | [goal](goal.md) | Call other goals | call |
-| [error](error.md) | Throw errors | throw |
+| [error](error.md) | Throw and handle errors | throw, handle (on error) |
+| [timer](timer.md) | Sleep and measure elapsed time | sleep, start, end |
+
+### Action Modifiers
+
+Modifiers attach to a single action and change how it runs — retry on failure, cap its duration, or return a cached result. They're written as trailing clauses on the action they guard.
+
+| Module | Description | Actions |
+|--------|-------------|---------|
+| [error](error.md) | Handle errors on a single action — filter, retry, call a goal, or ignore | handle (on error) |
+| [cache](cache.md) | Cache an action's result for a duration | wrap (cache for) |
+| [timeout](timeout.md) | Cap an action's runtime with a deadline | after (timeout after) |
 
 ### Data
 

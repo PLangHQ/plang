@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "1 major finding: GoalCall shared-state mutation in error.handle (flagged by 2 prior reviewers, unfixed). 3 minor, 2 nit. Fix is 5 lines — clone GoalCall instead of mutating."
+}

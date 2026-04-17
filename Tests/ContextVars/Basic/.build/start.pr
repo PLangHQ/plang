@@ -1,0 +1,47 @@
+{
+  "name": "Start",
+  "description": "Writes out the value of %!engine.Name% (expected to be null per step text).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out %!engine.Name%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": null,
+              "type": "object"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
+  "hash": "1b3aff6e10b82b9c003d84e8015b6b2c6d5a0d00029529bafcc80efb3f6359a3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

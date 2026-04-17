@@ -1,0 +1,53 @@
+{
+  "name": "TimedRetryCatcher",
+  "description": "Sets %timedRetryCaught% to true (null comparison noted in step text).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %timedRetryCaught% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%timedRetryCaught%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TimedRetryCatcher.goal",
+  "prPath": "/.build/timedretrycatcher.pr",
+  "hash": "0c5b0bce71ea2d237dd7b436a42bc5268c0db5828e914f20dc18abea890d7450",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

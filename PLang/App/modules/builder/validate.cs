@@ -4,10 +4,10 @@ using Actions = App.Goals.Goal.Steps.Step.Actions.@this;
 
 namespace App.modules.builder;
 
-[Action("actions.validate")]
+[Action("validate")]
 public partial class validate : IContext
 {
-    public partial Actions? Actions { get; init; }
+    public partial Data.@this<Actions>? Actions { get; init; }
 
     [Provider]
     public partial IBuilderProvider Builder { get; }

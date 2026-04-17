@@ -5,9 +5,11 @@ Build
 
 - set default %path% = "."
 - set default %!build.cache% = true
+- set %traceGoals% = []
 - write out "Building path: %path%"
-- [plang] call GetApp, write to %app%
-- [plang] GetGoalsV2, fileOrFolderPath=%path%, parser="goal", write to %goals%
+- builder.app, write to %app%
+- builder.goals path=%path%, write to %goals%
 - write out "Found %goals.Count% goals"
 - foreach %goals%, call BuildGoal, item=%goal%
-- [plang] call SaveApp, app=%app%
+- save %traceGoals% to file '/.build/traces/manifest.json'
+- builder.appSave

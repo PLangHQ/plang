@@ -3,7 +3,7 @@ using App.modules.builder.providers;
 
 namespace App.modules.builder;
 
-[Action("app.save")]
+[Action("appSave")]
 public partial class appSave : IContext
 {
     [Provider]

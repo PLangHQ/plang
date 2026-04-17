@@ -9,23 +9,23 @@ namespace App.modules.mock;
 [Action("intercept", Cacheable = false)]
 public partial class MockAction : IContext
 {
-    public partial string ActionPattern { get; init; }
-    public partial object? ReturnValue { get; init; }
-    public partial GoalCall? GoalToCall { get; init; }
-    public partial Dictionary<string, object?>? Parameters { get; init; }
+    public partial Data.@this<string> ActionPattern { get; init; }
+    public partial Data.@this? ReturnValue { get; init; }
+    public partial Data.@this<GoalCall>? GoalToCall { get; init; }
+    public partial Data.@this<Dictionary<string, object?>>? Parameters { get; init; }
 
     public Task<Data.@this> Run()
     {
         var handle = new types.MockHandle
         {
             Id = Guid.NewGuid().ToString("N")[..8],
-            ActionPattern = ActionPattern,
-            IsSpy = ReturnValue == null && GoalToCall == null
+            ActionPattern = ActionPattern.Value!,
+            IsSpy = ReturnValue?.Value == null && GoalToCall?.Value == null
         };
 
-        var returnValue = ReturnValue;
-        var goalToCall = GoalToCall;
-        var paramMatchers = Parameters;
+        var returnValue = ReturnValue?.Value;
+        var goalToCall = GoalToCall?.Value;
+        var paramMatchers = Parameters?.Value;
 
         Func<Actor.Context.@this, Task<Data.@this>> handler = async ctx =>
         {
@@ -61,7 +61,7 @@ public partial class MockAction : IContext
         var binding = new EventBinding(
             EventType.BeforeAction,
             handler,
-            actionPattern: ActionPattern);
+            actionPattern: ActionPattern.Value!);
 
         handle.EventBindingId = binding.Id;
 

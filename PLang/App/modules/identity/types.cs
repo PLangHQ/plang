@@ -1,17 +1,19 @@
 using App;
-using App.Variables;
 
 namespace App.modules.identity;
 
 /// <summary>
 /// Represents a PLang identity (key pair with metadata).
-/// Data subclass — lives on Variables, navigable via %MyIdentity.PublicKey%.
+/// Plain domain class — wrapped in Data&lt;Identity&gt; by handlers.
 /// Persistence is owned by IIdentityProvider.
 /// </summary>
-public sealed class Identity : Data.@this
+public sealed class Identity
 {
-    public Identity() : base("Identity") { }
-    public Identity(string name) : base(name) { }
+    public Identity() { }
+    public Identity(string name) { Name = name; }
+
+    /// <summary>Identity name (e.g., "default", "work").</summary>
+    public string Name { get; set; } = "Identity";
 
     /// <summary>Base64-encoded Ed25519 public key. Used as the identity in signed envelopes.</summary>
     public string PublicKey { get; set; } = "";
@@ -33,23 +35,4 @@ public sealed class Identity : Data.@this
     /// String context returns the public key — %MyIdentity% in a string gives the public key.
     /// </summary>
     public override string ToString() => PublicKey;
-
-    public override Data.@this Clone()
-    {
-        var clone = new Identity(Name)
-        {
-            PublicKey = PublicKey,
-            PrivateKey = PrivateKey,
-            IsDefault = IsDefault,
-            IsArchived = IsArchived,
-            Created = Created,
-            Properties = Properties.Clone()
-        };
-        clone.Error = Error;
-        clone.Handled = Handled;
-        clone.Warnings = Warnings != null ? new List<Info>(Warnings) : null;
-        clone.Signature = Signature;
-        clone.Context = Context;
-        return clone;
-    }
 }

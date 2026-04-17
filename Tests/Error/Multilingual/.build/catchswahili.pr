@@ -1,0 +1,47 @@
+{
+  "name": "CatchSwahili",
+  "description": "Sets %caughtSwahili% to true (the \u0027\u003C= null\u0027 is ignored as it does not map to any engine action parameter).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %caughtSwahili% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%caughtSwahili%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/CatchSwahili.goal",
+  "prPath": "/.build/catchswahili.pr",
+  "hash": "9b4b035307347296916d7c5b39b0a2c058d0ec06b33195186cbd8e4a8c1b2734",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

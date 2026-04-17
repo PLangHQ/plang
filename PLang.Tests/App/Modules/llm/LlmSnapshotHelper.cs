@@ -95,7 +95,7 @@ internal static class LlmSnapshotHelper
 
         foreach (var msg in messages)
         {
-            sb.Append(msg.Role).Append(':').Append(msg.Text ?? "").Append('|');
+            sb.Append(msg.Role).Append(':').Append(msg.Content ?? "").Append('|');
             if (msg.Images != null)
                 foreach (var img in msg.Images)
                     sb.Append("img:").Append(img).Append('|');

@@ -1,0 +1,47 @@
+{
+  "name": "HandlerA",
+  "description": "Sets %eventA% to true (the \u0027\u003C= null\u0027 part is ignored by the compiler as it does not map to any engine action).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %eventA% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%eventA%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/HandlerA.goal",
+  "prPath": "/.build/handlera.pr",
+  "hash": "a6ead47c5d066c2ef2a536b1dd146569b15b440e3829769ddb2f5b1a3ee9dfc0",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

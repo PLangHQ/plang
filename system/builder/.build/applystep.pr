@@ -1,59 +1,55 @@
 {
   "name": "ApplyStep",
-  "description": "Validates and applies step result. level=high skips BuildStep, medium/low runs it with guidance.",
+  "description": "Validates and applies a step result. On validation error, calls HandleValidationError to run BuildStep.",
+  "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "[plang] ValidateActions, actions=%stepResult.actions%",
+      "text": "builder.validate actions=%stepResult.actions%, on error call HandleValidationError",
       "lineNumber": 4,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "builder",
-          "action": "actions.validate",
+          "action": "validate",
           "parameters": [
+            { "name": "Actions", "value": "%stepResult.actions%", "type": "object" }
+          ],
+          "modifiers": [
             {
-              "name": "Actions",
-              "value": "%stepResult.actions%",
-              "type": "object"
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                { "name": "Goal", "value": { "name": "HandleValidationError" }, "type": "goal.call" }
+              ]
             }
           ]
         }
       ],
-      "onError": {
-        "goal": {
-          "name": "HandleValidationError",
-          "prPath": "/system/builder/.build/handlevalidationerror.pr"
-        },
-        "ignoreError": false
-      },
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "[plang] MergeStep %goal.Steps[stepResult.index]%, %stepResult%, write to %goal.Steps[stepResult.index]%",
-      "lineNumber": 6,
+      "text": "builder.merge step=%goal.Steps[stepResult.index]%, stepFromLlm=%stepResult%, write to %goal.Steps[stepResult.index]%",
+      "lineNumber": 5,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "builder",
-          "action": "steps.merge",
+          "action": "merge",
           "parameters": [
-            {
-              "name": "Step",
-              "value": "%goal.Steps[stepResult.index]%",
-              "type": "object"
-            },
-            {
-              "name": "StepFromLlm",
-              "value": "%stepResult%",
-              "type": "object"
-            }
-          ],
-          "return": [
-            {
-              "name": "goal.Steps[stepResult.index]"
-            }
+            { "name": "Step", "value": "%goal.Steps[stepResult.index]%", "type": "object" },
+            { "name": "StepFromLlm", "value": "%stepResult%", "type": "object" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "%goal.Steps[stepResult.index]%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
           ]
         }
       ],
@@ -62,49 +58,109 @@
     {
       "index": 2,
       "text": "if %stepResult.level% != \"high\", call BuildStep",
-      "lineNumber": 7,
+      "lineNumber": 6,
       "indent": 0,
+      "comment": null,
       "actions": [
         {
           "module": "condition",
           "action": "if",
           "parameters": [
-            {
-              "name": "Left",
-              "value": "%stepResult.level%",
-              "type": "string"
-            },
-            {
-              "name": "Operator",
-              "value": "!=",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": "high",
-              "type": "string"
-            },
-            {
-              "name": "GoalIfTrue",
-              "value": {
-                "name": "BuildStep",
-                "prPath": "/system/builder/.build/buildstep.pr"
-              },
-              "type": "goal.call"
-            }
+            { "name": "Left", "value": "%stepResult.level%", "type": "string" },
+            { "name": "Operator", "value": "!=", "type": "string" },
+            { "name": "Right", "value": "high", "type": "string" },
+            { "name": "Negate", "value": false, "type": "bool" }
+          ]
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            { "name": "GoalName", "value": { "name": "BuildStep" }, "type": "goal.call" }
           ]
         }
       ],
       "waitForExecution": true
     }
   ],
-  "goals": [],
-  "visibility": 0,
+  "goals": [
+    {
+      "name": "HandleValidationError",
+      "description": "Records the validation error on the specific step and runs BuildStep to rebuild it.",
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out \"  Validation error: %!error.Message%\"",
+          "lineNumber": 10,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                { "name": "Data", "value": "  Validation error: %!error.Message%", "type": "tstring" }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "set %goal.Steps[stepResult.index].validationError% = %!error%",
+          "lineNumber": 11,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                { "name": "Name", "value": "%goal.Steps[stepResult.index].validationError%", "type": "string" },
+                { "name": "Value", "value": "%!error%", "type": "object" }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "call BuildStep",
+          "lineNumber": 12,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                { "name": "GoalName", "value": { "name": "BuildStep" }, "type": "goal.call" }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 1,
+      "path": "/system/builder/ApplyStep.goal",
+      "prPath": "/system/builder/.build/applystep.pr",
+      "builderVersion": "0.2.2",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
   "path": "/system/builder/ApplyStep.goal",
   "prPath": "/system/builder/.build/applystep.pr",
-  "hash": "",
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
-  "isTest": false
+  "isTest": false,
+  "inputParameters": null
 }

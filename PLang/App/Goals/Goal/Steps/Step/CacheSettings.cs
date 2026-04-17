@@ -9,7 +9,7 @@ public sealed class CacheSettings
     public long DurationMs { get; init; }
 
     [Store]
-    public bool Sliding { get; init; }
+    public bool? Sliding { get; init; }
 
     [Store]
     public string? Key { get; init; }

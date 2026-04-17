@@ -1,0 +1,12 @@
+TestCacheOnFileRead
+/ Verifies that cache.wrap modifier caches a file.read result
+- save 'testdata/cache_test.txt' with content 'cached content'
+- read file 'testdata/cache_test.txt'
+    cache for 60 seconds
+    write to %content1%
+- read file 'testdata/cache_test.txt'
+    cache for 60 seconds
+    write to %content2%
+/ Both reads should return same cached value
+- assert %content1% equals %content2%
+- delete file 'testdata/cache_test.txt'

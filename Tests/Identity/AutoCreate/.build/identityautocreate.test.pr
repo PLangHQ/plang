@@ -1,0 +1,76 @@
+{
+  "name": "Start",
+  "description": "Asserts that %MyIdentity% and %MyIdentity.Name% are not null, to verify an auto-created default identity exists when no identities are present.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "assert %MyIdentity% is not null",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: access %MyIdentity% when no identities exist, verify auto-created default identity",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%MyIdentity%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %MyIdentity% to be not null",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %MyIdentity.Name% is not null",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%MyIdentity.Name%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %MyIdentity.Name% to be not null",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/IdentityAutoCreate.test.goal",
+  "prPath": "/.build/identityautocreate.test.pr",
+  "hash": "153fa75d2609153132a67b1d80f090a0b6f9ced940f1a62e514bf3835b590fe1",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

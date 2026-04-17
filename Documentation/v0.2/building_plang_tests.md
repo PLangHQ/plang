@@ -86,8 +86,8 @@ The builder sends step text to an LLM which maps it to module/action/parameters.
 2. **Map to wrong module** — variable names bias selection (e.g., `%fileExists%` biases toward file module). Use neutral variable names.
 3. **Alter literal values** — LLM "helpfully" changes assertion values. The prompt has a "compiler not editor" rule but it can drift.
 4. **Merge steps** — two actions crammed into one step (set + call).
-5. **Miss onError** — `on error` modifier not translated to `onError` JSON property.
-6. **Comment bleed** — LLM reads comment text (lines starting with `/`) and uses it to influence action mapping of nearby steps. Example: comment `/ on error call goal catches error` caused the LLM to add `onError` and `goal.call` to the step below it. Fix: prompt rule "comments are documentation only."
+5. **Miss modifier actions** — `on error ...` / `cache for ...` / `timeout after ...` emit trailing modifier actions (`error.handle`, `cache.wrap`, `timeout.after`) that follow their target action in the flat list. If the LLM drops one, the resulting step has no error handling/caching/timeout.
+6. **Comment bleed** — LLM reads comment text (lines starting with `/`) and uses it to influence action mapping of nearby steps. Example: comment `/ on error call goal catches error` caused the LLM to add an `error.handle` modifier action to the step below it. Fix: prompt rule "comments are documentation only."
 7. **Step shifting on retry** — when the validator rejects a response (e.g., wrong step count), the LLM may "fix" the count by shifting actions between steps instead of correctly re-mapping each step. Always verify step content matches step text after retries, not just the count.
 
 ## Debugging Build Problems
@@ -114,7 +114,7 @@ The debug output tells you exactly:
 - Step count matches goal
 - Each step maps to the correct module/action
 - Parameters match the step text literally
-- `onError`/`cache` properties are present when step has modifiers
+- Modifier actions (`error.handle`, `cache.wrap`, `timeout.after`) appear on the correct action's `modifiers` array when the step uses `on error` / `cache for` / `timeout after`
 - Literal values (assertion expected values) are not altered
 
 **Never change .pr files.** If the build produces wrong output, rebuild (clear LLM cache if needed) or fix the builder prompt. Exception: builder .pr files (`system/builder/.build/`) are currently hand-crafted — changes require permission first, since they affect everything already tested.
@@ -130,7 +130,7 @@ What exactly failed — build error, runtime error, assertion mismatch? Note the
 Verify each step maps correctly:
 - Right module and action?
 - Right parameters matching the step text literally?
-- `onError`/`cache` present when the step has modifiers?
+- Modifier actions grouped onto the correct action when the step uses `on error` / `cache for` / `timeout after`?
 - Literal values (assertion expected values) not altered?
 
 This catches builder issues — if the .pr is wrong, it's a build problem.
@@ -221,9 +221,14 @@ Single file per goal, array of goal objects:
       {
         "index": 0,
         "text": "step text",
-        "actions": [{ "module": "x", "action": "y", "parameters": [...] }],
-        "onError": null,
-        "cache": null
+        "actions": [
+          {
+            "module": "x",
+            "action": "y",
+            "parameters": [],
+            "modifiers": []
+          }
+        ]
       }
     ],
     "path": "/FileName.goal",

@@ -25,8 +25,7 @@ public class MockTests
         {
             Context = context,
             ActionPattern = "file.read",
-            ReturnValue = "test content"
-        };
+            ReturnValue = new global::App.Data.@this("", "test content")        };
 
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
@@ -64,8 +63,7 @@ public class MockTests
         {
             Context = context,
             ActionPattern = "file.read",
-            ReturnValue = "mocked"
-        };
+            ReturnValue = new global::App.Data.@this("", "mocked")        };
 
         var beforeCount = context.Events.Count;
         await action.Run();
@@ -82,8 +80,7 @@ public class MockTests
         {
             Context = context,
             ActionPattern = "file.read",
-            ReturnValue = "mocked"
-        };
+            ReturnValue = new global::App.Data.@this("", "mocked")        };
 
         var result = await action.Run();
         var handle = (MockHandle)result.Value!;
@@ -177,8 +174,7 @@ public class MockTests
         {
             Context = context,
             ActionPattern = "file.read",
-            ReturnValue = "mocked"
-        };
+            ReturnValue = new global::App.Data.@this("", "mocked")        };
         var mockResult = await mockAction.Run();
         var handle = (MockHandle)mockResult.Value!;
 
@@ -205,16 +201,14 @@ public class MockTests
         {
             Context = context,
             ActionPattern = "file.read",
-            ReturnValue = "mocked1"
-        };
+            ReturnValue = new global::App.Data.@this("", "mocked1")        };
         await mock1.Run();
 
         var mock2 = new MockAction
         {
             Context = context,
             ActionPattern = "output.write",
-            ReturnValue = "mocked2"
-        };
+            ReturnValue = new global::App.Data.@this("", "mocked2")        };
         await mock2.Run();
 
         await Assert.That(context.Events.Count).IsGreaterThanOrEqualTo(2);

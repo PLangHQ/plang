@@ -1,0 +1,60 @@
+{
+  "name": "InnerGoal",
+  "description": "InnerGoal calls ThrowInnerError and, if it errors, invokes InnerHandler via error handling.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call ThrowInnerError, on error call InnerHandler",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ThrowInnerError"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "InnerHandler"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/InnerGoal.goal",
+  "prPath": "/.build/innergoal.pr",
+  "hash": "a60dacbb90144444eb57f4e9cb6fa09714365e4b956c674f73d69b64dc38f5c7",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

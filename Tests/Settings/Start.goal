@@ -1,7 +1,0 @@
-Start
-- write out %Settings.Data%
-- set var %isValid%=true
-- if %isValid%, call !IsValid
-
-IsValid
-- write out %Settings.Data2%

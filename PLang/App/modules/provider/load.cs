@@ -13,20 +13,20 @@ namespace App.modules.provider;
 public partial class load : IContext
 {
     /// <summary>Path to the DLL to load (relative to app root or absolute).</summary>
-    public partial string? Path { get; init; }
+    public partial Data.@this<string>? Path { get; init; }
 
     /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>
-    public partial string? Name { get; init; }
+    public partial Data.@this<string>? Name { get; init; }
 
     public async Task<Data.@this> Run()
     {
-        if (string.IsNullOrEmpty(Path))
+        if (string.IsNullOrEmpty(Path?.Value))
             return Error(new ActionError("Provider path is required", "ValidationError", 400));
 
         Assembly assembly;
         try
         {
-            var fullPath = Context.App.FileSystem.Path.GetFullPath(Path, Context.App.AbsolutePath);
+            var fullPath = Context.App.FileSystem.Path.GetFullPath(Path.Value!, Context.App.AbsolutePath);
             assembly = Assembly.LoadFrom(fullPath);
         }
         catch (Exception ex)

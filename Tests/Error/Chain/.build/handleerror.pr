@@ -1,0 +1,53 @@
+{
+  "name": "HandleError",
+  "description": "Sets %errorHandled% to true (null comparison implied by step text).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %errorHandled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%errorHandled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/HandleError.goal",
+  "prPath": "/.build/handleerror.pr",
+  "hash": "e591f83f4025046dd0efc4f1ff631ccb5f0a4c4d3ead32f1fa6d49332e46c1ee",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -1,0 +1,31 @@
+{
+  "name": "SetFrameworkTest",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call goal ../SetFramework framework={Name:\u0022uikit\u0022}",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/PlangConsole/bin/Debug/net10.0/system/modules/UiModule/Builder/tests/SetFrameworkTest.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/modules/UiModule/Builder/tests/.build/setframeworktest.pr",
+  "hash": "1709b29a80a0763f2a2137b886865fb379e2555e96d0525c2fe73bd2c8105ecd",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

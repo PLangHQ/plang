@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using App.Attributes;
+using App.Events;
 using App.modules;
 using App.Utils;
 namespace App.Goals.Goal;
@@ -18,7 +19,7 @@ public enum Visibility
 /// <summary>
 /// Represents a goal (a .goal file or sub-goal) for App.
 /// </summary>
-public sealed partial class @this : Data.@this<@this>
+public sealed partial class @this : modules.IDataWrappable
 {
     private modules.Events? _events;
     [JsonIgnore]
@@ -28,7 +29,7 @@ public sealed partial class @this : Data.@this<@this>
         set => _events = value;
     }
     [Store, LlmBuilder, Debug, Default]
-    public new string Name { get; init; } = "";
+    public string Name { get; init; } = "";
 
     [Store, LlmBuilder, Debug, Default]
     public string? Description { get; set; }
@@ -69,7 +70,7 @@ public sealed partial class @this : Data.@this<@this>
     }
 
     [Store, Debug]
-    public new string? Path { get; set; }
+    public string? Path { get; set; }
 
     [Store, Debug]
     public string? PrPath
@@ -152,7 +153,7 @@ public sealed partial class @this : Data.@this<@this>
 
     [LlmIgnore]
     [JsonIgnore]
-    public new @this? Parent { get; set; }
+    public @this? Parent { get; set; }
 
     [LlmIgnore]
     [JsonIgnore]
@@ -202,22 +203,26 @@ public sealed partial class @this : Data.@this<@this>
     /// </summary>
     public void MergeFrom(@this? existing)
     {
-        if (existing == null || existing.Steps.Count == 0) return;
+        if (existing == null) return;
 
-        var consumed = new HashSet<int>();
-        foreach (var step in Steps)
+        if (existing.Steps.Count > 0)
         {
-            for (int i = 0; i < existing.Steps.Count; i++)
+            var consumed = new HashSet<int>();
+            foreach (var step in Steps)
             {
-                if (consumed.Contains(i)) continue;
-                if (existing.Steps[i].Text == step.Text)
+                for (int i = 0; i < existing.Steps.Count; i++)
                 {
-                    step.Merge(existing.Steps[i]);
-                    consumed.Add(i);
-                    break;
+                    if (consumed.Contains(i)) continue;
+                    if (existing.Steps[i].Text == step.Text)
+                    {
+                        step.Merge(existing.Steps[i]);
+                        consumed.Add(i);
+                        break;
+                    }
                 }
             }
         }
+
     }
 
     /// <summary>
@@ -235,7 +240,7 @@ public sealed partial class @this : Data.@this<@this>
         var lifecycle = context.LifecycleFor(this);
 
         // BeforeGoal events
-        var beforeResult = await lifecycle.Before.Run(context, global::App.Events.EventType.BeforeGoal);
+        var beforeResult = await lifecycle.Before.Run(context, EventType.BeforeGoal);
         if (!beforeResult.Success) { context.Goal = previousGoal; return beforeResult; }
         if (beforeResult.Handled) { context.Goal = previousGoal; return beforeResult; }
 
@@ -252,7 +257,7 @@ public sealed partial class @this : Data.@this<@this>
             }
 
             // AfterGoal events
-            var afterResult = await lifecycle.After.Run(context, global::App.Events.EventType.AfterGoal);
+            var afterResult = await lifecycle.After.Run(context, EventType.AfterGoal);
             if (!afterResult.Success) return afterResult;
 
             return result;
@@ -261,6 +266,20 @@ public sealed partial class @this : Data.@this<@this>
         {
             context.Goal = previousGoal;
         }
+    }
+
+    /// <summary>
+    /// OBP: Goal is responsible for its own Data representation.
+    /// Returns a cached per-execution Data&lt;Goal&gt; wrapper from the context.
+    /// </summary>
+    public Data.@this AsData(Actor.Context.@this context)
+    {
+        return context.GetOrCreate(this, () =>
+        {
+            var data = new Data.@this<@this>("", this);
+            data.Context = context;
+            return data;
+        });
     }
 
     public static @this NotFound(string name) => new()

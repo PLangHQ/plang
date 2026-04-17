@@ -1,0 +1,17 @@
+{
+  "name": "null",
+  "description": "No goal steps were provided (input was null), so no engine actions can be mapped.",
+  "comment": null,
+  "steps": [],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ParseGoal/parse_test/Test.goal",
+  "prPath": "/ParseGoal/parse_test/.build/test.pr",
+  "hash": null,
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

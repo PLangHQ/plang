@@ -328,7 +328,7 @@ public sealed class @this
             }
 
             if (goals == null || goals.Count == 0)
-                return global::App.Data.@this.FromError(new Error($"Failed to parse goal file: {prFilePath}"));
+                return Data.@this.FromError(new Error($"Failed to parse goal file: {prFilePath}"));
 
             Goal.@this? primary = null;
             foreach (var goal in goals)
@@ -340,11 +340,11 @@ public sealed class @this
                 primary ??= goal;
             }
 
-            return global::App.Data.@this.Ok(primary!);
+            return Data.@this.Ok(primary!);
         }
         catch (Exception ex)
         {
-            return global::App.Data.@this.FromError(Error.FromException(ex));
+            return Data.@this.FromError(Error.FromException(ex));
         }
     }
 
@@ -367,11 +367,11 @@ public sealed class @this
                     loadedCount++;
             }
 
-            return global::App.Data.@this.Ok(loadedCount);
+            return Data.@this.Ok(loadedCount);
         }
         catch (Exception ex)
         {
-            return global::App.Data.@this.FromError(Error.FromException(ex));
+            return Data.@this.FromError(Error.FromException(ex));
         }
     }
 }

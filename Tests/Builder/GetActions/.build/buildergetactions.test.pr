@@ -1,0 +1,83 @@
+{
+  "name": "Start",
+  "description": "Gets all registered module actions via builder.getActions, stores them in %actions%, then asserts the result is not null.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "get all actions, write to %actions%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test that builder.getActions returns a list of all registered module actions",
+      "actions": [
+        {
+          "module": "builder",
+          "action": "getActions",
+          "parameters": [],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%actions%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %actions% is not empty, \u0022getActions should return registered module actions\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%actions%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "getActions should return registered module actions",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/BuilderGetActions.test.goal",
+  "prPath": "/.build/buildergetactions.test.pr",
+  "hash": "e869f3b74ac66066a95d87bdd8ca6509fd6644f16c306f1b781c7c751cb86109",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

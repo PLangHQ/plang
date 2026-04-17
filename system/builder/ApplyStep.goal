@@ -1,12 +1,12 @@
 ApplyStep
 / Validates and applies step result
 / level=high → use as-is, medium/low → run BuildStep with guidance
-- [plang] ValidateActions, actions=%stepResult.actions%
-    on error call HandleValidationError
-- [plang] MergeStep %goal.Steps[stepResult.index]%, %stepResult%, write to %goal.Steps[stepResult.index]%
+- builder.validate actions=%stepResult.actions%, on error call HandleValidationError
+- builder.merge step=%goal.Steps[stepResult.index]%, stepFromLlm=%stepResult%, write to %goal.Steps[stepResult.index]%
 - if %stepResult.level% != "high", call BuildStep
 
 
 HandleValidationError
+- write out "  Validation error: %!error.Message%"
 - set %goal.Steps[stepResult.index].validationError% = %!error%
 - call BuildStep

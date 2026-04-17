@@ -21,7 +21,7 @@ public class LlmTypeTests
     public async Task LlmMessage_DefaultProperties_AreNull()
     {
         var msg = new LlmMessage();
-        await Assert.That(msg.Text).IsNull();
+        await Assert.That(msg.Content).IsNull();
         await Assert.That(msg.Images).IsNull();
         await Assert.That(msg.ToolCallId).IsNull();
         await Assert.That(msg.ToolCalls).IsNull();

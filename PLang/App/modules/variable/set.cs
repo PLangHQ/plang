@@ -1,3 +1,4 @@
+using App.Attributes;
 using App.Variables;
 
 namespace App.modules.variable;
@@ -7,26 +8,52 @@ namespace App.modules.variable;
 /// When AsDefault is true, only sets if the variable doesn't already exist.
 /// </summary>
 [Action("set", Cacheable = false)]
-public partial class Set : IContext
+[Example(
+    "set %data% = {\"name\": \"%user%\", \"age\": 30}, type=json",
+    "{\"module\":\"variable\",\"action\":\"set\",\"parameters\":[{\"name\":\"Name\",\"value\":\"%data%\",\"type\":\"string\"},{\"name\":\"Value\",\"value\":{\"name\":\"%user%\",\"age\":30},\"type\":\"json\"}]}")]
+public partial class Set : IContext, IBuildValidatable
 {
+    public static string? ValidateBuild(List<Data.@this> parameters)
+    {
+        var value = parameters.FirstOrDefault(p =>
+            string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
+        if (value?.Value is string s && s == "this")
+            return "Parameter 'Value' is the literal string \"this\" — this is wrong. For \"write to %var%\" patterns, use \"%__data__%\" to capture the previous action's result. \"this\" is a type annotation, not a value.";
+        if (value?.Type?.Value != null && value.Value != null)
+        {
+            // Skip validation when value contains %variable% references — they resolve at runtime
+            if (value.HasVariableReference) return null;
+
+            var targetType = Utils.TypeMapping.GetType(value.Type.Value);
+            if (targetType != null && !targetType.IsInstanceOfType(value.Value))
+            {
+                var (_, error) = Utils.TypeMapping.TryConvertTo(value.Value, targetType);
+                if (error != null)
+                    return $"Parameter 'Value' has type={value.Type.Value} but value cannot be converted: {error.Message}";
+            }
+        }
+        return null;
+    }
+
     [VariableName]
     public partial string Name { get; init; }
-    public partial object? Value { get; init; }
-    public partial string? Type { get; init; }
+    public partial Data.@this Value { get; init; }
+    public partial Data.@this<string>? Type { get; init; }
     [Default(false)]
-    public partial bool AsDefault { get; init; }
+    public partial Data.@this<bool> AsDefault { get; init; }
 
     public Task<Data.@this> Run()
     {
-        if (AsDefault)
+        if (AsDefault.Value)
         {
             var existing = Context.Variables.Get(Name);
             if (existing.IsInitialized)
-                return Task.FromResult(existing);
+                return Task.FromResult(Data());
         }
 
         Context.Variables.Set(Name, Value,
-            Type != null ? App.Data.Type.FromName(Type) : null);
-        return Task.FromResult(Context.Variables.Get(Name));
+            Type?.Value != null ? App.Data.Type.FromName(Type.Value) : null);
+
+        return Task.FromResult(Data());
     }
 }

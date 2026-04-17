@@ -8,7 +8,7 @@ public partial class Sort : IContext
     [VariableName]
     public partial string ListName { get; init; }
     [Default(false)]
-    public partial bool Descending { get; init; }
+    public partial Data.@this<bool> Descending { get; init; }
 
     public Task<Data.@this> Run()
     {
@@ -17,7 +17,7 @@ public partial class Sort : IContext
             return Task.FromResult(Error(
                 new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
-        if (Descending)
+        if (Descending.Value)
             list.Sort((a, b) => Comparer<object>.Default.Compare(b, a));
         else
             list.Sort((a, b) => Comparer<object>.Default.Compare(a, b));

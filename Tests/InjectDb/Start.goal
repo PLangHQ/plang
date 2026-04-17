@@ -1,6 +1,0 @@
-Start
-/ You need postgresql running for this to work
-- set datasource 'my_postgresql'
-- write out 'Start db injection'
-- SELECT version(); write to %version%
-- write out 'Version: %version%'

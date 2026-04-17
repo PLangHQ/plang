@@ -1,0 +1,9 @@
+{
+  "verdict": "FAIL",
+  "must_fix": 5,
+  "should_fix": 4,
+  "tests_pass": "2145/2146",
+  "pre_existing_failures": 1,
+  "new_failures": 0,
+  "next_bot": "coder"
+}

@@ -5,11 +5,11 @@ namespace App.modules.math;
 [Action("abs")]
 public partial class Abs : IContext
 {
-    public partial object Value { get; init; }
+    public partial Data.@this Value { get; init; }
 
     public Task<Data.@this> Run()
     {
-        var result = Math.Abs(MathHelper.ToDouble(Value));
-        return Task.FromResult(Data(MathHelper.PreserveType(result, Value)));
+        var result = Math.Abs(MathHelper.ToDouble(Value.Value));
+        return Task.FromResult(Data(MathHelper.PreserveType(result, Value.Value)));
     }
 }

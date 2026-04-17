@@ -12,9 +12,14 @@
           "action": "read",
           "parameters": [
             { "name": "path", "value": "/testdata.txt" }
-          ],
-          "return": [
-            { "name": "rootAbsolute" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "rootAbsolute" },
+            { "name": "Value", "value": "%__data__%" }
           ]
         }
       ]

@@ -6,8 +6,22 @@ namespace App.Goals.Goal.Steps.Step.Actions.Action;
 /// A single action within a step — the LLM-mapped unit of execution.
 /// Identifies the module and handler to invoke, with typed parameters, return mappings, and defaults.
 /// </summary>
-public sealed partial class @this : Data.@this<@this>
+public sealed partial class @this : modules.IDataWrappable
 {
+    /// <summary>
+    /// OBP: Action is responsible for its own Data representation.
+    /// Returns a cached per-execution Data&lt;Action&gt; wrapper from the context.
+    /// </summary>
+    public Data.@this AsData(Actor.Context.@this context)
+    {
+        return context.GetOrCreate(this, () =>
+        {
+            var data = new Data.@this<@this>("", this);
+            data.Context = context;
+            return data;
+        });
+    }
+
     [JsonIgnore]
     public System.Type? ParameterSchema { get; init; }
     [Store, LlmBuilder, Debug, Default]
@@ -23,11 +37,11 @@ public sealed partial class @this : Data.@this<@this>
     [Store, LlmBuilder, Debug, Default]
     public List<Data.@this> Parameters { get; init; } = new();
 
-    [Store, LlmBuilder, Debug, Default]
-    public List<Data.@this>? Return { get; init; }
-
     [Store, Debug, Default]
     public List<Data.@this>? Defaults { get; set; }
+
+    [Store, Debug, Default]
+    public Modifiers.@this Modifiers { get; init; } = new();
 
     [Debug]
     public List<Info> Errors { get; init; } = new();
@@ -58,29 +72,42 @@ public sealed partial class @this : Data.@this<@this>
     {
         var lifecycle = context.LifecycleFor(this);
 
-        // BeforeAction events — can override execution via Handled
         var beforeResult = await lifecycle.Before.Run(context, App.Events.EventType.BeforeAction);
         if (!beforeResult.Success) return beforeResult;
         if (beforeResult.Handled) return beforeResult;
 
-        // Dispatch to handler
-        var result = await context.App!.Run(this, context);
+        Func<Task<Data.@this>> dispatch = () => context.App!.Run(this, context);
+        var result = await Modifiers.RunAsync(dispatch, context);
 
-        // Map return variables
-        if (result.Success && Return != null)
+        if (result.Success)
         {
-            foreach (var returnVar in Return)
-            {
-                result.Name = returnVar.Name;
-                context.Variables.Put(result);
-            }
+            result.Name = "__data__";
+            context.Variables.Put(result);
         }
 
-        // AfterAction events
         var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterAction);
         if (!afterResult.Success) return afterResult;
 
         return result;
+    }
+
+    /// <summary>
+    /// Wraps the given inner delegate with this modifier action. Resolves this action's
+    /// handler, verifies it implements IModifier, and runs ExecuteAsync so the source-generated
+    /// properties are populated before Wrap() reads them. Called by Modifiers.RunAsync.
+    /// </summary>
+    public async Task<(Func<Task<Data.@this>>? Wrapped, Errors.IError? Error)> WrapAround(
+        Func<Task<Data.@this>> next,
+        Actor.Context.@this context)
+    {
+        var (handler, error) = context.App!.Modules.GetCodeGenerated(this);
+        if (error != null) return (null, error);
+        if (handler is not modules.IModifier mod)
+            return (null, new Errors.ActionError(
+                $"{Module}.{ActionName} is not a modifier", "ModifierError", 400));
+
+        await handler.ExecuteAsync(this, context);
+        return (mod.Wrap(next, context), null);
     }
 
     /// <summary>

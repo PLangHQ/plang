@@ -14,7 +14,7 @@ public partial class @this
 
     /// <summary>
     /// Gets a child value by path (dot notation, index, or method call).
-    /// Never returns null — returns Data.Null(key) when the path doesn't resolve.
+    /// Never returns null — returns Data.NotFound(key) when the path doesn't resolve.
     /// </summary>
     public virtual @this GetChild(string path, int depth = 0)
     {
@@ -138,7 +138,7 @@ public partial class @this
             "tolower" => new @this(Name, str?.ToLowerInvariant()),
             "toupper" => new @this(Name, str?.ToUpperInvariant()),
             "replace" => Replace(str, args),
-            _ => Null(method)
+            _ => NotFound(method)
         };
     }
 
@@ -236,7 +236,7 @@ public partial class @this
             if (dataChild.IsInitialized) return dataChild;
         }
 
-        // Check Data subclass properties (e.g., Path.Exists, Identity.PublicKey)
+        // Check Data subclass properties (e.g., SettingsVariable, DynamicData)
         // These are declared on the subclass, not on Data itself.
         var ownProp = GetType().GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
@@ -246,6 +246,13 @@ public partial class @this
         // Check Data.Properties (extensible key-value pairs on the Data)
         var prop = Properties[key];
         if (prop != null) return prop;
+
+        // Lazy type conversion — if value is a string with a typed Data, convert on first navigation
+        if (val is string && _type != null)
+        {
+            ConvertValue();
+            val = Value;
+        }
 
         // Navigate the Value object via registered navigator (dict, list, CLR reflection, etc.)
         if (val != null)
@@ -273,7 +280,7 @@ public partial class @this
             return new @this(key, ownProp.GetValue(this), parent: this);
         }
 
-        return Null(key);
+        return NotFound(key);
     }
 
     /// <summary>
@@ -294,6 +301,6 @@ public partial class @this
         if (prop != null)
             return new @this(key, prop.GetValue(this), parent: this);
 
-        return Null(key);
+        return NotFound(key);
     }
 }

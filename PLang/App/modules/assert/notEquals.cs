@@ -10,7 +10,7 @@ public partial class NotEquals : IContext
 {
     public partial Data.@this? Expected { get; init; }
     public partial Data.@this? Actual { get; init; }
-    public partial string? Message { get; init; }
+    public partial Data.@this<string>? Message { get; init; }
 
     [Provider]
     public partial IAssertProvider Assert { get; }

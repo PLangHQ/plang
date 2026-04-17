@@ -1,0 +1,53 @@
+{
+  "name": "WhenNotEqual",
+  "description": "Sets %result% to \u0022not-equal\u0022 when the step condition indicates not-equal (\u003C= null).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022not-equal\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "not-equal",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/WhenNotEqual.goal",
+  "prPath": "/.build/whennotequal.pr",
+  "hash": "9bc3d19b23c5f3af2f7ff1fa39c16e7cdfa6de4c161b5376ce1d779e368fde14",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}
