@@ -47,6 +47,46 @@
         "health": "green",
         "notes": "All 11 review points addressed. Key corrections: App isolation boundary, variable dump timing, AfterAction events for coverage."
       }
+    },
+    {
+      "id": "a1f4c2d9-3e7b-48e6-9a1c-0b5f7d2e4a11",
+      "bot": "architect",
+      "timestamp_start": "2026-04-17T12:00:00Z",
+      "intent": "Architect synthesis: merge runtime2 into branch, read tester v2 + test-designer review, produce v1 architect plan with scope decisions locked after discussion with Ingi",
+      "before": {
+        "assumptions": "Branch was 173 commits behind runtime2. Tester v1+v2 plans and test-designer review exist but predate recent runtime2 changes (Runtime2→App rename, modifiers, events). Failing PLang tests motivate the need for this tool.",
+        "risk": "Plan-only. No runtime code changes in this session. Merge from runtime2 is conflict-free because all branch changes are under .bot/."
+      },
+      "plan": "Scope locked in discussion 2026-04-17:\n\nIN SCOPE (v1):\n1. Testing class upgrade to runner — owns Results, Coverage, Config; configured via --test={timeout,parallel,include,exclude,verbose}.\n2. test.discover action — scan *.test.goal, load .pr, freshness check (hash), extract user tags via test.tag scan + auto-tags via [RequiresCapability] attribute reflection.\n3. test.tag action — user-declared tags, no-op at runtime, metadata at discovery.\n4. test.run action — C# main loop. Fresh App.@this per file (file-boundary = App-boundary, sub-goals and external calls share). Parallel execution (default Environment.ProcessorCount). 30s default timeout via CancellationTokenSource. Subscribes AfterAction for coverage.\n5. test.report action — console + JSON + JUnit XML + two coverage tables (module.action + branch).\n6. [RequiresCapability(params string[])] attribute on action handlers. http.* gets 'network', llm.ask gets 'llm'.\n7. Variables.Snapshot() API + AssertionError.Variables field. Assert handlers capture scope-chain snapshot on failure.\n8. AfterAction event payload widened to (Action, Data). Surgical change, all call sites updated same commit. Unlocks module.action coverage + branch tracking without touching Data itself.\n9. condition.if publishes Properties['branch_index'] in its result Data. Enables branch coverage for if/elseif/else.\n10. system/test.goal rewritten — no foreach. Single test.run call with discovered list.\n11. Per-test metadata in output: builder version + .pr hash for drift correlation.\n\nDEFERRED: mutation testing (needs own design pass), conditional skip/precondition (tags cover static case, genuine dynamic cases rare), .golden.pr drift detection (builder concern), tag negation (v1 additive only), action-level capability overrides (not needed pre-emptively).\n\nKEY DISCUSSION DECISIONS:\n- Dropped test.dependency (tests can call each other for setup — isolation violated by ordered deps).\n- Dropped test.skip (tags cover environmental preconditions, known-broken shouldn't be silenced).\n- App isolation = file boundary, not goal boundary.\n- Rejected Data.Action property in favor of widening AfterAction event payload — smaller blast radius, branch coverage falls out cleanly from (Action, Data) at fire site.\n- [RequiresCapability] on action, not module (action-level for flexibility, params string[] for multi-capability actions).\n\nNext step: hand off to test-designer for test-suite design.\n\nFull plan at .bot/runtime2-test-module/architect/v1/plan.md.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-test-module/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect v1 plan — synthesis of tester v2 + test-designer review + live discussion with Ingi. Covers scope, architecture, file layout, per-action detail, risks, handoff."
+        },
+        {
+          "paths": [".bot/runtime2-test-module/architect/v1/summary.md", ".bot/runtime2-test-module/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 and cross-session summaries"
+        },
+        {
+          "paths": ["(merge)"],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Merged origin/runtime2 into runtime2-test-module (173 commits). Zero conflicts — branch only had .bot/ changes. Pushed."
+        }
+      ],
+      "timestamp_end": "2026-04-17T13:00:00Z",
+      "after": {
+        "status": "v1 plan written and approved by Ingi. Ready to hand off to test-designer.",
+        "health": "green",
+        "notes": "Plan-only session. No runtime code changed. Key decisions: AfterAction event payload widening (not Data.Action), [RequiresCapability] on handler, file-boundary isolation, branch_index in condition.if result."
+      }
     }
   ]
 }
