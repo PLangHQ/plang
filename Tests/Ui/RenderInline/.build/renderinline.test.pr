@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name%, renders an inline template with substitution into %result%, then asserts the rendered output equals \u0027Hello World!\u0027.",
+  "description": "Sets %name%, renders an inline template with variable substitution into %result%, then asserts the rendered output equals the expected string.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,7 +54,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -73,13 +72,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -102,27 +99,20 @@
               "name": "Actual",
               "value": "%result%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %result% to equal \u0027Hello World!\u0027",
-              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Ui/RenderInline/RenderInline.test.goal",
-  "prPath": "/Tests/Ui/RenderInline/.build/renderinline.test.pr",
+  "path": "/RenderInline.test.goal",
+  "prPath": "/.build/renderinline.test.pr",
   "hash": "7972161a6d5fa7ca9f24db193bba0b27b0ba42e02d48402f58c503c2bc0aad36",
   "builderVersion": null,
   "isSetup": false,

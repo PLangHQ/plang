@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets variables and conditionally calls goals based on greater-than, less-than, equality, inequality, string containment, and a false condition (if/else). Then asserts expected results.",
+  "description": "Sets variables and runs conditional goal calls based on comparisons (\u003E, \u003C, ==, !=, contains) including an if/else branch, then asserts expected results.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -64,22 +62,28 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
             {
-              "name": "Step",
+              "name": "GoalName",
               "value": {
                 "name": "WhenGreater"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -102,15 +106,18 @@
               "name": "Actual",
               "value": "%greaterResult%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -135,13 +142,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -174,22 +179,28 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
             {
-              "name": "Step",
+              "name": "GoalName",
               "value": {
                 "name": "WhenLess"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -212,15 +223,18 @@
               "name": "Actual",
               "value": "%lessResult%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -245,13 +259,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -284,22 +296,28 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
             {
-              "name": "Step",
+              "name": "GoalName",
               "value": {
                 "name": "WhenEqual"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -322,15 +340,18 @@
               "name": "Actual",
               "value": "%equalResult%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -355,13 +376,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -394,22 +413,28 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
             {
-              "name": "Step",
+              "name": "GoalName",
               "value": {
                 "name": "WhenNotEqual"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -432,15 +457,18 @@
               "name": "Actual",
               "value": "%notEqualResult%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -465,13 +493,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -504,22 +530,28 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
             {
-              "name": "Step",
+              "name": "GoalName",
               "value": {
                 "name": "WhenContains"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -542,15 +574,18 @@
               "name": "Actual",
               "value": "%containsResult%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -575,13 +610,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -598,7 +631,7 @@
             {
               "name": "Left",
               "value": "%b%",
-              "type": "object"
+              "type": "int"
             },
             {
               "name": "Operator",
@@ -617,13 +650,36 @@
             },
             {
               "name": "Step",
-              "value": {
-                "name": "WhenGreater"
-              },
-              "type": "goal.call"
+              "value": "this",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "Name": "WhenGreater",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": "/.build/whengreater.pr"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "condition",
@@ -632,7 +688,7 @@
             {
               "name": "Left",
               "value": "%b%",
-              "type": "object"
+              "type": "int"
             },
             {
               "name": "Operator",
@@ -651,19 +707,39 @@
             },
             {
               "name": "Step",
-              "value": {
-                "name": "WhenFalse"
-              },
-              "type": "goal.call"
+              "value": "this",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "Name": "WhenFalse",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": "/.build/whenfalse.pr"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -686,22 +762,25 @@
               "name": "Actual",
               "value": "%falseResult%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Compound/ConditionCompound.test.goal",
-  "prPath": "/Tests/Condition/Compound/.build/conditioncompound.test.pr",
+  "path": "/ConditionCompound.test.goal",
+  "prPath": "/.build/conditioncompound.test.pr",
   "hash": "9b189b9e28d5b45c9a83ddf05681b7b878ce40779e9bde3e606bf33dccdd647e",
   "builderVersion": null,
   "isSetup": false,

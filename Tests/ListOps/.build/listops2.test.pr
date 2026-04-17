@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Tests list.range, list.set by index, list.get, and list.flatten by generating/mutating lists and asserting results.",
+  "description": "Compiles three tests: list.range sequence generation, list.set/get by index mutation, and list.flatten of nested lists.",
   "comment": null,
   "steps": [
     {
@@ -30,7 +30,8 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -47,13 +48,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -74,17 +73,15 @@
             },
             {
               "name": "Message",
-              "value": null,
-              "type": "string?"
+              "value": "rangeResult should not be null",
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -113,13 +110,11 @@
               "type": "json"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -149,13 +144,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -180,7 +173,8 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -197,13 +191,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -229,17 +221,15 @@
             },
             {
               "name": "Message",
-              "value": null,
-              "type": "string?"
+              "value": "updated item should equal 99",
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -273,13 +263,11 @@
               "type": "json"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -299,7 +287,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -316,13 +305,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -343,24 +330,22 @@
             },
             {
               "name": "Message",
-              "value": null,
-              "type": "string?"
+              "value": "flatResult should not be null",
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/ListOps/ListOps2.test.goal",
-  "prPath": "/Tests/ListOps/.build/listops2.test.pr",
+  "path": "/ListOps2.test.goal",
+  "prPath": "/.build/listops2.test.pr",
   "hash": "effabce62b55fc0d7aae9e54cfa0577166483ccd7be748d8cdbbc52071ab10a2",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Writes call stack depth before calling Inner, calls Inner, writes depth after, then calls Inner again.",
+  "description": "Writes call stack depth before and after calling Inner twice.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -52,15 +50,18 @@
                 "parameters": []
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "actor(user|service|system)"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -85,13 +86,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -112,22 +111,25 @@
                 "parameters": []
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "actor(user|service|system)"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/CallStack/Start.goal",
-  "prPath": "/Tests/CallStack/.build/start.pr",
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
   "hash": "c823029a7220b2924dd7dd88f2761ae549afeb98a81f218f1ecb566f4b49f315",
   "builderVersion": null,
   "isSetup": false,

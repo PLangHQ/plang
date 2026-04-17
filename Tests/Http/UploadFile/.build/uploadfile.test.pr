@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Saves a test file, uploads it to httpbin, verifies the response is non-empty, checks StatusCode == 200, writes outputs, then deletes the test file.",
+  "description": "Saves test content to a local file, uploads it to httpbin, writes the upload response, conditionally outputs messages based on whether the response is empty and whether StatusCode equals 200, then deletes the temporary file.",
   "comment": null,
   "steps": [
     {
@@ -22,16 +22,14 @@
             {
               "name": "Value",
               "value": "test upload content",
-              "type": "object"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -51,27 +49,28 @@
               "type": "string"
             },
             {
+              "name": "As",
+              "value": "File",
+              "type": "string"
+            },
+            {
               "name": "Content",
               "value": "upload-test.txt",
-              "type": "object"
+              "type": "path"
             },
             {
               "name": "Method",
               "value": "POST",
-              "type": "httpmethod"
+              "type": "string"
             },
             {
               "name": "Unsigned",
               "value": true,
               "type": "bool"
-            },
-            {
-              "name": "As",
-              "value": "File",
-              "type": "contentas"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -88,13 +87,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -121,7 +118,7 @@
             {
               "name": "Right",
               "value": "",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Negate",
@@ -129,13 +126,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -160,13 +155,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -196,13 +189,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -227,13 +218,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -263,20 +252,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Http/UploadFile/UploadFile.test.goal",
-  "prPath": "/Tests/Http/UploadFile/.build/uploadfile.test.pr",
+  "path": "/UploadFile.test.goal",
+  "prPath": "/.build/uploadfile.test.pr",
   "hash": "296a21da8725826befc0761f8b8d175e1122aceea3e22c7e3717225ef9afa0d2",
   "builderVersion": null,
   "isSetup": false,

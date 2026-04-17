@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets a template string containing a callGoal tag, renders it to %result% (writing render output to a variable), then asserts the rendered output contains \u0027Error\u0027 because the referenced goal does not exist.",
+  "description": "Sets a template string containing a callGoal tag, renders it to %result%, then asserts the rendered output contains \u0027Error\u0027 (expecting the referenced goal is missing).",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,7 +54,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -73,13 +72,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -102,27 +99,20 @@
               "name": "Container",
               "value": "Error",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %result% to contain substring \u0027Error\u0027 when the goal does not exist.",
-              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Ui/RenderCallGoal/RenderCallGoal.test.goal",
-  "prPath": "/Tests/Ui/RenderCallGoal/.build/rendercallgoal.test.pr",
+  "path": "/RenderCallGoal.test.goal",
+  "prPath": "/.build/rendercallgoal.test.pr",
   "hash": "59103672d31071799eaf8404345ad2c389b1ca7b32019366e4f2029e89e8c560",
   "builderVersion": null,
   "isSetup": false,

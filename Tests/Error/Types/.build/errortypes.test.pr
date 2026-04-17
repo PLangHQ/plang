@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Calls ThrowUserError with an on-error handler, asserts the thrown error key, then attempts to read a missing file with an on-error handler and asserts the file error was caught.",
   "comment": null,
   "steps": [
     {
@@ -9,11 +9,50 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": "throw error has expected shape",
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ThrowUserError"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "actor(user|service|system)"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "CatchThrow"
+                  },
+                  "type": "goal.call"
+                },
+                {
+                  "name": "IgnoreError",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -22,11 +61,32 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "TestKey",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%throwKey%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -35,11 +95,48 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": "file not found error",
-      "actions": [],
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "nonexistent_file_xyz.txt",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "CatchFileError"
+                  },
+                  "type": "goal.call"
+                },
+                {
+                  "name": "IgnoreError",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -48,18 +145,39 @@
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%fileErrorCaught%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Types/ErrorTypes.test.goal",
-  "prPath": "/Tests/Runtime2/Error/Types/.build/errortypes.test.pr",
+  "path": "/ErrorTypes.test.goal",
+  "prPath": "/.build/errortypes.test.pr",
   "hash": "795a83975d59d5634a207d8f3ff7e47d24f549850fe91a0107e5f4123e5a6510",
   "builderVersion": null,
   "isSetup": false,

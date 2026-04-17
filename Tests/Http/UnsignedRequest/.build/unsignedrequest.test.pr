@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Makes an unsigned HTTP GET request to httpbin headers, stores the response in %response%, checks that %response% is not empty, and writes an output message if it contains data.",
+  "description": "Performs an unsigned HTTP GET to httpbin headers endpoint, stores the response, checks it is not empty, then writes an output message.",
   "comment": null,
   "steps": [
     {
@@ -22,7 +22,7 @@
             {
               "name": "Method",
               "value": "GET",
-              "type": "httpmethod"
+              "type": "string"
             },
             {
               "name": "Unsigned",
@@ -30,7 +30,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -47,13 +48,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -79,7 +78,7 @@
             },
             {
               "name": "Right",
-              "value": "",
+              "value": null,
               "type": "object"
             },
             {
@@ -88,13 +87,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -119,20 +116,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Http/UnsignedRequest/UnsignedRequest.test.goal",
-  "prPath": "/Tests/Http/UnsignedRequest/.build/unsignedrequest.test.pr",
+  "path": "/UnsignedRequest.test.goal",
+  "prPath": "/.build/unsignedrequest.test.pr",
   "hash": "93d478c76da1827002e3bf624afce0f87d3f47ac47759ec7ca8de40d20cdac33",
   "builderVersion": null,
   "isSetup": false,

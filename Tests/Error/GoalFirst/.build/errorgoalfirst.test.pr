@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets up flags/counters, calls AlwaysFails with GoalFirst error handling (call GoalFirstHandler first, then retry 2 times), and asserts the handler was invoked.",
+  "description": "Initializes tracking variables, calls AlwaysFails with GoalFirst error handling order (handler called first, then retries up to 2 times), and asserts the handler was invoked.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,13 +54,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -79,34 +75,72 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "AlwaysFails",
-                "parameters": []
+                "name": "AlwaysFails"
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "StatusCode",
+                  "value": null,
+                  "type": "int?"
+                },
+                {
+                  "name": "Key",
+                  "value": null,
+                  "type": "string?"
+                },
+                {
+                  "name": "Message",
+                  "value": null,
+                  "type": "string?"
+                },
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "GoalFirstHandler"
+                  },
+                  "type": "goal.call?"
+                },
+                {
+                  "name": "RetryCount",
+                  "value": 2,
+                  "type": "int?"
+                },
+                {
+                  "name": "RetryOverMs",
+                  "value": null,
+                  "type": "int?"
+                },
+                {
+                  "name": "Order",
+                  "value": "GoalFirst",
+                  "type": "errororder?(GoalFirst|RetryFirst)"
+                },
+                {
+                  "name": "IgnoreError",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "GoalFirstHandler",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": 2,
-        "retryOverMs": null,
-        "order": 0,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -123,7 +157,7 @@
             {
               "name": "Value",
               "value": "%goalFirstHandled%",
-              "type": "bool"
+              "type": "object?"
             },
             {
               "name": "Message",
@@ -131,20 +165,18 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/GoalFirst/ErrorGoalFirst.test.goal",
-  "prPath": "/Tests/Error/GoalFirst/.build/errorgoalfirst.test.pr",
+  "path": "/ErrorGoalFirst.test.goal",
+  "prPath": "/.build/errorgoalfirst.test.pr",
   "hash": "e7fff35aa8b251b0726e792f79f6f003fbed9f55b66ef9d316cfb0b40b541245",
   "builderVersion": null,
   "isSetup": false,

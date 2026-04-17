@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -9,29 +9,8 @@
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "math",
-          "action": "add",
-          "parameters": [
-            {
-              "name": "A",
-              "value": "5",
-              "type": "int"
-            },
-            {
-              "name": "B",
-              "value": "3",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -42,9 +21,6 @@
       "comment": null,
       "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -53,29 +29,8 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "math",
-          "action": "subtract",
-          "parameters": [
-            {
-              "name": "A",
-              "value": "10",
-              "type": "int"
-            },
-            {
-              "name": "B",
-              "value": "3",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -84,29 +39,8 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": "7",
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%diff%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -115,29 +49,8 @@
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "math",
-          "action": "multiply",
-          "parameters": [
-            {
-              "name": "A",
-              "value": "6",
-              "type": "int"
-            },
-            {
-              "name": "B",
-              "value": "7",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -146,29 +59,8 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": "42",
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%product%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -177,29 +69,8 @@
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "math",
-          "action": "divide",
-          "parameters": [
-            {
-              "name": "A",
-              "value": "10",
-              "type": "int"
-            },
-            {
-              "name": "B",
-              "value": "4",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -208,29 +79,8 @@
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 2.5,
-              "type": "double"
-            },
-            {
-              "name": "Actual",
-              "value": "%quotient%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -239,24 +89,8 @@
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "math",
-          "action": "abs",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "-42",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -265,29 +99,8 @@
       "lineNumber": 11,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": "42",
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%absVal%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -296,29 +109,8 @@
       "lineNumber": 12,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "math",
-          "action": "round",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "3.14159",
-              "type": "double"
-            },
-            {
-              "name": "Decimals",
-              "value": "2",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -327,29 +119,8 @@
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 3.14,
-              "type": "double"
-            },
-            {
-              "name": "Actual",
-              "value": "%rounded%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -358,29 +129,8 @@
       "lineNumber": 14,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "math",
-          "action": "min",
-          "parameters": [
-            {
-              "name": "A",
-              "value": "5",
-              "type": "int"
-            },
-            {
-              "name": "B",
-              "value": "3",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -389,29 +139,8 @@
       "lineNumber": 15,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": "3",
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%minimum%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -420,29 +149,8 @@
       "lineNumber": 16,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "math",
-          "action": "max",
-          "parameters": [
-            {
-              "name": "A",
-              "value": "5",
-              "type": "int"
-            },
-            {
-              "name": "B",
-              "value": "3",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -451,29 +159,8 @@
       "lineNumber": 17,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": "5",
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%maximum%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -482,29 +169,8 @@
       "lineNumber": 19,
       "indent": 0,
       "comment": "power",
-      "actions": [
-        {
-          "module": "math",
-          "action": "power",
-          "parameters": [
-            {
-              "name": "Base",
-              "value": "2",
-              "type": "int"
-            },
-            {
-              "name": "Exponent",
-              "value": "3",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -513,29 +179,8 @@
       "lineNumber": 20,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": "8",
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%pow%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -544,24 +189,8 @@
       "lineNumber": 22,
       "indent": 0,
       "comment": "sqrt",
-      "actions": [
-        {
-          "module": "math",
-          "action": "sqrt",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "16",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -570,29 +199,8 @@
       "lineNumber": 23,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": "4",
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%root%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -601,24 +209,8 @@
       "lineNumber": 25,
       "indent": 0,
       "comment": "floor",
-      "actions": [
-        {
-          "module": "math",
-          "action": "floor",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "3.7",
-              "type": "double"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -627,29 +219,8 @@
       "lineNumber": 26,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": "3",
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%floored%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -658,24 +229,8 @@
       "lineNumber": 28,
       "indent": 0,
       "comment": "ceiling",
-      "actions": [
-        {
-          "module": "math",
-          "action": "ceiling",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "3.2",
-              "type": "double"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -684,29 +239,8 @@
       "lineNumber": 29,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": "4",
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%ceiled%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -715,29 +249,8 @@
       "lineNumber": 31,
       "indent": 0,
       "comment": "modulo",
-      "actions": [
-        {
-          "module": "math",
-          "action": "modulo",
-          "parameters": [
-            {
-              "name": "A",
-              "value": "10",
-              "type": "int"
-            },
-            {
-              "name": "B",
-              "value": "3",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -746,36 +259,15 @@
       "lineNumber": 32,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": "1",
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%mod%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Math/Math.test.goal",
-  "prPath": "/Tests/Runtime2/Math/.build/math.test.pr",
+  "path": "/Math.test.goal",
+  "prPath": "/.build/math.test.pr",
   "hash": "2d30d897efc6ade166fdc152dfb9b20a8fe0ab7aa0b94fa7815bc406dc3c77ac",
   "builderVersion": null,
   "isSetup": false,

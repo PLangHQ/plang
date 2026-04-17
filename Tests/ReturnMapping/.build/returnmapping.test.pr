@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Reads testfile.txt into %content%, asserts its value, calls ComputeValue and writes its return into %result%, then asserts %result% is not null.",
+  "description": "Reads a file into %content%, asserts its value, then calls ComputeValue into %result% and asserts %result% is not null.",
   "comment": null,
   "steps": [
     {
@@ -18,14 +18,10 @@
               "name": "Path",
               "value": "testfile.txt",
               "type": "path"
-            },
-            {
-              "name": "ResolveVariables",
-              "value": false,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -42,13 +38,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -73,13 +67,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -96,13 +88,13 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ComputeValue",
-                "parameters": []
+                "name": "ComputeValue"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -119,13 +111,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -146,24 +136,22 @@
             },
             {
               "name": "Message",
-              "value": "Expected %result% to be not null.",
-              "type": "tstring"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/ReturnMapping/ReturnMapping.test.goal",
-  "prPath": "/Tests/ReturnMapping/.build/returnmapping.test.pr",
+  "path": "/ReturnMapping.test.goal",
+  "prPath": "/.build/returnmapping.test.pr",
   "hash": "68157ee64ac6cb646c5a5fdcfa4ab9f400a26f4379808e75ca70a1776d2ae8e1",
   "builderVersion": null,
   "isSetup": false,

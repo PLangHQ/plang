@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets afterCount to 0, calls TrackAfterStep after-step hook, sets value and value2, then asserts afterCount \u003E 0.",
+  "description": "Sets up after-step tracking by initializing %afterCount%, calling TrackAfterStep, setting %value% and %value2%, then asserting %afterCount% is greater than 0.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -48,18 +46,17 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "TrackAfterStep"
+                "name": "TrackAfterStep",
+                "parameters": []
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -84,13 +81,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -115,13 +110,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -146,20 +139,18 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/AfterStep/EventAfterStep.test.goal",
-  "prPath": "/Tests/Event/AfterStep/.build/eventafterstep.test.pr",
+  "path": "/EventAfterStep.test.goal",
+  "prPath": "/.build/eventafterstep.test.pr",
   "hash": "3539e45c2d574207fd135c411c007376e343d558d9548e18408da02f8fa1dc3b",
   "builderVersion": null,
   "isSetup": false,

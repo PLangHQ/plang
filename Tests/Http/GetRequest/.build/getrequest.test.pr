@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Performs an unsigned HTTP GET to httpbin.org/get, stores the response in %response%, conditionally writes output based on whether %response% is empty, and then conditionally writes output based on %response.StatusCode == 200.",
+  "description": "Performs an unsigned HTTP GET to httpbin.org/get, writes the response to %response%, then conditionally writes messages based on whether %response% is not empty and whether %response.StatusCode equals 200.",
   "comment": null,
   "steps": [
     {
@@ -22,7 +22,7 @@
             {
               "name": "Method",
               "value": "GET",
-              "type": "httpmethod"
+              "type": "string"
             },
             {
               "name": "Unsigned",
@@ -30,7 +30,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -47,13 +48,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -80,38 +79,24 @@
             {
               "name": "Right",
               "value": "",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Negate",
               "value": true,
               "type": "bool"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {
-              "name": "Data",
-              "value": "%response%",
-              "type": "object"
             },
             {
-              "name": "Channels",
-              "value": "pr",
+              "name": "Step",
+              "value": "",
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -132,17 +117,15 @@
             },
             {
               "name": "Channels",
-              "value": "pr",
+              "value": "this",
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -175,32 +158,18 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {
-              "name": "Data",
-              "value": "Status code is 200",
-              "type": "tstring"
             },
             {
-              "name": "Channels",
-              "value": "pr",
-              "type": "string"
+              "name": "Step",
+              "value": null,
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -221,24 +190,22 @@
             },
             {
               "name": "Channels",
-              "value": "pr",
+              "value": "this",
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Http/GetRequest/GetRequest.test.goal",
-  "prPath": "/Tests/Http/GetRequest/.build/getrequest.test.pr",
+  "path": "/GetRequest.test.goal",
+  "prPath": "/.build/getrequest.test.pr",
   "hash": "bd80ccafae6164da0d48e695d55f2be1e6b1ba6efc1a1673b0403e0a4638e542",
   "builderVersion": null,
   "isSetup": false,

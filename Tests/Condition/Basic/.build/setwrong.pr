@@ -1,6 +1,6 @@
 {
   "name": "SetWrong",
-  "description": "SetWrong: set %wasWrong% to true using variable.set.",
+  "description": "Sets %wasWrong% to true (the \u0027\u003C= null\u0027 part is treated as an invalid/ambiguous constraint and is not representable in the available actions).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Basic/SetWrong.goal",
-  "prPath": "/Tests/Condition/Basic/.build/setwrong.pr",
+  "path": "/SetWrong.goal",
+  "prPath": "/.build/setwrong.pr",
   "hash": "9a328158bcd3fea39002d861281fa7b89be9c46b471209ab9cc3349558a60267",
   "builderVersion": null,
   "isSetup": false,

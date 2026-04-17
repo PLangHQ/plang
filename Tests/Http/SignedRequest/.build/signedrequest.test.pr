@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Fetches headers from httpbin, stores the response in %response%, checks that %response% is not empty, and writes an output message when the check passes.",
+  "description": "Fetches headers from httpbin, stores response, checks if response is not empty, then writes a message indicating a signed request returned data.",
   "comment": null,
   "steps": [
     {
@@ -22,10 +22,16 @@
             {
               "name": "Method",
               "value": "GET",
-              "type": "httpmethod"
+              "type": "string"
+            },
+            {
+              "name": "Body",
+              "value": null,
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -42,13 +48,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -74,8 +78,8 @@
             },
             {
               "name": "Right",
-              "value": false,
-              "type": "bool"
+              "value": null,
+              "type": "object"
             },
             {
               "name": "Negate",
@@ -83,13 +87,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -114,20 +116,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Http/SignedRequest/SignedRequest.test.goal",
-  "prPath": "/Tests/Http/SignedRequest/.build/signedrequest.test.pr",
+  "path": "/SignedRequest.test.goal",
+  "prPath": "/.build/signedrequest.test.pr",
   "hash": "c616554ac67fad8477f13b1a065394cf31a6a95d3fb9d94fab8083f8e575088d",
   "builderVersion": null,
   "isSetup": false,

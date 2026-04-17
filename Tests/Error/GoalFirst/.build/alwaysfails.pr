@@ -1,6 +1,6 @@
 {
   "name": "AlwaysFails",
-  "description": "AlwaysFails: increments %goalFirstAttempts% by 1 (via list.add) and then throws an error.",
+  "description": "AlwaysFails: increments %goalFirstAttempts% and writes it back, then throws an error.",
   "comment": null,
   "steps": [
     {
@@ -11,26 +11,22 @@
       "comment": null,
       "actions": [
         {
-          "module": "list",
+          "module": "math",
           "action": "add",
           "parameters": [
             {
-              "name": "ListName",
+              "name": "A",
               "value": "%goalFirstAttempts%",
-              "type": "string"
+              "type": "object"
             },
             {
-              "name": "Value",
+              "name": "B",
               "value": 1,
-              "type": "long"
-            },
-            {
-              "name": "AtIndex",
-              "value": -1,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -47,13 +43,17 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -70,28 +70,21 @@
             {
               "name": "Message",
               "value": "always fails",
-              "type": "string"
-            },
-            {
-              "name": "StatusCode",
-              "value": 500,
-              "type": "int"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/GoalFirst/AlwaysFails.goal",
-  "prPath": "/Tests/Error/GoalFirst/.build/alwaysfails.pr",
+  "path": "/AlwaysFails.goal",
+  "prPath": "/.build/alwaysfails.pr",
   "hash": "20452d6d06df8961ba441d4dc18fc37c2e6dd04b2658568f70fb8b95f341268d",
   "builderVersion": null,
   "isSetup": false,

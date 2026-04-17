@@ -1,6 +1,6 @@
 {
   "name": "Setup",
-  "description": "Sets %setupDone% to true using variable.set.",
+  "description": "Sets %setupDone% to true.",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/SetupGoal/Setup.goal",
-  "prPath": "/Tests/SetupGoal/.build/setup.pr",
+  "path": "/Setup.goal",
+  "prPath": "/.build/setup.pr",
   "hash": "3f806b74cd5365a2f65d04e4fc3d43757a75d2e803500ec1506732df9204fa8e",
   "builderVersion": null,
   "isSetup": true,

@@ -1,6 +1,6 @@
 {
   "name": "ReadCachedFile",
-  "description": "Reads cachekey.txt with caching for 60 seconds, then writes the file contents into %cachedContent% via variable.set.",
+  "description": "Reads a cached file (cache duration 60 seconds) and writes its content to %cachedContent%.",
   "comment": null,
   "steps": [
     {
@@ -25,7 +25,32 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "cache",
+              "action": "wrap",
+              "parameters": [
+                {
+                  "name": "DurationMs",
+                  "value": 60000,
+                  "type": "long"
+                },
+                {
+                  "name": "Sliding",
+                  "value": false,
+                  "type": "bool"
+                },
+                {
+                  "name": "Key",
+                  "value": null,
+                  "type": "string?"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         },
         {
           "module": "variable",
@@ -42,25 +67,18 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": {
-        "durationMs": 60000,
-        "sliding": null,
-        "key": null,
-        "location": null
-      },
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Cache/Key/ReadCachedFile.goal",
-  "prPath": "/Tests/Cache/Key/.build/readcachedfile.pr",
+  "path": "/ReadCachedFile.goal",
+  "prPath": "/.build/readcachedfile.pr",
   "hash": "01394b21d4d0e9412ff0456706bbf0e4d71a0a39058be63c291369debec73052",
   "builderVersion": null,
   "isSetup": false,

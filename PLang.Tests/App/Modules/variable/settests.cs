@@ -85,4 +85,53 @@ public class SetTests
         await Assert.That(result.Success).IsTrue();
         await Assert.That(context.Variables.GetValue("y")).IsEqualTo("default");
     }
+
+    // --- ValidateBuild tests ---
+
+    [Test]
+    public async Task ValidateBuild_LiteralThis_ReturnsError()
+    {
+        var parameters = new List<Data> { new Data("Value", "this") };
+        var result = global::App.modules.variable.Set.ValidateBuild(parameters);
+
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!).Contains("this");
+    }
+
+    [Test]
+    public async Task ValidateBuild_VariableReference_ReturnsNull()
+    {
+        var parameters = new List<Data>
+        {
+            new Data("Value", "%myVar%", global::App.Data.Type.FromName("int"))
+        };
+        var result = global::App.modules.variable.Set.ValidateBuild(parameters);
+
+        await Assert.That(result).IsNull();
+    }
+
+    [Test]
+    public async Task ValidateBuild_TypeMismatch_ReturnsError()
+    {
+        var parameters = new List<Data>
+        {
+            new Data("Value", "not a number", global::App.Data.Type.FromName("int"))
+        };
+        var result = global::App.modules.variable.Set.ValidateBuild(parameters);
+
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!).Contains("type=int");
+    }
+
+    [Test]
+    public async Task ValidateBuild_ValidTypeMatch_ReturnsNull()
+    {
+        var parameters = new List<Data>
+        {
+            new Data("Value", 42, global::App.Data.Type.FromName("int"))
+        };
+        var result = global::App.modules.variable.Set.ValidateBuild(parameters);
+
+        await Assert.That(result).IsNull();
+    }
 }

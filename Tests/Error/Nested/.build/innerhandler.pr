@@ -1,6 +1,6 @@
 {
   "name": "InnerHandler",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %innerErrorHandled% to true.",
   "comment": null,
   "steps": [
     {
@@ -9,18 +9,34 @@
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerErrorHandled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Nested/InnerHandler.goal",
-  "prPath": "/Tests/Runtime2/Error/Nested/.build/innerhandler.pr",
+  "path": "/InnerHandler.goal",
+  "prPath": "/.build/innerhandler.pr",
   "hash": "dd5be9a4665106e1df91cb580cec1e0ef0640e82a8c7e88b24bdc562ab4e8d43",
   "builderVersion": null,
   "isSetup": false,

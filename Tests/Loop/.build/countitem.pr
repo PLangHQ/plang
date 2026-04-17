@@ -1,6 +1,6 @@
 {
   "name": "CountItem",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Increments %count% by 1.",
   "comment": null,
   "steps": [
     {
@@ -9,18 +9,40 @@
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%count%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%count% \u002B 1",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Loop/CountItem.goal",
-  "prPath": "/Tests/Runtime2/Loop/.build/countitem.pr",
+  "path": "/CountItem.goal",
+  "prPath": "/.build/countitem.pr",
   "hash": "40ee3f7bba0e615628ee90ccb5a4da7e07721b4f2dc62fc48137da9bce77051e",
   "builderVersion": null,
   "isSetup": false,

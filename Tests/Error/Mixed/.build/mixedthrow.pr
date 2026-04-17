@@ -1,6 +1,6 @@
 {
   "name": "MixedThrow",
-  "description": "Throws an error with message \u0022mixed error\u0022 using error.throw.",
+  "description": "Throws an error with message \u0022mixed error\u0022 and status code defaulting to 500; the \u003C= null indicates no additional key/status override.",
   "comment": null,
   "steps": [
     {
@@ -17,23 +17,21 @@
             {
               "name": "Message",
               "value": "mixed error",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Mixed/MixedThrow.goal",
-  "prPath": "/Tests/Error/Mixed/.build/mixedthrow.pr",
+  "path": "/MixedThrow.goal",
+  "prPath": "/.build/mixedthrow.pr",
   "hash": "16db04b6bed5cc31a88bc5151212d07f955a2f1958283afe4d62e42372eb57a3",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets settings.archive.max, reads it into %maxSize%, then asserts %maxSize% equals 20971520.",
+  "description": "Sets archive.max in settings, reads it back into %maxSize%, then asserts it equals 20971520.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +49,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -68,13 +67,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -99,20 +96,18 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Settings/SetMaxGzipSize/Start.test.goal",
-  "prPath": "/Tests/Settings/SetMaxGzipSize/.build/start.test.pr",
+  "path": "/Start.test.goal",
+  "prPath": "/.build/start.test.pr",
   "hash": "ec751a865962456ca94721ed138f68c2f3b6ca44ff11e1e7b784ace01ee33796",
   "builderVersion": null,
   "isSetup": false,

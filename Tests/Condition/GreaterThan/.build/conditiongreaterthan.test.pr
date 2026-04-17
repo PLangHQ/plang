@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %x% to 10, checks if %x% \u003E 5, and if true calls WhenGreater; then asserts %result% equals \u0027greater\u0027.",
+  "description": "Sets %x% to 10, conditionally calls WhenGreater when %x% \u003E 5, then asserts %result% equals \u0027greater\u0027.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -59,25 +57,10 @@
               "name": "Right",
               "value": 5,
               "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": {
-                "name": "call-WhenGreater",
-                "description": "Conditional call when %x% \u003E 5",
-                "comment": "",
-                "visibility": "public",
-                "inputParameters": {}
-              },
-              "type": "this"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -86,19 +69,16 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenGreater",
-                "parameters": []
+                "name": "WhenGreater"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -125,23 +105,21 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for x \u003E 5",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/GreaterThan/ConditionGreaterThan.test.goal",
-  "prPath": "/Tests/Condition/GreaterThan/.build/conditiongreaterthan.test.pr",
+  "path": "/ConditionGreaterThan.test.goal",
+  "prPath": "/.build/conditiongreaterthan.test.pr",
   "hash": "df77bfacc5403b8a9d116844f19337ab0324690151f0dc72e84a3196e7406ea3",
   "builderVersion": null,
   "isSetup": false,

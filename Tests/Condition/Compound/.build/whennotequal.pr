@@ -1,6 +1,6 @@
 {
   "name": "WhenNotEqual",
-  "description": "Maps the step \u0027WhenNotEqual - set %notEqualResult% = \u0022yes\u0022\u0027 to a variable.set action.",
+  "description": "Maps the step to a variable assignment of %notEqualResult% to the string \u0022yes\u0022 with a null comparison implied by the step text.",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Compound/WhenNotEqual.goal",
-  "prPath": "/Tests/Condition/Compound/.build/whennotequal.pr",
+  "path": "/WhenNotEqual.goal",
+  "prPath": "/.build/whennotequal.pr",
   "hash": "63094fc1d603d21557ff55e1e388dea437e0804ccd1f0fa964903093d823e476",
   "builderVersion": null,
   "isSetup": false,

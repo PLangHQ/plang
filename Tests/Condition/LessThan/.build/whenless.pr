@@ -1,6 +1,6 @@
 {
   "name": "WhenLess",
-  "description": "Maps the step \u0027WhenLess\u0027 to a variable assignment setting %result% to the string \u0027less\u0027.",
+  "description": "Sets %result% to \u0022less\u0022 when the condition \u0022\u003C= null\u0022 is met.",
   "comment": null,
   "steps": [
     {
@@ -10,6 +10,39 @@
       "indent": 0,
       "comment": null,
       "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "less",
+              "type": "string"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003C=",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
         {
           "module": "variable",
           "action": "set",
@@ -25,20 +58,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/LessThan/WhenLess.goal",
-  "prPath": "/Tests/Condition/LessThan/.build/whenless.pr",
+  "path": "/WhenLess.goal",
+  "prPath": "/.build/whenless.pr",
   "hash": "8ca0e5ed7d68a2df01d2bf088104851e5201618bc638a3ad359a4642b468c13f",
   "builderVersion": null,
   "isSetup": false,

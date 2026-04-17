@@ -1,6 +1,6 @@
 {
   "name": "CatchJapanese",
-  "description": "Sets the %caughtJapanese% variable to true.",
+  "description": "Sets %caughtJapanese% to true (null comparison marker ignored as it is not a valid action modifier).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Multilingual/CatchJapanese.goal",
-  "prPath": "/Tests/Error/Multilingual/.build/catchjapanese.pr",
+  "path": "/CatchJapanese.goal",
+  "prPath": "/.build/catchjapanese.pr",
   "hash": "60c802606c976f152d5f57bca81d0e5a510c3c76a762e5b2835c240434bcdc3c",
   "builderVersion": null,
   "isSetup": false,

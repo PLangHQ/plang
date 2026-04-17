@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %x% to \u0027hello\u0027, then asserts the current step result (%__stepResult%) is not null.",
+  "description": "Sets %x% to a string literal, then asserts the previous step result (%__stepResult%) is not null.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -51,20 +49,18 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/StepResult/StepResult.test.goal",
-  "prPath": "/Tests/StepResult/.build/stepresult.test.pr",
+  "path": "/StepResult.test.goal",
+  "prPath": "/.build/stepresult.test.pr",
   "hash": "b71f60b0189a659c5e43ef9ecd9485a0a5080816955af1c03f29c1fe7810af59",
   "builderVersion": null,
   "isSetup": false,

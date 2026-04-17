@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets the %timedOut% flag to true (null comparison noted in source, but value assigned is true).",
+  "description": "Sets the %timedOut% flag to true (null comparison noted in step text).",
   "comment": null,
   "steps": [
     {
@@ -25,22 +25,25 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "IgnoreError",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -60,13 +63,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -93,13 +94,11 @@
               "type": "json"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -119,7 +118,8 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -136,13 +136,17 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -158,7 +162,7 @@
           "parameters": [
             {
               "name": "Key",
-              "value": "signing.timeout",
+              "value": "signing.timeoutMs",
               "type": "string"
             },
             {
@@ -167,13 +171,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -184,27 +186,20 @@
       "comment": null,
       "actions": [
         {
-          "module": "timer",
-          "action": "start",
+          "module": "timeout.after",
+          "action": "after",
           "parameters": [
             {
-              "name": "Name",
-              "value": "wait-60ms",
-              "type": "string"
-            },
-            {
-              "name": "Scope",
-              "value": "goal",
-              "type": "string"
+              "name": "Ms",
+              "value": 60,
+              "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -228,10 +223,37 @@
               "value": [
                 "C0"
               ],
-              "type": "list"
+              "type": "list\u003Cstring\u003E"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "Name": "HandleTimedOut",
+                    "Description": null,
+                    "Parallel": false,
+                    "Parameters": null,
+                    "PrPath": null
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
         },
         {
           "module": "variable",
@@ -239,7 +261,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%timedOut%",
+              "value": "%verified%",
               "type": "string"
             },
             {
@@ -248,28 +270,17 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "HandleTimedOut",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -294,13 +305,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
@@ -332,20 +341,24 @@
                   "type": "bool"
                 }
               ],
-              "defaults": null
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
             }
           ],
           "intent": null,
-          "onError": null,
-          "cache": null,
-          "timeout": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/Tests/Signing/TimedOut/SigningTimedOut.test.goal",
-      "prPath": "/Tests/Signing/TimedOut/.build/signingtimedout.test.pr",
+      "path": "/SigningTimedOut.test.goal",
+      "prPath": "/.build/signingtimedout.test.pr",
       "hash": "3be0880cb8dae8a7f44bb51e2c80c3c576792515de5a75b8341f6ad1fc33a1a4",
       "builderVersion": null,
       "isSetup": false,
@@ -356,8 +369,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/Tests/Signing/TimedOut/SigningTimedOut.test.goal",
-  "prPath": "/Tests/Signing/TimedOut/.build/signingtimedout.test.pr",
+  "path": "/SigningTimedOut.test.goal",
+  "prPath": "/.build/signingtimedout.test.pr",
   "hash": "b5caa9d5e8e99346073de3e01bee8e7bef3106cdf4ad8f654d870bc4250b4832",
   "builderVersion": null,
   "isSetup": false,

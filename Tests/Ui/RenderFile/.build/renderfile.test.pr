@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name%, renders template.html to %result%, then asserts %result% equals the expected greeting.",
+  "description": "Sets %name%, renders template.html into %result%, then asserts %result% equals the expected greeting.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,7 +54,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -73,13 +72,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -102,27 +99,20 @@
               "name": "Actual",
               "value": "%result%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "Rendered %result% should equal \u0027Hello PLang!\u0027",
-              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Ui/RenderFile/RenderFile.test.goal",
-  "prPath": "/Tests/Ui/RenderFile/.build/renderfile.test.pr",
+  "path": "/RenderFile.test.goal",
+  "prPath": "/.build/renderfile.test.pr",
   "hash": "0fc14d1a392d5187223f8d6e4e82cb96a2d1a4752ae6c5fe88759c290e98f2d3",
   "builderVersion": null,
   "isSetup": false,

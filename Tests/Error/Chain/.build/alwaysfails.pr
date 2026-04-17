@@ -1,6 +1,6 @@
 {
   "name": "AlwaysFails",
-  "description": "AlwaysFails goal throws an error with message \u0027always fails\u0027.",
+  "description": "Throws an error with message \u0022always fails\u0022.",
   "comment": null,
   "steps": [
     {
@@ -17,23 +17,26 @@
             {
               "name": "Message",
               "value": "always fails",
-              "type": "string"
+              "type": "tstring"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Chain/AlwaysFails.goal",
-  "prPath": "/Tests/Error/Chain/.build/alwaysfails.pr",
+  "path": "/AlwaysFails.goal",
+  "prPath": "/.build/alwaysfails.pr",
   "hash": "a91369207d3e67d7d3fbc2cc7a0fc4e6f2a7558d1ae6c543d01237f04ad35098",
   "builderVersion": null,
   "isSetup": false,

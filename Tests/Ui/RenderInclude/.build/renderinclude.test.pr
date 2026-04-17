@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %title%, renders page.html to %result%, then asserts %result% contains expected header and body content.",
+  "description": "Sets title, renders page.html into %result%, then asserts the rendered output contains expected strings.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,7 +54,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -73,13 +72,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -101,21 +98,14 @@
             {
               "name": "Container",
               "value": "Header: Welcome",
-              "type": "string"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %result% to contain \u0027Header: Welcome\u0027",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -137,28 +127,21 @@
             {
               "name": "Container",
               "value": "Body content",
-              "type": "string"
-            },
-            {
-              "name": "Message",
-              "value": "Expected rendered %result% to contain \u0027Body content\u0027.",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Ui/RenderInclude/RenderInclude.test.goal",
-  "prPath": "/Tests/Ui/RenderInclude/.build/renderinclude.test.pr",
+  "path": "/RenderInclude.test.goal",
+  "prPath": "/.build/renderinclude.test.pr",
   "hash": "f5a069c0614dc3f898da793a4ec9531776bcedcffe6f9dede75a085ab6878f43",
   "builderVersion": null,
   "isSetup": false,

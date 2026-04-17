@@ -1,5 +1,11 @@
 namespace App.modules.timer;
 
+/// <summary>
+/// Stops a previously started timer and returns the elapsed <see cref="TimeSpan"/>.
+/// If Name is omitted, ends the most recently started timer. Returns a
+/// <see cref="App.Errors.ValidationError"/> if no timer has been started or the
+/// named timer is unknown.
+/// </summary>
 [Action("end", Cacheable = false)]
 public partial class End : IContext, IStatic
 {

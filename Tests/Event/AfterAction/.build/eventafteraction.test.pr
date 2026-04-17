@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %actionFired% to false, then writes out a captured output from a called CaptureWrite goal, writes \u0027hello world\u0027, and finally asserts %actionFired% equals true.",
+  "description": "Sets a flag, runs an after-action hook that writes via CaptureWrite, writes \u0027hello world\u0027, then asserts the flag was set to true.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -48,19 +46,20 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "CaptureWrite",
-                "parameters": []
+                "Name": "CaptureWrite",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -85,13 +84,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -114,22 +111,25 @@
               "name": "Actual",
               "value": "%actionFired%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/AfterAction/EventAfterAction.test.goal",
-  "prPath": "/Tests/Event/AfterAction/.build/eventafteraction.test.pr",
+  "path": "/EventAfterAction.test.goal",
+  "prPath": "/.build/eventafteraction.test.pr",
   "hash": "318f15a4a1a1834bc5ac96a70ab0c1bacd7c13c7e815934b8aa612fe13535290",
   "builderVersion": null,
   "isSetup": false,

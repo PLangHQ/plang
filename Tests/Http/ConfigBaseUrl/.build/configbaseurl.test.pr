@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Configures HTTP base URL, requests a relative path, conditionally writes output based on response emptiness and status code.",
+  "description": "Configures HTTP base URL, performs an unsigned GET to a relative path, then conditionally writes messages based on whether the response is non-empty and whether StatusCode equals 200.",
   "comment": null,
   "steps": [
     {
@@ -20,13 +20,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -51,17 +49,13 @@
               "type": "string"
             },
             {
-              "name": "Body",
-              "value": null,
-              "type": "object?"
-            },
-            {
               "name": "Unsigned",
               "value": true,
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -78,13 +72,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -112,20 +104,13 @@
               "name": "Right",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Negate",
-              "value": true,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -150,13 +135,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -186,13 +169,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -217,20 +198,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal",
-  "prPath": "/Tests/Http/ConfigBaseUrl/.build/configbaseurl.test.pr",
+  "path": "/ConfigBaseUrl.test.goal",
+  "prPath": "/.build/configbaseurl.test.pr",
   "hash": "01dc137ea19f5d3c1b5db93b973fbe773de24f7bea80089d8d558bf792d295d9",
   "builderVersion": null,
   "isSetup": false,

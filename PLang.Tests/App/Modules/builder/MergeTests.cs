@@ -15,7 +15,7 @@ public class MergeTests
     #region Step.Merge
 
     [Test]
-    public async Task StepMerge_CopiesLlmDerivedFields()
+    public async Task StepMerge_CopiesActions()
     {
         var target = new Step { Text = "do something", Index = 0 };
         var source = new Step
@@ -24,19 +24,13 @@ public class MergeTests
             Actions = new StepActions(new[]
             {
                 new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hello") } }
-            }),
-            Cache = new CacheSettings { DurationMs = 5000 },
-            OnError = new ErrorHandler { RetryCount = 3 }
+            })
         };
 
         target.Merge(source);
 
         await Assert.That(target.Actions.Count).IsEqualTo(1);
         await Assert.That(target.Actions[0].Module).IsEqualTo("output");
-        await Assert.That(target.Cache).IsNotNull();
-        await Assert.That(target.Cache!.DurationMs).IsEqualTo(5000);
-        await Assert.That(target.OnError).IsNotNull();
-        await Assert.That(target.OnError!.RetryCount).IsEqualTo(3);
     }
 
     [Test]
@@ -73,8 +67,7 @@ public class MergeTests
         var target = new Step
         {
             Text = "step",
-            Actions = new StepActions(new[] { originalAction }),
-            Cache = new CacheSettings { DurationMs = 1000 }
+            Actions = new StepActions(new[] { originalAction })
         };
         var source = new Step { Text = "step" }; // Empty LLM fields
 
@@ -82,7 +75,6 @@ public class MergeTests
 
         // Actions not cleared because source has 0 actions
         await Assert.That(target.Actions.Count).IsEqualTo(1);
-        await Assert.That(target.Cache!.DurationMs).IsEqualTo(1000);
     }
 
     [Test]

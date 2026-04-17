@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Creates test_output.txt, reads and validates content, checks existence, copies to test_copy.txt and validates, moves to test_moved.txt and validates, lists files in \u0027.\u0027, validates list is not null, then deletes created files.",
+  "description": "Saves a string to a file, reads it back and asserts content; checks existence; copies then reads and asserts; moves then reads and asserts; lists files in current directory and asserts list is not null; finally deletes created files.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -49,14 +47,10 @@
               "name": "Path",
               "value": "test_output.txt",
               "type": "path"
-            },
-            {
-              "name": "ResolveVariables",
-              "value": false,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -73,13 +67,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -101,21 +93,19 @@
             {
               "name": "Actual",
               "value": "%content%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "Expected %content% to equal \u0022hello world\u0022",
-              "type": "tstring"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -135,7 +125,8 @@
               "type": "path"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -152,13 +143,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -175,21 +164,19 @@
             {
               "name": "Value",
               "value": "%info%",
-              "type": "object"
+              "type": "object?"
             },
             {
               "name": "Message",
-              "value": "Assert that %info% is not null.",
-              "type": "tstring"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -224,13 +211,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -248,14 +233,10 @@
               "name": "Path",
               "value": "test_copy.txt",
               "type": "path"
-            },
-            {
-              "name": "ResolveVariables",
-              "value": false,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -272,13 +253,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -300,16 +279,19 @@
             {
               "name": "Actual",
               "value": "%copied%",
-              "type": "string"
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -339,13 +321,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -363,14 +343,10 @@
               "name": "Path",
               "value": "test_moved.txt",
               "type": "path"
-            },
-            {
-              "name": "ResolveVariables",
-              "value": false,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -387,13 +363,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -415,21 +389,19 @@
             {
               "name": "Actual",
               "value": "%moved%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "Assert that %moved% equals the expected string.",
-              "type": "tstring"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -459,7 +431,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -476,13 +449,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -499,21 +470,19 @@
             {
               "name": "Value",
               "value": "%files%",
-              "type": "object"
+              "type": "object?"
             },
             {
               "name": "Message",
-              "value": "Assert that %files% is not null.",
-              "type": "tstring"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -543,13 +512,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -579,20 +546,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/File/File.test.goal",
-  "prPath": "/Tests/File/.build/file.test.pr",
+  "path": "/File.test.goal",
+  "prPath": "/.build/file.test.pr",
   "hash": "10dc1d6f914c66e6f522885478af03e53d89874069e7d0eebe8434a8c04aefcc",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "WhenSmall",
-  "description": "Maps the step \u0027set %result% = \u0022small\u0022\u0027 to a variable.set action.",
+  "description": "Sets %result% to the string \u0022small\u0022 (the \u0022\u003C= null\u0022 part is ignored by the compiler since it is not a supported action parameter).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/ElseBranch/WhenSmall.goal",
-  "prPath": "/Tests/Condition/ElseBranch/.build/whensmall.pr",
+  "path": "/WhenSmall.goal",
+  "prPath": "/.build/whensmall.pr",
   "hash": "b78a89b034c5389d7f2ad908f0dcb266f543b5c1700219da912e6bf2a4c4029f",
   "builderVersion": null,
   "isSetup": false,

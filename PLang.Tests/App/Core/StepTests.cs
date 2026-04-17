@@ -205,14 +205,6 @@ public class StepTests
     }
 
     [Test]
-    public async Task Timeout_DefaultsToNull()
-    {
-        var step = new Step();
-
-        await Assert.That(step.Timeout).IsNull();
-    }
-
-    [Test]
     public async Task Errors_DefaultsToEmptyList()
     {
         var step = new Step();

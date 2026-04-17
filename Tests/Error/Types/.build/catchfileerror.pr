@@ -1,6 +1,6 @@
 {
   "name": "CatchFileError",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Sets %fileErrorCaught% to true (null comparison implied by step text).",
   "comment": null,
   "steps": [
     {
@@ -31,20 +31,18 @@
               "value": false,
               "type": "bool"
             }
-          ]
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Types/CatchFileError.goal",
-  "prPath": "/Tests/Runtime2/Error/Types/.build/catchfileerror.pr",
+  "path": "/CatchFileError.goal",
+  "prPath": "/.build/catchfileerror.pr",
   "hash": "41c7c19edbdb6bc6e6f6e20355d6163717a2a518dd94db2ab2c1c062b026d233",
   "builderVersion": null,
   "isSetup": false,

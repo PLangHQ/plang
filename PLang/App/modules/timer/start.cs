@@ -1,5 +1,10 @@
 namespace App.modules.timer;
 
+/// <summary>
+/// Starts a named timer. Records the start time in static storage so a later
+/// <c>timer.end</c> with the same name (or no name, to target the last started) returns
+/// the elapsed duration. Use for performance tracing and simple stopwatch measurements.
+/// </summary>
 [Action("start", Cacheable = false)]
 public partial class Start : IContext, IStatic
 {

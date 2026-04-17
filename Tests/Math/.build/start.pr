@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Performs basic math operations (add/subtract/multiply/divide/abs/round/min/max/random) and writes formatted results to output, storing each computed value into the specified variables.",
+  "description": "Performs basic math operations (add, subtract, multiply, divide, abs, round, min, max, random) and writes formatted results to output, storing each result in a variable.",
   "comment": null,
   "steps": [
     {
@@ -17,15 +17,16 @@
             {
               "name": "A",
               "value": 5,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "B",
               "value": 3,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -42,13 +43,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -65,21 +64,19 @@
             {
               "name": "Data",
               "value": "5 \u002B 3 = %sum%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
               "value": "this",
-              "type": "object"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -96,15 +93,16 @@
             {
               "name": "A",
               "value": 10,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "B",
               "value": 3,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -121,13 +119,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -144,21 +140,19 @@
             {
               "name": "Data",
               "value": "10 - 3 = %diff%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
               "value": "this",
-              "type": "object"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -175,15 +169,16 @@
             {
               "name": "A",
               "value": 6,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "B",
               "value": 7,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -200,13 +195,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -223,21 +216,19 @@
             {
               "name": "Data",
               "value": "6 * 7 = %product%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
               "value": "this",
-              "type": "object"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -254,15 +245,16 @@
             {
               "name": "A",
               "value": 10,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "B",
               "value": 3,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -279,13 +271,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -302,21 +292,19 @@
             {
               "name": "Data",
               "value": "10 / 3 = %quotient%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
               "value": "this",
-              "type": "object"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -333,10 +321,11 @@
             {
               "name": "Value",
               "value": -42,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -353,13 +342,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -376,21 +363,19 @@
             {
               "name": "Data",
               "value": "abs(-42) = %absVal%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
               "value": "this",
-              "type": "object"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -407,7 +392,7 @@
             {
               "name": "Value",
               "value": 3.14159,
-              "type": "double"
+              "type": "object"
             },
             {
               "name": "Decimals",
@@ -415,7 +400,8 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -432,13 +418,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -455,21 +439,19 @@
             {
               "name": "Data",
               "value": "round(3.14159, 2) = %rounded%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
               "value": "this",
-              "type": "object"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -486,15 +468,16 @@
             {
               "name": "A",
               "value": 5,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "B",
               "value": 3,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -511,13 +494,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -534,21 +515,19 @@
             {
               "name": "Data",
               "value": "min(5, 3) = %minimum%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
               "value": "this",
-              "type": "object"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -565,15 +544,16 @@
             {
               "name": "A",
               "value": 5,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "B",
               "value": 3,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -590,13 +570,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -613,21 +591,19 @@
             {
               "name": "Data",
               "value": "max(5, 3) = %maximum%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
               "value": "this",
-              "type": "object"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -652,7 +628,8 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -669,13 +646,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -692,28 +667,26 @@
             {
               "name": "Data",
               "value": "random: %rand%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
               "value": "this",
-              "type": "object"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Math/Start.goal",
-  "prPath": "/Tests/Math/.build/start.pr",
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
   "hash": "e92b5952596a1ac057a67614002052ab2e129c4e884bf4b570c8aa5ac3a5e0c0",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "WhenGreater",
-  "description": "Maps the step \u0027WhenGreater\u0027 to a variable assignment using variable.set.",
+  "description": "Maps the step \u0027set %greaterResult% = \u0022yes\u0022 \u003C= null\u0027 to a variable assignment action.",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Compound/WhenGreater.goal",
-  "prPath": "/Tests/Condition/Compound/.build/whengreater.pr",
+  "path": "/WhenGreater.goal",
+  "prPath": "/.build/whengreater.pr",
   "hash": "de1b2350ea4346d265a5ff9ada731caaf2f4e03ca5c99df387838b0bd87206b8",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %outerHandled% to false, calls ThrowWithBadHandler with an on-error handler that calls OuterHandler, then asserts %outerHandled% becomes true.",
+  "description": "Sets a flag to false, calls ThrowWithBadHandler with an on-error handler that calls OuterHandler, then asserts the outer handler ran.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -48,39 +46,42 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowWithBadHandler",
-                "parameters": []
+                "name": "ThrowWithBadHandler"
               },
               "type": "goal.call"
             },
             {
               "name": "Actor",
               "value": "this",
-              "type": "actor(user|service|system)"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "OuterHandler"
+                  },
+                  "type": "goal.call"
+                },
+                {
+                  "name": "IgnoreError",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "OuterHandler",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": 0,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -102,23 +103,26 @@
             {
               "name": "Actual",
               "value": "%outerHandled%",
-              "type": "bool"
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/InHandler/ErrorInHandler.test.goal",
-  "prPath": "/Tests/Error/InHandler/.build/errorinhandler.test.pr",
+  "path": "/ErrorInHandler.test.goal",
+  "prPath": "/.build/errorinhandler.test.pr",
   "hash": "ac84eb8f196a13e591d4c452ae6710b5c53c7d96d635bf06dba62927d1efa8da",
   "builderVersion": null,
   "isSetup": false,

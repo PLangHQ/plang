@@ -1,6 +1,6 @@
 {
   "name": "InnerGoal",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "InnerGoal calls ThrowInnerError and, if it errors, invokes InnerHandler via error handling.",
   "comment": null,
   "steps": [
     {
@@ -9,18 +9,47 @@
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ThrowInnerError"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "InnerHandler"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Nested/InnerGoal.goal",
-  "prPath": "/Tests/Runtime2/Error/Nested/.build/innergoal.pr",
+  "path": "/InnerGoal.goal",
+  "prPath": "/.build/innergoal.pr",
   "hash": "a60dacbb90144444eb57f4e9cb6fa09714365e4b956c674f73d69b64dc38f5c7",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity, creates it, sets signing payload data, signs it with custom contracts, verifies with matching contracts while writing the result to %verifyResult%, then asserts verification success. Error on archive is ignored.",
+  "description": "Archives an identity, creates it, sets signing payload data, signs it with custom contracts, verifies with matching contracts and writes the verification result, then asserts verification success.",
   "comment": null,
   "steps": [
     {
@@ -25,22 +25,25 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "IgnoreError",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -60,13 +63,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -93,13 +94,11 @@
               "type": "json"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -127,13 +126,11 @@
               "type": "list\u003Cstring\u003E"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -158,10 +155,11 @@
                 "C0",
                 "C1"
               ],
-              "type": "list\u003Cobject\u003E"
+              "type": "list\u003Cstring\u003E"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -178,13 +176,17 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -196,12 +198,17 @@
       "actions": [
         {
           "module": "assert",
-          "action": "isTrue",
+          "action": "equals",
           "parameters": [
             {
-              "name": "Value",
-              "value": "%verifyResult.Success%",
+              "name": "Expected",
+              "value": true,
               "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%verifyResult.Success%",
+              "type": "object"
             },
             {
               "name": "Message",
@@ -209,20 +216,18 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Signing/CustomContracts/SigningCustomContracts.test.goal",
-  "prPath": "/Tests/Signing/CustomContracts/.build/signingcustomcontracts.test.pr",
+  "path": "/SigningCustomContracts.test.goal",
+  "prPath": "/.build/signingcustomcontracts.test.pr",
   "hash": "101bf6af9ada83955301485d3735405d1c5b454422f1b27e656a79d4e98d48b0",
   "builderVersion": null,
   "isSetup": false,

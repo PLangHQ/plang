@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Writes testdata.txt, calls ReadCached twice to verify cache hit returns the first cached value even after the file changes, then deletes the file.",
+  "description": "Writes testdata.txt, calls ReadCached twice to verify cached file.read returns the original first-value even after the file is modified, then asserts and cleans up by deleting the file.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -54,13 +52,11 @@
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -85,13 +81,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -116,13 +110,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -145,13 +137,11 @@
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -181,13 +171,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -217,20 +205,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Cache/Basic/Cache.test.goal",
-  "prPath": "/Tests/Cache/Basic/.build/cache.test.pr",
+  "path": "/Cache.test.goal",
+  "prPath": "/.build/cache.test.pr",
   "hash": "7fabc2e1527462b1fec7568c496fe745b6de786b0d5eab208a8ffa3d7ab22f16",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Greet",
-  "description": "Sets %greeting% to a string value \u0027hello %name%\u0027.",
+  "description": "Sets %greeting% to a greeting string using the provided %name% variable.",
   "comment": null,
   "steps": [
     {
@@ -23,27 +23,20 @@
               "name": "Value",
               "value": "hello %name%",
               "type": "string"
-            },
-            {
-              "name": "Type",
-              "value": "string",
-              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/GoalCall/Basic/Greet.goal",
-  "prPath": "/Tests/GoalCall/Basic/.build/greet.pr",
+  "path": "/Greet.goal",
+  "prPath": "/.build/greet.pr",
   "hash": "72898260a2b952d69739148b4726df3957311adb7aa7e77b2130a90faf8423cf",
   "builderVersion": null,
   "isSetup": false,

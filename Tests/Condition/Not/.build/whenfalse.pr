@@ -1,6 +1,6 @@
 {
   "name": "WhenFalse",
-  "description": "WhenFalse step sets %result% to \u0022negated\u0022 using variable.set.",
+  "description": "WhenFalse step sets %result% to the string \u0022negated\u0022 (the \u003C= null part is treated as the condition context, but no explicit condition action is provided in the step text).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Not/WhenFalse.goal",
-  "prPath": "/Tests/Condition/Not/.build/whenfalse.pr",
+  "path": "/WhenFalse.goal",
+  "prPath": "/.build/whenfalse.pr",
   "hash": "04427d0c9df712277476d5458f5462b724ffe2a212e88b0db99e6edb0d710010",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "WhenGTE",
-  "description": "Maps the step \u0027WhenGTE\u0027 to a variable assignment setting %result% to the string \u0027gte\u0027.",
+  "description": "Sets %result% to the string \u0022gte\u0022.",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/GTE/WhenGTE.goal",
-  "prPath": "/Tests/Condition/GTE/.build/whengte.pr",
+  "path": "/WhenGTE.goal",
+  "prPath": "/.build/whengte.pr",
   "hash": "beb3790989e3cd356f51555827b10c86bff35ea07dcd4df208b06eddb0f787aa",
   "builderVersion": null,
   "isSetup": false,

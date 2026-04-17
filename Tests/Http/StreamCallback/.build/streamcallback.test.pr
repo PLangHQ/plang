@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Fetches a streaming HTTP response, invokes ProcessChunk on stream events, then writes \u0027Streaming complete\u0027.",
+  "description": "Fetches a streaming URL, processes each streamed chunk via ProcessChunk callback, then outputs a completion message.",
   "comment": null,
   "steps": [
     {
@@ -25,36 +25,43 @@
               "type": "string"
             },
             {
-              "name": "Body",
-              "value": null,
-              "type": "object?"
-            },
-            {
-              "name": "Headers",
-              "value": null,
-              "type": "dictionary?"
-            },
-            {
-              "name": "Unsigned",
-              "value": true,
-              "type": "bool"
-            },
-            {
               "name": "OnStream",
               "value": {
-                "name": "ProcessChunk",
-                "parameters": []
+                "Name": "ProcessChunk",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
-              "type": "goal.call?"
+              "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "contenttype",
+              "value": "application/json",
+              "type": "string"
+            },
+            {
+              "name": "encoding",
+              "value": "utf-8",
+              "type": "string"
+            },
+            {
+              "name": "timeoutinsec",
+              "value": 30,
+              "type": "int"
+            },
+            {
+              "name": "unsigned",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -79,20 +86,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Http/StreamCallback/StreamCallback.test.goal",
-  "prPath": "/Tests/Http/StreamCallback/.build/streamcallback.test.pr",
+  "path": "/StreamCallback.test.goal",
+  "prPath": "/.build/streamcallback.test.pr",
   "hash": "5c4c5a3d5158ab94c5bf346b7099b09600511a1d3781802d465ec12193d9a0f8",
   "builderVersion": null,
   "isSetup": false,

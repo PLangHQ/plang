@@ -1,84 +1,33 @@
 {
   "name": "ValidateBuildResponse",
-  "description": "Validates a single step from the LLM response: checks for empty actions, throws an error if missing, then validates the provided actions via builder.validate.",
+  "description": "Validates the LLM build response — step count matches and each step has actions.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "if %stepResults.steps.Count% is not %goal.Steps.Count%, throw error \u0027LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with \u0027- \u0027. Return exactly one result per goal step.\u0027",
+      "text": "if %stepResults.steps.Count% is not %goal.Steps.Count%, throw error 'LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step.'",
       "lineNumber": 3,
       "indent": 0,
-      "comment": "Validates the LLM build response",
+      "comment": null,
       "actions": [
         {
           "module": "condition",
           "action": "if",
           "parameters": [
-            {
-              "name": "Left",
-              "value": "%stepResults.steps.Count%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": "!=",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": "%goal.Steps.Count%",
-              "type": "object"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": 1,
-              "type": "int"
-            }
-          ],
-          "defaults": null
+            { "name": "Left", "value": "%stepResults.steps.Count%", "type": "object" },
+            { "name": "Operator", "value": "!=", "type": "string" },
+            { "name": "Right", "value": "%goal.Steps.Count%", "type": "object" },
+            { "name": "Negate", "value": false, "type": "bool" }
+          ]
         },
         {
           "module": "error",
           "action": "throw",
           "parameters": [
-            {
-              "name": "Message",
-              "value": "LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with \u0027- \u0027. Return exactly one result per goal step.",
-              "type": "tstring"
-            },
-            {
-              "name": "StatusCode",
-              "value": 500,
-              "type": "int"
-            }
-          ],
-          "defaults": null
+            { "name": "Message", "value": "LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step.", "type": "tstring" }
+          ]
         }
       ],
-      "intent": null,
-      "onError": {
-        "goal": {
-          "name": "call",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": 0,
-        "retryOverMs": null,
-        "order": 0,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -92,52 +41,25 @@
           "module": "loop",
           "action": "foreach",
           "parameters": [
-            {
-              "name": "Collection",
-              "value": "%stepResults.steps%",
-              "type": "object"
-            },
-            {
-              "name": "ItemName",
-              "value": "step",
-              "type": "string"
-            }
-          ],
-          "defaults": null
+            { "name": "Collection", "value": "%stepResults.steps%", "type": "object" },
+            { "name": "ItemName", "value": "step", "type": "string" }
+          ]
         },
         {
           "module": "goal",
           "action": "call",
           "parameters": [
-            {
-              "name": "GoalName",
-              "value": {
-                "name": "ValidateStep",
-                "parameters": [
-                  {
-                    "name": "item",
-                    "value": "%step%",
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "goal.call"
-            }
-          ],
-          "defaults": null
+            { "name": "GoalName", "value": { "name": "ValidateStep" }, "type": "goal.call" }
+          ]
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [
     {
       "name": "ValidateStep",
-      "description": null,
+      "description": "Validates a single step from the LLM response.",
       "comment": null,
       "steps": [
         {
@@ -145,75 +67,36 @@
           "text": "if %step.actions% is empty",
           "lineNumber": 8,
           "indent": 0,
-          "comment": "Validates a single step from the LLM response",
+          "comment": null,
           "actions": [
             {
               "module": "condition",
               "action": "if",
               "parameters": [
-                {
-                  "name": "Left",
-                  "value": "%step.actions%",
-                  "type": "object"
-                },
-                {
-                  "name": "Operator",
-                  "value": "isempty",
-                  "type": "string"
-                },
-                {
-                  "name": "Right",
-                  "value": null,
-                  "type": "object?"
-                }
-              ],
-              "defaults": null
+                { "name": "Left", "value": "%step.actions%", "type": "object" },
+                { "name": "Operator", "value": "isempty", "type": "string" },
+                { "name": "Right", "value": "%step.actions%", "type": "object" },
+                { "name": "Negate", "value": false, "type": "bool" }
+              ]
             }
           ],
-          "intent": null,
-          "onError": null,
-          "cache": null,
-          "timeout": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "throw error \u0027Step at index %step.index% has no actions. Every step must include actions with module and action filled in.\u0027",
+          "text": "throw error 'Step at index %step.index% has no actions. Every step must include actions with module and action filled in.'",
           "lineNumber": 9,
-          "indent": 1,
+          "indent": 4,
           "comment": null,
           "actions": [
             {
               "module": "error",
               "action": "throw",
               "parameters": [
-                {
-                  "name": "Message",
-                  "value": "Step at index %step.index% has no actions. Every step must include actions with module and action filled in.",
-                  "type": "tstring"
-                },
-                {
-                  "name": "StatusCode",
-                  "value": 500,
-                  "type": "int"
-                }
-              ],
-              "defaults": null
+                { "name": "Message", "value": "Step at index %step.index% has no actions. Every step must include actions with module and action filled in.", "type": "tstring" }
+              ]
             }
           ],
-          "intent": null,
-          "onError": {
-            "goal": null,
-            "retryCount": null,
-            "retryOverMs": null,
-            "order": null,
-            "ignoreError": false,
-            "message": null,
-            "statusCode": null,
-            "key": null
-          },
-          "cache": null,
-          "timeout": null,
           "waitForExecution": true
         },
         {
@@ -227,28 +110,18 @@
               "module": "builder",
               "action": "validate",
               "parameters": [
-                {
-                  "name": "Actions",
-                  "value": "%step.actions%",
-                  "type": "object"
-                }
-              ],
-              "defaults": null
+                { "name": "Actions", "value": "%step.actions%", "type": "object" }
+              ]
             }
           ],
-          "intent": null,
-          "onError": null,
-          "cache": null,
-          "timeout": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
-      "visibility": 0,
+      "visibility": 1,
       "path": "/system/builder/ValidateBuildResponse.goal",
       "prPath": "/system/builder/.build/validatebuildresponse.pr",
-      "hash": "f728f47131159e85a55007fb9c3503a33fb33a60c9d733080becb2033e732210",
-      "builderVersion": null,
+      "builderVersion": "0.2.2",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -259,8 +132,7 @@
   "visibility": 1,
   "path": "/system/builder/ValidateBuildResponse.goal",
   "prPath": "/system/builder/.build/validatebuildresponse.pr",
-  "hash": "9d341a6b102e19a53178f42bfb7ffed210702daaaafceb264ad752e1d3fef63d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

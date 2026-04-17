@@ -1,6 +1,6 @@
 {
   "name": "BareRetryGoal",
-  "description": "BareRetryGoal: increments %bareRetryAttempts% and stores the result, then throws an error that always fails.",
+  "description": "BareRetryGoal increments %bareRetryAttempts%, writes it back, then throws an error that always fails.",
   "comment": null,
   "steps": [
     {
@@ -25,7 +25,8 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -42,13 +43,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -66,27 +65,20 @@
               "name": "Message",
               "value": "always fails",
               "type": "string"
-            },
-            {
-              "name": "StatusCode",
-              "value": 500,
-              "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/RetryOnly/BareRetryGoal.goal",
-  "prPath": "/Tests/Error/RetryOnly/.build/bareretrygoal.pr",
+  "path": "/BareRetryGoal.goal",
+  "prPath": "/.build/bareretrygoal.pr",
   "hash": "a14e6258269311dacfa378adeede9211601390c49ba1730b9d410840b5c59476",
   "builderVersion": null,
   "isSetup": false,

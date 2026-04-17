@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity (ignoring errors), creates it as default, exports it to %exported% (capturing the export result), asserts the exported value is not null, then archives it again.",
+  "description": "Archives an identity, recreates it as default, exports it to %exported%, asserts the export is not null, then archives it again. The first archive step ignores errors.",
   "comment": null,
   "steps": [
     {
@@ -25,22 +25,25 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "IgnoreError",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -65,13 +68,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -91,7 +92,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -108,13 +110,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -134,13 +134,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -165,20 +163,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Identity/Export/IdentityExport.test.goal",
-  "prPath": "/Tests/Identity/Export/.build/identityexport.test.pr",
+  "path": "/IdentityExport.test.goal",
+  "prPath": "/.build/identityexport.test.pr",
   "hash": "3771ce1ad11b8481a981e672b30e3fd6f5a52a2f007f4a1845d640674c9a2636",
   "builderVersion": null,
   "isSetup": false,

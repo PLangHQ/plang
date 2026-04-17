@@ -1,6 +1,6 @@
 {
   "name": "WhenFalse",
-  "description": "WhenFalse step sets %falseResult% to the string \u0022no\u0022 using variable.set.",
+  "description": "WhenFalse step sets %falseResult% to \u0022no\u0022 (the step text includes \u0022\u003C= null\u0022 but the closest supported mapping is a direct variable.set).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Compound/WhenFalse.goal",
-  "prPath": "/Tests/Condition/Compound/.build/whenfalse.pr",
+  "path": "/WhenFalse.goal",
+  "prPath": "/.build/whenfalse.pr",
   "hash": "7c617b7b5fbe2dcd7405ecf9e67a688c9149e29fd43e9a15425794ded6050900",
   "builderVersion": null,
   "isSetup": false,

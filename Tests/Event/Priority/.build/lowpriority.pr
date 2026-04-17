@@ -1,6 +1,6 @@
 {
   "name": "LowPriority",
-  "description": "Sets %order% to the string \u0027%order%,low\u0027 using variable.set.",
+  "description": "Sets %order% to the string \u0022%order%,low\u0022 (the \u003C= null part is treated as part of the step text, but no conditional/error modifier is available for it in the engine).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/Priority/LowPriority.goal",
-  "prPath": "/Tests/Event/Priority/.build/lowpriority.pr",
+  "path": "/LowPriority.goal",
+  "prPath": "/.build/lowpriority.pr",
   "hash": "4eb64df1d668cf4ee3e39d7bea9e3e0e7915394eceb4ad3cfbde02f8ff6b69f0",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets nested object %deep% and list %list%, then asserts expected nested values.",
+  "description": "Sets a nested object into %deep%, asserts nested paths are not null and match expected value, then sets a list of objects into %list% and asserts specific indexed nested values.",
   "comment": null,
   "steps": [
     {
@@ -35,13 +35,11 @@
               "type": "json"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -62,17 +60,15 @@
             },
             {
               "name": "Message",
-              "value": "",
-              "type": "string"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -94,21 +90,19 @@
             {
               "name": "Actual",
               "value": "%deep.a.b.c.d.e%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "",
-              "type": "string"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -151,13 +145,11 @@
               "type": "json"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -179,21 +171,19 @@
             {
               "name": "Actual",
               "value": "%list[0].items[0].val%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "",
-              "type": "string"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -215,21 +205,19 @@
             {
               "name": "Actual",
               "value": "%list[0].items[1].val%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "",
-              "type": "string"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -251,28 +239,26 @@
             {
               "name": "Actual",
               "value": "%list[1].items[0].val%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "",
-              "type": "string"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/DeepNavigation/DeepNavigation.test.goal",
-  "prPath": "/Tests/DeepNavigation/.build/deepnavigation.test.pr",
+  "path": "/DeepNavigation.test.goal",
+  "prPath": "/.build/deepnavigation.test.pr",
   "hash": "d382568b069b94aa56dc3dee866fdbd6d6d532899b5b9c65d23a5a95d8821844",
   "builderVersion": null,
   "isSetup": false,

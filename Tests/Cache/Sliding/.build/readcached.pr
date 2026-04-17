@@ -1,6 +1,6 @@
 {
   "name": "ReadCached",
-  "description": "Reads cacheslide.txt with sliding cache for 60 seconds and writes the result to %cachedValue%.",
+  "description": "Reads cacheslide.txt with a 60-second cache window and writes the result into %cachedValue%.",
   "comment": null,
   "steps": [
     {
@@ -25,7 +25,32 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "cache",
+              "action": "wrap",
+              "parameters": [
+                {
+                  "name": "DurationMs",
+                  "value": 60000,
+                  "type": "long"
+                },
+                {
+                  "name": "Sliding",
+                  "value": false,
+                  "type": "bool"
+                },
+                {
+                  "name": "Key",
+                  "value": null,
+                  "type": "string?"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         },
         {
           "module": "variable",
@@ -42,25 +67,18 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": {
-        "durationMs": 60000,
-        "sliding": true,
-        "key": null,
-        "location": null
-      },
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Cache/Sliding/ReadCached.goal",
-  "prPath": "/Tests/Cache/Sliding/.build/readcached.pr",
+  "path": "/ReadCached.goal",
+  "prPath": "/.build/readcached.pr",
   "hash": "a42f6e6232c2cd7c67fa24f0938f74634d8cc0e4552c9b7a94d54e1cd2563268",
   "builderVersion": null,
   "isSetup": false,

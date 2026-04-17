@@ -20,20 +20,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Ordering/FailOnce.goal",
-  "prPath": "/Tests/Error/Ordering/.build/failonce.pr",
+  "path": "/FailOnce.goal",
+  "prPath": "/.build/failonce.pr",
   "hash": "f1648733b8656221b79a27895b2aaed27dd6586ca475761244b73193182e4865",
   "builderVersion": null,
   "isSetup": false,

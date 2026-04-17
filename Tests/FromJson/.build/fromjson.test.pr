@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Parse JSON strings into %obj% and %arr% variables, then assert nested fields and array elements match expected values.",
+  "description": "Parses two JSON literals into %obj% and %arr%, then asserts expected fields/array elements and nested values.",
   "comment": null,
   "steps": [
     {
@@ -33,21 +33,20 @@
                   "data": null
                 }
               },
-              "type": "json"
-            },
-            {
-              "name": "Type",
-              "value": "json",
-              "type": "string"
+              "type": "jsonobject"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -69,16 +68,19 @@
             {
               "name": "Actual",
               "value": "%obj.name%",
-              "type": "string"
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -100,21 +102,19 @@
             {
               "name": "Actual",
               "value": "%obj.values[0]%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "Assert %obj.values[0]% equals 1",
-              "type": "tstring"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -136,21 +136,19 @@
             {
               "name": "Actual",
               "value": "%obj.values[2]%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "Assert %obj.values[2]% equals 3",
-              "type": "tstring"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -167,21 +165,19 @@
             {
               "name": "Value",
               "value": "%obj.nested.flag%",
-              "type": "bool"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "Expected %obj.nested.flag% to be true",
-              "type": "tstring"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -210,21 +206,20 @@
                   "id": 2
                 }
               ],
-              "type": "json"
-            },
-            {
-              "name": "Type",
-              "value": "json[]",
-              "type": "string"
+              "type": "json[]"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -246,16 +241,19 @@
             {
               "name": "Actual",
               "value": "%arr[0].id%",
-              "type": "int"
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -277,28 +275,26 @@
             {
               "name": "Actual",
               "value": "%arr[1].id%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "Assert %arr[1].id% equals 2",
-              "type": "tstring"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/FromJson/FromJson.test.goal",
-  "prPath": "/Tests/FromJson/.build/fromjson.test.pr",
+  "path": "/FromJson.test.goal",
+  "prPath": "/.build/fromjson.test.pr",
   "hash": "540d36f1967a04f469ee86b23b670503759d2a9e035b2b8c9154fef7f45e8ebe",
   "builderVersion": null,
   "isSetup": false,

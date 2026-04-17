@@ -25,20 +25,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/Basic/TestGoal.goal",
-  "prPath": "/Tests/Event/Basic/.build/testgoal.pr",
+  "path": "/TestGoal.goal",
+  "prPath": "/.build/testgoal.pr",
   "hash": "5d8285e6d5909cd9d1faa033eba7f6956cce188055581b6635546f88cf23de06",
   "builderVersion": null,
   "isSetup": false,

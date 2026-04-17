@@ -1262,4 +1262,106 @@ public class DynamicDataTests
 
         await Assert.That(dov.Value).IsEqualTo(now);
     }
+
+    // --- IsVariable tests ---
+
+    [Test]
+    public async Task IsVariable_StandardVariable_ReturnsTrue()
+    {
+        var d = new Data("x", "%var%");
+        await Assert.That(d.IsVariable).IsTrue();
+    }
+
+    [Test]
+    public async Task IsVariable_ShortName_ReturnsTrue()
+    {
+        var d = new Data("x", "%v%");
+        await Assert.That(d.IsVariable).IsTrue();
+    }
+
+    [Test]
+    public async Task IsVariable_EmptyPercents_ReturnsFalse()
+    {
+        var d = new Data("x", "%%");
+        await Assert.That(d.IsVariable).IsFalse();
+    }
+
+    [Test]
+    public async Task IsVariable_EmbeddedVariable_ReturnsFalse()
+    {
+        var d = new Data("x", "hello %var%");
+        await Assert.That(d.IsVariable).IsFalse();
+    }
+
+    [Test]
+    public async Task IsVariable_VariableWithTrailing_ReturnsFalse()
+    {
+        var d = new Data("x", "%var% + 1");
+        await Assert.That(d.IsVariable).IsFalse();
+    }
+
+    [Test]
+    public async Task IsVariable_NonStringValue_ReturnsFalse()
+    {
+        var d = new Data("x", 42);
+        await Assert.That(d.IsVariable).IsFalse();
+    }
+
+    [Test]
+    public async Task IsVariable_NullValue_ReturnsFalse()
+    {
+        var d = new Data("x");
+        await Assert.That(d.IsVariable).IsFalse();
+    }
+
+    // --- HasVariableReference tests ---
+
+    [Test]
+    public async Task HasVariableReference_EmbeddedVariable_ReturnsTrue()
+    {
+        var d = new Data("x", "hello %name%");
+        await Assert.That(d.HasVariableReference).IsTrue();
+    }
+
+    [Test]
+    public async Task HasVariableReference_MultipleVariables_ReturnsTrue()
+    {
+        var d = new Data("x", "%a% + %b%");
+        await Assert.That(d.HasVariableReference).IsTrue();
+    }
+
+    [Test]
+    public async Task HasVariableReference_SingleVariable_ReturnsTrue()
+    {
+        var d = new Data("x", "%var%");
+        await Assert.That(d.HasVariableReference).IsTrue();
+    }
+
+    [Test]
+    public async Task HasVariableReference_NoVariables_ReturnsFalse()
+    {
+        var d = new Data("x", "no vars");
+        await Assert.That(d.HasVariableReference).IsFalse();
+    }
+
+    [Test]
+    public async Task HasVariableReference_EmptyPercents_ReturnsFalse()
+    {
+        var d = new Data("x", "%%");
+        await Assert.That(d.HasVariableReference).IsFalse();
+    }
+
+    [Test]
+    public async Task HasVariableReference_NonStringValue_ReturnsFalse()
+    {
+        var d = new Data("x", 42);
+        await Assert.That(d.HasVariableReference).IsFalse();
+    }
+
+    [Test]
+    public async Task HasVariableReference_NullValue_ReturnsFalse()
+    {
+        var d = new Data("x");
+        await Assert.That(d.HasVariableReference).IsFalse();
+    }
 }

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Compiles the provided Start goal into engine actions. Note: the goal text indicates a known behavior about cache keys using literal step text; this compilation does not add/modify caching because no cache modifiers are present in the steps.",
+  "description": "Creates two dynamic cache-keyed files, reads them via ReadDynamic, asserts both results equal content1 (demonstrating the cache-key bug), then deletes both files.",
   "comment": null,
   "steps": [
     {
@@ -16,22 +16,20 @@
           "parameters": [
             {
               "name": "Path",
-              "value": "dynkey1.txt",
+              "value": "%path%/dynkey1.txt",
               "type": "path"
             },
             {
               "name": "Value",
               "value": "content1",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -47,22 +45,20 @@
           "parameters": [
             {
               "name": "Path",
-              "value": "dynkey2.txt",
+              "value": "%path%/dynkey2.txt",
               "type": "path"
             },
             {
               "name": "Value",
               "value": "content2",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -84,16 +80,19 @@
             {
               "name": "Value",
               "value": "dynkey1.txt",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "string",
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -116,13 +115,11 @@
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -144,16 +141,14 @@
             {
               "name": "Value",
               "value": "%dynContent%",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -175,16 +170,19 @@
             {
               "name": "Value",
               "value": "dynkey2.txt",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "string",
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -207,13 +205,11 @@
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -235,16 +231,14 @@
             {
               "name": "Value",
               "value": "%dynContent%",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -261,21 +255,19 @@
             {
               "name": "Expected",
               "value": "content1",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Actual",
               "value": "%result1%",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -292,21 +284,19 @@
             {
               "name": "Expected",
               "value": "content1",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Actual",
               "value": "%result2%",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -322,7 +312,7 @@
           "parameters": [
             {
               "name": "Path",
-              "value": "dynkey1.txt",
+              "value": "%path%/dynkey1.txt",
               "type": "path"
             },
             {
@@ -336,13 +326,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -358,7 +346,7 @@
           "parameters": [
             {
               "name": "Path",
-              "value": "dynkey2.txt",
+              "value": "%path%/dynkey2.txt",
               "type": "path"
             },
             {
@@ -372,20 +360,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Cache/DynamicKey/CacheDynamicKey.test.goal",
-  "prPath": "/Tests/Cache/DynamicKey/.build/cachedynamickey.test.pr",
+  "path": "/CacheDynamicKey.test.goal",
+  "prPath": "/.build/cachedynamickey.test.pr",
   "hash": "13f312f74552bfeb9448e45b2104ffac76a37407485677b97967d9971d05669f",
   "builderVersion": null,
   "isSetup": false,

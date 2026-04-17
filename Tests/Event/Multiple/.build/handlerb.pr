@@ -1,6 +1,6 @@
 {
   "name": "HandlerB",
-  "description": "Set %eventB% to true using variable.set.",
+  "description": "Sets %eventB% to true (the \u0027\u003C= null\u0027 appears to be a comment/annotation and is ignored by the engine mapping).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/Multiple/HandlerB.goal",
-  "prPath": "/Tests/Event/Multiple/.build/handlerb.pr",
+  "path": "/HandlerB.goal",
+  "prPath": "/.build/handlerb.pr",
   "hash": "8cfd03ac6a23b4f83837d3718155d2368047235954a80fae85e0c161db4fa210",
   "builderVersion": null,
   "isSetup": false,

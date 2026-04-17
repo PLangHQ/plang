@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name% to \u0022hello\u0022, writes it, and calls TestGoal, with event hooks before/after goal calls and before action variable.set calls.",
+  "description": "Maps the provided steps to engine actions: logging hooks (before/after goal calls and before variable.set), then sets %name%, writes it out, and calls TestGoal.",
   "comment": null,
   "steps": [
     {
@@ -16,55 +16,37 @@
           "parameters": [
             {
               "name": "Type",
-              "value": "BeforeGoal",
+              "value": "before-goal-call",
               "type": "string"
             },
             {
               "name": "GoalToCall",
               "value": {
-                "name": "LogBefore",
-                "parameters": []
+                "Name": "goal.call",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
               "type": "goal.call"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "GoalPattern",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "StepPattern",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "ActionPattern",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "IsRegex",
+              "name": "isregex",
               "value": false,
               "type": "bool"
             },
             {
-              "name": "Priority",
+              "name": "priority",
               "value": 0,
               "type": "int"
-            },
-            {
-              "name": "Actor",
-              "value": "system",
-              "type": "actor(system)"
             }
           ],
-          "defaults": null
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -80,55 +62,37 @@
           "parameters": [
             {
               "name": "Type",
-              "value": "AfterGoal",
+              "value": "after-goal-call",
               "type": "string"
             },
             {
               "name": "GoalToCall",
               "value": {
-                "name": "",
-                "parameters": []
+                "Name": "LogAfter",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
               "type": "goal.call"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "GoalPattern",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "StepPattern",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "ActionPattern",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "IsRegex",
+              "name": "isregex",
               "value": false,
               "type": "bool"
             },
             {
-              "name": "Priority",
+              "name": "priority",
               "value": 0,
               "type": "int"
-            },
-            {
-              "name": "Actor",
-              "value": "system",
-              "type": "actor(system)"
             }
           ],
-          "defaults": null
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -144,55 +108,42 @@
           "parameters": [
             {
               "name": "Type",
-              "value": "BeforeAction",
+              "value": "before-action",
               "type": "string"
             },
             {
               "name": "GoalToCall",
               "value": {
-                "name": "LogBefore",
-                "parameters": []
+                "Name": "OnVarSet",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": "/.build/onvarset.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "GoalPattern",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "StepPattern",
-              "value": "",
-              "type": "string"
             },
             {
               "name": "ActionPattern",
               "value": "variable.set",
               "type": "string"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "IsRegex",
+              "name": "isregex",
               "value": false,
               "type": "bool"
             },
             {
-              "name": "Priority",
+              "name": "priority",
               "value": 0,
               "type": "int"
-            },
-            {
-              "name": "Actor",
-              "value": "system",
-              "type": "actor(system)"
             }
           ],
-          "defaults": null
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -217,13 +168,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -248,13 +197,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -271,26 +218,23 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "TestGoal",
-                "parameters": []
+                "name": "TestGoal"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/Basic/Start.goal",
-  "prPath": "/Tests/Event/Basic/.build/start.pr",
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
   "hash": "3e69fbb0209fb1d32ebe764ba0ae2076f6017153ff2241ceaa16b3677511ce2a",
   "builderVersion": null,
   "isSetup": false,

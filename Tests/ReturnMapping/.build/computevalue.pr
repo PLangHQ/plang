@@ -1,6 +1,6 @@
 {
   "name": "ComputeValue",
-  "description": "Sets %answer% to integer value 42 using variable.set.",
+  "description": "Sets %answer% to 42.",
   "comment": null,
   "steps": [
     {
@@ -22,23 +22,26 @@
             {
               "name": "Value",
               "value": 42,
-              "type": "int"
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "int",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/ReturnMapping/ComputeValue.goal",
-  "prPath": "/Tests/ReturnMapping/.build/computevalue.pr",
+  "path": "/ComputeValue.goal",
+  "prPath": "/.build/computevalue.pr",
   "hash": "69ab581ca8309df99afd9d72cbe4b93526cec25221fecaecc8095955c3450d9b",
   "builderVersion": null,
   "isSetup": false,

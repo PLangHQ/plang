@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Writes two output messages (one default actor, one system actor), sets a flag variable, then asserts it equals true.",
+  "description": "Writes two output messages to different actors/channels, sets a boolean variable, then asserts it equals true.",
   "comment": null,
   "steps": [
     {
@@ -18,15 +18,18 @@
               "name": "Data",
               "value": "user message",
               "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -51,13 +54,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -80,15 +81,18 @@
               "name": "Value",
               "value": true,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -110,23 +114,26 @@
             {
               "name": "Actual",
               "value": "%actorTestDone%",
-              "type": "object"
+              "type": "actor"
+            },
+            {
+              "name": "Message",
+              "value": "",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Actor/Switch/ActorSwitch.test.goal",
-  "prPath": "/Tests/Actor/Switch/.build/actorswitch.test.pr",
+  "path": "/ActorSwitch.test.goal",
+  "prPath": "/.build/actorswitch.test.pr",
   "hash": "341e120d2c886661e3602c2062ceabe2dd64c7e228984740b5b4e1689d1588fd",
   "builderVersion": null,
   "isSetup": false,

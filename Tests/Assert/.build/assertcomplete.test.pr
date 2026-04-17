@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Compiles a sequence of assertions and variable assignments grouped by the provided comment blocks (/ equals, / isTrue, / isNotNull, / contains).",
+  "description": "Runs a sequence of assertions: equals, isTrue, isNotNull, and contains, using variable.set to create the referenced variables before asserting on them.",
   "comment": null,
   "steps": [
     {
@@ -17,21 +17,19 @@
             {
               "name": "Expected",
               "value": 5,
-              "type": "object"
+              "type": "int"
             },
             {
               "name": "Actual",
               "value": 5,
-              "type": "object"
+              "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -53,21 +51,14 @@
             {
               "name": "Value",
               "value": true,
-              "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "bool",
-              "type": "string"
+              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -87,13 +78,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -115,21 +104,14 @@
             {
               "name": "Value",
               "value": "something",
-              "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "string",
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -149,13 +131,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -177,21 +157,14 @@
             {
               "name": "Value",
               "value": "hello world",
-              "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "string",
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -216,20 +189,18 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Assert/AssertComplete.test.goal",
-  "prPath": "/Tests/Assert/.build/assertcomplete.test.pr",
+  "path": "/AssertComplete.test.goal",
+  "prPath": "/.build/assertcomplete.test.pr",
   "hash": "bea6710c86a16db718f96799ed865f72f4cf8de601602b18f56a499ca0251670",
   "builderVersion": null,
   "isSetup": false,

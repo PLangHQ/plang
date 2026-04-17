@@ -1,6 +1,6 @@
 {
   "name": "HighPriority",
-  "description": "Sets %order% to the string \u0022high\u0022 using variable.set.",
+  "description": "Sets the %order% variable to the string \u0022high\u0022.",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/Priority/HighPriority.goal",
-  "prPath": "/Tests/Event/Priority/.build/highpriority.pr",
+  "path": "/HighPriority.goal",
+  "prPath": "/.build/highpriority.pr",
   "hash": "356710fa291551e139dca85f61fe0574709c4ad054caa2a68c598610f011bca1",
   "builderVersion": null,
   "isSetup": false,

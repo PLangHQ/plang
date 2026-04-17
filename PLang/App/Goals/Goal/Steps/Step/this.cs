@@ -79,15 +79,6 @@ public sealed partial class @this : modules.IDataWrappable
     [Store, LlmBuilder, Debug, Default]
     public string? Intent { get; init; }
 
-    [Store, Debug, Default]
-    public ErrorHandler? OnError { get; set; }
-
-    [Store, Debug, Default]
-    public CacheSettings? Cache { get; set; }
-
-    [Store, Debug, Default]
-    public int? Timeout { get; init; }
-
     [Debug]
     public List<Info> Errors { get; init; } = new();
 
@@ -109,137 +100,38 @@ public sealed partial class @this : modules.IDataWrappable
     public Goals.Goal.@this? Goal { get; set; }
 
     /// <summary>
-    /// Runs this step: lifecycle events → actions (with timeout) → error handling.
-    /// Context travels as parameter — steps are shared objects, not per-request.
+    /// Runs this step: lifecycle events → actions.
+    /// Error handling, caching, and timeouts are per-action modifiers, not step-level.
     /// </summary>
     public async Task<Data.@this> RunAsync(Actor.Context.@this context)
     {
         context.Step = this;
         var lifecycle = context.LifecycleFor(this);
 
-        // BeforeStep events
         var beforeResult = await lifecycle.Before.Run(context, App.Events.EventType.BeforeStep);
         if (!beforeResult.Success) return beforeResult;
         if (beforeResult.Handled) return beforeResult;
 
-        // Execute actions (with timeout if configured)
-        Data.@this result;
+        Data.@this result = Data.@this.Ok();
         try
         {
-            result = Timeout is > 0
-                ? await RunActionsWithTimeout(context)
-                : await RunActions(context);
+            foreach (var action in Actions)
+            {
+                context.CancellationToken.ThrowIfCancellationRequested();
+                result = await action.RunAsync(context);
+                if (!result.Success || result.Handled) break;
+            }
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
         {
             result = Data.@this.FromError(new Errors.ServiceError(
                 ex.Message, "StepError", 400) { Exception = ex });
         }
 
-        // Error handling (retry, error goal, ignore)
-        if (!result.Success && OnError != null)
-            result = await HandleErrorAsync(result, context);
-
-        // AfterStep events
         var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterStep);
         if (!afterResult.Success) return afterResult;
 
         return result;
-    }
-
-    private async Task<Data.@this> RunActionsWithTimeout(Actor.Context.@this context)
-    {
-        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
-        timeoutCts.CancelAfter(Timeout!.Value);
-        context.PushCancellation(timeoutCts);
-        try
-        {
-            return await RunActions(context);
-        }
-        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested)
-        {
-            return Data.@this.FromError(new Errors.ServiceError(
-                $"Step timed out after {Timeout}ms: {Text}", "Timeout", 408));
-        }
-        finally
-        {
-            context.PopCancellation();
-        }
-    }
-
-    private async Task<Data.@this> RunActions(Actor.Context.@this context)
-    {
-        Data.@this result = Data.@this.Ok();
-        foreach (var action in Actions)
-        {
-            context.CancellationToken.ThrowIfCancellationRequested();
-            result = await action.RunAsync(context);
-            if (!result.Success || result.Handled) break;
-        }
-        return result;
-    }
-
-    private async Task<Data.@this> HandleErrorAsync(Data.@this failedResult, Actor.Context.@this context)
-    {
-        var handler = OnError!;
-
-        // Ignore — swallow error
-        if (handler.IgnoreError == true)
-            return Data.@this.Ok();
-
-        var app = context.App!;
-        var order = handler.Order ?? ErrorOrder.RetryFirst;
-
-        if (order == ErrorOrder.GoalFirst)
-        {
-            if (handler.Goal != null)
-            {
-                var goalResult = await CallErrorGoal(handler, failedResult, app, context);
-                if (goalResult.Success) return goalResult;
-            }
-            var retryResult = await Retry(handler, app, context);
-            if (retryResult != null && retryResult.Success) return retryResult;
-        }
-        else
-        {
-            var retryResult = await Retry(handler, app, context);
-            if (retryResult != null && retryResult.Success) return retryResult;
-            if (handler.Goal != null)
-            {
-                var goalResult = await CallErrorGoal(handler, failedResult, app, context);
-                if (goalResult.Success) return goalResult;
-            }
-        }
-
-        return failedResult;
-    }
-
-    private async Task<Data.@this?> Retry(ErrorHandler handler, App.@this app, Actor.Context.@this context)
-    {
-        if (handler.RetryCount == null || handler.RetryCount <= 0) return null;
-
-        var delayMs = handler.RetryOverMs != null && handler.RetryCount > 0
-            ? handler.RetryOverMs.Value / handler.RetryCount.Value
-            : 0;
-
-        for (int attempt = 0; attempt < handler.RetryCount; attempt++)
-        {
-            if (delayMs > 0) await Task.Delay(delayMs);
-
-            var result = await RunActions(context);
-            if (result.Success) return result;
-        }
-
-        return null;
-    }
-
-    private async Task<Data.@this> CallErrorGoal(ErrorHandler handler, Data.@this failedResult,
-        App.@this app, Actor.Context.@this context)
-    {
-        handler.Goal!.Parameters ??= new();
-        handler.Goal.Parameters.Add(new Data.@this("!error", failedResult.Error));
-        handler.Goal.Action ??= Actions.Count > 0 ? Actions[0] : null;
-        return await app.RunGoalAsync(handler.Goal, context);
     }
 
     /// <summary>
@@ -272,14 +164,20 @@ public sealed partial class @this : modules.IDataWrappable
                 Parameters = new List<Data.@this>(a.Parameters),
                 Defaults = a.Defaults != null ? new List<Data.@this>(a.Defaults) : null,
                 Errors = new List<Info>(a.Errors),
-                Warnings = new List<Info>(a.Warnings)
+                Warnings = new List<Info>(a.Warnings),
+                Modifiers = new ActionModifiers(a.Modifiers.Select(m => new Action
+                {
+                    Module = m.Module,
+                    ActionName = m.ActionName,
+                    Parameters = new List<Data.@this>(m.Parameters),
+                    Defaults = m.Defaults != null ? new List<Data.@this>(m.Defaults) : null,
+                    Errors = new List<Info>(m.Errors),
+                    Warnings = new List<Info>(m.Warnings)
+                }))
             })),
             WaitForExecution = WaitForExecution,
             Goal = Goal,
             Intent = Intent,
-            OnError = OnError,
-            Cache = Cache,
-            Timeout = Timeout,
             Errors = new List<Info>(Errors),
             Warnings = new List<Info>(Warnings)
         };
@@ -296,12 +194,6 @@ public sealed partial class @this : modules.IDataWrappable
             Actions.Clear();
             Actions.AddRange(from.Actions);
         }
-
-        if (from.Cache != null)
-            Cache = from.Cache;
-
-        if (from.OnError != null)
-            OnError = from.OnError;
 
         if (from.Errors.Count > 0)
         {

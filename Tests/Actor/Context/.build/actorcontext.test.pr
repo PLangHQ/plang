@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Validates required context variables are not null using assert checks.",
+  "description": "Asserts that required context variables (%!engine%, %!context%, %!memoryStack%) are not null by using assert.notEquals with Expected=null and Actual=\u003Cvariable\u003E.",
   "comment": null,
   "steps": [
     {
@@ -12,26 +12,29 @@
       "actions": [
         {
           "module": "assert",
-          "action": "isNotNull",
+          "action": "notEquals",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Expected",
+              "value": null,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
               "value": "%!engine%",
               "type": "object"
             },
             {
               "name": "Message",
-              "value": "engine is null",
+              "value": "Expected %!engine% to not be null",
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -43,26 +46,29 @@
       "actions": [
         {
           "module": "assert",
-          "action": "isNotNull",
+          "action": "notEquals",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Expected",
+              "value": null,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
               "value": "%!context%",
               "type": "object"
             },
             {
               "name": "Message",
-              "value": "context is null",
+              "value": "Expected %!context% to not be null",
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -74,33 +80,36 @@
       "actions": [
         {
           "module": "assert",
-          "action": "isNotNull",
+          "action": "notEquals",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Expected",
+              "value": null,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
               "value": "%!memoryStack%",
               "type": "object"
             },
             {
               "name": "Message",
-              "value": "memoryStack is null",
+              "value": "Expected %!memoryStack% to not be null",
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Actor/Context/ActorContext.test.goal",
-  "prPath": "/Tests/Actor/Context/.build/actorcontext.test.pr",
+  "path": "/ActorContext.test.goal",
+  "prPath": "/.build/actorcontext.test.pr",
   "hash": "fce9c249a5caee614bf2e847ba967347f6f2d76bd4cf0c977abc81772459550b",
   "builderVersion": null,
   "isSetup": false,

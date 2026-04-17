@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %title%, renders page.html with explicit author parameter and writes output to %result%, then asserts %result% contains expected Title and Author strings.",
+  "description": "Sets %title%, renders page.html with explicit author parameter and writes output to %result%, then asserts %result% contains expected strings.",
   "comment": null,
   "steps": [
     {
@@ -23,20 +23,13 @@
               "name": "Value",
               "value": "My Page",
               "type": "string"
-            },
-            {
-              "name": "Type",
-              "value": "string",
-              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -62,7 +55,7 @@
                   "author": "Ingi"
                 }
               ],
-              "type": "list\u003Cobject\u003E"
+              "type": "list"
             },
             {
               "name": "IsFile",
@@ -70,7 +63,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -87,13 +81,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -115,21 +107,14 @@
             {
               "name": "Container",
               "value": "Title: My Page",
-              "type": "string"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %result% to contain \u0027Title: My Page\u0027.",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -151,28 +136,21 @@
             {
               "name": "Container",
               "value": "Author: Ingi",
-              "type": "string"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %result% to contain \u0027Author: Ingi\u0027.",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Ui/RenderWithParams/RenderWithParams.test.goal",
-  "prPath": "/Tests/Ui/RenderWithParams/.build/renderwithparams.test.pr",
+  "path": "/RenderWithParams.test.goal",
+  "prPath": "/.build/renderwithparams.test.pr",
   "hash": "fd5f4292a59df89e78557a09e4d3b9eb657498f8eff94f7a748741cf33b9ec27",
   "builderVersion": null,
   "isSetup": false,

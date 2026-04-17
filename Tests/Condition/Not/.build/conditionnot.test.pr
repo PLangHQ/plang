@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %flag% to false, then uses condition.if with Negate=true to treat \u0027if not %flag%\u0027 as a true condition and calls WhenFalse. Finally asserts %result% equals \u0027negated\u0027.",
+  "description": "Sets %flag% to false, conditionally calls WhenFalse when NOT %flag% is true, then asserts %result% equals \u0027negated\u0027.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -64,20 +62,10 @@
               "name": "Negate",
               "value": true,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": {
-                "name": "call",
-                "description": "Conditional call WhenFalse",
-                "comment": "",
-                "visibility": "public",
-                "inputParameters": {}
-              },
-              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -92,13 +80,11 @@
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -125,23 +111,21 @@
             {
               "name": "Message",
               "value": "NOT should negate falsy to truthy",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Not/ConditionNot.test.goal",
-  "prPath": "/Tests/Condition/Not/.build/conditionnot.test.pr",
+  "path": "/ConditionNot.test.goal",
+  "prPath": "/.build/conditionnot.test.pr",
   "hash": "a7710ec1237c989fb1f6596ef87bf1e0552553ce70930fc5fa07832bf42e060a",
   "builderVersion": null,
   "isSetup": false,

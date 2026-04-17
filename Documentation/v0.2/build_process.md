@@ -136,9 +136,9 @@ One `.pr` file per `.goal` file. The root goal is the JSON root, sub-goals are i
 | `indent` | int | Indent level (0 = top, 1 = one level in, etc.) |
 | `comment` | string? | Comment from `/` line above this step |
 | `actions` | Action[] | One or more actions mapped by the LLM |
-| `onError` | OnError? | Error handling (retry, call goal, ignore) |
-| `cache` | Cache? | Caching configuration |
 | `waitForExecution` | bool | Whether to wait for completion (default true) |
+
+Error handling, caching, and timeouts are per-action — see the `modifiers` field on Action below.
 
 ### Action Properties
 
@@ -149,6 +149,7 @@ One `.pr` file per `.goal` file. The root goal is the JSON root, sub-goals are i
 | `parameters` | Parameter[]? | List of `{name, value, type}` matching the action's properties |
 | `return` | Return[]? | Variables to store results in: `[{name: "varName"}]` |
 | `defaults` | Default[]? | Default parameter values added during validation |
+| `modifiers` | Action[]? | Modifier actions (cache/timeout/error) folded around this action at runtime. Same shape as an action; grouped by the builder and pre-sorted by `[Modifier(Order)]`. |
 
 ### Parameter Properties
 
@@ -220,7 +221,7 @@ Most steps are fully built in pass 1. Pass 2 is the fallback.
 
 ### GoalsSave
 
-`GoalsSave` serializes the root goal (with sub-goals in `.Goals`) to the .pr path. One .pr file per .goal file.
+`GoalsSave` serializes the root goal (with sub-goals in `.Goals`) to the .pr path. One .pr file per .goal file. Before serialization, each step calls `step.Actions.GroupModifiers(app.Modules)` — this takes the flat LLM-produced action list and attaches every `[Modifier]` action onto the preceding executable action's `Modifiers` collection, sorted by `[Modifier(Order)]`. Runtime never sorts or classifies: the `.pr` file is already the execution plan.
 
 ## Runtime Loading
 

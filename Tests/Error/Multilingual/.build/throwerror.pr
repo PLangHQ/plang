@@ -1,6 +1,6 @@
 {
   "name": "ThrowError",
-  "description": "Throws an intentional error with the provided message.",
+  "description": "Throws an error with message \u0022intentional error\u0022 and null status code.",
   "comment": null,
   "steps": [
     {
@@ -18,22 +18,25 @@
               "name": "Message",
               "value": "intentional error",
               "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": null,
+              "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Multilingual/ThrowError.goal",
-  "prPath": "/Tests/Error/Multilingual/.build/throwerror.pr",
+  "path": "/ThrowError.goal",
+  "prPath": "/.build/throwerror.pr",
   "hash": "227b802a61ecde7ab3c5b00a247f6e6ba6695f0b2db6325dd8b538a69a2642c6",
   "builderVersion": null,
   "isSetup": false,

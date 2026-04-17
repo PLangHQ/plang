@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %x% to 2, evaluates %x% \u003E 100 with an else branch that calls WhenSmall when the condition is false, then asserts %result% equals \u0022small\u0022.",
+  "description": "Sets %x% to 2, checks if %x% \u003E 100; since false, calls WhenSmall (else branch). Then asserts %result% equals \u0022small\u0022.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -48,7 +46,7 @@
             {
               "name": "Left",
               "value": "%x%",
-              "type": "object"
+              "type": "int"
             },
             {
               "name": "Operator",
@@ -67,75 +65,12 @@
             },
             {
               "name": "Step",
-              "value": {
-                "name": "call-WhenBig",
-                "description": "",
-                "comment": "",
-                "visibility": "public",
-                "inputParameters": {}
-              },
-              "type": "this"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "name": "GoalName",
-              "value": {
-                "name": "WhenBig",
-                "parameters": []
-              },
-              "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "user",
-              "type": "actor(user|service|system)"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%x%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": "\u003E",
+              "value": "this",
               "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": 100,
-              "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": true,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": {
-                "name": "call-WhenSmall",
-                "description": "",
-                "comment": "",
-                "visibility": "public",
-                "inputParameters": {}
-              },
-              "type": "this"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -144,24 +79,25 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenSmall",
-                "parameters": []
+                "Name": "WhenBig",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
               "type": "goal.call"
             },
             {
               "name": "Actor",
-              "value": "user",
-              "type": "actor(user|service|system)"
+              "value": "this?(user|service|system)",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -188,23 +124,21 @@
             {
               "name": "Message",
               "value": "else branch should execute when condition is false",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/ElseBranch/ConditionElseBranch.test.goal",
-  "prPath": "/Tests/Condition/ElseBranch/.build/conditionelsebranch.test.pr",
+  "path": "/ConditionElseBranch.test.goal",
+  "prPath": "/.build/conditionelsebranch.test.pr",
   "hash": "1e47a3ea8ece27ced425e78c62abeb15ec688a4e4e4b3cef98ab293a43b3efa7",
   "builderVersion": null,
   "isSetup": false,

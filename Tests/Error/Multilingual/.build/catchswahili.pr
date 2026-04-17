@@ -1,6 +1,6 @@
 {
   "name": "CatchSwahili",
-  "description": "Sets the %caughtSwahili% variable to true.",
+  "description": "Sets %caughtSwahili% to true (the \u0027\u003C= null\u0027 is ignored as it does not map to any engine action parameter).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Multilingual/CatchSwahili.goal",
-  "prPath": "/Tests/Error/Multilingual/.build/catchswahili.pr",
+  "path": "/CatchSwahili.goal",
+  "prPath": "/.build/catchswahili.pr",
   "hash": "9b4b035307347296916d7c5b39b0a2c058d0ec06b33195186cbd8e4a8c1b2734",
   "builderVersion": null,
   "isSetup": false,

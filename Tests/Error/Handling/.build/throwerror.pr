@@ -1,6 +1,6 @@
 {
   "name": "ThrowError",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Throws an error with the provided message and a null payload.",
   "comment": null,
   "steps": [
     {
@@ -9,18 +9,34 @@
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "something went wrong",
+              "type": "tstring"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Error/Handling/ThrowError.goal",
-  "prPath": "/Tests/Runtime2/Error/Handling/.build/throwerror.pr",
+  "path": "/ThrowError.goal",
+  "prPath": "/.build/throwerror.pr",
   "hash": "760733522882f786b33a29656b13a929e3aabde1a27dbce83d60c95e0290a596",
   "builderVersion": null,
   "isSetup": false,

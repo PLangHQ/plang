@@ -1,6 +1,6 @@
 {
   "name": "InnerGoal",
-  "description": "InnerGoal sets variable %x% to the string \u0022modified\u0022 using variable.set.",
+  "description": "Sets %x% to the string \u0022modified\u0022 (the \u003C= null indicates no additional value/condition beyond the assignment).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Variable/Scoping/InnerGoal.goal",
-  "prPath": "/Tests/Variable/Scoping/.build/innergoal.pr",
+  "path": "/InnerGoal.goal",
+  "prPath": "/.build/innergoal.pr",
   "hash": "f825cd12443c1cd65525ad125c97678711c27853132279ce31186940caf5795e",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Compiles steps: set %x%, call InnerGoal, assert %x% modified; then add items to %items%, capture them via foreach calling CaptureItem, and assert captured contains both alpha and beta.",
+  "description": "Compiles steps that (1) verify a variable set in the caller is modified by an inner goal, and (2) verify list iteration and that a called goal can capture per-item effects back into a caller-visible variable.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -53,13 +51,11 @@
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -81,16 +77,14 @@
             {
               "name": "Actual",
               "value": "%x%",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -112,16 +106,19 @@
             {
               "name": "Value",
               "value": "alpha",
-              "type": "string"
+              "type": "object"
+            },
+            {
+              "name": "AtIndex",
+              "value": -1,
+              "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -143,16 +140,19 @@
             {
               "name": "Value",
               "value": "beta",
-              "type": "string"
+              "type": "object"
+            },
+            {
+              "name": "AtIndex",
+              "value": -1,
+              "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -177,13 +177,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -208,7 +206,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -229,13 +228,11 @@
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -251,22 +248,20 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "%captured%",
-              "type": "string"
+              "value": "alpha",
+              "type": "object"
             },
             {
               "name": "Container",
-              "value": "alpha",
-              "type": "string"
+              "value": "%captured%",
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -282,29 +277,27 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "%captured%",
-              "type": "string"
+              "value": "beta",
+              "type": "object"
             },
             {
               "name": "Container",
-              "value": "beta",
-              "type": "string"
+              "value": "%captured%",
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Variable/Scoping/VariableScoping.test.goal",
-  "prPath": "/Tests/Variable/Scoping/.build/variablescoping.test.pr",
+  "path": "/VariableScoping.test.goal",
+  "prPath": "/.build/variablescoping.test.pr",
   "hash": "c32737166653604c22d4d239baed09929cbc95e64c135139ad51b1e6a77288a5",
   "builderVersion": null,
   "isSetup": false,

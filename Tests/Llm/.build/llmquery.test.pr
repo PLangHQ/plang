@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Runs an LLM system\u002Buser query, writes the response to %result%, then asserts %result% is not null.",
+  "description": "Runs an LLM system\u002Buser query, writes the response to %result%, then asserts the result is not null.",
   "comment": null,
   "steps": [
     {
@@ -29,14 +29,10 @@
                 }
               ],
               "type": "list\u003Cllmmessage\u003E"
-            },
-            {
-              "name": "Cache",
-              "value": true,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -53,13 +49,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -79,20 +73,18 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Llm/LlmQuery.test.goal",
-  "prPath": "/Tests/Llm/.build/llmquery.test.pr",
+  "path": "/LlmQuery.test.goal",
+  "prPath": "/.build/llmquery.test.pr",
   "hash": "f11c540d089de04a68ed7e629c194f6d38f0885fc58e6044eca4d6ccb258f64b",
   "builderVersion": null,
   "isSetup": false,

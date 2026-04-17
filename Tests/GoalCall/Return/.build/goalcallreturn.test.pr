@@ -17,28 +17,14 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ComputeAnswer",
-                "parameters": []
+                "name": "ComputeAnswer"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 1,
-      "text": "assert %answer% is not null",
-      "lineNumber": 4,
-      "indent": 0,
-      "comment": null,
-      "actions": [
+          "defaults": null,
+          "modifiers": []
+        },
         {
           "module": "variable",
           "action": "set",
@@ -54,20 +40,47 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %answer% is not null",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%answer%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/GoalCall/Return/GoalCallReturn.test.goal",
-  "prPath": "/Tests/GoalCall/Return/.build/goalcallreturn.test.pr",
+  "path": "/GoalCallReturn.test.goal",
+  "prPath": "/.build/goalcallreturn.test.pr",
   "hash": "94a30b6d4f5165265be44710715f8d0ca7ff094e2f4ab1d33abd61d10bc2bb8b",
   "builderVersion": null,
   "isSetup": false,

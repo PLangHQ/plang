@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls sub/SubGoal and then asserts that %subResult% equals \u0022from sub\u0022.",
+  "description": "Calls sub/SubGoal, then asserts that %subResult% equals \u0022from sub\u0022.",
   "comment": null,
   "steps": [
     {
@@ -17,19 +17,16 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "sub/SubGoal",
-                "parameters": []
+                "name": "sub/SubGoal"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -52,22 +49,25 @@
               "name": "Actual",
               "value": "%subResult%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/GoalCall/Relative/GoalCallRelative.test.goal",
-  "prPath": "/Tests/GoalCall/Relative/.build/goalcallrelative.test.pr",
+  "path": "/GoalCallRelative.test.goal",
+  "prPath": "/.build/goalcallrelative.test.pr",
   "hash": "cb01eef210fee7de682ba2b2518a19d73b1aea2dc6f39fb6b7de168b0414c8b0",
   "builderVersion": null,
   "isSetup": false,

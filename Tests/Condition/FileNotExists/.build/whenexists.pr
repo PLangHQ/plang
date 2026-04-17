@@ -1,6 +1,6 @@
 {
   "name": "WhenExists",
-  "description": "WhenExists step sets %result% to the string \u0022exists\u0022 using variable.set.",
+  "description": "Sets %result% to the string \u0022exists\u0022 (the step text includes \u0022\u003C= null\u0022 but the engine action is a variable assignment).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/FileNotExists/WhenExists.goal",
-  "prPath": "/Tests/Condition/FileNotExists/.build/whenexists.pr",
+  "path": "/WhenExists.goal",
+  "prPath": "/.build/whenexists.pr",
   "hash": "06288c6029e1a4704f721e5d1c84cbdb25f97a6c9fc8ba8dde4833e738b8e4a4",
   "builderVersion": null,
   "isSetup": false,

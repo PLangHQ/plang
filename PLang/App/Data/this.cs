@@ -84,6 +84,7 @@ public sealed class Type
 public partial class @this
 {
     private object? _value;
+    private object? _rawValue; // preserved pre-resolution value for re-resolution
     private Func<object?>? _valueFactory;
     private Type? _type;
     private Actor.Context.@this? _context;
@@ -152,6 +153,21 @@ public partial class @this
     [JsonIgnore]
     public bool IsInitialized { get; private set; }
 
+    /// <summary>
+    /// True when the raw _value is a %variable% reference (starts and ends with %).
+    /// Used to skip build-time validation on values that resolve at runtime.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsVariable => _value is string s && s.StartsWith('%') && s.EndsWith('%') && s.Length > 2;
+
+    /// <summary>
+    /// True when the raw _value contains any %variable% reference anywhere.
+    /// IsVariable is "%name%" (the whole value IS a variable).
+    /// HasVariableReference is "%count% + 1", "hello %name%", etc. (contains one or more).
+    /// </summary>
+    [JsonIgnore]
+    public bool HasVariableReference => _value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, @"%[^%]+%");
+
     [JsonIgnore]
     public DateTime Created { get; }
 
@@ -191,14 +207,16 @@ public partial class @this
             if (NeedsResolution && _value != null && _context?.Variables != null
                 && (_value is System.Collections.IList || _value is System.Collections.IDictionary))
             {
-                NeedsResolution = false; // set before resolve to prevent concurrent double-resolution
-                _value = _context.Variables.ResolveDeep(_value);
+                // Preserve raw value so ResetResolution can re-resolve on subsequent calls.
+                _rawValue ??= _value;
+                _value = _context.Variables.ResolveDeep(_rawValue);
             }
             return _value;
         }
         set
         {
             _value = UnwrapJsonElement(value);
+            _rawValue = null; // new raw value — clear preserved copy
             _valueFactory = null;
             Updated = System.DateTime.UtcNow;
             IsInitialized = true;

@@ -1,6 +1,6 @@
 {
   "name": "TimedRetryGoal",
-  "description": "TimedRetryGoal: increments %timedRetryAttempts% by 1, stores it back, then throws an error \u0027timed fail\u0027.",
+  "description": "TimedRetryGoal increments %timedRetryAttempts% and then throws an error \u0027timed fail\u0027.",
   "comment": null,
   "steps": [
     {
@@ -17,15 +17,16 @@
             {
               "name": "A",
               "value": "%timedRetryAttempts%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "B",
               "value": 1,
-              "type": "long"
+              "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -42,13 +43,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -68,20 +67,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/RetryOnly/TimedRetryGoal.goal",
-  "prPath": "/Tests/Error/RetryOnly/.build/timedretrygoal.pr",
+  "path": "/TimedRetryGoal.goal",
+  "prPath": "/.build/timedretrygoal.pr",
   "hash": "c3682ca3c59a1d65c0fcf535415978b1d1d02bc7019282c388101c838ccf5612",
   "builderVersion": null,
   "isSetup": false,

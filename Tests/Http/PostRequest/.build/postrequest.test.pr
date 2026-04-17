@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets JSON body, POSTs to httpbin with unsigned request and stores response, then conditionally writes messages based on whether response is empty and whether response.StatusCode equals 200.",
+  "description": "Sets a JSON body, POSTs it to httpbin, writes the response if non-empty, then checks StatusCode equals 200 and writes a success message.",
   "comment": null,
   "steps": [
     {
@@ -28,13 +28,11 @@
               "type": "json"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,7 +54,7 @@
             {
               "name": "Method",
               "value": "POST",
-              "type": "httpmethod"
+              "type": "string"
             },
             {
               "name": "Body",
@@ -74,7 +72,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -91,13 +90,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -123,22 +120,20 @@
             },
             {
               "name": "Right",
-              "value": false,
-              "type": "bool"
+              "value": "",
+              "type": "string"
             },
             {
               "name": "Negate",
-              "value": false,
+              "value": true,
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -158,13 +153,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -192,20 +185,13 @@
               "name": "Right",
               "value": 200,
               "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -225,20 +211,18 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Http/PostRequest/PostRequest.test.goal",
-  "prPath": "/Tests/Http/PostRequest/.build/postrequest.test.pr",
+  "path": "/PostRequest.test.goal",
+  "prPath": "/.build/postrequest.test.pr",
   "hash": "298d57e541ec98d2f01de92eb72a3556d3f89683fa40cc83d6232a37786ff99b",
   "builderVersion": null,
   "isSetup": false,

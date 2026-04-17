@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Runs the same llm.query twice with caching enabled, writes results to %first% and %second%, then asserts both are not null.",
+  "description": "Runs the same llm.query twice with caching enabled, writes results to %first% and %second%, then asserts both are not null to validate cached retrieval.",
   "comment": null,
   "steps": [
     {
@@ -36,7 +36,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -53,13 +54,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -95,7 +94,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -112,13 +112,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -135,16 +133,14 @@
             {
               "name": "Value",
               "value": "%first%",
-              "type": "object"
+              "type": "object?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -161,23 +157,21 @@
             {
               "name": "Value",
               "value": "%second%",
-              "type": "object"
+              "type": "object?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Llm/LlmCache.test.goal",
-  "prPath": "/Tests/Llm/.build/llmcache.test.pr",
+  "path": "/LlmCache.test.goal",
+  "prPath": "/.build/llmcache.test.pr",
   "hash": "c6cd977022448f7eee0b74dd55759c005e87f335a40599b886bb96a81cc7bc4b",
   "builderVersion": null,
   "isSetup": false,

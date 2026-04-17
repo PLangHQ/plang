@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %y% to 3, checks if %y% \u003C 10, calls WhenLess if true, then asserts %result% equals \u0027less\u0027.",
+  "description": "Sets %y% to 3, checks if %y% \u003C 10, calls WhenLess when true, then asserts %result% equals \u0022less\u0022.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -59,9 +57,15 @@
               "name": "Right",
               "value": 10,
               "type": "int"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -70,19 +74,16 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenLess",
-                "parameters": []
+                "name": "WhenLess"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -109,23 +110,21 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for y \u003C 10",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/LessThan/ConditionLessThan.test.goal",
-  "prPath": "/Tests/Condition/LessThan/.build/conditionlessthan.test.pr",
+  "path": "/ConditionLessThan.test.goal",
+  "prPath": "/.build/conditionlessthan.test.pr",
   "hash": "b4b4a4c64a60145503c6c66e5743d1be6e41e579c8b2f9bd02c39a39f16bd75c",
   "builderVersion": null,
   "isSetup": false,

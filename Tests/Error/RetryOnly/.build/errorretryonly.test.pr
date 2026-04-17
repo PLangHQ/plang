@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Compiles a test flow that verifies bare retry exhaustion propagates to the caller, and that timed retry (retry over milliseconds) also propagates after retries are exhausted.",
+  "description": "Sets up state for bare retry and timed retry scenarios, calls the respective goals with on-error retry policies, then asserts that exhaustion propagates to the caller and that attempt counts match expectations.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,13 +54,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -79,34 +75,42 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "BareRetryGoal",
-                "parameters": []
+                "name": "BareRetryGoal"
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "RetryCount",
+                  "value": 2,
+                  "type": "int"
+                },
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "BareRetryCatcher"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "BareRetryCatcher",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": 2,
-        "retryOverMs": null,
-        "order": 1,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -131,13 +135,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -167,13 +169,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -198,13 +198,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -229,13 +227,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -252,34 +248,85 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "TimedRetryGoal",
-                "parameters": []
+                "Name": "TimedRetryGoal",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "RetryCount",
+                  "value": 2,
+                  "type": "int"
+                },
+                {
+                  "name": "RetryOverMs",
+                  "value": 500,
+                  "type": "int"
+                },
+                {
+                  "name": "Goal",
+                  "value": {
+                    "Name": "TimedRetryGoal",
+                    "Description": null,
+                    "Parallel": false,
+                    "Parameters": null,
+                    "PrPath": null
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "Name": "TimedRetryCatcher",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": "/.build/timedretrycatcher.pr"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "TimedRetryCatcher",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": 2,
-        "retryOverMs": 500,
-        "order": 1,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -304,13 +351,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -340,20 +385,18 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/RetryOnly/ErrorRetryOnly.test.goal",
-  "prPath": "/Tests/Error/RetryOnly/.build/errorretryonly.test.pr",
+  "path": "/ErrorRetryOnly.test.goal",
+  "prPath": "/.build/errorretryonly.test.pr",
   "hash": "96a26b749f43cc186e430e26b98692236ef09efc220d4930e9241da1aa50525d",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %noSig% to true (null comparison noted in source, but compiler maps to the explicit assignment).",
+  "description": "Sets %noSig% to true (null comparison implied by step text).",
   "comment": null,
   "steps": [
     {
@@ -27,13 +27,11 @@
               "type": "json"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -57,31 +55,30 @@
               "value": [
                 "C0"
               ],
-              "type": "list\u003Cstring\u003E"
+              "type": "list"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "HandleNoSig"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "HandleNoSig",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": 0,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -106,13 +103,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
@@ -144,20 +139,18 @@
                   "type": "bool"
                 }
               ],
-              "defaults": null
+              "defaults": null,
+              "modifiers": []
             }
           ],
           "intent": null,
-          "onError": null,
-          "cache": null,
-          "timeout": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/Tests/Signing/VerifyUnsigned/SigningVerifyUnsigned.test.goal",
-      "prPath": "/Tests/Signing/VerifyUnsigned/.build/signingverifyunsigned.test.pr",
+      "path": "/SigningVerifyUnsigned.test.goal",
+      "prPath": "/.build/signingverifyunsigned.test.pr",
       "hash": "1ec51f17dad756518684dd77191f698253104090941c18b8159abae87a2310fb",
       "builderVersion": null,
       "isSetup": false,
@@ -168,8 +161,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/Tests/Signing/VerifyUnsigned/SigningVerifyUnsigned.test.goal",
-  "prPath": "/Tests/Signing/VerifyUnsigned/.build/signingverifyunsigned.test.pr",
+  "path": "/SigningVerifyUnsigned.test.goal",
+  "prPath": "/.build/signingverifyunsigned.test.pr",
   "hash": "ff337cd6a33b420d9649fef0fec77910e00acbd9ee5037fe17efb1b750aa106d",
   "builderVersion": null,
   "isSetup": false,

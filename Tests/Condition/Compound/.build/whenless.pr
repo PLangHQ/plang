@@ -1,6 +1,6 @@
 {
   "name": "WhenLess",
-  "description": "WhenLess step sets %lessResult% to \u0022yes\u0022 using variable.set.",
+  "description": "Sets %lessResult% to \u0022yes\u0022 when the condition \u0022\u003C= null\u0022 is met using a less-than-or-equal comparison.",
   "comment": null,
   "steps": [
     {
@@ -10,6 +10,34 @@
       "indent": 0,
       "comment": null,
       "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": null,
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003C=",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": null,
+              "type": "object"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
         {
           "module": "variable",
           "action": "set",
@@ -25,20 +53,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Compound/WhenLess.goal",
-  "prPath": "/Tests/Condition/Compound/.build/whenless.pr",
+  "path": "/WhenLess.goal",
+  "prPath": "/.build/whenless.pr",
   "hash": "428a59343c2ef05617772887e106049b900979acae829a08f03039b4122c9886",
   "builderVersion": null,
   "isSetup": false,

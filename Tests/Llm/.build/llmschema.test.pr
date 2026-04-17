@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Runs an llm.query with JSON schema, writes the parsed response to %result%, then asserts %result% and %result.sentiment% are not null.",
+  "description": "Calls llm.query with system/user messages and a JSON schema, writes the parsed response to %result%, then asserts %result% and %result.sentiment% are not null.",
   "comment": null,
   "steps": [
     {
@@ -34,14 +34,10 @@
               "name": "Schema",
               "value": "{\u0022sentiment\u0022:\u0022string\u0022,\u0022score\u0022:\u0022number\u0022}",
               "type": "string"
-            },
-            {
-              "name": "Cache",
-              "value": true,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -58,13 +54,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -82,15 +76,18 @@
               "name": "Value",
               "value": "%result%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -108,22 +105,25 @@
               "name": "Value",
               "value": "%result.sentiment%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Llm/LlmSchema.test.goal",
-  "prPath": "/Tests/Llm/.build/llmschema.test.pr",
+  "path": "/LlmSchema.test.goal",
+  "prPath": "/.build/llmschema.test.pr",
   "hash": "57b6e9dc25ee4a37ebd54ad85cf6fb41fd0ae25e07784ca813a0088d059a06c4",
   "builderVersion": null,
   "isSetup": false,

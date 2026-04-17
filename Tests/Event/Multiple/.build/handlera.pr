@@ -1,6 +1,6 @@
 {
   "name": "HandlerA",
-  "description": "Sets %eventA% to true using variable.set.",
+  "description": "Sets %eventA% to true (the \u0027\u003C= null\u0027 part is ignored by the compiler as it does not map to any engine action).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/Multiple/HandlerA.goal",
-  "prPath": "/Tests/Event/Multiple/.build/handlera.pr",
+  "path": "/HandlerA.goal",
+  "prPath": "/.build/handlera.pr",
   "hash": "a6ead47c5d066c2ef2a536b1dd146569b15b440e3829769ddb2f5b1a3ee9dfc0",
   "builderVersion": null,
   "isSetup": false,

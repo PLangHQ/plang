@@ -1,0 +1,638 @@
+diff --git a/PLang.Tests/App/Modules/modifier/CacheWrapTests.cs b/PLang.Tests/App/Modules/modifier/CacheWrapTests.cs
+new file mode 100644
+index 00000000..278a37d9
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/CacheWrapTests.cs
+@@ -0,0 +1,69 @@
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for the cache.wrap modifier handler.
++/// Wraps an action with cache lookup before and cache store after.
++/// </summary>
++public class CacheWrapTests
++{
++    private global::App.@this _app = null!;
++    private global::App.Actor.Context.@this Ctx => _app.Context;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/app");
++    }
++
++    [After(Test)]
++    public async Task Cleanup() => await _app.DisposeAsync();
++
++    [Test]
++    public async Task Wrap_CacheMiss_RunsActionAndStoresResult()
++    {
++        // Cache is empty -> action runs -> result stored in cache
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Wrap_CacheHit_ReturnsCachedSkipsAction()
++    {
++        // Cache has value -> action is NOT called -> cached value returned
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Wrap_ActionFailure_DoesNotCache()
++    {
++        // Action returns error -> result NOT stored in cache
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Wrap_CustomKey_UsedWhenProvided()
++    {
++        // Key parameter is set -> cache uses that key, not the default
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Wrap_DefaultKey_DerivedFromGoalPathAndStepIndex()
++    {
++        // No Key parameter -> cache key = "step:{goalPath}:{stepIndex}"
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Wrap_SlidingExpiration_PassedToCache()
++    {
++        // Sliding = true -> CacheSettings.Sliding is true when storing
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Wrap_CachedResult_RestoredAsDataVariable()
++    {
++        // On cache hit, result.Name set to "__data__" and put in Variables
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++}
+diff --git a/PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs b/PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs
+new file mode 100644
+index 00000000..b39de511
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs
+@@ -0,0 +1,109 @@
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for the error.handle modifier handler.
++/// Wraps an action with error matching, retry logic, and error goal calls.
++/// </summary>
++public class ErrorHandleTests
++{
++    private global::App.@this _app = null!;
++    private global::App.Actor.Context.@this Ctx => _app.Context;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/app");
++    }
++
++    [After(Test)]
++    public async Task Cleanup() => await _app.DisposeAsync();
++
++    #region Happy Path
++
++    [Test]
++    public async Task Handle_ActionSucceeds_PassesThrough()
++    {
++        // Action returns Ok -> error handler not invoked, result passes through
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    #endregion
++
++    #region IgnoreError
++
++    [Test]
++    public async Task Handle_IgnoreError_SwallowsErrorReturnsOk()
++    {
++        // IgnoreError = true -> action error is swallowed, returns Data.Ok()
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    #endregion
++
++    #region Error Filtering
++
++    [Test]
++    public async Task Handle_FilterByStatusCode_MatchHandles()
++    {
++        // StatusCode = 404, error has 404 -> error is handled
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Handle_FilterByStatusCode_NoMatchPropagates()
++    {
++        // StatusCode = 404, error has 500 -> error propagates unhandled
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Handle_FilterByKey_CaseInsensitiveMatch()
++    {
++        // Key = "notfound", error key = "NotFound" -> matches (case-insensitive)
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Handle_FilterByMessage_SubstringMatch()
++    {
++        // Message = "connection", error message = "connection refused" -> matches
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Handle_NoFilter_MatchesAllErrors()
++    {
++        // No StatusCode/Key/Message filters set -> any error matches
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    #endregion
++
++    #region Retry and Goal Order
++
++    [Test]
++    public async Task Handle_RetryFirst_RetriesBeforeCallingGoal()
++    {
++        // Order = "RetryFirst" (default), RetryCount = 2
++        // -> retries action twice before calling error goal
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Handle_GoalFirst_CallsGoalBeforeRetry()
++    {
++        // Order = "GoalFirst", Goal = "HandleError"
++        // -> calls error goal first, then retries if goal fails
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task Handle_RetrySucceedsOnSecondAttempt_ReturnsSuccess()
++    {
++        // RetryCount = 3, action fails first call, succeeds second
++        // -> returns success from second attempt
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    #endregion
++}
+diff --git a/PLang.Tests/App/Modules/modifier/GroupModifiersTests.cs b/PLang.Tests/App/Modules/modifier/GroupModifiersTests.cs
+new file mode 100644
+index 00000000..07a6fa43
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/GroupModifiersTests.cs
+@@ -0,0 +1,57 @@
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for the deterministic GroupModifiers pipeline in the builder save path.
++/// Takes a flat list of actions (from LLM) and groups modifier actions onto
++/// their preceding executable action, sorted by Order.
++/// </summary>
++public class GroupModifiersTests
++{
++    [Test]
++    public async Task GroupModifiers_NoModifiers_Unchanged()
++    {
++        // Flat list: [file.read, variable.set] -> same output, no modifiers attached
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task GroupModifiers_ModifierAfterExecutable_Attached()
++    {
++        // Flat list: [file.read, cache.wrap] -> file.read has Modifiers=[cache.wrap]
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task GroupModifiers_MultipleModifiersOnOneAction_SortedByOrder()
++    {
++        // Flat list: [file.read, error.handle, cache.wrap, timeout.after]
++        // -> file.read.Modifiers = [timeout.after(1), cache.wrap(2), error.handle(3)]
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task GroupModifiers_ModifierBetweenTwoExecutables_AttachesToPreceding()
++    {
++        // Flat list: [file.read, cache.wrap, variable.set]
++        // -> file.read.Modifiers = [cache.wrap], variable.set.Modifiers = []
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task GroupModifiers_LeadingModifier_NoPreceeding_EdgeCase()
++    {
++        // Flat list: [cache.wrap, file.read]
++        // Leading modifier has no preceding action — should be handled gracefully
++        // (dropped or error, not crash)
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task GroupModifiers_Mixed_CorrectGrouping()
++    {
++        // Flat list: [file.read, cache.wrap, error.handle, variable.set, timeout.after]
++        // -> file.read.Modifiers = [cache.wrap(2), error.handle(3)] (sorted)
++        //    variable.set.Modifiers = [timeout.after(1)]
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++}
+diff --git a/PLang.Tests/App/Modules/modifier/ModifierFoldTests.cs b/PLang.Tests/App/Modules/modifier/ModifierFoldTests.cs
+new file mode 100644
+index 00000000..df05772e
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/ModifierFoldTests.cs
+@@ -0,0 +1,103 @@
++using global::App.modules;
++
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for the core modifier infrastructure: ModifierAttribute, IModifier contract,
++/// Action.Modifiers property, and the right-to-left fold in Action.RunAsync.
++/// </summary>
++public class ModifierFoldTests
++{
++    private global::App.@this _app = null!;
++    private global::App.Actor.Context.@this Ctx => _app.Context;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/app");
++    }
++
++    [After(Test)]
++    public async Task Cleanup() => await _app.DisposeAsync();
++
++    #region ModifierAttribute
++
++    [Test]
++    public async Task ModifierAttribute_Order_IsSetAndReadable()
++    {
++        // Verify [Modifier(Order = N)] stores and exposes the Order value
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    #endregion
++
++    #region IModifier Contract
++
++    [Test]
++    public async Task Wrap_SingleModifier_WrapsDelegate()
++    {
++        // Create a fake IModifier that records whether it was called,
++        // verify Wrap() receives and invokes the inner delegate
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    #endregion
++
++    #region Action.Modifiers Property
++
++    [Test]
++    public async Task Action_Modifiers_DefaultsToEmptyList()
++    {
++        // New Action should have Modifiers as empty list, not null
++        var action = new PrAction { Module = "file", ActionName = "read" };
++
++        await Assert.That(action.Modifiers).IsNotNull();
++        await Assert.That(action.Modifiers.Count).IsEqualTo(0);
++    }
++
++    #endregion
++
++    #region Action.RunAsync Fold
++
++    [Test]
++    public async Task RunAsync_ZeroModifiers_ExistingBehaviorUnchanged()
++    {
++        // Regression: Action.RunAsync with no modifiers dispatches normally
++        // and stores result as __data__
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task RunAsync_OneModifier_WrapsAction()
++    {
++        // Single modifier's Wrap() is called, wrapping the action dispatch
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task RunAsync_TwoModifiers_CorrectNestingOrder()
++    {
++        // First modifier in list = outermost wrapper (right-to-left fold)
++        // Verify execution order: modifier[0] enters first, modifier[1] enters second,
++        // action runs, modifier[1] exits, modifier[0] exits
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task RunAsync_ThreeModifiers_FullChain()
++    {
++        // timeout(order=1) > cache(order=2) > error(order=3) > action
++        // Verify all three wrap in correct nesting order
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task RunAsync_NonIModifierHandler_ReturnsCleanError()
++    {
++        // If a modifier action's handler doesn't implement IModifier,
++        // Action.RunAsync returns a ModifierError with descriptive message
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    #endregion
++}
+diff --git a/PLang.Tests/App/Modules/modifier/ModifierRegistryTests.cs b/PLang.Tests/App/Modules/modifier/ModifierRegistryTests.cs
+new file mode 100644
+index 00000000..b22e9d11
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/ModifierRegistryTests.cs
+@@ -0,0 +1,91 @@
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for modifier awareness in the module registry (IsModifier, GetModifierOrder)
++/// and Step.Clone() support for action modifiers.
++/// </summary>
++public class ModifierRegistryTests
++{
++    #region IsModifier
++
++    [Test]
++    public async Task IsModifier_ModifierAttributedHandler_ReturnsTrue()
++    {
++        // timeout.after has [Modifier(Order=1)] -> IsModifier("timeout", "after") returns true
++        var modules = new EngineModules();
++
++        // Will return true once the modifier handlers are implemented
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task IsModifier_RegularHandler_ReturnsFalse()
++    {
++        // variable.set has no [Modifier] attribute -> IsModifier("variable", "set") returns false
++        var modules = new EngineModules();
++
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    #endregion
++
++    #region GetModifierOrder
++
++    [Test]
++    public async Task GetModifierOrder_ReturnsCorrectOrder()
++    {
++        // timeout.after has Order=1, cache.wrap has Order=2, error.handle has Order=3
++        var modules = new EngineModules();
++
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    #endregion
++
++    #region Step.Clone
++
++    [Test]
++    public async Task StepClone_ClonesActionModifiers()
++    {
++        // Step with action that has modifiers -> Clone() copies modifiers too
++        var step = new Step
++        {
++            Index = 0,
++            Text = "read file with cache",
++            Actions = new StepActions
++            {
++                new PrAction
++                {
++                    Module = "file",
++                    ActionName = "read",
++                    Modifiers = new List<PrAction>
++                    {
++                        new PrAction { Module = "cache", ActionName = "wrap" }
++                    }
++                }
++            }
++        };
++
++        var clone = step.Clone();
++
++        await Assert.That(clone.Actions[0].Modifiers.Count).IsEqualTo(1);
++        await Assert.That(clone.Actions[0].Modifiers[0].Module).IsEqualTo("cache");
++        // Verify it's a copy, not the same reference
++        await Assert.That(clone.Actions[0].Modifiers).IsNotSameReferenceAs(step.Actions[0].Modifiers);
++    }
++
++    #endregion
++
++    #region Describe
++
++    [Test]
++    public async Task Describe_ModifierActions_AppearInSummary()
++    {
++        // Modules.Describe() includes modifier actions so LLM can discover them
++        var modules = new EngineModules();
++
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    #endregion
++}
+diff --git a/PLang.Tests/App/Modules/modifier/TimeoutAfterTests.cs b/PLang.Tests/App/Modules/modifier/TimeoutAfterTests.cs
+new file mode 100644
+index 00000000..44603db5
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/TimeoutAfterTests.cs
+@@ -0,0 +1,64 @@
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for the timeout.after modifier handler.
++/// Wraps an action with a CancellationTokenSource that fires after Ms milliseconds.
++/// </summary>
++public class TimeoutAfterTests
++{
++    private global::App.@this _app = null!;
++    private global::App.Actor.Context.@this Ctx => _app.Context;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/app");
++    }
++
++    [After(Test)]
++    public async Task Cleanup() => await _app.DisposeAsync();
++
++    [Test]
++    public async Task After_ActionCompletesBefore_PassesThroughResult()
++    {
++        // Action finishes in 10ms, timeout is 5000ms -> result passes through
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task After_ActionExceedsTimeout_Returns408Error()
++    {
++        // Action takes 5000ms, timeout is 50ms -> returns ServiceError with 408 status
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task After_CancellationTokenPropagatedToAction()
++    {
++        // Verify context.PushCancellation is called so the action can observe the timeout token
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task After_ParentCancellation_PropagatesException()
++    {
++        // Parent token cancelled (not timeout) -> OperationCanceledException propagates,
++        // not caught as timeout error
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task After_ZeroMsTimeout_ImmediateTimeout()
++    {
++        // Ms = 0 -> action should timeout immediately
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++
++    [Test]
++    public async Task After_NestedWithOtherModifiers_TimeoutWrapsOuter()
++    {
++        // timeout(order=1) wraps cache(order=2) wraps action
++        // If cache lookup takes too long, timeout still fires
++        await Assert.That(true).IsFalse(); // Assert.Fail("Not implemented")
++    }
++}
+diff --git a/tests/modifiers/CacheOnFileRead.test.goal b/tests/modifiers/CacheOnFileRead.test.goal
+new file mode 100644
+index 00000000..83031dcd
+--- /dev/null
++++ b/tests/modifiers/CacheOnFileRead.test.goal
+@@ -0,0 +1,12 @@
++TestCacheOnFileRead
++/ Verifies that cache.wrap modifier caches a file.read result
++- save 'testdata/cache_test.txt' with content 'cached content'
++- read file 'testdata/cache_test.txt'
++    cache for 60 seconds
++    write to %content1%
++- read file 'testdata/cache_test.txt'
++    cache for 60 seconds
++    write to %content2%
++/ Both reads should return same cached value
++- assert %content1% equals %content2%
++- delete file 'testdata/cache_test.txt'
+diff --git a/tests/modifiers/MultipleModifiersCompose.test.goal b/tests/modifiers/MultipleModifiersCompose.test.goal
+new file mode 100644
+index 00000000..15e156e4
+--- /dev/null
++++ b/tests/modifiers/MultipleModifiersCompose.test.goal
+@@ -0,0 +1,15 @@
++TestMultipleModifiersCompose
++/ Verifies that cache + error modifiers compose correctly on one action
++- save 'testdata/compose_test.txt' with content 'hello compose'
++- read file 'testdata/compose_test.txt'
++    cache for 60 seconds
++    on error ignore
++    write to %result%
++- assert %result% equals 'hello compose'
++- delete file 'testdata/compose_test.txt'
++/ Second read should come from cache even though file is deleted
++- read file 'testdata/compose_test.txt'
++    cache for 60 seconds
++    on error ignore
++    write to %cachedResult%
++- assert %cachedResult% equals 'hello compose'
+diff --git a/tests/modifiers/OnErrorCallGoal.test.goal b/tests/modifiers/OnErrorCallGoal.test.goal
+new file mode 100644
+index 00000000..5263c52f
+--- /dev/null
++++ b/tests/modifiers/OnErrorCallGoal.test.goal
+@@ -0,0 +1,11 @@
++TestOnErrorCallGoal
++/ Verifies error.handle modifier calls error goal and provides error details
++- call FailWithDetails
++    on error call CaptureError
++- assert %capturedMessage% equals 'specific failure'
++
++FailWithDetails
++- throw error 'specific failure', key 'TestKey', status code 422
++
++CaptureError
++- set %capturedMessage% = %!error.Message%
+diff --git a/tests/modifiers/OnErrorRetry.test.goal b/tests/modifiers/OnErrorRetry.test.goal
+new file mode 100644
+index 00000000..f4378604
+--- /dev/null
++++ b/tests/modifiers/OnErrorRetry.test.goal
+@@ -0,0 +1,12 @@
++TestOnErrorRetry
++/ Verifies that error.handle modifier retries a failing action
++- set %counter% = 0
++- call IncrementAndFail
++    on error retry 3 times
++    on error ignore
++/ After 3 retries + original = counter should be 4
++- assert %counter% equals 4
++
++IncrementAndFail
++- set %counter% = %counter% + 1
++- throw error 'intentional failure'
+diff --git a/tests/modifiers/PerActionErrorScope.test.goal b/tests/modifiers/PerActionErrorScope.test.goal
+new file mode 100644
+index 00000000..57dd224f
+--- /dev/null
++++ b/tests/modifiers/PerActionErrorScope.test.goal
+@@ -0,0 +1,17 @@
++TestPerActionErrorScope
++/ Verifies error modifier applies only to its action, not subsequent actions
++- set %handled% = false
++- call MayFail
++    on error call MarkHandled
++- call AlwaysFails
++- assert %handled% equals true
++
++MayFail
++/ This goal succeeds — error modifier should not trigger
++- set %x% = 1
++
++MarkHandled
++- set %handled% = true
++
++AlwaysFails
++- throw error 'second action error'
+diff --git a/tests/modifiers/TimeoutOnSlowAction.test.goal b/tests/modifiers/TimeoutOnSlowAction.test.goal
+new file mode 100644
+index 00000000..7efbe3c8
+--- /dev/null
++++ b/tests/modifiers/TimeoutOnSlowAction.test.goal
+@@ -0,0 +1,6 @@
++TestTimeoutOnSlowAction
++/ Verifies that timeout.after modifier fires when action exceeds timeout
++/ NOTE for coder: this test needs a way to simulate a slow action.
++/ Options: (1) add a test.sleep action, (2) use http request to slow endpoint,
++/ (3) use a loop that takes >100ms. Pick whichever fits best.
++- throw "not implemented — needs slow action mechanism"

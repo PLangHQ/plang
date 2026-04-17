@@ -35,12 +35,12 @@ This works because C# resolves child namespace segments before using aliases.
 **Can't be global** (shadowed or conflicting):
 - `App` — namespace `App.App` shadows it from all `App.*` files
 - `CallStack` — v1 `PLang.Runtime.CallStack` conflict
-- `Goal`, `Visibility`, `ErrorHandler` — v1 `Building.Model` conflict
+- `Goal`, `Visibility` — v1 `Building.Model` conflict
 - `Action` — `System.Action` conflict
 - `EventType`, `EventBinding` — v1 `PLang.Events` conflict
 
 ### PLang.Tests Has Extra Aliases
-`PLang.Tests/GlobalUsings.cs` includes additional aliases (App, Goal, ErrorHandler, CallStack, etc.)
+`PLang.Tests/GlobalUsings.cs` includes additional aliases (App, Goal, ErrorOrder, CallStack, etc.)
 because there are no Building.Model or v1 Runtime references in the test project.
 
 ---
@@ -153,7 +153,9 @@ When `ErrorOrder` is `GoalFirst`, the error goal runs first. If the error goal *
 
 Only if the error goal fails (or is absent) does the runtime proceed to retries. This means `GoalFirst` with both a goal and retries configured will only use the retries as a fallback when the error goal can't handle the problem.
 
-See `Step/Methods.cs:HandleErrorAsync()` for the implementation.
+`RetryFirst` (the default) is the opposite order: retries run first, the error goal only runs if every retry still fails. `IgnoreError` is the final fallback in both orderings — applied after retry and goal are both exhausted.
+
+See `PLang/App/modules/error/handle.cs` for the implementation.
 
 ---
 
@@ -425,7 +427,7 @@ PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"tem
 - `Goal.Parse(text, path)` — line-by-line parser for `.goal` text format. Produces `List<Goal>` with structural data (Name, Steps with Text/Index/Indent, Visibility, Comments). Supports multi-goal files, `/` and `/* */` comments, `\` escape, continuation lines.
 - `Goal.MergeFrom(existing)` — matches steps by `Text`, delegates to `Step.Merge()` for LLM field transfer. Unmatched steps keep empty Actions.
 
-**Step.Merge()**: Copies LLM-derived fields (Actions, Cache, OnError, Errors, Warnings) from source to target. Structural fields (Text, Index, Indent, LineNumber) are untouched. Only overwrites if source has data.
+**Step.Merge()**: Copies LLM-derived fields (Actions, Errors, Warnings) from source to target. Structural fields (Text, Index, Indent, LineNumber) are untouched. Only overwrites if source has data. Modifiers travel inside `Actions` — each action carries its own `Modifiers` collection.
 
 **File I/O pattern**: All file operations go through `app.RunAction` with file module actions — consistent with how the LLM module uses `http.request`. No direct `System.IO`.
 
@@ -478,3 +480,52 @@ This separates the configure action's nullable properties (only non-null values 
 The class resolves raw path strings into absolute paths. Relative paths resolve against the goal's folder, not the app root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.
 
 See `PLang/App/FileSystem/PathData.cs` for the class definition.
+
+---
+
+## Action Modifiers — Fold + Grouping
+
+Error handling, caching, and timeouts are **not step-level properties** — they're per-action modifiers. A modifier is a handler that implements `IModifier` and carries `[Modifier(Order = N)]`.
+
+**Runtime.** `Action.RunAsync` hands its dispatch delegate to `Action.Modifiers.RunAsync(innermost, context)`, which walks the list right-to-left. Each action resolves its own handler via `Action.WrapAround` and wraps the running delegate. First in the list = outermost wrapper.
+
+**Builder.** `DefaultBuilderProvider.GoalsSave` calls `step.Actions.GroupModifiers(app.Modules)` before serialization. The LLM returns a flat list; grouping attaches every `[Modifier]` action to the nearest preceding executable action and sorts each cluster by `Order`. A leading modifier with no preceding executable is dropped and recorded as `DroppedLeadingModifier` in `step.Warnings` so the builder author notices.
+
+**Ordering today:** `timeout=1` (outermost — caps everything including cache lookup), `cache=2` (skip the rest on a hit), `error=3` (innermost — closest to the action).
+
+**Adding a modifier.** Write a handler with `[Modifier(Order = N)]` and implement `IModifier.Wrap`. Normal module discovery picks it up; the LLM sees it in the action registry like any other action.
+
+See `PLang/App/modules/IModifier.cs`, `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs`, and `PLang/App/Goals/Goal/Steps/Step/Actions/this.cs` (`GroupModifiers`).
+
+---
+
+## GoalCall — Clone, Never Mutate
+
+Deserialized `GoalCall` instances are **shared**. They come off the `.pr` file and back every invocation of the same step. If two invocations run concurrently (events, future async.fire, HTTP-driven requests), mutating shared `GoalCall` properties (`Parameters`, `Action`) races — one invocation reads the other's `%!error%`.
+
+**Rule:** inside any handler that needs to modify a `GoalCall` before passing it to `RunGoalAsync`, **clone** rather than mutate. Example from `error/handle.cs:CallErrorGoal`:
+
+```csharp
+var call = new GoalCall
+{
+    Name = goalCall.Name,
+    Description = goalCall.Description,
+    Parallel = goalCall.Parallel,
+    Parameters = parameters,
+    PrPath = goalCall.PrPath,
+    Action = context.Step?.Actions.FirstOrDefault() ?? goalCall.Action
+};
+return await context.App!.RunGoalAsync(call, context);
+```
+
+This pattern applies to any future modifier or handler that parameterises a goal call. Related Clone-family rule: when you add a property to `GoalCall`, update every constructor/clone path that copies it.
+
+---
+
+## Modifier Hardening Backlog
+
+Three accepted-but-unresolved items from security v1 on the modifier feature. Not bugs today — tripwires once new capabilities land.
+
+1. **Negative Ms.** `timeout.after.Ms` and `timer.sleep.Ms` are not validated. `CancelAfter(-2)` and `Task.Delay(-2)` throw `ArgumentOutOfRangeException`. If a developer binds `%ms%` from untrusted external input (HTTP query string, etc.) without sanitising, the modifier throws instead of returning a typed error.
+2. **Unbounded RetryCount.** `error.handle.RetryCount` is applied as-is. A `%retryCount%` from untrusted input set to `int.MaxValue` makes the action effectively hang. The inner `Task.Delay` honours cancellation, but a retry with `delayMs == 0` does unbounded work per iteration.
+3. **Non-thread-safe cancellation stack.** `Context._cancellationStack` is `Stack<CancellationTokenSource>`. Safe today because handlers execute serially per context, but the roadmap's `async.fire` / `parallel.set` modifiers would run on the same context concurrently. Swap to `ConcurrentStack<T>` or `AsyncLocal<ImmutableStack<T>>` before landing those.

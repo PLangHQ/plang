@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Asserts that goal name, step, context, fileSystem, and callStack are accessible via special variables in the Start goal.",
+  "description": "Asserts that goal name, step, context, fileSystem, and callStack are accessible via special variables.",
   "comment": null,
   "steps": [
     {
@@ -23,20 +23,13 @@
               "name": "Actual",
               "value": "%!goal.Name%",
               "type": "string"
-            },
-            {
-              "name": "Message",
-              "value": "Expected goal name to equal \u0027Start\u0027.",
-              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -53,7 +46,7 @@
             {
               "name": "Value",
               "value": "%!step%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
@@ -61,13 +54,11 @@
               "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -84,21 +75,19 @@
             {
               "name": "Value",
               "value": "%!context%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "Expected %!context% to be not null.",
-              "type": "string"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -115,21 +104,19 @@
             {
               "name": "Value",
               "value": "%!fileSystem%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "fileSystem must not be null",
-              "type": "string"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -146,28 +133,26 @@
             {
               "name": "Value",
               "value": "%!callStack%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "callStack must not be null",
-              "type": "string"
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/ContextVars/Advanced/ContextVars2.test.goal",
-  "prPath": "/Tests/ContextVars/Advanced/.build/contextvars2.test.pr",
+  "path": "/ContextVars2.test.goal",
+  "prPath": "/.build/contextvars2.test.pr",
   "hash": "85619f863448eb43ec701fc1850de420df2fea3a522ce131303290d8f6ae53de",
   "builderVersion": null,
   "isSetup": false,

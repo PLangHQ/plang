@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name% and %greeting% variables, then asserts they contain expected content.",
+  "description": "Sets %name% and %greeting% variables, then asserts they match expected values and that %greeting% contains the injected name.",
   "comment": null,
   "steps": [
     {
@@ -23,20 +23,13 @@
               "name": "Value",
               "value": "TestUser",
               "type": "string"
-            },
-            {
-              "name": "Type",
-              "value": "string",
-              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -61,13 +54,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -90,20 +81,13 @@
               "name": "Value",
               "value": "Hello %name%",
               "type": "string"
-            },
-            {
-              "name": "Type",
-              "value": "string",
-              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -119,34 +103,27 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "%greeting%",
-              "type": "string"
-            },
-            {
-              "name": "Container",
               "value": "TestUser",
               "type": "string"
             },
             {
-              "name": "Message",
-              "value": "Expected %greeting% to contain \u0022TestUser\u0022",
-              "type": "tstring"
+              "name": "Container",
+              "value": "%greeting%",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/StartupParams/StartupParams.test.goal",
-  "prPath": "/Tests/StartupParams/.build/startupparams.test.pr",
+  "path": "/StartupParams.test.goal",
+  "prPath": "/.build/startupparams.test.pr",
   "hash": "ed30f6b09a8d3799b77316af181bc24671d3f3cb2df0c1bd2ac3df3f6b7479cb",
   "builderVersion": null,
   "isSetup": false,

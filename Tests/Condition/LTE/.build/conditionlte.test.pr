@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -53,12 +51,12 @@
             {
               "name": "Operator",
               "value": "\u003C=",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": 5,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Negate",
@@ -67,17 +65,12 @@
             },
             {
               "name": "Step",
-              "value": {
-                "name": "call",
-                "description": "Call WhenLTE when condition is true",
-                "comment": "",
-                "visibility": "public",
-                "inputParameters": {}
-              },
-              "type": "this"
+              "value": "this",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -86,19 +79,25 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenLTE",
-                "parameters": []
+                "Name": "WhenLTE",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -125,23 +124,21 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for x \u003C= 5",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/LTE/ConditionLTE.test.goal",
-  "prPath": "/Tests/Condition/LTE/.build/conditionlte.test.pr",
+  "path": "/ConditionLTE.test.goal",
+  "prPath": "/.build/conditionlte.test.pr",
   "hash": "1b6398a4e6e7df9232d3cc7d2161d3ee6f274993dda7cfb44143e32f547f9879",
   "builderVersion": null,
   "isSetup": false,

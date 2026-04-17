@@ -1,6 +1,6 @@
 {
   "name": "ReadWithKey",
-  "description": "Reads keytest.txt with variable resolution disabled, writes the result to %keyData% and caches the read step for 5 minutes under key \u0027myKeyTest\u0027.",
+  "description": "Reads keytest.txt, caches the file.read for 5 minutes under key \u0027myKeyTest\u0027, then writes the result into %keyData% via variable.set.",
   "comment": null,
   "steps": [
     {
@@ -25,7 +25,32 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "cache",
+              "action": "wrap",
+              "parameters": [
+                {
+                  "name": "DurationMs",
+                  "value": 300000,
+                  "type": "long"
+                },
+                {
+                  "name": "Sliding",
+                  "value": false,
+                  "type": "bool"
+                },
+                {
+                  "name": "Key",
+                  "value": "myKeyTest",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         },
         {
           "module": "variable",
@@ -42,25 +67,18 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": {
-        "durationMs": 300000,
-        "sliding": null,
-        "key": "myKeyTest",
-        "location": null
-      },
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Cache/Basic/ReadWithKey.goal",
-  "prPath": "/Tests/Cache/Basic/.build/readwithkey.pr",
+  "path": "/ReadWithKey.goal",
+  "prPath": "/.build/readwithkey.pr",
   "hash": "0c4bc9bc4a1f048eae1406d6c63a3bdfe8fca33e193944a9b5f81f3a87e2356a",
   "builderVersion": null,
   "isSetup": false,

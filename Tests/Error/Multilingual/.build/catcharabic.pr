@@ -1,6 +1,6 @@
 {
   "name": "CatchArabic",
-  "description": "Sets %caughtArabic% to true using variable.set.",
+  "description": "Sets %caughtArabic% to true (null comparison noted in step text).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Multilingual/CatchArabic.goal",
-  "prPath": "/Tests/Error/Multilingual/.build/catcharabic.pr",
+  "path": "/CatchArabic.goal",
+  "prPath": "/.build/catcharabic.pr",
   "hash": "64dc901c857473f38e7ff10967d149b8f277a68d993a14db776d641cbd649e86",
   "builderVersion": null,
   "isSetup": false,

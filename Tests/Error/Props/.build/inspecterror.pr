@@ -1,6 +1,6 @@
 {
   "name": "InspectError",
-  "description": "Sets error-related variables from the current %!error.*% context, each defaulting to null.",
+  "description": "Maps InspectError steps to variable assignments from the %!error.*% context values.",
   "comment": null,
   "steps": [
     {
@@ -27,16 +27,14 @@
             {
               "name": "Type",
               "value": null,
-              "type": "string?"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -63,16 +61,14 @@
             {
               "name": "Type",
               "value": null,
-              "type": "string?"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -99,23 +95,21 @@
             {
               "name": "Type",
               "value": null,
-              "type": "string?"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Props/InspectError.goal",
-  "prPath": "/Tests/Error/Props/.build/inspecterror.pr",
+  "path": "/InspectError.goal",
+  "prPath": "/.build/inspecterror.pr",
   "hash": "a04c978e2dcf88fd3ad7c3ff05b8361a9e019e3440c9bbfcef137a4260d21a14",
   "builderVersion": null,
   "isSetup": false,

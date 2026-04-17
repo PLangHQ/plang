@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %flag% to false, then conditionally calls HandleTrue or HandleFalse based on %flag%. Finally asserts %result% equals the expected false-branch value.",
+  "description": "Sets %flag% to false, conditionally calls HandleTrue or HandleFalse based on %flag%, then asserts %result% equals the expected false-branch value.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -64,23 +62,27 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
+            },
             {
-              "name": "GoalName",
+              "name": "Step",
               "value": {
-                "name": "HandleTrue"
+                "module": "goal",
+                "action": "call",
+                "parameters": [
+                  {
+                    "name": "GoalName",
+                    "value": {
+                      "name": "HandleTrue"
+                    },
+                    "type": "goal.call"
+                  }
+                ]
               },
-              "type": "goal.call"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "condition",
@@ -105,29 +107,30 @@
               "name": "Negate",
               "value": true,
               "type": "bool"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
+            },
             {
-              "name": "GoalName",
+              "name": "Step",
               "value": {
-                "name": "HandleFalse"
+                "module": "goal",
+                "action": "call",
+                "parameters": [
+                  {
+                    "name": "GoalName",
+                    "value": {
+                      "name": "HandleFalse"
+                    },
+                    "type": "goal.call"
+                  }
+                ]
               },
-              "type": "goal.call"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -154,23 +157,21 @@
             {
               "name": "Message",
               "value": "GoalIfFalse should have been called",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Falsy/ConditionFalsy.test.goal",
-  "prPath": "/Tests/Condition/Falsy/.build/conditionfalsy.test.pr",
+  "path": "/ConditionFalsy.test.goal",
+  "prPath": "/.build/conditionfalsy.test.pr",
   "hash": "dc5a504602162b53b08ccae42a594e1cb8bcac00e9b7b91321f6229bf1868c4e",
   "builderVersion": null,
   "isSetup": false,

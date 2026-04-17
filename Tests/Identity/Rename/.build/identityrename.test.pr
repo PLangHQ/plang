@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives old/new identities, recreates old as default, renames it to new, asserts the identity name matches, then archives the new identity. All steps ignore errors as specified.",
+  "description": "Archives two identities (ignoring errors), creates the old identity as default, renames it to the new name, asserts the identity name matches, then archives the new identity.",
   "comment": null,
   "steps": [
     {
@@ -25,22 +25,25 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "IgnoreError",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -65,22 +68,25 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "IgnoreError",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -105,22 +111,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -145,22 +140,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -185,22 +169,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -225,29 +198,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Identity/Rename/IdentityRename.test.goal",
-  "prPath": "/Tests/Identity/Rename/.build/identityrename.test.pr",
+  "path": "/IdentityRename.test.goal",
+  "prPath": "/.build/identityrename.test.pr",
   "hash": "66c4243ac1f1cba0369638c94312b07722ff908760c88e9afe0c19363a53e9c1",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets recursion depth to 0, calls Recurse with error handling that calls HandleRecursionError, then asserts recursionErrorCaught is true.",
+  "description": "Initializes recursion depth, calls Recurse with error handling that routes to HandleRecursionError, then asserts the recursion error was caught.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -52,30 +50,35 @@
                 "parameters": []
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "HandleRecursionError",
+                    "parameters": []
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "HandleRecursionError",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": 0,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -100,20 +103,18 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/RecursionDepthLimit/RecursionDepthLimit.test.goal",
-  "prPath": "/Tests/RecursionDepthLimit/.build/recursiondepthlimit.test.pr",
+  "path": "/RecursionDepthLimit.test.goal",
+  "prPath": "/.build/recursiondepthlimit.test.pr",
   "hash": "58ad7438d7c3f2c48a399f77ebbf2a7b737b05f1f9e5752cc883e9cac9f41253",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %a% and %b%, evaluates a compound OR condition (a==1 OR b==2) and calls DoThing when true, then asserts %result% equals \u0022or-true\u0022.",
+  "description": "Sets %a% and %b%, evaluates a compound OR condition, calls DoThing when the condition is true, then asserts %result% equals the expected value.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,13 +54,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -78,72 +74,13 @@
           "parameters": [
             {
               "name": "Left",
-              "value": "%a%",
+              "value": {
+                "name": "comparison",
+                "left": "%a%",
+                "operator": "==",
+                "right": 1
+              },
               "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": "==",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": 1,
-              "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "%__conditionReturn1__%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%b%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": "==",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": 2,
-              "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "%__conditionReturn2__%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        },
-        {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%__conditionReturn1__%",
-              "type": "bool"
             },
             {
               "name": "Operator",
@@ -152,8 +89,13 @@
             },
             {
               "name": "Right",
-              "value": "%__conditionReturn2__%",
-              "type": "bool"
+              "value": {
+                "name": "comparison",
+                "left": "%b%",
+                "operator": "==",
+                "right": 2
+              },
+              "type": "object"
             },
             {
               "name": "Negate",
@@ -162,11 +104,12 @@
             },
             {
               "name": "Step",
-              "value": "%__conditionReturn3__%",
-              "type": "object"
+              "value": "this",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -175,19 +118,25 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "DoThing",
-                "parameters": []
+                "Name": "DoThing",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -209,28 +158,21 @@
             {
               "name": "Actual",
               "value": "%result%",
-              "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "OR condition should pass when at least one side true",
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/CompoundOr/ConditionCompoundOr.test.goal",
-  "prPath": "/Tests/Condition/CompoundOr/.build/conditioncompoundor.test.pr",
+  "path": "/ConditionCompoundOr.test.goal",
+  "prPath": "/.build/conditioncompoundor.test.pr",
   "hash": "6c6289984cfa2e19a7b7e38b91b7484f35053cc39a507882b9ee29cd5163698c",
   "builderVersion": null,
   "isSetup": false,

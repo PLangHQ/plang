@@ -1,6 +1,6 @@
 {
   "name": "TargetGoal",
-  "description": "Sets %dynamicResult% to the string \u0022reached\u0022 using variable.set.",
+  "description": "Sets %dynamicResult% to the string \u0022reached\u0022.",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/GoalCall/Dynamic/TargetGoal.goal",
-  "prPath": "/Tests/GoalCall/Dynamic/.build/targetgoal.pr",
+  "path": "/TargetGoal.goal",
+  "prPath": "/.build/targetgoal.pr",
   "hash": "2ec9c541c0798889c270f82e43e32097396653042f614f189331cbc6904717c0",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "LogRetryError",
-  "description": "Sets %order% to the string \u0022error\u0022 using variable.set.",
+  "description": "Maps the step to a variable assignment setting %order% to the string \u0022error\u0022.",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Ordering/LogRetryError.goal",
-  "prPath": "/Tests/Error/Ordering/.build/logretryerror.pr",
+  "path": "/LogRetryError.goal",
+  "prPath": "/.build/logretryerror.pr",
   "hash": "51313fa12d49b8619cb31583b870ffabe109bfdafe268ce0f17242a2064d6148",
   "builderVersion": null,
   "isSetup": false,

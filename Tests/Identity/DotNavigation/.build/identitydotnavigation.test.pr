@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity (ignoring errors), creates it as default, then asserts identity fields via dot navigation, and finally archives it again (ignoring errors).",
+  "description": "Archives and recreates an identity, then asserts dot-navigation access to identity fields (Name, PublicKey, IsDefault).",
   "comment": null,
   "steps": [
     {
@@ -25,22 +25,25 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "IgnoreError",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -65,13 +68,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -91,13 +92,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -117,13 +116,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -140,16 +137,14 @@
             {
               "name": "Value",
               "value": "%MyIdentity.IsDefault%",
-              "type": "bool"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -174,29 +169,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Identity/DotNavigation/IdentityDotNavigation.test.goal",
-  "prPath": "/Tests/Identity/DotNavigation/.build/identitydotnavigation.test.pr",
+  "path": "/IdentityDotNavigation.test.goal",
+  "prPath": "/.build/identitydotnavigation.test.pr",
   "hash": "547f9ad6d1e97746936a490ed53285414c13889b2f923a1226f3ac93382ca33e",
   "builderVersion": null,
   "isSetup": false,

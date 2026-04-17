@@ -1,6 +1,6 @@
 {
   "name": "WhenBig",
-  "description": "Maps the step \u0027WhenBig - set %result% = \u0022big\u0022\u0027 to a variable.set action.",
+  "description": "Maps the step to setting %result% to the string \u0022big\u0022.",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/ElseBranch/WhenBig.goal",
-  "prPath": "/Tests/Condition/ElseBranch/.build/whenbig.pr",
+  "path": "/WhenBig.goal",
+  "prPath": "/.build/whenbig.pr",
   "hash": "3dffbc0e1cdf035691216d1a5708f49cd6c5dcd74c5e886b58fb647d91f19719",
   "builderVersion": null,
   "isSetup": false,

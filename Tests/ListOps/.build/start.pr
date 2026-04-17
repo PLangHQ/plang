@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Builds and mutates %myList%, then outputs the list, count, first/last elements, containment check, joined string, and split parts into variables with corresponding outputs.",
+  "description": "Builds and mutates a list, then outputs derived values (count, first/last, contains, join, split) by using list operations and variable assignments.",
   "comment": null,
   "steps": [
     {
@@ -27,25 +27,13 @@
                 30
               ],
               "type": "list"
-            },
-            {
-              "name": "Type",
-              "value": "list",
-              "type": "string"
-            },
-            {
-              "name": "AsDefault",
-              "value": false,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -67,21 +55,14 @@
             {
               "name": "Value",
               "value": 40,
-              "type": "object"
-            },
-            {
-              "name": "AtIndex",
-              "value": -1,
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -98,7 +79,7 @@
             {
               "name": "Data",
               "value": "After add: %myList%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -106,13 +87,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -132,7 +111,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -149,13 +129,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -172,7 +150,7 @@
             {
               "name": "Data",
               "value": "Count: %count%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -180,13 +158,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -206,7 +182,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -223,13 +200,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -246,7 +221,7 @@
             {
               "name": "Data",
               "value": "First: %first%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -254,13 +229,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -280,7 +253,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -297,13 +271,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -320,7 +292,7 @@
             {
               "name": "Data",
               "value": "Last: %last%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -328,13 +300,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -356,10 +326,11 @@
             {
               "name": "Value",
               "value": 20,
-              "type": "object"
+              "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -376,13 +347,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -399,7 +368,7 @@
             {
               "name": "Data",
               "value": "Contains 20: %has20%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -407,13 +376,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -438,7 +405,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -455,13 +423,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -478,7 +444,7 @@
             {
               "name": "Data",
               "value": "Joined: %joined%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -486,13 +452,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -522,7 +486,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -539,13 +504,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -562,7 +525,7 @@
             {
               "name": "Data",
               "value": "Split: %parts%",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -570,20 +533,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/ListOps/Start.goal",
-  "prPath": "/Tests/ListOps/.build/start.pr",
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
   "hash": "ee8e3b0c0bf597ba573709e7b7cb784ef470689d932ba99d6c8d3f433e9ff251",
   "builderVersion": null,
   "isSetup": false,

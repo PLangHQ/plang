@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %order% to empty, calls FailOnce with retry-first error handling that then calls LogRetryError, and asserts %order% contains the substring \u0022error\u0022.",
+  "description": "Sets %order% to empty, calls FailOnce with on-error retry (retry-first) then calls LogRetryError, and finally asserts %order% contains \u0022error\u0022.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -52,30 +50,45 @@
                 "parameters": []
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "RetryCount",
+                  "value": 1,
+                  "type": "int"
+                },
+                {
+                  "name": "Order",
+                  "value": "RetryFirst",
+                  "type": "string"
+                },
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "LogRetryError",
+                    "parameters": []
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "LogRetryError",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": 1,
-        "retryOverMs": null,
-        "order": 1,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -98,22 +111,25 @@
               "name": "Container",
               "value": "error",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Ordering/ErrorOrdering.test.goal",
-  "prPath": "/Tests/Error/Ordering/.build/errorordering.test.pr",
+  "path": "/ErrorOrdering.test.goal",
+  "prPath": "/.build/errorordering.test.pr",
   "hash": "38ca5305ba8097ecc606cd908d65fc442a1a0650aee0c20e2cc4526b22a82f8c",
   "builderVersion": null,
   "isSetup": false,

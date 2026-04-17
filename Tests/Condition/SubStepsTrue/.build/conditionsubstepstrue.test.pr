@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets flag and inner variables, conditionally runs indented set steps when %flag% is true, then asserts the indented steps executed.",
+  "description": "Sets up a true condition, runs indented steps under the if, then asserts the indented variables were updated.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,13 +54,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -79,7 +75,7 @@
             {
               "name": "Left",
               "value": "%flag%",
-              "type": "bool"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -92,13 +88,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -123,13 +117,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -154,13 +146,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -185,13 +175,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -221,20 +209,18 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/SubStepsTrue/ConditionSubStepsTrue.test.goal",
-  "prPath": "/Tests/Condition/SubStepsTrue/.build/conditionsubstepstrue.test.pr",
+  "path": "/ConditionSubStepsTrue.test.goal",
+  "prPath": "/.build/conditionsubstepstrue.test.pr",
   "hash": "eea24c21cb5c72743bd936eef55669c6a34a956ccc23930f100498a728220900",
   "builderVersion": null,
   "isSetup": false,

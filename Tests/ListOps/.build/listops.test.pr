@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -9,43 +9,8 @@
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%myList%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": [
-                10,
-                20,
-                30
-              ],
-              "type": "list"
-            },
-            {
-              "name": "Type",
-              "value": "list",
-              "type": "string"
-            },
-            {
-              "name": "AsDefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,9 +21,6 @@
       "comment": null,
       "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -67,24 +29,8 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "count",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%myList%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -93,34 +39,8 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 4,
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%count%",
-              "type": "int"
-            },
-            {
-              "name": "Message",
-              "value": "list should have 4 items after add",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -129,24 +49,8 @@
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "first",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%myList%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -155,29 +59,8 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 10,
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%first%",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -186,24 +69,8 @@
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "last",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%myList%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -212,29 +79,8 @@
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 40,
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%last%",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -243,29 +89,8 @@
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "contains",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%myList%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": 20,
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -274,29 +99,8 @@
       "lineNumber": 11,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "isTrue",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "%has20%",
-              "type": "bool"
-            },
-            {
-              "name": "Message",
-              "value": "list should contain 20",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -305,29 +109,8 @@
       "lineNumber": 12,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "join",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%myList%",
-              "type": "string"
-            },
-            {
-              "name": "Separator",
-              "value": ", ",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -336,29 +119,8 @@
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "contains",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "%joined%",
-              "type": "string"
-            },
-            {
-              "name": "Container",
-              "value": "10",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -367,29 +129,8 @@
       "lineNumber": 14,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "contains",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "%joined%",
-              "type": "string"
-            },
-            {
-              "name": "Container",
-              "value": "40",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -398,34 +139,8 @@
       "lineNumber": 15,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "split",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "a-b-c",
-              "type": "string"
-            },
-            {
-              "name": "Separator",
-              "value": "-",
-              "type": "string"
-            },
-            {
-              "name": "RemoveEmpty",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -434,24 +149,8 @@
       "lineNumber": 16,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "count",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%parts%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -460,29 +159,8 @@
       "lineNumber": 17,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 3,
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%partsCount%",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -491,29 +169,8 @@
       "lineNumber": 19,
       "indent": 0,
       "comment": "get by index",
-      "actions": [
-        {
-          "module": "list",
-          "action": "get",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%myList%",
-              "type": "string"
-            },
-            {
-              "name": "Index",
-              "value": 1,
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -522,29 +179,8 @@
       "lineNumber": 20,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 20,
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%second%",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -553,34 +189,8 @@
       "lineNumber": 22,
       "indent": 0,
       "comment": "remove",
-      "actions": [
-        {
-          "module": "list",
-          "action": "remove",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%myList%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": 20,
-              "type": "object"
-            },
-            {
-              "name": "AtIndex",
-              "value": -1,
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -589,29 +199,8 @@
       "lineNumber": 23,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "contains",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%myList%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": 20,
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -620,24 +209,8 @@
       "lineNumber": 24,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "isFalse",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "%still20%",
-              "type": "bool"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -646,29 +219,8 @@
       "lineNumber": 26,
       "indent": 0,
       "comment": "indexOf",
-      "actions": [
-        {
-          "module": "list",
-          "action": "indexof",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%myList%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": 30,
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -677,34 +229,8 @@
       "lineNumber": 27,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "greaterThan",
-          "parameters": [
-            {
-              "name": "A",
-              "value": "%idx%",
-              "type": "int"
-            },
-            {
-              "name": "B",
-              "value": -1,
-              "type": "int"
-            },
-            {
-              "name": "Message",
-              "value": "indexOf should find the item",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -713,43 +239,8 @@
       "lineNumber": 29,
       "indent": 0,
       "comment": "sort",
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%unsorted%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": [
-                3,
-                1,
-                2
-              ],
-              "type": "list"
-            },
-            {
-              "name": "Type",
-              "value": "list",
-              "type": "string"
-            },
-            {
-              "name": "AsDefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -758,29 +249,8 @@
       "lineNumber": 30,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "sort",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%unsorted%",
-              "type": "string"
-            },
-            {
-              "name": "Descending",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -789,24 +259,8 @@
       "lineNumber": 31,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "first",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%unsorted%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -815,29 +269,8 @@
       "lineNumber": 32,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 1,
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%sortFirst%",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -846,24 +279,8 @@
       "lineNumber": 34,
       "indent": 0,
       "comment": "reverse",
-      "actions": [
-        {
-          "module": "list",
-          "action": "reverse",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%unsorted%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -872,24 +289,8 @@
       "lineNumber": 35,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "first",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%unsorted%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -898,29 +299,8 @@
       "lineNumber": 36,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 3,
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%revFirst%",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -929,46 +309,8 @@
       "lineNumber": 38,
       "indent": 0,
       "comment": "unique",
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%dupes%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": [
-                1,
-                2,
-                2,
-                3,
-                3,
-                3
-              ],
-              "type": "list"
-            },
-            {
-              "name": "Type",
-              "value": "list",
-              "type": "string"
-            },
-            {
-              "name": "AsDefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -977,24 +319,8 @@
       "lineNumber": 39,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "unique",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%dupes%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -1003,24 +329,8 @@
       "lineNumber": 40,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "list",
-          "action": "count",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%uniq%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -1029,36 +339,15 @@
       "lineNumber": 41,
       "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 3,
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%uniqCount%",
-              "type": "int"
-            }
-          ],
-          "defaults": null
-        }
-      ],
+      "actions": [],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/ListOps/ListOps.test.goal",
-  "prPath": "/Tests/Runtime2/ListOps/.build/listops.test.pr",
+  "path": "/ListOps.test.goal",
+  "prPath": "/.build/listops.test.pr",
   "hash": "0a2b147ff098cb5191b32dd87445311e6626f78f3349a3dab5c2cada908e879a",
   "builderVersion": null,
   "isSetup": false,

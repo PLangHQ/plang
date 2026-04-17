@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Creates a file, initializes an inner flag, checks file existence with a condition, sets the flag in the true branch, then asserts the flag value.",
+  "description": "Saves a file, initializes %innerRan%, conditionally sets it to yes if the file exists, then asserts the expected value.",
   "comment": null,
   "steps": [
     {
@@ -22,16 +22,14 @@
             {
               "name": "Value",
               "value": "hello",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -53,16 +51,14 @@
             {
               "name": "Value",
               "value": "no",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -73,12 +69,25 @@
       "comment": null,
       "actions": [
         {
+          "module": "file",
+          "action": "exists",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "testfile.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
           "module": "condition",
           "action": "if",
           "parameters": [
             {
               "name": "Left",
-              "value": "%fileInfo.Exists%",
+              "value": "%__data__%",
               "type": "object"
             },
             {
@@ -92,13 +101,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -120,16 +127,14 @@
             {
               "name": "Value",
               "value": "yes",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -146,33 +151,31 @@
             {
               "name": "Expected",
               "value": "yes",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Actual",
               "value": "%innerRan%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "sub-steps should execute when file exists",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/FileExistsSubSteps/ConditionFileExistsSubSteps.test.goal",
-  "prPath": "/Tests/Condition/FileExistsSubSteps/.build/conditionfileexistssubsteps.test.pr",
+  "path": "/ConditionFileExistsSubSteps.test.goal",
+  "prPath": "/.build/conditionfileexistssubsteps.test.pr",
   "hash": "d420210fbe207ea104aa6663b47743ef3fd803669e8b75f2f608316b10da4d95",
   "builderVersion": null,
   "isSetup": false,

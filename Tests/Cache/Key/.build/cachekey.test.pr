@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Saves cachekey.txt, calls ReadCachedFile twice to verify cached content is reused, then asserts cached content equals the first saved value and deletes the file.",
+  "description": "Saves cachekey.txt with value1, reads it via ReadCachedFile, stores cachedContent into %first%, overwrites cachekey.txt with value2, reads again via ReadCachedFile, asserts cachedContent equals %first% (verifying same-step cache hit), then deletes the file.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -48,19 +46,16 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ReadCachedFile",
-                "parameters": []
+                "name": "ReadCachedFile"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -85,13 +80,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -116,13 +109,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -139,19 +130,16 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ReadCachedFile",
-                "parameters": []
+                "name": "ReadCachedFile"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -176,13 +164,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -212,20 +198,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Cache/Key/CacheKey.test.goal",
-  "prPath": "/Tests/Cache/Key/.build/cachekey.test.pr",
+  "path": "/CacheKey.test.goal",
+  "prPath": "/.build/cachekey.test.pr",
   "hash": "29051c83e2d6c1d9f6649583b042eb2df72980ba61eb723cc4eeb10572326286",
   "builderVersion": null,
   "isSetup": false,

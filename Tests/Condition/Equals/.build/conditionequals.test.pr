@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %z% to 5, conditionally calls WhenEqual when %z% == 5, then asserts %result% equals \u0022equal\u0022.",
+  "description": "Sets %z% to 5, conditionally calls WhenEqual when %z% equals 5, then asserts %result% equals \u0022equal\u0022.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -59,14 +57,10 @@
               "name": "Right",
               "value": 5,
               "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -75,19 +69,16 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenEqual",
-                "parameters": []
+                "name": "WhenEqual"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -114,23 +105,21 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for z == 5",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Equals/ConditionEquals.test.goal",
-  "prPath": "/Tests/Condition/Equals/.build/conditionequals.test.pr",
+  "path": "/ConditionEquals.test.goal",
+  "prPath": "/.build/conditionequals.test.pr",
   "hash": "d07f25e0cc5c2de3e3f762de7a372d5b7787bd72a0e29c9b75b4a7bf230c5aca",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "HandleTrue",
-  "description": "Sets %result% to the string \u0022true-branch\u0022 in HandleTrue.",
+  "description": "Sets %result% to the string \u0022true-branch\u0022 (the step text indicates a true-branch, but no explicit condition is provided in the step).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Falsy/HandleTrue.goal",
-  "prPath": "/Tests/Condition/Falsy/.build/handletrue.pr",
+  "path": "/HandleTrue.goal",
+  "prPath": "/.build/handletrue.pr",
   "hash": "49e7d4ae7739c7c8735ca92768d80236a99551c8e9a5f12a70a412e97d782cd2",
   "builderVersion": null,
   "isSetup": false,

@@ -1,74 +1,25 @@
 {
   "name": "Build",
-  "description": "Compiles the provided Build goal steps into engine actions, including required variable assignments for \u0027write to %var%\u0027 patterns and foreach\u002Bcall pairing.",
+  "description": "Main entry point for the PLang builder. Transforms .goal files into .pr files.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = \u0022.\u0022",
+      "text": "set default %path% = \".\"",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%step.actions%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": "isempty",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": "%step.actions%",
-              "type": "object"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
-        },
-        {
           "module": "variable",
           "action": "set",
           "parameters": [
-            {
-              "name": "Name",
-              "value": "%path%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": ".",
-              "type": "string"
-            },
-            {
-              "name": "Type",
-              "value": "string",
-              "type": "string?"
-            },
-            {
-              "name": "AsDefault",
-              "value": true,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
+            { "name": "Name", "value": "%path%", "type": "string" },
+            { "name": "Value", "value": ".", "type": "string" },
+            { "name": "AsDefault", "value": true, "type": "bool" }
+          ]
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -79,68 +30,15 @@
       "comment": null,
       "actions": [
         {
-          "module": "error",
-          "action": "throw",
-          "parameters": [
-            {
-              "name": "Message",
-              "value": "Step at index %step.index% has no actions. Every step must include actions with module and action filled in.",
-              "type": "tstring"
-            },
-            {
-              "name": "StatusCode",
-              "value": 500,
-              "type": "int"
-            },
-            {
-              "name": "Key",
-              "value": null,
-              "type": "string?"
-            }
-          ],
-          "defaults": null
-        },
-        {
           "module": "variable",
           "action": "set",
           "parameters": [
-            {
-              "name": "Name",
-              "value": "%!build.cache%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": true,
-              "type": "bool"
-            },
-            {
-              "name": "Type",
-              "value": "bool",
-              "type": "string?"
-            },
-            {
-              "name": "AsDefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
+            { "name": "Name", "value": "%!build.cache%", "type": "string" },
+            { "name": "Value", "value": true, "type": "bool" },
+            { "name": "AsDefault", "value": true, "type": "bool" }
+          ]
         }
       ],
-      "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -151,54 +49,19 @@
       "comment": null,
       "actions": [
         {
-          "module": "builder",
-          "action": "validate",
-          "parameters": [
-            {
-              "name": "Actions",
-              "value": "%step.actions%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
-        },
-        {
           "module": "variable",
           "action": "set",
           "parameters": [
-            {
-              "name": "Name",
-              "value": "%traceGoals%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%__data__%",
-              "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": null,
-              "type": "string?"
-            },
-            {
-              "name": "AsDefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
+            { "name": "Name", "value": "%traceGoals%", "type": "string" },
+            { "name": "Value", "value": [], "type": "json" }
+          ]
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "write out \u0022Building path: %path%\u0022",
+      "text": "write out \"Building path: %path%\"",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -207,24 +70,10 @@
           "module": "output",
           "action": "write",
           "parameters": [
-            {
-              "name": "Data",
-              "value": "Building path: %path%",
-              "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "object",
-              "type": "this"
-            }
-          ],
-          "defaults": null
+            { "name": "Data", "value": "Building path: %path%", "type": "tstring" }
+          ]
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -237,47 +86,17 @@
         {
           "module": "builder",
           "action": "app",
-          "parameters": [
-            {
-              "name": "Path",
-              "value": ".",
-              "type": "string"
-            }
-          ],
-          "defaults": null
+          "parameters": []
         },
         {
           "module": "variable",
           "action": "set",
           "parameters": [
-            {
-              "name": "Name",
-              "value": "%app%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%__data__%",
-              "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": null,
-              "type": "string?"
-            },
-            {
-              "name": "AsDefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
+            { "name": "Name", "value": "%app%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -291,51 +110,23 @@
           "module": "builder",
           "action": "goals",
           "parameters": [
-            {
-              "name": "Path",
-              "value": "%path%",
-              "type": "string"
-            }
-          ],
-          "defaults": null
+            { "name": "Path", "value": "%path%", "type": "string" }
+          ]
         },
         {
           "module": "variable",
           "action": "set",
           "parameters": [
-            {
-              "name": "Name",
-              "value": "%goals%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "%__data__%",
-              "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": null,
-              "type": "string?"
-            },
-            {
-              "name": "AsDefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "defaults": null
+            { "name": "Name", "value": "%goals%", "type": "string" },
+            { "name": "Value", "value": "%__data__%", "type": "object" }
+          ]
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 6,
-      "text": "write out \u0022Found %goals.Count% goals\u0022",
+      "text": "write out \"Found %goals.Count% goals\"",
       "lineNumber": 12,
       "indent": 0,
       "comment": null,
@@ -344,24 +135,10 @@
           "module": "output",
           "action": "write",
           "parameters": [
-            {
-              "name": "Data",
-              "value": "Found %goals.Count% goals",
-              "type": "string"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "this"
-            }
-          ],
-          "defaults": null
+            { "name": "Data", "value": "Found %goals.Count% goals", "type": "tstring" }
+          ]
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -375,50 +152,23 @@
           "module": "loop",
           "action": "foreach",
           "parameters": [
-            {
-              "name": "Collection",
-              "value": "%goals%",
-              "type": "object"
-            },
-            {
-              "name": "ItemName",
-              "value": "goal",
-              "type": "string"
-            }
-          ],
-          "defaults": null
+            { "name": "Collection", "value": "%goals%", "type": "object" },
+            { "name": "ItemName", "value": "goal", "type": "string" }
+          ]
         },
         {
           "module": "goal",
           "action": "call",
           "parameters": [
-            {
-              "name": "GoalName",
-              "value": {
-                "name": "BuildGoal",
-                "parameters": [
-                  {
-                    "name": "item",
-                    "value": "%goal%",
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "goal.call"
-            }
-          ],
-          "defaults": null
+            { "name": "GoalName", "value": { "name": "BuildGoal" }, "type": "goal.call" }
+          ]
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 8,
-      "text": "save %traceGoals% to file \u0027/.build/traces/manifest.json\u0027",
+      "text": "save %traceGoals% to file '/.build/traces/manifest.json'",
       "lineNumber": 14,
       "indent": 0,
       "comment": null,
@@ -427,24 +177,11 @@
           "module": "file",
           "action": "save",
           "parameters": [
-            {
-              "name": "Path",
-              "value": "/.build/traces/manifest.json",
-              "type": "path"
-            },
-            {
-              "name": "Value",
-              "value": "%traceGoals%",
-              "type": "object"
-            }
-          ],
-          "defaults": null
+            { "name": "Path", "value": "/.build/traces/manifest.json", "type": "path" },
+            { "name": "Value", "value": "%traceGoals%", "type": "object" }
+          ]
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -457,14 +194,9 @@
         {
           "module": "builder",
           "action": "appSave",
-          "parameters": [],
-          "defaults": null
+          "parameters": []
         }
       ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
@@ -472,8 +204,7 @@
   "visibility": 1,
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "ac0c7cdb2f92075272286c024c605759e7f237667a8768fb7c01dc6590dc1b26",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

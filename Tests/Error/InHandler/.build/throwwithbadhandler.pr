@@ -1,6 +1,6 @@
 {
   "name": "ThrowWithBadHandler",
-  "description": "Calls ThrowOriginal; if it throws, calls BadHandler (handler also throws).",
+  "description": "Calls ThrowOriginal; if it throws, calls BadHandler. Handler is specified as null/omitted.",
   "comment": null,
   "steps": [
     {
@@ -17,41 +17,57 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowOriginal",
-                "parameters": []
+                "Name": "ThrowOriginal",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": "/.build/throworiginal.pr"
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "Name": "BadHandler",
+                    "Description": null,
+                    "Parallel": false,
+                    "Parameters": null,
+                    "PrPath": "/.build/badhandler.pr"
+                  },
+                  "type": "goal.call"
+                },
+                {
+                  "name": "IgnoreError",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "BadHandler",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": 0,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/InHandler/ThrowWithBadHandler.goal",
-  "prPath": "/Tests/Error/InHandler/.build/throwwithbadhandler.pr",
+  "path": "/ThrowWithBadHandler.goal",
+  "prPath": "/.build/throwwithbadhandler.pr",
   "hash": "010dce8d9abce373be533dc95dd11a5dabefdaf8f05787372c28dd8580f1cee7",
   "builderVersion": null,
   "isSetup": false,

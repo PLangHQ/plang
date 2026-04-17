@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -61,7 +59,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -70,19 +69,16 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenStarts",
-                "parameters": []
+                "name": "WhenStarts"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -109,23 +105,21 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for startswith",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/StartsWith/ConditionStartsWith.test.goal",
-  "prPath": "/Tests/Condition/StartsWith/.build/conditionstartswith.test.pr",
+  "path": "/ConditionStartsWith.test.goal",
+  "prPath": "/.build/conditionstartswith.test.pr",
   "hash": "9eab1ffa0ef05bb7e8e7db4591b6dea6797252c0dd395f5a1171047c13377dd2",
   "builderVersion": null,
   "isSetup": false,

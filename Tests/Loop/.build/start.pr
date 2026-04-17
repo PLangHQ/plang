@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %items% to a list, iterates it calling ProcessItem for each item, then writes \u0027Loop done\u0027.",
+  "description": "Sets %items% to a list of strings, iterates over it calling ProcessItem for each item, then writes a completion message.",
   "comment": null,
   "steps": [
     {
@@ -29,13 +29,11 @@
               "type": "list"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -60,7 +58,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -81,13 +80,11 @@
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -105,27 +102,20 @@
               "name": "Data",
               "value": "Loop done",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Loop/Start.goal",
-  "prPath": "/Tests/Loop/.build/start.pr",
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
   "hash": "b99165365c37203153e256f817f4f1c3f5ac6fd2ce00197f9d4ed0bd65160019",
   "builderVersion": null,
   "isSetup": false,

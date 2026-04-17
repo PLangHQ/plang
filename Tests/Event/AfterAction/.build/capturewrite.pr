@@ -1,6 +1,6 @@
 {
   "name": "CaptureWrite",
-  "description": "CaptureWrite: set %actionFired% to true using variable.set.",
+  "description": "Sets %actionFired% to true (the \u0027\u003C= null\u0027 is ignored as it does not map to any engine action parameter).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/AfterAction/CaptureWrite.goal",
-  "prPath": "/Tests/Event/AfterAction/.build/capturewrite.pr",
+  "path": "/CaptureWrite.goal",
+  "prPath": "/.build/capturewrite.pr",
   "hash": "65bdcc8b0a165ed6de5773283a379dd4b76b0e06c28829e8d91d5efe8c3b2580",
   "builderVersion": null,
   "isSetup": false,

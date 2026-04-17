@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name%, checks if it contains substring \u0022world\u0022, calls WhenContains if true, then asserts %result% equals \u0022contains\u0022.",
+  "description": "Sets %name%, conditionally calls WhenContains when %name% contains \u0027world\u0027, then asserts %result% equals \u0027contains\u0027.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -61,7 +59,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -76,13 +75,11 @@
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -109,23 +106,21 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for contains",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Contains/ConditionContains.test.goal",
-  "prPath": "/Tests/Condition/Contains/.build/conditioncontains.test.pr",
+  "path": "/ConditionContains.test.goal",
+  "prPath": "/.build/conditioncontains.test.pr",
   "hash": "9ffdba833592c772bb37f764984e7b08eccddd6431e756d5aaa861b9befcb91c",
   "builderVersion": null,
   "isSetup": false,

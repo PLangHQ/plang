@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets a false flag, attempts to set an inner variable under a false condition, then asserts the inner variable was not changed (indented steps skipped).",
+  "description": "Sets a false flag, attempts an indented set under a false condition, then asserts the inner step was skipped.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,13 +54,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -90,15 +86,23 @@
               "name": "Right",
               "value": true,
               "type": "bool"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": "this",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -123,13 +127,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -156,23 +158,21 @@
             {
               "name": "Message",
               "value": "indented steps should be skipped when condition is false",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/SubStepsFalse/ConditionSubStepsFalse.test.goal",
-  "prPath": "/Tests/Condition/SubStepsFalse/.build/conditionsubstepsfalse.test.pr",
+  "path": "/ConditionSubStepsFalse.test.goal",
+  "prPath": "/.build/conditionsubstepsfalse.test.pr",
   "hash": "aba9fc62f9d3e416c4db1f905ff96240e82c5cf5dcb2427bde91772360352467",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "InnerTest",
-  "description": "Sets %innerDepth% from %!callStack.Depth% and asserts it is not null.",
+  "description": "Sets %innerDepth% from call stack depth and asserts it is not null.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,20 +54,18 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/CallStack/InnerTest.goal",
-  "prPath": "/Tests/CallStack/.build/innertest.pr",
+  "path": "/InnerTest.goal",
+  "prPath": "/.build/innertest.pr",
   "hash": "93454595bee652bda5232f333572f109bb040b75c4ef64ed133b4a605287523a",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "ProcessChunk",
-  "description": "Writes an output message for each received stream chunk.",
+  "description": "Writes an output message for each received stream chunk (null data).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Http/StreamCallback/ProcessChunk.goal",
-  "prPath": "/Tests/Http/StreamCallback/.build/processchunk.pr",
+  "path": "/ProcessChunk.goal",
+  "prPath": "/.build/processchunk.pr",
   "hash": "04c66cdf7538158f70ec86f58de4129957c80656d1b317866d3bab22ac2a7fca",
   "builderVersion": null,
   "isSetup": false,

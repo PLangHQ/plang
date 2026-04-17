@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Builds a list of known engine actions via builder.actions, stores it in %actions%, validates that list with builder.validate, stores %result%, then asserts %result% is true.",
   "comment": null,
   "steps": [
     {
@@ -14,13 +14,29 @@
           "module": "builder",
           "action": "actions",
           "parameters": [],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%actions%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -29,11 +45,40 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "builder",
+          "action": "validate",
+          "parameters": [
+            {
+              "name": "Actions",
+              "value": "%actions%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -50,28 +95,26 @@
             {
               "name": "Value",
               "value": "%result%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "validateActions should pass for known actions",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Builder/ValidateValid/BuilderValidateValid.test.goal",
-  "prPath": "/Tests/Runtime2/Builder/ValidateValid/.build/buildervalidatevalid.test.pr",
+  "path": "/BuilderValidateValid.test.goal",
+  "prPath": "/.build/buildervalidatevalid.test.pr",
   "hash": "98504c4083c32cd63ac88f29d0f91c775bca6cdb3e3e1b518ce79c912cb715c5",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %data% to \u0027hello world\u0027, hashes it with default algorithm keccak256 into %hash%, then asserts %hash% is not empty.",
+  "description": "Sets %data% to \u0027hello world\u0027, hashes it using default algorithm (keccak256) and writes result to %hash%, then asserts %hash% is not empty.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,7 +54,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -73,13 +72,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -91,38 +88,31 @@
       "actions": [
         {
           "module": "assert",
-          "action": "notEquals",
+          "action": "isNotNull",
           "parameters": [
             {
-              "name": "Expected",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "Actual",
+              "name": "Value",
               "value": "%hash%",
-              "type": "object"
+              "type": "object?"
             },
             {
               "name": "Message",
               "value": "hash should produce non-empty result",
-              "type": "string"
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Crypto/HashDefault/HashDefault.test.goal",
-  "prPath": "/Tests/Crypto/HashDefault/.build/hashdefault.test.pr",
+  "path": "/HashDefault.test.goal",
+  "prPath": "/.build/hashdefault.test.pr",
   "hash": "88e9c5eef8970c8e3db91c82c916d642254d5fb0f21b9f61e6d9ab99ef30eaf6",
   "builderVersion": null,
   "isSetup": false,

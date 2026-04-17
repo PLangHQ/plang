@@ -1,6 +1,6 @@
 {
   "name": "ProcessItem",
-  "description": "ProcessItem writes an output line including the current loop variable %item%.",
+  "description": "Writes an output line for the current item.",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Loop/ProcessItem.goal",
-  "prPath": "/Tests/Loop/.build/processitem.pr",
+  "path": "/ProcessItem.goal",
+  "prPath": "/.build/processitem.pr",
   "hash": "cfeb4d0ddd62c20bc3ca1f0a7102830269241c0d6547c72d7e16db832eae042d",
   "builderVersion": null,
   "isSetup": false,

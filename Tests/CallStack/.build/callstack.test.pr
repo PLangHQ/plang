@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Captures call stack depth before and after calling InnerTest, asserting depth is available and returns to the same value.",
   "comment": null,
   "steps": [
     {
@@ -22,22 +22,14 @@
             {
               "name": "Value",
               "value": "%!callStack.Depth%",
-              "type": "long"
+              "type": "object"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -46,11 +38,27 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%depthBefore%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "callStack.Depth should be available",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -66,17 +74,17 @@
           "parameters": [
             {
               "name": "GoalName",
-              "value": "InnerTest",
-              "type": "string"
+              "value": {
+                "name": "InnerTest"
+              },
+              "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -98,22 +106,14 @@
             {
               "name": "Value",
               "value": "%!callStack.Depth%",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ]
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -130,33 +130,31 @@
             {
               "name": "Expected",
               "value": "%depthBefore%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Actual",
               "value": "%depthAfter%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "depth should return to same level after call",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/CallStack/CallStack.test.goal",
-  "prPath": "/Tests/Runtime2/CallStack/.build/callstack.test.pr",
+  "path": "/CallStack.test.goal",
+  "prPath": "/.build/callstack.test.pr",
   "hash": "a38a015b01986ce423ca82b84a1f0e17d86acfd654bc5dddc0c0ab0142026759",
   "builderVersion": null,
   "isSetup": false,

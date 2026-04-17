@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Configures default HTTP headers, requests httpbin headers endpoint, conditionally checks response is not empty, then writes an output message.",
+  "description": "Configures default HTTP headers, calls httpbin headers endpoint, and conditionally writes an output message if the response is not empty.",
   "comment": null,
   "steps": [
     {
@@ -20,20 +20,13 @@
                 "X-Test-Header": "plang-test"
               },
               "type": "json"
-            },
-            {
-              "name": "Default",
-              "value": true,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -55,7 +48,7 @@
             {
               "name": "Method",
               "value": "GET",
-              "type": "httpmethod"
+              "type": "string"
             },
             {
               "name": "Unsigned",
@@ -63,7 +56,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -80,13 +74,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -103,7 +95,7 @@
             {
               "name": "Left",
               "value": "%response%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -112,8 +104,8 @@
             },
             {
               "name": "Right",
-              "value": "",
-              "type": "string"
+              "value": null,
+              "type": "object"
             },
             {
               "name": "Negate",
@@ -121,13 +113,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -152,20 +142,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Http/ConfigHeaders/ConfigHeaders.test.goal",
-  "prPath": "/Tests/Http/ConfigHeaders/.build/configheaders.test.pr",
+  "path": "/ConfigHeaders.test.goal",
+  "prPath": "/.build/configheaders.test.pr",
   "hash": "29e2997537ad66df7ec3cd4beb455913b7a6be87f3b2955e8024beda9cffaa69",
   "builderVersion": null,
   "isSetup": false,

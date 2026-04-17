@@ -1,6 +1,6 @@
 {
   "name": "CachedGoal",
-  "description": "CachedGoal reads testdata.txt into %cachedMsg% with a 5-minute cache, then writes an output message including the cached content. If called twice, the second call should hit the cache for the file.read step.",
+  "description": "CachedGoal reads testdata.txt with caching for 5 minutes, stores the result in %cachedMsg%, then writes an output message including %cachedMsg%.",
   "comment": null,
   "steps": [
     {
@@ -25,7 +25,22 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "cache",
+              "action": "wrap",
+              "parameters": [
+                {
+                  "name": "DurationMs",
+                  "value": 300000,
+                  "type": "long"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         },
         {
           "module": "variable",
@@ -42,18 +57,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": {
-        "durationMs": 300000,
-        "sliding": null,
-        "key": null,
-        "location": null
-      },
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -69,7 +77,7 @@
           "parameters": [
             {
               "name": "Data",
-              "value": "CachedGoal read: %cachedMsg%",
+              "value": "  CachedGoal read: %cachedMsg%",
               "type": "tstring"
             },
             {
@@ -78,20 +86,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Cache/Basic/CachedGoal.goal",
-  "prPath": "/Tests/Cache/Basic/.build/cachedgoal.pr",
+  "path": "/CachedGoal.goal",
+  "prPath": "/.build/cachedgoal.pr",
   "hash": "530633b1822355ea48057798a87c093a26b5085baac91fec508af31e03850a85",
   "builderVersion": null,
   "isSetup": false,

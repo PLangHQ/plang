@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -61,7 +59,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -70,19 +69,16 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenEnds",
-                "parameters": []
+                "name": "WhenEnds"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -112,20 +108,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/EndsWith/ConditionEndsWith.test.goal",
-  "prPath": "/Tests/Condition/EndsWith/.build/conditionendswith.test.pr",
+  "path": "/ConditionEndsWith.test.goal",
+  "prPath": "/.build/conditionendswith.test.pr",
   "hash": "33ea9e6482f1d8b3dac0f1b66fc0c2e67ba920fb203421a09a2dbb54ebc73d68",
   "builderVersion": null,
   "isSetup": false,

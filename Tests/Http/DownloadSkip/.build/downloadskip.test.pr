@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Test flow: create a file, download with IfExists=Skip, read back content, assert skip worked via conditional output, then delete the file.",
+  "description": "Creates skip-test.txt, downloads the same URL with IfExists=Skip, reads the file into %content%, verifies it still equals the original content, writes a confirmation message, then deletes the file.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -66,13 +64,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -97,7 +93,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -114,13 +111,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -150,13 +145,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -178,16 +171,14 @@
             {
               "name": "Channels",
               "value": "this",
-              "type": "object"
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -217,20 +208,18 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Http/DownloadSkip/DownloadSkip.test.goal",
-  "prPath": "/Tests/Http/DownloadSkip/.build/downloadskip.test.pr",
+  "path": "/DownloadSkip.test.goal",
+  "prPath": "/.build/downloadskip.test.pr",
   "hash": "2d89ef5b3ef512867d5fc30a7d644804f499d4a3accbfa8de1e9c5c187211799",
   "builderVersion": null,
   "isSetup": false,

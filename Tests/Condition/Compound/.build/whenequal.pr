@@ -1,6 +1,6 @@
 {
   "name": "WhenEqual",
-  "description": "Maps the step \u0027WhenEqual\u0027 to a variable assignment using variable.set.",
+  "description": "Compiles a step that sets %equalResult% to the string \u0022yes\u0022 when the condition \u0022\u003C= null\u0022 is satisfied (interpreted as a comparison against null).",
   "comment": null,
   "steps": [
     {
@@ -10,6 +10,34 @@
       "indent": 0,
       "comment": null,
       "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%equalResult%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003C=",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
         {
           "module": "variable",
           "action": "set",
@@ -25,20 +53,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Compound/WhenEqual.goal",
-  "prPath": "/Tests/Condition/Compound/.build/whenequal.pr",
+  "path": "/WhenEqual.goal",
+  "prPath": "/.build/whenequal.pr",
   "hash": "39ca33859cd43cdfa7f65838321b73822acadbd150285dddf482b01296633ee7",
   "builderVersion": null,
   "isSetup": false,

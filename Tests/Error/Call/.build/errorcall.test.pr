@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %caughtMessage% to empty, calls ThrowTestError with on-error redirect to CatchError, then asserts %caughtMessage% equals \u0027test error\u0027.",
+  "description": "Sets an empty caught message, calls ThrowTestError with an on-error handler that calls CatchError, then asserts the caught message equals \u0027test error\u0027.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -48,33 +46,39 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowTestError"
+                "name": "ThrowTestError",
+                "parameters": []
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "actor(user|service|system)"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "CatchError",
+                    "parameters": []
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "CatchError",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -96,23 +100,21 @@
             {
               "name": "Actual",
               "value": "%caughtMessage%",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Call/ErrorCall.test.goal",
-  "prPath": "/Tests/Error/Call/.build/errorcall.test.pr",
+  "path": "/ErrorCall.test.goal",
+  "prPath": "/.build/errorcall.test.pr",
   "hash": "8c21fb451d36f668ff578e8d092ed6e203cfced3aa3ec24de873a6fafb88d34d",
   "builderVersion": null,
   "isSetup": false,

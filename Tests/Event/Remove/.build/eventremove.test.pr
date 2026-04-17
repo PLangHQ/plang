@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %writeCount% to 0, writes to an event-bound output channel via Counter, verifies it increments once, removes the event binding, then writes again and verifies the counter did not increment further.",
+  "description": "Sets up an event binding, writes via Counter while the event is bound, verifies write count increments once, removes the event binding, writes again, and verifies the count did not increment further.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -42,21 +40,58 @@
       "comment": null,
       "actions": [
         {
-          "module": "output",
-          "action": "write",
+          "module": "event",
+          "action": "on",
           "parameters": [
             {
-              "name": "Data",
-              "value": "%__data__%",
-              "type": "object"
+              "name": "Type",
+              "value": "output.write",
+              "type": "string"
             },
             {
-              "name": "Channels",
-              "value": "%eventBinding%",
+              "name": "GoalToCall",
+              "value": {
+                "Name": "Counter",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": "/.build/counter.pr"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "GoalPattern",
+              "value": "",
               "type": "string"
+            },
+            {
+              "name": "StepPattern",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            },
+            {
+              "name": "IsRegex",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Priority",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "Actor",
+              "value": "system",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -73,13 +108,17 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -96,7 +135,7 @@
             {
               "name": "Data",
               "value": "first",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -104,13 +143,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -132,16 +169,19 @@
             {
               "name": "Actual",
               "value": "%writeCount%",
-              "type": "string"
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -161,13 +201,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -184,7 +222,7 @@
             {
               "name": "Data",
               "value": "second",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -192,13 +230,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -220,23 +256,26 @@
             {
               "name": "Actual",
               "value": "%writeCount%",
-              "type": "string"
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/Remove/EventRemove.test.goal",
-  "prPath": "/Tests/Event/Remove/.build/eventremove.test.pr",
+  "path": "/EventRemove.test.goal",
+  "prPath": "/.build/eventremove.test.pr",
   "hash": "c1aab1a156ef3b1154f5aa41533b3d21f86b54d517cced7f67aee12e06b04fc5",
   "builderVersion": null,
   "isSetup": false,

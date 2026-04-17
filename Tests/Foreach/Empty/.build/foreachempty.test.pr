@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Initializes an empty list and count, iterates over the empty list calling ProcessItem (no iterations expected), then asserts count is 0.",
+  "description": "Initializes an empty items list and count, then iterates over items calling ProcessItem for each item, and finally asserts count equals 0.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "list"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,13 +54,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -87,7 +83,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -108,13 +105,11 @@
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -137,22 +132,25 @@
               "name": "Actual",
               "value": "%count%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Foreach/Empty/ForeachEmpty.test.goal",
-  "prPath": "/Tests/Foreach/Empty/.build/foreachempty.test.pr",
+  "path": "/ForeachEmpty.test.goal",
+  "prPath": "/.build/foreachempty.test.pr",
   "hash": "d6a256ddd85de9e00b39467590ee6a4b7798440e444abb7629b43524512f08f9",
   "builderVersion": null,
   "isSetup": false,

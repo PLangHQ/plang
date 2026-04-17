@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets a settings key, reads it back into %val%, asserts the value matches, then removes the key.",
+  "description": "Sets a settings key, reads it back into %val%, asserts the value matches, then removes the settings key.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +49,8 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -64,17 +63,15 @@
             },
             {
               "name": "Value",
-              "value": "%__data__",
+              "value": "%__data__%",
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -97,15 +94,18 @@
               "name": "Actual",
               "value": "%val%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -125,20 +125,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Actor/Datasource/ActorDatasource.test.goal",
-  "prPath": "/Tests/Actor/Datasource/.build/actordatasource.test.pr",
+  "path": "/ActorDatasource.test.goal",
+  "prPath": "/.build/actordatasource.test.pr",
   "hash": "78ce3381fba78c88c270d338def8fc7a4e522fb2d779f45ce9c8b28c29d8592b",
   "builderVersion": null,
   "isSetup": false,

@@ -10,11 +10,11 @@ global using ErrorOrder = App.Goals.Goal.Steps.Step.ErrorOrder;
 global using CacheSettings = App.Goals.Goal.Steps.Step.CacheSettings;
 global using StepActions = App.Goals.Goal.Steps.Step.Actions.@this;
 global using PrAction = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+global using ActionModifiers = App.Goals.Goal.Steps.Step.Actions.Action.Modifiers.@this;
 
 // Types that have v1 conflicts in PLang project but NOT in PLang.Tests (no Building.Model here)
 global using Goal = App.Goals.Goal.@this;
 global using Visibility = App.Goals.Goal.Visibility;
-global using ErrorHandler = App.Goals.Goal.Steps.Step.ErrorHandler;
 
 // Event types
 global using EventType = App.Events.EventType;

@@ -1,6 +1,6 @@
 {
   "name": "ThrowCustomError",
-  "description": "ThrowCustomError maps to error.throw with message, key, and status code.",
+  "description": "Throws a custom error with message, key, and HTTP status code.",
   "comment": null,
   "steps": [
     {
@@ -30,20 +30,18 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Props/ThrowCustomError.goal",
-  "prPath": "/Tests/Error/Props/.build/throwcustomerror.pr",
+  "path": "/ThrowCustomError.goal",
+  "prPath": "/.build/throwcustomerror.pr",
   "hash": "8e10bd9f6f672d9297e03b262e092f9742b07097098c01f7ea73cd6c11e48d99",
   "builderVersion": null,
   "isSetup": false,

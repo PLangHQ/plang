@@ -1,6 +1,6 @@
 {
   "name": "TestGoal",
-  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "description": "Maps two conditional steps using condition.if. The first step has no nested action; the second step includes an explicit Step=this.",
   "comment": null,
   "steps": [
     {
@@ -11,27 +11,40 @@
       "comment": null,
       "actions": [
         {
-          "module": "output",
-          "action": "write",
+          "module": "condition",
+          "action": "if",
           "parameters": [
             {
-              "name": "Data",
-              "value": "step one",
+              "name": "Left",
+              "value": "%step one%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
               "type": "string"
             },
             {
-              "name": "Channels",
+              "name": "Right",
+              "value": "[object]",
+              "type": "string"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
               "value": "this",
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -40,18 +53,49 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%step two%",
+              "type": "object?"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "[object?]",
+              "type": "object?"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Runtime2/Builder/ParseGoal/parse_test/Test.goal",
-  "prPath": "/Tests/Runtime2/Builder/ParseGoal/parse_test/.build/test.pr",
+  "path": "/parse_test/Test.goal",
+  "prPath": "/parse_test/.build/test.pr",
   "hash": "a61e4828752e9706c892324fac9ff77098e3301722657cac993ddb5c405a5191",
   "builderVersion": null,
   "isSetup": false,

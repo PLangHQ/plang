@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets two flags false, registers two event handlers on the same hook (BeforeAction) that write via output.write, then writes \u0027trigger\u0027 and asserts both flags became true.",
+  "description": "Sets two event flags, runs two handler calls intended to fire on the same hook before output.write, writes \u0027trigger\u0027, then asserts both flags became true.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,13 +54,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -73,34 +69,31 @@
       "comment": null,
       "actions": [
         {
-          "module": "event",
-          "action": "on",
+          "module": "goal",
+          "action": "call",
           "parameters": [
             {
-              "name": "Type",
-              "value": "BeforeAction",
-              "type": "string"
-            },
-            {
-              "name": "GoalToCall",
+              "name": "GoalName",
               "value": {
-                "name": "HandlerA"
+                "Name": "HandlerA",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": "/.build/handlera.pr"
               },
               "type": "goal.call"
             },
             {
-              "name": "ActionPattern",
-              "value": "output.write",
-              "type": "string"
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -111,34 +104,31 @@
       "comment": null,
       "actions": [
         {
-          "module": "event",
-          "action": "on",
+          "module": "goal",
+          "action": "call",
           "parameters": [
             {
-              "name": "Type",
-              "value": "BeforeAction",
-              "type": "string"
-            },
-            {
-              "name": "GoalToCall",
+              "name": "GoalName",
               "value": {
-                "name": "HandlerB"
+                "Name": "HandlerB",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": "/.build/handlerb.pr"
               },
               "type": "goal.call"
             },
             {
-              "name": "ActionPattern",
-              "value": "output.write",
-              "type": "string"
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -155,16 +145,19 @@
             {
               "name": "Data",
               "value": "trigger",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -186,16 +179,14 @@
             {
               "name": "Actual",
               "value": "%eventA%",
-              "type": "bool"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -217,23 +208,21 @@
             {
               "name": "Actual",
               "value": "%eventB%",
-              "type": "bool"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/Multiple/EventMultiple.test.goal",
-  "prPath": "/Tests/Event/Multiple/.build/eventmultiple.test.pr",
+  "path": "/EventMultiple.test.goal",
+  "prPath": "/.build/eventmultiple.test.pr",
   "hash": "f3a3f71fd38fe36b01abc8f0cea55fd758d7d86630f1325642df123175142de9",
   "builderVersion": null,
   "isSetup": false,

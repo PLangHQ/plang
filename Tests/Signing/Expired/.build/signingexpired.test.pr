@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Set %expired% to true (null comparison result indicated by \u003C= null in the goal step).",
+  "description": "Sets the %expired% variable to true.",
   "comment": null,
   "steps": [
     {
@@ -25,22 +25,25 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "IgnoreError",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": null,
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": true,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -58,20 +61,13 @@
               "name": "Name",
               "value": "testSigner",
               "type": "string"
-            },
-            {
-              "name": "SetAsDefault",
-              "value": false,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -98,13 +94,11 @@
               "type": "json"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -129,13 +123,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -146,39 +138,20 @@
       "comment": null,
       "actions": [
         {
-          "module": "timer",
-          "action": "start",
+          "module": "timeout.after",
+          "action": "after",
           "parameters": [
             {
-              "name": "Name",
-              "value": "wait60ms",
-              "type": "string"
-            },
-            {
-              "name": "Scope",
-              "value": "goal",
-              "type": "string"
+              "name": "Ms",
+              "value": 60,
+              "type": "int"
             }
           ],
-          "defaults": null
-        },
-        {
-          "module": "timer",
-          "action": "end",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "wait60ms",
-              "type": "string"
-            }
-          ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -202,31 +175,40 @@
               "value": [
                 "C0"
               ],
-              "type": "list\u003Cstring\u003E"
+              "type": "list"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "Name": "HandleExpired",
+                    "Description": null,
+                    "Parallel": false,
+                    "Parameters": null,
+                    "PrPath": null
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "HandleExpired",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": null,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -251,13 +233,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
@@ -289,20 +269,18 @@
                   "type": "bool"
                 }
               ],
-              "defaults": null
+              "defaults": null,
+              "modifiers": []
             }
           ],
           "intent": null,
-          "onError": null,
-          "cache": null,
-          "timeout": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/Tests/Signing/Expired/SigningExpired.test.goal",
-      "prPath": "/Tests/Signing/Expired/.build/signingexpired.test.pr",
+      "path": "/SigningExpired.test.goal",
+      "prPath": "/.build/signingexpired.test.pr",
       "hash": "3e0fc6cf0fa6e675dbbfea3a6d897c5c4a85e1c7f461196245524e9be0d0f3d3",
       "builderVersion": null,
       "isSetup": false,
@@ -313,8 +291,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/Tests/Signing/Expired/SigningExpired.test.goal",
-  "prPath": "/Tests/Signing/Expired/.build/signingexpired.test.pr",
+  "path": "/SigningExpired.test.goal",
+  "prPath": "/.build/signingexpired.test.pr",
   "hash": "591ebadbc139923b807bd95182cb82c57c4f7953f95524214e0762af5608e7d4",
   "builderVersion": null,
   "isSetup": false,

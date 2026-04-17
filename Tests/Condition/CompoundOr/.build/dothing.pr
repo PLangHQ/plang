@@ -1,6 +1,6 @@
 {
   "name": "DoThing",
-  "description": "Sets %result% to the string \u0022or-true\u0022 using variable.set.",
+  "description": "Sets %result% to the string \u0022or-true\u0022 (the \u003C= null part is ignored by the compiler since no engine action supports that syntax).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/CompoundOr/DoThing.goal",
-  "prPath": "/Tests/Condition/CompoundOr/.build/dothing.pr",
+  "path": "/DoThing.goal",
+  "prPath": "/.build/dothing.pr",
   "hash": "d2b74b329a943baecc77a760819ad11f1c52335964c1e8876c0c1b03fb3d8fea",
   "builderVersion": null,
   "isSetup": false,

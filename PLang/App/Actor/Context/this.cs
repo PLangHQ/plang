@@ -55,7 +55,7 @@ public sealed class @this : IDisposable
     private readonly Stack<CancellationTokenSource> _cancellationStack = new();
 
     /// <summary>
-    /// Pushes a timeout CTS so all sub-calls use it. Called by app.execute for step.Timeout.
+    /// Pushes a timeout CTS so all sub-calls use it. Used by the timeout.after modifier.
     /// </summary>
     public void PushCancellation(CancellationTokenSource cts) => _cancellationStack.Push(cts);
 

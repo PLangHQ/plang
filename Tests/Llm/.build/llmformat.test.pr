@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls llm.query requesting a JSON-only response, writes the result to %result%, then asserts %result% is not null.",
+  "description": "Calls llm.query requesting a JSON-only response, writes the model output to %result%, then asserts %result% is not null.",
   "comment": null,
   "steps": [
     {
@@ -34,14 +34,10 @@
               "name": "Format",
               "value": "json",
               "type": "string"
-            },
-            {
-              "name": "Cache",
-              "value": true,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -58,13 +54,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -82,22 +76,25 @@
               "name": "Value",
               "value": "%result%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %result% to be not null",
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Llm/LlmFormat.test.goal",
-  "prPath": "/Tests/Llm/.build/llmformat.test.pr",
+  "path": "/LlmFormat.test.goal",
+  "prPath": "/.build/llmformat.test.pr",
   "hash": "a572581de9026488973df4f3364f5d6ea4b68fd7482a223ed3b438130aad6304",
   "builderVersion": null,
   "isSetup": false,

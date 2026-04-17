@@ -58,26 +58,17 @@ public class TypeMappingDictConversionTests
                         new Dictionary<string, object?> { ["name"] = "GoalName", ["value"] = "Test", ["type"] = "goal.call" }
                     }
                 }
-            },
-            ["onError"] = new Dictionary<string, object?>
-            {
-                ["retryCount"] = 2,
-                ["order"] = "RetryFirst",
-                ["goal"] = new Dictionary<string, object?> { ["name"] = "HandleError" }
             }
         };
 
         var (result, error) = TypeMapping.TryConvertTo(dict, typeof(Step));
 
-        // Report what happened
         if (error != null)
             Assert.Fail($"Conversion failed: {error.Message}");
 
         await Assert.That(result).IsNotNull();
         var step = result as Step;
         await Assert.That(step!.Actions.Count).IsEqualTo(1);
-        await Assert.That(step!.OnError).IsNotNull();
-        await Assert.That(step!.OnError!.RetryCount).IsEqualTo(2);
     }
 
     [Test]

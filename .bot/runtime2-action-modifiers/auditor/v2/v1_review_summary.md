@@ -1,0 +1,1 @@
+Auditor v1 found 6 findings (1 major, 3 minor, 2 nit). Coder v5 fixed the major and all 3 minors. Codeanalyzer v2 verified all fixes clean. The 2 nits (F5: FirstOrDefault action stamping, F6: DefaultKey path-relative) were accepted as-is.

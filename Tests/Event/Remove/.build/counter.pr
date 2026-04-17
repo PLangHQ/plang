@@ -1,6 +1,6 @@
 {
   "name": "Counter",
-  "description": "Counter step increments %writeCount% by 1 using variable.set.",
+  "description": "Counter step: increment %writeCount% by 1 and assign back to %writeCount%. The provided expression includes \u0027\u003C= null\u0027, which is not a valid mapping to the available engine actions.",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/Remove/Counter.goal",
-  "prPath": "/Tests/Event/Remove/.build/counter.pr",
+  "path": "/Counter.goal",
+  "prPath": "/.build/counter.pr",
   "hash": "b5b20fd0f93bd7121b322b5c89dd8ab0cf3f8ff62759fa6637818853573d079f",
   "builderVersion": null,
   "isSetup": false,

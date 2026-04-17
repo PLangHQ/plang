@@ -17,7 +17,7 @@
             {
               "name": "Data",
               "value": "test output message",
-              "type": "string"
+              "type": "tstring"
             },
             {
               "name": "Channels",
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,13 +54,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -79,28 +75,26 @@
             {
               "name": "Value",
               "value": "%afterWrite%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "write should complete without error",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Output/Output.test.goal",
-  "prPath": "/Tests/Output/.build/output.test.pr",
+  "path": "/Output.test.goal",
+  "prPath": "/.build/output.test.pr",
   "hash": "18b6852d54587bc07be5307e88af74ed1405ad84976b03543e81be4beca216bc",
   "builderVersion": null,
   "isSetup": false,

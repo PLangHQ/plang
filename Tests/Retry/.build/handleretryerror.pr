@@ -1,6 +1,6 @@
 {
   "name": "HandleRetryError",
-  "description": "Sets %retryErrorHandled% to true in HandleRetryError.",
+  "description": "Sets %retryErrorHandled% to true (null comparison/placeholder in step text is ignored by compiler).",
   "comment": null,
   "steps": [
     {
@@ -23,27 +23,26 @@
               "name": "Value",
               "value": true,
               "type": "bool"
-            },
-            {
-              "name": "Type",
-              "value": "bool",
-              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Retry/HandleRetryError.goal",
-  "prPath": "/Tests/Retry/.build/handleretryerror.pr",
+  "path": "/HandleRetryError.goal",
+  "prPath": "/.build/handleretryerror.pr",
   "hash": "07977c4a77a01653f722fc2cc4587a4232ba762697c7e13ac982efcf4dcb38c8",
   "builderVersion": null,
   "isSetup": false,

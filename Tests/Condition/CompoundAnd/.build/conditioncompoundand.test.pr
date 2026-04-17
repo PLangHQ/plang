@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %a% and %b%, evaluates a compound AND condition (both comparisons must be true) and calls DoThing when satisfied, then asserts %result% equals \u0027both-true\u0027.",
+  "description": "Sets %a% and %b%, evaluates a compound AND condition, calls DoThing when true, then asserts %result% equals the expected value.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,13 +54,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -78,113 +74,28 @@
           "parameters": [
             {
               "name": "Left",
-              "value": "%a%",
-              "type": "string"
+              "value": "%a% \u003E 1 and %b% \u003C 10",
+              "type": "bool"
             },
             {
               "name": "Operator",
-              "value": "\u003E",
+              "value": "==",
               "type": "string"
             },
             {
               "name": "Right",
-              "value": 1,
-              "type": "long"
-            },
-            {
-              "name": "Negate",
-              "value": false,
+              "value": true,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": {
-                "name": "this",
-                "description": "",
-                "comment": "",
-                "visibility": "public",
-                "inputParameters": {}
-              },
-              "type": "this"
             }
           ],
-          "defaults": null
-        },
-        {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
+          "defaults": [
             {
-              "name": "Left",
-              "value": "%b%",
-              "type": "string"
-            },
-            {
-              "name": "Operator",
-              "value": "\u003C",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": 10,
-              "type": "long"
-            },
-            {
-              "name": "Negate",
+              "name": "negate",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": {
-                "name": "this",
-                "description": "",
-                "comment": "",
-                "visibility": "public",
-                "inputParameters": {}
-              },
-              "type": "this"
             }
           ],
-          "defaults": null
-        },
-        {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%__conditionReturn1__%",
-              "type": "string"
-            },
-            {
-              "name": "Operator",
-              "value": "and",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": "%__conditionReturn2__%",
-              "type": "string"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": {
-                "name": "this",
-                "description": "",
-                "comment": "",
-                "visibility": "public",
-                "inputParameters": {}
-              },
-              "type": "this"
-            }
-          ],
-          "defaults": null
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -193,19 +104,25 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "DoThing",
-                "parameters": []
+                "Name": "DoThing",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -227,28 +144,26 @@
             {
               "name": "Actual",
               "value": "%result%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "AND condition should pass when both sides true",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/CompoundAnd/ConditionCompoundAnd.test.goal",
-  "prPath": "/Tests/Condition/CompoundAnd/.build/conditioncompoundand.test.pr",
+  "path": "/ConditionCompoundAnd.test.goal",
+  "prPath": "/.build/conditioncompoundand.test.pr",
   "hash": "1b2c7e71ed1ee4211f422eeead71eb38e7c7849066e50b810718f63ada6ea335",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Runs two llm.query calls: first stores the response in %first%, second continues the previous conversation and stores the response in %second%, then asserts both are not null.",
+  "description": "Runs two LLM queries: the first stores the response in %first%, the second continues the previous conversation to answer the favorite color and stores it in %second%, then asserts both are not null.",
   "comment": null,
   "steps": [
     {
@@ -34,14 +34,10 @@
               "name": "ContinuePreviousConversation",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Cache",
-              "value": true,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -58,13 +54,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -98,14 +92,10 @@
               "name": "ContinuePreviousConversation",
               "value": true,
               "type": "bool"
-            },
-            {
-              "name": "Cache",
-              "value": true,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -122,13 +112,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -148,13 +136,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -174,20 +160,18 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Llm/LlmContinue.test.goal",
-  "prPath": "/Tests/Llm/.build/llmcontinue.test.pr",
+  "path": "/LlmContinue.test.goal",
+  "prPath": "/.build/llmcontinue.test.pr",
   "hash": "37b7d06e17c11310edbcf0336bb934cc32b507e0f2f8677603fa4f1f3dbf0202",
   "builderVersion": null,
   "isSetup": false,

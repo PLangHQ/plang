@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Asserts that %MyIdentity% (an identitydata variable) exists and that its Name field is not null, covering the case where no identities exist and a default identity is auto-created.",
+  "description": "Asserts that %MyIdentity% and %MyIdentity.Name% are not null, to verify an auto-created default identity exists when no identities are present.",
   "comment": null,
   "steps": [
     {
@@ -18,15 +18,18 @@
               "name": "Value",
               "value": "%MyIdentity%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %MyIdentity% to be not null",
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -43,23 +46,26 @@
             {
               "name": "Value",
               "value": "%MyIdentity.Name%",
-              "type": "string"
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %MyIdentity.Name% to be not null",
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Identity/AutoCreate/IdentityAutoCreate.test.goal",
-  "prPath": "/Tests/Identity/AutoCreate/.build/identityautocreate.test.pr",
+  "path": "/IdentityAutoCreate.test.goal",
+  "prPath": "/.build/identityautocreate.test.pr",
   "hash": "153fa75d2609153132a67b1d80f090a0b6f9ced940f1a62e514bf3835b590fe1",
   "builderVersion": null,
   "isSetup": false,

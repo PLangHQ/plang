@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %flag% true, conditionally calls SetTrue, asserts %wasTrue% was set. Then sets %noFlag% false, conditionally calls SetWrong or SetFalse (else branch), and asserts %wasFalse% was set.",
+  "description": "Sets %flag% true, conditionally calls SetTrue, asserts %wasTrue% was set. Then sets %noFlag% false, conditionally calls SetWrong or else calls SetFalse, and asserts %wasFalse% was set.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -59,25 +57,10 @@
               "name": "Right",
               "value": true,
               "type": "bool"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": {
-                "name": "SetTrue",
-                "description": "",
-                "comment": "",
-                "visibility": "public",
-                "inputParameters": {}
-              },
-              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -86,19 +69,16 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "SetTrue",
-                "parameters": []
+                "name": "SetTrue"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -110,10 +90,15 @@
       "actions": [
         {
           "module": "assert",
-          "action": "isTrue",
+          "action": "equals",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
               "value": "%wasTrue%",
               "type": "object"
             },
@@ -123,13 +108,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -154,13 +137,11 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -186,27 +167,17 @@
             },
             {
               "name": "Right",
-              "value": true,
-              "type": "bool"
+              "value": "true",
+              "type": "string"
             },
             {
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": {
-                "name": "SetWrong",
-                "description": "",
-                "comment": "",
-                "visibility": "public",
-                "inputParameters": {}
-              },
-              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -215,13 +186,22 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "SetWrong",
-                "parameters": []
+                "Name": "SetWrong",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": "/.build/setwrong.pr"
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "condition",
@@ -239,27 +219,17 @@
             },
             {
               "name": "Right",
-              "value": true,
-              "type": "bool"
+              "value": "false",
+              "type": "string"
             },
             {
               "name": "Negate",
-              "value": true,
+              "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": {
-                "name": "SetFalse",
-                "description": "",
-                "comment": "",
-                "visibility": "public",
-                "inputParameters": {}
-              },
-              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -268,19 +238,25 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "SetFalse",
-                "parameters": []
+                "Name": "SetFalse",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -292,10 +268,15 @@
       "actions": [
         {
           "module": "assert",
-          "action": "isTrue",
+          "action": "equals",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
               "value": "%wasFalse%",
               "type": "object"
             },
@@ -305,20 +286,18 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Basic/Condition.test.goal",
-  "prPath": "/Tests/Condition/Basic/.build/condition.test.pr",
+  "path": "/Condition.test.goal",
+  "prPath": "/.build/condition.test.pr",
   "hash": "afeace710baab1e7e08bdde31918fa94ca3f912ba6b7e051437914824fdf6640",
   "builderVersion": null,
   "isSetup": false,

@@ -40,6 +40,9 @@ public sealed partial class @this : modules.IDataWrappable
     [Store, Debug, Default]
     public List<Data.@this>? Defaults { get; set; }
 
+    [Store, Debug, Default]
+    public Modifiers.@this Modifiers { get; init; } = new();
+
     [Debug]
     public List<Info> Errors { get; init; } = new();
 
@@ -69,26 +72,42 @@ public sealed partial class @this : modules.IDataWrappable
     {
         var lifecycle = context.LifecycleFor(this);
 
-        // BeforeAction events — can override execution via Handled
         var beforeResult = await lifecycle.Before.Run(context, App.Events.EventType.BeforeAction);
         if (!beforeResult.Success) return beforeResult;
         if (beforeResult.Handled) return beforeResult;
 
-        // Dispatch to handler
-        var result = await context.App!.Run(this, context);
+        Func<Task<Data.@this>> dispatch = () => context.App!.Run(this, context);
+        var result = await Modifiers.RunAsync(dispatch, context);
 
-        // Store result as %__data__% — available to next action or step
         if (result.Success)
         {
             result.Name = "__data__";
             context.Variables.Put(result);
         }
 
-        // AfterAction events
         var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterAction);
         if (!afterResult.Success) return afterResult;
 
         return result;
+    }
+
+    /// <summary>
+    /// Wraps the given inner delegate with this modifier action. Resolves this action's
+    /// handler, verifies it implements IModifier, and runs ExecuteAsync so the source-generated
+    /// properties are populated before Wrap() reads them. Called by Modifiers.RunAsync.
+    /// </summary>
+    public async Task<(Func<Task<Data.@this>>? Wrapped, Errors.IError? Error)> WrapAround(
+        Func<Task<Data.@this>> next,
+        Actor.Context.@this context)
+    {
+        var (handler, error) = context.App!.Modules.GetCodeGenerated(this);
+        if (error != null) return (null, error);
+        if (handler is not modules.IModifier mod)
+            return (null, new Errors.ActionError(
+                $"{Module}.{ActionName} is not a modifier", "ModifierError", 400));
+
+        await handler.ExecuteAsync(this, context);
+        return (mod.Wrap(next, context), null);
     }
 
     /// <summary>

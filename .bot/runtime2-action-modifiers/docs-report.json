@@ -1,0 +1,248 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-action-modifiers",
+  "timestamp": "2026-04-17T10:48:00Z",
+  "reviewed_version": "v1",
+  "summary": "Documentation pass for action modifiers. Rewrote user-facing error handling docs to describe the new error.handle modifier, added new module pages for cache/timeout/timer. Updated architecture, execution-flow, goals-steps, good_to_know, build_process, and building_plang_tests in Documentation/v0.2/ to remove stale Step.OnError/Cache/Timeout and error.check/cache.check/cache.store references, and added a new Action Modifiers section describing the fold and builder grouping. Filled small XML doc gaps on timer.start, timer.end, and ModifierAttribute.Order. Recorded the three accepted security-backlog items and the GoalCall clone-not-mutate rule in good_to_know.md so future work surfaces them.",
+  "stats": {
+    "gaps_found": 14,
+    "gaps_filled": 14,
+    "docs_updated": 9,
+    "docs_created": 3
+  },
+  "changes": [
+    {
+      "id": 1,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "docs/modules/error.md",
+      "description": "Rewrote 'on error' section: per-action scope, filters (StatusCode/Key/Message), retry + retry budget, error-goal call, Order (RetryFirst/GoalFirst), IgnoreError fallback, %!error% parameter. Kept throw section."
+    },
+    {
+      "id": 2,
+      "type": "architecture-doc",
+      "action": "created",
+      "file": "docs/modules/cache.md",
+      "description": "New user doc for cache.wrap modifier: DurationMs/Sliding/Key, default key scheme (step:{goalPath}:{index}), success-only, shared-by-reference caveat."
+    },
+    {
+      "id": 3,
+      "type": "architecture-doc",
+      "action": "created",
+      "file": "docs/modules/timeout.md",
+      "description": "New user doc for timeout.after modifier: 408 Timeout error shape, cooperative cancellation, nested composition, parent-cancellation passthrough."
+    },
+    {
+      "id": 4,
+      "type": "architecture-doc",
+      "action": "created",
+      "file": "docs/modules/timer.md",
+      "description": "New user doc for timer.sleep, timer.start, timer.end with parameters, error shapes, and examples."
+    },
+    {
+      "id": 5,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "docs/modules/index.md",
+      "description": "Added timer to Core and a new 'Action Modifiers' bucket. Brief explanation of the modifier pattern."
+    },
+    {
+      "id": 6,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "docs/modules/builder.md",
+      "description": "Removed OnError/Cache from the Step.Merge field list; noted Modifiers travel inside Actions."
+    },
+    {
+      "id": 7,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/architecture.md",
+      "description": "Removed Step.OnError/Cache/Timeout from entity block; added Modifiers to Action block; rewrote Error Handling to describe error.handle modifier (ErrorHandler class deleted). Added new 'Action Modifiers' section with shape, runtime fold, IModifier, builder grouping, and how to add a modifier."
+    },
+    {
+      "id": 8,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/execution-flow.md",
+      "description": "Rewrote run.pr flow diagram to drop error.check/cache.check/cache.store; rewrote Section 6 (Error Flow) around per-action error.handle modifier; removed step.OnError reference."
+    },
+    {
+      "id": 9,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/goals-steps.md",
+      "description": "Removed OnError/Cache/Timeout rows from Step table; added Modifiers row to Action table; added pointer note that error/cache/timeout are per-action modifiers."
+    },
+    {
+      "id": 10,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "description": "Updated GoalFirst note to point at PLang/App/modules/error/handle.cs (old file deleted). Fixed Step.Merge field list. Removed stale ErrorHandler references in global-usings section. Added three new sections: Action Modifiers — Fold + Grouping, GoalCall — Clone Never Mutate, Modifier Hardening Backlog."
+    },
+    {
+      "id": 11,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/build_process.md",
+      "description": "Removed onError/cache from Step Properties; added modifiers to Action Properties; noted GroupModifiers runs in GoalsSave pipeline so runtime gets a pre-sorted fold."
+    },
+    {
+      "id": 12,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/building_plang_tests.md",
+      "description": "Reworded common LLM failures and verification checklists from onError/cache JSON properties to modifier-action grouping. Updated sample .pr shape."
+    },
+    {
+      "id": 13,
+      "type": "xml-doc",
+      "action": "created",
+      "file": "PLang/App/modules/timer/start.cs",
+      "description": "Added class-level summary describing stopwatch semantics and Name/Scope behaviour."
+    },
+    {
+      "id": 14,
+      "type": "xml-doc",
+      "action": "created",
+      "file": "PLang/App/modules/timer/end.cs",
+      "description": "Added class-level summary including the two ValidationError shapes (no-timer-started, unknown-name)."
+    },
+    {
+      "id": 15,
+      "type": "xml-doc",
+      "action": "updated",
+      "file": "PLang/App/modules/ModifierAttribute.cs",
+      "description": "Added Order property docstring listing the current assignments: timeout=1, cache=2, error=3."
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "missing-doc",
+      "file": "PLang/App/modules/timer/start.cs",
+      "issue": "Class-level XML summary missing — timer.start had no description of stopwatch semantics.",
+      "resolution": "filled",
+      "detail": "Added class-level summary."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "missing-doc",
+      "file": "PLang/App/modules/timer/end.cs",
+      "issue": "Class-level XML summary missing — timer.end had no description of return type or error shapes.",
+      "resolution": "filled",
+      "detail": "Added class-level summary covering elapsed TimeSpan return and the two ValidationError shapes."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "missing-doc",
+      "file": "PLang/App/modules/ModifierAttribute.cs",
+      "issue": "Order property had no XML docstring.",
+      "resolution": "filled",
+      "detail": "Added docstring listing current assignments (timeout=1, cache=2, error=3)."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "category": "stale-doc",
+      "file": "docs/modules/error.md",
+      "issue": "User-facing error handling doc described step-level `on error` syntax, which is deleted.",
+      "resolution": "filled",
+      "detail": "Rewrote to describe error.handle modifier with filters, retry, goal call, ordering, and %!error% parameter."
+    },
+    {
+      "id": 5,
+      "severity": "major",
+      "category": "missing-doc",
+      "file": "docs/modules/cache.md",
+      "issue": "No user-facing doc for the new cache.wrap modifier.",
+      "resolution": "filled",
+      "detail": "New page covering DurationMs/Sliding/Key, default key scheme, success-only storage, and shared-by-reference caveat."
+    },
+    {
+      "id": 6,
+      "severity": "major",
+      "category": "missing-doc",
+      "file": "docs/modules/timeout.md",
+      "issue": "No user-facing doc for the new timeout.after modifier.",
+      "resolution": "filled",
+      "detail": "New page covering 408 error shape, cooperative cancellation, nesting, and parent cancellation."
+    },
+    {
+      "id": 7,
+      "severity": "major",
+      "category": "missing-doc",
+      "file": "docs/modules/timer.md",
+      "issue": "No user-facing doc for the new timer module (sleep/start/end).",
+      "resolution": "filled",
+      "detail": "New page covering all three actions with parameters and examples."
+    },
+    {
+      "id": 8,
+      "severity": "major",
+      "category": "stale-doc",
+      "file": "docs/modules/index.md",
+      "issue": "Index missed the three new user-facing modules (cache, timeout, timer).",
+      "resolution": "filled",
+      "detail": "Added timer to Core and a new 'Action Modifiers' bucket with brief explanation of the modifier pattern."
+    },
+    {
+      "id": 9,
+      "severity": "major",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/architecture.md",
+      "issue": "Step block listed deleted .Timeout/.OnError/.Cache; Action block missed .Modifiers; Error Handling section referenced deleted ErrorHandler class.",
+      "resolution": "filled",
+      "detail": "Updated entity blocks; rewrote Error Handling; added full Action Modifiers section."
+    },
+    {
+      "id": 10,
+      "severity": "major",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/execution-flow.md",
+      "issue": "Sections 2 and 6 referenced deleted error.check / cache.check / cache.store / step.OnError.",
+      "resolution": "filled",
+      "detail": "Rewrote run.pr flow diagram and Section 6 around per-action error.handle modifier."
+    },
+    {
+      "id": 11,
+      "severity": "major",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/goals-steps.md",
+      "issue": "Step properties table listed deleted OnError/Cache/Timeout; Action table missed Modifiers.",
+      "resolution": "filled",
+      "detail": "Removed deleted rows; added Modifiers row to Action; added pointer note."
+    },
+    {
+      "id": 12,
+      "severity": "minor",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "issue": "GoalFirst note pointed at deleted Step/Methods.cs:HandleErrorAsync(); Step.Merge field list listed deleted Cache/OnError; global-using-aliases section referenced deleted ErrorHandler class alias.",
+      "resolution": "filled",
+      "detail": "Updated pointer, field list, and aliases; added three new sections (Action Modifiers fold + grouping, GoalCall clone-not-mutate pattern from auditor F1, Modifier Hardening Backlog from security v1)."
+    },
+    {
+      "id": 13,
+      "severity": "major",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/build_process.md",
+      "issue": "Step Properties table listed deleted onError/cache; Action Properties table missed modifiers; no mention of GroupModifiers in save pipeline.",
+      "resolution": "filled",
+      "detail": "Updated both tables and noted GroupModifiers in the GoalsSave description."
+    },
+    {
+      "id": 14,
+      "severity": "minor",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/building_plang_tests.md",
+      "issue": "Builder-failure checklist and sample .pr shape referenced deleted onError/cache JSON properties.",
+      "resolution": "filled",
+      "detail": "Reworded checklists around modifier-action grouping; updated sample .pr shape."
+    }
+  ]
+}

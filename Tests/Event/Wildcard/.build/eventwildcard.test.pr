@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Initialises %matchCount%, calls WildcardHandler, sets %a% and %b%, then asserts %matchCount% \u003E 0.",
+  "description": "Maps each step to engine actions: initialize matchCount, call wildcard handler, set a and b, then assert matchCount \u003E 0.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -48,19 +46,20 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WildcardHandler",
-                "parameters": []
+                "Name": "WildcardHandler",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -85,13 +84,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -116,13 +113,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -144,28 +139,21 @@
             {
               "name": "B",
               "value": 0,
-              "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %matchCount% to be greater than 0.",
-              "type": "tstring"
+              "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Event/Wildcard/EventWildcard.test.goal",
-  "prPath": "/Tests/Event/Wildcard/.build/eventwildcard.test.pr",
+  "path": "/EventWildcard.test.goal",
+  "prPath": "/.build/eventwildcard.test.pr",
   "hash": "5c9a82daceaf72be93a9ca2181c59f24b0084f0323e5ea1361fc1d4ed05db036",
   "builderVersion": null,
   "isSetup": false,

@@ -4,7 +4,7 @@ BuildGoal
 
 - write out "Building goal: %goal.Name%"
 - call BuildGoalCore
-- set %goal.Version% = "0.2.1"
+- set %goal.Version% = "0.2.2"
 - set %parentGoal% = %goal%
 - foreach %parentGoal.Goals%, call BuildSubGoal item=%subGoal%
 - set %goal% = %parentGoal%
@@ -20,7 +20,7 @@ BuildGoalCore
 - render template "/system/actions/v2/summary.md", write to %actionSummary%
 - render template "/system/builder/templates/v2/goalFormatForLlm.template", write to %goalForLlm%
 - render template "/system/builder/llm/BuildGoal.llm", write to %buildGoalPrompt%
-- llm.query system=%buildGoalPrompt%, user=%goalForLlm%, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, cache=%!build.cache%, on error HandleBuildGoalFailure, write to %stepResults%
+- llm.query system=%buildGoalPrompt%, user=%goalForLlm%, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], level: string, confidence: int}]}, cache=%!build.cache%, on error HandleBuildGoalFailure, write to %stepResults%
 - builder.validateResponse stepResults=%stepResults%, goal=%goal%, on error call LlmFixer
 - set %traceId% = %Now.Ticks%_%goal.Name%
 - set %trace% = {"id": "%traceId%", "goal": "%goal.Name%", "timestamp": "%Now%", "pass1": {"system": "%buildGoalPrompt%", "user": "%goalForLlm%", "response": "%stepResults%"}, "detailPasses": []}, type=json
@@ -47,7 +47,7 @@ ProcessGroup
 LlmFixer
 / LLM produced invalid output — retry with error context
 - write out "  Validation failed: %!error.Message% — retrying..."
-- llm.query system=%buildGoalPrompt%, user="Your previous response had validation errors:\n%!error.Message%\n\nThe PLang code to build:\n%goalForLlm%\n\nFix the errors listed above and return the complete corrected response.", scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, cache=%!build.cache%, write to %stepResults%
+- llm.query system=%buildGoalPrompt%, user="Your previous response had validation errors:\n%!error.Message%\n\nThe PLang code to build:\n%goalForLlm%\n\nFix the errors listed above and return the complete corrected response.", scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], level: string, confidence: int}]}, cache=%!build.cache%, write to %stepResults%
 - call ValidateBuildResponse
 
 

@@ -1,6 +1,6 @@
 {
   "name": "WhenContains",
-  "description": "Maps the step \u0027set %result% = \u0022contains\u0022\u0027 to a variable.set action.",
+  "description": "Maps the step to a variable assignment setting %result% to the string \u0022contains\u0022.",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,18 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Contains/WhenContains.goal",
-  "prPath": "/Tests/Condition/Contains/.build/whencontains.pr",
+  "path": "/WhenContains.goal",
+  "prPath": "/.build/whencontains.pr",
   "hash": "bc412b7ad89619bbdcdf8753e5dfb056749bc5e2681bd0b75abbb68bec344182",
   "builderVersion": null,
   "isSetup": false,

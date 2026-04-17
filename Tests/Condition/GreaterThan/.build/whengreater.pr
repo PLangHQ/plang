@@ -1,6 +1,6 @@
 {
   "name": "WhenGreater",
-  "description": "Maps the step \u0027WhenGreater\u0027 to a variable.set action for %result% with value \u0027greater\u0027.",
+  "description": "Sets %result% to \u0022greater\u0022 when the step condition indicates a greater-than comparison (as implied by the goal name).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/GreaterThan/WhenGreater.goal",
-  "prPath": "/Tests/Condition/GreaterThan/.build/whengreater.pr",
+  "path": "/WhenGreater.goal",
+  "prPath": "/.build/whengreater.pr",
   "hash": "8549bd74cad02b311cec50cff51455adff0761b51391d3756636c7d5678e7de5",
   "builderVersion": null,
   "isSetup": false,

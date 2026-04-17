@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %goalName% to \u0027TargetGoal\u0027, calls the goal referenced by %goalName%, then asserts %dynamicResult% equals \u0027reached\u0027.",
+  "description": "Sets a variable containing the target goal name, calls that goal by variable reference, then asserts the dynamic result equals \u0027reached\u0027.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -47,17 +45,21 @@
           "parameters": [
             {
               "name": "GoalName",
-              "value": "%goalName%",
+              "value": {
+                "Name": "%goalName%",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
+              },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -79,23 +81,21 @@
             {
               "name": "Actual",
               "value": "%dynamicResult%",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/GoalCall/Dynamic/GoalCallDynamic.test.goal",
-  "prPath": "/Tests/GoalCall/Dynamic/.build/goalcalldynamic.test.pr",
+  "path": "/GoalCallDynamic.test.goal",
+  "prPath": "/.build/goalcalldynamic.test.pr",
   "hash": "be5fdfa8098f28bad9b07b1562a74bea782e882575a057eeae821965441a287a",
   "builderVersion": null,
   "isSetup": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Compiles a sequence of assertions: not-equals, is-false, is-null, greater-than, and less-than, with explicit variable.set steps for the null/false values.",
+  "description": "Builds a sequence of assertions and variable assignments for notEquals, isFalse, isNull, greaterThan, and lessThan checks.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -54,15 +52,18 @@
               "name": "Value",
               "value": false,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -79,16 +80,14 @@
             {
               "name": "Value",
               "value": "%flag%",
-              "type": "bool"
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -111,15 +110,18 @@
               "name": "Value",
               "value": null,
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "object",
+              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -139,13 +141,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -170,13 +170,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -201,20 +199,18 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Assert/Assert.test.goal",
-  "prPath": "/Tests/Assert/.build/assert.test.pr",
+  "path": "/Assert.test.goal",
+  "prPath": "/.build/assert.test.pr",
   "hash": "1815c780867821a77fd6445aa08ecd27f6d5d34e0c875d967718c63ab3d7e4b6",
   "builderVersion": null,
   "isSetup": false,

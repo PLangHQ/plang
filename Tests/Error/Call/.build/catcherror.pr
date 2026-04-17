@@ -1,6 +1,6 @@
 {
   "name": "CatchError",
-  "description": "CatchError step sets %caughtMessage% to the caught error message.",
+  "description": "Sets %caughtMessage% to the caught error message (or null).",
   "comment": null,
   "steps": [
     {
@@ -22,28 +22,26 @@
             {
               "name": "Value",
               "value": "%!error.Message%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Type",
-              "value": "string",
+              "value": null,
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/Call/CatchError.goal",
-  "prPath": "/Tests/Error/Call/.build/catcherror.pr",
+  "path": "/CatchError.goal",
+  "prPath": "/.build/catcherror.pr",
   "hash": "e0c6c59c2f69f86595162877a2a5796ede74af5a3074201db9a8dd56c0c7fa4d",
   "builderVersion": null,
   "isSetup": false,

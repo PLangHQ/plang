@@ -1,6 +1,6 @@
 {
   "name": "WhenLTE",
-  "description": "Maps the step \u0027WhenLTE\u0027 to a variable assignment setting %result% to the string \u0027lte\u0027.",
+  "description": "Sets %result% to the string \u0022lte\u0022 when the step condition indicates LTE (\u003C= null).",
   "comment": null,
   "steps": [
     {
@@ -10,6 +10,34 @@
       "indent": 0,
       "comment": null,
       "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003C=",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
         {
           "module": "variable",
           "action": "set",
@@ -25,20 +53,24 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/LTE/WhenLTE.goal",
-  "prPath": "/Tests/Condition/LTE/.build/whenlte.pr",
+  "path": "/WhenLTE.goal",
+  "prPath": "/.build/whenlte.pr",
   "hash": "6f6d08cdd0d061b9851262b738c479468c504dc7a9f1d895452abcf4f2d3d7c1",
   "builderVersion": null,
   "isSetup": false,

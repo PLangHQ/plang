@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %noIdentity% to true (null condition in source maps to boolean true).",
+  "description": "Sets %noIdentity% to true (null comparison implied by step text).",
   "comment": null,
   "steps": [
     {
@@ -27,13 +27,11 @@
               "type": "json"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -53,28 +51,32 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": {
+                    "name": "HandleNoIdentity"
+                  },
+                  "type": "goal.call"
+                },
+                {
+                  "name": "IgnoreError",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
-      "onError": {
-        "goal": {
-          "name": "HandleNoIdentity",
-          "description": null,
-          "parallel": false,
-          "parameters": null,
-          "prPath": null
-        },
-        "retryCount": null,
-        "retryOverMs": null,
-        "order": 0,
-        "ignoreError": null,
-        "message": null,
-        "statusCode": null,
-        "key": null
-      },
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -99,13 +101,11 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
@@ -137,20 +137,18 @@
                   "type": "bool"
                 }
               ],
-              "defaults": null
+              "defaults": null,
+              "modifiers": []
             }
           ],
           "intent": null,
-          "onError": null,
-          "cache": null,
-          "timeout": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/Tests/Signing/NoIdentity/SigningNoIdentity.test.goal",
-      "prPath": "/Tests/Signing/NoIdentity/.build/signingnoidentity.test.pr",
+      "path": "/SigningNoIdentity.test.goal",
+      "prPath": "/.build/signingnoidentity.test.pr",
       "hash": "78852fea53a9ef8e4d8aafea747e5b552909c12a5b36a3c4b8824e5ff13ea63c",
       "builderVersion": null,
       "isSetup": false,
@@ -161,8 +159,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/Tests/Signing/NoIdentity/SigningNoIdentity.test.goal",
-  "prPath": "/Tests/Signing/NoIdentity/.build/signingnoidentity.test.pr",
+  "path": "/SigningNoIdentity.test.goal",
+  "prPath": "/.build/signingnoidentity.test.pr",
   "hash": "75ae4cb14e476c542ca21c5a53af118b078854e7561b17caf91d6b3c05f3b80f",
   "builderVersion": null,
   "isSetup": false,

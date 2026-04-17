@@ -1,6 +1,6 @@
 {
   "name": "TimedRetryCatcher",
-  "description": "Sets %timedRetryCaught% to true using variable.set.",
+  "description": "Sets %timedRetryCaught% to true (null comparison noted in step text).",
   "comment": null,
   "steps": [
     {
@@ -25,20 +25,24 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Error/RetryOnly/TimedRetryCatcher.goal",
-  "prPath": "/Tests/Error/RetryOnly/.build/timedretrycatcher.pr",
+  "path": "/TimedRetryCatcher.goal",
+  "prPath": "/.build/timedretrycatcher.pr",
   "hash": "0c5b0bce71ea2d237dd7b436a42bc5268c0db5828e914f20dc18abea890d7450",
   "builderVersion": null,
   "isSetup": false,

@@ -21,6 +21,9 @@ public partial class Set : IContext, IBuildValidatable
             return "Parameter 'Value' is the literal string \"this\" — this is wrong. For \"write to %var%\" patterns, use \"%__data__%\" to capture the previous action's result. \"this\" is a type annotation, not a value.";
         if (value?.Type?.Value != null && value.Value != null)
         {
+            // Skip validation when value contains %variable% references — they resolve at runtime
+            if (value.HasVariableReference) return null;
+
             var targetType = Utils.TypeMapping.GetType(value.Type.Value);
             if (targetType != null && !targetType.IsInstanceOfType(value.Value))
             {

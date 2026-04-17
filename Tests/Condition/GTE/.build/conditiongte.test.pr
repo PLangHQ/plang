@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %x% to 5, conditionally calls WhenGTE when %x% \u003E= 5 (boundary case), then asserts %result% equals \u0027gte\u0027.",
+  "description": "Sets %x% to 5, conditionally calls WhenGTE when %x% \u003E= 5, then asserts %result% equals \u0022gte\u0022.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -59,14 +57,10 @@
               "name": "Right",
               "value": 5,
               "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "goal",
@@ -75,19 +69,16 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenGTE",
-                "parameters": []
+                "name": "WhenGTE"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -114,23 +105,21 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for x \u003E= 5",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/GTE/ConditionGTE.test.goal",
-  "prPath": "/Tests/Condition/GTE/.build/conditiongte.test.pr",
+  "path": "/ConditionGTE.test.goal",
+  "prPath": "/.build/conditiongte.test.pr",
   "hash": "234f3042235ab436cebb469be11e44b3dd2ee4f16b68113748704c09f29c7810",
   "builderVersion": null,
   "isSetup": false,

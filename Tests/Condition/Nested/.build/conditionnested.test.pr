@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets x/y and flags, then uses nested condition.if steps to ensure inner false skips only inner block while outer continues; asserts innerRan remains \u0027no\u0027 and outerAfterRan becomes \u0027yes\u0027.",
+  "description": "Sets up variables, then uses nested if conditions to ensure the inner-if false branch skips only its block while the outer-if continues to subsequent steps.",
   "comment": null,
   "steps": [
     {
@@ -25,13 +25,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -56,13 +54,11 @@
               "type": "int"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -87,13 +83,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -118,13 +112,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -141,7 +133,7 @@
             {
               "name": "Left",
               "value": "%x%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -152,20 +144,13 @@
               "name": "Right",
               "value": 5,
               "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -182,7 +167,7 @@
             {
               "name": "Left",
               "value": "%y%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -193,20 +178,13 @@
               "name": "Right",
               "value": 100,
               "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -231,13 +209,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -262,13 +238,11 @@
               "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -295,16 +269,14 @@
             {
               "name": "Message",
               "value": "inner block should be skipped (y not \u003E 100)",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -331,23 +303,21 @@
             {
               "name": "Message",
               "value": "outer block step after inner-if should execute",
-              "type": "string"
+              "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Condition/Nested/ConditionNested.test.goal",
-  "prPath": "/Tests/Condition/Nested/.build/conditionnested.test.pr",
+  "path": "/ConditionNested.test.goal",
+  "prPath": "/.build/conditionnested.test.pr",
   "hash": "fa1b29070a16b3c7970d353c4240aa79f32eb16faa7ed137f08e0c200504cbb0",
   "builderVersion": null,
   "isSetup": false,

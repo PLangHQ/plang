@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets a JSON object, hashes it twice with keccak256, stores both hashes, then asserts they are identical.",
+  "description": "Sets a JSON object, hashes it twice, then asserts both hashes are identical.",
   "comment": null,
   "steps": [
     {
@@ -28,13 +28,11 @@
               "type": "json"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -52,14 +50,10 @@
               "name": "Data",
               "value": "%obj%",
               "type": "object"
-            },
-            {
-              "name": "Algorithm",
-              "value": "keccak256",
-              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -76,13 +70,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -100,14 +92,10 @@
               "name": "Data",
               "value": "%obj%",
               "type": "object"
-            },
-            {
-              "name": "Algorithm",
-              "value": "keccak256",
-              "type": "string"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -124,13 +112,11 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
@@ -160,20 +146,18 @@
               "type": "tstring"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Crypto/HashObject/HashObject.test.goal",
-  "prPath": "/Tests/Crypto/HashObject/.build/hashobject.test.pr",
+  "path": "/HashObject.test.goal",
+  "prPath": "/.build/hashobject.test.pr",
   "hash": "b5a9e3b23c5def12f12f8b8e7337e4b70f9ec04aad833d1092d8b38f09c15e75",
   "builderVersion": null,
   "isSetup": false,
