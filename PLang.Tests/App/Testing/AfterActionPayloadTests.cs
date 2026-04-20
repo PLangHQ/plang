@@ -146,9 +146,13 @@ public class AfterActionPayloadTests
 
         await _app.RunGoalAsync(goal, _app.User.Context);
 
-        // Both the modifier and the inner action fire AfterAction.
-        await Assert.That(observed.Any(o => o is { Module: "timeout", ActionName: "after" })).IsTrue();
-        await Assert.That(observed.Any(o => o is { Module: "variable", ActionName: "set" })).IsTrue();
+        // Exact count and order — Modifiers.RunAsync emits the modifier's AfterAction
+        // first (inside its own post-loop), then control returns to Action.RunAsync which
+        // emits the inner action's AfterAction. Duplicate firings would corrupt
+        // coverage counts silently; unexpected order signals a lifecycle regression.
+        await Assert.That(observed.Count).IsEqualTo(2);
+        await Assert.That(observed[0]).IsEqualTo(("timeout", "after"));
+        await Assert.That(observed[1]).IsEqualTo(("variable", "set"));
     }
 
     // Regression guard: architect widened only AfterAction. BeforeAction stays at

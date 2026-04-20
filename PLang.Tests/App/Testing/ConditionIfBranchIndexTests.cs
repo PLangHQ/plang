@@ -223,9 +223,11 @@ public class ConditionIfBranchIndexTests
 
         var result = await RunSingleStep(action);
         await Assert.That(result).IsNotNull();
-        // Either success with a legitimate branchIndex, or failure with none.
-        // Per spec: if eval errored, branchIndex should not be published.
-        if (!result.Success)
-            await Assert.That(result.Properties.Contains("branchIndex")).IsFalse();
+        // Pre-condition: the fixture must actually trigger an eval error — otherwise
+        // the branchIndex-absence check is vacuously true and the test proves nothing.
+        // If this assertion fires, the fixture needs to be strengthened (pick a
+        // different non-comparable pair) rather than relaxing the guard.
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Properties.Contains("branchIndex")).IsFalse();
     }
 }

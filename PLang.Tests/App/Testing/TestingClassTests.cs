@@ -108,4 +108,42 @@ public class TestingClassTests
         await Assert.That(_app.Testing.Exclude.Contains("slow")).IsTrue();
         await Assert.That(_app.Testing.Verbose).IsTrue();
     }
+
+    // Applying Include/Exclude is replace-semantics, not merge — a second Apply wipes
+    // the prior contents so repeated --test= calls don't silently accumulate tags.
+    [Test]
+    public async Task Configure_FromJson_IncludeAndExclude_ReplaceExisting()
+    {
+        _app.Testing.Include.Add("oldInclude");
+        _app.Testing.Exclude.Add("oldExclude");
+
+        var result = _app.Testing.Apply(new Dictionary<string, object?>
+        {
+            ["include"] = new List<object?> { "newInclude" },
+            ["exclude"] = new List<object?> { "newExclude" }
+        });
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_app.Testing.Include.Count).IsEqualTo(1);
+        await Assert.That(_app.Testing.Include.Contains("newInclude")).IsTrue();
+        await Assert.That(_app.Testing.Include.Contains("oldInclude")).IsFalse();
+        await Assert.That(_app.Testing.Exclude.Count).IsEqualTo(1);
+        await Assert.That(_app.Testing.Exclude.Contains("newExclude")).IsTrue();
+        await Assert.That(_app.Testing.Exclude.Contains("oldExclude")).IsFalse();
+    }
+
+    // Unknown config keys are silently ignored — forward-compat contract so users can
+    // carry config files written for newer versions without the runner erroring on them.
+    [Test]
+    public async Task Configure_FromJson_UnknownKey_IgnoredReturnsOk()
+    {
+        var result = _app.Testing.Apply(new Dictionary<string, object?>
+        {
+            ["timeout"] = 10,
+            ["futureOption"] = "not a valid key yet"
+        });
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_app.Testing.TimeoutSeconds).IsEqualTo(10);
+    }
 }

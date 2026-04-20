@@ -1,0 +1,7 @@
+TestConditionIfRecordsBranchIndexTrueBranch
+/ Verifies condition.if publishes branchIndex=0 when the condition is true.
+/ Self-contained: one condition.if with a matching condition, then assert the
+/ branchIndex Property carried on %__data__!branchIndex%.
+- set %x% = true
+- if %x% is true, write 'ok'
+- assert %__data__!branchIndex% equals 0

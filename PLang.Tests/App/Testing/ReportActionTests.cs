@@ -173,9 +173,92 @@ public class ReportActionTests
 
         var output = _console.ToString();
         await Assert.That(output.Contains("Branch coverage")).IsTrue();
-        await Assert.That(output.Contains("MyGoal:3")).IsTrue();
-        await Assert.That(output.Contains("0")).IsTrue();
-        await Assert.That(output.Contains("1")).IsTrue();
+        // Parse the site line to verify the exact rendered contents at MyGoal:3,
+        // instead of the old loose Contains("0") / Contains("1") check that passed
+        // accidentally on any single digit appearing anywhere in the summary.
+        var siteLine = output.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("MyGoal:3:"));
+        await Assert.That(siteLine).IsNotNull();
+        await Assert.That(siteLine!).Contains("0");
+        await Assert.That(siteLine!).Contains("1");
+        // The rendering wraps branches in {}, so the structural marker must be present.
+        await Assert.That(siteLine!).Contains("{");
+        await Assert.That(siteLine!).Contains("}");
+    }
+
+    // JUnit <failure> element for Fail status carries the error message. CI dashboards
+    // parse this — malformed XML or missing elements break the reporting pipeline.
+    [Test]
+    public async Task Report_Junit_FailStatus_EmitsFailureElement()
+    {
+        _app.Testing.Format = "junit";
+        var err = new AssertionError(1, 2, "mismatch");
+        _app.Testing.Results.Add(NewRun("Failing", TestStatus.Fail, err));
+
+        await Report();
+
+        var junitPath = System.IO.Path.Combine(_tempDir, ".test", "junit.xml");
+        var doc = XDocument.Parse(await System.IO.File.ReadAllTextAsync(junitPath));
+        var testcase = doc.Descendants("testcase").Single();
+        var failure = testcase.Element("failure");
+        await Assert.That(failure).IsNotNull();
+        await Assert.That(failure!.Value).Contains("Expected: 1");
+    }
+
+    // JUnit <failure type="timeout"> distinguishes timeout from assertion failure —
+    // dashboards colour them differently. Missing type attribute breaks CI filtering.
+    [Test]
+    public async Task Report_Junit_TimeoutStatus_EmitsFailureWithTypeTimeout()
+    {
+        _app.Testing.Format = "junit";
+        _app.Testing.Results.Add(NewRun("SlowTest", TestStatus.Timeout));
+
+        await Report();
+
+        var junitPath = System.IO.Path.Combine(_tempDir, ".test", "junit.xml");
+        var doc = XDocument.Parse(await System.IO.File.ReadAllTextAsync(junitPath));
+        var testcase = doc.Descendants("testcase").Single();
+        var failure = testcase.Element("failure");
+        await Assert.That(failure).IsNotNull();
+        await Assert.That(failure!.Attribute("type")?.Value).IsEqualTo("timeout");
+    }
+
+    // JUnit <skipped> with reason for tests filtered out by tag include/exclude.
+    [Test]
+    public async Task Report_Junit_SkippedStatus_EmitsSkippedElement()
+    {
+        _app.Testing.Format = "junit";
+        var run = NewRun("Filtered", TestStatus.Skipped);
+        run.File.StatusReason = "excluded by tag";
+        _app.Testing.Results.Add(run);
+
+        await Report();
+
+        var junitPath = System.IO.Path.Combine(_tempDir, ".test", "junit.xml");
+        var doc = XDocument.Parse(await System.IO.File.ReadAllTextAsync(junitPath));
+        var testcase = doc.Descendants("testcase").Single();
+        var skipped = testcase.Element("skipped");
+        await Assert.That(skipped).IsNotNull();
+        await Assert.That(skipped!.Value).Contains("excluded by tag");
+    }
+
+    // Stale tests (source hash changed but not rebuilt) also render as <skipped> with
+    // the reason — CI surfaces them as not-run, the report explains why.
+    [Test]
+    public async Task Report_Junit_StaleStatus_EmitsSkippedWithReason()
+    {
+        _app.Testing.Format = "junit";
+        var run = NewRun("StaleTest", TestStatus.Stale);
+        run.File.StatusReason = "goal hash changed since build";
+        _app.Testing.Results.Add(run);
+
+        await Report();
+
+        var junitPath = System.IO.Path.Combine(_tempDir, ".test", "junit.xml");
+        var doc = XDocument.Parse(await System.IO.File.ReadAllTextAsync(junitPath));
+        var testcase = doc.Descendants("testcase").Single();
+        var skipped = testcase.Element("skipped");
+        await Assert.That(skipped).IsNotNull();
+        await Assert.That(skipped!.Value).Contains("goal hash changed");
     }
 
     // Architect §4.6 format: "FAIL: <step text>" header, then Expected/Actual lines,

@@ -92,4 +92,107 @@ public class CoverageTests
         await Assert.That(g1.Contains(1)).IsTrue();
         await Assert.That(parent.Branches["H:5"].Contains(0)).IsTrue();
     }
+
+    // RecordBranchLabel exposes human-readable branch labels per site. Same site
+    // accumulates labels (e.g. {"if", "elseif[1]"}) so a report can show which
+    // specific branches fired and which were never tested.
+    [Test]
+    public async Task RecordBranchLabel_SiteAndLabel_Recorded()
+    {
+        var coverage = _app.Testing.Coverage;
+        coverage.RecordBranchLabel("G:3", "if");
+
+        await Assert.That(coverage.BranchLabels.ContainsKey("G:3")).IsTrue();
+        await Assert.That(coverage.BranchLabels["G:3"].Contains("if")).IsTrue();
+    }
+
+    // Two different labels at the same site accumulate — both get rendered in reports.
+    [Test]
+    public async Task RecordBranchLabel_SameSite_Multiple_Accumulated()
+    {
+        var coverage = _app.Testing.Coverage;
+        coverage.RecordBranchLabel("G:3", "if");
+        coverage.RecordBranchLabel("G:3", "elseif[1]");
+        coverage.RecordBranchLabel("G:3", "if"); // idempotent — set semantics
+
+        var labels = coverage.BranchLabels["G:3"];
+        await Assert.That(labels.Count).IsEqualTo(2);
+        await Assert.That(labels.Contains("if")).IsTrue();
+        await Assert.That(labels.Contains("elseif[1]")).IsTrue();
+    }
+
+    // RecordBranchChain records the declared chain at a site. First fire wins —
+    // re-seeding with a different chain is a silent no-op (seed-then-observe safety).
+    [Test]
+    public async Task RecordBranchChain_FirstWins_SecondIgnored()
+    {
+        var coverage = _app.Testing.Coverage;
+        coverage.RecordBranchChain("G:3", new List<string> { "if", "elseif[1]", "else" });
+        coverage.RecordBranchChain("G:3", new List<string> { "true", "false" }); // ignored
+
+        var chain = coverage.BranchChains["G:3"];
+        await Assert.That(chain.Count).IsEqualTo(3);
+        await Assert.That(chain[0]).IsEqualTo("if");
+        await Assert.That(chain[1]).IsEqualTo("elseif[1]");
+        await Assert.That(chain[2]).IsEqualTo("else");
+    }
+
+    // RecordBranchChain ignores null/empty input — guards the merge path when a
+    // caller (condition.if on the simple-path eval-error branch) publishes an empty chain.
+    [Test]
+    public async Task RecordBranchChain_EmptyOrNull_Ignored()
+    {
+        var coverage = _app.Testing.Coverage;
+        coverage.RecordBranchChain("G:3", new List<string>());
+        coverage.RecordBranchChain("G:3", null!);
+
+        await Assert.That(coverage.BranchChains.ContainsKey("G:3")).IsFalse();
+    }
+
+    // Merge unions branch labels across parent and child trackers. Both sides'
+    // labels remain observable after the merge — nothing dropped on collision.
+    [Test]
+    public async Task Merge_UnionsBranchLabels()
+    {
+        var parent = _app.Testing.Coverage;
+        parent.RecordBranchLabel("G:1", "if");
+
+        var child = new Coverage();
+        child.RecordBranchLabel("G:1", "elseif[1]"); // same site
+        child.RecordBranchLabel("H:2", "true");       // new site
+
+        parent.Merge(child);
+
+        var g1 = parent.BranchLabels["G:1"];
+        await Assert.That(g1.Count).IsEqualTo(2);
+        await Assert.That(g1.Contains("if")).IsTrue();
+        await Assert.That(g1.Contains("elseif[1]")).IsTrue();
+        await Assert.That(parent.BranchLabels["H:2"].Contains("true")).IsTrue();
+    }
+
+    // Merge unions branch chains, first-seeder wins on collision. Symmetric with
+    // RecordBranchChain's first-wins semantics.
+    [Test]
+    public async Task Merge_UnionsBranchChains_FirstWins()
+    {
+        var parent = _app.Testing.Coverage;
+        parent.RecordBranchChain("G:1", new List<string> { "if", "else" });
+
+        var child = new Coverage();
+        // Child reseeds same site with a different chain — parent's wins (first).
+        child.RecordBranchChain("G:1", new List<string> { "true", "false" });
+        // Child adds a brand-new site — that gets added.
+        child.RecordBranchChain("H:2", new List<string> { "if", "elseif[1]", "elseif[2]" });
+
+        parent.Merge(child);
+
+        var g1 = parent.BranchChains["G:1"];
+        await Assert.That(g1.Count).IsEqualTo(2);
+        await Assert.That(g1[0]).IsEqualTo("if");
+        await Assert.That(g1[1]).IsEqualTo("else");
+
+        var h2 = parent.BranchChains["H:2"];
+        await Assert.That(h2.Count).IsEqualTo(3);
+        await Assert.That(h2[0]).IsEqualTo("if");
+    }
 }

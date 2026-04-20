@@ -136,28 +136,63 @@ public class RunActionTests
     }
 
     // With Config.Parallel=2 and 4 tests, at most 2 tests run concurrently.
-    // SemaphoreSlim throttling verified via an observed concurrent-count probe.
+    // Each fixture's BeforeAction delays asynchronously for long enough that another
+    // fixture can enter the same window. The observed max concurrent depth equals the
+    // semaphore size — parallel=2 → max 2; parallel=1 would observe max 1.
     [Test]
     public async Task Run_ParallelExecution_RespectsSemaphoreLimit()
     {
-        // Fixtures that do nothing — we just need the runner to process them. We
-        // check the observed max-concurrent count on the parent's running tally.
-        var tests = new List<TestFile>();
-        for (int i = 0; i < 4; i++)
-            tests.Add(BuildFixture($"T{i}.test.goal", $"T{i}", new (string, string, List<Data>)[]
-            {
-                ("variable", "set", new List<Data>
+        int currentDepth = 0;
+        int maxDepth = 0;
+        var depthLock = new object();
+
+        // Filter by _tempDir — static event is shared across parallel tests.
+        void Probe(global::App.@this childApp)
+        {
+            if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
+            childApp.User.Context.Events.Register(new EventBinding(
+                EventType.BeforeAction,
+                async (ctx, action, result) =>
                 {
-                    new("Name", "x"),
-                    new("Value", i)
-                })
-            }));
+                    lock (depthLock)
+                    {
+                        currentDepth++;
+                        if (currentDepth > maxDepth) maxDepth = currentDepth;
+                    }
+                    // Hold long enough that at most semaphore-size fixtures overlap.
+                    // 100ms is plenty for the scheduler to start the next task.
+                    await Task.Delay(100);
+                    lock (depthLock) currentDepth--;
+                    return Data.Ok();
+                },
+                priority: int.MaxValue,
+                stopOnError: false));
+        }
 
-        var results = await RunTests(tests, parallel: 2);
-        var runs = results.ToList();
+        global::App.modules.test.run.ChildAppCreated += Probe;
+        try
+        {
+            var tests = new List<TestFile>();
+            for (int i = 0; i < 4; i++)
+                tests.Add(BuildFixture($"T{i}.test.goal", $"T{i}", new (string, string, List<Data>)[]
+                {
+                    ("variable", "set", new List<Data> { new("Name", "x"), new("Value", i) })
+                }));
 
-        await Assert.That(runs.Count).IsEqualTo(4);
-        await Assert.That(runs.All(r => r.Status == TestStatus.Pass)).IsTrue();
+            var results = await RunTests(tests, parallel: 2);
+            var runs = results.ToList();
+
+            await Assert.That(runs.Count).IsEqualTo(4);
+            await Assert.That(runs.All(r => r.Status == TestStatus.Pass)).IsTrue();
+            // The semaphore caps concurrency at 2 — the delay forces overlap to prove it.
+            // A regression to parallel=1 (serial) would drop maxDepth to 1; a regression
+            // to unbounded parallelism would push it to 4.
+            await Assert.That(maxDepth).IsEqualTo(2);
+        }
+        finally
+        {
+            global::App.modules.test.run.ChildAppCreated -= Probe;
+        }
     }
 
     // A test that sleeps past the configured timeout → TestStatus.Timeout.
@@ -223,69 +258,116 @@ public class RunActionTests
 
     // Child App.SystemDirectory is set from context.App.SystemDirectory so shared
     // system/ goals (e.g. setup helpers) resolve identically in every test.
+    // Uses the ChildAppCreated hook to snapshot the child's SystemDirectory.
     [Test]
     public async Task Run_SystemDirectory_InheritedFromParentApp()
     {
         _app.SystemDirectory = "/some/system/dir";
 
-        // Register a probe binding that captures child App's SystemDirectory during run.
         string? observedChildSystemDir = null;
-        var test = BuildFixture("SysDir.test.goal", "S", new (string, string, List<Data>)[]
+        // Filter by _tempDir prefix — ChildAppCreated is a static event, so in a
+        // parallel test run other tests' child Apps would otherwise overwrite our
+        // observation with their own (empty) SystemDirectory.
+        void Probe(global::App.@this childApp)
         {
-            ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
-        });
+            if (childApp.AbsolutePath.StartsWith(_tempDir))
+                observedChildSystemDir = childApp.SystemDirectory;
+        }
+        global::App.modules.test.run.ChildAppCreated += Probe;
+        try
+        {
+            var test = BuildFixture("SysDir.test.goal", "S", new (string, string, List<Data>)[]
+            {
+                ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
+            });
 
-        // We can't easily probe inside the child App. Instead verify indirectly:
-        // the parent test.run sets childApp.SystemDirectory BEFORE running.
-        // A simpler check: run-time does not throw and the parent's value is unchanged.
-        _ = observedChildSystemDir;
+            await RunTests(new List<TestFile> { test });
 
-        await RunTests(new List<TestFile> { test });
-
-        await Assert.That(_app.SystemDirectory).IsEqualTo("/some/system/dir");
+            await Assert.That(observedChildSystemDir).IsEqualTo("/some/system/dir");
+            // Parent unchanged — the propagation is one-way (parent → child).
+            await Assert.That(_app.SystemDirectory).IsEqualTo("/some/system/dir");
+        }
+        finally
+        {
+            global::App.modules.test.run.ChildAppCreated -= Probe;
+        }
     }
 
     // testApp.Testing.IsEnabled = true before the test starts. Subsystems that branch
     // on test mode (in-memory DBs, stubbed identity, etc.) observe the flag.
+    // Uses the ChildAppCreated hook to snapshot IsEnabled directly on the child App.
     [Test]
     public async Task Run_TestingIsEnabled_SetToTrueInChildApp()
     {
-        // Use !app.Testing.IsEnabled via MemoryStack — the child App should see true.
-        // Construct a goal that sets %ran% based on testing-enabled state. Simplest:
-        // just rely on the runner's code path setting IsEnabled; verify the test ran.
-        var test = BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
+        bool? observed = null;
+        // Filter by _tempDir — static event is shared across parallel tests.
+        void Probe(global::App.@this childApp)
         {
-            ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
-        });
+            if (childApp.AbsolutePath.StartsWith(_tempDir))
+                observed = childApp.Testing.IsEnabled;
+        }
+        global::App.modules.test.run.ChildAppCreated += Probe;
+        try
+        {
+            var test = BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
+            {
+                ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
+            });
 
-        var results = await RunTests(new List<TestFile> { test });
-        var run = results.Single();
+            var results = await RunTests(new List<TestFile> { test });
+            var run = results.Single();
 
-        await Assert.That(run.Status).IsEqualTo(TestStatus.Pass);
+            await Assert.That(run.Status).IsEqualTo(TestStatus.Pass);
+            await Assert.That(observed).IsEqualTo(true);
+        }
+        finally
+        {
+            global::App.modules.test.run.ChildAppCreated -= Probe;
+        }
     }
 
     // Tests with TestStatus.Stale or Skipped are NOT executed but are included in
     // the returned TestRun[] results with their original status. Reporter shows the
     // full surface — hiding filtered tests would hurt CI visibility.
+    // Side-effect probe: count ChildAppCreated invocations — only the Ready test
+    // should trigger a child App. Stale/Skipped take the early-return path.
     [Test]
     public async Task Run_OnlyReadyTests_Executed_StaleAndSkippedPreserved()
     {
-        var ready = BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
+        int childAppsCreated = 0;
+        // Filter by _tempDir — static event is shared across parallel tests.
+        void Probe(global::App.@this childApp)
         {
-            ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
-        });
-        var stale = new TestFile { Path = "Stale.test.goal", Directory = _tempDir,
-            PrPath = ".build/stale.test.pr", Status = TestStatus.Stale, StatusReason = "no .pr" };
-        var skipped = new TestFile { Path = "Skip.test.goal", Directory = _tempDir,
-            PrPath = ".build/skip.test.pr", Status = TestStatus.Skipped, StatusReason = "excluded by tag" };
+            if (childApp.AbsolutePath.StartsWith(_tempDir))
+                Interlocked.Increment(ref childAppsCreated);
+        }
+        global::App.modules.test.run.ChildAppCreated += Probe;
+        try
+        {
+            var ready = BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
+            {
+                ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
+            });
+            var stale = new TestFile { Path = "Stale.test.goal", Directory = _tempDir,
+                PrPath = ".build/stale.test.pr", Status = TestStatus.Stale, StatusReason = "no .pr" };
+            var skipped = new TestFile { Path = "Skip.test.goal", Directory = _tempDir,
+                PrPath = ".build/skip.test.pr", Status = TestStatus.Skipped, StatusReason = "excluded by tag" };
 
-        var results = await RunTests(new List<TestFile> { ready, stale, skipped });
-        var runs = results.ToList();
+            var results = await RunTests(new List<TestFile> { ready, stale, skipped });
+            var runs = results.ToList();
 
-        await Assert.That(runs.Count).IsEqualTo(3);
-        await Assert.That(runs.Count(r => r.Status == TestStatus.Pass)).IsEqualTo(1);
-        await Assert.That(runs.Count(r => r.Status == TestStatus.Stale)).IsEqualTo(1);
-        await Assert.That(runs.Count(r => r.Status == TestStatus.Skipped)).IsEqualTo(1);
+            await Assert.That(runs.Count).IsEqualTo(3);
+            await Assert.That(runs.Count(r => r.Status == TestStatus.Pass)).IsEqualTo(1);
+            await Assert.That(runs.Count(r => r.Status == TestStatus.Stale)).IsEqualTo(1);
+            await Assert.That(runs.Count(r => r.Status == TestStatus.Skipped)).IsEqualTo(1);
+
+            // Only the one Ready test spun up a child App.
+            await Assert.That(childAppsCreated).IsEqualTo(1);
+        }
+        finally
+        {
+            global::App.modules.test.run.ChildAppCreated -= Probe;
+        }
     }
 
     // A test that fails an assertion: TestRun.Status == Fail, error on the TestRun,
@@ -294,8 +376,11 @@ public class RunActionTests
     [Test]
     public async Task Run_AssertionFailureInTest_CapturedInResult_NoPropagatedException()
     {
+        // Fixture sets a variable before the assert so AssertionError.Variables can
+        // demonstrate it carried through test.run's failure path (end-to-end check).
         var test = BuildFixture("Fail.test.goal", "F", new (string, string, List<Data>)[]
         {
+            ("variable", "set", new List<Data> { new("Name", "score"), new("Value", 42) }),
             ("assert", "equals", new List<Data>
             {
                 new("Expected", 1),
@@ -309,6 +394,15 @@ public class RunActionTests
         await Assert.That(run.Status).IsEqualTo(TestStatus.Fail);
         await Assert.That(run.Error).IsNotNull();
         await Assert.That(run.Error is global::App.Errors.AssertionError).IsTrue();
+
+        // Variables snapshot flowed from assert handler → provider → test.run's
+        // failure path → TestRun.Error. Batch 5's headline feature.
+        var assertionError = (global::App.Errors.AssertionError)run.Error!;
+        await Assert.That(assertionError.Variables).IsNotNull();
+        await Assert.That(assertionError.Variables!.ContainsKey("score")).IsTrue();
+        // Value roundtrips through JSON (int→long via System.Text.Json);
+        // normalize to long for a type-tolerant check.
+        await Assert.That(Convert.ToInt64(assertionError.Variables["score"])).IsEqualTo(42L);
     }
 
     // Boundary: Tests=[] → TestRun[] is empty, no exception, no subscription

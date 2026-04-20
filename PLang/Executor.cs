@@ -16,6 +16,20 @@ namespace PLang
 
 		public async Task<App.Data.@this> Run(string[] args, CancellationToken cancellationToken = default)
 		{
+			var (engine, configError) = Configure(args);
+			if (configError != null) return configError;
+			return await engine!.Start();
+		}
+
+		/// <summary>
+		/// Parses argv and prepares an App engine for execution: wires CLI parameters
+		/// to user variables, applies --test / --debug / --build / --app config, and
+		/// sets the goalFile variable on System.Context that Start() reads.
+		/// Returns (engine, null) on success, (null, errorData) if --test= config is invalid.
+		/// Separated from Run() so tests can observe configuration without executing Start().
+		/// </summary>
+		internal (App.@this? Engine, App.Data.@this? Error) Configure(string[] args)
+		{
 			// Normalize: "build" or "--build" both become the --build flag
 			if (args.Length > 0 && args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
 				args = ["--build", .. args[1..]];
@@ -48,7 +62,7 @@ namespace PLang
 				if (testValue is IDictionary<string, object?> testDict)
 				{
 					var applyResult = engine.Testing.Apply(testDict);
-					if (!applyResult.Success) return applyResult;
+					if (!applyResult.Success) return (null, applyResult);
 				}
 			}
 
@@ -75,7 +89,7 @@ namespace PLang
 			if (engine.Testing.IsEnabled && goalFile == "Start.goal")
 			{
 				engine.System.Context.Variables.Set("goalFile", "/system/.build/test.pr");
-				return await engine.Start();
+				return (engine, null);
 			}
 
 			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
@@ -83,7 +97,7 @@ namespace PLang
 				prPath = ".build/" + prPath;
 			engine.System.Context.Variables.Set("goalFile", "/" + prPath.ToLowerInvariant());
 
-			return await engine.Start();
+			return (engine, null);
 		}
 	}
 }

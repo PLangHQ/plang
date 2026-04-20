@@ -1,0 +1,209 @@
+using global::App.modules.condition;
+using global::App.modules.condition.providers;
+using global::App.Test;
+
+namespace PLang.Tests.App.Testing;
+
+/// <summary>
+/// Regression guard for the three-bug cluster fixed by commit d05c138d.
+///
+/// Root cause: `SplitAtConditions` used `_items[i]` instead of the indexer, so inner
+/// elseif actions were returned with `Step == null`. Three symptoms cascaded:
+///   1. Coverage subscriber recorded at phantom site "?:?" instead of "goal:step".
+///   2. `alreadyOrchestrating` guard-key mismatch (hash of null != hash of real step)
+///      caused inner elseifs to re-enter orchestration on the simple path.
+///   3. `DisableChildrenOf` silently skipped when invoked from an inner elseif.
+///
+/// This test attaches a production-shaped coverage subscriber (same filter as run.cs
+/// L77-115: `action.IsCondition && action.IsFirstConditionInStep`), runs a multi-action
+/// orchestrate step where the outer `if` is false and the inner `elseif` is true,
+/// and asserts:
+///   - No "?:?" site is recorded (Step propagated to inner elseif)
+///   - The observed branchIndex at the correct site is 1 (elseif matched)
+///   - Inner elseif's `IsFirstConditionInStep` is false (filter works)
+///   - Indented sub-step ran (DisableChildrenOf worked per-branch)
+/// </summary>
+public class OrchestrateBranchCoverageTests
+{
+    private global::App.@this _app = null!;
+
+    [Before(Test)]
+    public void Setup()
+    {
+        _app = new global::App.@this("/test");
+    }
+
+    [After(Test)]
+    public async Task Cleanup() => await _app.DisposeAsync();
+
+    // Attaches the same-shape subscriber used by test.run's RunSingleAsync, writing
+    // observations into a fresh Coverage instance and keeping the list of (action,
+    // isFirstCondition) pairs seen so the test can make filter-level assertions.
+    private (Coverage coverage, List<(PrAction action, bool isFirstCondition)> observed) RegisterCoverageProbe()
+    {
+        var coverage = new Coverage();
+        var observed = new List<(PrAction action, bool isFirstCondition)>();
+        _app.User.Context.Events.Register(new EventBinding(
+            EventType.AfterAction,
+            (ctx, action, result) =>
+            {
+                if (action != null)
+                {
+                    coverage.RecordModuleAction(action.Module, action.ActionName);
+                    if (action.IsCondition)
+                        observed.Add((action, action.IsFirstConditionInStep));
+                    if (action.IsCondition
+                        && result != null && result.Properties.Contains("branchIndex")
+                        && action.IsFirstConditionInStep)
+                    {
+                        var goal = action.Step?.Goal;
+                        var goalId = goal?.Path ?? goal?.Name ?? "?";
+                        var stepIndex = action.Step?.Index.ToString() ?? "?";
+                        var site = $"{goalId}:{stepIndex}";
+                        coverage.RecordBranch(site, result.Properties.Get<int>("branchIndex"));
+                    }
+                }
+                return Task.FromResult(Data.Ok());
+            },
+            priority: int.MaxValue,
+            stopOnError: false));
+        return (coverage, observed);
+    }
+
+    private static PrAction IfAction(object? left, string op, object? right) => new()
+    {
+        Module = "condition",
+        ActionName = "if",
+        Parameters = new List<Data>
+        {
+            new("Left", left),
+            new("Operator", new Operator(op)),
+            new("Right", right)
+        }
+    };
+
+    private static PrAction SetAction(string name, object value) => new()
+    {
+        Module = "variable",
+        ActionName = "set",
+        Parameters = new List<Data> { new("Name", name), new("Value", value) }
+    };
+
+    // Multi-action orchestrate step where outer if is false and inner elseif is true.
+    // Before d05c138d: inner elseif's Step was null, so the coverage subscriber recorded
+    // at "?:?", the orchestrate guard mis-matched, and DisableChildrenOf silently skipped.
+    // After d05c138d: Step is populated via the Actions indexer, so all three paths work.
+    [Test]
+    public async Task MultiActionOrchestrate_InnerElseIfMatches_FilterSkipsPhantomSites_SubStepsRun()
+    {
+        _app.User.Context.Variables.Set("x", 5);
+
+        var orchestrateStep = new Step
+        {
+            Index = 0,
+            Indent = 0,
+            Text = "if outer false elseif inner true",
+            Actions = new StepActions
+            {
+                IfAction("%x%", ">", 100),   // outer — false (5 > 100)
+                SetAction("bodyA", 1),       // body under outer if
+                IfAction("%x%", ">", 0),     // inner — true (5 > 0)
+                SetAction("bodyB", 2)        // body under inner elseif
+            }
+        };
+
+        // Indented sub-step: only reached when DisableChildrenOf leaves it enabled.
+        var subStep = new Step
+        {
+            Index = 1,
+            Indent = 1,
+            Text = "set subran",
+            Actions = new StepActions { SetAction("subran", 1) }
+        };
+
+        var goal = new Goal
+        {
+            Name = "Orch",
+            Path = "/Orch.goal",
+            Steps = new GoalSteps { orchestrateStep, subStep }
+        };
+        _app.Goals.Add(goal);
+
+        var (coverage, observed) = RegisterCoverageProbe();
+
+        await _app.RunGoalAsync(goal, _app.User.Context);
+
+        // 1. DisableChildrenOf worked: the inner elseif matched so the sub-step ran.
+        var vars = _app.User.Context.Variables;
+        await Assert.That(vars.Get<int>("subran")).IsEqualTo(1);
+
+        // 2. alreadyOrchestrating guard keyed on the real step: inner elseif's body
+        //    ran (bodyB set) and outer's body didn't (bodyA unset because outer was false).
+        await Assert.That(vars.Get<int>("bodyB")).IsEqualTo(2);
+        await Assert.That(vars.Contains("bodyA")).IsFalse();
+
+        // 3. Coverage subscriber never recorded "?:?" — Step was propagated.
+        await Assert.That(coverage.Branches.ContainsKey("?:?")).IsFalse();
+
+        // 4. Exactly one site was recorded, at the orchestrate step's real key.
+        await Assert.That(coverage.Branches.Count).IsEqualTo(1);
+        await Assert.That(coverage.Branches.ContainsKey("/Orch.goal:0")).IsTrue();
+
+        // 5. branchIndex=1 recorded — the elseif matched (position 1 in the chain).
+        await Assert.That(coverage.Branches["/Orch.goal:0"].Contains(1)).IsTrue();
+
+        // 6. The filter distinguishes outer vs inner condition.if actions.
+        //    Both condition.if actions fire AfterAction — the outer as orchestrator
+        //    (IsFirstConditionInStep==true), the inner on the simple path during elseif
+        //    evaluation (IsFirstConditionInStep==false).
+        var outerObservations = observed.Where(o => o.isFirstCondition).ToList();
+        var innerObservations = observed.Where(o => !o.isFirstCondition).ToList();
+        await Assert.That(outerObservations.Count).IsGreaterThanOrEqualTo(1);
+        await Assert.That(innerObservations.Count).IsGreaterThanOrEqualTo(1);
+    }
+
+    // Belt-and-suspenders: direct assertion on Actions propagation. Ensures
+    // SplitAtConditions reads via the indexer (Step propagated on every returned action),
+    // matching the fix from d05c138d.
+    [Test]
+    public async Task SplitAtConditions_PropagatesStepToEveryReturnedAction()
+    {
+        var step = new Step
+        {
+            Index = 0,
+            Text = "multi",
+            Actions = new StepActions
+            {
+                IfAction(1, ">", 100),
+                SetAction("a", 1),
+                IfAction(1, ">", 0),
+                SetAction("b", 2)
+            }
+        };
+        // Force Actions → step binding (same path the runtime takes via enumeration).
+        _ = step.Actions;
+
+        var branches = step.Actions.SplitAtConditions(0);
+
+        await Assert.That(branches.Count).IsEqualTo(2);
+        foreach (var (condition, body) in branches)
+        {
+            await Assert.That(condition).IsNotNull();
+            await Assert.That(condition!.Step).IsNotNull();
+            await Assert.That(condition.Step!.Index).IsEqualTo(0);
+            foreach (var bodyAction in body)
+            {
+                await Assert.That(bodyAction.Step).IsNotNull();
+                await Assert.That(bodyAction.Step!.Index).IsEqualTo(0);
+            }
+        }
+
+        // Inner elseif (second condition action) must report IsFirstConditionInStep=false.
+        var innerElseIf = branches[1].condition!;
+        await Assert.That(innerElseIf.IsFirstConditionInStep).IsFalse();
+
+        // Outer if (first condition action) must report IsFirstConditionInStep=true.
+        var outerIf = branches[0].condition!;
+        await Assert.That(outerIf.IsFirstConditionInStep).IsTrue();
+    }
+}

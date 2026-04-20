@@ -21,6 +21,13 @@ namespace App.modules.test;
 [Action("run", Cacheable = false)]
 public partial class run : IContext
 {
+    // Test hook: fires once per child App after it's constructed and configured
+    // (SystemDirectory inherited, Testing.IsEnabled=true, CurrentTest assigned),
+    // before the test's entry goal runs. Tests attach probes here to snapshot
+    // observable child-App state (parallel count, SystemDirectory, IsEnabled).
+    // Subscribers must be thread-safe — parallel tests fire this concurrently.
+    internal static event Action<App.@this>? ChildAppCreated;
+
     [IsNotNull]
     public partial Data.@this<List<TestFile>> Tests { get; init; }
 
@@ -113,6 +120,9 @@ public partial class run : IContext
             priority: int.MaxValue,
             stopOnError: false);
         childApp.User.Context.Events.Register(coverageBinding);
+
+        // Test-only hook — see ChildAppCreated declaration above.
+        ChildAppCreated?.Invoke(childApp);
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(Context.CancellationToken);
         cts.CancelAfter(timeout);
