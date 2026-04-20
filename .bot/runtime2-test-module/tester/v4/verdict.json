@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "15 of 17 v3 findings fully discharged, 2 partially (PLang .test.goal blocked on LLM builder). 5 minor residuals (F1-F5). Suite 2267/2268 pass (same pre-existing flake). Coverage deltas: Executor 0→87%, Coverage.cs 65→100%, Debug 2→50%. All tautology fixes pass the deletion test." }

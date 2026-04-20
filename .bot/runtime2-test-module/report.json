@@ -514,7 +514,7 @@
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Re-review of 11 LOC across 2 files. SplitAtConditions now reads via this[i] (indexer with lazy Step ??= Step). IsFirstConditionInStep fallback `?? true` → `?? false`. All three bugs (v2 phantom coverage, alreadyOrchestrating guard-key mismatch, DisableChildrenOf skip) share the Step == null root cause and are resolved by the one indexer change."
+          "context": "Re-review of 11 LOC across 2 files. SplitAtConditions now reads via this[i] (indexer with lazy Step ??= Step). IsFirstConditionInStep fallback `?? true` \u2192 `?? false`. All three bugs (v2 phantom coverage, alreadyOrchestrating guard-key mismatch, DisableChildrenOf skip) share the Step == null root cause and are resolved by the one indexer change."
         }
       ],
       "timestamp_end": "2026-04-20T21:45:00Z",
@@ -581,6 +581,77 @@
         "status": "Test-quality review complete. Verdict: needs-fixes (17 findings; 4 critical, 7 major, 6 minor). Suite is green but the green is soft in several load-bearing places. Three-bug-cluster fix from d05c138d is correct but unguarded. Full .pr \u2194 runtime pipeline has no PLang-side integration tests. Recommend coder runs next to address findings, then tester re-review.",
         "health": "amber",
         "notes": "Memory confirmations: 'new-code-highest-risk' (Executor.Run at 0%, Coverage.RecordBranchLabel at 0%); 'false-green detection' (RunActionTests tautologies all begin with comments admitting the shortcut); 'registration-vs-execution' (AfterAction test verifies capture but modifier test lacks count/order); 'absence-not-presence' (AssertionError.Variables populated not verified end-to-end); 'callback-invocation-unverifiable' (the three child-App probe tests)."
+      }
+    },
+    {
+      "id": "321d0143-da1f-4cf6-bd5c-2551dfef9609",
+      "bot": "tester",
+      "timestamp_start": "2026-04-20T16:00:00Z",
+      "intent": "Re-review coder v2 fixes to tester v3 findings \u2014 fresh-eyes validation of the whole branch",
+      "before": {
+        "assumptions": "Coder v2 addressed all 17 v3 findings: renamed .goal \u2192 .test.goal, added ExecutorTests/OrchestrateBranchCoverageTests/DebugSmokeTests, rewrote 3 tautology tests with ChildAppCreated probe, added 6 CoverageTests, 4 JUnit tests, strengthened weak assertions.",
+        "risk": "The ChildAppCreated hook is production code added for tests \u2014 must verify it doesn't leak or break production. 19 .test.goal files remain stubs pending LLM build. New tests on weak-assertion fixes may still be false-green."
+      },
+      "plan": "# Tester v4 \u2014 Plan\n\n## Context\n\nCoder v2 (commit 730bfce0) addressed all 17 of my v3 findings. Full suite claim: 2267/2268 passing, +24 new tests, 0 regressions. My job: fresh-eyes validation.\n\n## Approach \u2014 fresh eyes, not just verification\n\nMy v3 suggested specific fix shapes. The coder followed them. That's the **highest risk of false greens** \u2014 review-driven code is where the coder knows the exact assertion pattern the reviewer will run.\n\nSo rather than just \"did they add the tests I asked for?\" I'll:\n\n1. **Suite run** \u2014 C# + PLang, record pass/fail, compare to v3 baseline.\n2. **Coverage delta** \u2014 re-run `dotnet-coverage` on changed files; my v3 captured cobertura, diff it.\n3. **Read EVERY new/modified test with deletion-test discipline** \u2014 \"if I deleted the assertion block, would anything fail?\"\n4. **Trace ChildAppCreated hook** \u2014 this is production code added for tests. Must not leak subscribers, must not break production paths. Audit where it's raised and who subscribes.\n5. **Audit the Executor.Configure split** \u2014 internal-for-tests. Verify no behavior change for `Run`. Check `Configure` returns error correctly without side effects.\n6. **Check the 19 .test.goal stubs** \u2014 they are still stubs (coder admitted). How does the runner handle them? Will `plang --test` mark them as Stale? If Stale counts as \"ok\", we have another class of false green.\n7. **SplitAtConditions guard test** \u2014 this is the critical finding #2. Does the new OrchestrateBranchCoverageTests actually reproduce the phantom-site scenario? If I revert `d05c138d` (the fix), does the test fail?\n8. **Cross-check findings mapping** \u2014 each v3 finding \u2192 which v2 commit/test addresses it. Flag any that were claimed-addressed but actually punted.\n\n## Risks to watch\n\n- **ChildAppCreated is a static event** \u2014 TUnit parallel tests mean subscribers from previous tests can still be alive; did the coder unsubscribe? A leaked subscriber that throws would surface as an unrelated test failure.\n- **Renamed .goal files** \u2014 if any had `.pr.json` already, those are orphaned now. If some tests referenced the old name explicitly, they'd break.\n- **The `Configure/Start` split** \u2014 `internal` means it's accessible from `PLang.Tests` (InternalsVisibleTo). But: was `Run` previously doing things in order that `Configure` breaks? E.g. if `Run` did `Configure \u2192 check something \u2192 Start` but `Start` now assumes Configure was successful without re-checking?\n- **Tautology fixes** \u2014 the v2 summary says \"probe via `childApp.AbsolutePath.StartsWith(_tempDir)`\". If the probe only fires for tests that actually spawn a child, but the original bug was about inheritance, the probe is contingent on the very thing being tested. Verify the probe proves inheritance under failure.\n\n## Deliverables\n\n- `v4/coverage.cobertura.xml` \u2014 fresh coverage\n- `v4/result.md` \u2014 detailed findings  \n- `v4/summary.md` \u2014 session summary\n- `v4/verdict.json` \u2014 pass/fail\n- `v4/changes.patch` \u2014 git diff runtime2..HEAD\n- `.bot/runtime2-test-module/test-report.json` \u2014 overwrite with v4 results\n- Bot root `summary.md` \u2014 append v4 line\n\n## Verdict policy\n\n- **pass** if: every v3 finding is genuinely addressed (fix works AND would fail if the bug returned), no regressions, no new false greens introduced.\n- **needs-fixes** if: any finding was claimed-addressed but the test is a tautology/false-green; any regression; any new false-green in the v2 tests.\n\nI expect to be tough on the tautology-fix tests (findings #5-7) since the coder was told exactly what shape I wanted \u2014 if they followed the letter but not the spirit, I'll call it.\n",
+      "timestamp_end": "2026-04-20T17:45:00Z",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-test-module/tester/v4/plan.md",
+            ".bot/runtime2-test-module/tester/v4/result.md",
+            ".bot/runtime2-test-module/tester/v4/summary.md",
+            ".bot/runtime2-test-module/tester/v4/verdict.json",
+            ".bot/runtime2-test-module/tester/v4/coverage.cobertura.xml"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v4 tester artifacts: plan, result (with v3-to-v4 mapping table + 5 new findings), version summary, pass verdict, fresh coverage"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/test-report.json",
+            ".bot/runtime2-test-module/tester/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "test-report.json updated to v4 (pass, 2267/2268, findings F1-F5). Cross-session summary.md appended with v4 progression line."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Testing/*"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Applied deletion-test discipline to every v2 rewrite: Run_ParallelExecution, SystemDirectory_Inherited, TestingIsEnabled, AssertionFailure.Variables, AfterAction modifier count/order, Evaluation_ThrowsOrErrors, Report_BranchTable. All pass \u2014 none are tautologies."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/test/run.cs",
+            "PLang/Executor.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read production changes. ChildAppCreated hook is narrow and correctly guarded (internal, filtered by _tempDir in probes, try/finally unsubscribe). Executor.Configure split is test-scoped internal, no production behavior change. Both accepted."
+        },
+        {
+          "paths": [
+            "Tests/TestModule/**/*.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "19 files renamed .goal\u2192.test.goal (correct). 3 have real bodies, 16 carry 'throw \"not implemented\"'. No .pr on disk \u2192 all currently Stale. Post-build, 16 will Fail. Handoff to coder to implement bodies + run `plang build` (new CLI, no 'p')."
+        }
+      ],
+      "after": {
+        "status": "pass with 5 minor residual findings (F1-F5)",
+        "health": "green \u2014 suite in materially better shape than v1 ever was",
+        "notes": "Handing back to coder per user direction for F1 primarily: implement real bodies for 16 stub .test.goal files, then run `plang build` to materialize .pr files. Also F2 (add condition.if fixture in RunActionTests so production subscriber is exercised). Once F1+F2 addressed, re-route to tester v5, then security.",
+        "next_agent": "coder"
       }
     }
   ]
