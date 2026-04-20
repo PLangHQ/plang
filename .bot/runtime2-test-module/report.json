@@ -481,6 +481,48 @@
         "health": "yellow",
         "notes": "Key insight: inner elseif actions have Step == null during Orchestrate because Step.RunAsync's enumerator only yields as-far-as-consumed and Orchestrate's SplitAtConditions/IndexOf use _items directly. This null is silent today (and silent in v1 too due to NRE swallowing) but becomes observable as phantom `?:?` coverage sites in the new code. No existing test exercises the coverage subscriber on an inner elseif firing \u2014 suggest adding one in v3. Memory technique used: caller tracing through the Action.Step lifecycle (who sets it, who bypasses the setter)."
       }
+    },
+    {
+      "id": "9a3b1d7e-6c84-4f2a-9e15-2b8c4d0a7f93",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-20T21:15:00Z",
+      "intent": "Re-review coder commit d05c138d addressing the v2 must-fix regression (IsFirstConditionInStep `?? true` fallback / phantom `?:?` coverage records).",
+      "before": {
+        "assumptions": "Coder fix commit d05c138d is +8 / -4 LOC across 2 files. Claims to root-cause the v2 regression by propagating Step through SplitAtConditions via the Actions indexer, plus retaining `?? false` as belt-and-suspenders. Commit message also identifies two additional latent bugs sharing the root cause (alreadyOrchestrating guard-key mismatch, DisableChildrenOf silently skipped on inner elseifs) that I missed in v2. Full suite: 2243/2244 (same pre-existing flake).",
+        "risk": "Small surface, low risk. Main verification tasks: (a) confirm Step propagation works end-to-end for inner elseif, (b) verify each of the two additional latent bugs is real and resolved, (c) check no new regressions from the indexer access."
+      },
+      "plan": "Focused pass re-review. Pass 0: verify the v2 regression is fixed (trace Step propagation from SplitAtConditions to coverage subscriber). Pass 1: verify each of the two additional latent bugs (alreadyOrchestrating guard-key, DisableChildrenOf skipped). Pass 2: check for new issues introduced by indexer access. Pass 3: deletion test + flag test-coverage gap. Expect CLEAN. Plan at .bot/runtime2-test-module/codeanalyzer/v3/plan.md.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-test-module/codeanalyzer/v3/plan.md",
+            ".bot/runtime2-test-module/codeanalyzer/v3/result.md",
+            ".bot/runtime2-test-module/codeanalyzer/v3/verdict.json",
+            ".bot/runtime2-test-module/codeanalyzer/v3/summary.md",
+            ".bot/runtime2-test-module/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v3 re-review docs. Verdict: CLEAN (pass). Coder fix is root-cause (indexer propagation in SplitAtConditions). Two additional latent bugs the coder caught that I missed in v2 are real and resolved. One test-coverage gap flagged for tester follow-up."
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Re-review of 11 LOC across 2 files. SplitAtConditions now reads via this[i] (indexer with lazy Step ??= Step). IsFirstConditionInStep fallback `?? true` → `?? false`. All three bugs (v2 phantom coverage, alreadyOrchestrating guard-key mismatch, DisableChildrenOf skip) share the Step == null root cause and are resolved by the one indexer change."
+        }
+      ],
+      "timestamp_end": "2026-04-20T21:45:00Z",
+      "after": {
+        "status": "Re-review complete. Verdict: CLEAN (pass). All three bugs in the cluster (v2 must-fix + two the coder caught) resolved by root-cause Step propagation. Fix is surgical (11 LOC). Recommendation: ready for tester. One test-coverage gap flagged (no existing test catches any of the three bugs \u2014 recommend tester add multi-action orchestrate coverage test).",
+        "health": "green",
+        "notes": "Memory lesson saved mentally: when a null-prop chain shows up, treat it as a class of bugs \u2014 scan every caller that depends on the missing value, not just the symptom site. The coder caught two additional bugs I missed in v2 (alreadyOrchestrating guard-key mismatch, DisableChildrenOf skip) by doing exactly this."
+      }
     }
   ]
 }

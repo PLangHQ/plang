@@ -29,3 +29,20 @@ V1 pre-fix code threw NRE (swallowed by `stopOnError: false`), which
 accidentally prevented the record. Fix: `?? false` (one line). One v2
 follow-up flagged: `ComputeBranchChain` can't emit "else" (latent bug for
 future else-branch support). See `v2/summary.md` and `v2/result.md`.
+
+## v3 (2026-04-20)
+
+Re-review of coder commit `d05c138d` addressing v2 must-fix. Verdict:
+**CLEAN** (pass). Coder fixed the root cause instead of the symptom:
+`SplitAtConditions` now reads via `this[i]` (Actions indexer with
+`a.Step ??= Step`) instead of `_items[i]`, so every action returned to
+`Orchestrate` has Step propagated. The `?? true` → `?? false` change is
+kept as belt-and-suspenders. 11 LOC, 2 files. The coder caught two
+additional latent bugs I missed in v2 that shared the same root cause:
+(a) `alreadyOrchestrating` guard-key mismatch (masked pre-fix by the
+`actions == null` short-circuit) and (b) `DisableChildrenOf` silently
+skipped on inner elseifs (indented sub-steps stayed disabled even when
+an inner branch matched). Note: no existing test catches any of the
+three bugs — recommended tester add a multi-action orchestrate coverage
+test. Recommendation: ready for tester. See `v3/summary.md` and
+`v3/result.md`.
