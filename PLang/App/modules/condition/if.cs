@@ -23,6 +23,7 @@ public partial class If : IContext, IStep
     public async Task<Data.@this> Run()
     {
         var evalResult = Evaluator.Evaluate(this);
+        // Evaluation errored → leave branchIndex unpublished (architect §5.7 / Batch 7 #6).
         if (!evalResult.Success) return evalResult;
 
         var conditionResult = evalResult.Value is true;
@@ -65,7 +66,11 @@ public partial class If : IContext, IStep
             }
         }
 
-        return Data(conditionResult);
+        // Simple non-orchestrating form: 0 for true, 1 for false — uniform with multi-branch
+        // indexing where 0 is the first (if) branch and later indices are elseif/else positions.
+        var simple = Data(conditionResult);
+        simple.Properties.Set("branchIndex", conditionResult ? 0 : 1);
+        return simple;
     }
 
     /// <summary>
@@ -143,11 +148,15 @@ public partial class If : IContext, IStep
                     lastResult = await action.RunAsync(Context);
                     if (!lastResult.Success) return lastResult;
                 }
+                // Record which branch fired (index within the if/elseif/else chain)
+                // so the coverage subscriber can track branches per site.
+                lastResult.Properties.Set("branchIndex", b);
                 return lastResult;
             }
         }
 
-        // No branch matched
+        // No branch matched — rare (usually the else catches). Leave branchIndex unset
+        // so coverage doesn't claim a branch fired.
         return Data(false);
     }
 
