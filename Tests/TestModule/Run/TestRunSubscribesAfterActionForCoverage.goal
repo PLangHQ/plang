@@ -1,0 +1,6 @@
+TestRunSubscribesAfterActionForCoverage
+/ Integration: fixture test uses file.read and output.write. After the run
+/ completes, run-wide Coverage contains observed (file,read) and (output,write)
+/ entries — verifies AfterAction subscription wired per child App and merged
+/ back into parent Coverage.
+- throw "not implemented"

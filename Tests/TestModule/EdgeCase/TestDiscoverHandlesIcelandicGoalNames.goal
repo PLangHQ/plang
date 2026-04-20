@@ -1,0 +1,6 @@
+TestDiscoverHandlesIcelandicGoalNames
+/ End-to-end: fixture with a .test.goal whose filename and goal name use
+/ non-ASCII characters (e.g., "Próf.test.goal" with goal name "Próf").
+/ Discovery finds it, runs it, and reports it. Proves the runner is
+/ encoding-safe for non-English .goal files (PLang is multilingual by design).
+- throw "not implemented"

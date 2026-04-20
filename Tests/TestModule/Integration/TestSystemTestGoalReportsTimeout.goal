@@ -1,0 +1,5 @@
+TestSystemTestGoalReportsTimeout
+/ End-to-end: fixture containing a test that sleeps 60s, system/test.goal
+/ runs with --test={"timeout":2}. That test reports TestStatus.Timeout;
+/ other tests in the same run continue normally; overall run does not hang.
+- throw "not implemented"

@@ -1,0 +1,5 @@
+TestSystemTestGoalRunsAllDiscovered
+/ End-to-end: invoke the rewritten system/test.goal against a fixture tree
+/ containing 5 .test.goal files. All 5 must appear in the run results —
+/ none silently skipped. Verifies the foreach-bug fix (architect plan §1).
+- throw "not implemented"

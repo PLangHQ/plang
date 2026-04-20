@@ -1,0 +1,6 @@
+TestSystemTestGoalRespectsTagFilter
+/ End-to-end: 3 fixture tests tagged [fast], [fast,slow], [slow]. Run with
+/ --test={"include":["fast"]}. Two tests execute (both carry "fast");
+/ the third is reported Skipped. Proves the discover → run filter pipeline
+/ works through the full system/test.goal invocation.
+- throw "not implemented"

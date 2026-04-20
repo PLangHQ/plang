@@ -1,0 +1,6 @@
+TestSystemTestGoalNoForeach
+/ Structural regression guard: read system/test.goal and assert its step
+/ text contains no "foreach" token. The whole point of the rewrite is to
+/ eliminate the silent-skip bug — this test keeps anyone from reintroducing
+/ the pattern in the system test runner.
+- throw "not implemented"

@@ -1,0 +1,5 @@
+TestTagOutsideTestIsNoOp
+/ Integration: run this goal normally via plang (not via test runner).
+/ The "set test tag" step must not throw and must not break execution —
+/ it no-ops because Testing.CurrentTest is null outside test mode.
+- throw "not implemented"

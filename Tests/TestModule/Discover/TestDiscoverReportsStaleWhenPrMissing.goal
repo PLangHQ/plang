@@ -1,0 +1,5 @@
+TestDiscoverReportsStaleWhenPrMissing
+/ Integration: discover on a fixture where one .test.goal has no corresponding
+/ .pr file — that entry returns with TestStatus.Stale and a reason string
+/ mentioning "no .pr".
+- throw "not implemented"

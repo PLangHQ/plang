@@ -1,0 +1,5 @@
+TestReportIncludesCoverageTables
+/ Integration: after a run, console output contains both the module.action
+/ coverage table and the branch coverage table (when any condition.if site
+/ was observed). Verifies the final surface, not internal Coverage state.
+- throw "not implemented"

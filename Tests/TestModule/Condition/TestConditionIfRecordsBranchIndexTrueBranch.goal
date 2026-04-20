@@ -1,0 +1,5 @@
+TestConditionIfRecordsBranchIndexTrueBranch
+/ Verifies condition.if publishes branchIndex=0 when the condition is true.
+/ Setup: set %x% = true. Then: if %x% is true, write 'ok'.
+/ After the if step, inspect %__data__!branchIndex% — should be 0 (the true branch position).
+- throw "not implemented"

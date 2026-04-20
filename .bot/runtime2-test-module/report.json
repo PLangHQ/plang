@@ -87,6 +87,88 @@
         "health": "green",
         "notes": "Plan-only session. No runtime code changed. Key decisions: AfterAction event payload widening (not Data.Action), [RequiresCapability] on handler, file-boundary isolation, branch_index in condition.if result."
       }
+    },
+    {
+      "id": "f7a3e8c1-5d2b-4e6a-b8c9-01a2b3c4d5e6",
+      "bot": "test-designer",
+      "timestamp_start": "2026-04-17T14:00:00Z",
+      "intent": "Design test suites that prove the PLang test module v1 works, per architect's approved plan",
+      "before": {
+        "assumptions": "Architect v1 plan approved. Locked scope: Testing class upgrade, test.discover/tag/run/report, [RequiresCapability], Variables.Snapshot, AssertionError.Variables, AfterAction payload widening, condition.if branch_index, system/test.goal rewrite. Existing PLang test-designer review (test-module-plan-review.md) predates the architect plan.",
+        "risk": "Test design only — no production code. Risk is missing coverage areas or translating architect plan 1:1 without independent edge-case thinking (memory feedback_think_independently)."
+      },
+      "plan": "14 batches, ~109 tests (90 C# / 19 PLang). Foundation (batches 1–7): Testing class + Config, Results + Coverage, [RequiresCapability] attribute, Variables.Snapshot(), AssertionError.Variables, AfterAction payload widening, condition.if branch_index. Actions (8–11): test.discover, test.tag, test.run, test.report. Integration (12): system/test.goal end-to-end. Metadata (13): builder version + .pr hash. Safety net (14): independent edge cases and security tests — recursive test.run, path traversal, XML escaping in JUnit, ANSI injection via output.write, static-cache leakage across fresh Apps, --test={parallel:0|timeout:0}, Icelandic test.goal discovery. C# files under PLang.Tests/App/Test/; PLang files under Tests/TestModule/ (one goal per file per memory rule). Bodies are Assert.Fail('Not implemented') / throw 'not implemented'. Five open questions in plan.md section 9 (Results file split, CurrentTest thread-safety, JUnit XML variant, builder version source, capability auto-tag scope). Plan waiting for Ingi approval before writing batch 1.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-test-module/test-designer/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Test plan with 14 batches, C#/PLang split, independent edge cases, five open questions resolved with Ingi."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Testing/TestingClassTests.cs",
+            "PLang.Tests/App/Testing/ResultsTests.cs",
+            "PLang.Tests/App/Testing/CoverageTests.cs",
+            "PLang.Tests/App/Testing/RequiresCapabilityAttributeTests.cs",
+            "PLang.Tests/App/Testing/VariablesSnapshotTests.cs",
+            "PLang.Tests/App/Testing/AssertionErrorVariablesTests.cs",
+            "PLang.Tests/App/Testing/AfterActionPayloadTests.cs",
+            "PLang.Tests/App/Testing/ConditionIfBranchIndexTests.cs",
+            "PLang.Tests/App/Testing/DiscoverActionTests.cs",
+            "PLang.Tests/App/Testing/TagActionTests.cs",
+            "PLang.Tests/App/Testing/RunActionTests.cs",
+            "PLang.Tests/App/Testing/ReportActionTests.cs",
+            "PLang.Tests/App/Testing/TestMetadataTests.cs",
+            "PLang.Tests/App/Testing/EdgeCaseTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "14 C# test files, 93 [Test] method signatures total, all bodies Assert.Fail('Not implemented'). One-line intent comment per test defines the spec. Namespace PLang.Tests.App.Testing (renamed from .Test to avoid shadowing TUnit's [Test]). Compiles clean."
+        },
+        {
+          "paths": [
+            "Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.goal",
+            "Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.goal",
+            "Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.goal",
+            "Tests/TestModule/Discover/TestDiscoverFindsTestGoals.goal",
+            "Tests/TestModule/Discover/TestDiscoverReportsStaleWhenPrMissing.goal",
+            "Tests/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.goal",
+            "Tests/TestModule/Tag/TestTagOutsideTestIsNoOp.goal",
+            "Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.goal",
+            "Tests/TestModule/Run/TestRunEnforcesTimeout.goal",
+            "Tests/TestModule/Run/TestRunReportsAssertionFailure.goal",
+            "Tests/TestModule/Run/TestRunSubscribesAfterActionForCoverage.goal",
+            "Tests/TestModule/Report/TestReportWritesJunitXml.goal",
+            "Tests/TestModule/Report/TestReportRendersFailureWithVariables.goal",
+            "Tests/TestModule/Report/TestReportIncludesCoverageTables.goal",
+            "Tests/TestModule/Integration/TestSystemTestGoalRunsAllDiscovered.goal",
+            "Tests/TestModule/Integration/TestSystemTestGoalNoForeach.goal",
+            "Tests/TestModule/Integration/TestSystemTestGoalRespectsTagFilter.goal",
+            "Tests/TestModule/Integration/TestSystemTestGoalReportsTimeout.goal",
+            "Tests/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "19 PLang .test.goal files, one goal per file (memory feedback: multi-goal files overwritten by builder). Each has a comment block explaining the intent. Body is 'throw not implemented' — coder fills in with real assertions."
+        },
+        {
+          "paths": [".bot/runtime2-test-module/test-designer/v1/summary.md", ".bot/runtime2-test-module/test-designer/summary.md", ".bot/runtime2-test-module/test-designer/v1/verdict.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session summaries and PASS verdict."
+        }
+      ],
+      "timestamp_end": "2026-04-20T14:30:00Z",
+      "after": {
+        "status": "Test suite complete — 112 tests (93 C# + 19 PLang) across 14 batches, all compile clean. Ready for coder handoff.",
+        "health": "green",
+        "notes": "Every batch reviewed with Ingi before writing. Key design choices locked: flat config on Testing, Results/Coverage split, no AfterAction back-compat, .test/ output per-goal-dir, format=json default single-select, Goal.Hash for freshness, auto-tags traverse sub-goals, test.tag no-op outside tests. All tests carry a comment defining the spec; bodies are Assert.Fail/throw."
+      }
     }
   ]
 }

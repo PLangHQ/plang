@@ -1,0 +1,5 @@
+TestDiscoverFindsTestGoals
+/ Integration: discover on a fixture directory containing three .test.goal files,
+/ all with matching .pr files — returned list has length 3 and all entries are
+/ TestStatus.Ready.
+- throw "not implemented"

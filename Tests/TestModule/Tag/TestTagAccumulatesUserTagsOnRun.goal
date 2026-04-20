@@ -1,0 +1,5 @@
+TestTagAccumulatesUserTagsOnRun
+/ Integration: goal calls "set test tag 'http'" then "set test tag 'fast', 'slow'".
+/ After execution under the test runner, the test's UserTags contains all three:
+/ http, fast, slow (union semantics). Verifies runtime accumulation end-to-end.
+- throw "not implemented"

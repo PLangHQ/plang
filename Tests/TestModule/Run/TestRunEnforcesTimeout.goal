@@ -1,0 +1,5 @@
+TestRunEnforcesTimeout
+/ Integration: a fixture test that sleeps 60 seconds with runner timeout set to 2s.
+/ That test must finish as TestStatus.Timeout (not Pass, not Fail) within ~2s.
+/ Runner must not hang, must not cancel other tests in the same run.
+- throw "not implemented"

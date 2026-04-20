@@ -1,0 +1,5 @@
+TestRunIsolatesMemoryStackBetweenTests
+/ Integration: two tests discovered — TestA sets %shared%=1, TestB asserts
+/ %shared% is unset. Both must pass — proves fresh App per test boundary.
+/ If isolation breaks, TestB would see %shared%=1 and fail.
+- throw "not implemented"

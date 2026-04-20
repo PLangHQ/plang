@@ -1,0 +1,5 @@
+TestConditionIfRecordsBranchIndexElseBranch
+/ Verifies condition.if publishes the else-branch index when nothing else matches.
+/ Setup: set %x% = 0. Then: if %x% > 10 do A; else if %x% > 5 do B; else do C.
+/ After the if step, inspect %__data__!branchIndex% — should be 2 (else position).
+- throw "not implemented"

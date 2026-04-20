@@ -1,0 +1,6 @@
+TestReportWritesJunitXml
+/ Integration: run a 3-test fixture with --test={"format":"junit"}. Verify
+/ .test/junit.xml exists, is valid XML, and contains 3 <testcase> entries
+/ under <testsuite>. .test/results.json must NOT exist (format selector
+/ is single-select).
+- throw "not implemented"

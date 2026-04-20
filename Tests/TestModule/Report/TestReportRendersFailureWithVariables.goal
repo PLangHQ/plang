@@ -1,0 +1,5 @@
+TestReportRendersFailureWithVariables
+/ Integration: fixture test fails with %foo%=1 in scope. Console output must
+/ contain "Variables:" section listing "%foo% = 1". Proves the Batch 5
+/ snapshot capture flows through to the final rendered diagnostic.
+- throw "not implemented"
