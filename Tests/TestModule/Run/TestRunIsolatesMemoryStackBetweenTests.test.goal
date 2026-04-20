@@ -1,9 +1,12 @@
 TestRunIsolatesMemoryStackBetweenTests
-/ Fresh-App-per-test guard. The runner constructs a new App per test, so at
-/ the start of every test the user variable stack is empty. Assert the probe
-/ is unset, set it, then confirm we can read back our own write.
-/ A regression that made tests share memory would surface as %isolation_probe%
-/ being non-null at entry (if any prior test set it).
-- assert %isolation_probe% is null
-- set %isolation_probe% = 1
-- assert %isolation_probe% equals 1
+/ Fresh-App-per-test guard. Runs two paired fixtures under test.run
+/ parallel=1: AIsolationPollute writes %shared_probe%=1; BIsolationProbe
+/ asserts %shared_probe% is null at entry. If the runner regressed to
+/ sharing MemoryStack, Probe would read the polluted value and fail.
+/ Parallel=1 forces sequential execution so the ordering is deterministic.
+- test.discover tests in '_isolation', pattern='*.fixture.goal', recursive, write to %tests%
+- list.count %tests%, write to %count%
+- assert %count% equals 2
+- test.run tests %tests%, parallel=1, write to %results%
+- list.any %results% where Status not equals 'Pass', write to %hasNonPass%
+- assert %hasNonPass% is false

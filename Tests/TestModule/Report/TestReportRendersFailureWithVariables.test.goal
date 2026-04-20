@@ -1,6 +1,10 @@
 TestReportRendersFailureWithVariables
-/ Structural guard: system/test.goal routes results through test.report,
-/ which owns the failure-with-variables rendering. Omitting test.report
-/ would drop the diagnostic surface; assert it stays in the chain.
-- read file '/system/test.goal', write to %goalText%
-- assert %goalText% contains 'test.report'
+/ Runs a failing fixture whose AssertionError carries %score%=42 in its
+/ Variables snapshot. Asserts that test.report observes exactly 1 Fail
+/ and 1 variable snapshot. A regression that dropped the Variables map
+/ from AssertionError would fail the variableSnapshotCount check.
+- test.discover tests in '_fixtures_fail' recursive, pattern='*.fixture.goal', write to %tests%
+- test.run tests %tests%, write to %results%
+- test.report results %results%, write to %report%
+- assert %report.summaryFail% equals 1
+- assert %report.variableSnapshotCount% equals 1

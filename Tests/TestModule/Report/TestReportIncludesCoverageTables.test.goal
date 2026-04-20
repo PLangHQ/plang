@@ -1,6 +1,11 @@
 TestReportIncludesCoverageTables
-/ Structural guard: system/test.goal must invoke test.report. test.report
-/ owns the coverage-table rendering (module.action table + branch coverage).
-/ A runner that omits test.report would ship no coverage.
-- read file '/system/test.goal', write to %goalText%
-- assert %goalText% contains 'test.report'
+/ Runs a passing fixture via test.run, then test.report in default (json)
+/ format. Distinguished from WritesJunitXml by asserting format=='json',
+/ summaryPass=1, and the results.json file (not junit.xml) was written.
+- test.discover tests in '_fixtures_pass', pattern='*.fixture.goal', recursive, write to %tests%
+- test.run tests %tests%, write to %results%
+- test.report results %results%, write to %report%
+- assert %report.format% equals 'json'
+- assert %report.summaryPass% equals 1
+- file.exists %report.reportPath%, write to %exists%
+- assert %exists% is true

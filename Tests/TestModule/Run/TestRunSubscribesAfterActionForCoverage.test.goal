@@ -1,8 +1,0 @@
-TestRunSubscribesAfterActionForCoverage
-/ Executes file.read and output.write so the test.run AfterAction subscriber
-/ records them in coverage. The outer coverage table must show file.read and
-/ output.write after this test runs — observable regression guard for the
-/ subscriber wiring.
-- read file '/system/test.goal', write to %goalText%
-- write out 'coverage probe'
-- assert 1 equals 1

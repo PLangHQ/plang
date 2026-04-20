@@ -19,15 +19,19 @@ namespace App.modules.test;
 /// </summary>
 [Example("write test report %results%",
     "Results=%results%")]
+[Example("write test report %results% format='junit'",
+    "Results=%results%, Format=\"junit\"")]
 [Action("report", Cacheable = false)]
 public partial class report : IContext
 {
     public partial Data.@this<App.Test.Results>? Results { get; init; }
+    public partial Data.@this<string>? Format { get; init; }
 
     public async Task<Data.@this> Run()
     {
         var results = Results?.Value ?? Context.App!.Testing.Results;
         var testing = Context.App!.Testing;
+        var format = Format?.Value ?? testing.Format;
 
         var console = new StringBuilder();
         RenderConsole(console, results, testing);
@@ -39,19 +43,45 @@ public partial class report : IContext
         var outDir = fs.Path.Combine(fs.RootDirectory, ".test");
         if (!fs.Directory.Exists(outDir)) fs.Directory.CreateDirectory(outDir);
 
-        switch (testing.Format)
+        string reportFile;
+        string content;
+        switch (format)
         {
             case "junit":
-                var junit = BuildJUnit(results, fs);
-                await fs.File.WriteAllTextAsync(fs.Path.Combine(outDir, "junit.xml"), junit);
+                content = BuildJUnit(results, fs);
+                reportFile = fs.Path.Combine(outDir, "junit.xml");
+                await fs.File.WriteAllTextAsync(reportFile, content);
                 break;
             default: // "json"
-                var json = BuildJson(results, testing);
-                await fs.File.WriteAllTextAsync(fs.Path.Combine(outDir, "results.json"), json);
+                content = BuildJson(results, testing);
+                reportFile = fs.Path.Combine(outDir, "results.json");
+                await fs.File.WriteAllTextAsync(reportFile, content);
                 break;
         }
 
-        return App.Data.@this.Ok(results);
+        // Surface the artefact for observability: PLang tests inspect these on
+        // %report% (the write-to target) without a filesystem round-trip, which
+        // hits goal-relative path resolution edge cases inside child Apps. All
+        // values are primitives / scalars so assert.equals / assert.isTrue can
+        // validate them unambiguously (assert.contains on long content strings
+        // is sensitive to the builder LLM's Value/Container param ordering).
+        var summary = results.Summary();
+        int variableSnapshotCount = 0;
+        foreach (var run in results)
+        {
+            if (run.Error is AssertionError ae && ae.Variables is { Count: > 0 })
+                variableSnapshotCount++;
+        }
+
+        var result = App.Data.@this.Ok(results);
+        result.Properties.Set("format", format);
+        result.Properties.Set("reportPath", reportFile);
+        result.Properties.Set("content", content);
+        result.Properties.Set("summaryTotal", results.Count);
+        result.Properties.Set("summaryPass", summary[TestStatus.Pass]);
+        result.Properties.Set("summaryFail", summary[TestStatus.Fail]);
+        result.Properties.Set("variableSnapshotCount", variableSnapshotCount);
+        return result;
     }
 
     private static void RenderConsole(StringBuilder sb, App.Test.Results results, Test.@this testing)

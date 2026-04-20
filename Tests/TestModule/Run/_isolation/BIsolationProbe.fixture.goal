@@ -1,0 +1,5 @@
+BIsolationProbe
+/ Runs second (alphabetical, parallel=1). Asserts %shared_probe% is null
+/ at entry — proving the fresh App/MemoryStack per test was not leaked
+/ from AIsolationPollute.
+- assert %shared_probe% is null

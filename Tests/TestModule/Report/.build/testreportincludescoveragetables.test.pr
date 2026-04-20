@@ -1,27 +1,32 @@
 {
   "name": "TestReportIncludesCoverageTables",
-  "description": "Reads /system/test.goal into %goalText% and asserts the text contains \u0027test.report\u0027.",
+  "description": "Discovers passing fixture goals, runs them, reports results in default JSON format, then asserts the report format and summaryPass, and verifies the report file exists.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "read file \u0027/system/test.goal\u0027, write to %goalText%",
+      "text": "test.discover tests in \u0027_fixtures_pass\u0027, pattern=\u0027*.fixture.goal\u0027, recursive, write to %tests%",
       "lineNumber": 5,
       "indent": 0,
-      "comment": "Structural guard: system/test.goal must invoke test.report. test.report\nowns the coverage-table rendering (module.action table \u002B branch coverage).\nA runner that omits test.report would ship no coverage.",
+      "comment": "Runs a passing fixture via test.run, then test.report in default (json)\nformat. Distinguished from WritesJunitXml by asserting format==\u0027json\u0027,\nsummaryPass=1, and the results.json file (not junit.xml) was written.",
       "actions": [
         {
-          "module": "file",
-          "action": "read",
+          "module": "test",
+          "action": "discover",
           "parameters": [
             {
               "name": "Path",
-              "value": "/system/test.goal",
+              "value": "_fixtures_pass",
               "type": "path"
             },
             {
-              "name": "ResolveVariables",
-              "value": false,
+              "name": "Pattern",
+              "value": "*.fixture.goal",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": true,
               "type": "bool"
             }
           ],
@@ -34,7 +39,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%goalText%",
+              "value": "%tests%",
               "type": "string"
             },
             {
@@ -52,23 +57,213 @@
     },
     {
       "index": 1,
-      "text": "assert %goalText% contains \u0027test.report\u0027",
+      "text": "test.run tests %tests%, write to %results%",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "assert",
-          "action": "contains",
+          "module": "test",
+          "action": "run",
           "parameters": [
             {
+              "name": "Tests",
+              "value": "%tests%",
+              "type": "list"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%results%",
+              "type": "string"
+            },
+            {
               "name": "Value",
-              "value": "%goalText%",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "test.report results %results%, write to %report%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "report",
+          "parameters": [
+            {
+              "name": "Results",
+              "value": "%results%",
               "type": "object"
             },
             {
-              "name": "Container",
-              "value": "test.report",
+              "name": "Format",
+              "value": "json",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%report%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %report.format% equals \u0027json\u0027",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "json",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%report.format%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %report.summaryPass% equals 1",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%report.summaryPass%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "file.exists %report.reportPath%, write to %exists%",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "exists",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%report.reportPath%",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%exists%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %exists% is true",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%exists%",
               "type": "object"
             },
             {
@@ -87,9 +282,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Report/TestReportIncludesCoverageTables.test.goal",
-  "prPath": "/Report/.build/testreportincludescoveragetables.test.pr",
-  "hash": "2440224091052584aa32ee70636d3b1006760fd29828985eff3dce316392f86d",
+  "path": "/Tests/TestModule/Report/TestReportIncludesCoverageTables.test.goal",
+  "prPath": "/Tests/TestModule/Report/.build/testreportincludescoveragetables.test.pr",
+  "hash": "d6f37c3f344656fa57c6528e6b2d83ea658d484cf3018d03fde536a09b699e98",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

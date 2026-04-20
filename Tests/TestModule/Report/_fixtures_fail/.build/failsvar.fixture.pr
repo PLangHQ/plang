@@ -1,14 +1,14 @@
 {
   "name": "FailsVar",
-  "description": "Step 0 sets %foo% to 42. Step 1 asserts that %foo% equals 99 (this will fail at runtime because %foo% is 42).",
+  "description": "Sets %score% to 42, then asserts that %score% equals 99.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %foo% = 42",
-      "lineNumber": 2,
+      "text": "set %score% = 42",
+      "lineNumber": 5,
       "indent": 0,
-      "comment": null,
+      "comment": "Sets %score%=42 and asserts %score%=99 \u2014 AssertSnapshot attaches the\nVariables map to AssertionError. The Report test then verifies that\ntest.report\u0027s JSON output carries the %score% snapshot.",
       "actions": [
         {
           "module": "variable",
@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%foo%",
+              "value": "%score%",
               "type": "string"
             },
             {
@@ -34,8 +34,8 @@
     },
     {
       "index": 1,
-      "text": "assert %foo% equals 99",
-      "lineNumber": 3,
+      "text": "assert %score% equals 99",
+      "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -50,7 +50,7 @@
             },
             {
               "name": "Actual",
-              "value": "%foo%",
+              "value": "%score%",
               "type": "object"
             }
           ],
@@ -64,9 +64,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/TestModule/Assert/_fixtures/failsvar.fixture.goal",
-  "prPath": "/Tests/TestModule/Assert/_fixtures/.build/failsvar.fixture.pr",
-  "hash": "a3b8caf0cdca46b1831f5814a2fab698f48c0b980dac692378b7f542927e1ad3",
+  "path": "/Tests/TestModule/Report/_fixtures_fail/failsvar.fixture.goal",
+  "prPath": "/Tests/TestModule/Report/_fixtures_fail/.build/failsvar.fixture.pr",
+  "hash": "6e25b0b9ea78d3cae7db9ebca5d34f0d47946fd71f04616153de8314869b4a27",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

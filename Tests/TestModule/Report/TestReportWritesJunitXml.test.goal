@@ -1,6 +1,12 @@
 TestReportWritesJunitXml
-/ Structural guard: system/test.goal ends with test.report. test.report reads
-/ Testing.Format and writes .test/junit.xml when format='junit'. Assert the
-/ pipeline routes through test.report.
-- read file '/system/test.goal', write to %goalText%
-- assert %goalText% contains 'test.report'
+/ Runs a passing fixture via test.run, then test.report with format='junit'.
+/ Proves: (1) format routes through the junit branch, (2) reportPath points
+/ at junit.xml, (3) the file actually got written on disk. Uses the absolute
+/ reportPath so file.exists doesn't hit goal-relative path resolution.
+- test.discover tests in '_fixtures_pass', pattern='*.fixture.goal', recursive, write to %tests%
+- test.run tests %tests%, write to %results%
+- test.report results %results%, format='junit', write to %report%
+- assert %report.format% equals 'junit'
+- assert %report.summaryPass% equals 1
+- file.exists %report.reportPath%, write to %exists%
+- assert %exists% is true

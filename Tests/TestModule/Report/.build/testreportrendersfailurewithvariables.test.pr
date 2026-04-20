@@ -1,27 +1,32 @@
 {
   "name": "TestReportRendersFailureWithVariables",
-  "description": "Reads /system/test.goal into %goalText% and asserts the rendered goal text contains \u0027test.report\u0027 to ensure the failure-with-variables rendering chain is preserved.",
+  "description": "Discovers failing fixture goals, runs them, renders a test report, then asserts the report shows 1 failure and 1 variable snapshot.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "read file \u0027/system/test.goal\u0027, write to %goalText%",
-      "lineNumber": 5,
+      "text": "test.discover tests in \u0027_fixtures_fail\u0027 recursive, pattern=\u0027*.fixture.goal\u0027, write to %tests%",
+      "lineNumber": 6,
       "indent": 0,
-      "comment": "Structural guard: system/test.goal routes results through test.report,\nwhich owns the failure-with-variables rendering. Omitting test.report\nwould drop the diagnostic surface; assert it stays in the chain.",
+      "comment": "Runs a failing fixture whose AssertionError carries %score%=42 in its\nVariables snapshot. Asserts that test.report observes exactly 1 Fail\nand 1 variable snapshot. A regression that dropped the Variables map\nfrom AssertionError would fail the variableSnapshotCount check.",
       "actions": [
         {
-          "module": "file",
-          "action": "read",
+          "module": "test",
+          "action": "discover",
           "parameters": [
             {
               "name": "Path",
-              "value": "/system/test.goal",
-              "type": "path"
+              "value": "_fixtures_fail",
+              "type": "string"
             },
             {
-              "name": "ResolveVariables",
-              "value": false,
+              "name": "Pattern",
+              "value": "*.fixture.goal",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": true,
               "type": "bool"
             }
           ],
@@ -34,7 +39,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%goalText%",
+              "value": "%tests%",
               "type": "string"
             },
             {
@@ -52,29 +57,137 @@
     },
     {
       "index": 1,
-      "text": "assert %goalText% contains \u0027test.report\u0027",
-      "lineNumber": 6,
+      "text": "test.run tests %tests%, write to %results%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "run",
+          "parameters": [
+            {
+              "name": "Tests",
+              "value": "%tests%",
+              "type": "list\u003Ctestfile\u003E"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%results%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "test.report results %results%, write to %report%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "report",
+          "parameters": [
+            {
+              "name": "Results",
+              "value": "%results%",
+              "type": "results?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%report%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %report.summaryFail% equals 1",
+      "lineNumber": 9,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "assert",
-          "action": "contains",
+          "action": "equals",
           "parameters": [
             {
-              "name": "Value",
-              "value": "%goalText%",
-              "type": "object"
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
             },
             {
-              "name": "Container",
-              "value": "test.report",
+              "name": "Actual",
+              "value": "%report.summaryFail%",
               "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %report.variableSnapshotCount% equals 1",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
             },
             {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
+              "name": "Actual",
+              "value": "%report.variableSnapshotCount%",
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -87,9 +200,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Report/TestReportRendersFailureWithVariables.test.goal",
-  "prPath": "/Report/.build/testreportrendersfailurewithvariables.test.pr",
-  "hash": "7ee15e292bb89c0583f5ef2d62cb31ee1ec52bbf74cfa108150cd53c5ef20469",
+  "path": "/Tests/TestModule/Report/TestReportRendersFailureWithVariables.test.goal",
+  "prPath": "/Tests/TestModule/Report/.build/testreportrendersfailurewithvariables.test.pr",
+  "hash": "48239745160930279840396bf6ddb529a74a9e8b353384c264638664ffdf1ab0",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

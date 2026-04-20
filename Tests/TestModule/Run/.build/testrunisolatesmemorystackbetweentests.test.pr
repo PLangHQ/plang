@@ -1,28 +1,51 @@
 {
   "name": "TestRunIsolatesMemoryStackBetweenTests",
-  "description": "Asserts the per-test variable stack is isolated: probe is null at test start, then set to 1, then verified equals 1.",
+  "description": "Discovers two isolation fixture goals, runs them sequentially in a single test.run, then checks that all results have Status == \u0027Pass\u0027.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "assert %isolation_probe% is null",
+      "text": "test.discover tests in \u0027_isolation\u0027, pattern=\u0027*.fixture.goal\u0027, recursive, write to %tests%",
       "lineNumber": 7,
       "indent": 0,
-      "comment": "Fresh-App-per-test guard. The runner constructs a new App per test, so at\nthe start of every test the user variable stack is empty. Assert the probe\nis unset, set it, then confirm we can read back our own write.\nA regression that made tests share memory would surface as %isolation_probe%\nbeing non-null at entry (if any prior test set it).",
+      "comment": "Fresh-App-per-test guard. Runs two paired fixtures under test.run\nparallel=1: AIsolationPollute writes %shared_probe%=1; BIsolationProbe\nasserts %shared_probe% is null at entry. If the runner regressed to\nsharing MemoryStack, Probe would read the polluted value and fail.\nParallel=1 forces sequential execution so the ordering is deterministic.",
       "actions": [
         {
-          "module": "assert",
-          "action": "isNull",
+          "module": "test",
+          "action": "discover",
           "parameters": [
             {
-              "name": "Value",
-              "value": "%isolation_probe%",
-              "type": "object"
+              "name": "Path",
+              "value": "_isolation",
+              "type": "string"
             },
             {
-              "name": "Message",
-              "value": "Expected %isolation_probe% to be null at test start (memory isolation regression).",
-              "type": "tstring"
+              "name": "Pattern",
+              "value": "*.fixture.goal",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%tests%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -34,29 +57,37 @@
     },
     {
       "index": 1,
-      "text": "set %isolation_probe% = 1",
+      "text": "list.count %tests%, write to %count%",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
+        {
+          "module": "list",
+          "action": "count",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%tests%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
         {
           "module": "variable",
           "action": "set",
           "parameters": [
             {
               "name": "Name",
-              "value": "%isolation_probe%",
+              "value": "%count%",
               "type": "string"
             },
             {
               "name": "Value",
-              "value": 1,
-              "type": "int"
-            },
-            {
-              "name": "Type",
-              "value": "int",
-              "type": "string"
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -68,7 +99,7 @@
     },
     {
       "index": 2,
-      "text": "assert %isolation_probe% equals 1",
+      "text": "assert %count% equals 2",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -79,18 +110,141 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": 1,
+              "value": 2,
               "type": "int"
             },
             {
               "name": "Actual",
-              "value": "%isolation_probe%",
+              "value": "%count%",
               "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "test.run tests %tests%, parallel=1, write to %results%",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "run",
+          "parameters": [
+            {
+              "name": "Tests",
+              "value": "%tests%",
+              "type": "list"
             },
             {
-              "name": "Message",
-              "value": "Expected %isolation_probe% to equal 1 after setting it.",
-              "type": "tstring"
+              "name": "Parallel",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%results%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "list.any %results% where Status not equals \u0027Pass\u0027, write to %hasNonPass%",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "any",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%results%",
+              "type": "string"
+            },
+            {
+              "name": "Key",
+              "value": "Status",
+              "type": "string"
+            },
+            {
+              "name": "Operator",
+              "value": "!=",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "Pass",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%hasNonPass%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %hasNonPass% is false",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isFalse",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%hasNonPass%",
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -103,9 +257,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal",
-  "prPath": "/Run/.build/testrunisolatesmemorystackbetweentests.test.pr",
-  "hash": "e08eb31a62b5f57021067fdcd60aed25533e7c30a80acd5a1faea947a4b64d8e",
+  "path": "/Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal",
+  "prPath": "/Tests/TestModule/Run/.build/testrunisolatesmemorystackbetweentests.test.pr",
+  "hash": "4a9ec2134e51a51c2587b3148d38511306e201d7b0f12b272af72cfbbf1d5292",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
