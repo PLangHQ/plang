@@ -15,5 +15,6 @@ public partial class LessThan : IContext
     [Provider]
     public partial IAssertProvider Assert { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Assert.LessThan(this));
+    public Task<Data.@this> Run() =>
+        Task.FromResult(AssertSnapshot.WithVariables(Assert.LessThan(this), Context));
 }

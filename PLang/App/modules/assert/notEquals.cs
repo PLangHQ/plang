@@ -15,5 +15,6 @@ public partial class NotEquals : IContext
     [Provider]
     public partial IAssertProvider Assert { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Assert.NotEquals(this));
+    public Task<Data.@this> Run() =>
+        Task.FromResult(AssertSnapshot.WithVariables(Assert.NotEquals(this), Context));
 }

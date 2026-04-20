@@ -1,3 +1,14 @@
+using global::App.Errors;
+using AssertEquals = global::App.modules.assert.Equals;
+using AssertNotEquals = global::App.modules.assert.NotEquals;
+using AssertIsTrue = global::App.modules.assert.IsTrue;
+using AssertIsFalse = global::App.modules.assert.IsFalse;
+using AssertIsNull = global::App.modules.assert.IsNull;
+using AssertIsNotNull = global::App.modules.assert.IsNotNull;
+using AssertContains = global::App.modules.assert.Contains;
+using AssertGreaterThan = global::App.modules.assert.GreaterThan;
+using AssertLessThan = global::App.modules.assert.LessThan;
+
 namespace PLang.Tests.App.Testing;
 
 /// <summary>
@@ -17,13 +28,18 @@ public class AssertionErrorVariablesTests
         _app = new global::App.@this("/test");
     }
 
+    private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
+
     // New AssertionError has Variables == null. Only handlers populate it; unrelated error
     // construction paths leave it null.
     [Test]
     public async Task AssertionError_Variables_DefaultNull()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var err = new AssertionError("expected x, got y");
+        await Assert.That(err.Variables).IsNull();
+
+        var err2 = new AssertionError(42, 99, "msg");
+        await Assert.That(err2.Variables).IsNull();
     }
 
     // Property is settable and gettable — handlers assign Context.Variables.Snapshot()
@@ -31,8 +47,11 @@ public class AssertionErrorVariablesTests
     [Test]
     public async Task AssertionError_Variables_PropertyRoundtrip()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var err = new AssertionError(1, 2);
+        var captured = new Dictionary<string, object?> { ["x"] = 1 };
+        err.Variables = captured;
+        await Assert.That(err.Variables).IsNotNull();
+        await Assert.That(err.Variables!["x"]).IsEqualTo(1);
     }
 
     // Canonical failure path: assert.equals fails → returned Data.Error is AssertionError
@@ -40,8 +59,19 @@ public class AssertionErrorVariablesTests
     [Test]
     public async Task EqualsHandler_OnFailure_PopulatesVariablesFromSnapshot()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var context = _app.User.Context;
+        context.Variables.Set("score", 42);
+        context.Variables.Set("label", "foo");
+
+        var action = new AssertEquals { Context = context, Expected = D(1), Actual = D(2) };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        var err = result.Error as AssertionError;
+        await Assert.That(err).IsNotNull();
+        await Assert.That(err!.Variables).IsNotNull();
+        await Assert.That(err.Variables!["score"]).IsEqualTo(42);
+        await Assert.That(err.Variables!["label"]).IsEqualTo("foo");
     }
 
     // Guard (architect spec): no snapshot cost on passing assertions. A successful
@@ -49,8 +79,15 @@ public class AssertionErrorVariablesTests
     [Test]
     public async Task EqualsHandler_OnSuccess_VariablesNotPopulated()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var context = _app.User.Context;
+        context.Variables.Set("x", 1);
+
+        var action = new AssertEquals { Context = context, Expected = D(5), Actual = D(5) };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // On success, Data.Error is null — nothing to populate.
+        await Assert.That(result.Error).IsNull();
     }
 
     // Reflection-based smoke across all 9 assert handlers (equals, notEquals, isTrue,
@@ -60,7 +97,29 @@ public class AssertionErrorVariablesTests
     [Test]
     public async Task AllAssertHandlers_OnFailure_ConsistentlyPopulateVariables()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var context = _app.User.Context;
+        context.Variables.Set("watched", "sentinel");
+
+        var failures = new List<Data>
+        {
+            await new AssertEquals { Context = context, Expected = D(1), Actual = D(2) }.Run(),
+            await new AssertNotEquals { Context = context, Expected = D(1), Actual = D(1) }.Run(),
+            await new AssertIsTrue { Context = context, Value = D(false) }.Run(),
+            await new AssertIsFalse { Context = context, Value = D(true) }.Run(),
+            await new AssertIsNull { Context = context, Value = D(42) }.Run(),
+            await new AssertIsNotNull { Context = context, Value = D(null) }.Run(),
+            await new AssertContains { Context = context, Value = D("zzz"), Container = D("hello") }.Run(),
+            await new AssertGreaterThan { Context = context, A = D(1), B = D(5) }.Run(),
+            await new AssertLessThan { Context = context, A = D(5), B = D(1) }.Run()
+        };
+
+        foreach (var result in failures)
+        {
+            await Assert.That(result.Success).IsFalse();
+            var err = result.Error as AssertionError;
+            await Assert.That(err).IsNotNull();
+            await Assert.That(err!.Variables).IsNotNull();
+            await Assert.That(err.Variables!["watched"]).IsEqualTo("sentinel");
+        }
     }
 }

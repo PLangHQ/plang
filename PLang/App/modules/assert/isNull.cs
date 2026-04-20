@@ -14,5 +14,6 @@ public partial class IsNull : IContext
     [Provider]
     public partial IAssertProvider Assert { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Assert.IsNull(this));
+    public Task<Data.@this> Run() =>
+        Task.FromResult(AssertSnapshot.WithVariables(Assert.IsNull(this), Context));
 }
