@@ -523,6 +523,65 @@
         "health": "green",
         "notes": "Memory lesson saved mentally: when a null-prop chain shows up, treat it as a class of bugs \u2014 scan every caller that depends on the missing value, not just the symptom site. The coder caught two additional bugs I missed in v2 (alreadyOrchestrating guard-key mismatch, DisableChildrenOf skip) by doing exactly this."
       }
+    },
+    {
+      "id": "500c8e19-0fe4-4d53-94bf-42c21388e7ef",
+      "bot": "tester",
+      "timestamp_start": "2026-04-20T22:00:00Z",
+      "intent": "Test-quality review of shipped test module (coder v1) after codeanalyzer v3 approval. Run full suite, run coverage, hunt false greens, propose tests for the three-bug cluster codeanalyzer flagged.",
+      "before": {
+        "assumptions": "Coder v1 shipped test module across 11 phases (commits 1ae1f4e0..ca844212). Codeanalyzer v1/v2/v3 reviewed; v3 CLEAN. Codeanalyzer flagged one test gap: no existing test catches the multi-action orchestrate cluster (phantom coverage, alreadyOrchestrating guard-key, DisableChildrenOf skip). Previous tester v1/v2 were plan refinement only \u2014 no actual testing done yet.",
+        "risk": "Real testing work now. Full suite ~2244 tests. Coverage run may be slow. False greens likely in: assert-handlers shipped rapidly (v1-new code always high risk), coverage subscriber filter (`IsFirstConditionInStep`), condition.if branch index publishing, AfterAction payload widening. Need to hunt, not verify."
+      },
+      "plan": "Phase 1: build + run full C# test suite. Phase 2: coverage on changed files, save to v3/coverage.json. Phase 3: false-green hunt across shipped files (AssertSnapshot, AfterAction widening, branchIndex publishing, Coverage.Merge, test.run/discover/tag/report handlers, [RequiresCapability], SplitAtConditions indexer fix). Phase 4: verify PLang .goal tests exist for new modules and .pr files semantically match step text. Phase 5: write v3/coverage.json, v3/test-report.json, v3/verdict.json, v3/summary.md, v3/result.md; update cross-session summary. Phase 6: commit + push immediately. Key false-green suspects from memory: default-path handlers, mock/production divergence, absence\u2260presence, callback invocation unverifiable. Codeanalyzer v3 flagged test gap for multi-action orchestrate cluster (phantom coverage + alreadyOrchestrating guard + DisableChildrenOf skip) \u2014 I propose the test, coder writes it.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-test-module/tester/v3/coverage.cobertura.xml"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "TUnit-collected coverage for the full suite (163k-line Cobertura XML). Used to identify 0%/low-coverage changed files."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/tester/v3/plan.md",
+            ".bot/runtime2-test-module/tester/v3/summary.md",
+            ".bot/runtime2-test-module/tester/v3/result.md",
+            ".bot/runtime2-test-module/tester/v3/verdict.json",
+            ".bot/runtime2-test-module/test-report.json",
+            ".bot/runtime2-test-module/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v3 tester deliverables + cross-session summary update. Verdict: needs-fixes. 17 findings cataloged."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Testing/*.cs",
+            "PLang/App/modules/test/*.cs",
+            "PLang/App/Test/*.cs",
+            "PLang/App/modules/condition/if.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/modules/assert/AssertSnapshot.cs",
+            "PLang/Executor.cs",
+            "Tests/TestModule/**/*.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "False-green hunt + PLang-stub discovery. Critical findings: 3-bug cluster from d05c138d unguarded by any test; Tests/TestModule/ 19 .goal files are 'throw not implemented' stubs with wrong extension (never discovered by test.discover); RunActionTests has three tautology tests (Run_ParallelExecution, Run_SystemDirectory_Inherited, Run_TestingIsEnabled) that the author knowingly shipped with 'we can't easily probe' fallbacks; Executor.Run at 0% coverage; Coverage.RecordBranchLabel/Chain and Merge union paths at 0%."
+        }
+      ],
+      "timestamp_end": "2026-04-20T23:30:00Z",
+      "after": {
+        "status": "Test-quality review complete. Verdict: needs-fixes (17 findings; 4 critical, 7 major, 6 minor). Suite is green but the green is soft in several load-bearing places. Three-bug-cluster fix from d05c138d is correct but unguarded. Full .pr \u2194 runtime pipeline has no PLang-side integration tests. Recommend coder runs next to address findings, then tester re-review.",
+        "health": "amber",
+        "notes": "Memory confirmations: 'new-code-highest-risk' (Executor.Run at 0%, Coverage.RecordBranchLabel at 0%); 'false-green detection' (RunActionTests tautologies all begin with comments admitting the shortcut); 'registration-vs-execution' (AfterAction test verifies capture but modifier test lacks count/order); 'absence-not-presence' (AssertionError.Variables populated not verified end-to-end); 'callback-invocation-unverifiable' (the three child-App probe tests)."
+      }
     }
   ]
 }
