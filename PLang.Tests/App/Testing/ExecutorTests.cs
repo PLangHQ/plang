@@ -172,4 +172,20 @@ public class ExecutorTests
         await Assert.That(engine.Debug.IsEnabled).IsTrue();
         await using var _ = engine;
     }
+
+    // Covers Run()'s composition with Configure(): an invalid --test config produces
+    // an error from Configure, and Run must propagate that error without calling
+    // engine.Start() (no .build/start.pr exists in the fixture filesystem, so if
+    // Start were invoked it would return a file-not-found error instead of the
+    // Apply error). The assertion on the error Key differentiates the two paths.
+    [Test]
+    public async Task Run_InvalidConfig_ReturnsErrorWithoutStarting()
+    {
+        var executor = NewExecutor();
+        var result = await executor.Run(new[] { "--test={\"timeout\":-1}" });
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("InvalidTestConfig");
+    }
 }

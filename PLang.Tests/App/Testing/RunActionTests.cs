@@ -413,4 +413,89 @@ public class RunActionTests
         var results = await RunTests(new List<TestFile>());
         await Assert.That(results.Count).IsEqualTo(0);
     }
+
+    // Covers the production coverage subscriber's branchLabel / branchChain paths in
+    // run.cs (the block that reads result.Properties and calls Coverage.RecordBranch*).
+    // Other tests assert those Coverage methods directly, but only a fixture whose test
+    // runs THROUGH test.run exercises the real wiring — a typo in the Properties keys
+    // here would otherwise ship silently.
+    [Test]
+    public async Task Run_FixtureWithConditionIf_ProductionSubscriber_RecordsBranchLabelAndChain()
+    {
+        // Fixture: single condition.if (Actions.Count == 1 → simple path, publishes
+        // branchIndex=0/1, branchLabel="true"/"false", branchChain=["true","false"]).
+        // Operator passes through as a string — the runtime resolver constructs the
+        // Operator IObject at execution time. (Real .pr files store it as string too;
+        // serializing Operator directly hits a Func-not-serializable NotSupportedException.)
+        var fixture = BuildFixture("Cond.test.goal", "Cond", new (string, string, List<Data>)[]
+        {
+            ("condition", "if", new List<Data>
+            {
+                new("Left", 1),
+                new("Operator", "=="),
+                new("Right", 1)
+            })
+        });
+
+        var results = await RunTests(new List<TestFile> { fixture });
+        var run = results.Single();
+        await Assert.That(run.Status).IsEqualTo(TestStatus.Pass);
+
+        // Site key format: "<goalPath>:<stepIndex>" — matches run.cs:91-95.
+        var site = "/Cond.test.goal:0";
+
+        // BranchLabels populated via the production subscriber reading
+        // result.Properties["branchLabel"] and calling RecordBranchLabel.
+        await Assert.That(_app.Testing.Coverage.BranchLabels.ContainsKey(site)).IsTrue();
+        await Assert.That(_app.Testing.Coverage.BranchLabels[site].Contains("true")).IsTrue();
+
+        // BranchChains populated via the production subscriber reading
+        // result.Properties["branchChain"] and calling RecordBranchChain.
+        await Assert.That(_app.Testing.Coverage.BranchChains.ContainsKey(site)).IsTrue();
+        var chain = _app.Testing.Coverage.BranchChains[site];
+        await Assert.That(chain.Count).IsEqualTo(2);
+        await Assert.That(chain[0]).IsEqualTo("true");
+        await Assert.That(chain[1]).IsEqualTo("false");
+
+        // Indices map gets the simple-path 0 (condition was true).
+        await Assert.That(_app.Testing.Coverage.Branches[site].Contains(0)).IsTrue();
+    }
+
+    // Covers RunSingleAsync's outer catch — a handler that throws an unexpected
+    // exception must not propagate out of test.run. The TestRun records Fail with
+    // the exception message preserved; subsequent tests in the same run continue.
+    [Test]
+    public async Task Run_FixtureThrowsUnexpectedException_CapturedAsFail_LoopContinues()
+    {
+        // variable.get with a name that doesn't resolve ends up throwing inside the
+        // handler when assignment blows up — but more reliable: use a fixture whose
+        // .pr file has a module/action that doesn't exist, forcing the dispatch to
+        // return an ActionError before the handler runs. That goes through the outer
+        // catch-all path only for OTHER kinds of failures. Simpler: construct a
+        // fixture whose .pr is malformed JSON so goal loading throws.
+        var throwing = BuildFixture("Throw.test.goal", "T", new (string, string, List<Data>)[]
+        {
+            ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
+        });
+        // Corrupt the .pr so deserialization throws inside RunSingleAsync.
+        var prAbs = System.IO.Path.Combine(throwing.Directory, throwing.PrPath);
+        System.IO.File.WriteAllText(prAbs, "{ \"name\": INVALID_JSON");
+
+        var healthy = BuildFixture("Healthy.test.goal", "H", new (string, string, List<Data>)[]
+        {
+            ("variable", "set", new List<Data> { new("Name", "y"), new("Value", 2) })
+        });
+
+        var results = await RunTests(new List<TestFile> { throwing, healthy });
+        var runs = results.ToList();
+
+        await Assert.That(runs.Count).IsEqualTo(2);
+        // Throwing fixture captured as Fail — no exception propagated.
+        var failed = runs.Single(r => r.File.Path == "Throw.test.goal");
+        await Assert.That(failed.Status).IsEqualTo(TestStatus.Fail);
+        await Assert.That(failed.Error).IsNotNull();
+        // Healthy fixture still ran — loop stayed parallel-safe.
+        var passed = runs.Single(r => r.File.Path == "Healthy.test.goal");
+        await Assert.That(passed.Status).IsEqualTo(TestStatus.Pass);
+    }
 }

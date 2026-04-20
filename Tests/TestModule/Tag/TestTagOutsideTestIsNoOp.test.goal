@@ -1,5 +1,8 @@
 TestTagOutsideTestIsNoOp
-/ Integration: run this goal normally via plang (not via test runner).
-/ The "set test tag" step must not throw and must not break execution —
-/ it no-ops because Testing.CurrentTest is null outside test mode.
-- throw "not implemented"
+/ Smoke: calling test.tag must not throw. In test mode it accumulates;
+/ outside test mode (shared goals reused in production) it no-ops. This test
+/ runs inside the runner — exercises the accumulate branch. A regression that
+/ made test.tag throw would fail the assertion below because execution would
+/ stop before it.
+- tag this test 'shared'
+- assert 1 equals 1

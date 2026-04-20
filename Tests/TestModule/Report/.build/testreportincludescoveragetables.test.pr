@@ -1,0 +1,99 @@
+{
+  "name": "TestReportIncludesCoverageTables",
+  "description": "Reads /system/test.goal into %goalText% and asserts the text contains \u0027test.report\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027/system/test.goal\u0027, write to %goalText%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Structural guard: system/test.goal must invoke test.report. test.report\nowns the coverage-table rendering (module.action table \u002B branch coverage).\nA runner that omits test.report would ship no coverage.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "/system/test.goal",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalText%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %goalText% contains \u0027test.report\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%goalText%",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "test.report",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Report/TestReportIncludesCoverageTables.test.goal",
+  "prPath": "/Report/.build/testreportincludescoveragetables.test.pr",
+  "hash": "2440224091052584aa32ee70636d3b1006760fd29828985eff3dce316392f86d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

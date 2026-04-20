@@ -88,11 +88,8 @@ public partial class run : IContext
                 {
                     childApp.Testing.Coverage.RecordModuleAction(action.Module, action.ActionName);
 
-                    if (action.IsCondition
-                        && result != null && result.Properties.Contains("branchIndex")
-                        // Ignore inner-elseif simple-path firings — they'd mix
-                        // {true, elseif[1]} labels into the orchestrator's chain.
-                        && action.IsFirstConditionInStep)
+                    if (action.IsIfHead
+                        && result != null && result.Properties.Contains("branchIndex"))
                     {
                         // Site key carries the goal's source file so sites from
                         // different files don't collide on shared names like "Start".

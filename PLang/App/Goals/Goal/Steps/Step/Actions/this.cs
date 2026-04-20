@@ -68,9 +68,10 @@ public sealed class @this : IList<Action.@this>
     /// <summary>
     /// Declared branch-label chain for a condition.if site rooted at myIndex.
     /// Single-action step: simple path → [true, false]. Multi-action step:
-    /// orchestrate path → [if, elseif[1], elseif[2], ...] with one entry per
-    /// condition.if action from myIndex onwards. Shared by runtime (If.Run) and
-    /// discovery (test.discover seeding) so both agree on site shape.
+    /// orchestrate path → one entry per condition.* action, tagged by its action name:
+    /// condition.if → "if", condition.elseif → "elseif[N]", condition.else → "else".
+    /// Shared by runtime (If.Run) and discovery (test.discover seeding) so both agree
+    /// on site shape.
     /// </summary>
     public List<string> ComputeBranchChain(int myIndex)
     {
@@ -80,8 +81,14 @@ public sealed class @this : IList<Action.@this>
         var chain = new List<string>();
         for (int i = myIndex; i < _items.Count; i++)
         {
-            if (_items[i].IsCondition)
-                chain.Add(chain.Count == 0 ? "if" : $"elseif[{chain.Count}]");
+            var a = _items[i];
+            if (!a.IsCondition) continue;
+            if (string.Equals(a.ActionName, "if", StringComparison.OrdinalIgnoreCase))
+                chain.Add("if");
+            else if (string.Equals(a.ActionName, "else", StringComparison.OrdinalIgnoreCase))
+                chain.Add("else");
+            else
+                chain.Add($"elseif[{chain.Count}]");
         }
         return chain;
     }

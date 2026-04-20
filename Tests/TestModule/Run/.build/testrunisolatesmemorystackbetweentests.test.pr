@@ -1,0 +1,115 @@
+{
+  "name": "TestRunIsolatesMemoryStackBetweenTests",
+  "description": "Asserts the per-test variable stack is isolated: probe is null at test start, then set to 1, then verified equals 1.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "assert %isolation_probe% is null",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "Fresh-App-per-test guard. The runner constructs a new App per test, so at\nthe start of every test the user variable stack is empty. Assert the probe\nis unset, set it, then confirm we can read back our own write.\nA regression that made tests share memory would surface as %isolation_probe%\nbeing non-null at entry (if any prior test set it).",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%isolation_probe%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %isolation_probe% to be null at test start (memory isolation regression).",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %isolation_probe% = 1",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%isolation_probe%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Type",
+              "value": "int",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %isolation_probe% equals 1",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%isolation_probe%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %isolation_probe% to equal 1 after setting it.",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal",
+  "prPath": "/Run/.build/testrunisolatesmemorystackbetweentests.test.pr",
+  "hash": "e08eb31a62b5f57021067fdcd60aed25533e7c30a80acd5a1faea947a4b64d8e",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

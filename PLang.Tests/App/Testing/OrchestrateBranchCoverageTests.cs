@@ -133,7 +133,12 @@ public class OrchestrateBranchCoverageTests
 
         await _app.RunGoalAsync(goal, _app.User.Context);
 
-        // 1. DisableChildrenOf worked: the inner elseif matched so the sub-step ran.
+        // 1. DisableChildrenOf per-branch: the outer `if` (false) first disables the
+        //    sub-step; then the inner elseif (true) re-enables it. In the bug case
+        //    (d05c138d pre-fix), the inner's `userStep` was null so DisableChildrenOf
+        //    was silently skipped — the sub-step stayed disabled from the outer's
+        //    pass and `subran` would be unset. After the fix, the re-enable fires
+        //    and the sub-step runs.
         var vars = _app.User.Context.Variables;
         await Assert.That(vars.Get<int>("subran")).IsEqualTo(1);
 
@@ -160,6 +165,44 @@ public class OrchestrateBranchCoverageTests
         var innerObservations = observed.Where(o => !o.isFirstCondition).ToList();
         await Assert.That(outerObservations.Count).IsGreaterThanOrEqualTo(1);
         await Assert.That(innerObservations.Count).IsGreaterThanOrEqualTo(1);
+    }
+
+    // Outer-only scenario: a false condition must disable the sub-step (no inner elseif
+    // re-enables). Complements the MultiActionOrchestrate test by isolating the
+    // DisableChildrenOf(disable=true) path from the orchestrate re-enable path.
+    // If DisableChildrenOf silently no-ops (e.g. userStep is null), the sub-step would
+    // still run and `subran` would be set — so `IsFalse()` discriminates.
+    [Test]
+    public async Task SingleIfFalse_DisablesIndentedSubStep()
+    {
+        _app.User.Context.Variables.Set("x", 5);
+
+        var conditionStep = new Step
+        {
+            Index = 0,
+            Indent = 0,
+            Text = "if x > 100",
+            Actions = new StepActions { IfAction("%x%", ">", 100) } // false
+        };
+        var subStep = new Step
+        {
+            Index = 1,
+            Indent = 1,
+            Text = "set subran",
+            Actions = new StepActions { SetAction("subran", 1) }
+        };
+        var goal = new Goal
+        {
+            Name = "SingleIf",
+            Path = "/SingleIf.goal",
+            Steps = new GoalSteps { conditionStep, subStep }
+        };
+        _app.Goals.Add(goal);
+
+        await _app.RunGoalAsync(goal, _app.User.Context);
+
+        var vars = _app.User.Context.Variables;
+        await Assert.That(vars.Contains("subran")).IsFalse();
     }
 
     // Belt-and-suspenders: direct assertion on Actions propagation. Ensures

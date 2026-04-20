@@ -1,0 +1,3 @@
+FailsVar
+- set %foo% = 42
+- assert %foo% equals 99

@@ -1,0 +1,76 @@
+{
+  "name": "FailsVar",
+  "description": "Step 1 sets %foo% to 42. Step 2 asserts that %foo% equals 99.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %foo% = 42",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%foo%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 42,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %foo% equals 99",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 99,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%foo%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/TestModule/Assert/_fixtures/failsvar.fixture.goal",
+  "prPath": "/Tests/TestModule/Assert/_fixtures/.build/failsvar.fixture.pr",
+  "hash": "a3b8caf0cdca46b1831f5814a2fab698f48c0b980dac692378b7f542927e1ad3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

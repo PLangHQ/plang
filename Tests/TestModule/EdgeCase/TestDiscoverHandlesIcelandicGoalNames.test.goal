@@ -1,6 +1,9 @@
 TestDiscoverHandlesIcelandicGoalNames
-/ End-to-end: fixture with a .test.goal whose filename and goal name use
-/ non-ASCII characters (e.g., "Próf.test.goal" with goal name "Próf").
-/ Discovery finds it, runs it, and reports it. Proves the runner is
-/ encoding-safe for non-English .goal files (PLang is multilingual by design).
-- throw "not implemented"
+/ Discovery must be encoding-safe for non-ASCII filenames and goal names.
+/ The fixture directory contains a Próf.fixture.goal with goal name "Próf".
+/ Assert discover finds it and carries the Icelandic name on EntryGoalName.
+- test.discover tests in '_fixtures' recursive, pattern='*.fixture.goal', write to %tests%
+- list.count %tests%, write to %count%
+- assert %count% equals 1
+- list.any %tests% where EntryGoalName equals 'Próf', write to %hasProf%
+- assert %hasProf% is true

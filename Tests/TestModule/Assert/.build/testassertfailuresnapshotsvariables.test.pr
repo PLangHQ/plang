@@ -1,0 +1,269 @@
+{
+  "name": "TestAssertFailureSnapshotsVariables",
+  "description": "Discovers fixture goals, asserts exactly one test, runs them, checks that at least one result has Status=\u0027Fail\u0027, and asserts the failure flag is true.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "test.discover tests in \u0027_fixtures\u0027 recursive, pattern=\u0027*.fixture.goal\u0027, write to %tests%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "Fixture sets %foo%=42 then asserts %foo% equals 99 \u2014 forces AssertSnapshot\nto attach the Variables map to the error. Run it via test.run; assert the\nresult has Status=Fail. The error surface (Expected/Actual/Variables) is\ntested directly by C# AssertSnapshot tests; here we prove the pipeline\nreaches Fail via the production path.",
+      "actions": [
+        {
+          "module": "test",
+          "action": "discover",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "_fixtures",
+              "type": "string"
+            },
+            {
+              "name": "Pattern",
+              "value": "*.fixture.goal",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%tests%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.count %tests%, write to %count%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "count",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%tests%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%count%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %count% equals 1",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%count%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "test.run tests %tests%, write to %results%",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "run",
+          "parameters": [
+            {
+              "name": "Tests",
+              "value": "%tests%",
+              "type": "list"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%results%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "list.any %results% where Status equals \u0027Fail\u0027, write to %hasFail%",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "any",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%results%",
+              "type": "string"
+            },
+            {
+              "name": "Key",
+              "value": "Status",
+              "type": "string"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "Fail",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%hasFail%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %hasFail% is true",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%hasFail%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "Assert that %hasFail% is true.",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.test.goal",
+  "prPath": "/Tests/TestModule/Assert/.build/testassertfailuresnapshotsvariables.test.pr",
+  "hash": "bd0bfa0a0b229bbcc4e6c466de7b7a239ab74beb9233f36ffe6f4876551cb70d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

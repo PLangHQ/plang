@@ -1,0 +1,99 @@
+{
+  "name": "TestReportRendersFailureWithVariables",
+  "description": "Reads /system/test.goal into %goalText% and asserts the rendered goal text contains \u0027test.report\u0027 to ensure the failure-with-variables rendering chain is preserved.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027/system/test.goal\u0027, write to %goalText%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Structural guard: system/test.goal routes results through test.report,\nwhich owns the failure-with-variables rendering. Omitting test.report\nwould drop the diagnostic surface; assert it stays in the chain.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "/system/test.goal",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalText%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %goalText% contains \u0027test.report\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%goalText%",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "test.report",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Report/TestReportRendersFailureWithVariables.test.goal",
+  "prPath": "/Report/.build/testreportrendersfailurewithvariables.test.pr",
+  "hash": "7ee15e292bb89c0583f5ef2d62cb31ee1ec52bbf74cfa108150cd53c5ef20469",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

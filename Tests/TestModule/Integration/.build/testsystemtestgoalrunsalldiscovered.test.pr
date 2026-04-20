@@ -1,0 +1,157 @@
+{
+  "name": "TestSystemTestGoalRunsAllDiscovered",
+  "description": "Reads /system/test.goal into %goalText%, then asserts it contains test.discover and test.run, and does not contain foreach.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027/system/test.goal\u0027, write to %goalText%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Structural guard against the silent-skip regression: system/test.goal must\n(1) call test.discover and (2) hand the full discovered list to test.run\nwithout a foreach. The foreach variant skipped tests silently when a single\ntest errored \u2014 that\u0027s the whole reason this module was rewritten.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "/system/test.goal",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalText%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %goalText% contains \u0027test.discover\u0027",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%goalText%",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "test.discover",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %goalText% contains \u0027test.run\u0027",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%goalText%",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "test.run",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %goalText% does not contain \u0027foreach\u0027",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%goalText%",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "foreach",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %goalText% to not contain substring \u0027foreach\u0027.",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Integration/TestSystemTestGoalRunsAllDiscovered.test.goal",
+  "prPath": "/Integration/.build/testsystemtestgoalrunsalldiscovered.test.pr",
+  "hash": "4ab86b7d7dcecb5194fbdb10335f9f55be6450eed1d2ef26a8e440294a0176c4",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

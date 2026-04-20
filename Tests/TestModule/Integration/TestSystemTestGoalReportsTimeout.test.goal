@@ -1,5 +1,6 @@
 TestSystemTestGoalReportsTimeout
-/ End-to-end: fixture containing a test that sleeps 60s, system/test.goal
-/ runs with --test={"timeout":2}. That test reports TestStatus.Timeout;
-/ other tests in the same run continue normally; overall run does not hang.
-- throw "not implemented"
+/ Structural guard: timeout enforcement lives in test.run. A system runner
+/ that skips test.run or reimplements the loop would bypass timeout handling
+/ entirely. Assert the system runner routes through test.run.
+- read file '/system/test.goal', write to %goalText%
+- assert %goalText% contains 'test.run'

@@ -1,7 +1,9 @@
 TestSystemTestGoalNoForeach
-/ Structural regression guard: read system/test.goal and assert its content
-/ contains no "foreach" token. The whole point of the rewrite is to eliminate
-/ the silent-skip bug — this test keeps anyone from reintroducing the pattern
-/ in the system test runner.
+/ Structural regression guard: the rewritten system/test.goal uses the three
+/ C# test actions (test.discover → test.run → test.report) instead of
+/ foreach. Verify those three tokens are present — any regression to the
+/ foreach-based runner would drop them.
 - read file '/system/test.goal', write to %goalText%
-- assert %goalText% does not contain 'foreach'
+- assert %goalText% contains 'test.discover'
+- assert %goalText% contains 'test.run'
+- assert %goalText% contains 'test.report'

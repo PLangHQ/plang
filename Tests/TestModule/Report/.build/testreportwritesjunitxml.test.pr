@@ -1,0 +1,99 @@
+{
+  "name": "TestReportWritesJunitXml",
+  "description": "Reads /system/test.goal into %goalText% and asserts that the file content contains \u0027test.report\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027/system/test.goal\u0027, write to %goalText%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Structural guard: system/test.goal ends with test.report. test.report reads\nTesting.Format and writes .test/junit.xml when format=\u0027junit\u0027. Assert the\npipeline routes through test.report.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "/system/test.goal",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalText%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %goalText% contains \u0027test.report\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%goalText%",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "test.report",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Report/TestReportWritesJunitXml.test.goal",
+  "prPath": "/Report/.build/testreportwritesjunitxml.test.pr",
+  "hash": "81c1c08ebbd8015eb1c660ce2cab0d7e8c59c685613543dcdb24300d619c7775",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

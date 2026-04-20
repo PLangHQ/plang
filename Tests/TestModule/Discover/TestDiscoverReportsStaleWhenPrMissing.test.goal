@@ -1,5 +1,9 @@
 TestDiscoverReportsStaleWhenPrMissing
-/ Integration: discover on a fixture where one .test.goal has no corresponding
-/ .pr file — that entry returns with TestStatus.Stale and a reason string
-/ mentioning "no .pr".
-- throw "not implemented"
+/ Directory has two fixtures; only one has a built .pr. The unbuilt one
+/ must come back with StatusReason containing "no .pr" — discover's
+/ signal that the .pr file is missing.
+- test.discover tests in '_stale' recursive, pattern='*.fixture.goal', write to %tests%
+- list.count %tests%, write to %count%
+- assert %count% equals 2
+- list.any %tests% where StatusReason equals 'no .pr', write to %hasMissingPr%
+- assert %hasMissingPr% is true

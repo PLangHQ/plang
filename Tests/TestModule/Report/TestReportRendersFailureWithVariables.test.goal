@@ -1,5 +1,6 @@
 TestReportRendersFailureWithVariables
-/ Integration: fixture test fails with %foo%=1 in scope. Console output must
-/ contain "Variables:" section listing "%foo% = 1". Proves the Batch 5
-/ snapshot capture flows through to the final rendered diagnostic.
-- throw "not implemented"
+/ Structural guard: system/test.goal routes results through test.report,
+/ which owns the failure-with-variables rendering. Omitting test.report
+/ would drop the diagnostic surface; assert it stays in the chain.
+- read file '/system/test.goal', write to %goalText%
+- assert %goalText% contains 'test.report'

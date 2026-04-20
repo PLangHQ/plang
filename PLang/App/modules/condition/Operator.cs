@@ -173,6 +173,13 @@ public sealed class Operator : IObject
                 return NormalizeTypes(left, converted);
         }
 
+        // Enum compared with string → normalize to the enum's name so PLang can
+        // write `where Status equals 'Timeout'` against a TestStatus field.
+        if (left is Enum leEnum && right is string)
+            return (leEnum.ToString(), right);
+        if (right is Enum reEnum && left is string)
+            return (left, reEnum.ToString());
+
         return (left, right);
     }
 

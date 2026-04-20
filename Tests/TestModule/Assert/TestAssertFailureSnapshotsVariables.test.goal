@@ -1,7 +1,12 @@
 TestAssertFailureSnapshotsVariables
-/ Verifies that when an assertion fails, the AssertionError exposes a Variables
-/ snapshot containing the user variables in scope at failure time.
-/ Setup: set %foo% = 1, then assert %foo% equals 2 (which fails).
-/ Caught error should expose Variables dict with %foo% == 1, proving the
-/ snapshot captured the pre-failure state.
-- throw "not implemented"
+/ Fixture sets %foo%=42 then asserts %foo% equals 99 — forces AssertSnapshot
+/ to attach the Variables map to the error. Run it via test.run; assert the
+/ result has Status=Fail. The error surface (Expected/Actual/Variables) is
+/ tested directly by C# AssertSnapshot tests; here we prove the pipeline
+/ reaches Fail via the production path.
+- test.discover tests in '_fixtures' recursive, pattern='*.fixture.goal', write to %tests%
+- list.count %tests%, write to %count%
+- assert %count% equals 1
+- test.run tests %tests%, write to %results%
+- list.any %results% where Status equals 'Fail', write to %hasFail%
+- assert %hasFail% is true

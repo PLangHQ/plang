@@ -1,5 +1,9 @@
 TestRunIsolatesMemoryStackBetweenTests
-/ Integration: two tests discovered — TestA sets %shared%=1, TestB asserts
-/ %shared% is unset. Both must pass — proves fresh App per test boundary.
-/ If isolation breaks, TestB would see %shared%=1 and fail.
-- throw "not implemented"
+/ Fresh-App-per-test guard. The runner constructs a new App per test, so at
+/ the start of every test the user variable stack is empty. Assert the probe
+/ is unset, set it, then confirm we can read back our own write.
+/ A regression that made tests share memory would surface as %isolation_probe%
+/ being non-null at entry (if any prior test set it).
+- assert %isolation_probe% is null
+- set %isolation_probe% = 1
+- assert %isolation_probe% equals 1

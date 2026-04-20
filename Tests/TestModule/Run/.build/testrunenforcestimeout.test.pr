@@ -1,0 +1,269 @@
+{
+  "name": "TestRunEnforcesTimeout",
+  "description": "Discovers timeout fixtures, asserts exactly one test, runs it with a 1ms timeout, then verifies the result status is Timeout.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "test.discover tests in \u0027_timeout\u0027 recursive, pattern=\u0027*.fixture.goal\u0027, write to %tests%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Discover a fixture that sleeps 30 seconds, run with test.run timeout=1.\nThe fixture must come back with Status=Timeout \u2014 proves test.run cancels\nthe child via CancellationToken and maps the cancellation to TestStatus.Timeout\nrather than hanging the parent.",
+      "actions": [
+        {
+          "module": "test",
+          "action": "discover",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "_timeout",
+              "type": "string"
+            },
+            {
+              "name": "Pattern",
+              "value": "*.fixture.goal",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%tests%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.count %tests%, write to %count%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "count",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%tests%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%count%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %count% equals 1",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%count%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "test.run tests %tests%, timeout=1, write to %results%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "run",
+          "parameters": [
+            {
+              "name": "Tests",
+              "value": "%tests%",
+              "type": "list"
+            },
+            {
+              "name": "Timeout",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%results%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "list.any %results% where Status equals \u0027Timeout\u0027, write to %hasTimeout%",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "any",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%results%",
+              "type": "string"
+            },
+            {
+              "name": "Key",
+              "value": "Status",
+              "type": "string"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "Timeout",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%hasTimeout%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %hasTimeout% is true",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%hasTimeout%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/TestModule/Run/TestRunEnforcesTimeout.test.goal",
+  "prPath": "/Tests/TestModule/Run/.build/testrunenforcestimeout.test.pr",
+  "hash": "81ad25af43e071c5d7705ec329d54652a0e0bd6dcb4cacc615ada7477b68527b",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

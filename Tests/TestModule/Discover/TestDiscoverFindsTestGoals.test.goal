@@ -1,5 +1,7 @@
 TestDiscoverFindsTestGoals
-/ Integration: discover on a fixture directory containing three .test.goal files,
-/ all with matching .pr files — returned list has length 3 and all entries are
-/ TestStatus.Ready.
-- throw "not implemented"
+/ Calls test.discover against a fixture directory with three built
+/ *.fixture.goal files. Asserts the discover result has length 3. The outer
+/ runner uses pattern '*.test.goal' so it ignores these fixtures.
+- test.discover tests in '_fixtures' recursive, pattern='*.fixture.goal', write to %tests%
+- list.count %tests%, write to %count%
+- assert %count% equals 3

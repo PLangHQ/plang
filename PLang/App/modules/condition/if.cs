@@ -90,19 +90,25 @@ public partial class If : IContext, IStep
 
             if (b == 0)
             {
-                // First branch — we already evaluated this
+                // First branch — head condition.if, already evaluated
                 branchResult = firstConditionResult;
+            }
+            else if (condition != null
+                && string.Equals(condition.ActionName, "else", StringComparison.OrdinalIgnoreCase))
+            {
+                // condition.else — no condition, always runs if we get here
+                branchResult = true;
             }
             else if (condition != null)
             {
-                // Elseif — evaluate the condition
+                // condition.elseif — dispatch the handler so its Evaluate + lifecycle fire
                 var elseIfResult = await condition.RunAsync(Context);
                 if (!elseIfResult.Success) return elseIfResult;
                 branchResult = elseIfResult.Value is true;
             }
             else
             {
-                // Else — no condition, always runs if we get here
+                // No explicit condition (trailing body-only tail) — treat as taken
                 branchResult = true;
             }
 
@@ -115,18 +121,22 @@ public partial class If : IContext, IStep
                     if (!lastResult.Success) return lastResult;
                 }
                 // Record which branch fired. branchIndex is the position in the chain;
-                // branchLabel is the human-readable role; branchChain is the full declared
+                // branchLabel mirrors the action name; branchChain is the full declared
                 // shape so the report can show which other branches were never tested.
+                var label = b == 0
+                    ? "if"
+                    : (condition != null && string.Equals(condition.ActionName, "else", StringComparison.OrdinalIgnoreCase))
+                        ? "else"
+                        : $"elseif[{b}]";
                 lastResult.Properties.Set("branchIndex", b);
-                lastResult.Properties.Set("branchLabel",
-                    b == 0 ? "if" : condition == null ? "else" : $"elseif[{b}]");
+                lastResult.Properties.Set("branchLabel", label);
                 lastResult.Properties.Set("branchChain", actions.ComputeBranchChain(myIndex));
                 return lastResult;
             }
         }
 
-        // No branch matched — rare (usually the else catches). Leave branchIndex unset
-        // so coverage doesn't claim a branch fired.
+        // No branch matched — only possible when there is no condition.else tail.
+        // Leave branchIndex unset so coverage doesn't claim a branch fired.
         return Data(false);
     }
 }

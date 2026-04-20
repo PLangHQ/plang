@@ -1,6 +1,10 @@
 TestRunReportsAssertionFailure
-/ Integration: fixture test that deliberately fails an assertion (assert %x%
-/ equals 'wrong' when %x%='right'). Expected TestStatus.Fail with the
-/ AssertionError carrying Expected, Actual, and Variables snapshot (the
-/ full diagnostic surface from Batch 5).
-- throw "not implemented"
+/ Discover a fixture that deliberately fails (assert 1 equals 2). Run it.
+/ Expected TestStatus.Fail carrying an AssertionError. Proves the runner
+/ translates assert failures to Fail status without escaping as an exception.
+- test.discover tests in '_fail' recursive, pattern='*.fixture.goal', write to %tests%
+- list.count %tests%, write to %count%
+- assert %count% equals 1
+- test.run tests %tests%, write to %results%
+- list.any %results% where Status equals 'Fail', write to %hasFail%
+- assert %hasFail% is true

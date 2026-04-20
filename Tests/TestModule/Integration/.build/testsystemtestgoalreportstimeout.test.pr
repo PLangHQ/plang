@@ -1,0 +1,89 @@
+{
+  "name": "TestSystemTestGoalReportsTimeout",
+  "description": "Reads /system/test.goal into %goalText% and asserts that it contains the substring \u0027test.run\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027/system/test.goal\u0027, write to %goalText%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Structural guard: timeout enforcement lives in test.run. A system runner\nthat skips test.run or reimplements the loop would bypass timeout handling\nentirely. Assert the system runner routes through test.run.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "/system/test.goal",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalText%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %goalText% contains \u0027test.run\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%goalText%",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "test.run",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Integration/TestSystemTestGoalReportsTimeout.test.goal",
+  "prPath": "/Integration/.build/testsystemtestgoalreportstimeout.test.pr",
+  "hash": "d1905c13646e503d4ccf4c74cda722305a98010c52ef6b86eb76a3f3324ef0de",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

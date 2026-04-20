@@ -1,0 +1,128 @@
+{
+  "name": "TestRunSubscribesAfterActionForCoverage",
+  "description": "Runs a small sequence: reads a file into %goalText%, writes a coverage probe message, then asserts a trivial equality. This is intended to exercise subscriber wiring for actions executed during the test run.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027/system/test.goal\u0027, write to %goalText%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Executes file.read and output.write so the test.run AfterAction subscriber\nrecords them in coverage. The outer coverage table must show file.read and\noutput.write after this test runs \u2014 observable regression guard for the\nsubscriber wiring.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "/system/test.goal",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalText%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out \u0027coverage probe\u0027",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "coverage probe",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert 1 equals 1",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Run/TestRunSubscribesAfterActionForCoverage.test.goal",
+  "prPath": "/Run/.build/testrunsubscribesafteractionforcoverage.test.pr",
+  "hash": "4ad8d5b8ac13c80d099674d84f8d1f1f798da0c7388083db58161ed44ec03845",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -9,8 +9,9 @@ namespace App.modules.test;
 /// (Testing.CurrentTest == null, e.g. when a shared goal is reused in production),
 /// the action no-ops rather than erroring so shared goals work in both modes.
 /// </summary>
-[Example("set test tag 'http', 'fast'", "Tags=[http, fast]")]
-[Example("set test tag 'slow'", "Tags=[slow]")]
+[Example("tag this test 'http', 'fast'", "Tags=[http, fast]")]
+[Example("tag this test 'slow'", "Tags=[slow]")]
+[Example("add test tag 'db'", "Tags=[db]")]
 [Action("tag")]
 public partial class Tag : IContext
 {
@@ -25,6 +26,11 @@ public partial class Tag : IContext
                 if (!string.IsNullOrWhiteSpace(tag))
                     currentTest.UserTags.Add(tag);
         }
-        return Task.FromResult(App.Data.@this.Ok());
+        // Return the current tag set (empty list outside test mode) so plang tests
+        // can inspect accumulated tags via %__data__%.
+        var snapshot = currentTest != null
+            ? currentTest.UserTags.ToList()
+            : new List<string>();
+        return Task.FromResult(App.Data.@this.Ok(snapshot));
     }
 }

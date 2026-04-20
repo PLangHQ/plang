@@ -1,0 +1,141 @@
+{
+  "name": "TestDiscoverFindsTestGoals",
+  "description": "Discovers fixture test goals under _fixtures recursively, counts the discovered results, and asserts the count equals 3.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "test.discover tests in \u0027_fixtures\u0027 recursive, pattern=\u0027*.fixture.goal\u0027, write to %tests%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Calls test.discover against a fixture directory with three built\n*.fixture.goal files. Asserts the discover result has length 3. The outer\nrunner uses pattern \u0027*.test.goal\u0027 so it ignores these fixtures.",
+      "actions": [
+        {
+          "module": "test",
+          "action": "discover",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "_fixtures",
+              "type": "string"
+            },
+            {
+              "name": "Pattern",
+              "value": "*.fixture.goal",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%tests%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.count %tests%, write to %count%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "count",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%tests%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%count%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %count% equals 3",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%count%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Discover/TestDiscoverFindsTestGoals.test.goal",
+  "prPath": "/Discover/.build/testdiscoverfindstestgoals.test.pr",
+  "hash": "36adcc0116140de0e0f2970372e46d643dfc3d7b93bd971c3815396a3a736fdb",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

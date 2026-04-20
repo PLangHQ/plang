@@ -1,5 +1,11 @@
 TestRunEnforcesTimeout
-/ Integration: a fixture test that sleeps 60 seconds with runner timeout set to 2s.
-/ That test must finish as TestStatus.Timeout (not Pass, not Fail) within ~2s.
-/ Runner must not hang, must not cancel other tests in the same run.
-- throw "not implemented"
+/ Discover a fixture that sleeps 30 seconds, run with test.run timeout=1.
+/ The fixture must come back with Status=Timeout — proves test.run cancels
+/ the child via CancellationToken and maps the cancellation to TestStatus.Timeout
+/ rather than hanging the parent.
+- test.discover tests in '_timeout' recursive, pattern='*.fixture.goal', write to %tests%
+- list.count %tests%, write to %count%
+- assert %count% equals 1
+- test.run tests %tests%, timeout=1, write to %results%
+- list.any %results% where Status equals 'Timeout', write to %hasTimeout%
+- assert %hasTimeout% is true
