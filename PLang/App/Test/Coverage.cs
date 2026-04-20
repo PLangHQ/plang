@@ -51,6 +51,23 @@ public sealed class Coverage
         indices.TryAdd(branchIndex, 0);
     }
 
+    // Parallel map: site → set of human-readable branch labels ({"if", "elseif[1]", "else"}
+    // or {"true", "false"}). Populated alongside RecordBranch so the report can render
+    // {if, else} instead of {0, 2}.
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _branchLabels = new();
+
+    public void RecordBranchLabel(string site, string label)
+    {
+        var labels = _branchLabels.GetOrAdd(site, _ => new ConcurrentDictionary<string, byte>(StringComparer.Ordinal));
+        labels.TryAdd(label, 0);
+    }
+
+    /// <summary>Read-only view of observed branch labels per site. Empty if only indices were recorded.</summary>
+    public IReadOnlyDictionary<string, IReadOnlySet<string>> BranchLabels =>
+        _branchLabels.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (IReadOnlySet<string>)new HashSet<string>(kvp.Value.Keys));
+
     /// <summary>Unions another Coverage's observations into this one. Called when a child App's coverage is merged into the parent after a test completes.</summary>
     public void Merge(Coverage other)
     {
@@ -61,6 +78,12 @@ public sealed class Coverage
             var indices = _branches.GetOrAdd(kvp.Key, _ => new ConcurrentDictionary<int, byte>());
             foreach (var idx in kvp.Value.Keys)
                 indices.TryAdd(idx, 0);
+        }
+        foreach (var kvp in other._branchLabels)
+        {
+            var labels = _branchLabels.GetOrAdd(kvp.Key, _ => new ConcurrentDictionary<string, byte>(StringComparer.Ordinal));
+            foreach (var label in kvp.Value.Keys)
+                labels.TryAdd(label, 0);
         }
     }
 }

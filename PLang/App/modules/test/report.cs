@@ -130,12 +130,32 @@ public partial class report : IContext
         }
         else
         {
+            var labelsMap = testing.Coverage.BranchLabels;
             foreach (var (site, indices) in testing.Coverage.Branches.OrderBy(kv => kv.Key))
             {
-                sb.AppendLine($"  {site}: {{{string.Join(",", indices.OrderBy(i => i))}}}");
+                // Prefer the human-readable labels ({if, elseif[1], else} or {true, false}).
+                // Fall back to indices for any site that didn't get labels attached.
+                string rendered;
+                if (labelsMap.TryGetValue(site, out var labels) && labels.Count > 0)
+                    rendered = string.Join(", ", labels.OrderBy(SortLabel));
+                else
+                    rendered = string.Join(", ", indices.OrderBy(i => i));
+                sb.AppendLine($"  {site}: {{{rendered}}}");
             }
         }
     }
+
+    // Order labels so "if" comes before "elseif[N]" before "else", and
+    // "true" before "false". Alphabetical would scatter them.
+    private static string SortLabel(string label) => label switch
+    {
+        "if" => "0",
+        "true" => "0",
+        "false" => "1",
+        "else" => "Z",
+        _ when label.StartsWith("elseif[") => "5" + label,
+        _ => label
+    };
 
     private static string BuildJson(App.Test.Results results, Test.@this testing)
     {

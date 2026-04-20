@@ -66,10 +66,11 @@ public partial class If : IContext, IStep
             }
         }
 
-        // Simple non-orchestrating form: 0 for true, 1 for false — uniform with multi-branch
-        // indexing where 0 is the first (if) branch and later indices are elseif/else positions.
+        // Simple non-orchestrating form: 0/true for the truthy path, 1/false for the
+        // skipped path. Paired label stays readable in coverage output ({true,false}).
         var simple = Data(conditionResult);
         simple.Properties.Set("branchIndex", conditionResult ? 0 : 1);
+        simple.Properties.Set("branchLabel", conditionResult ? "true" : "false");
         return simple;
     }
 
@@ -148,9 +149,11 @@ public partial class If : IContext, IStep
                     lastResult = await action.RunAsync(Context);
                     if (!lastResult.Success) return lastResult;
                 }
-                // Record which branch fired (index within the if/elseif/else chain)
-                // so the coverage subscriber can track branches per site.
+                // Record which branch fired. branchIndex is the position in the chain;
+                // branchLabel is the human-readable role ({if, elseif[1], else, ...}).
                 lastResult.Properties.Set("branchIndex", b);
+                lastResult.Properties.Set("branchLabel",
+                    b == 0 ? "if" : condition == null ? "else" : $"elseif[{b}]");
                 return lastResult;
             }
         }

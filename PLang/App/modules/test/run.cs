@@ -92,6 +92,12 @@ public partial class run : IContext
                         var stepIndex = action.Step?.Index.ToString() ?? "?";
                         var site = $"{goalId}:{stepIndex}";
                         childApp.Testing.Coverage.RecordBranch(site, result.Properties.Get<int>("branchIndex"));
+                        if (result.Properties.Contains("branchLabel"))
+                        {
+                            var label = result.Properties.Get<string>("branchLabel");
+                            if (!string.IsNullOrEmpty(label))
+                                childApp.Testing.Coverage.RecordBranchLabel(site, label);
+                        }
                     }
                 }
                 return Task.FromResult(App.Data.@this.Ok());

@@ -28,3 +28,7 @@ characters/
 # PLang test runtime workspace directories
 Tests/**/workspace/
 .build/traces/
+
+# Test runner output
+.test/
+
