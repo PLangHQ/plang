@@ -13,28 +13,36 @@
       "plan": "Read test-designer review, verify claims against codebase (DefaultAssertProvider, existing test conventions, Action lifecycle events), write v2 plan addressing all 11 points with accept/correct/defer decisions.",
       "actions": [
         {
-          "paths": [".bot/runtime2-test-module/tester/v2/v1_review_summary.md"],
+          "paths": [
+            ".bot/runtime2-test-module/tester/v2/v1_review_summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Structured summary of test-designer review points"
         },
         {
-          "paths": [".bot/runtime2-test-module/tester/v2/plan.md"],
+          "paths": [
+            ".bot/runtime2-test-module/tester/v2/plan.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Revised plan addressing all 11 review points with rationale"
         },
         {
-          "paths": [".bot/runtime2-test-module/tester/v2/summary.md"],
+          "paths": [
+            ".bot/runtime2-test-module/tester/v2/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Version summary"
         },
         {
-          "paths": [".bot/runtime2-test-module/tester/summary.md"],
+          "paths": [
+            ".bot/runtime2-test-module/tester/summary.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
@@ -54,31 +62,38 @@
       "timestamp_start": "2026-04-17T12:00:00Z",
       "intent": "Architect synthesis: merge runtime2 into branch, read tester v2 + test-designer review, produce v1 architect plan with scope decisions locked after discussion with Ingi",
       "before": {
-        "assumptions": "Branch was 173 commits behind runtime2. Tester v1+v2 plans and test-designer review exist but predate recent runtime2 changes (Runtime2→App rename, modifiers, events). Failing PLang tests motivate the need for this tool.",
+        "assumptions": "Branch was 173 commits behind runtime2. Tester v1+v2 plans and test-designer review exist but predate recent runtime2 changes (Runtime2\u2192App rename, modifiers, events). Failing PLang tests motivate the need for this tool.",
         "risk": "Plan-only. No runtime code changes in this session. Merge from runtime2 is conflict-free because all branch changes are under .bot/."
       },
-      "plan": "Scope locked in discussion 2026-04-17:\n\nIN SCOPE (v1):\n1. Testing class upgrade to runner — owns Results, Coverage, Config; configured via --test={timeout,parallel,include,exclude,verbose}.\n2. test.discover action — scan *.test.goal, load .pr, freshness check (hash), extract user tags via test.tag scan + auto-tags via [RequiresCapability] attribute reflection.\n3. test.tag action — user-declared tags, no-op at runtime, metadata at discovery.\n4. test.run action — C# main loop. Fresh App.@this per file (file-boundary = App-boundary, sub-goals and external calls share). Parallel execution (default Environment.ProcessorCount). 30s default timeout via CancellationTokenSource. Subscribes AfterAction for coverage.\n5. test.report action — console + JSON + JUnit XML + two coverage tables (module.action + branch).\n6. [RequiresCapability(params string[])] attribute on action handlers. http.* gets 'network', llm.ask gets 'llm'.\n7. Variables.Snapshot() API + AssertionError.Variables field. Assert handlers capture scope-chain snapshot on failure.\n8. AfterAction event payload widened to (Action, Data). Surgical change, all call sites updated same commit. Unlocks module.action coverage + branch tracking without touching Data itself.\n9. condition.if publishes Properties['branch_index'] in its result Data. Enables branch coverage for if/elseif/else.\n10. system/test.goal rewritten — no foreach. Single test.run call with discovered list.\n11. Per-test metadata in output: builder version + .pr hash for drift correlation.\n\nDEFERRED: mutation testing (needs own design pass), conditional skip/precondition (tags cover static case, genuine dynamic cases rare), .golden.pr drift detection (builder concern), tag negation (v1 additive only), action-level capability overrides (not needed pre-emptively).\n\nKEY DISCUSSION DECISIONS:\n- Dropped test.dependency (tests can call each other for setup — isolation violated by ordered deps).\n- Dropped test.skip (tags cover environmental preconditions, known-broken shouldn't be silenced).\n- App isolation = file boundary, not goal boundary.\n- Rejected Data.Action property in favor of widening AfterAction event payload — smaller blast radius, branch coverage falls out cleanly from (Action, Data) at fire site.\n- [RequiresCapability] on action, not module (action-level for flexibility, params string[] for multi-capability actions).\n\nNext step: hand off to test-designer for test-suite design.\n\nFull plan at .bot/runtime2-test-module/architect/v1/plan.md.",
+      "plan": "Scope locked in discussion 2026-04-17:\n\nIN SCOPE (v1):\n1. Testing class upgrade to runner \u2014 owns Results, Coverage, Config; configured via --test={timeout,parallel,include,exclude,verbose}.\n2. test.discover action \u2014 scan *.test.goal, load .pr, freshness check (hash), extract user tags via test.tag scan + auto-tags via [RequiresCapability] attribute reflection.\n3. test.tag action \u2014 user-declared tags, no-op at runtime, metadata at discovery.\n4. test.run action \u2014 C# main loop. Fresh App.@this per file (file-boundary = App-boundary, sub-goals and external calls share). Parallel execution (default Environment.ProcessorCount). 30s default timeout via CancellationTokenSource. Subscribes AfterAction for coverage.\n5. test.report action \u2014 console + JSON + JUnit XML + two coverage tables (module.action + branch).\n6. [RequiresCapability(params string[])] attribute on action handlers. http.* gets 'network', llm.ask gets 'llm'.\n7. Variables.Snapshot() API + AssertionError.Variables field. Assert handlers capture scope-chain snapshot on failure.\n8. AfterAction event payload widened to (Action, Data). Surgical change, all call sites updated same commit. Unlocks module.action coverage + branch tracking without touching Data itself.\n9. condition.if publishes Properties['branch_index'] in its result Data. Enables branch coverage for if/elseif/else.\n10. system/test.goal rewritten \u2014 no foreach. Single test.run call with discovered list.\n11. Per-test metadata in output: builder version + .pr hash for drift correlation.\n\nDEFERRED: mutation testing (needs own design pass), conditional skip/precondition (tags cover static case, genuine dynamic cases rare), .golden.pr drift detection (builder concern), tag negation (v1 additive only), action-level capability overrides (not needed pre-emptively).\n\nKEY DISCUSSION DECISIONS:\n- Dropped test.dependency (tests can call each other for setup \u2014 isolation violated by ordered deps).\n- Dropped test.skip (tags cover environmental preconditions, known-broken shouldn't be silenced).\n- App isolation = file boundary, not goal boundary.\n- Rejected Data.Action property in favor of widening AfterAction event payload \u2014 smaller blast radius, branch coverage falls out cleanly from (Action, Data) at fire site.\n- [RequiresCapability] on action, not module (action-level for flexibility, params string[] for multi-capability actions).\n\nNext step: hand off to test-designer for test-suite design.\n\nFull plan at .bot/runtime2-test-module/architect/v1/plan.md.",
       "actions": [
         {
-          "paths": [".bot/runtime2-test-module/architect/v1/plan.md"],
+          "paths": [
+            ".bot/runtime2-test-module/architect/v1/plan.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Architect v1 plan — synthesis of tester v2 + test-designer review + live discussion with Ingi. Covers scope, architecture, file layout, per-action detail, risks, handoff."
+          "context": "Architect v1 plan \u2014 synthesis of tester v2 + test-designer review + live discussion with Ingi. Covers scope, architecture, file layout, per-action detail, risks, handoff."
         },
         {
-          "paths": [".bot/runtime2-test-module/architect/v1/summary.md", ".bot/runtime2-test-module/architect/summary.md"],
+          "paths": [
+            ".bot/runtime2-test-module/architect/v1/summary.md",
+            ".bot/runtime2-test-module/architect/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "v1 and cross-session summaries"
         },
         {
-          "paths": ["(merge)"],
+          "paths": [
+            "(merge)"
+          ],
           "type": "decision",
           "category": "code",
           "confidence": "high",
-          "context": "Merged origin/runtime2 into runtime2-test-module (173 commits). Zero conflicts — branch only had .bot/ changes. Pushed."
+          "context": "Merged origin/runtime2 into runtime2-test-module (173 commits). Zero conflicts \u2014 branch only had .bot/ changes. Pushed."
         }
       ],
       "timestamp_end": "2026-04-17T13:00:00Z",
@@ -95,12 +110,14 @@
       "intent": "Design test suites that prove the PLang test module v1 works, per architect's approved plan",
       "before": {
         "assumptions": "Architect v1 plan approved. Locked scope: Testing class upgrade, test.discover/tag/run/report, [RequiresCapability], Variables.Snapshot, AssertionError.Variables, AfterAction payload widening, condition.if branch_index, system/test.goal rewrite. Existing PLang test-designer review (test-module-plan-review.md) predates the architect plan.",
-        "risk": "Test design only — no production code. Risk is missing coverage areas or translating architect plan 1:1 without independent edge-case thinking (memory feedback_think_independently)."
+        "risk": "Test design only \u2014 no production code. Risk is missing coverage areas or translating architect plan 1:1 without independent edge-case thinking (memory feedback_think_independently)."
       },
-      "plan": "14 batches, ~109 tests (90 C# / 19 PLang). Foundation (batches 1–7): Testing class + Config, Results + Coverage, [RequiresCapability] attribute, Variables.Snapshot(), AssertionError.Variables, AfterAction payload widening, condition.if branch_index. Actions (8–11): test.discover, test.tag, test.run, test.report. Integration (12): system/test.goal end-to-end. Metadata (13): builder version + .pr hash. Safety net (14): independent edge cases and security tests — recursive test.run, path traversal, XML escaping in JUnit, ANSI injection via output.write, static-cache leakage across fresh Apps, --test={parallel:0|timeout:0}, Icelandic test.goal discovery. C# files under PLang.Tests/App/Test/; PLang files under Tests/TestModule/ (one goal per file per memory rule). Bodies are Assert.Fail('Not implemented') / throw 'not implemented'. Five open questions in plan.md section 9 (Results file split, CurrentTest thread-safety, JUnit XML variant, builder version source, capability auto-tag scope). Plan waiting for Ingi approval before writing batch 1.",
+      "plan": "14 batches, ~109 tests (90 C# / 19 PLang). Foundation (batches 1\u20137): Testing class + Config, Results + Coverage, [RequiresCapability] attribute, Variables.Snapshot(), AssertionError.Variables, AfterAction payload widening, condition.if branch_index. Actions (8\u201311): test.discover, test.tag, test.run, test.report. Integration (12): system/test.goal end-to-end. Metadata (13): builder version + .pr hash. Safety net (14): independent edge cases and security tests \u2014 recursive test.run, path traversal, XML escaping in JUnit, ANSI injection via output.write, static-cache leakage across fresh Apps, --test={parallel:0|timeout:0}, Icelandic test.goal discovery. C# files under PLang.Tests/App/Test/; PLang files under Tests/TestModule/ (one goal per file per memory rule). Bodies are Assert.Fail('Not implemented') / throw 'not implemented'. Five open questions in plan.md section 9 (Results file split, CurrentTest thread-safety, JUnit XML variant, builder version source, capability auto-tag scope). Plan waiting for Ingi approval before writing batch 1.",
       "actions": [
         {
-          "paths": [".bot/runtime2-test-module/test-designer/v1/plan.md"],
+          "paths": [
+            ".bot/runtime2-test-module/test-designer/v1/plan.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -153,10 +170,14 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "19 PLang .test.goal files, one goal per file (memory feedback: multi-goal files overwritten by builder). Each has a comment block explaining the intent. Body is 'throw not implemented' — coder fills in with real assertions."
+          "context": "19 PLang .test.goal files, one goal per file (memory feedback: multi-goal files overwritten by builder). Each has a comment block explaining the intent. Body is 'throw not implemented' \u2014 coder fills in with real assertions."
         },
         {
-          "paths": [".bot/runtime2-test-module/test-designer/v1/summary.md", ".bot/runtime2-test-module/test-designer/summary.md", ".bot/runtime2-test-module/test-designer/v1/verdict.json"],
+          "paths": [
+            ".bot/runtime2-test-module/test-designer/v1/summary.md",
+            ".bot/runtime2-test-module/test-designer/summary.md",
+            ".bot/runtime2-test-module/test-designer/v1/verdict.json"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -165,7 +186,7 @@
       ],
       "timestamp_end": "2026-04-20T14:30:00Z",
       "after": {
-        "status": "Test suite complete — 112 tests (93 C# + 19 PLang) across 14 batches, all compile clean. Ready for coder handoff.",
+        "status": "Test suite complete \u2014 112 tests (93 C# + 19 PLang) across 14 batches, all compile clean. Ready for coder handoff.",
         "health": "green",
         "notes": "Every batch reviewed with Ingi before writing. Key design choices locked: flat config on Testing, Results/Coverage split, no AfterAction back-compat, .test/ output per-goal-dir, format=json default single-select, Goal.Hash for freshness, auto-tags traverse sub-goals, test.tag no-op outside tests. All tests carry a comment defining the spec; bodies are Assert.Fail/throw."
       }
@@ -174,85 +195,139 @@
       "id": "b2e8d4a3-7c91-4f6d-9a05-1e3c7b5d8f24",
       "bot": "coder",
       "timestamp_start": "2026-04-20T15:00:00Z",
-      "intent": "Implement the v1 PLang test module: upgrade Testing class, add test.discover/tag/run/report handlers, widen AfterAction payload, add [RequiresCapability], Variables.Snapshot(), AssertionError.Variables, condition.if branchIndex, rewrite system/test.goal — making all 112 test-designer tests pass.",
+      "intent": "Implement the v1 PLang test module: upgrade Testing class, add test.discover/tag/run/report handlers, widen AfterAction payload, add [RequiresCapability], Variables.Snapshot(), AssertionError.Variables, condition.if branchIndex, rewrite system/test.goal \u2014 making all 112 test-designer tests pass.",
       "before": {
-        "assumptions": "Architect plan v1 approved. Test-designer produced 93 C# + 19 PLang tests with Assert.Fail bodies — these are the contract. App.Test.@this is currently a stub. AfterAction emit site is single-call. Goal.Hash already exists ([Store]-persisted, SHA-256 over Name+Steps.Text). Binding.Handler currently is Func<Context, Task<Data>>; widening needed for coverage subscriber.",
-        "risk": "Large scope — 11 distinct pieces touching core runtime (events, assertions, variables, condition orchestration). Plan-only so far; risk is producing a plan too big to review."
+        "assumptions": "Architect plan v1 approved. Test-designer produced 93 C# + 19 PLang tests with Assert.Fail bodies \u2014 these are the contract. App.Test.@this is currently a stub. AfterAction emit site is single-call. Goal.Hash already exists ([Store]-persisted, SHA-256 over Name+Steps.Text). Binding.Handler currently is Func<Context, Task<Data>>; widening needed for coverage subscriber.",
+        "risk": "Large scope \u2014 11 distinct pieces touching core runtime (events, assertions, variables, condition orchestration). Plan-only so far; risk is producing a plan too big to review."
       },
-      "plan": "11 phases, one commit each. Foundation types → Testing class → Variables.Snapshot + AssertionError.Variables + 9 assert handlers → [RequiresCapability] attribute → AfterAction payload widening (one widened signature, refactor all existing subscribers same commit per Ingi Q1) → condition.if branchIndex → test.discover + tag + run + report handlers under PLang/App/modules/test/ → system/test.goal rewrite (no foreach). Every phase checkpointed with its batch tests passing before moving on. All 93 test-designer C# tests pass; only pre-existing Query_ToolCall flake remains.",
+      "plan": "11 phases, one commit each. Foundation types \u2192 Testing class \u2192 Variables.Snapshot + AssertionError.Variables + 9 assert handlers \u2192 [RequiresCapability] attribute \u2192 AfterAction payload widening (one widened signature, refactor all existing subscribers same commit per Ingi Q1) \u2192 condition.if branchIndex \u2192 test.discover + tag + run + report handlers under PLang/App/modules/test/ \u2192 system/test.goal rewrite (no foreach). Every phase checkpointed with its batch tests passing before moving on. All 93 test-designer C# tests pass; only pre-existing Query_ToolCall flake remains.",
       "actions": [
         {
-          "paths": [".bot/runtime2-test-module/coder/v1/plan.md"],
+          "paths": [
+            ".bot/runtime2-test-module/coder/v1/plan.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "v1 plan covering 11 implementation phases, 6 open questions for Ingi, and OBP-compliance approach"
         },
         {
-          "paths": ["PLang/App/Test/TestStatus.cs", "PLang/App/Test/TestFile.cs", "PLang/App/Test/TestRun.cs", "PLang/App/Test/Results.cs", "PLang/App/Test/Coverage.cs", "PLang/App/Test/this.cs"],
+          "paths": [
+            "PLang/App/Test/TestStatus.cs",
+            "PLang/App/Test/TestFile.cs",
+            "PLang/App/Test/TestRun.cs",
+            "PLang/App/Test/Results.cs",
+            "PLang/App/Test/Coverage.cs",
+            "PLang/App/Test/this.cs"
+          ],
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 0+1 — data types + Testing class upgrade. Thread-safe Results (ConcurrentQueue) and Coverage (ConcurrentDictionary). Flat config on Testing, no nested Config class."
+          "context": "Phase 0+1 \u2014 data types + Testing class upgrade. Thread-safe Results (ConcurrentQueue) and Coverage (ConcurrentDictionary). Flat config on Testing, no nested Config class."
         },
         {
-          "paths": ["PLang/App/Variables/this.cs", "PLang/App/Errors/AssertionError.cs", "PLang/App/modules/assert/AssertSnapshot.cs", "PLang/App/modules/assert/equals.cs", "PLang/App/modules/assert/notEquals.cs", "PLang/App/modules/assert/isTrue.cs", "PLang/App/modules/assert/isFalse.cs", "PLang/App/modules/assert/isNull.cs", "PLang/App/modules/assert/isNotNull.cs", "PLang/App/modules/assert/contains.cs", "PLang/App/modules/assert/greaterThan.cs", "PLang/App/modules/assert/lessThan.cs"],
+          "paths": [
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Errors/AssertionError.cs",
+            "PLang/App/modules/assert/AssertSnapshot.cs",
+            "PLang/App/modules/assert/equals.cs",
+            "PLang/App/modules/assert/notEquals.cs",
+            "PLang/App/modules/assert/isTrue.cs",
+            "PLang/App/modules/assert/isFalse.cs",
+            "PLang/App/modules/assert/isNull.cs",
+            "PLang/App/modules/assert/isNotNull.cs",
+            "PLang/App/modules/assert/contains.cs",
+            "PLang/App/modules/assert/greaterThan.cs",
+            "PLang/App/modules/assert/lessThan.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 2 — Variables.Snapshot() added; AssertionError.Variables field; shared AssertSnapshot helper wraps all 9 assert handlers (avoid 9x duplication). Guard: no snapshot on success."
+          "context": "Phase 2 \u2014 Variables.Snapshot() added; AssertionError.Variables field; shared AssertSnapshot helper wraps all 9 assert handlers (avoid 9x duplication). Guard: no snapshot on success."
         },
         {
-          "paths": ["PLang/App/Attributes/RequiresCapabilityAttribute.cs", "PLang/App/modules/http/request.cs", "PLang/App/modules/http/download.cs", "PLang/App/modules/http/upload.cs", "PLang/App/modules/llm/query.cs"],
+          "paths": [
+            "PLang/App/Attributes/RequiresCapabilityAttribute.cs",
+            "PLang/App/modules/http/request.cs",
+            "PLang/App/modules/http/download.cs",
+            "PLang/App/modules/http/upload.cs",
+            "PLang/App/modules/llm/query.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 3 — [RequiresCapability] attribute applied to http.* ('network') and llm.query ('llm'). Test-designer's smoke-test reference 'llm.ask' corrected to 'llm.query' per Ingi Q2."
+          "context": "Phase 3 \u2014 [RequiresCapability] attribute applied to http.* ('network') and llm.query ('llm'). Test-designer's smoke-test reference 'llm.ask' corrected to 'llm.query' per Ingi Q2."
         },
         {
-          "paths": ["PLang/App/Events/Lifecycle/Bindings/Binding/this.cs", "PLang/App/Events/Lifecycle/Bindings/this.cs", "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs", "PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs", "PLang/App/Debug/this.cs", "PLang/App/modules/event/on.cs", "PLang/App/modules/mock/action.cs"],
+          "paths": [
+            "PLang/App/Events/Lifecycle/Bindings/Binding/this.cs",
+            "PLang/App/Events/Lifecycle/Bindings/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/modules/event/on.cs",
+            "PLang/App/modules/mock/action.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 4 — AfterAction payload widening. Binding.Handler signature: Func<Context, Action?, Data?, Task<Data>>. Emitted from Action.RunAsync + Modifiers.RunAsync (modifiers now emit too, per architect §5.6). All subscribers widened same commit."
+          "context": "Phase 4 \u2014 AfterAction payload widening. Binding.Handler signature: Func<Context, Action?, Data?, Task<Data>>. Emitted from Action.RunAsync + Modifiers.RunAsync (modifiers now emit too, per architect \u00a75.6). All subscribers widened same commit."
         },
         {
-          "paths": ["PLang/App/modules/condition/if.cs"],
+          "paths": [
+            "PLang/App/modules/condition/if.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 5 — condition.if publishes Properties['branchIndex']. Simple path: 0 true / 1 false. Orchestrate path: branch's chain position. Error or no-match: not published."
+          "context": "Phase 5 \u2014 condition.if publishes Properties['branchIndex']. Simple path: 0 true / 1 false. Orchestrate path: branch's chain position. Error or no-match: not published."
         },
         {
-          "paths": ["PLang/App/modules/test/discover.cs", "PLang/App/modules/test/tag.cs", "PLang/App/modules/test/run.cs", "PLang/App/modules/test/report.cs"],
+          "paths": [
+            "PLang/App/modules/test/discover.cs",
+            "PLang/App/modules/test/tag.cs",
+            "PLang/App/modules/test/run.cs",
+            "PLang/App/modules/test/report.cs"
+          ],
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "Phases 6-9 — four new action handlers. discover: walk + Goal.Parse for fresh hash + auto-tag via reflection. tag: no-op outside tests. run: semaphore-throttled parallel main loop, per-test App isolation, merged coverage. report: console + JSON or JUnit, coverage tables, failure with Variables snapshot."
+          "context": "Phases 6-9 \u2014 four new action handlers. discover: walk + Goal.Parse for fresh hash + auto-tag via reflection. tag: no-op outside tests. run: semaphore-throttled parallel main loop, per-test App isolation, merged coverage. report: console + JSON or JUnit, coverage tables, failure with Variables snapshot."
         },
         {
-          "paths": ["PLang/Executor.cs"],
+          "paths": [
+            "PLang/Executor.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "Pipe --test={...} dict through Testing.Apply for validated config."
         },
         {
-          "paths": ["system/test.goal", "system/.build/test.pr"],
+          "paths": [
+            "system/test.goal",
+            "system/.build/test.pr"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 10 — rewrite system/test.goal: no foreach. Steps: discover → run → report. Rebuilt via plang build, verified mapping (test.discover, test.run, test.report)."
+          "context": "Phase 10 \u2014 rewrite system/test.goal: no foreach. Steps: discover \u2192 run \u2192 report. Rebuilt via plang build, verified mapping (test.discover, test.run, test.report)."
         },
         {
-          "paths": ["PLang.Tests/App/Testing/*.cs"],
+          "paths": [
+            "PLang.Tests/App/Testing/*.cs"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
           "context": "Filled in 14 test files (93 tests) that the test-designer left as Assert.Fail('Not implemented'). Follow the test-designer's comment intent. Tests using Console.SetOut marked [NotInParallel] (Console.SetOut is process-wide)."
         },
         {
-          "paths": ["PLang.Tests/App/Foundation/EventCacheInvalidationTests.cs", "PLang.Tests/App/Core/EventCollectionTests.cs", "PLang.Tests/App/Security/SecurityFixTests.cs"],
+          "paths": [
+            "PLang.Tests/App/Foundation/EventCacheInvalidationTests.cs",
+            "PLang.Tests/App/Core/EventCollectionTests.cs",
+            "PLang.Tests/App/Security/SecurityFixTests.cs"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
@@ -263,7 +338,71 @@
       "after": {
         "status": "All 11 phases committed. 93 C# test-designer tests pass, 2243/2244 full suite (1 pre-existing flake). End-to-end `plang --test` on Tests/ discovers 149, runs in parallel, emits coverage + .test/results.json.",
         "health": "green",
-        "notes": "No PR per Ingi's request — push branch only. Recommended next bots: codeanalyzer, auditor, security. Known v2 follow-ups: true else-branch semantics, file.read .goal → Goal ergonomics."
+        "notes": "No PR per Ingi's request \u2014 push branch only. Recommended next bots: codeanalyzer, auditor, security. Known v2 follow-ups: true else-branch semantics, file.read .goal \u2192 Goal ergonomics."
+      }
+    },
+    {
+      "id": "1d5da2c7-fb7c-4292-bc39-b3b1be894a60",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-20T18:00:00Z",
+      "intent": "Five-pass analysis of test-module C# code for OBP violations, simplification, readability, behavioural fragility, and dead code",
+      "before": {
+        "assumptions": "Coder's v1 is functionally complete (93 test-designer tests + 149 .goal tests running, 1 pre-existing flake). Scope: ~1,400 lines new C# in Test/* + modules/test/* + AssertSnapshot + BranchChain + RequiresCapability, plus regression-review of modifications in events, modifiers, action, condition.if, assert handlers, http/llm capability attrs, Executor. Does NOT re-audit test-designer's test files \u2014 those are the contract.",
+        "risk": "Big surface (13 new + ~15 modified files). Two known hotspots: AfterAction signature widening (every subscriber must be updated) and condition.if branchIndex publishing (two sources of truth \u2014 If.Orchestrate builds its own chain and BranchChain.ComputeFor does too)."
+      },
+      "plan": "# Codeanalyzer v1 Plan \u2014 Review of PLang Test Module\n\n**Branch:** `runtime2-test-module`\n**Target:** C# code changes from the coder's v1 implementation (coder summary:\n`.bot/runtime2-test-module/coder/v1/summary.md`, commits `1178300a..8f7fcaf6`).\n\n## What I'm reviewing\n\nThe test module rewrite: replaces the `foreach`-based PLang test runner with a\nC#-driven runner (parallel App isolation, timeouts, AfterAction coverage,\nJSON/JUnit output). Coder already landed it \u2014 my job is to find OBP violations,\nover-complexity, behavioural fragility, and dead lines that can go.\n\nI am **not** reviewing:\n- `.goal` / `.pr` test fixtures (test-designer's contract, already reviewed)\n- C# test files under `PLang.Tests/App/Testing/` (test-designer's contract)\n- Docs in `.bot/` or `Documentation/`\n\n## Scope (code files changed on this branch)\n\n**New Test-module production code** (primary focus):\n- `PLang/App/Test/this.cs` \u2014 Testing config + state\n- `PLang/App/Test/Coverage.cs` \u2014 module+branch coverage tracker\n- `PLang/App/Test/Results.cs` \u2014 thread-safe TestRun collection\n- `PLang/App/Test/TestFile.cs` \u2014 discovery metadata\n- `PLang/App/Test/TestRun.cs` \u2014 execution record\n- `PLang/App/Test/TestStatus.cs` \u2014 enum\n- `PLang/App/modules/test/discover.cs` \u2014 file walk, freshness, tag extraction\n- `PLang/App/modules/test/run.cs` \u2014 parallel main loop + coverage subscriber\n- `PLang/App/modules/test/report.cs` \u2014 console + JSON/JUnit + coverage tables\n- `PLang/App/modules/test/tag.cs` \u2014 runtime tag accumulator\n- `PLang/App/modules/assert/AssertSnapshot.cs` \u2014 shared assertion helper\n- `PLang/App/modules/condition/BranchChain.cs` \u2014 branch-label computation\n- `PLang/App/Attributes/RequiresCapabilityAttribute.cs` \u2014 capability tag\n  attribute\n\n**Modifications touching runtime code paths** (review for regressions):\n- `PLang/App/Events/Lifecycle/Bindings/Binding/this.cs` \u2014 widened handler\n  signature (3-arg)\n- `PLang/App/Events/Lifecycle/Bindings/this.cs` \u2014 payload routing\n- `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs` \u2014\n  post-modifier AfterAction emission\n- `PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs` \u2014 AfterAction\n  payload\n- `PLang/App/modules/condition/if.cs` \u2014 branchIndex/Label/Chain publishing\n- `PLang/App/modules/assert/*.cs` \u2014 AssertSnapshot wrapping (9 handlers)\n- `PLang/App/modules/http/{request,download,upload}.cs`,\n  `llm/query.cs` \u2014 `[RequiresCapability]` attribution\n- `PLang/App/modules/event/on.cs`, `mock/action.cs`, `Debug/this.cs` \u2014\n  widened handler lambdas\n- `PLang/App/Errors/AssertionError.cs` \u2014 Variables property\n- `PLang/App/Variables/this.cs` \u2014 Snapshot() method\n- `PLang/Executor.cs` \u2014 `--test={...}` routing\n\n## Five analysis passes\n\nI will run the five character passes across every file in scope. For each\nfinding: file:line, current snippet, OBP/simple form, why it matters.\n\n### Pass 1 \u2014 OBP Compliance\n- **Rule 1 \u2014 Behaviour on owner**: any `foreach` over an externally-owned\n  collection? (e.g. run.cs iterating `tests`, report.cs iterating\n  `results`, discover.cs iterating `matches`/steps/actions)\n- **Rule 2 \u2014 Navigate, don't pass**: handlers that accept decomposed params\n  instead of walking `this.Context.App` / `Context.App.Testing`.\n  Especially check `AssertSnapshot.WithVariables(result, context)` \u2014 does\n  the snapshot's \"owner\" belong elsewhere?\n- **Rule 3 \u2014 Keep refs**: TestFile stores `Directory`/`Path`/`PrPath`/\n  `EntryGoalName`/`GoalHash`/`BuilderVersion` \u2014 strings extracted from Goal.\n  `TestFile.Goal` is kept, so are these duplicated? Are they used by\n  consumers who could walk `file.Goal`?\n- **Rule 4 \u2014 Per-request vs per-object**: `Testing.App` back-reference\n  (line 47). Is Testing \"per-object\" for the App? Yes, but the reverse\n  pointer is a smell \u2014 check why the reporter can't travel Context\u2192App.\n- **Rule 5 \u2014 Collections own operations**: `Results` inherits\n  `IEnumerable<TestRun>` \u2014 does it own the \"add/merge/summary\" ops or do\n  consumers poke at it? Same for `Coverage`.\n- **Rule 6 \u2014 Data.Value at boundaries only**: `report.cs`, `discover.cs`,\n  `run.cs` unwrap `Parameters[n].Value`, `Properties[\"x\"]?.Value`,\n  `result.Value` etc. Each unwrap is a potential violation unless the\n  receiver is external (JSON, reflection, stdout). Trace every\n  `.Value`/`Value as T`.\n\n### Pass 2 \u2014 Simplification\n- Dead abstractions: `ResolveBuilderVersion(testing) => testing.App.Version`\n  is a one-line delegator. Delete?\n- `Describe`/`FormatValue`/`FormatPreviewValue`: several ad-hoc value\n  formatters duplicated across Debug/report/Assert \u2014 is one enough?\n- `TestRun.Complete(Data.@this result)` + `Complete(TestStatus)` \u2014 two\n  overloads. Is the overload used anywhere, or does run.cs always call the\n  status form?\n- `Coverage.ModuleActions` \u2014 yields with a `.IndexOf('.')` split on a\n  composite key. Why the composite key at all when we could `ConcurrentBag<\n  (string,string)>` or a `ConcurrentDictionary<(string,string), byte>`?\n- `Tag` param is `Data.@this<string[]>` \u2014 check that string[] matches\n  what the parameter builder sends for list literals; arrays vs List<string>\n  differences have caused prior drift.\n- `SeedBranchChains` plus `ExtractAutoTags` both recurse the goal tree via\n  `goal.call`. Same walk, two visitors \u2014 candidate for a single pass.\n- `BuildJson` anonymous objects plus `ToDictionary(kv => kv.Key.ToString(),\n  kv => kv.Value)` \u2014 verify this is simpler than a named record.\n- Coverage has 4 dictionaries (`_moduleActions`, `_branches`, `_branchLabels`,\n  `_branchChains`) \u2014 seeding+labels+indices overlap; is there a simpler\n  per-site record?\n\n### Pass 3 \u2014 Readability\n- `@this` aliasing. Confirm each new file follows the `@this` / `this.cs` /\n  global-alias convention (CLAUDE.md rule). Spot any drift: e.g.\n  `public partial class Tag : IContext` in `tag.cs` \u2014 name is `Tag` not\n  `@this`, and file is `tag.cs` with no folder. Is this a violation of the\n  \"folder's primary class is @this in this.cs\" rule?\n- Method length: `RunSingleAsync` in run.cs is ~90 lines with a nested 40-\n  line coverage-subscriber lambda. Split?\n- Naming: `UserTags` on `TestRun` vs `File.Tags` \u2014 the memory says\n  `UserTags \u2192 Tags` is a flagged smell (redundant prefix).\n- Mixed `App.Test.Results` vs `Results` vs `Test.@this` \u2014 verify the\n  namespace choices aren't whipsawing.\n\n### Pass 4 \u2014 Behavioural Reasoning\n- `Testing.Apply` \u2014 `TryToInt` has a `double d when d == Math.Truncate(d)`\n  cast to int \u2014 JSON numeric boxing family. What happens for `3.0` vs\n  `3e10`? `(int)3e10` is defined but lossy.\n- `ExtractAutoTags` passes `depth=50` cap silently \u2014 recursion cycle safety\n  depends on `visited` set, so the depth cap is a backup. What happens at\n  depth 50? Silent drop of further sub-goals \u2192 undertagged tests. Should\n  log/warn.\n- `ResolveStaticGoalName` JsonElement and IDictionary branches \u2014 are these\n  actually possible post-load? If GoalMapper always produces typed\n  `GoalCall`, these are dead; if not, this is the sharp behavioural edge.\n- `RunSingleAsync`'s outer try/catch on `OperationCanceledException` uses\n  both `cts.IsCancellationRequested` and `!Context.CancellationToken\n  .IsCancellationRequested` \u2014 outer cancel path yields which status?\n  (Currently: bubble Exception clause marks Fail. Should it be a distinct\n  Cancelled?)\n- `childApp.Testing.Coverage.RecordModuleAction` fires on EVERY\n  AfterAction \u2014 including modifiers, events, and the orchestrator's inner\n  condition.if re-fires. `IsFirstConditionInStep` filters branch\n  recording but NOT module.action recording, so `condition.if` gets\n  recorded twice for orchestrate paths. Behavioural.\n- `BranchChain.ComputeFor` \u2014 single-action step returns `[true,false]`.\n  `If.Run` also publishes `[true,false]` in the simple path. Verified\n  consistent. But `If.Orchestrate` builds `declaredChain` itself via a\n  separate loop \u2014 does it match BranchChain.ComputeFor for the same input?\n  Two sources of truth \u2192 drift risk.\n- `AssertSnapshot.WithVariables` \u2014 `err.Variables == null` guard. If the\n  same AssertionError is returned twice (e.g. via cached Data), the first\n  snapshot wins. Intended (architect \u00a74.6) or accidental?\n- `AfterAction` widening: the signature change means every existing\n  registrant must be updated. Check that `Debug/this.cs`, `event/on.cs`,\n  `mock/action.cs` all pass (`_,_,_`) not (`_`). Confirmed above but\n  verify no grep-missed sites.\n- `Modifiers.RunAsync` fires `AfterAction` for each modifier *after* the\n  chain \u2014 what if the chain fails? `result` is the failure Data; is it ok\n  to emit AfterAction with a failing Data? Existing subscribers assumed\n  success? Coverage subscriber ignores success flag \u2192 fine. Others?\n- `discover.cs` line 98 comment says \"the stored Hash and BuilderVersion come\n  directly from the built artefact\" \u2014 but freshness test compares\n  `currentGoal.Hash` (re-computed from re-parsed source) vs `prGoal.Hash`\n  (stored). If Goal.Parse normalises differently in runtime than the\n  builder wrote, every test looks stale. Trace.\n- `run.cs` creates `childApp` per test with `new App.@this(test.Directory)`.\n  Is this file-system-directory the correct isolation boundary? If two\n  tests share a directory, they share file-lock state. Is that intended?\n- `report.cs` `ResolveBuilderVersion` returns `testing.App.Version`.\n  But test files carry their own `BuilderVersion` (per-test, from .pr).\n  Drift report compares per-test vs run-wide. What sets `App.Version`?\n  Is it the running builder's own version, or something else? If the\n  runner doesn't set it, every test flags as drift.\n\n### Pass 5 \u2014 Deletion Test\nFor every new file, ask \"can I delete lines X-Y and have a test fail?\":\n- `Coverage`'s `Merge` \u2014 is it hit by any test? run.cs calls it; a C#\n  CoverageTests fixture exists. OK.\n- `TestStatus.Ready` is set by TestFile default \u2014 is Ready ever observed\n  in a Results entry? Not-Ready tests short-circuit in `RunSingleAsync`\n  to `skipRun.Complete(test.Status, skipRun.Error)`. Ready tests get\n  `TestRun(file)` which copies Ready \u2192 TestRun.Status. If the goal never\n  completes cleanly this Ready leaks out. Is Ready-as-final-status\n  reachable?\n- `AssertSnapshot.WithVariables` null-check on `err.Variables` \u2014 if the\n  Variables snapshot is only attached once, why does every caller wrap\n  in `AssertSnapshot.WithVariables`? Could be on the error itself.\n- `BranchChain.ComputeFor`'s `chain.Count == 0` fallback to `[true,false]`\n  comment says \"Orchestrate ran on what looked like a single-action\". With\n  the `myIndex < actions.Count` invariant and `IsConditionAction(actions[\n  myIndex])` at entry, is this branch ever reachable?\n- `discover.cs`'s `empty` local (line 44): constructed even when paths pass\n  \u2014 micro-simplification.\n- `report.cs`'s `StripAnsi` regex \u2014 does any path feed ANSI bytes into\n  `CapturedOutput`? run.cs never sets `CapturedOutput`. If coder never\n  wired capture, the whole CapturedOutput branch is dead.\n- `TestRun.Complete(Data.@this)` \u2014 who calls this? run.cs calls\n  `testRun.Complete(result)` which dispatches to the status form. If only\n  one call site uses it, consider inlining.\n\n## Output deliverables\n\nPer character spec:\n\n1. **`.bot/runtime2-test-module/codeanalyzer/v1/result.md`** \u2014 per-file\n   analysis in the character's format (OBP Violations, Simplifications,\n   Readability, Verdict). Every file listed above gets a section; clean\n   files get a single \"Verdict: CLEAN\" line.\n2. **`.bot/runtime2-test-module/codeanalyzer/v1/summary.md`** \u2014 version\n   summary in the `v<N>/summary.md` format.\n3. **`.bot/runtime2-test-module/codeanalyzer/summary.md`** \u2014 bot-root\n   one-paragraph cross-session file.\n4. **`.bot/runtime2-test-module/codeanalyzer/v1/verdict.json`** \u2014 pass/fail\n   + one-line summary.\n5. **`.bot/runtime2-test-module/codeanalyzer/v1/changes.patch`** \u2014 empty\n   analysis session, but still a patch of `.bot/` additions.\n6. **`.bot/runtime2-test-module/report.json`** \u2014 session entry with\n   before/plan/actions/after.\n\nWhen I'm done:\n- If CLEAN \u2192 suggest **tester** runs next.\n- If NEEDS WORK / MAJOR ISSUES \u2192 suggest sending back to **coder**.\n\nThen commit `.bot/` and push.\n\n## Estimated effort\n\nVolume: ~1,400 lines of new C# across 13 new files + targeted review of ~7\nmodified files. Five passes means ~70 \"reads\". I'll batch-read files, then\nwrite `result.md` file-by-file.\n\n## Blocked?\n\nNo. Branch is fetched, everything compiles (per coder summary). Proceeding\nafter your OK.\n",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-test-module/codeanalyzer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Five-pass scope + pre-analysis suspect list submitted for user approval."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/codeanalyzer/v1/result.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Per-file review of 20+ C# files (13 new + ~7 modified). Each with OBP Violations / Simplifications / Readability / Behavioural / Deletion Test sections and a Verdict. Three files graded NEEDS WORK on critical issues (System.IO violations in discover.cs:77 + report.cs:259, no-op copy-loop in run.cs:141-142, duplicated declared-chain logic in if.cs vs BranchChain.ComputeFor)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/codeanalyzer/v1/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1/summary.md in the character format: what-this-is / what-was-done / must-fix & should-fix & consider lists / code-example illustrating the duplicated-chain drift-risk pattern / deliverables / what-to-do-next."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/codeanalyzer/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "{status: fail, summary: ...} \u2014 three must-fix findings named."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot-root cross-session summary, one paragraph per version."
+        }
+      ],
+      "timestamp_end": "2026-04-20T19:15:00Z",
+      "after": {
+        "status": "Review complete. Verdict: NEEDS WORK (fail). 3 must-fix findings (System.IO violations, no-op copy-loop, duplicated declared-chain). 4 should-fix. 5 consider. 3 v2 items flagged out of scope. Recommendation: back to coder, not tester.",
+        "health": "yellow",
+        "notes": "Coder's design is sound. All must-fix items are small-surface (<30 lines of change total). Expect quick turnaround. Notable new codebase knowledge: IPLangFileSystem.Path.X supports ChangeExtension/GetDirectoryName (System.IO.Abstractions IFileSystem interface). App.Version comes from app.json 'version' field. Goal.Hash = SHA256(Name + concat(Step.Text)), lazy-computed, init-settable."
       }
     }
   ]
