@@ -1,100 +1,123 @@
 {
   "tester": "tester",
   "branch": "runtime2-test-module",
-  "timestamp": "2026-04-20T17:30:00Z",
-  "tested_version": "v4",
-  "reviewed_commit": "730bfce0",
+  "timestamp": "2026-04-20T21:40:00Z",
+  "tested_version": "v3",
   "test_run": {
-    "csharp": { "total": 2268, "passed": 2267, "failed": 1, "skipped": 0, "note": "1 failure is pre-existing LLM flake (Query_ToolCall_LlmRequestsToolAndHandlesError) unchanged by this work" },
-    "plang": { "total": 19, "passed": 0, "failed": 0, "skipped": 0, "stale": 19, "note": "All .test.goal files renamed correctly but none has a .pr on disk — discovery labels them Stale. LLM builder must run to materialize .pr files before these can execute." }
+    "csharp": { "total": 2272, "passed": 2271, "failed": 1, "skipped": 0, "note": "Pre-existing LLM flake (Query_ToolCall_LlmRequestsToolAndHandlesError), same as tester v4 baseline" },
+    "plang": { "total": 19, "passed": 19, "failed": 0, "timeout": 0, "stale": 0, "skipped": 0, "note": "Initial run showed 14/19 because the installed plang binary (16:09) was stale vs source (21:20); after rebuild, 19/19" }
   },
-  "coverage_deltas": {
-    "PLang/Executor.cs": { "v3": "0.0%", "v4": "87.3%", "delta": "+87.3pp" },
-    "PLang/App/Test/Coverage.cs": { "v3": "65.5%", "v4": "100.0%", "delta": "+34.5pp" },
-    "PLang/App/Debug/this.cs": { "v3": "2.0%", "v4": "50.3%", "delta": "+48.3pp" },
-    "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs": { "v3": "86.4%", "v4": "92.2%", "delta": "+5.8pp" },
-    "PLang/App/modules/test/report.cs": { "v3": "82.8%", "v4": "87.1%", "delta": "+4.4pp" },
-    "PLang/App/modules/test/run.cs": { "v3": "69.6%", "v4": "69.9%", "delta": "+0.3pp (production sub-path still 0%)" }
-  },
-  "v3_findings_discharged": {
-    "fully": [2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17],
-    "partially": [1, 8],
-    "not_discharged": []
+  "coverage": {
+    "changed_files_covered": 7,
+    "changed_files_total": 9,
+    "uncovered_files": [
+      "PLang/App/modules/condition/elseif.cs (0% line coverage by C# tests; covered end-to-end by PLang test)",
+      "PLang/App/modules/condition/else.cs (0% line coverage by C# tests; covered end-to-end by PLang test)"
+    ],
+    "notes": "C# coverage via coverlet only measures C# unit tests, not PLang .test.goal execution. elseif.cs and else.cs are covered via PLang TestConditionIfRecordsBranchIndex{True,Else}Branch but 0% in the C# coverage report."
   },
   "findings": [
     {
       "id": 1,
       "severity": "major",
-      "type": "missing-plang-test",
-      "test_file": "Tests/TestModule/**/*.test.goal",
-      "code_file": "PLang/App/modules/test/discover.cs",
-      "issue": "16 of 19 .test.goal files still contain 'throw \"not implemented\"' as the only step. Rename from .goal → .test.goal is done, but no .pr files exist. Discovery labels all 19 as Stale. Once built, the 16 stubs will Fail (not Skip) because their body is the throw.",
-      "impact": "The PLang end-to-end pipeline (LLM builder → .pr → GoalMapper → runtime) has zero green integration tests today. A regression in any of those layers would not surface in CI until a human runs plang --test after a build.",
-      "suggestion": "Either (a) run `plang p build` locally (with LLM access) and commit the .pr files for the 3 tests with real bodies, OR (b) use @skip tags on the 16 stubs so they don't fail the suite once built."
+      "type": "weak-assertion",
+      "test_file": "Tests/TestModule/Run/TestRunSubscribesAfterActionForCoverage.test.goal",
+      "code_file": "PLang/App/modules/test/run.cs",
+      "issue": "Ends with `assert 1 equals 1`. Claims to guard the AfterAction coverage subscriber but observes nothing. If the subscriber silently recorded nothing, the test still passes.",
+      "impact": "Coverage subscriber regression would ship silently — test name lies about what it guards.",
+      "suggestion": "Either reach into Testing.Coverage to assert file.read/output.write were recorded, or downgrade the comment to admit this is a coverage-exercise probe only (not a guard)."
     },
     {
       "id": 2,
       "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/Testing/OrchestrateBranchCoverageTests.cs",
+      "type": "false-green",
+      "test_file": "Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal",
       "code_file": "PLang/App/modules/test/run.cs",
-      "issue": "Production coverage subscriber at run.cs:96-116 (the block that reads result.Properties[\"branchLabel\"] / [\"branchChain\"] and calls Coverage.RecordBranchLabel/Chain) remains 0% covered. OrchestrateBranchCoverageTests replicates the filter shape via a hand-written subscriber on _app.User.Context.Events but never routes through test.run.",
-      "impact": "A typo in the production Properties keys (e.g. \"branchIndx\" instead of \"branchIndex\") or a wrong cast (as List<int> instead of as List<string>) would ship with 2268 tests passing.",
-      "suggestion": "Add a RunActionTests fixture whose goal contains a condition.if so test.run's real subscriber fires. After the run, assert _app.Testing.Coverage.BranchLabels[<site>] is populated from the production path."
+      "issue": "Asserts `%isolation_probe% is null` at entry, but no other test in the suite writes %isolation_probe%. There is no source of pollution to leak in, so a broken-isolation regression would not be caught by this test.",
+      "impact": "The headline 'fresh App per test' claim is not verified by this test (it IS verified by C# RunActionTests.Run_FreshAppPerTest_IsolationBoundaryIsFileLevel).",
+      "suggestion": "Restructure as a test pair: PolluteShared.test.goal writes %shared_probe%=1; ProbeIsolation.test.goal asserts %shared_probe% is null at entry. Alphabetical ordering ensures Pollute runs first. OR delete the test since the C# version covers the case."
     },
     {
       "id": 3,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/Testing/OrchestrateBranchCoverageTests.cs",
-      "code_file": "PLang/App/modules/condition/if.cs",
-      "issue": "MultiActionOrchestrate_InnerElseIfMatches... asserts `subran == 1` with a comment stating 'DisableChildrenOf worked'. But in the bug case (symptom 3 of the three-bug cluster), DisableChildrenOf is silently skipped — so the sub-step still runs because nothing disabled it. `subran == 1` is consistent with both bug AND fix; the assertion doesn't discriminate.",
-      "impact": "Weakens the reasoning trail of an otherwise-strong guard. Other assertions in the same test (Branches.ContainsKey('?:?') == false, IsFirstConditionInStep==false for inner) still discriminate, so the test overall is a real guard.",
-      "suggestion": "Either remove that assertion, or add a second sub-step under only the false branch (e.g. 'subran_false') and assert that variable is unset — actually testing disable-per-branch."
+      "severity": "major",
+      "type": "duplicate-test",
+      "test_file": "Tests/TestModule/Report/TestReport{WritesJunitXml,IncludesCoverageTables,RendersFailureWithVariables}.test.goal",
+      "code_file": "system/test.goal",
+      "issue": "Three .test.goal files have IDENTICAL step bodies: `read file /system/test.goal, assert %goalText% contains 'test.report'`. They check the same string.",
+      "impact": "No incremental discrimination. Dropping test.report produces 3 failures for 1 root cause. Inflates the green count from 17→19 without guardrails.",
+      "suggestion": "Keep one as a structural guard. Make the other two actually test what their names imply: WritesJunitXml should write a junit.xml fixture and assert its content; IncludesCoverageTables should assert the coverage table format; RendersFailureWithVariables should run a failing fixture and assert the Variables map in output."
     },
     {
       "id": 4,
-      "severity": "minor",
+      "severity": "major",
       "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/Testing/ExecutorTests.cs",
-      "code_file": "PLang/Executor.cs",
-      "issue": "Executor.Run(args) (lines 17-22) is 0% covered — all ExecutorTests exercise Configure(args), not Run. Run = Configure + Start. The composition (propagating a Configure error without calling Start, vs invoking Start on success) is untested.",
-      "impact": "A regression where Run ignores the Configure error and calls Start anyway would not be caught.",
-      "suggestion": "Add `Run_InvalidConfig_ReturnsErrorWithoutStarting` — one small test. Pass `--test={\"timeout\":-1}`, assert Run returns the error data without Start side-effects."
+      "test_file": "(gap: new .test.goal needed)",
+      "code_file": "PLang/App/modules/condition/if.cs (Orchestrate, lines 102-108 elseif dispatch)",
+      "issue": "No test covers the case where condition.elseif branch matches (b=1, body runs, branchIndex=1). TrueBranch covers b=0, ElseBranch covers b=2 with elseif evaluating false at b=1. The elseif-matches path with the NEW condition.elseif action is untested.",
+      "impact": "A regression where elseif-matches sets wrong branchIndex, or skips the body, or returns wrong branchLabel would not be caught.",
+      "suggestion": "Add TestConditionElseIfMatchesRecordsBranchIndex1.test.goal: set %x%=7; if %x%>10 ... else if %x%>5 set %b%=2, else ...; assert %__data__.branchIndex% equals 1 and %b% equals 2."
     },
     {
       "id": 5,
       "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.test.goal",
+      "code_file": "PLang/App/modules/assert/equals.cs (AssertionError.Variables population)",
+      "issue": "Name implies the Variables snapshot is verified end-to-end, but the assertion is only `%hasFail% is true`. A regression that dropped the Variables snapshot but kept Fail status would pass.",
+      "impact": "The Batch 5 headline feature (AssertionError carries %foo%=42) is claimed to be guarded but isn't.",
+      "suggestion": "Reach into %results[0].Error.Variables.foo% and assert equals 42. OR rename to TestAssertFailureReportedAsFail to honestly describe the assertion level. Coder self-flagged this."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "type": "misleading-name",
+      "test_file": "Tests/TestModule/Tag/TestTagOutsideTestIsNoOp.test.goal",
+      "code_file": "PLang/App/modules/test/tag.cs (no-op branch at line 22)",
+      "issue": "Name implies 'when called outside test mode, tag is a no-op' but the test runs INSIDE the runner — it exercises the accumulate branch, not the no-op branch.",
+      "impact": "Name falsely claims coverage. The no-op branch (currentTest==null) is unreachable from a .test.goal and would need a C# unit test.",
+      "suggestion": "Rename to TestTagAccumulatesWhenInsideTest (honest about what it tests). OR delete since TestTagAccumulatesUserTagsOnRun covers the accumulate branch more thoroughly. Coder self-flagged this."
+    },
+    {
+      "id": 7,
+      "severity": "minor",
+      "type": "stale-filter-mirror",
+      "test_file": "PLang.Tests/App/Testing/OrchestrateBranchCoverageTests.cs:53-57",
+      "code_file": "PLang/App/modules/test/run.cs:91",
+      "issue": "Test's RegisterCoverageProbe mirrors the OLD production filter (`IsCondition && IsFirstConditionInStep`). Production was changed to `IsIfHead` in coder v3. Comment at line 18 still references the old shape.",
+      "impact": "A regression in IsIfHead logic would not be caught by this test. The test still has value for its original purpose (d05c138d Step-propagation fix), but its 'production filter' claim is stale.",
+      "suggestion": "Update the subscriber to use `action.IsIfHead` and the comment. OR add an assertion that `IsIfHead == (IsCondition && IsFirstConditionInStep)` for the two-condition-if step shape so both filter semantics remain validated."
+    },
+    {
+      "id": 8,
+      "severity": "minor",
       "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/Testing/RunActionTests.cs",
-      "code_file": "PLang/App/modules/test/run.cs",
-      "issue": "RunSingleAsync catches at lines 139 (OperationCanceledException) and 143 (catch-all except OOM/SO) are 0% covered. Timeout test reaches Complete(Timeout) via the cts.IsCancellationRequested branch at line 134, not via the OCE catch. No fixture throws unexpectedly.",
-      "impact": "Low — these are safety nets. The docstring's 'never throws for child-test failures' claim is formally unproven.",
-      "suggestion": "Optional: a fixture handler that throws InvalidOperationException. Low priority."
+      "test_file": "(gap: OperatorTests.cs)",
+      "code_file": "PLang/App/modules/condition/Operator.cs:176-181",
+      "issue": "New enum↔string normalization branches have no C# unit test. Covered end-to-end by three PLang tests (Run timeout/fail, Assert) which rely on `where Status equals 'Timeout|Fail'`.",
+      "impact": "Minor — the end-to-end path caught a stale-binary run in my review. But a direct unit test would give faster signal on regressions.",
+      "suggestion": "Add OperatorTests.Equal_EnumLeft_StringRight_NormalizesToEnumName and the mirror. Single method, four lines each."
+    },
+    {
+      "id": 9,
+      "severity": "minor",
+      "type": "overlap",
+      "test_file": "Tests/TestModule/Integration/TestSystemTestGoal{NoForeach,RunsAllDiscovered}.test.goal",
+      "code_file": "system/test.goal",
+      "issue": "NoForeach asserts contains test.discover + test.run + test.report. RunsAllDiscovered asserts contains test.discover + test.run + does-not-contain foreach. Only the foreach-absence differs.",
+      "impact": "Minor duplication — not wrong, just redundant.",
+      "suggestion": "Merge or make distinct. Consider: NoForeach asserts foreach is absent (negative test). RunsAllDiscovered exercises the full pipeline with fixtures (positive test)."
+    },
+    {
+      "id": 10,
+      "severity": "minor",
+      "type": "latent-runtime-bug",
+      "test_file": "(not a test-quality issue)",
+      "code_file": "PLang/App/modules/test/run.cs:124-130",
+      "issue": "test.run timeout=1 maps TestStatus.Timeout correctly but does not cancel the child's timer.sleep. TestRunEnforcesTimeout passes because Status mapping is correct, but wallclock is 5008ms instead of ~1000ms. cts.Token is passed to childApp.RunGoalAsync but downstream handlers read Context.CancellationToken which was set at child-App construction and not rebound.",
+      "impact": "A single test with a 60s sleep inside a timeout=1 wrapper burns 60s of CI wall-time, not 1s. Real latent bug. Not a test-quality finding — the test correctly asserts Status mapping. Coder self-flagged.",
+      "suggestion": "Route cts.Token into the child App's root context before dispatching the goal. Out of scope for test-quality fixes — belongs in the next coder iteration."
     }
   ],
-  "deletion_test_results": {
-    "note": "For each tautology-fix rewritten in v2, I applied the deletion test: would the test still pass if I deleted the core assertion block?",
-    "tests_checked": [
-      { "test": "Run_ParallelExecution_RespectsSemaphoreLimit", "assertion": "maxDepth == 2", "strong": true },
-      { "test": "Run_SystemDirectory_InheritedFromParentApp", "assertion": "observedChildSystemDir == '/some/system/dir'", "strong": true },
-      { "test": "Run_TestingIsEnabled_SetToTrueInChildApp", "assertion": "observed == true", "strong": true },
-      { "test": "Run_AssertionFailureInTest_CapturedInResult", "assertion": "Variables contains 'score' AND value round-trips as 42L", "strong": true },
-      { "test": "AfterAction_ForModifierAction_FiresSeparately", "assertion": "observed.Count == 2 + ordered tuple equality", "strong": true },
-      { "test": "Evaluation_ThrowsOrErrors_NoBranchIndexPublished", "assertion": "result.Success.IsFalse() first, then branchIndex absence", "strong": true },
-      { "test": "Report_Coverage_BranchTable_PerSiteShowsObservedIndices", "assertion": "parses MyGoal:3: line specifically, asserts 0 and 1 and { and } in that line", "strong": true }
-    ]
-  },
-  "childappcreated_hook_audit": {
-    "concerns_checked": [
-      "subscriber leak — all RunActionTests use try/finally to -= the handler",
-      "parallel-test contamination — each probe filters by childApp.AbsolutePath.StartsWith(_tempDir)",
-      "production surface — internal static; only PLang.Tests sees it via InternalsVisibleTo",
-      "emission order — invoked AFTER coverageBinding registration, BEFORE RunGoalAsync; probes see child state as the test will"
-    ],
-    "verdict": "accepted — test-only hook is narrow and correctly guarded"
-  },
-  "verdict": "pass",
-  "next_agent": "security",
-  "summary": "Coder v2 addressed 15 of 17 v3 findings fully. The two partially-addressed findings are both PLang .test.goal pipeline items blocked on LLM builder access. Five minor residuals remain (F1-F5). All tautology fixes pass the deletion test — they genuinely probe child-App state rather than faking it. Suite 2267/2268 pass (same pre-existing flake). Coverage deltas on touched files are strong. Recommend security review next."
+  "verdict": "needs-fixes",
+  "summary": "Suite is green at 19/19 PLang + 2271/2272 C# (same pre-existing LLM flake as v4 baseline). 10 of 19 .test.goal files are strong guards that discriminate under the deletion test; 9 are weak or duplicative (findings F1-F9). F1-F4 are major: a tautology, a false-green isolation test, 3 identical Report tests, and a missing elseif-matches test for the new architecture. F5-F9 are minor nits. F10 is a latent runtime bug (coder self-flagged, out of tester scope). No shipping blockers, but the major findings are real test-quality issues worth a cleanup pass before security review. Coder v3's architectural work (condition.elseif/else as first-class actions, enum-string normalization, test.tag return) is functionally correct and covered end-to-end."
 }

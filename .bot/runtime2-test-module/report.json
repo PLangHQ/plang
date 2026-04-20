@@ -653,6 +653,97 @@
         "notes": "Handing back to coder per user direction for F1 primarily: implement real bodies for 16 stub .test.goal files, then run `plang build` to materialize .pr files. Also F2 (add condition.if fixture in RunActionTests so production subscriber is exercised). Once F1+F2 addressed, re-route to tester v5, then security.",
         "next_agent": "coder"
       }
+    },
+    {
+      "id": "e5f6a7b8-c9d0-1234-ef01-567890123456",
+      "bot": "tester",
+      "timestamp_start": "2026-04-20T21:20:00Z",
+      "intent": "Review coder v3 (F1 discharge + condition.elseif/else + test.tag return + enum normalization)",
+      "before": {
+        "assumptions": "Coder v3 claims 19/19 .test.goal Pass (up from 3 real + 16 stubs), condition.if/elseif/else refactor with Ingi's approval, test.tag returns accumulated tags, enum-string normalization. C# suite claimed 2271/2272 (same pre-existing LLM flake). Coder self-flagged a latent bug: test.run timeout doesn't actually cancel child timer.sleep.",
+        "risk": "Highest-risk class: 19 PLang tests got bodies in one session. Pattern risk = rushed tests that pass without discriminating. Especially suspicious: structural tests reading /system/test.goal as text, isolation test with no cross-test writes, TestRunSubscribesAfterActionForCoverage asserting 1=1."
+      },
+      "plan": "1) Run C# suite + PLang suite, record pass/fail. 2) Run coverage on changed files. 3) Apply deletion test to every .test.goal body. 4) Cross-check every .pr against its .goal step intent. 5) Verify self-declared latent bug (timeout-not-cancelling-timer.sleep). 6) Check C# tests exist for the new paths (elseif.Run, else.Run, enum-string normalization, IsIfHead filter change, tag return shape). 7) Write test-report.json, verdict.json, summary.md.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-test-module/tester/v5/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan read back to user for approval; approved and executed."
+        },
+        {
+          "paths": ["PLang.Tests/bin/Debug/net10.0/PLang.Tests.dll", "PlangConsole/bin/Debug/net10.0/plang.dll"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran dotnet run --project PLang.Tests (2271/2272 pass, same LLM flake as v4 baseline) in parallel with plang --test (which initially showed 14/19 because the installed plang binary was stale vs post-pull source; after dotnet build PlangConsole, 19/19 pass)."
+        },
+        {
+          "paths": [".bot/runtime2-test-module/tester/v5/coverage.cobertura.xml"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Coverlet on filtered namespaces. elseif.cs/else.cs at 0% from C# unit tests only — covered end-to-end by PLang tests. All other changed files 71-100%."
+        },
+        {
+          "paths": [
+            "Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.test.goal",
+            "Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal",
+            "Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.test.goal",
+            "Tests/TestModule/Discover/TestDiscoverFindsTestGoals.test.goal",
+            "Tests/TestModule/Discover/TestDiscoverReportsStaleWhenPrMissing.test.goal",
+            "Tests/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal",
+            "Tests/TestModule/Integration/TestSystemTestGoalNoForeach.test.goal",
+            "Tests/TestModule/Integration/TestSystemTestGoalReportsTimeout.test.goal",
+            "Tests/TestModule/Integration/TestSystemTestGoalRespectsTagFilter.test.goal",
+            "Tests/TestModule/Integration/TestSystemTestGoalRunsAllDiscovered.test.goal",
+            "Tests/TestModule/Report/TestReportIncludesCoverageTables.test.goal",
+            "Tests/TestModule/Report/TestReportRendersFailureWithVariables.test.goal",
+            "Tests/TestModule/Report/TestReportWritesJunitXml.test.goal",
+            "Tests/TestModule/Run/TestRunEnforcesTimeout.test.goal",
+            "Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal",
+            "Tests/TestModule/Run/TestRunReportsAssertionFailure.test.goal",
+            "Tests/TestModule/Run/TestRunSubscribesAfterActionForCoverage.test.goal",
+            "Tests/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.test.goal",
+            "Tests/TestModule/Tag/TestTagOutsideTestIsNoOp.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Deletion-test analysis per file. 10 strong (discriminate), 9 weak (tautology/false-green/duplicate/misleading/missing-path)."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/condition/elseif.cs",
+            "PLang/App/modules/condition/else.cs",
+            "PLang/App/modules/condition/if.cs",
+            "PLang/App/modules/condition/Operator.cs",
+            "PLang/App/modules/condition/providers/DefaultEvaluator.cs",
+            "PLang/App/modules/test/run.cs",
+            "PLang/App/modules/test/tag.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read coder v3 changes. Architectural refactor (elseif/else as first-class actions) is functionally correct. IsIfHead replaces IsFirstConditionInStep in run.cs coverage filter. Operator.NormalizeTypes gains enum-string path. test.tag returns accumulated UserTags snapshot. Latent bug: test.run timeout maps Status correctly but doesn't cancel child timer.sleep (wallclock 5008ms vs expected 1000ms — coder self-flagged)."
+        },
+        {
+          "paths": [".bot/runtime2-test-module/test-report.json", ".bot/runtime2-test-module/tester/v5/result.md", ".bot/runtime2-test-module/tester/v5/verdict.json", ".bot/runtime2-test-module/tester/v5/summary.md", ".bot/runtime2-test-module/tester/v5/changes.patch", ".bot/runtime2-test-module/tester/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "10 findings: 4 major (F1 tautology, F2 false-green isolation, F3 three identical Reports, F4 missing elseif-matches test), 5 minor (F5-F9), 1 latent runtime bug (F10, out of scope). Verdict: needs-fixes."
+        }
+      ],
+      "after": {
+        "status": "needs-fixes: 4 major test-quality findings, 5 minor, 1 latent runtime bug",
+        "health": "suite green 19/19 PLang + 2271/2272 C#; architectural refactor functionally correct; 10 of 19 PLang tests discriminate, 9 are weak",
+        "notes": "Handing to coder v4 to address F1 (remove `assert 1 equals 1` tautology), F2 (pair isolation test with a polluter or delete), F3 (deduplicate 3 identical Report tests), F4 (add elseif-matches path test). F5-F9 minor nits. F10 is a real runtime bug for follow-up (route cts.Token into child context). After coder v4, re-route to tester v6, then security.",
+        "next_agent": "coder"
+      }
     }
   ]
 }
