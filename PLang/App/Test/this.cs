@@ -43,7 +43,10 @@ public sealed class @this
     /// <summary>File report format: "json" (default) or "junit". Console is always written regardless.</summary>
     public string Format { get; set; } = "json";
 
-    public @this(App.@this app) { }
+    /// <summary>Back-reference to the App that owns this Testing. Used by reporters to surface App.Version for drift comparisons.</summary>
+    internal App.@this App { get; }
+
+    public @this(App.@this app) { App = app; }
 
     /// <summary>
     /// Applies a --test={...} config dictionary. Validates bounds and returns an error Data

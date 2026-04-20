@@ -1,3 +1,6 @@
+using System.Text.Json;
+using global::App.Test;
+
 namespace PLang.Tests.App.Testing;
 
 /// <summary>
@@ -8,14 +11,47 @@ namespace PLang.Tests.App.Testing;
 /// produced a test's .pr, the report flags it. Drift is informational, not
 /// enforced — users decide when to rebuild.
 /// </summary>
+[NotInParallel]
 public class TestMetadataTests
 {
+    private string _tempDir = null!;
     private global::App.@this _app = null!;
+    private StringWriter _console = null!;
+    private TextWriter _originalConsole = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/test");
+        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-meta-" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(_tempDir);
+        var fs = new global::App.FileSystem.Default.PLangFileSystem(_tempDir, "");
+        _app = new global::App.@this(fs);
+        _originalConsole = Console.Out;
+        _console = new StringWriter();
+        Console.SetOut(_console);
+    }
+
+    [After(Test)]
+    public async Task Teardown()
+    {
+        Console.SetOut(_originalConsole);
+        await _app.DisposeAsync();
+        if (System.IO.Directory.Exists(_tempDir))
+            System.IO.Directory.Delete(_tempDir, true);
+    }
+
+    private static TestRun NewRun(string name, string? builderVersion = null, string? goalHash = "deadbeef")
+    {
+        var run = new TestRun(new TestFile
+        {
+            Path = $"Tests/{name}.test.goal",
+            EntryGoalName = name,
+            GoalHash = goalHash,
+            BuilderVersion = builderVersion
+        });
+        run.Complete(TestStatus.Pass);
+        return run;
     }
 
     // The .pr file carries a builder-version field (written at build time). At
@@ -24,8 +60,8 @@ public class TestMetadataTests
     [Test]
     public async Task Metadata_TestRun_CapturesBuilderVersionFromPr()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var run = NewRun("T", builderVersion: "v1.2.3");
+        await Assert.That(run.File.BuilderVersion).IsEqualTo("v1.2.3");
     }
 
     // TestRun captures Goal.Hash (Name + Steps.Text SHA-256) from the .pr.
@@ -34,8 +70,8 @@ public class TestMetadataTests
     [Test]
     public async Task Metadata_TestRun_CapturesGoalHashFromPr()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var run = NewRun("T", goalHash: "abc123");
+        await Assert.That(run.File.GoalHash).IsEqualTo("abc123");
     }
 
     // results.json exposes the builder version per test run entry. Tooling can
@@ -44,8 +80,18 @@ public class TestMetadataTests
     [Test]
     public async Task Metadata_Report_SurfacesBuilderVersion_InResultsJson()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        _app.Testing.Results.Add(NewRun("T", builderVersion: "v1.0"));
+
+        var action = new global::App.modules.test.report { Context = _app.User.Context };
+        await action.Run();
+
+        var jsonPath = System.IO.Path.Combine(_tempDir, ".test", "results.json");
+        var json = await System.IO.File.ReadAllTextAsync(jsonPath);
+        using var doc = JsonDocument.Parse(json);
+
+        var runsArray = doc.RootElement.GetProperty("runs");
+        var first = runsArray[0];
+        await Assert.That(first.GetProperty("builderVersion").GetString()).IsEqualTo("v1.0");
     }
 
     // When the current plang builder version differs from the .pr's builder
@@ -55,7 +101,13 @@ public class TestMetadataTests
     [Test]
     public async Task Metadata_Report_FlagsDriftWhenPrBuilderVersionMismatchesCurrent()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        _app.Version = "v2.0"; // current app builder version
+        _app.Testing.Results.Add(NewRun("T", builderVersion: "v1.0")); // stale
+
+        var action = new global::App.modules.test.report { Context = _app.User.Context };
+        await action.Run();
+
+        var output = _console.ToString();
+        await Assert.That(output.Contains("builder drift")).IsTrue();
     }
 }
