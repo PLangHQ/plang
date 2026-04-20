@@ -169,6 +169,26 @@
         "health": "green",
         "notes": "Every batch reviewed with Ingi before writing. Key design choices locked: flat config on Testing, Results/Coverage split, no AfterAction back-compat, .test/ output per-goal-dir, format=json default single-select, Goal.Hash for freshness, auto-tags traverse sub-goals, test.tag no-op outside tests. All tests carry a comment defining the spec; bodies are Assert.Fail/throw."
       }
+    },
+    {
+      "id": "b2e8d4a3-7c91-4f6d-9a05-1e3c7b5d8f24",
+      "bot": "coder",
+      "timestamp_start": "2026-04-20T15:00:00Z",
+      "intent": "Implement the v1 PLang test module: upgrade Testing class, add test.discover/tag/run/report handlers, widen AfterAction payload, add [RequiresCapability], Variables.Snapshot(), AssertionError.Variables, condition.if branchIndex, rewrite system/test.goal — making all 112 test-designer tests pass.",
+      "before": {
+        "assumptions": "Architect plan v1 approved. Test-designer produced 93 C# + 19 PLang tests with Assert.Fail bodies — these are the contract. App.Test.@this is currently a stub. AfterAction emit site is single-call. Goal.Hash already exists ([Store]-persisted, SHA-256 over Name+Steps.Text). Binding.Handler currently is Func<Context, Task<Data>>; widening needed for coverage subscriber.",
+        "risk": "Large scope — 11 distinct pieces touching core runtime (events, assertions, variables, condition orchestration). Plan-only so far; risk is producing a plan too big to review."
+      },
+      "plan": "PENDING — see .bot/runtime2-test-module/coder/v1/plan.md for full 11-phase approach. Awaiting Ingi approval.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-test-module/coder/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan covering 11 implementation phases, 6 open questions for Ingi, and OBP-compliance approach"
+        }
+      ]
     }
   ]
 }
