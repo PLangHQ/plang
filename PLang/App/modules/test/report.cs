@@ -42,7 +42,7 @@ public partial class report : IContext
         switch (testing.Format)
         {
             case "junit":
-                var junit = BuildJUnit(results);
+                var junit = BuildJUnit(results, fs);
                 await fs.File.WriteAllTextAsync(fs.Path.Combine(outDir, "junit.xml"), junit);
                 break;
             default: // "json"
@@ -251,12 +251,12 @@ public partial class report : IContext
         return JsonSerializer.Serialize(envelope, App.Utils.Json.CamelCaseIndented);
     }
 
-    private static string BuildJUnit(App.Test.Results results)
+    private static string BuildJUnit(App.Test.Results results, FileSystem.IPLangFileSystem fs)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine($"<testsuites tests=\"{results.Count}\" failures=\"{results.Count(r => r.Status == TestStatus.Fail)}\" errors=\"0\">");
-        var byPath = results.GroupBy(r => System.IO.Path.GetDirectoryName(r.File.Path) ?? "");
+        var byPath = results.GroupBy(r => fs.Path.GetDirectoryName(r.File.Path) ?? "");
         foreach (var group in byPath)
         {
             var suiteTests = group.ToList();

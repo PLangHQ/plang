@@ -34,13 +34,7 @@ public partial class If : IContext, IStep
         if (userStep?.Goal != null)
         {
             var disableContext = Context.App!.System.Context;
-            var steps = userStep.Goal.Steps;
-            for (int i = userStep.Index + 1; i < steps.Count; i++)
-            {
-                if (steps[i].Indent <= userStep.Indent) break;
-                steps[i].Context = disableContext;
-                steps[i].Disabled = !conditionResult;
-            }
+            userStep.Goal.Steps.DisableChildrenOf(userStep, !conditionResult, disableContext);
         }
 
         // Orchestrate if/elseif/else when there are multiple actions in this step.
@@ -83,41 +77,10 @@ public partial class If : IContext, IStep
     private async Task<Data.@this> Orchestrate(
         App.Goals.Goal.Steps.Step.Actions.@this actions, bool firstConditionResult)
     {
-        // Find our position
-        int myIndex = 0;
-        for (int i = 0; i < actions.Count; i++)
-        {
-            if (ReferenceEquals(actions[i], __action))
-            {
-                myIndex = i;
-                break;
-            }
-        }
+        int myIndex = actions.IndexOf(__action);
+        if (myIndex < 0) myIndex = 0;
 
-        // Build branches: each branch is (conditionAction, thenActions[])
-        // The last branch with no condition action is the else branch
-        var branches = new List<(Action? condition, List<Action> body)>();
-        List<Action>? currentBody = null;
-        Action? currentCondition = null;
-
-        for (int i = myIndex; i < actions.Count; i++)
-        {
-            if (IsConditionAction(actions[i]))
-            {
-                // Start a new branch
-                if (currentBody != null)
-                    branches.Add((currentCondition, currentBody));
-                currentCondition = actions[i];
-                currentBody = new List<Action>();
-            }
-            else
-            {
-                currentBody ??= new List<Action>();
-                currentBody.Add(actions[i]);
-            }
-        }
-        if (currentBody != null)
-            branches.Add((currentCondition, currentBody));
+        var branches = actions.SplitAtConditions(myIndex);
 
         // Execute: first branch uses our already-evaluated result
         for (int b = 0; b < branches.Count; b++)
@@ -157,13 +120,7 @@ public partial class If : IContext, IStep
                 lastResult.Properties.Set("branchIndex", b);
                 lastResult.Properties.Set("branchLabel",
                     b == 0 ? "if" : condition == null ? "else" : $"elseif[{b}]");
-                var declaredChain = new List<string>();
-                for (int di = 0; di < branches.Count; di++)
-                {
-                    var (dc, _) = branches[di];
-                    declaredChain.Add(di == 0 ? "if" : dc == null ? "else" : $"elseif[{di}]");
-                }
-                lastResult.Properties.Set("branchChain", declaredChain);
+                lastResult.Properties.Set("branchChain", actions.ComputeBranchChain(myIndex));
                 return lastResult;
             }
         }
@@ -172,8 +129,4 @@ public partial class If : IContext, IStep
         // so coverage doesn't claim a branch fired.
         return Data(false);
     }
-
-    private static bool IsConditionAction(Action action) =>
-        string.Equals(action.Module, "condition", StringComparison.OrdinalIgnoreCase)
-        && string.Equals(action.ActionName, "if", StringComparison.OrdinalIgnoreCase);
 }

@@ -52,6 +52,20 @@ public sealed partial class @this : modules.IDataWrappable
     [JsonIgnore]
     public bool Cacheable { get; init; } = true;
 
+    /// <summary>True when this is a condition.if action.</summary>
+    [JsonIgnore]
+    public bool IsCondition =>
+        string.Equals(Module, "condition", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(ActionName, "if", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// True when this is the first condition.if action in its step. Used by coverage
+    /// to ignore inner-elseif simple-path firings that would otherwise mix
+    /// true/false labels into the orchestrator's declared chain.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsFirstConditionInStep => Step?.Actions.IsFirstCondition(this) ?? true;
+
     [JsonIgnore]
     public Steps.Step.@this? Step { get; set; }
 

@@ -74,7 +74,7 @@ public partial class discover : IContext
         var dir = fs.Path.GetDirectoryName(absGoalPath) ?? fs.RootDirectory;
         var relGoalPath = NormalizeRelative(fs.Path.GetRelativePath(fs.RootDirectory, absGoalPath));
         var fileName = fs.Path.GetFileName(absGoalPath);
-        var prFileName = System.IO.Path.ChangeExtension(fileName, ".pr").ToLowerInvariant();
+        var prFileName = fs.Path.ChangeExtension(fileName, ".pr").ToLowerInvariant();
         var absPrPath = fs.Path.Combine(dir, ".build", prFileName);
         // PrPath is relative to the test's own directory (not the parent app root) so
         // the per-test child App — rooted at TestFile.Directory — can resolve it directly.
@@ -184,28 +184,25 @@ public partial class discover : IContext
 
     private static void ExtractUserTags(Goal goal, HashSet<string> tags)
     {
-        foreach (var step in goal.Steps)
+        goal.ForEachAction((step, action) =>
         {
-            foreach (var action in step.Actions)
+            if (!string.Equals(action.Module, "test", StringComparison.OrdinalIgnoreCase)) return;
+            if (!string.Equals(action.ActionName, "tag", StringComparison.OrdinalIgnoreCase)) return;
+            var tagsParam = action.Parameters.FirstOrDefault(p =>
+                string.Equals(p.Name, "Tags", StringComparison.OrdinalIgnoreCase));
+            if (tagsParam?.Value is System.Collections.IEnumerable enumerable and not string)
             {
-                if (!string.Equals(action.Module, "test", StringComparison.OrdinalIgnoreCase)) continue;
-                if (!string.Equals(action.ActionName, "tag", StringComparison.OrdinalIgnoreCase)) continue;
-                var tagsParam = action.Parameters.FirstOrDefault(p =>
-                    string.Equals(p.Name, "Tags", StringComparison.OrdinalIgnoreCase));
-                if (tagsParam?.Value is System.Collections.IEnumerable enumerable and not string)
+                foreach (var item in enumerable)
                 {
-                    foreach (var item in enumerable)
-                    {
-                        var s = item?.ToString();
-                        if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
-                    }
-                }
-                else if (tagsParam?.Value is string single && !string.IsNullOrWhiteSpace(single))
-                {
-                    tags.Add(single);
+                    var s = item?.ToString();
+                    if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
                 }
             }
-        }
+            else if (tagsParam?.Value is string single && !string.IsNullOrWhiteSpace(single))
+            {
+                tags.Add(single);
+            }
+        });
     }
 
     /// <summary>
@@ -219,29 +216,29 @@ public partial class discover : IContext
         if (!visited.Add(goal.Name)) return;
 
         var modules = Context.App!.Modules;
-        foreach (var step in goal.Steps)
+        var subGoals = new List<Goal>();
+        goal.ForEachAction((step, action) =>
         {
-            foreach (var action in step.Actions)
-            {
-                var type = modules.GetActionType(action.Module, action.ActionName);
-                var attr = type?.GetCustomAttribute<RequiresCapabilityAttribute>();
-                if (attr != null)
-                    foreach (var cap in attr.Capabilities)
-                        tags.Add(cap);
+            var type = modules.GetActionType(action.Module, action.ActionName);
+            var attr = type?.GetCustomAttribute<RequiresCapabilityAttribute>();
+            if (attr != null)
+                foreach (var cap in attr.Capabilities)
+                    tags.Add(cap);
 
-                // Static goal.call: follow the chain to capture called-goal capabilities.
-                if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(action.ActionName, "call", StringComparison.OrdinalIgnoreCase))
+            // Static goal.call: follow the chain to capture called-goal capabilities.
+            if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(action.ActionName, "call", StringComparison.OrdinalIgnoreCase))
+            {
+                var targetName = ResolveStaticGoalName(action);
+                if (targetName != null)
                 {
-                    var targetName = ResolveStaticGoalName(action);
-                    if (targetName != null)
-                    {
-                        var sub = Context.App.Goals.Get(targetName);
-                        if (sub != null) ExtractAutoTags(sub, tags, visited, depth + 1);
-                    }
+                    var sub = Context.App.Goals.Get(targetName);
+                    if (sub != null) subGoals.Add(sub);
                 }
             }
-        }
+        });
+        foreach (var sub in subGoals)
+            ExtractAutoTags(sub, tags, visited, depth + 1);
     }
 
     private static string? ResolveStaticGoalName(Goals.Goal.Steps.Step.Actions.Action.@this action)
@@ -278,41 +275,37 @@ public partial class discover : IContext
         if (!visited.Add(goal.Name)) return;
 
         var goalId = goal.Path ?? goal.Name ?? "?";
-        foreach (var step in goal.Steps)
+        var seededSteps = new HashSet<int>();
+        var subGoals = new List<Goal>();
+
+        goal.ForEachAction((step, action) =>
         {
-            // First condition.if in this step defines the site.
-            Goals.Goal.Steps.Step.Actions.Action.@this? firstIf = null;
-            int firstIfIndex = -1;
-            for (int i = 0; i < step.Actions.Count; i++)
+            // First condition.if in this step defines the site — seed once per step.
+            if (seededSteps.Add(step.Index))
             {
-                if (App.modules.condition.BranchChain.IsConditionAction(step.Actions[i]))
+                int firstIfIndex = step.Actions.FirstConditionIndex();
+                if (firstIfIndex >= 0)
                 {
-                    firstIf = step.Actions[i];
-                    firstIfIndex = i;
-                    break;
+                    var chain = step.Actions.ComputeBranchChain(firstIfIndex);
+                    var site = $"{goalId}:{step.Index}";
+                    coverage.RecordBranchChain(site, chain);
                 }
-            }
-            if (firstIf != null)
-            {
-                var chain = App.modules.condition.BranchChain.ComputeFor(step.Actions, firstIfIndex);
-                var site = $"{goalId}:{step.Index}";
-                coverage.RecordBranchChain(site, chain);
             }
 
             // Recurse into static goal.call targets — their condition.ifs count too.
-            foreach (var action in step.Actions)
+            if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(action.ActionName, "call", StringComparison.OrdinalIgnoreCase))
             {
-                if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(action.ActionName, "call", StringComparison.OrdinalIgnoreCase))
+                var targetName = ResolveStaticGoalName(action);
+                if (targetName != null)
                 {
-                    var targetName = ResolveStaticGoalName(action);
-                    if (targetName != null)
-                    {
-                        var sub = Context.App!.Goals.Get(targetName);
-                        if (sub != null) SeedBranchChains(sub, coverage, visited, depth + 1);
-                    }
+                    var sub = Context.App!.Goals.Get(targetName);
+                    if (sub != null) subGoals.Add(sub);
                 }
             }
-        }
+        });
+
+        foreach (var sub in subGoals)
+            SeedBranchChains(sub, coverage, visited, depth + 1);
     }
 }

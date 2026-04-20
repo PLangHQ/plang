@@ -81,12 +81,11 @@ public partial class run : IContext
                 {
                     childApp.Testing.Coverage.RecordModuleAction(action.Module, action.ActionName);
 
-                    if (string.Equals(action.Module, "condition", StringComparison.OrdinalIgnoreCase)
-                        && string.Equals(action.ActionName, "if", StringComparison.OrdinalIgnoreCase)
+                    if (action.IsCondition
                         && result != null && result.Properties.Contains("branchIndex")
                         // Ignore inner-elseif simple-path firings — they'd mix
                         // {true, elseif[1]} labels into the orchestrator's chain.
-                        && App.modules.condition.BranchChain.IsFirstConditionInStep(action))
+                        && action.IsFirstConditionInStep)
                     {
                         // Site key carries the goal's source file so sites from
                         // different files don't collide on shared names like "Start".
@@ -136,10 +135,6 @@ public partial class run : IContext
             testRun.Complete(TestStatus.Fail,
                 new ServiceError(ex.Message, "TestRunError", 500) { Exception = ex });
         }
-
-        // Accumulate UserTags added via test.tag during the run.
-        foreach (var tag in childApp.Testing.CurrentTest?.UserTags ?? Enumerable.Empty<string>())
-            testRun.UserTags.Add(tag);
 
         parentApp.Testing.Coverage.Merge(childApp.Testing.Coverage);
         parentApp.Testing.Results.Add(testRun);

@@ -289,6 +289,18 @@ public sealed partial class @this : modules.IDataWrappable
     };
 
     /// <summary>
+    /// Visits every action in every step (ignoring Steps' disabled-skip iterator).
+    /// Moves the "foreach step, foreach action" skeleton onto Goal so handlers can
+    /// query the shape of a built goal without reaching through its children.
+    /// </summary>
+    public void ForEachAction(System.Action<Steps.Step.@this, Steps.Step.Actions.Action.@this> visitor)
+    {
+        foreach (var step in _steps.Value)
+            foreach (var action in step.Actions)
+                visitor(step, action);
+    }
+
+    /// <summary>
     /// Parses .goal file text into a list of Goals.
     /// All goals share the same Path. First goal is Public, rest are Private.
     /// Inverse of ToText().
