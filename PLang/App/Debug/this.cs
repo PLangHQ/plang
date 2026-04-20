@@ -157,21 +157,21 @@ public sealed class @this
 
         events.Register(new EventBinding(
             EventType.BeforeStep,
-            context => BeforeStepHandler(context, Step),
+            (context, _, _) => BeforeStepHandler(context, Step),
             goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
 
         events.Register(new EventBinding(
             EventType.AfterStep,
-            context => AfterStepHandler(context, Step),
+            (context, _, _) => AfterStepHandler(context, Step),
             goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
 
         events.Register(new EventBinding(
             EventType.AfterGoal,
-            AfterGoalHandler,
+            (context, _, _) => AfterGoalHandler(context),
             goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
@@ -180,14 +180,14 @@ public sealed class @this
         {
             events.Register(new EventBinding(
                 EventType.BeforeAction,
-                context => BeforeActionHandler(context, Step),
+                (context, _, _) => BeforeActionHandler(context, Step),
                 goalNamePattern: Goal ?? "*",
                 priority: int.MaxValue,
                 stopOnError: false));
 
             events.Register(new EventBinding(
                 EventType.AfterAction,
-                context => AfterActionHandler(context, Step),
+                (context, _, _) => AfterActionHandler(context, Step),
                 goalNamePattern: Goal ?? "*",
                 priority: int.MaxValue,
                 stopOnError: false));

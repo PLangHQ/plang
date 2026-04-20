@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using App.Actor.Context;
 using App.Events;
 using App.Variables;
+using Action = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace App.Events.Lifecycle.Bindings.Binding;
 
@@ -15,7 +16,12 @@ public sealed class @this
     public string? GoalNamePattern { get; }
     public string? StepPattern { get; }
     public string? ActionPattern { get; }
-    public Func<Actor.Context.@this, Task<Data.@this>> Handler { get; }
+    /// <summary>
+    /// Handler receives (context, action, result). action and result are populated for
+    /// payload-carrying events (AfterAction); null for all other event types. Subscribers
+    /// that don't use the payload should take the arguments as (_, _, _) — architect §4.4.
+    /// </summary>
+    public Func<Actor.Context.@this, Action?, Data.@this?, Task<Data.@this>> Handler { get; }
     public Goals.Goal.GoalCall? GoalToCall { get; }
     public int Priority { get; }
     public bool StopOnError { get; }
@@ -25,16 +31,17 @@ public sealed class @this
 
     /// <summary>
     /// Runs this binding's handler, skipping if already executing (re-entry guard).
+    /// Payload-carrying events pass the action that just ran and its result; other events pass null.
     /// </summary>
-    public async Task<Data.@this> Run(Actor.Context.@this context)
+    public async Task<Data.@this> Run(Actor.Context.@this context, Action? action = null, Data.@this? result = null)
     {
         if (!context.TryEnterEvent(Id))
             return Data.@this.Ok();
 
-        Data.@this result;
+        Data.@this handlerResult;
         try
         {
-            result = await Handler(context);
+            handlerResult = await Handler(context, action, result);
         }
         finally
         {
@@ -55,15 +62,15 @@ public sealed class @this
             }
         }
 
-        if (!result.Success && !StopOnError)
+        if (!handlerResult.Success && !StopOnError)
             return Data.@this.Ok();
 
-        return result;
+        return handlerResult;
     }
 
     public @this(
         EventType type,
-        Func<Actor.Context.@this, Task<Data.@this>> handler,
+        Func<Actor.Context.@this, Action?, Data.@this?, Task<Data.@this>> handler,
         string? goalNamePattern = null,
         string? stepPattern = null,
         string? actionPattern = null,

@@ -27,7 +27,7 @@ public partial class MockAction : IContext
         var goalToCall = GoalToCall?.Value;
         var paramMatchers = Parameters?.Value;
 
-        Func<Actor.Context.@this, Task<Data.@this>> handler = async ctx =>
+        Func<Actor.Context.@this, Goals.Goal.Steps.Step.Actions.Action.@this?, Data.@this?, Task<Data.@this>> handler = async (ctx, _, _) =>
         {
             // Find the current action being executed from the step
             var currentAction = FindCurrentAction(ctx);

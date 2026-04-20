@@ -85,7 +85,7 @@ public sealed partial class @this : modules.IDataWrappable
             context.Variables.Put(result);
         }
 
-        var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterAction);
+        var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterAction, this, result);
         if (!afterResult.Success) return afterResult;
 
         return result;

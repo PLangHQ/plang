@@ -35,6 +35,10 @@ public sealed class @this : IList<PrAction>
     /// Runs an inner operation wrapped by this collection right-to-left.
     /// Each action resolves its own handler via WrapAround; this collection
     /// owns the iteration order.
+    /// After the chain completes, fires AfterAction for each modifier so
+    /// coverage tracks modifier presence (architect §5.6). Modifiers don't go
+    /// through Action.RunAsync (they're wrapping, not standalone executables),
+    /// so we emit the event here — once per modifier, carrying the chain's result.
     /// </summary>
     public async Task<Data.@this> RunAsync(
         Func<Task<Data.@this>> innermost,
@@ -49,6 +53,14 @@ public sealed class @this : IList<PrAction>
             if (error != null) return Data.@this.FromError(error);
             execute = wrapped!;
         }
-        return await execute();
+        var result = await execute();
+
+        foreach (var modifier in _items)
+        {
+            var lifecycle = context.LifecycleFor(modifier);
+            await lifecycle.After.Run(context, App.Events.EventType.AfterAction, modifier, result);
+        }
+
+        return result;
     }
 }
