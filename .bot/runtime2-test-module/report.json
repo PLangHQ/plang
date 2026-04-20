@@ -416,6 +416,71 @@
         "health": "yellow",
         "notes": "Coder's design is sound. All must-fix items are small-surface (<30 lines of change total). Expect quick turnaround. Notable new codebase knowledge: IPLangFileSystem.Path.X supports ChangeExtension/GetDirectoryName (System.IO.Abstractions IFileSystem interface). App.Version comes from app.json 'version' field. Goal.Hash = SHA256(Name + concat(Step.Text)), lazy-computed, init-settable. Follow-up: user pointed at SeedBranchChains; scan uncovered 5 more rule 1/5 outside-iteration violations in this branch. Saved the grep-pattern technique to memory (feedback_analysis_techniques.md) for future reviews."
       }
+    },
+    {
+      "id": "7c2e9b48-5a1d-4f3e-b8c6-9d0e2a4b6f81",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-20T20:00:00Z",
+      "intent": "Re-review coder's fix commit 8a462217 for v1 must-fix findings. Verify each fix + scan for new issues introduced by the OBP refactor.",
+      "before": {
+        "assumptions": "Coder committed 8a462217 claiming to address all 4 v1 must-fix items. Diff is +181 / -182 LOC across 9 files. New owner methods added to Goal/Steps/Actions/Action. BranchChain.cs deleted. System.IO replaced with fs.Path. No-op copy-loop deleted. if.cs now delegates to actions.ComputeBranchChain. 2243/2244 tests pass (baseline flake only).",
+        "risk": "Refactor introduces subtle behavioural shifts. Single source of truth for ComputeBranchChain shared by if.cs + test.discover \u2014 any drift between old and new is silent. SeedBranchChains visitor pattern now visits (step, action) pairs rather than per-step, requiring a new seededSteps dedup invariant."
+      },
+      "plan": "Five-pass re-review scoped to the fix. Pass 0: verify each v1 must-fix item actually fixed (System.IO grep, no-op loop gone, ComputeBranchChain delegation, 6 OBP instances resolved). Pass 1: OBP compliance on new owner methods (Action.IsCondition/IsFirstConditionInStep, Actions.FirstConditionIndex/IsFirstCondition/ComputeBranchChain/SplitAtConditions, Steps.DisableChildrenOf, Goal.ForEachAction). Pass 2: simplification (residuals, imports, unused helpers). Pass 3: readability (naming, XML docs). Pass 4 (most weight): behavioural reasoning \u2014 diff ComputeBranchChain vs old inline byte-for-byte; check SplitAtConditions groups branches identically; check IsFirstConditionInStep Step==null semantics; check Goal.ForEachAction using _steps.Value (bypasses iterator); check seededSteps dedup invariant; check IndexOf fallback. Pass 5: deletion test on each new method. Plan document at .bot/runtime2-test-module/codeanalyzer/v2/plan.md.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-test-module/codeanalyzer/v2/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Five-pass plan scoped to the fix. User approved."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/codeanalyzer/v2/result.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Per-pass review. Pass 0 verified all four v1 must-fix items resolved. Pass 4 found one behavioural regression: Action.IsFirstConditionInStep `?? true` fallback reached when Step is null (inner elseif firings during Orchestrate, since SplitAtConditions/IndexOf bypass the Actions indexer that sets Step). Coverage subscriber records phantom branches at bogus \"?:?\" site. v1 pre-fix threw NRE (swallowed by stopOnError:false), accidentally preventing the record. Fix is one line: `?? false`. One latent future bug flagged: ComputeBranchChain reads _items and can only emit if/elseif[N], never else \u2014 will diverge from Orchestrate labels when else-branch support lands."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/codeanalyzer/v2/verdict.json",
+            ".bot/runtime2-test-module/codeanalyzer/v2/summary.md",
+            ".bot/runtime2-test-module/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "verdict fail, v2 summary, and cross-session bot-root summary updated."
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs",
+            "PLang/App/Goals/Goal/Steps/this.cs",
+            "PLang/App/Goals/Goal/this.cs",
+            "PLang/App/modules/condition/if.cs",
+            "PLang/App/modules/test/discover.cs",
+            "PLang/App/modules/test/run.cs",
+            "PLang/App/modules/test/report.cs",
+            "PLang/App/modules/condition/BranchChain.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Re-review of files touched in commit 8a462217. Fixes verified in Pass 0; one new regression found in Action/this.cs:67 (IsFirstConditionInStep `?? true` fallback). Traced Step lifecycle: set only via Actions indexer (this[i]), bypassed by Orchestrate's _items access; Step.RunAsync foreach yields action[0] (setting Step there) then early-returns on result.Handled, leaving inner actions' Step null."
+        }
+      ],
+      "timestamp_end": "2026-04-20T20:45:00Z",
+      "after": {
+        "status": "Re-review complete. Verdict: NEEDS WORK (fail). All 4 v1 must-fix items resolved; one new behavioural regression (IsFirstConditionInStep `?? true` fallback). One v2 follow-up flagged (ComputeBranchChain else support). Recommendation: back to coder for one-line fix.",
+        "health": "yellow",
+        "notes": "Key insight: inner elseif actions have Step == null during Orchestrate because Step.RunAsync's enumerator only yields as-far-as-consumed and Orchestrate's SplitAtConditions/IndexOf use _items directly. This null is silent today (and silent in v1 too due to NRE swallowing) but becomes observable as phantom `?:?` coverage sites in the new code. No existing test exercises the coverage subscriber on an inner elseif firing \u2014 suggest adding one in v3. Memory technique used: caller tracing through the Action.Step lifecycle (who sets it, who bypasses the setter)."
+      }
     }
   ]
 }

@@ -12,3 +12,20 @@ instances across `discover.cs`, `BranchChain.cs`, `if.cs Orchestrate`
 (handlers looping `goal.Steps` / `step.Actions` from outside the owner).
 Several smaller simplifications and v2 items flagged. Recommended: send
 back to coder. See `v1/summary.md` and `v1/result.md`.
+
+## v2 (2026-04-20)
+
+Re-review of coder commit `8a462217` that addresses v1 must-fix items.
+Verdict: **NEEDS WORK** (fail). All four v1 must-fix items verifiably
+resolved; BranchChain.cs deleted cleanly; OBP refactor is well-structured.
+Bonus: previously-bare `catch (Exception)` sites in run.cs and discover.cs
+were scoped. However, one new behavioural regression introduced:
+`Action.IsFirstConditionInStep` uses `Step?.Actions.IsFirstCondition(this)
+?? true`, and inner elseif actions have `Step == null` during Orchestrate
+(because SplitAtConditions / IndexOf bypass the Actions indexer that sets
+Step). The `?? true` fallback makes the coverage subscriber record phantom
+branches at site `"?:?"` — the exact case the filter was meant to ignore.
+V1 pre-fix code threw NRE (swallowed by `stopOnError: false`), which
+accidentally prevented the record. Fix: `?? false` (one line). One v2
+follow-up flagged: `ComputeBranchChain` can't emit "else" (latent bug for
+future else-branch support). See `v2/summary.md` and `v2/result.md`.

@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "NEEDS WORK — 1 must-fix behavioural regression. All four v1 must-fix items verifiably resolved, BUT the new Action.IsFirstConditionInStep property's `?? true` fallback silently regresses coverage filtering: inner elseif simple-path firings have action.Step == null (Orchestrate bypasses the Actions indexer that sets Step), so the property returns true and the coverage subscriber records phantom branches at a bogus \"?:?\" site. V1's BranchChain.IsFirstConditionInStep threw NRE on the same input, which stopOnError:false swallowed, preventing the record. Fix: change `?? true` to `?? false` in Action/this.cs:67. No existing test covers this path (ConditionIfBranchIndexTests.MultiBranch_* filters by ReferenceEquals to the outer action)."
+}
