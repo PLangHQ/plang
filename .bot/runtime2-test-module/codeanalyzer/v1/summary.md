@@ -21,9 +21,9 @@ Readability → Behavioural reasoning → Deletion test.
 Read every file in scope end-to-end, grounded each finding in a file:line
 snippet, and graded each file CLEAN / NEEDS WORK / MAJOR ISSUES.
 
-**Verdict: NEEDS WORK** (fail). Design is sound; three findings are
-must-fix-before-merge, several smaller simplifications rounded out the
-report.
+**Verdict: NEEDS WORK** (fail). Design is sound; four must-fix findings
+(three single-site, one OBP pattern), several smaller simplifications
+rounded out the report.
 
 ### Must-fix
 
@@ -44,6 +44,24 @@ report.
    drift-risk pattern (CLAUDE.md's recurring-bug-patterns §Clone/Copy
    Family). Use `BranchChain.ComputeFor(actions, myIndex)` and delete the
    inline loop.
+
+4. **OBP rule 1 + rule 5 — outside-iteration cluster (six new
+   instances in this branch).** See "OBP outside-iteration cluster"
+   in `result.md`. Handlers and utilities iterate
+   `Goal.Steps` / `Step.Actions` / `Action.Parameters` from outside
+   the owner:
+   - `discover.cs` triple walk (`ExtractUserTags`, `ExtractAutoTags`,
+     `SeedBranchChains`) — same foreach-step-foreach-action skeleton
+     copied three times.
+   - `BranchChain.cs` static utility taking `StepActions` as parameter —
+     textbook rule 5 anti-pattern; belongs on `Actions.@this`.
+   - `if.cs Orchestrate` — three outside loops: finding self via
+     `ReferenceEquals` scan, splitting actions into branches,
+     disabling indented sub-steps.
+   All should move to instance methods on `Goal` / `Steps` / `Actions`
+   (visitor or domain ops, author's choice). Pre-existing instances in
+   `mock/action.cs`, `DefaultBuilderProvider.cs`, `GoalCall.cs` are
+   out of scope for this branch.
 
 ### Should-fix
 

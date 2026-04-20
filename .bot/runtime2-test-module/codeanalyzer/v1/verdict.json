@@ -1,4 +1,4 @@
 {
   "status": "fail",
-  "summary": "NEEDS WORK — solid design, but 2 clear CLAUDE.md rule breaks (System.IO in discover.cs:77 and report.cs:259), 1 no-op copy-loop (run.cs:141-142), and duplicated declared-chain logic in condition.if that should consolidate on BranchChain.ComputeFor. Several smaller simplifications flagged."
+  "summary": "NEEDS WORK — solid design, but 2 CLAUDE.md rule breaks (System.IO in discover.cs:77 and report.cs:259), 1 no-op copy-loop (run.cs:141-142), duplicated declared-chain logic in condition.if vs BranchChain.ComputeFor, and an OBP rule 1/5 outside-iteration cluster with 6 new instances across discover.cs, BranchChain.cs, and if.cs Orchestrate. Several smaller simplifications flagged."
 }

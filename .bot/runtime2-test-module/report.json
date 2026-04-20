@@ -396,13 +396,25 @@
           "category": "doc",
           "confidence": "high",
           "context": "Bot-root cross-session summary, one paragraph per version."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/codeanalyzer/v1/result.md",
+            ".bot/runtime2-test-module/codeanalyzer/v1/summary.md",
+            ".bot/runtime2-test-module/codeanalyzer/v1/verdict.json",
+            ".bot/runtime2-test-module/codeanalyzer/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Follow-up: after user-triggered OBP rule 1/5 spot-check, expanded report with 'OBP outside-iteration cluster' section. Six new instances found in this branch: discover.cs triple walk (ExtractUserTags/ExtractAutoTags/SeedBranchChains), BranchChain.cs whole-file as sibling-static utility, if.cs Orchestrate three outside loops (self-index find, branch split, sub-step disable). Scoped to this branch only; pre-existing instances in mock/action.cs, DefaultBuilderProvider.cs, GoalCall.cs noted for a separate refactor branch."
         }
       ],
       "timestamp_end": "2026-04-20T19:15:00Z",
       "after": {
         "status": "Review complete. Verdict: NEEDS WORK (fail). 3 must-fix findings (System.IO violations, no-op copy-loop, duplicated declared-chain). 4 should-fix. 5 consider. 3 v2 items flagged out of scope. Recommendation: back to coder, not tester.",
         "health": "yellow",
-        "notes": "Coder's design is sound. All must-fix items are small-surface (<30 lines of change total). Expect quick turnaround. Notable new codebase knowledge: IPLangFileSystem.Path.X supports ChangeExtension/GetDirectoryName (System.IO.Abstractions IFileSystem interface). App.Version comes from app.json 'version' field. Goal.Hash = SHA256(Name + concat(Step.Text)), lazy-computed, init-settable."
+        "notes": "Coder's design is sound. All must-fix items are small-surface (<30 lines of change total). Expect quick turnaround. Notable new codebase knowledge: IPLangFileSystem.Path.X supports ChangeExtension/GetDirectoryName (System.IO.Abstractions IFileSystem interface). App.Version comes from app.json 'version' field. Goal.Hash = SHA256(Name + concat(Step.Text)), lazy-computed, init-settable. Follow-up: user pointed at SeedBranchChains; scan uncovered 5 more rule 1/5 outside-iteration violations in this branch. Saved the grep-pattern technique to memory (feedback_analysis_techniques.md) for future reviews."
       }
     }
   ]

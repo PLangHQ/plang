@@ -23,6 +23,12 @@ dead-loop finding round out the report.
 3. `run.cs:141-142` — copy-loop is a no-op. `childApp.Testing.CurrentTest`
    IS `testRun` (set on line 72), so iterating its `UserTags` and adding to
    `testRun.UserTags` copies a set into itself. Delete the loop.
+4. **OBP Rule 1 + Rule 5 — outside iteration of Goal / Steps / Actions /
+   Parameters from outside the owner, six new instances in this branch.**
+   See "OBP outside-iteration cluster" section below. Not a single-line
+   fix; scoped as a pattern rather than per-file items. Addresses the
+   `discover.cs` triple walk, `BranchChain.cs` whole-file layout, and
+   `if.cs` `Orchestrate`'s three outside loops.
 
 **Behavioural risks (worth a second look):**
 
@@ -61,6 +67,157 @@ dead-loop finding round out the report.
     `discover`) use lowercase. Pick one convention.
 12. `run.cs:55-146` — `RunSingleAsync` is ~90 lines with a 40-line lambda
     inside. Split the coverage-subscriber into a named helper.
+
+---
+
+## OBP outside-iteration cluster (rule 1 + rule 5)
+
+**What to look for:** any code that iterates someone else's collection
+from outside the owner. "Behaviour belongs to the owner" (rule 1) and
+"Collections are smart wrappers — parents delegate, they never iterate
+directly" (rule 5). If `Goal`/`Steps`/`Actions`/`Parameters` are being
+scanned in a handler/utility, the scan belongs on the collection as an
+instance method.
+
+Six fresh instances introduced by this branch:
+
+### 1. `discover.cs` — three walks, all outside iteration
+
+```csharp
+// ExtractUserTags (185-209)
+foreach (var step in goal.Steps)
+    foreach (var action in step.Actions)
+        if (action.Module == "test" && action.ActionName == "tag") { ... }
+
+// ExtractAutoTags (216-245)
+foreach (var step in goal.Steps)
+    foreach (var action in step.Actions)
+        if (modules.GetActionType(action.Module, action.ActionName) has
+            [RequiresCapability]) { ... }
+
+// SeedBranchChains (275-317)
+foreach (var step in goal.Steps)
+{
+    for (int i = 0; i < step.Actions.Count; i++)
+        if (BranchChain.IsConditionAction(step.Actions[i])) { ... break; }
+
+    foreach (var action in step.Actions)
+        if (action is goal.call) { ... }
+}
+
+// Plus action.Parameters.FirstOrDefault(p => p.Name == "Tags") at 193, 249
+```
+
+**OBP form:** the three walks all share the same skeleton — iterate
+steps, for each step filter actions, for some actions recurse into
+static goal.call targets. Move the walk onto `Goal`/`Steps`:
+
+```csharp
+// On Goal.@this (or Steps.@this)
+public void ForEachAction(Action<Step, Action> visitor);
+public IEnumerable<Goal> StaticallyReachableGoals(App app);  // follows goal.call
+public Action? FirstConditionIn(Step step);
+
+// In discover:
+prGoal.ForEachAction((step, action) => {
+    if (action.Module == "test" && action.ActionName == "tag")
+        ExtractTagParam(action, tags);
+});
+foreach (var sub in prGoal.StaticallyReachableGoals(Context.App!))
+    sub.ForEachAction((step, action) => { autoTagsFrom(action, tags); });
+```
+
+**Why it matters:** three copies of the same walk is exactly the
+Clone/Copy family drift pattern. A refactor to support e.g.
+`foreach-over-sub-goals` or `step.Disabled` filtering would have to
+update three places. Behaviour that SHOULD live on the Goal object is
+scattered across a handler.
+
+### 2. `BranchChain.cs` — entire file is a sibling static that should be Actions methods
+
+```csharp
+internal static class BranchChain
+{
+    public static List<string> ComputeFor(StepActions actions, int myIndex)
+    {
+        for (int i = myIndex; i < actions.Count; i++) { ... }  // outside iteration
+    }
+
+    public static bool IsFirstConditionInStep(PrAction action)
+    {
+        foreach (var a in action.Step.Actions) { ... }  // outside iteration via action
+    }
+}
+```
+
+**OBP form:** these are pure domain operations on `Actions`/`Action`.
+`StepActions` ALREADY inherits `List<PrAction>` — add the methods there:
+
+```csharp
+// On Actions.@this (StepActions)
+public List<string> ComputeBranchChain(int myIndex) { ... }
+public bool IsFirstCondition(Action me) { ... }
+public int IndexOfFirstCondition() { ... }
+
+// Callers:
+var chain = step.Actions.ComputeBranchChain(myIndex);
+if (step.Actions.IsFirstCondition(action)) { ... }
+```
+
+Or put these on `Action.@this` directly since the question is about a
+specific action's position in its step. Either way, a sibling static
+class taking the collection as parameter is the exact rule 5
+anti-pattern.
+
+### 3. `if.cs Orchestrate` — three outside loops, all fixable with owner-methods
+
+```csharp
+// 87-95: finding self in Actions via ReferenceEquals
+for (int i = 0; i < actions.Count; i++)
+    if (ReferenceEquals(actions[i], __action)) { myIndex = i; break; }
+// → actions.IndexOf(__action)  (List<T>.IndexOf already exists, uses ref equality on reference types)
+// OR store position on Action: __action.IndexInStep
+
+// 103-120: splitting actions into (condition, body) branches
+for (int i = myIndex; i < actions.Count; i++) { ... }
+// → actions.SplitAtConditions(myIndex) → List<(Action? condition, List<Action> body)>
+//   "Group my actions into branches" is an Actions operation.
+
+// 36-44: disabling indented sub-steps under a parent step
+var steps = userStep.Goal.Steps;
+for (int i = userStep.Index + 1; i < steps.Count; i++)
+{
+    if (steps[i].Indent <= userStep.Indent) break;
+    steps[i].Context = disableContext;
+    steps[i].Disabled = !conditionResult;
+}
+// → steps.DisableChildrenOf(userStep, disabled: !conditionResult, ctx: disableContext);
+//   Parent-mutating loops on someone else's collection are the textbook rule 1/5 case.
+```
+
+### Smaller / non-Goal instances
+
+- **`discover.cs:164`** — `foreach (var tag in tags) file.Tags.Add(tag);`
+  Iterating an external set to add to another. `file.Tags.UnionWith(tags)`
+  is the one-liner.
+- **`tag.cs:24-26`** — `foreach (var tag in tags) if (!IsNullOrWhiteSpace(tag))
+  currentTest.UserTags.Add(tag);` — input is raw `string[]` so borderline,
+  but `currentTest.UserTags.UnionWith(tags.Where(t => !IsNullOrWhiteSpace(t)))`
+  is cleaner.
+- **`report.cs:66, 216`** — `foreach (var run in results)` for rendering.
+  `Results` is deliberately `IEnumerable<TestRun>` so external iteration
+  is the sanctioned path. Strict OBP would argue rendering is a domain
+  op (`results.RenderTo(sb, testing)`); taste call. Leaving unflagged.
+
+### Pre-existing (not this branch, noted for future passes)
+
+Grep finds these patterns pre-existing in `mock/action.cs:84,96`,
+`builder/providers/DefaultBuilderProvider.cs:159,230,401,413,473`,
+`Goals/Goal/GoalCall.cs:109,115`, `Goals/Setup/this.cs:57`,
+`Goals/this.cs:336`, `ui/providers/FluidProvider.cs:85,93`,
+`signing/SignedData.cs:95`, `signing/Ed25519Provider.cs:104`. The
+pattern is endemic across the codebase — this branch isn't the only
+offender, but it's adding six new instances that are avoidable.
 
 ---
 
@@ -258,6 +415,14 @@ consumers delegate. Rule 5 compliant.
 ### `PLang/App/modules/test/discover.cs`
 
 **OBP Violations**
+
+0. **Lines 185-209, 216-245, 275-317: Outside iteration of Goal.Steps /
+   Step.Actions (rule 1 + rule 5)** — see "OBP outside-iteration
+   cluster" section above. Three nested walks (`ExtractUserTags`,
+   `ExtractAutoTags`, `SeedBranchChains`) all implement the same
+   "foreach step → foreach action → maybe recurse via goal.call"
+   skeleton from outside `Goal`. All three should be visitor methods on
+   `Goal.@this` or `Steps.@this`.
 
 1. **Line 77: `System.IO.Path.ChangeExtension`** — CLAUDE.md: **NEVER use
    System.IO. Always use `fileSystem.Path`.** `IPLangFileSystem` exposes
@@ -589,11 +754,21 @@ nine — they're identical in structure.
 
 ### `PLang/App/modules/condition/BranchChain.cs`
 
-**OBP Violations** — none. Internal static utility; single responsibility.
+**OBP Violations**
+
+1. **Whole file is a sibling static that should be methods on `Actions`
+   (rule 5).** — see "OBP outside-iteration cluster" above. A static
+   class taking `StepActions actions` as a parameter is exactly the
+   anti-pattern rule 5 calls out: "Collections are smart wrappers —
+   parents delegate, they never iterate directly." `ComputeFor` and
+   `IsFirstConditionInStep` belong on `Actions.@this` (or on
+   `Action.@this` for "am I the first condition?"). Keeping the logic
+   in a sibling utility means every caller reaches through Actions
+   instead of asking Actions.
 
 **Simplifications**
 
-1. **Line 33-34: Unreachable fallback** — `if (chain.Count == 0) return
+2. **Line 33-34: Unreachable fallback** — `if (chain.Count == 0) return
    new List<string> { "true", "false" };` only fires when
    `actions.Count > 1` AND no condition.if is in `actions[myIndex..]`.
    Callers pass `myIndex` pointing at a known condition.if (per
@@ -606,12 +781,13 @@ nine — they're identical in structure.
 
 **Readability**
 
-2. **Line 18-37: Two-part semantics (single-action vs multi-action)** —
+3. **Line 18-37: Two-part semantics (single-action vs multi-action)** —
    comments are clear. Keep.
 
-3. **Line 48-58: `IsFirstConditionInStep`** — clear.
+4. **Line 48-58: `IsFirstConditionInStep`** — clear.
 
-**Verdict: NEEDS WORK** (delete unreachable fallback)
+**Verdict: NEEDS WORK** (move to Actions/Action; delete unreachable
+fallback)
 
 ---
 
@@ -620,7 +796,23 @@ nine — they're identical in structure.
 Modified — the big change is `branchIndex`/`branchLabel`/`branchChain`
 publishing.
 
-**OBP Violations** — none introduced.
+**OBP Violations**
+
+0. **Three outside-iteration loops in `Orchestrate` (rule 1 + rule 5)**
+   — see "OBP outside-iteration cluster" above.
+   - **Line 87-95**: `for (int i = 0; i < actions.Count; i++) if
+     (ReferenceEquals(actions[i], __action))` — finding self in Actions.
+     `actions.IndexOf(__action)` already works (List<T>.IndexOf uses
+     reference equality for reference types) or, better, store the
+     position on `Action` so "where am I?" doesn't need a scan.
+   - **Line 103-120**: action-splitting-into-branches loop — this is
+     "group my actions into (condition, body) pairs". A domain op on
+     `Actions`: `actions.SplitAtConditions(myIndex)`.
+   - **Line 36-44**: `for (int i = userStep.Index + 1; i < steps.Count;
+     i++) { steps[i].Disabled = ...; }` — disabling indented children
+     of userStep from outside Steps. Textbook rule 1/5 case: "disable
+     children of this step" is a `Steps` operation, not an `If`
+     operation.
 
 **Simplifications**
 
@@ -908,10 +1100,19 @@ to tester, please address:
 - `discover.cs:77` + `report.cs:259` — swap `System.IO.Path.X` for
   `fs.Path.X` (CLAUDE.md hard rule).
 - `run.cs:141-142` — delete the no-op copy-loop.
+- **OBP outside-iteration cluster** (rule 1 + rule 5) — six new
+  instances in this branch. See section above. Fix, don't just
+  document:
+  - `discover.cs` triple walk → visitor methods on `Goal`/`Steps`
+  - `BranchChain.cs` static class → methods on `Actions`/`Action`
+  - `if.cs Orchestrate` three loops (self-index find, branch split,
+    sub-step disable) → owner methods on `Actions` and `Steps`
 
 **Should-fix:**
 - `if.cs:160-165` — replace inline `declaredChain` construction with
   `BranchChain.ComputeFor(actions, myIndex)` (one source of truth).
+  If the `BranchChain` move-to-Actions happens, this becomes
+  `actions.ComputeBranchChain(myIndex)`.
 - `TestFile.cs` — either delete the extracted `EntryGoalName` /
   `GoalHash` / `BuilderVersion` fields and read through `Goal`, or
   document why the duplication is load-bearing.
@@ -924,12 +1125,19 @@ to tester, please address:
 - `Coverage.cs` — composite `"module.action"` key + `IndexOf('.')`
   replaced with tuple key.
 - `report.cs:296-297` — inline `ResolveBuilderVersion`.
-- `BranchChain.cs:33-34` — delete unreachable fallback.
+- `BranchChain.cs:33-34` — delete unreachable fallback (subsumed if
+  whole file moves to Actions).
 - `tag.cs` vs peers — unify class name casing.
 - `CapturedOutput` field — either wire stdout capture in `run.cs` or
   delete the field + report rendering branch + `StripAnsi` helper.
+- `discover.cs:164` — `foreach (var tag in tags) file.Tags.Add(tag)`
+  → `file.Tags.UnionWith(tags)`.
+- `tag.cs:24-26` — same UnionWith simplification.
 
 **Flag for v2 (not this review):**
 - True `else` branch semantics in `if.cs`.
 - `Cancelled` TestStatus distinct from `Fail` on outer cancellation.
 - Capability tags for `db.*`, `signing.*`, `code.*`.
+- Pre-existing outside-iteration pattern across the codebase
+  (`mock/action.cs`, `DefaultBuilderProvider.cs`, `GoalCall.cs`,
+  etc.) — systematic refactor on a separate branch.
