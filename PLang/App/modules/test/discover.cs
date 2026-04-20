@@ -76,7 +76,9 @@ public partial class discover : IContext
         var fileName = fs.Path.GetFileName(absGoalPath);
         var prFileName = System.IO.Path.ChangeExtension(fileName, ".pr").ToLowerInvariant();
         var absPrPath = fs.Path.Combine(dir, ".build", prFileName);
-        var relPrPath = NormalizeRelative(fs.Path.GetRelativePath(fs.RootDirectory, absPrPath));
+        // PrPath is relative to the test's own directory (not the parent app root) so
+        // the per-test child App — rooted at TestFile.Directory — can resolve it directly.
+        var relPrPath = ".build/" + prFileName;
 
         var stub = new TestFile
         {
