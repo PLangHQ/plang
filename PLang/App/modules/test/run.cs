@@ -85,9 +85,12 @@ public partial class run : IContext
                         && string.Equals(action.ActionName, "if", StringComparison.OrdinalIgnoreCase)
                         && result != null && result.Properties.Contains("branchIndex"))
                     {
-                        var goalName = action.Step?.Goal?.Name ?? "?";
+                        // Site key carries the goal's source file so sites from
+                        // different files don't collide on shared names like "Start".
+                        var goal = action.Step?.Goal;
+                        var goalId = goal?.Path ?? goal?.Name ?? "?";
                         var stepIndex = action.Step?.Index.ToString() ?? "?";
-                        var site = $"{goalName}:{stepIndex}";
+                        var site = $"{goalId}:{stepIndex}";
                         childApp.Testing.Coverage.RecordBranch(site, result.Properties.Get<int>("branchIndex"));
                     }
                 }
