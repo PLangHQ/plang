@@ -44,6 +44,12 @@ namespace PLang
 				engine.Testing.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", fileSystem.RootDirectory);
+
+				if (testValue is IDictionary<string, object?> testDict)
+				{
+					var applyResult = engine.Testing.Apply(testDict);
+					if (!applyResult.Success) return applyResult;
+				}
 			}
 
 			// App settings (--app={"create":true})

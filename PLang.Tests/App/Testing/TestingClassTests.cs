@@ -1,3 +1,5 @@
+using global::App.Test;
+
 namespace PLang.Tests.App.Testing;
 
 /// <summary>
@@ -21,72 +23,66 @@ public class TestingClassTests
     [Test]
     public async Task NewInstance_IsEnabled_FalseByDefault()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await Assert.That(_app.Testing.IsEnabled).IsFalse();
     }
 
     // Testing owns a Results collection, initialized, empty on construction.
     [Test]
     public async Task NewInstance_Results_InitializedEmpty()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await Assert.That(_app.Testing.Results).IsNotNull();
+        await Assert.That(_app.Testing.Results.Count).IsEqualTo(0);
     }
 
     // Testing owns a Coverage tracker, initialized with zero observed module.action and branch entries.
     [Test]
     public async Task NewInstance_Coverage_InitializedEmpty()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await Assert.That(_app.Testing.Coverage).IsNotNull();
+        await Assert.That(_app.Testing.Coverage.ModuleActions.Any()).IsFalse();
+        await Assert.That(_app.Testing.Coverage.Branches.Count).IsEqualTo(0);
     }
 
     // Per-test in-flight state slot starts null; test.run assigns it for the currently running test.
     [Test]
     public async Task NewInstance_CurrentTest_NullUntilAssigned()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await Assert.That(_app.Testing.CurrentTest).IsNull();
     }
 
     // Architect spec: TimeoutSeconds defaults to 30.
     [Test]
     public async Task NewInstance_TimeoutSeconds_DefaultIs30()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await Assert.That(_app.Testing.TimeoutSeconds).IsEqualTo(30);
     }
 
     // Architect spec: Parallel defaults to Environment.ProcessorCount.
     [Test]
     public async Task NewInstance_Parallel_DefaultIsProcessorCount()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await Assert.That(_app.Testing.Parallel).IsEqualTo(Environment.ProcessorCount);
     }
 
     // No tag filter by default — Include is empty, meaning every discovered test matches.
     [Test]
     public async Task NewInstance_Include_DefaultIsEmpty()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await Assert.That(_app.Testing.Include.Count).IsEqualTo(0);
     }
 
     // No tag filter by default — Exclude is empty, meaning nothing is excluded.
     [Test]
     public async Task NewInstance_Exclude_DefaultIsEmpty()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await Assert.That(_app.Testing.Exclude.Count).IsEqualTo(0);
     }
 
     // Quiet mode by default — output.write is captured and shown only on failure.
     [Test]
     public async Task NewInstance_Verbose_DefaultIsFalse()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await Assert.That(_app.Testing.Verbose).IsFalse();
     }
 
     // --test={"timeout":60,"parallel":4,"include":["fast"],"exclude":["slow"],"verbose":true}
@@ -94,7 +90,22 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_AllFieldsApplied()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var config = new Dictionary<string, object?>
+        {
+            ["timeout"] = 60,
+            ["parallel"] = 4,
+            ["include"] = new List<object?> { "fast" },
+            ["exclude"] = new List<object?> { "slow" },
+            ["verbose"] = true
+        };
+
+        var result = _app.Testing.Apply(config);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_app.Testing.TimeoutSeconds).IsEqualTo(60);
+        await Assert.That(_app.Testing.Parallel).IsEqualTo(4);
+        await Assert.That(_app.Testing.Include.Contains("fast")).IsTrue();
+        await Assert.That(_app.Testing.Exclude.Contains("slow")).IsTrue();
+        await Assert.That(_app.Testing.Verbose).IsTrue();
     }
 }
