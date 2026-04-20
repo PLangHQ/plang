@@ -1,3 +1,4 @@
+using App.Attributes;
 using App.Goals.Goal;
 using App.Variables;
 using App.modules.llm.providers;
@@ -13,6 +14,7 @@ namespace App.modules.llm;
 [Example("system: you are a helpful assistant\n  user: %question%\n  tools:\n    GetWeather, gets weather for a city, %city%(string), parallel\n  write to %answer%",
     "Messages=[{Role=system, Content=you are a helpful assistant}, {Role=user, Content=%question%}], Tools=[{Name=GetWeather, Description=gets weather for a city, Parameters=[{Name=city, Type=string}], Parallel=true}]")]
 [Action("query")]
+[RequiresCapability("llm")]
 public partial class query : IContext, IBuildValidatable
 {
     public static string? ValidateBuild(List<Data.@this> parameters)

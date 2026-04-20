@@ -1,3 +1,4 @@
+using App.Attributes;
 using App.Goals.Goal;
 using App.Variables;
 using App.modules.http.providers;
@@ -10,6 +11,7 @@ namespace App.modules.http;
 /// Reports progress via an optional callback goal. Returns the saved file path.
 /// </summary>
 [Action("download", Cacheable = false)]
+[RequiresCapability("network")]
 public partial class download : IContext
 {
     /// <summary>URL to download from. Relative URLs resolve against Config.BaseUrl.</summary>
