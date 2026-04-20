@@ -145,6 +145,12 @@ public partial class discover : IContext
         var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         ExtractAutoTags(prGoal, tags, visited);
 
+        // Seed branch-coverage chains for every condition.if site in this test's goal
+        // tree — lets the report surface sites that exist in source but no test ever
+        // reaches. Uses the same recursion as auto-tag traversal.
+        var chainVisited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        SeedBranchChains(prGoal, Context.App!.Testing.Coverage, chainVisited);
+
         var file = new TestFile
         {
             Path = relGoalPath,
@@ -258,4 +264,55 @@ public partial class discover : IContext
 
     private static string NormalizeRelative(string path) =>
         path.Replace('\\', '/');
+
+    /// <summary>
+    /// For every condition.if site in the goal tree, seed its declared chain on
+    /// the given Coverage. Only the first condition.if in each step is treated as
+    /// a site (subsequent elseif conditions are inner-fires during orchestration,
+    /// not standalone sites). Recurses static goal.call targets the same way
+    /// auto-tag traversal does; dynamic %var% goal names are skipped.
+    /// </summary>
+    private void SeedBranchChains(Goal goal, Test.Coverage coverage, HashSet<string> visited, int depth = 0)
+    {
+        if (depth > 50) return;
+        if (!visited.Add(goal.Name)) return;
+
+        var goalId = goal.Path ?? goal.Name ?? "?";
+        foreach (var step in goal.Steps)
+        {
+            // First condition.if in this step defines the site.
+            Goals.Goal.Steps.Step.Actions.Action.@this? firstIf = null;
+            int firstIfIndex = -1;
+            for (int i = 0; i < step.Actions.Count; i++)
+            {
+                if (App.modules.condition.BranchChain.IsConditionAction(step.Actions[i]))
+                {
+                    firstIf = step.Actions[i];
+                    firstIfIndex = i;
+                    break;
+                }
+            }
+            if (firstIf != null)
+            {
+                var chain = App.modules.condition.BranchChain.ComputeFor(step.Actions, firstIfIndex);
+                var site = $"{goalId}:{step.Index}";
+                coverage.RecordBranchChain(site, chain);
+            }
+
+            // Recurse into static goal.call targets — their condition.ifs count too.
+            foreach (var action in step.Actions)
+            {
+                if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(action.ActionName, "call", StringComparison.OrdinalIgnoreCase))
+                {
+                    var targetName = ResolveStaticGoalName(action);
+                    if (targetName != null)
+                    {
+                        var sub = Context.App!.Goals.Get(targetName);
+                        if (sub != null) SeedBranchChains(sub, coverage, visited, depth + 1);
+                    }
+                }
+            }
+        }
+    }
 }

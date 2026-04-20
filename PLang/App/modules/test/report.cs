@@ -124,24 +124,77 @@ public partial class report : IContext
 
         sb.AppendLine();
         sb.AppendLine("Branch coverage (condition.if):");
-        if (testing.Coverage.Branches.Count == 0)
+
+        var chains = testing.Coverage.BranchChains;
+        var labelsMap = testing.Coverage.BranchLabels;
+        var indicesMap = testing.Coverage.Branches;
+        var allSites = new SortedSet<string>(
+            chains.Keys.Concat(labelsMap.Keys).Concat(indicesMap.Keys),
+            StringComparer.Ordinal);
+
+        if (allSites.Count == 0)
         {
             sb.AppendLine("  (no condition.if sites observed)");
+            return;
         }
-        else
+
+        int sitesComplete = 0, sitesPartial = 0, sitesUnreached = 0;
+        int declaredTotal = 0, hitTotal = 0;
+        var untested = new List<(string Site, List<string> Missing)>();
+
+        foreach (var site in allSites)
         {
-            var labelsMap = testing.Coverage.BranchLabels;
-            foreach (var (site, indices) in testing.Coverage.Branches.OrderBy(kv => kv.Key))
+            var declared = chains.TryGetValue(site, out var chain) ? chain : null;
+            var observedLabels = labelsMap.TryGetValue(site, out var labels) ? labels : new HashSet<string>();
+
+            // Fall back to observed-as-declared when no chain was recorded (safety net
+            // for runtime paths that skip seeding, e.g. tests that call test.run directly).
+            bool labelBacked = true;
+            if (declared == null || declared.Count == 0)
             {
-                // Prefer the human-readable labels ({if, elseif[1], else} or {true, false}).
-                // Fall back to indices for any site that didn't get labels attached.
-                string rendered;
-                if (labelsMap.TryGetValue(site, out var labels) && labels.Count > 0)
-                    rendered = string.Join(", ", labels.OrderBy(SortLabel));
-                else
-                    rendered = string.Join(", ", indices.OrderBy(i => i));
-                sb.AppendLine($"  {site}: {{{rendered}}}");
+                if (observedLabels.Count > 0)
+                    declared = observedLabels.OrderBy(SortLabel).ToList();
+                else if (indicesMap.TryGetValue(site, out var indices))
+                {
+                    // Render raw indices so Coverage.RecordBranch-only callers still
+                    // produce readable output — no declared chain means we treat every
+                    // observed index as the full universe.
+                    declared = indices.OrderBy(i => i).Select(i => i.ToString()).ToList();
+                    labelBacked = false;
+                }
+                else declared = new List<string>();
             }
+
+            var missing = new List<string>();
+            var parts = new List<string>();
+            foreach (var branch in declared)
+            {
+                // Without labels, anything in 'declared' is by construction observed.
+                var hit = labelBacked ? observedLabels.Contains(branch) : true;
+                parts.Add((hit ? "✅ " : "❌ ") + branch);
+                declaredTotal++;
+                if (hit) hitTotal++;
+                else missing.Add(branch);
+            }
+
+            sb.AppendLine($"  {site}: {{{string.Join(", ", parts)}}}");
+
+            if (missing.Count == 0) sitesComplete++;
+            else if (observedLabels.Count == 0) { sitesUnreached++; untested.Add((site, missing)); }
+            else { sitesPartial++; untested.Add((site, missing)); }
+        }
+
+        var percent = declaredTotal > 0 ? (int)Math.Round(100.0 * hitTotal / declaredTotal) : 0;
+        sb.AppendLine();
+        sb.AppendLine($"  Sites: {allSites.Count} total ({sitesComplete} complete, {sitesPartial} partial, {sitesUnreached} unreached)");
+        sb.AppendLine($"  Branches: {hitTotal}/{declaredTotal} covered ({percent}%)");
+
+        if (untested.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("  Untested branches:");
+            foreach (var (site, missing) in untested)
+                sb.AppendLine($"    {site}  {string.Join(", ", missing)}");
         }
     }
 
@@ -177,11 +230,23 @@ public partial class report : IContext
                 variables = (run.Error as AssertionError)?.Variables
             });
         }
+        // Structured coverage block — no emoji; downstream tooling renders as it likes.
+        var branchCoverage = new Dictionary<string, object>();
+        var labelsMap = testing.Coverage.BranchLabels;
+        var chains = testing.Coverage.BranchChains;
+        foreach (var site in chains.Keys.Concat(labelsMap.Keys).Distinct())
+        {
+            var declared = chains.TryGetValue(site, out var chain) ? (IReadOnlyList<string>)chain : Array.Empty<string>();
+            var observed = labelsMap.TryGetValue(site, out var labels) ? labels.ToList() : new List<string>();
+            branchCoverage[site] = new { declared, observed };
+        }
+
         var envelope = new
         {
             summary = results.Summary().ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
             builderVersion = ResolveBuilderVersion(testing),
-            runs
+            runs,
+            branchCoverage
         };
         return JsonSerializer.Serialize(envelope, App.Utils.Json.CamelCaseIndented);
     }

@@ -68,9 +68,11 @@ public partial class If : IContext, IStep
 
         // Simple non-orchestrating form: 0/true for the truthy path, 1/false for the
         // skipped path. Paired label stays readable in coverage output ({true,false}).
+        // Publish the full declared chain too so the report can show the untested half.
         var simple = Data(conditionResult);
         simple.Properties.Set("branchIndex", conditionResult ? 0 : 1);
         simple.Properties.Set("branchLabel", conditionResult ? "true" : "false");
+        simple.Properties.Set("branchChain", new List<string> { "true", "false" });
         return simple;
     }
 
@@ -150,10 +152,18 @@ public partial class If : IContext, IStep
                     if (!lastResult.Success) return lastResult;
                 }
                 // Record which branch fired. branchIndex is the position in the chain;
-                // branchLabel is the human-readable role ({if, elseif[1], else, ...}).
+                // branchLabel is the human-readable role; branchChain is the full declared
+                // shape so the report can show which other branches were never tested.
                 lastResult.Properties.Set("branchIndex", b);
                 lastResult.Properties.Set("branchLabel",
                     b == 0 ? "if" : condition == null ? "else" : $"elseif[{b}]");
+                var declaredChain = new List<string>();
+                for (int di = 0; di < branches.Count; di++)
+                {
+                    var (dc, _) = branches[di];
+                    declaredChain.Add(di == 0 ? "if" : dc == null ? "else" : $"elseif[{di}]");
+                }
+                lastResult.Properties.Set("branchChain", declaredChain);
                 return lastResult;
             }
         }

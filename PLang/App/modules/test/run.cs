@@ -83,7 +83,10 @@ public partial class run : IContext
 
                     if (string.Equals(action.Module, "condition", StringComparison.OrdinalIgnoreCase)
                         && string.Equals(action.ActionName, "if", StringComparison.OrdinalIgnoreCase)
-                        && result != null && result.Properties.Contains("branchIndex"))
+                        && result != null && result.Properties.Contains("branchIndex")
+                        // Ignore inner-elseif simple-path firings — they'd mix
+                        // {true, elseif[1]} labels into the orchestrator's chain.
+                        && App.modules.condition.BranchChain.IsFirstConditionInStep(action))
                     {
                         // Site key carries the goal's source file so sites from
                         // different files don't collide on shared names like "Start".
@@ -97,6 +100,12 @@ public partial class run : IContext
                             var label = result.Properties.Get<string>("branchLabel");
                             if (!string.IsNullOrEmpty(label))
                                 childApp.Testing.Coverage.RecordBranchLabel(site, label);
+                        }
+                        if (result.Properties.Contains("branchChain"))
+                        {
+                            var chain = result.Properties["branchChain"]?.Value as List<string>;
+                            if (chain != null)
+                                childApp.Testing.Coverage.RecordBranchChain(site, chain);
                         }
                     }
                 }
