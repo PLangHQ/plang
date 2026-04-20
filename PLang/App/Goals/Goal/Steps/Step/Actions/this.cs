@@ -90,6 +90,9 @@ public sealed class @this : IList<Action.@this>
     /// Groups actions from startIndex into (condition, body) branches. A condition.if
     /// starts a new branch; non-condition actions append to the current branch's body.
     /// Trailing body-only actions attach to the last condition.
+    /// Reads via the indexer so every returned action has Step propagated — callers
+    /// (condition.if.Orchestrate) invoke these actions and need Step set for the
+    /// alreadyOrchestrating guard, DisableChildrenOf, and coverage site keys.
     /// </summary>
     public List<(Action.@this? condition, List<Action.@this> body)> SplitAtConditions(int startIndex)
     {
@@ -99,17 +102,18 @@ public sealed class @this : IList<Action.@this>
 
         for (int i = startIndex; i < _items.Count; i++)
         {
-            if (_items[i].IsCondition)
+            var action = this[i];
+            if (action.IsCondition)
             {
                 if (currentBody != null)
                     branches.Add((currentCondition, currentBody));
-                currentCondition = _items[i];
+                currentCondition = action;
                 currentBody = new List<Action.@this>();
             }
             else
             {
                 currentBody ??= new List<Action.@this>();
-                currentBody.Add(_items[i]);
+                currentBody.Add(action);
             }
         }
         if (currentBody != null)

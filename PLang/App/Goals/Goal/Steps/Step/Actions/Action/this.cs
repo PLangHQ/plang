@@ -64,7 +64,7 @@ public sealed partial class @this : modules.IDataWrappable
     /// true/false labels into the orchestrator's declared chain.
     /// </summary>
     [JsonIgnore]
-    public bool IsFirstConditionInStep => Step?.Actions.IsFirstCondition(this) ?? true;
+    public bool IsFirstConditionInStep => Step?.Actions.IsFirstCondition(this) ?? false;
 
     [JsonIgnore]
     public Steps.Step.@this? Step { get; set; }
