@@ -179,7 +179,7 @@
         "assumptions": "Architect plan v1 approved. Test-designer produced 93 C# + 19 PLang tests with Assert.Fail bodies — these are the contract. App.Test.@this is currently a stub. AfterAction emit site is single-call. Goal.Hash already exists ([Store]-persisted, SHA-256 over Name+Steps.Text). Binding.Handler currently is Func<Context, Task<Data>>; widening needed for coverage subscriber.",
         "risk": "Large scope — 11 distinct pieces touching core runtime (events, assertions, variables, condition orchestration). Plan-only so far; risk is producing a plan too big to review."
       },
-      "plan": "PENDING — see .bot/runtime2-test-module/coder/v1/plan.md for full 11-phase approach. Awaiting Ingi approval.",
+      "plan": "11 phases, one commit each. Foundation types → Testing class → Variables.Snapshot + AssertionError.Variables + 9 assert handlers → [RequiresCapability] attribute → AfterAction payload widening (one widened signature, refactor all existing subscribers same commit per Ingi Q1) → condition.if branchIndex → test.discover + tag + run + report handlers under PLang/App/modules/test/ → system/test.goal rewrite (no foreach). Every phase checkpointed with its batch tests passing before moving on. All 93 test-designer C# tests pass; only pre-existing Query_ToolCall flake remains.",
       "actions": [
         {
           "paths": [".bot/runtime2-test-module/coder/v1/plan.md"],
@@ -187,8 +187,84 @@
           "category": "doc",
           "confidence": "high",
           "context": "v1 plan covering 11 implementation phases, 6 open questions for Ingi, and OBP-compliance approach"
+        },
+        {
+          "paths": ["PLang/App/Test/TestStatus.cs", "PLang/App/Test/TestFile.cs", "PLang/App/Test/TestRun.cs", "PLang/App/Test/Results.cs", "PLang/App/Test/Coverage.cs", "PLang/App/Test/this.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 0+1 — data types + Testing class upgrade. Thread-safe Results (ConcurrentQueue) and Coverage (ConcurrentDictionary). Flat config on Testing, no nested Config class."
+        },
+        {
+          "paths": ["PLang/App/Variables/this.cs", "PLang/App/Errors/AssertionError.cs", "PLang/App/modules/assert/AssertSnapshot.cs", "PLang/App/modules/assert/equals.cs", "PLang/App/modules/assert/notEquals.cs", "PLang/App/modules/assert/isTrue.cs", "PLang/App/modules/assert/isFalse.cs", "PLang/App/modules/assert/isNull.cs", "PLang/App/modules/assert/isNotNull.cs", "PLang/App/modules/assert/contains.cs", "PLang/App/modules/assert/greaterThan.cs", "PLang/App/modules/assert/lessThan.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 2 — Variables.Snapshot() added; AssertionError.Variables field; shared AssertSnapshot helper wraps all 9 assert handlers (avoid 9x duplication). Guard: no snapshot on success."
+        },
+        {
+          "paths": ["PLang/App/Attributes/RequiresCapabilityAttribute.cs", "PLang/App/modules/http/request.cs", "PLang/App/modules/http/download.cs", "PLang/App/modules/http/upload.cs", "PLang/App/modules/llm/query.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 3 — [RequiresCapability] attribute applied to http.* ('network') and llm.query ('llm'). Test-designer's smoke-test reference 'llm.ask' corrected to 'llm.query' per Ingi Q2."
+        },
+        {
+          "paths": ["PLang/App/Events/Lifecycle/Bindings/Binding/this.cs", "PLang/App/Events/Lifecycle/Bindings/this.cs", "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs", "PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs", "PLang/App/Debug/this.cs", "PLang/App/modules/event/on.cs", "PLang/App/modules/mock/action.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 4 — AfterAction payload widening. Binding.Handler signature: Func<Context, Action?, Data?, Task<Data>>. Emitted from Action.RunAsync + Modifiers.RunAsync (modifiers now emit too, per architect §5.6). All subscribers widened same commit."
+        },
+        {
+          "paths": ["PLang/App/modules/condition/if.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 5 — condition.if publishes Properties['branchIndex']. Simple path: 0 true / 1 false. Orchestrate path: branch's chain position. Error or no-match: not published."
+        },
+        {
+          "paths": ["PLang/App/modules/test/discover.cs", "PLang/App/modules/test/tag.cs", "PLang/App/modules/test/run.cs", "PLang/App/modules/test/report.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phases 6-9 — four new action handlers. discover: walk + Goal.Parse for fresh hash + auto-tag via reflection. tag: no-op outside tests. run: semaphore-throttled parallel main loop, per-test App isolation, merged coverage. report: console + JSON or JUnit, coverage tables, failure with Variables snapshot."
+        },
+        {
+          "paths": ["PLang/Executor.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Pipe --test={...} dict through Testing.Apply for validated config."
+        },
+        {
+          "paths": ["system/test.goal", "system/.build/test.pr"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 10 — rewrite system/test.goal: no foreach. Steps: discover → run → report. Rebuilt via plang build, verified mapping (test.discover, test.run, test.report)."
+        },
+        {
+          "paths": ["PLang.Tests/App/Testing/*.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Filled in 14 test files (93 tests) that the test-designer left as Assert.Fail('Not implemented'). Follow the test-designer's comment intent. Tests using Console.SetOut marked [NotInParallel] (Console.SetOut is process-wide)."
+        },
+        {
+          "paths": ["PLang.Tests/App/Foundation/EventCacheInvalidationTests.cs", "PLang.Tests/App/Core/EventCollectionTests.cs", "PLang.Tests/App/Security/SecurityFixTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Widened test lambdas to (_, _, _) for AfterAction payload signature change."
         }
-      ]
+      ],
+      "timestamp_end": "2026-04-20T17:30:00Z",
+      "after": {
+        "status": "All 11 phases committed. 93 C# test-designer tests pass, 2243/2244 full suite (1 pre-existing flake). End-to-end `plang --test` on Tests/ discovers 149, runs in parallel, emits coverage + .test/results.json.",
+        "health": "green",
+        "notes": "No PR per Ingi's request — push branch only. Recommended next bots: codeanalyzer, auditor, security. Known v2 follow-ups: true else-branch semantics, file.read .goal → Goal ergonomics."
+      }
     }
   ]
 }
