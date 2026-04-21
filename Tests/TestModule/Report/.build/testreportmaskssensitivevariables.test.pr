@@ -1,14 +1,14 @@
 {
-  "name": "TestReportIncludesCoverageTables",
-  "description": "Discovers passing fixtures, runs them, reports results in JSON, then asserts the report content includes branchCoverage and that summaryPass is 1. Also verifies the report file exists.",
+  "name": "TestReportMasksSensitiveVariables",
+  "description": "Discovers sensitive fixtures, runs them, reports results to a report variable, then asserts the report masks sensitive values while preserving key names.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "test.discover tests in \u0027_fixtures_pass\u0027, pattern=\u0027*.fixture.goal\u0027, recursive, write to %tests%",
-      "lineNumber": 7,
+      "text": "test.discover tests in \u0027_fixtures_sensitive\u0027, pattern=\u0027*.fixture.goal\u0027, recursive, write to %tests%",
+      "lineNumber": 10,
       "indent": 0,
-      "comment": "Runs a passing fixture via test.run, then test.report in default (json)\nformat. Asserts the BuildJson branch actually ran by checking the content\ncarries the branchCoverage block \u2014 deleting that block in BuildJson would\nthen fail this test (earlier version only checked %report.format% which\nechoes the input regardless of which branch formatted the content).",
+      "comment": "Regression test for security finding #3: proves test.report routes assertion\nfailure content through DiagnosticOutput so [Sensitive] properties are masked.\nThe fixture fails with an Identity (carrying a Sensitive PrivateKey) in\nAssertionError.Actual \u002B the Variables snapshot. We then check the written\nreport content has the key name preserved (\u0027privateKey\u0027) but the value\nredacted (\u0027******\u0027), while the non-sensitive \u0027publicKey\u0027 still serializes.\nA regression that drops the DiagnosticOutput modifier \u2014 or falls back to\nvalue.ToString() \u2014 would fail the \u0027******\u0027 assertion.",
       "actions": [
         {
           "module": "test",
@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Path",
-              "value": "_fixtures_pass",
+              "value": "_fixtures_sensitive",
               "type": "path"
             },
             {
@@ -58,7 +58,7 @@
     {
       "index": 1,
       "text": "test.run tests %tests%, write to %results%",
-      "lineNumber": 8,
+      "lineNumber": 11,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -100,7 +100,7 @@
     {
       "index": 2,
       "text": "test.report results %results%, write to %report%",
-      "lineNumber": 9,
+      "lineNumber": 12,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -112,11 +112,6 @@
               "name": "Results",
               "value": "%results%",
               "type": "object"
-            },
-            {
-              "name": "Format",
-              "value": "json",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -146,8 +141,37 @@
     },
     {
       "index": 3,
-      "text": "assert %report.content% contains \u0027branchCoverage\u0027",
-      "lineNumber": 10,
+      "text": "assert %report.summaryFail% equals 1",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%report.summaryFail%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %report.content% contains \u0027privateKey\u0027",
+      "lineNumber": 14,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -157,8 +181,8 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "branchCoverage",
-              "type": "object"
+              "value": "privateKey",
+              "type": "string"
             },
             {
               "name": "Container",
@@ -174,66 +198,24 @@
       "waitForExecution": true
     },
     {
-      "index": 4,
-      "text": "assert %report.summaryPass% equals 1",
-      "lineNumber": 11,
+      "index": 5,
+      "text": "assert %report.content% contains \u0027******\u0027",
+      "lineNumber": 15,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "assert",
-          "action": "equals",
+          "action": "contains",
           "parameters": [
             {
-              "name": "Expected",
-              "value": 1,
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%report.summaryPass%",
-              "type": "object"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 5,
-      "text": "file.exists %report.reportPath%, write to %exists%",
-      "lineNumber": 12,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "file",
-          "action": "exists",
-          "parameters": [
-            {
-              "name": "Path",
-              "value": "%report.reportPath%",
-              "type": "path"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%exists%",
+              "name": "Value",
+              "value": "******",
               "type": "string"
             },
             {
-              "name": "Value",
-              "value": "%__data__%",
+              "name": "Container",
+              "value": "%report.content%",
               "type": "object"
             }
           ],
@@ -246,18 +228,23 @@
     },
     {
       "index": 6,
-      "text": "assert %exists% is true",
-      "lineNumber": 13,
+      "text": "assert %report.content% contains \u0027publicKey\u0027",
+      "lineNumber": 16,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "assert",
-          "action": "isTrue",
+          "action": "contains",
           "parameters": [
             {
               "name": "Value",
-              "value": "%exists%",
+              "value": "publicKey",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "%report.content%",
               "type": "object"
             }
           ],
@@ -271,9 +258,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Report/TestReportIncludesCoverageTables.test.goal",
-  "prPath": "/Report/.build/testreportincludescoveragetables.test.pr",
-  "hash": "87128b082985dc6a0b01437b05b745a604d4d5c9a6ccba0268851162c7792b4e",
+  "path": "/Report/TestReportMasksSensitiveVariables.test.goal",
+  "prPath": "/Report/.build/testreportmaskssensitivevariables.test.pr",
+  "hash": "98bb738f1744ae140dc4797544b72723f8c3c4f6ab90d007b050758552c9b244",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

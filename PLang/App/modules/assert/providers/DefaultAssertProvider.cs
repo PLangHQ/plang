@@ -171,12 +171,7 @@ public class DefaultAssertProvider : IAssertProvider
         return string.Compare(a.ToString(), b.ToString(), StringComparison.Ordinal);
     }
 
-    private static string FormatValue(object? value)
-    {
-        if (value == null) return "(null)";
-        if (value is string s) return $"\"{s}\"";
-        return value.ToString() ?? "(null)";
-    }
+    private static string FormatValue(object? value) => App.Utils.Json.FormatForDiagnostic(value);
 
     private static bool IsNumeric(object? value)
         => value is int or long or double or float or decimal

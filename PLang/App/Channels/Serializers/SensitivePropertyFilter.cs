@@ -35,24 +35,32 @@ public static class SensitivePropertyFilter
     }
 
     /// <summary>
-    /// Replaces [Sensitive] string property values with <c>"******"</c> during
-    /// serialization. For non-string [Sensitive] properties, falls back to stripping
-    /// the property — the mask literal would not match the declared type.
+    /// Replaces [Sensitive] property values with <c>"******"</c> during serialization.
+    /// String properties are rewritten in place; non-string properties are replaced
+    /// with a synthesized string-typed JsonPropertyInfo of the same name — the key
+    /// stays visible (per <c>DiagnosticOutput</c>'s contract: absent vs null vs
+    /// redacted must be distinguishable) while the value renders as <c>"******"</c>
+    /// regardless of the source type (<c>byte[]</c>, record, etc.).
     /// </summary>
     public static void Mask(JsonTypeInfo typeInfo)
     {
         if (typeInfo.Kind != JsonTypeInfoKind.Object) return;
 
-        for (int i = typeInfo.Properties.Count - 1; i >= 0; i--)
+        for (int i = 0; i < typeInfo.Properties.Count; i++)
         {
             var prop = typeInfo.Properties[i];
             if (prop.AttributeProvider?.IsDefined(typeof(SensitiveAttribute), false) != true)
                 continue;
 
             if (prop.PropertyType == typeof(string))
+            {
                 prop.Get = _ => MaskValue;
-            else
-                typeInfo.Properties.RemoveAt(i);
+                continue;
+            }
+
+            var replacement = typeInfo.CreateJsonPropertyInfo(typeof(string), prop.Name);
+            replacement.Get = _ => MaskValue;
+            typeInfo.Properties[i] = replacement;
         }
     }
 }

@@ -1,14 +1,14 @@
 {
-  "name": "TestReportIncludesCoverageTables",
-  "description": "Discovers passing fixtures, runs them, reports results in JSON, then asserts the report content includes branchCoverage and that summaryPass is 1. Also verifies the report file exists.",
+  "name": "TestReportMasksSensitiveVariablesJunit",
+  "description": "Discovers fixture tests, runs them, generates a JUnit report, asserts summary counts and that the JUnit XML content masks sensitive private keys, then saves the masked snapshot to disk.",
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "test.discover tests in \u0027_fixtures_pass\u0027, pattern=\u0027*.fixture.goal\u0027, recursive, write to %tests%",
+      "text": "test.discover tests in \u0027_fixtures_sensitive\u0027, pattern=\u0027*.fixture.goal\u0027, recursive, write to %tests%",
       "lineNumber": 7,
       "indent": 0,
-      "comment": "Runs a passing fixture via test.run, then test.report in default (json)\nformat. Asserts the BuildJson branch actually ran by checking the content\ncarries the branchCoverage block \u2014 deleting that block in BuildJson would\nthen fail this test (earlier version only checked %report.format% which\nechoes the input regardless of which branch formatted the content).",
+      "comment": "Companion to TestReportMasksSensitiveVariables \u2014 same fixture, but with\nformat=\u0027junit\u0027 so the committed junit.xml snapshot can be eyeballed.\nProves the JUnit XML path also masks [Sensitive] PrivateKey \u2014 BuildJUnit\nemits run.Error?.Message directly, so AssertionError.Message itself must\nbe sanitised (not just the structured JSON envelope).",
       "actions": [
         {
           "module": "test",
@@ -16,8 +16,8 @@
           "parameters": [
             {
               "name": "Path",
-              "value": "_fixtures_pass",
-              "type": "path"
+              "value": "_fixtures_sensitive",
+              "type": "string"
             },
             {
               "name": "Pattern",
@@ -99,7 +99,7 @@
     },
     {
       "index": 2,
-      "text": "test.report results %results%, write to %report%",
+      "text": "test.report results %results%, format=\u0027junit\u0027, write to %report%",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -115,7 +115,7 @@
             },
             {
               "name": "Format",
-              "value": "json",
+              "value": "junit",
               "type": "string"
             }
           ],
@@ -146,8 +146,37 @@
     },
     {
       "index": 3,
-      "text": "assert %report.content% contains \u0027branchCoverage\u0027",
+      "text": "assert %report.summaryFail% equals 1",
       "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%report.summaryFail%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %report.content% contains \u0027\u003Ctestsuites\u0027",
+      "lineNumber": 11,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -157,8 +186,8 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "branchCoverage",
-              "type": "object"
+              "value": "\u003Ctestsuites",
+              "type": "string"
             },
             {
               "name": "Container",
@@ -174,66 +203,24 @@
       "waitForExecution": true
     },
     {
-      "index": 4,
-      "text": "assert %report.summaryPass% equals 1",
-      "lineNumber": 11,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": 1,
-              "type": "int"
-            },
-            {
-              "name": "Actual",
-              "value": "%report.summaryPass%",
-              "type": "object"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "waitForExecution": true
-    },
-    {
       "index": 5,
-      "text": "file.exists %report.reportPath%, write to %exists%",
+      "text": "assert %report.content% contains \u0027privateKey\u0027",
       "lineNumber": 12,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "file",
-          "action": "exists",
+          "module": "assert",
+          "action": "contains",
           "parameters": [
             {
-              "name": "Path",
-              "value": "%report.reportPath%",
-              "type": "path"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%exists%",
+              "name": "Value",
+              "value": "privateKey",
               "type": "string"
             },
             {
-              "name": "Value",
-              "value": "%__data__%",
+              "name": "Container",
+              "value": "%report.content%",
               "type": "object"
             }
           ],
@@ -246,18 +233,81 @@
     },
     {
       "index": 6,
-      "text": "assert %exists% is true",
+      "text": "assert %report.content% contains \u0027******\u0027",
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "assert",
-          "action": "isTrue",
+          "action": "contains",
           "parameters": [
             {
               "name": "Value",
-              "value": "%exists%",
+              "value": "******",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "%report.content%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %report.content% contains \u0027publicKey\u0027",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "publicKey",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "%report.content%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "file.save path=\u0027snapshots/junit_sensitive_masked.xml\u0027, content=%report.content%",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "snapshots/junit_sensitive_masked.xml",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "%report.content%",
               "type": "object"
             }
           ],
@@ -271,9 +321,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Report/TestReportIncludesCoverageTables.test.goal",
-  "prPath": "/Report/.build/testreportincludescoveragetables.test.pr",
-  "hash": "87128b082985dc6a0b01437b05b745a604d4d5c9a6ccba0268851162c7792b4e",
+  "path": "/Report/TestReportMasksSensitiveVariablesJunit.test.goal",
+  "prPath": "/Report/.build/testreportmaskssensitivevariablesjunit.test.pr",
+  "hash": "26f282c2eed41a2eceeb5b3d05ba1bbbe8a9648aee1425cb7ad316f828bc8f7b",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

@@ -326,15 +326,7 @@ public partial class report : IContext
     private static string? ResolveBuilderVersion(Test.@this testing) =>
         testing.App.Version;
 
-    private static string FormatValue(object? value)
-    {
-        if (value == null) return "(null)";
-        if (value is string s) return $"\"{s}\"";
-        if (value is System.Collections.IEnumerable en and not string)
-            try { return JsonSerializer.Serialize(value, App.Utils.Json.DiagnosticOutput); }
-            catch { return value.ToString() ?? "(null)"; }
-        return value.ToString() ?? "(null)";
-    }
+    private static string FormatValue(object? value) => App.Utils.Json.FormatForDiagnostic(value);
 
     // Strips ANSI escape sequences to prevent forged output in captured
     // test stdout (test writes bold-green "ok" via ANSI — rendered literally instead).

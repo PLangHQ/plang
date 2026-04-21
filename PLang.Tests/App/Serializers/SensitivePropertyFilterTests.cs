@@ -1,10 +1,25 @@
 using System.Text.Json;
 using App;
 using global::App.Channels.Serializers.Serializer;
+using global::App.Errors;
 using global::App.modules.identity;
 using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Serializers;
+
+// Record with an auto-generated ToString — used to prove AssertionError.Message
+// does not fall back to value.ToString() (which would print every field, including
+// [Sensitive] ones). This is the exact vector for security finding #3 on the
+// junit.xml path where only Error.Message is emitted.
+file sealed record LeakySecretRecord(string Name, [property: Sensitive] string Secret);
+
+// Non-string [Sensitive] carrier — proves DiagnosticOutput still renders the key
+// with a "******" placeholder instead of silently stripping the property.
+file sealed class NonStringSecretCarrier
+{
+    public string Name { get; set; } = "";
+    [Sensitive] public byte[] Key { get; set; } = Array.Empty<byte>();
+}
 
 public class SensitivePropertyFilterTests
 {
@@ -141,6 +156,43 @@ public class SensitivePropertyFilterTests
         var json = JsonSerializer.Serialize(identity, global::App.Utils.Json.CamelCaseIndented);
 
         await Assert.That(json).Contains("secret456");
+    }
+
+    // Regression for security finding #3, JUnit path: BuildJUnit emits only
+    // run.Error?.Message — so AssertionError.Message itself must be masked,
+    // not just the structured expected/actual fields in the JSON envelope.
+    // A record's auto-ToString prints every field; the old FormatValue used
+    // value.ToString() for non-strings and leaked the raw Secret.
+    [Test]
+    public async Task AssertionError_Message_MasksSensitiveViaDiagnosticOutput()
+    {
+        var actual = new LeakySecretRecord("alice", "topsecret-PLAINTEXT-777");
+        var error = new AssertionError(expected: "nope", actual: actual);
+
+        await Assert.That(error.Message).DoesNotContain("topsecret-PLAINTEXT-777");
+        await Assert.That(error.Message).Contains("******");
+        // Key name stays visible — distinguishing absent / null / redacted is
+        // the contract DiagnosticOutput promises.
+        await Assert.That(error.Message).Contains("secret");
+    }
+
+    // Regression for F4: non-string [Sensitive] properties used to be dropped
+    // silently by Mask. DiagnosticOutput's stated intent is that the key
+    // remains visible so a human reading a crash dump can distinguish
+    // "not set" from "redacted". The filter now synthesizes a string-typed
+    // property so the mask literal renders regardless of source type.
+    [Test]
+    public async Task Sensitive_NonStringProperty_RendersMaskedValueNotStripped()
+    {
+        var obj = new NonStringSecretCarrier { Name = "ed25519", Key = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF } };
+
+        var json = JsonSerializer.Serialize(obj, global::App.Utils.Json.DiagnosticOutput);
+
+        await Assert.That(json).Contains("key");
+        await Assert.That(json).Contains("******");
+        // base64 of the bytes, never leaked
+        await Assert.That(json).DoesNotContain("3q2+7w==");
+        await Assert.That(json).DoesNotContain("3q2-7w");
     }
 
     [Test]

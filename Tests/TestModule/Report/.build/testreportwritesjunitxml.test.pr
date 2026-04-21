@@ -1,14 +1,14 @@
 {
   "name": "TestReportWritesJunitXml",
-  "description": "Discovers fixture tests, runs them, reports results in junit format, asserts report fields, and verifies the junit.xml file was written to disk via file.exists.",
+  "description": "Discovers passing fixtures, runs them, generates a JUnit-formatted report, asserts the XML root is present, checks summaryPass, verifies the report file path, and confirms the file exists on disk.",
   "comment": null,
   "steps": [
     {
       "index": 0,
       "text": "test.discover tests in \u0027_fixtures_pass\u0027, pattern=\u0027*.fixture.goal\u0027, recursive, write to %tests%",
-      "lineNumber": 6,
+      "lineNumber": 7,
       "indent": 0,
-      "comment": "Runs a passing fixture via test.run, then test.report with format=\u0027junit\u0027.\nProves: (1) format routes through the junit branch, (2) reportPath points\nat junit.xml, (3) the file actually got written on disk. Uses the absolute\nreportPath so file.exists doesn\u0027t hit goal-relative path resolution.",
+      "comment": "Runs a passing fixture via test.run, then test.report with format=\u0027junit\u0027.\nProves the junit branch actually formatted the content (not just that the\nformat parameter echoed through): %report.content% carries the \u003Ctestsuites\u003E\nXML root. Also verifies reportPath points at junit.xml and the file was\nwritten on disk.",
       "actions": [
         {
           "module": "test",
@@ -58,7 +58,7 @@
     {
       "index": 1,
       "text": "test.run tests %tests%, write to %results%",
-      "lineNumber": 7,
+      "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -69,7 +69,7 @@
             {
               "name": "Tests",
               "value": "%tests%",
-              "type": "list\u003Ctestfile\u003E"
+              "type": "list"
             }
           ],
           "defaults": null,
@@ -100,7 +100,7 @@
     {
       "index": 2,
       "text": "test.report results %results%, format=\u0027junit\u0027, write to %report%",
-      "lineNumber": 8,
+      "lineNumber": 9,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -137,13 +137,7 @@
               "type": "object"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
+          "defaults": null,
           "modifiers": []
         }
       ],
@@ -152,24 +146,29 @@
     },
     {
       "index": 3,
-      "text": "assert %report.format% equals \u0027junit\u0027",
-      "lineNumber": 9,
+      "text": "assert %report.content% contains \u0027\u003Ctestsuites\u0027",
+      "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "assert",
-          "action": "equals",
+          "action": "contains",
           "parameters": [
             {
-              "name": "Expected",
-              "value": "junit",
+              "name": "Value",
+              "value": "%report.content%",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "\u003Ctestsuites",
               "type": "string"
             },
             {
-              "name": "Actual",
-              "value": "%report.format%",
-              "type": "object"
+              "name": "Message",
+              "value": "Expected report content to contain JUnit XML root tag \u0027\u003Ctestsuites\u0027.",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -182,7 +181,7 @@
     {
       "index": 4,
       "text": "assert %report.summaryPass% equals 1",
-      "lineNumber": 10,
+      "lineNumber": 11,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -199,6 +198,11 @@
               "name": "Actual",
               "value": "%report.summaryPass%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -211,7 +215,7 @@
     {
       "index": 5,
       "text": "file.exists %report.reportPath%, write to %exists%",
-      "lineNumber": 11,
+      "lineNumber": 12,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -253,7 +257,7 @@
     {
       "index": 6,
       "text": "assert %exists% is true",
-      "lineNumber": 12,
+      "lineNumber": 13,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -264,7 +268,12 @@
             {
               "name": "Value",
               "value": "%exists%",
-              "type": "object"
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -277,9 +286,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/TestModule/Report/TestReportWritesJunitXml.test.goal",
-  "prPath": "/Tests/TestModule/Report/.build/testreportwritesjunitxml.test.pr",
-  "hash": "3b3cf68884184924c55ce28690b885b3ba72fd84aaa1f1739bc66b22e28a9322",
+  "path": "/Report/TestReportWritesJunitXml.test.goal",
+  "prPath": "/Report/.build/testreportwritesjunitxml.test.pr",
+  "hash": "ebbd2c30032f7282dbbd208efd557578ab21b33141284d8b06d8527140e5f0b6",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

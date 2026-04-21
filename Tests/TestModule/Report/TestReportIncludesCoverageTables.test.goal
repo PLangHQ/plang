@@ -1,11 +1,13 @@
 TestReportIncludesCoverageTables
 / Runs a passing fixture via test.run, then test.report in default (json)
-/ format. Distinguished from WritesJunitXml by asserting format=='json',
-/ summaryPass=1, and the results.json file (not junit.xml) was written.
+/ format. Asserts the BuildJson branch actually ran by checking the content
+/ carries the branchCoverage block — deleting that block in BuildJson would
+/ then fail this test (earlier version only checked %report.format% which
+/ echoes the input regardless of which branch formatted the content).
 - test.discover tests in '_fixtures_pass', pattern='*.fixture.goal', recursive, write to %tests%
 - test.run tests %tests%, write to %results%
 - test.report results %results%, write to %report%
-- assert %report.format% equals 'json'
+- assert %report.content% contains 'branchCoverage'
 - assert %report.summaryPass% equals 1
 - file.exists %report.reportPath%, write to %exists%
 - assert %exists% is true
