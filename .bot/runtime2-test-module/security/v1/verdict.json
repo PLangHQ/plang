@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Test module isolation correct; 4 low-severity defense-in-depth findings on output rendering and variable snapshot info disclosure. No critical/high." }
