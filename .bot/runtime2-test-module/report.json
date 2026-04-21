@@ -970,6 +970,60 @@
         "health": "two major findings (F1/F2) both around security fix 9dc148f5; one-edit fix available via AssertionError.FormatValue",
         "notes": "Route back to coder. F2 is the keystone: fixing AssertionError.FormatValue to use Json.DiagnosticOutput closes the leak on console/JSON/JUnit in one place. F1 is one-line per .test.goal."
       }
+    },
+    {
+      "id": "f0c6b8c4-4eda-484c-86ea-8a009fcea13a",
+      "bot": "auditor",
+      "timestamp_start": "2026-04-21T10:50:00Z",
+      "timestamp_end": "2026-04-21T10:55:00Z",
+      "intent": "Re-audit runtime2-test-module after coder 152d2a8e addresses v1 fail findings",
+      "before": {
+        "assumptions": "Coder fix at commit 152d2a8e addresses all 4 v1 findings; need to verify each is closed by both code fix AND regression test",
+        "risk": "Consolidation of FormatValue may break existing assertion-message shape; F4 synthesized JsonPropertyInfo approach may have type-metadata edge cases"
+      },
+      "plan": "# Auditor v2 \u2014 Plan\n\n## Context\n\nv1 failed with 4 findings (2 major, 1 minor, 1 nit) clustered around security fix\n9dc148f5 being scoped to the JSON path only, leaving the JUnit path unmasked.\nCoder pushed commit `152d2a8e` addressing all four. This v2 verifies the fix.\n\n## What I already checked (gathering)\n\n1. Read v1 findings from `.bot/runtime2-test-module/auditor-report.json`.\n2. Read full diff `b7819961..HEAD` (17 files, +862 -93).\n3. Read coder's changes in context:\n   - `PLang/App/Utils/Json.cs` \u2014 new `FormatForDiagnostic` (F2 common path).\n   - `PLang/App/Errors/AssertionError.cs` \u2014 `FormatValue` \u2192 `FormatForDiagnostic`.\n   - `PLang/App/modules/assert/providers/DefaultAssertProvider.cs` \u2014 same.\n   - `PLang/App/modules/test/report.cs` \u2014 same.\n   - `PLang/App/Channels/Serializers/SensitivePropertyFilter.cs` \u2014 F4 fix.\n   - Two new .test.goal files + fixture + JUnit snapshot (F3).\n   - Two .test.goal edits routing asserts to `%report.content%` (F1).\n4. Ran `dotnet run --project PLang.Tests -- --treenode-filter \"/*/*/SensitivePropertyFilterTests/*\"` \u2014 **9/9 pass**.\n5. Ran `plang --test` in `Tests/TestModule` \u2014 **20/20 outer pass** including both\n   new masking tests and both F1-fixed tests.\n6. Inspected committed snapshot `junit_sensitive_masked.xml` \u2014 `privateKey = \"******\"`,\n   `publicKey = \"MySHZU5Y\u2026\"` visible. JUnit path leak closed.\n\n## Discharge assessment\n\n| v1 # | severity | status | evidence |\n|---|---|---|---|\n| 1 | major | DISCHARGED | `TestReportWritesJunitXml.test.goal:10` asserts `%report.content% contains '<testsuites'`; `TestReportIncludesCoverageTables.test.goal:10` asserts `'branchCoverage'`. Both pass. Deleting `case \"junit\":` in BuildFormat would now break the JUnit test; dropping branchCoverage block in BuildJson would break the other. |\n| 2 | major | DISCHARGED | `AssertionError.FormatValue` now routes through `Json.FormatForDiagnostic` \u2192 `DiagnosticOutput`. Snapshot confirms `<failure>` node contains `\"privateKey\": \"******\"` and the raw key is absent. End-to-end .test.goal (Junit variant) passes green. |\n| 3 | minor | DISCHARGED | `TestReportMasksSensitiveVariables.test.goal` + `...Junit.test.goal` both run `sensitivefail.fixture.goal` with `%MyIdentity%` as Actual and assert `%report.content% contains '******'`. Dropping the DiagnosticOutput modifier from report.cs:281 would now break these tests, not just the unit test. |\n| 4 | nit | DISCHARGED | `SensitivePropertyFilter.Mask` now synthesises a string-typed `JsonPropertyInfo` instead of `RemoveAt` for non-string properties. `Sensitive_NonStringProperty_RendersMaskedValueNotStripped` proves `byte[]` \u2192 `\"******\"` with key visible. |\n\n## Cross-cutting observations (no findings)\n\n- **Good OBP move:** consolidating three copies of `FormatValue` into\n  `App.Utils.Json.FormatForDiagnostic` is correct \u2014 \"behavior belongs to the\n  owner\" (Json owns diagnostic formatting). `AssertionError`, `DefaultAssertProvider`\n  and `report.cs` now all delegate to one implementation; a future fix lands\n  once, not thrice.\n\n- **Subtle behavior change (not a finding):** `DefaultAssertProvider` previously\n  used `value.ToString()` for non-string actual values in failure messages. Now\n  it JSON-serializes via `DiagnosticOutput`. Output format is stricter (e.g. a\n  `List<int>` used to render as `System.Collections.Generic.List\\`1[System.Int32]`,\n  now renders as `[1,2,3]`). The whole test suite still passes, so no existing\n  assertion snapshots depend on the old shape. Worth noting but not a defect.\n\n- **`CreateJsonPropertyInfo` replacement is correct per System.Text.Json docs.**\n  The synthesised property with `Get = _ => \"******\"` and `PropertyType = string`\n  serialises as a string field with the literal mask \u2014 confirmed by the new\n  unit test which also asserts base64 of the byte array (`3q2+7w==`) is *not*\n  present. The mask stays visible even when the source type is `byte[]`.\n\n- **Build non-determinism risk cleared.** I read all three edited .pr files\n  (TestReportIncludesCoverageTables, TestReportWritesJunitXml, the two new\n  masks). Module/action mapping is correct everywhere. The builder did drop a\n  `defaults: asdefault=false` and a `Message: null` param from two unchanged\n  steps \u2014 those are no-op cleanups from rebuild, not semantic drift.\n\n## What I did NOT re-check\n\n- Step propagation + AfterAction widening (v1 verdict: clean; no code in those\n  areas changed in `152d2a8e`). Skipped.\n- Other security v1 low-severity findings that were already discharged at v1\n  time (only finding #3 was reopened on the JUnit axis).\n\n## Verdict\n\n**pass.** All four v1 findings are discharged by both code fix AND test\ncoverage. The \"code fix verified \u2260 finding resolved\" rule is satisfied for\nevery finding \u2014 each has either a new .cs unit test or a new .test.goal (or\nboth) that would catch a regression.\n\nNext bot: **docs**.\n\n## Output artifacts to produce\n\n1. `.bot/runtime2-test-module/auditor/v2/v1_review_summary.md` \u2014 summary of v1\n   findings and how each was addressed.\n2. `.bot/runtime2-test-module/auditor/v2/result.md` \u2014 detailed discharge notes.\n3. `.bot/runtime2-test-module/auditor/v2/verdict.json` \u2014 pass.\n4. `.bot/runtime2-test-module/auditor/v2/summary.md` \u2014 this version's summary.\n5. `.bot/runtime2-test-module/auditor-report.json` \u2014 v2 report.\n6. `.bot/runtime2-test-module/auditor/summary.md` \u2014 updated cross-session index.\n7. `.bot/runtime2-test-module/report.json` \u2014 session entry appended.\n8. `.bot/runtime2-test-module/auditor/v2/changes.patch` \u2014 `git diff runtime2..HEAD -- ':(exclude).bot'`.\n9. Commit and push everything.\n",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Utils/Json.cs",
+            "PLang/App/Errors/AssertionError.cs",
+            "PLang/App/modules/assert/providers/DefaultAssertProvider.cs",
+            "PLang/App/modules/test/report.cs",
+            "PLang/App/Channels/Serializers/SensitivePropertyFilter.cs",
+            "PLang.Tests/App/Serializers/SensitivePropertyFilterTests.cs",
+            "Tests/TestModule/Report/TestReportWritesJunitXml.test.goal",
+            "Tests/TestModule/Report/TestReportIncludesCoverageTables.test.goal",
+            "Tests/TestModule/Report/TestReportMasksSensitiveVariables.test.goal",
+            "Tests/TestModule/Report/TestReportMasksSensitiveVariablesJunit.test.goal",
+            "Tests/TestModule/Report/_fixtures_sensitive/sensitivefail.fixture.goal",
+            "Tests/TestModule/Report/snapshots/junit_sensitive_masked.xml"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified each v1 finding discharged by code fix + regression test. F2 keystone fix (Json.FormatForDiagnostic consolidation) propagates mask to console/JSON/JUnit in one place. JUnit snapshot visual-confirms privateKey=****** in <failure>. Ran 9/9 filter unit tests + 20/20 PLang .test.goal tests \u2014 all pass."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/auditor/v2/plan.md",
+            ".bot/runtime2-test-module/auditor/v2/v1_review_summary.md",
+            ".bot/runtime2-test-module/auditor/v2/result.md",
+            ".bot/runtime2-test-module/auditor/v2/summary.md",
+            ".bot/runtime2-test-module/auditor/v2/verdict.json",
+            ".bot/runtime2-test-module/auditor/summary.md",
+            ".bot/runtime2-test-module/auditor-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 auditor artefacts: pass verdict, full discharge verification for each v1 finding, cross-session summary updated."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "Branch ready for docs bot. All 4 v1 findings discharged; JUnit Sensitive leak closed; full test suite green.",
+        "notes": "Coder 152d2a8e went beyond the v1 suggestion by consolidating three FormatValue copies into Json.FormatForDiagnostic \u2014 a correct OBP move. Committed JUnit snapshot is a nice forensic artefact for reviewers."
+      }
     }
   ]
 }
