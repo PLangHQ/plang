@@ -744,6 +744,76 @@
         "notes": "Handing to coder v4 to address F1 (remove `assert 1 equals 1` tautology), F2 (pair isolation test with a polluter or delete), F3 (deduplicate 3 identical Report tests), F4 (add elseif-matches path test). F5-F9 minor nits. F10 is a real runtime bug for follow-up (route cts.Token into child context). After coder v4, re-route to tester v6, then security.",
         "next_agent": "coder"
       }
+    },
+    {
+      "id": "e7f8a9b0-c1d2-3456-ef78-901234567890",
+      "bot": "tester",
+      "timestamp_start": "2026-04-21T12:00:00Z",
+      "intent": "Re-verify coder v4 discharge of tester v5 major findings F1-F4",
+      "before": {
+        "assumptions": "Coder v4 addressed F1 (deleted tautology), F2 (pair-fixture isolation), F3 (distinct Report tests via scalar observables), F4 (new elseif-matches test). F5-F9 explicitly deferred, L1/L2/F10 latent.",
+        "risk": "v4 introduced new scalar Properties on test.report and a child-App path-resolution workaround — could create new false-greens if scalars aren't truly distinct or if the pair-fixture isolation doesn't actually exercise the broken-case."
+      },
+      "plan": "Plan at .bot/runtime2-test-module/tester/v6/plan.md. Re-run full test suite (C# + PLang). Read each new/changed .pr to verify builder intent. Apply deletion tests to each F1-F4 fix. Confirm no new test-quality gaps introduced by v4. If clean, verdict=approved, route to security.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-test-module/tester/v6/plan.md", ".bot/runtime2-test-module/tester/v6/v5_review_summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v6 plan + v5 review summary. Plan establishes the deletion-test matrix for F1-F4 discharge verification."
+        },
+        {
+          "paths": ["PlangConsole/bin/Debug/net10.0/plang"],
+          "type": "review",
+          "category": "config",
+          "confidence": "high",
+          "context": "Stale binary — initial --test run showed 5 false-negative failures because notContains action added 2026-04-21 09:08 but binary last built 2026-04-20 21:29. Rebuilt via dotnet build PlangConsole. All failures resolved."
+        },
+        {
+          "paths": ["Tests/TestModule"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "PLang --test: 18/18 TestModule green. C# 2274/2275 (same pre-existing LLM flake as v5). Applied deletion test to each F1-F4 fix."
+        },
+        {
+          "paths": [
+            "Tests/TestModule/Condition/.build/testconditionelseifmatchesrecordsbranchindex1.test.pr",
+            "Tests/TestModule/Run/_isolation/.build/aisolationpollute.fixture.pr",
+            "Tests/TestModule/Run/_isolation/.build/bisolationprobe.fixture.pr",
+            "Tests/TestModule/Report/.build/testreportwritesjunitxml.test.pr",
+            "Tests/TestModule/Report/.build/testreportincludescoveragetables.test.pr",
+            "Tests/TestModule/Report/.build/testreportrendersfailurewithvariables.test.pr",
+            "Tests/TestModule/Integration/.build/testsystemtestgoaldoesnotuseforeach.test.pr",
+            "Tests/TestModule/Assert/.build/testassertfailuresnapshotsvariables.test.pr"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": ".pr files for new/changed tests verified: module/action/parameters match step intent. F4 elseif test correctly maps condition.elseif. F1 tautology .pr deleted. F3 Report tests map test.report with Format parameter wired. F9 notContains properly picked up after binary rebuild."
+        },
+        {
+          "paths": ["PLang/App/modules/test/run.cs", "PLang/App/modules/test/report.cs", "PLang/App/modules/assert/notContains.cs", "PLang/App/modules/assert/providers/DefaultAssertProvider.cs", "PLang/App/Data/Navigators/ObjectNavigator.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read production changes: run.cs cts.Token now PushCancellation'd into child context (F10 latent bug fixed). report.cs exposes observable scalars on Data.Properties for PLang test introspection. assert.notContains + symmetric containment in provider (addresses L2 partially). ObjectNavigator walks inheritance chain for shadowed props (unblocks F5 Variables drill-through)."
+        },
+        {
+          "paths": [".bot/runtime2-test-module/test-report.json", ".bot/runtime2-test-module/tester/v6/verdict.json", ".bot/runtime2-test-module/tester/v6/summary.md", ".bot/runtime2-test-module/tester/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verdict: approved. F1-F4 discharged, F5-F10 bonus discharges. One minor new finding F11: WritesJunitXml and IncludesCoverageTables test names make claims their scalar-only assertions don't verify — neither inspects file CONTENT. Not a blocker."
+        }
+      ],
+      "after": {
+        "status": "approved: F1-F4 fully discharged + F5-F10 bonus discharged + 1 minor F11 follow-up",
+        "health": "C# 2274/2275 (same pre-existing LLM flake), PLang TestModule 18/18 green. TestRunEnforcesTimeout wallclock 1005ms (was 5008ms — F10 fixed). All 4 v5 majors pass deletion test.",
+        "notes": "Coder v4 + the follow-up `ea7aeb85` commit together discharge ALL v5 findings including the latent F10 runtime bug. New minor F11: two Report tests have name-claims their scalar assertions don't verify (file CONTENT never asserted). Suggest security review next per v5 handoff plan.",
+        "next_agent": "security"
+      }
     }
   ]
 }
