@@ -35,6 +35,23 @@ public static class Json
     };
 
     /// <summary>
+    /// Diagnostic output — state dumps for humans to debug (test reports, variable
+    /// snapshots in assertion failures, --debug dumps). [Sensitive] string properties
+    /// are masked as "******" so the shape of the data is preserved while secrets are
+    /// redacted. Distinct from storage (keeps sensitive data) and user output
+    /// (strips it entirely).
+    /// </summary>
+    public static readonly JsonSerializerOptions DiagnosticOutput = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { Channels.Serializers.SensitivePropertyFilter.Mask }
+        }
+    };
+
+    /// <summary>
     /// .pr file serialization — only properties marked with [Store] are included.
     /// CamelCase, indented, nulls omitted.
     /// </summary>

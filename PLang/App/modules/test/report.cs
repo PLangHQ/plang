@@ -278,7 +278,7 @@ public partial class report : IContext
             runs,
             branchCoverage
         };
-        return JsonSerializer.Serialize(envelope, App.Utils.Json.CamelCaseIndented);
+        return JsonSerializer.Serialize(envelope, App.Utils.Json.DiagnosticOutput);
     }
 
     private static string BuildJUnit(App.Test.Results results, FileSystem.IPLangFileSystem fs)
@@ -331,7 +331,7 @@ public partial class report : IContext
         if (value == null) return "(null)";
         if (value is string s) return $"\"{s}\"";
         if (value is System.Collections.IEnumerable en and not string)
-            try { return JsonSerializer.Serialize(value, App.Utils.Json.CamelCaseIndented); }
+            try { return JsonSerializer.Serialize(value, App.Utils.Json.DiagnosticOutput); }
             catch { return value.ToString() ?? "(null)"; }
         return value.ToString() ?? "(null)";
     }

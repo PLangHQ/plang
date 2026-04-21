@@ -103,6 +103,46 @@ public class SensitivePropertyFilterTests
         await Assert.That(storeJson).DoesNotContain("secret456");
     }
 
+    // Diagnostic output keeps the [Sensitive] key visible and replaces the value with
+    // "******". Distinguishing absent / null / redacted matters when a human is reading
+    // a crash dump — the key must still appear.
+    [Test]
+    public async Task Sensitive_DiagnosticOutput_MasksValueAsAsterisks()
+    {
+        var identity = new Identity
+        {
+            Name = "test",
+            PublicKey = "pubkey123",
+            PrivateKey = "secret456",
+            IsDefault = true
+        };
+
+        var json = JsonSerializer.Serialize(identity, global::App.Utils.Json.DiagnosticOutput);
+
+        await Assert.That(json).Contains("pubkey123");
+        await Assert.That(json).DoesNotContain("secret456");
+        await Assert.That(json).Contains("privateKey");
+        await Assert.That(json).Contains("******");
+    }
+
+    // CamelCaseIndented is the storage/output format — it must NOT mask or strip,
+    // otherwise .build/app.pr round-trips would lose sensitive data.
+    [Test]
+    public async Task Sensitive_CamelCaseIndented_KeepsSensitiveData()
+    {
+        var identity = new Identity
+        {
+            Name = "test",
+            PublicKey = "pubkey123",
+            PrivateKey = "secret456",
+            IsDefault = true
+        };
+
+        var json = JsonSerializer.Serialize(identity, global::App.Utils.Json.CamelCaseIndented);
+
+        await Assert.That(json).Contains("secret456");
+    }
+
     [Test]
     public async Task Sensitive_IdentityData_PrivateKeyExcluded()
     {
