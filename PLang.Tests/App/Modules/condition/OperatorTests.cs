@@ -134,4 +134,33 @@ public class OperatorTests
     {
         await Assert.That(() => { Operator op = "equals"; }).ThrowsException();
     }
+
+    // --- Enum ↔ string normalization (Operator.NormalizeTypes) ---
+    // Used by `where Status equals 'Timeout'` patterns: PLang side has a string,
+    // C# side has an enum value. Without normalization, Enum.Equals("Timeout") is
+    // always false and the filter silently matches nothing.
+
+    [Test]
+    public async Task Equal_EnumLeft_StringRight_NormalizesToEnumName()
+    {
+        var op = new Operator("==");
+        var matches = op.Evaluate(D(global::App.Test.TestStatus.Timeout), D("Timeout"));
+        await Assert.That(matches).IsTrue();
+    }
+
+    [Test]
+    public async Task Equal_StringLeft_EnumRight_NormalizesToEnumName()
+    {
+        var op = new Operator("==");
+        var matches = op.Evaluate(D("Fail"), D(global::App.Test.TestStatus.Fail));
+        await Assert.That(matches).IsTrue();
+    }
+
+    [Test]
+    public async Task Equal_EnumVsMismatchedString_DoesNotMatch()
+    {
+        var op = new Operator("==");
+        var matches = op.Evaluate(D(global::App.Test.TestStatus.Pass), D("Fail"));
+        await Assert.That(matches).IsFalse();
+    }
 }

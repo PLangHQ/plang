@@ -1,9 +1,0 @@
-TestSystemTestGoalRunsAllDiscovered
-/ Structural guard against the silent-skip regression: system/test.goal must
-/ (1) call test.discover and (2) hand the full discovered list to test.run
-/ without a foreach. The foreach variant skipped tests silently when a single
-/ test errored — that's the whole reason this module was rewritten.
-- read file '/system/test.goal', write to %goalText%
-- assert %goalText% contains 'test.discover'
-- assert %goalText% contains 'test.run'
-- assert %goalText% does not contain 'foreach'

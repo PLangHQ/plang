@@ -116,6 +116,14 @@ public sealed class GoalCall : modules.IEvent
                 step.Goal = subGoal;
         }
 
+        // Stash where the .pr was loaded from — Goal.GetRuntimeDirectory uses this
+        // so file.read with a relative path resolves against the goal's actual
+        // on-disk directory (works in child Apps where Path was set under a
+        // different root and would otherwise mis-resolve).
+        goal.LoadedFromPrPath = prPath;
+        foreach (var subGoal in goal.Goals)
+            subGoal.LoadedFromPrPath = prPath;
+
         // Match by name — the loaded goal or one of its sub-goals
         @this? found;
         if (string.IsNullOrEmpty(Name) || string.Equals(goal.Name, Name, StringComparison.OrdinalIgnoreCase))

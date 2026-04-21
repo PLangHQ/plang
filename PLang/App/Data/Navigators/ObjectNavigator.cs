@@ -14,8 +14,17 @@ public sealed class ObjectNavigator : INavigator
         var value = data.Value;
         if (value == null) return Data.@this.NotFound(key);
 
-        var prop = value.GetType().GetProperty(key,
-            BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        // Walk the inheritance chain bottom-up so properties shadowed in a
+        // derived type win over the base — GetProperty(name, IgnoreCase) throws
+        // AmbiguousMatchException when both declare the same name (e.g.
+        // AssertionError.Variables shadows IError.Variables).
+        PropertyInfo? prop = null;
+        for (var t = value.GetType(); t != null && prop == null; t = t.BaseType)
+        {
+            prop = t.GetProperty(key,
+                BindingFlags.Public | BindingFlags.Instance |
+                BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly);
+        }
         if (prop == null) return Data.@this.NotFound(key);
 
         try

@@ -8,7 +8,7 @@
       "text": "set default %path% = \u0027.\u0027",
       "lineNumber": 4,
       "indent": 0,
-      "comment": "Replacement for the foreach-based runner \u2014 uses C# test.discover/run/report.\nNo foreach means the silent-skip bug can\u0027t repeat.",
+      "comment": "Replacement for the iteration-based runner \u2014 uses C# test.discover/run/report.\nThe C# test.run loop ensures one test\u0027s failure can\u0027t silent-skip the rest.",
       "actions": [
         {
           "module": "variable",
@@ -158,8 +158,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/test.goal",
-  "prPath": "/.build/test.pr",
+  "path": "/PlangConsole/bin/Debug/net10.0/system/test.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/test.pr",
   "hash": "925df3ab6a65e8b48f5efa755fba3f08ee9b9eee225babc23ab1393e862b5aa3",
   "builderVersion": null,
   "isSetup": false,

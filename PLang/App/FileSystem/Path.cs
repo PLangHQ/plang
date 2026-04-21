@@ -49,15 +49,28 @@ public class Path : modules.IContext
         var fs = context.App.FileSystem;
         var resolved = rawPath;
 
-        // Relative paths resolve against the goal's folder
+        // Relative paths resolve against the goal's folder. Prefer the runtime
+        // directory derived from the .pr's on-disk location — Goal.Path is the
+        // build-time identity (parent-perspective in child Apps) and would
+        // mis-resolve. Fall back to Goal.Path's directory for in-memory goals
+        // that have no LoadedFromPrPath.
         if (!rawPath.StartsWith('/') && !rawPath.StartsWith('\\') && !rawPath.Contains("://"))
         {
-            var goalPath = context.Goal?.Path;
-            if (!string.IsNullOrEmpty(goalPath))
+            var goal = context.Goal;
+            var runtimeDir = goal?.GetRuntimeDirectory();
+            if (!string.IsNullOrEmpty(runtimeDir))
             {
-                var goalDir = fs.Path.GetDirectoryName(goalPath);
-                if (!string.IsNullOrEmpty(goalDir))
-                    resolved = fs.Path.Combine(goalDir, rawPath);
+                resolved = fs.Path.Combine(runtimeDir, rawPath);
+            }
+            else
+            {
+                var goalPath = goal?.Path;
+                if (!string.IsNullOrEmpty(goalPath))
+                {
+                    var goalDir = fs.Path.GetDirectoryName(goalPath);
+                    if (!string.IsNullOrEmpty(goalDir))
+                        resolved = fs.Path.Combine(goalDir, rawPath);
+                }
             }
         }
 

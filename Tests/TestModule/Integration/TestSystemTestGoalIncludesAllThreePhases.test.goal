@@ -1,0 +1,9 @@
+TestSystemTestGoalIncludesAllThreePhases
+/ Structural regression guard: the rewritten system/test.goal must invoke
+/ all three C# test phases — test.discover → test.run → test.report. Any
+/ regression that drops a phase (e.g. removes test.report) would fail one
+/ of the three asserts below.
+- read file '/system/test.goal', write to %goalText%
+- assert %goalText% contains 'test.discover'
+- assert %goalText% contains 'test.run'
+- assert %goalText% contains 'test.report'

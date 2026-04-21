@@ -124,6 +124,11 @@ public partial class run : IContext
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(Context.CancellationToken);
         cts.CancelAfter(timeout);
 
+        // Bind cts to the child context's cancellation stack so downstream
+        // handlers reading Context.CancellationToken (timer.sleep, http.request,
+        // …) honour the per-test timeout. Same mechanism timeout.after uses.
+        childApp.User.Context.PushCancellation(cts);
+
         try
         {
             var goalCall = new Goals.Goal.GoalCall { PrPath = test.PrPath };
@@ -141,6 +146,10 @@ public partial class run : IContext
         {
             testRun.Complete(TestStatus.Fail,
                 new ServiceError(ex.Message, "TestRunError", 500) { Exception = ex });
+        }
+        finally
+        {
+            childApp.User.Context.PopCancellation();
         }
 
         parentApp.Testing.Coverage.Merge(childApp.Testing.Coverage);

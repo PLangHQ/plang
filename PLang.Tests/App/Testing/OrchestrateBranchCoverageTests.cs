@@ -14,13 +14,12 @@ namespace PLang.Tests.App.Testing;
 ///      caused inner elseifs to re-enter orchestration on the simple path.
 ///   3. `DisableChildrenOf` silently skipped when invoked from an inner elseif.
 ///
-/// This test attaches a production-shaped coverage subscriber (same filter as run.cs
-/// L77-115: `action.IsCondition && action.IsFirstConditionInStep`), runs a multi-action
-/// orchestrate step where the outer `if` is false and the inner `elseif` is true,
-/// and asserts:
+/// This test attaches a production-shaped coverage subscriber (same filter as run.cs:
+/// `action.IsIfHead`), runs a multi-action orchestrate step where the outer `if` is
+/// false and the inner `elseif` is true, and asserts:
 ///   - No "?:?" site is recorded (Step propagated to inner elseif)
 ///   - The observed branchIndex at the correct site is 1 (elseif matched)
-///   - Inner elseif's `IsFirstConditionInStep` is false (filter works)
+///   - Inner elseif is not flagged as IfHead (filter works)
 ///   - Indented sub-step ran (DisableChildrenOf worked per-branch)
 /// </summary>
 public class OrchestrateBranchCoverageTests
@@ -38,11 +37,11 @@ public class OrchestrateBranchCoverageTests
 
     // Attaches the same-shape subscriber used by test.run's RunSingleAsync, writing
     // observations into a fresh Coverage instance and keeping the list of (action,
-    // isFirstCondition) pairs seen so the test can make filter-level assertions.
-    private (Coverage coverage, List<(PrAction action, bool isFirstCondition)> observed) RegisterCoverageProbe()
+    // isIfHead) pairs seen so the test can make filter-level assertions.
+    private (Coverage coverage, List<(PrAction action, bool isIfHead)> observed) RegisterCoverageProbe()
     {
         var coverage = new Coverage();
-        var observed = new List<(PrAction action, bool isFirstCondition)>();
+        var observed = new List<(PrAction action, bool isIfHead)>();
         _app.User.Context.Events.Register(new EventBinding(
             EventType.AfterAction,
             (ctx, action, result) =>
@@ -51,10 +50,9 @@ public class OrchestrateBranchCoverageTests
                 {
                     coverage.RecordModuleAction(action.Module, action.ActionName);
                     if (action.IsCondition)
-                        observed.Add((action, action.IsFirstConditionInStep));
-                    if (action.IsCondition
-                        && result != null && result.Properties.Contains("branchIndex")
-                        && action.IsFirstConditionInStep)
+                        observed.Add((action, action.IsIfHead));
+                    if (action.IsIfHead
+                        && result != null && result.Properties.Contains("branchIndex"))
                     {
                         var goal = action.Step?.Goal;
                         var goalId = goal?.Path ?? goal?.Name ?? "?";
@@ -157,12 +155,14 @@ public class OrchestrateBranchCoverageTests
         // 5. branchIndex=1 recorded — the elseif matched (position 1 in the chain).
         await Assert.That(coverage.Branches["/Orch.goal:0"].Contains(1)).IsTrue();
 
-        // 6. The filter distinguishes outer vs inner condition.if actions.
-        //    Both condition.if actions fire AfterAction — the outer as orchestrator
-        //    (IsFirstConditionInStep==true), the inner on the simple path during elseif
-        //    evaluation (IsFirstConditionInStep==false).
-        var outerObservations = observed.Where(o => o.isFirstCondition).ToList();
-        var innerObservations = observed.Where(o => !o.isFirstCondition).ToList();
+        // 6. Both condition.if actions fire AfterAction — outer as orchestrator,
+        //    inner on the simple path during elseif evaluation. Old-shape fixtures
+        //    (two condition.if) have IsIfHead=true on both, so we use the legacy
+        //    IsFirstConditionInStep predicate here purely as a distinguisher to
+        //    confirm the inner action's Step is propagated (the SplitAtConditions
+        //    fix from d05c138d).
+        var outerObservations = observed.Where(o => o.action.IsFirstConditionInStep).ToList();
+        var innerObservations = observed.Where(o => !o.action.IsFirstConditionInStep).ToList();
         await Assert.That(outerObservations.Count).IsGreaterThanOrEqualTo(1);
         await Assert.That(innerObservations.Count).IsGreaterThanOrEqualTo(1);
     }

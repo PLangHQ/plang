@@ -1,6 +1,6 @@
 {
-  "name": "TestSystemTestGoalRunsAllDiscovered",
-  "description": "Reads /system/test.goal into %goalText%, then asserts it contains test.discover and test.run, and does not contain foreach.",
+  "name": "TestSystemTestGoalIncludesAllThreePhases",
+  "description": "Reads /system/test.goal into %goalText%, then asserts the text contains the three required phases: test.discover, test.run, and test.report.",
   "comment": null,
   "steps": [
     {
@@ -8,7 +8,7 @@
       "text": "read file \u0027/system/test.goal\u0027, write to %goalText%",
       "lineNumber": 6,
       "indent": 0,
-      "comment": "Structural guard against the silent-skip regression: system/test.goal must\n(1) call test.discover and (2) hand the full discovered list to test.run\nwithout a foreach. The foreach variant skipped tests silently when a single\ntest errored \u2014 that\u0027s the whole reason this module was rewritten.",
+      "comment": "Structural regression guard: the rewritten system/test.goal must invoke\nall three C# test phases \u2014 test.discover \u2192 test.run \u2192 test.report. Any\nregression that drops a phase (e.g. removes test.report) would fail one\nof the three asserts below.",
       "actions": [
         {
           "module": "file",
@@ -70,6 +70,11 @@
               "name": "Container",
               "value": "test.discover",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -99,6 +104,11 @@
               "name": "Container",
               "value": "test.run",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -110,7 +120,7 @@
     },
     {
       "index": 3,
-      "text": "assert %goalText% does not contain \u0027foreach\u0027",
+      "text": "assert %goalText% contains \u0027test.report\u0027",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -122,16 +132,16 @@
             {
               "name": "Value",
               "value": "%goalText%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Container",
-              "value": "foreach",
-              "type": "string"
+              "value": "test.report",
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "Expected %goalText% to not contain substring \u0027foreach\u0027.",
+              "value": null,
               "type": "string"
             }
           ],
@@ -145,9 +155,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Integration/TestSystemTestGoalRunsAllDiscovered.test.goal",
-  "prPath": "/Integration/.build/testsystemtestgoalrunsalldiscovered.test.pr",
-  "hash": "4ab86b7d7dcecb5194fbdb10335f9f55be6450eed1d2ef26a8e440294a0176c4",
+  "path": "/Tests/TestModule/Integration/TestSystemTestGoalIncludesAllThreePhases.test.goal",
+  "prPath": "/Tests/TestModule/Integration/.build/testsystemtestgoalincludesallthreephases.test.pr",
+  "hash": "82a745b237dd3a8828685ba2701af4a77b9d89e85f6dc797633ddb97243024da",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

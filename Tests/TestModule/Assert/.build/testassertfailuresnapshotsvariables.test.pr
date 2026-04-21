@@ -1,14 +1,14 @@
 {
   "name": "TestAssertFailureSnapshotsVariables",
-  "description": "Discovers fixture goals, asserts exactly one test, runs them, checks that at least one result has Status=\u0027Fail\u0027, and asserts the failure flag is true.",
+  "description": "Discovers fixture goals, runs them, then asserts at least one failed result and that a failure snapshot includes Variables.foo == 42.",
   "comment": null,
   "steps": [
     {
       "index": 0,
       "text": "test.discover tests in \u0027_fixtures\u0027 recursive, pattern=\u0027*.fixture.goal\u0027, write to %tests%",
-      "lineNumber": 7,
+      "lineNumber": 5,
       "indent": 0,
-      "comment": "Fixture sets %foo%=42 then asserts %foo% equals 99 \u2014 forces AssertSnapshot\nto attach the Variables map to the error. Run it via test.run; assert the\nresult has Status=Fail. The error surface (Expected/Actual/Variables) is\ntested directly by C# AssertSnapshot tests; here we prove the pipeline\nreaches Fail via the production path.",
+      "comment": "Fixture sets %foo%=42 then asserts %foo% equals 99 \u2014 forces AssertSnapshot\nto attach the Variables map to the AssertionError. Run via test.run, then\nconfirm both Status=Fail AND the %foo%=42 snapshot survived end-to-end.",
       "actions": [
         {
           "module": "test",
@@ -58,7 +58,7 @@
     {
       "index": 1,
       "text": "list.count %tests%, write to %count%",
-      "lineNumber": 8,
+      "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -100,7 +100,7 @@
     {
       "index": 2,
       "text": "assert %count% equals 1",
-      "lineNumber": 9,
+      "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -129,7 +129,7 @@
     {
       "index": 3,
       "text": "test.run tests %tests%, write to %results%",
-      "lineNumber": 10,
+      "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -158,10 +158,16 @@
             {
               "name": "Value",
               "value": "%__data__%",
-              "type": "object"
+              "type": "json"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -171,7 +177,7 @@
     {
       "index": 4,
       "text": "list.any %results% where Status equals \u0027Fail\u0027, write to %hasFail%",
-      "lineNumber": 11,
+      "lineNumber": 9,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -215,10 +221,16 @@
             {
               "name": "Value",
               "value": "%__data__%",
-              "type": "object"
+              "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -228,7 +240,7 @@
     {
       "index": 5,
       "text": "assert %hasFail% is true",
-      "lineNumber": 12,
+      "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -239,12 +251,104 @@
             {
               "name": "Value",
               "value": "%hasFail%",
-              "type": "bool"
+              "type": "object"
             },
             {
               "name": "Message",
-              "value": "Assert that %hasFail% is true.",
+              "value": null,
+              "type": "string?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "list.any %results% where Error.Variables.foo equals 42, write to %hasSnapshot%",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "any",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%results%",
               "type": "string"
+            },
+            {
+              "name": "Key",
+              "value": "Error.Variables.foo",
+              "type": "string"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 42,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%hasSnapshot%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %hasSnapshot% is true",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%hasSnapshot%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string?"
             }
           ],
           "defaults": null,
@@ -259,7 +363,7 @@
   "visibility": 1,
   "path": "/Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.test.goal",
   "prPath": "/Tests/TestModule/Assert/.build/testassertfailuresnapshotsvariables.test.pr",
-  "hash": "bd0bfa0a0b229bbcc4e6c466de7b7a239ab74beb9233f36ffe6f4876551cb70d",
+  "hash": "3582cc34c81065674a9645a1d8de2904b59298fbe57628ffd5e288c5c1b12116",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

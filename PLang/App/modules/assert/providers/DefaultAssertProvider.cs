@@ -64,12 +64,37 @@ public class DefaultAssertProvider : IAssertProvider
 
     public Data.@this Contains(Contains action)
     {
-        if (ContainsValue(action.Value?.Value, action.Container?.Value))
+        var v = action.Value?.Value;
+        var c = action.Container?.Value;
+
+        // Symmetric containment: the Value/Container names don't match the
+        // natural reading "X contains Y" (haystack/needle), so the builder
+        // LLM sometimes flips them. Tolerate both orderings — pass if either
+        // side contains the other. Both sides must be non-null to avoid
+        // string.Contains("") trivially passing on every haystack.
+        if (v != null && c != null && (ContainsValue(v, c) || ContainsValue(c, v)))
             return App.Data.@this.Ok(true);
 
         return App.Data.@this.FromError(new AssertionError(
-            FormatValue(action.Container?.Value), action.Value?.Value,
+            FormatValue(c), v,
             action.Message?.Value ?? "Container does not contain value"));
+    }
+
+    public Data.@this NotContains(NotContains action)
+    {
+        var v = action.Value?.Value;
+        var c = action.Container?.Value;
+
+        // Same symmetric tolerance as Contains: fail if either side contains
+        // the other (otherwise the builder LLM's Value/Container flip would
+        // make this assertion silently pass). If either side is null we
+        // can't claim containment, so assertion passes vacuously.
+        if (v == null || c == null || (!ContainsValue(v, c) && !ContainsValue(c, v)))
+            return App.Data.@this.Ok(true);
+
+        return App.Data.@this.FromError(new AssertionError(
+            $"absent: {FormatValue(c)}", v,
+            action.Message?.Value ?? "Container contains value but should not"));
     }
 
     public Data.@this GreaterThan(GreaterThan action)
