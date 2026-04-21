@@ -1,5 +1,7 @@
 # Building PLang Test Goals — Reference
 
+This page covers **authoring** `.test.goal` files — variables, error handlers, modifier formatting, and the quirks you hit when the builder LLM maps your step text to actions. For **running the suite** — `plang --test`, tags, timeouts, parallelism, isolation, report artefacts, and coverage — see the [test module](../../docs/modules/testing.md).
+
 ## PLang Variable Syntax
 
 - Regular variables: `%variableName%`

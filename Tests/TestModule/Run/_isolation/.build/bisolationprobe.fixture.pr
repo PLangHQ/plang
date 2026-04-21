@@ -1,0 +1,47 @@
+{
+  "name": "BIsolationProbe",
+  "description": "BIsolationProbe asserts that %shared_probe% is null at entry to verify no state leakage from AIsolationPollute.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "assert %shared_probe% is null",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Runs second (alphabetical, parallel=1). Asserts %shared_probe% is null\nat entry \u2014 proving the fresh App/MemoryStack per test was not leaked\nfrom AIsolationPollute.",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%shared_probe%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %shared_probe% to be null at entry (no state leakage).",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/TestModule/Run/_isolation/BIsolationProbe.fixture.goal",
+  "prPath": "/Tests/TestModule/Run/_isolation/.build/bisolationprobe.fixture.pr",
+  "hash": "16437291eac594b25bb2b9d54b8e90dc407e6d5a26f22aad08da7352857485a3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

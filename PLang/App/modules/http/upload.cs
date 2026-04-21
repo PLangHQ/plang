@@ -1,3 +1,4 @@
+using App.Attributes;
 using App.Goals.Goal;
 using App.Variables;
 using App.modules.http.providers;
@@ -10,6 +11,7 @@ namespace App.modules.http;
 /// Content type is auto-detected from the Content value or explicitly set via As.
 /// </summary>
 [Action("upload", Cacheable = false)]
+[RequiresCapability("network")]
 public partial class upload : IContext
 {
     /// <summary>URL to upload to. Relative URLs resolve against Config.BaseUrl.</summary>

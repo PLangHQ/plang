@@ -1,0 +1,7 @@
+AIsolationPollute
+/ Writes %shared_probe%=1. Paired with BIsolationProbe. When the outer
+/ test.run launches this first (alphabetical + parallel=1), a regression
+/ that shared MemoryStack across tests would leak this value into
+/ BIsolationProbe's entry state.
+- set %shared_probe% = 1
+- assert %shared_probe% equals 1

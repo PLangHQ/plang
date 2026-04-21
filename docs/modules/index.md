@@ -72,8 +72,9 @@ Modifiers attach to a single action and change how it runs — retry on failure,
 | Module | Description | Actions |
 |--------|-------------|---------|
 | [event](event.md) | Hook into execution lifecycle | on, remove, skipAction |
-| [assert](assert.md) | Test assertions | equals, notEquals, contains, greaterThan, lessThan, isTrue, isFalse, isNull, isNotNull |
+| [assert](assert.md) | Test assertions | equals, notEquals, contains, notContains, greaterThan, lessThan, isTrue, isFalse, isNull, isNotNull |
 | [mock](mock.md) | Mock actions in tests | intercept, verify, reset |
+| [test](testing.md) | Test runner — discovery, execution, tagging, reporting | discover, run, tag, report |
 
 ### System
 

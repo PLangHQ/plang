@@ -42,6 +42,17 @@ Assert a container includes a value.
 
 Works with strings (substring match), lists, and dictionaries.
 
+### notContains
+
+Assert a container does not include a value.
+
+```plang
+- assert %text% does not contain 'hello'
+- assert %items% does not contain 42
+```
+
+Same container types as `contains`. Symmetric in argument order — either side may be the container — so authoring stays natural even when the builder flips `Value` and `Container`.
+
 ### greaterThan
 
 Assert A is greater than B.

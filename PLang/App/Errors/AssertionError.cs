@@ -13,6 +13,13 @@ public class AssertionError : Error
     public object? Actual { get; init; }
     public string? UserMessage { get; init; }
 
+    /// <summary>
+    /// Snapshot of user-visible variables at the moment of failure, captured by assert
+    /// handlers on failure only. Null on fresh construction and on passing assertions.
+    /// Consumed by the runner's failure-diagnostic renderer (test.report).
+    /// </summary>
+    public Dictionary<string, object?>? Variables { get; set; }
+
     public AssertionError(string message, string key = "AssertionFailed", int statusCode = 400)
         : base(message, key, statusCode) { }
 
@@ -32,12 +39,7 @@ public class AssertionError : Error
         return msg;
     }
 
-    private static string FormatValue(object? value)
-    {
-        if (value == null) return "(null)";
-        if (value is string s) return $"\"{s}\"";
-        return value.ToString() ?? "(null)";
-    }
+    private static string FormatValue(object? value) => App.Utils.Json.FormatForDiagnostic(value);
 
     protected override void FormatExtra(StringBuilder sb, string indent)
     {

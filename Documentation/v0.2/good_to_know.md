@@ -529,3 +529,36 @@ Three accepted-but-unresolved items from security v1 on the modifier feature. No
 1. **Negative Ms.** `timeout.after.Ms` and `timer.sleep.Ms` are not validated. `CancelAfter(-2)` and `Task.Delay(-2)` throw `ArgumentOutOfRangeException`. If a developer binds `%ms%` from untrusted external input (HTTP query string, etc.) without sanitising, the modifier throws instead of returning a typed error.
 2. **Unbounded RetryCount.** `error.handle.RetryCount` is applied as-is. A `%retryCount%` from untrusted input set to `int.MaxValue` makes the action effectively hang. The inner `Task.Delay` honours cancellation, but a retry with `delayMs == 0` does unbounded work per iteration.
 3. **Non-thread-safe cancellation stack.** `Context._cancellationStack` is `Stack<CancellationTokenSource>`. Safe today because handlers execute serially per context, but the roadmap's `async.fire` / `parallel.set` modifiers would run on the same context concurrently. Swap to `ConcurrentStack<T>` or `AsyncLocal<ImmutableStack<T>>` before landing those.
+
+---
+
+## Test Module — Cross-Cutting Invariants
+
+The test runner lives in `PLang/App/modules/test/` (`discover.cs`, `run.cs`, `tag.cs`, `report.cs`) and stores run state on `App.Testing` (`PLang/App/Test/this.cs`). Facts future devs won't see in any single file:
+
+### App boundary = file boundary
+Each `.test.goal` file gets its own child `App` rooted at that file's directory — not per-goal, not per-step. `test.run` spins up one App via `await using` per `TestFile`, runs the entry goal, then disposes. Multiple goals inside the same file share state within that test's run. Don't "optimise" this by pooling Apps across tests — isolation is the entire point of the module existing.
+
+### Coverage merge is additive + idempotent
+`Coverage.Merge(other)` unions module/action observations and branch indices/labels/chains into the parent. `ConcurrentDictionary.TryAdd` makes repeated calls with the same site/label a no-op. This is what makes `test.run` parallel-safe: each child App has its own `Coverage`, merge happens once on completion, no cross-talk.
+
+### Site key = `goalPath:stepIndex`
+The branch-coverage site identifier includes the source path, not just the goal name. A `Start` step in two files never collides. The format is fixed by `run.cs:99` and the same format is rendered in the console and `results.json`. Don't change it without updating both seed (`discover.cs:SeedBranchChains`) and observe (`run.cs` AfterAction binding) in lockstep.
+
+### `test.discover` seeds declared branch chains
+Before a single test runs, `test.discover` walks every `condition.if` site in every discovered test's goal tree — including statically-reachable `goal.call` targets — and records each site's declared chain on `Testing.Coverage`. Purpose: unreached sites (branches that exist in source but no test visits) still appear in the coverage report. Runtime observation unions in later without overwriting; seed-then-observe is safe by design (`Coverage.RecordBranchChain` stores only the first chain per site).
+
+### `[RequiresCapability]` is class-level, single-instance
+Per `PLang/App/Attributes/RequiresCapabilityAttribute.cs`, the attribute has `AllowMultiple = false`. Multi-capability handlers use `params string[]`: `[RequiresCapability("network", "llm")]`. Discovery reflects over the attribute on the resolved handler type for every action referenced in the test's `.pr` (recursing static `goal.call` chains, depth 50, cycle-safe via visited set) and unions the capabilities into the test's auto-tag set. If you add a new capability-hungry action, remember the attribute — otherwise `--test={"exclude":["your-capability"]}` won't filter it out.
+
+### Staleness check uses goal hash, not mtime
+`test.discover` re-parses the current `.goal` text into a Goal object and compares `Goal.Hash` (SHA-256 of Name + concatenated Step.Text) against the `.pr`'s stored hash. Touching the file, changing whitespace, or editing a comment doesn't trigger staleness — only changes that affect step text do. Missing `.pr` or unparseable `.pr` also marks Stale with a reason set on `TestFile.StatusReason`.
+
+### `ChildAppCreated` is a test-only hook
+`internal static event Action<App> ChildAppCreated` on `run.cs:29` fires once per child App after configuration (SystemDirectory inherited, `Testing.IsEnabled = true`, `CurrentTest` assigned) and before the entry goal runs. It exists so the runner's own meta-tests can install probes observing child-App state (SystemDirectory, parallel count, etc.) without faking. Do **not** depend on it from production handlers — it's an `internal static event` and subscribers must be thread-safe because parallel tests fire it concurrently.
+
+### `test.tag` no-ops outside test mode
+Shared goals often tag themselves so they carry auto-tags when reused in tests (`tag this test 'http'`). When that same goal runs in production (no `CurrentTest` on `App.Testing`), the action does nothing instead of throwing. This is why `test.tag` is callable from production goals — it's a one-way signal, never an error.
+
+### `Variables.Snapshot()` honors exclusions, not sensitivity
+The snapshot taken on assertion failure (`PLang/App/Variables/this.cs:Snapshot`) excludes `!`-prefixed infrastructure vars, `DynamicData` (Now/GUID), and `SettingsVariable`. It does **not** honour `[Sensitive]` — that filter applies at JSON *serialization* via `Json.DiagnosticOutput` when the snapshot is rendered into the report. Result: ordinary user variables carrying secrets flow through the snapshot but are only masked if their carrier type has `[Sensitive]` on the relevant property. See security-report.json finding #3 on this branch.

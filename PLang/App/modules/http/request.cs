@@ -1,3 +1,4 @@
+using App.Attributes;
 using App.Goals.Goal;
 using App.Variables;
 using App.modules.http.providers;
@@ -11,6 +12,7 @@ namespace App.modules.http;
 /// When signing is enabled (default), attaches X-Signature header and verifies signed responses.
 /// </summary>
 [Action("request")]
+[RequiresCapability("network")]
 public partial class request : IContext
 {
     /// <summary>Target URL. Relative URLs resolve against Config.BaseUrl. Bare domains get https:// prefix.</summary>

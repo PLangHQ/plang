@@ -580,6 +580,29 @@ public class @this
         return dict;
     }
 
+    /// <summary>
+    /// Captures user-visible variables for failure diagnostics (e.g. assertion errors).
+    /// Excludes:
+    ///  - infrastructure vars (!-prefixed, e.g. !app, !fileSystem)
+    ///  - dynamic system vars (Now, NowUtc, GUID) — always-fresh, no diagnostic value
+    ///  - SettingsVariable — backed by the settings store, not in-scope state
+    /// Values are captured by reference (architect §5.7). Called from assert handlers
+    /// on failure only; the App is about to be disposed, so by-ref is safe.
+    /// ConcurrentDictionary enumeration is snapshot-style and safe during concurrent writes.
+    /// </summary>
+    public Dictionary<string, object?> Snapshot()
+    {
+        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kvp in _variables)
+        {
+            if (kvp.Key.StartsWith("!")) continue;
+            if (kvp.Value is Data.DynamicData) continue;
+            if (kvp.Value is App.Settings.SettingsVariable) continue;
+            dict[kvp.Key] = kvp.Value.Value;
+        }
+        return dict;
+    }
+
     [ThreadStatic]
     private static HashSet<string>? _resolvingVars;
 

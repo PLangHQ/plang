@@ -21,6 +21,19 @@ public sealed class DefaultEvaluator : IEvaluator
         }
     }
 
+    public Data.@this Evaluate(Elseif action)
+    {
+        try
+        {
+            bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
+            return App.Data.@this.Ok(result);
+        }
+        catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
+        {
+            return EvaluationError(action.Left, action.Operator.Value, action.Right, ex);
+        }
+    }
+
     public Data.@this Evaluate(Compare action)
     {
         try

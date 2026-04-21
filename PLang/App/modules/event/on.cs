@@ -48,8 +48,8 @@ public partial class On : IContext
         var targetActor = Actor?.Value ?? Context.Actor ?? Context.App!.User;
 
         var goalToCall = GoalToCall.Value!;
-        Func<Actor.Context.@this, Task<Data.@this>> handler = async ctx =>
-            await ctx.App!.RunGoalAsync(goalToCall, targetActor.Context, ctx.CancellationToken);
+        Func<Actor.Context.@this, Goals.Goal.Steps.Step.Actions.Action.@this?, Data.@this?, Task<Data.@this>> handler =
+            async (ctx, _, _) => await ctx.App!.RunGoalAsync(goalToCall, targetActor.Context, ctx.CancellationToken);
 
         var binding = new EventBinding(
             eventType,

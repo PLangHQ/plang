@@ -1,0 +1,13 @@
+TestReportWritesJunitXml
+/ Runs a passing fixture via test.run, then test.report with format='junit'.
+/ Proves the junit branch actually formatted the content (not just that the
+/ format parameter echoed through): %report.content% carries the <testsuites>
+/ XML root. Also verifies reportPath points at junit.xml and the file was
+/ written on disk.
+- test.discover tests in '_fixtures_pass', pattern='*.fixture.goal', recursive, write to %tests%
+- test.run tests %tests%, write to %results%
+- test.report results %results%, format='junit', write to %report%
+- assert %report.content% contains '<testsuites'
+- assert %report.summaryPass% equals 1
+- file.exists %report.reportPath%, write to %exists%
+- assert %exists% is true

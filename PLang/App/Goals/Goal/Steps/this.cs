@@ -73,6 +73,21 @@ public sealed class @this : IList<Step.@this>, IContext
     }
 
     /// <summary>
+    /// Marks indented children of the given parent step as disabled / enabled.
+    /// Walks forward from parent.Index until a sibling-or-lower-indent step is found.
+    /// Used by condition.if to gate its sub-steps on the evaluation result.
+    /// </summary>
+    public void DisableChildrenOf(Step.@this parent, bool disabled, Actor.Context.@this ctx)
+    {
+        for (int i = parent.Index + 1; i < _items.Count; i++)
+        {
+            if (_items[i].Indent <= parent.Indent) break;
+            _items[i].Context = ctx;
+            _items[i].Disabled = disabled;
+        }
+    }
+
+    /// <summary>
     /// Runs all steps in sequence. Owns the iteration loop (OBP rule 5).
     /// Handles sub-step skipping (condition-gated), cancellation, and return propagation.
     /// </summary>

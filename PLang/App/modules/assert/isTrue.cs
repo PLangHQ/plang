@@ -14,5 +14,6 @@ public partial class IsTrue : IContext
     [Provider]
     public partial IAssertProvider Assert { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Assert.IsTrue(this));
+    public Task<Data.@this> Run() =>
+        Task.FromResult(AssertSnapshot.WithVariables(Assert.IsTrue(this), Context));
 }

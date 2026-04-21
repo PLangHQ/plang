@@ -1,0 +1,6 @@
+FailsVar
+/ Sets %score%=42 and asserts %score%=99 — AssertSnapshot attaches the
+/ Variables map to AssertionError. The Report test then verifies that
+/ test.report's JSON output carries the %score% snapshot.
+- set %score% = 42
+- assert %score% equals 99

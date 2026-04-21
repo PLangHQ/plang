@@ -52,6 +52,35 @@ public sealed partial class @this : modules.IDataWrappable
     [JsonIgnore]
     public bool Cacheable { get; init; } = true;
 
+    /// <summary>
+    /// True for any condition chain action: condition.if, condition.elseif, or condition.else.
+    /// Used by SplitAtConditions / ComputeBranchChain to split an orchestrated step's actions
+    /// into per-branch groups.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsCondition =>
+        string.Equals(Module, "condition", StringComparison.OrdinalIgnoreCase) &&
+        (string.Equals(ActionName, "if", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(ActionName, "elseif", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(ActionName, "else", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// True only for the head of a condition chain (condition.if). Coverage records sites
+    /// against the head — elseif/else participate in the chain but don't own the site.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsIfHead =>
+        string.Equals(Module, "condition", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(ActionName, "if", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// True when this is the first condition.if action in its step. Used by coverage
+    /// to ignore inner-elseif simple-path firings that would otherwise mix
+    /// true/false labels into the orchestrator's declared chain.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsFirstConditionInStep => Step?.Actions.IsFirstCondition(this) ?? false;
+
     [JsonIgnore]
     public Steps.Step.@this? Step { get; set; }
 
@@ -85,7 +114,7 @@ public sealed partial class @this : modules.IDataWrappable
             context.Variables.Put(result);
         }
 
-        var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterAction);
+        var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterAction, this, result);
         if (!afterResult.Success) return afterResult;
 
         return result;

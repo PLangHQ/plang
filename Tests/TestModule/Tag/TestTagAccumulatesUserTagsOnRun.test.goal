@@ -1,0 +1,14 @@
+TestTagAccumulatesUserTagsOnRun
+/ Calls test.tag (module test, action tag) twice. The handler returns the
+/ accumulated UserTags. Capture into %tags% and verify union semantics:
+/ three unique tags across both calls.
+- tag this test 'http'
+- tag this test 'fast', 'slow', write to %tags%
+- list.count %tags%, write to %count%
+- assert %count% equals 3
+- list.contains %tags% has 'http', write to %hasHttp%
+- assert %hasHttp% is true
+- list.contains %tags% has 'fast', write to %hasFast%
+- assert %hasFast% is true
+- list.contains %tags% has 'slow', write to %hasSlow%
+- assert %hasSlow% is true

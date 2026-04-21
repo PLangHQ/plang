@@ -27,7 +27,7 @@ public class SecurityFixTests
         // Create a binding whose handler throws
         var binding = new EventBinding(
             EventType.BeforeGoal,
-            handler: _ => throw new InvalidOperationException("handler crash"),
+            handler: (_, _, _) => throw new InvalidOperationException("handler crash"),
             goalNamePattern: "*");
 
         // First call — handler throws, but ExitEvent should still run
@@ -40,7 +40,7 @@ public class SecurityFixTests
         var secondCallRan = false;
         var binding2 = new EventBinding(
             EventType.BeforeGoal,
-            handler: _ =>
+            handler: (_, _, _) =>
             {
                 secondCallRan = true;
                 return Task.FromResult(Data.Ok());
@@ -52,7 +52,7 @@ public class SecurityFixTests
         var ranAgain = false;
         var testBinding = new EventBinding(
             EventType.BeforeGoal,
-            handler: ctx =>
+            handler: (ctx, _, _) =>
             {
                 ranAgain = true;
                 return Task.FromResult(Data.Ok());
@@ -63,7 +63,7 @@ public class SecurityFixTests
         var callCount = 0;
         var fragileBinding = new EventBinding(
             EventType.BeforeGoal,
-            handler: _ =>
+            handler: (_, _, _) =>
             {
                 callCount++;
                 if (callCount == 1)

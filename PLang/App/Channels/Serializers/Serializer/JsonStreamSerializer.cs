@@ -27,7 +27,7 @@ public sealed class JsonStreamSerializer : ISerializer
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
-                Modifiers = { SensitivePropertyFilter.Filter }
+                Modifiers = { SensitivePropertyFilter.Strip }
             },
             Converters =
             {
@@ -47,7 +47,7 @@ public sealed class JsonStreamSerializer : ISerializer
             {
                 TypeInfoResolver = new DefaultJsonTypeInfoResolver
                 {
-                    Modifiers = { SensitivePropertyFilter.Filter, ViewPropertyFilter.For(v) }
+                    Modifiers = { SensitivePropertyFilter.Strip, ViewPropertyFilter.For(v) }
                 }
             };
             return new JsonStreamSerializer(viewOptions);

@@ -12,6 +12,7 @@ public interface IAssertProvider : IProvider
     Data.@this IsNull(IsNull action);
     Data.@this IsNotNull(IsNotNull action);
     Data.@this Contains(Contains action);
+    Data.@this NotContains(NotContains action);
     Data.@this GreaterThan(GreaterThan action);
     Data.@this LessThan(LessThan action);
 }

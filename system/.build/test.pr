@@ -1,14 +1,14 @@
 {
   "name": "Test",
-  "description": "PrintError: writes the runtime error variable %!error% (may be null) to output.",
+  "description": "Sets default %path%, discovers tests under %path% recursively into %tests%, runs them into %results%, then reports %results%.",
   "comment": null,
   "steps": [
     {
       "index": 0,
       "text": "set default %path% = \u0027.\u0027",
-      "lineNumber": 3,
+      "lineNumber": 4,
       "indent": 0,
-      "comment": "Discovers and runs *.test.goal files. Results collected in %!test.results%.",
+      "comment": "Replacement for the iteration-based runner \u2014 uses C# test.discover/run/report.\nThe C# test.run loop ensures one test\u0027s failure can\u0027t silent-skip the rest.",
       "actions": [
         {
           "module": "variable",
@@ -35,34 +35,27 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "find files \u0027*.test.goal\u0027 in %path% recursive, write to %testFiles%",
-      "lineNumber": 4,
+      "text": "test.discover tests in %path% recursive, write to %tests%",
+      "lineNumber": 5,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "file",
-          "action": "list",
+          "module": "test",
+          "action": "discover",
           "parameters": [
             {
               "name": "Path",
               "value": "%path%",
-              "type": "path"
-            },
-            {
-              "name": "Pattern",
-              "value": "*.test.goal",
               "type": "string"
             },
             {
@@ -71,7 +64,8 @@
               "type": "bool"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
           "module": "variable",
@@ -79,7 +73,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%testFiles%",
+              "value": "%tests%",
               "type": "string"
             },
             {
@@ -88,280 +82,85 @@
               "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "write out \u0027Found %testFiles.Length% test files\u0027",
-      "lineNumber": 5,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {
-              "name": "Data",
-              "value": "Found %testFiles.Length% test files",
-              "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
-            }
-          ],
-          "defaults": null
-        }
-      ],
-      "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "foreach %testFiles%, call RunTest, item=%testFile%",
+      "text": "test.run tests %tests%, write to %results%",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "loop",
-          "action": "foreach",
+          "module": "test",
+          "action": "run",
           "parameters": [
             {
-              "name": "Collection",
-              "value": "%testFiles%",
-              "type": "object"
-            },
-            {
-              "name": "ItemName",
-              "value": "testFile",
-              "type": "string"
+              "name": "Tests",
+              "value": "%tests%",
+              "type": "list"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         },
         {
-          "module": "goal",
-          "action": "call",
+          "module": "variable",
+          "action": "set",
           "parameters": [
             {
-              "name": "GoalName",
-              "value": {
-                "name": "RunTest",
-                "parameters": [
-                  {
-                    "name": "item",
-                    "value": "%testFile%",
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "goal.call"
+              "name": "Name",
+              "value": "%results%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     },
     {
-      "index": 4,
-      "text": "write out %!test.summary%",
+      "index": 3,
+      "text": "test.report results %results%",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "output",
-          "action": "write",
+          "module": "test",
+          "action": "report",
           "parameters": [
             {
-              "name": "Data",
-              "value": "%!test.summary%",
-              "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
+              "name": "Results",
+              "value": "%results%",
+              "type": "object"
             }
           ],
-          "defaults": null
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
-      "onError": null,
-      "cache": null,
-      "timeout": null,
       "waitForExecution": true
     }
   ],
-  "goals": [
-    {
-      "name": "RunTest",
-      "description": null,
-      "comment": null,
-      "steps": [
-        {
-          "index": 0,
-          "text": "write out \u0027Running %testFile%\u0027",
-          "lineNumber": 11,
-          "indent": 0,
-          "comment": "Runs a single test goal through the full RunStep pipeline",
-          "actions": [
-            {
-              "module": "output",
-              "action": "write",
-              "parameters": [
-                {
-                  "name": "Data",
-                  "value": "Running %testFile%",
-                  "type": "tstring"
-                },
-                {
-                  "name": "Channels",
-                  "value": "this",
-                  "type": "string"
-                }
-              ],
-              "defaults": null
-            }
-          ],
-          "intent": null,
-          "onError": null,
-          "cache": null,
-          "timeout": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 1,
-          "text": "app run %testFile.GoalCall%, on error call PrintError",
-          "lineNumber": 12,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "app",
-              "action": "run",
-              "parameters": [
-                {
-                  "name": "GoalName",
-                  "value": "%testFile.GoalCall%",
-                  "type": "goal.call"
-                },
-                {
-                  "name": "Actor",
-                  "value": "this",
-                  "type": "actor(user|service|system)"
-                }
-              ],
-              "defaults": null
-            }
-          ],
-          "intent": null,
-          "onError": {
-            "goal": {
-              "name": "PrintError",
-              "description": null,
-              "parallel": false,
-              "parameters": null,
-              "prPath": null
-            },
-            "retryCount": null,
-            "retryOverMs": null,
-            "order": 0,
-            "ignoreError": null,
-            "message": null,
-            "statusCode": null,
-            "key": null
-          },
-          "cache": null,
-          "timeout": null,
-          "waitForExecution": true
-        }
-      ],
-      "goals": [],
-      "visibility": 0,
-      "path": "/PlangConsole/bin/Debug/net10.0/system/test.goal",
-      "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/test.pr",
-      "hash": "49fef1d435f8b975cc332c0c1a4022053428ab8ef622ae5d3ed6a4a718d9952d",
-      "builderVersion": null,
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": false,
-      "inputParameters": null
-    },
-    {
-      "name": "PrintError",
-      "description": null,
-      "comment": null,
-      "steps": [
-        {
-          "index": 0,
-          "text": "write out %!error%",
-          "lineNumber": 15,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "output",
-              "action": "write",
-              "parameters": [
-                {
-                  "name": "Data",
-                  "value": "%!error%",
-                  "type": "object"
-                },
-                {
-                  "name": "Channels",
-                  "value": "this",
-                  "type": "string"
-                }
-              ],
-              "defaults": null
-            }
-          ],
-          "intent": null,
-          "onError": null,
-          "cache": null,
-          "timeout": null,
-          "waitForExecution": true
-        }
-      ],
-      "goals": [],
-      "visibility": 0,
-      "path": "/PlangConsole/bin/Debug/net10.0/system/test.goal",
-      "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/test.pr",
-      "hash": "8c3f77a5cd16d7ddc6e6b10f1a8fb93222b83b2cfd1b23aa8854ad59df1b733d",
-      "builderVersion": null,
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": false,
-      "inputParameters": null
-    }
-  ],
+  "goals": [],
   "visibility": 1,
   "path": "/PlangConsole/bin/Debug/net10.0/system/test.goal",
   "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/test.pr",
-  "hash": "76976193577f6cb787f8e0ab91b7d639c06b17b280fd964e789a0ca75dc7134e",
+  "hash": "925df3ab6a65e8b48f5efa755fba3f08ee9b9eee225babc23ab1393e862b5aa3",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

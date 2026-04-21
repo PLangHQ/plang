@@ -1,15 +1,7 @@
 Test
-/ Discovers and runs *.test.goal files. Results collected in %!test.results%.
+/ Replacement for the iteration-based runner — uses C# test.discover/run/report.
+/ The C# test.run loop ensures one test's failure can't silent-skip the rest.
 - set default %path% = '.'
-- find files '*.test.goal' in %path% recursive, write to %testFiles%
-- write out 'Found %testFiles.Length% test files'
-- foreach %testFiles%, call RunTest, item=%testFile%
-- write out %!test.summary%
-
-RunTest
-/ Runs a single test goal through the full RunStep pipeline
-- write out 'Running %testFile%'
-- app run %testFile.GoalCall%, on error call PrintError
-
-PrintError
-- write out %!error%
+- test.discover tests in %path% recursive, write to %tests%
+- test.run tests %tests%, write to %results%
+- test.report results %results%

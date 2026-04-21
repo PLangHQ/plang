@@ -72,6 +72,35 @@ public sealed partial class @this : modules.IDataWrappable
     [Store, Debug]
     public string? Path { get; set; }
 
+    /// <summary>
+    /// On-disk .pr path the goal was loaded from. Set by GoalCall.LoadFromFile.
+    /// Used by GetRuntimeDirectory to derive the goal's actual directory in the
+    /// current App's filesystem — distinct from Path (which is the build-time
+    /// identity, parent-perspective for goals run inside a child App).
+    /// </summary>
+    [JsonIgnore, LlmIgnore]
+    public string? LoadedFromPrPath { get; set; }
+
+    /// <summary>
+    /// Returns the absolute on-disk directory that contains this goal's source
+    /// .goal file in the current App's filesystem — derived from LoadedFromPrPath
+    /// (a `<dir>/.build/<name>.pr`-shaped path) so it remains correct in child
+    /// Apps where Path was baked from a different root. Returns null when the
+    /// goal wasn't loaded from a file (in-memory goals built by tests / fixtures).
+    /// </summary>
+    public string? GetRuntimeDirectory()
+    {
+        if (App == null || string.IsNullOrEmpty(LoadedFromPrPath)) return null;
+        var fs = App.FileSystem;
+        string prAbs;
+        try { prAbs = fs.ValidatePath(LoadedFromPrPath); }
+        catch { return null; }
+        var prParent = fs.Path.GetDirectoryName(prAbs);
+        if (prParent == null) return null;
+        if (!string.Equals(fs.Path.GetFileName(prParent), ".build", StringComparison.OrdinalIgnoreCase)) return null;
+        return fs.Path.GetDirectoryName(prParent);
+    }
+
     [Store, Debug]
     public string? PrPath
     {
@@ -287,6 +316,18 @@ public sealed partial class @this : modules.IDataWrappable
         Name = name,
         Description = "Goal not found"
     };
+
+    /// <summary>
+    /// Visits every action in every step (ignoring Steps' disabled-skip iterator).
+    /// Moves the "foreach step, foreach action" skeleton onto Goal so handlers can
+    /// query the shape of a built goal without reaching through its children.
+    /// </summary>
+    public void ForEachAction(System.Action<Steps.Step.@this, Steps.Step.Actions.Action.@this> visitor)
+    {
+        foreach (var step in _steps.Value)
+            foreach (var action in step.Actions)
+                visitor(step, action);
+    }
 
     /// <summary>
     /// Parses .goal file text into a list of Goals.

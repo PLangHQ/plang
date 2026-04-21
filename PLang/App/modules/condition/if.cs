@@ -23,6 +23,7 @@ public partial class If : IContext, IStep
     public async Task<Data.@this> Run()
     {
         var evalResult = Evaluator.Evaluate(this);
+        // Evaluation errored → leave branchIndex unpublished (architect §5.7 / Batch 7 #6).
         if (!evalResult.Success) return evalResult;
 
         var conditionResult = evalResult.Value is true;
@@ -33,13 +34,7 @@ public partial class If : IContext, IStep
         if (userStep?.Goal != null)
         {
             var disableContext = Context.App!.System.Context;
-            var steps = userStep.Goal.Steps;
-            for (int i = userStep.Index + 1; i < steps.Count; i++)
-            {
-                if (steps[i].Indent <= userStep.Indent) break;
-                steps[i].Context = disableContext;
-                steps[i].Disabled = !conditionResult;
-            }
+            userStep.Goal.Steps.DisableChildrenOf(userStep, !conditionResult, disableContext);
         }
 
         // Orchestrate if/elseif/else when there are multiple actions in this step.
@@ -65,7 +60,14 @@ public partial class If : IContext, IStep
             }
         }
 
-        return Data(conditionResult);
+        // Simple non-orchestrating form: 0/true for the truthy path, 1/false for the
+        // skipped path. Paired label stays readable in coverage output ({true,false}).
+        // Publish the full declared chain too so the report can show the untested half.
+        var simple = Data(conditionResult);
+        simple.Properties.Set("branchIndex", conditionResult ? 0 : 1);
+        simple.Properties.Set("branchLabel", conditionResult ? "true" : "false");
+        simple.Properties.Set("branchChain", new List<string> { "true", "false" });
+        return simple;
     }
 
     /// <summary>
@@ -75,41 +77,10 @@ public partial class If : IContext, IStep
     private async Task<Data.@this> Orchestrate(
         App.Goals.Goal.Steps.Step.Actions.@this actions, bool firstConditionResult)
     {
-        // Find our position
-        int myIndex = 0;
-        for (int i = 0; i < actions.Count; i++)
-        {
-            if (ReferenceEquals(actions[i], __action))
-            {
-                myIndex = i;
-                break;
-            }
-        }
+        int myIndex = actions.IndexOf(__action);
+        if (myIndex < 0) myIndex = 0;
 
-        // Build branches: each branch is (conditionAction, thenActions[])
-        // The last branch with no condition action is the else branch
-        var branches = new List<(Action? condition, List<Action> body)>();
-        List<Action>? currentBody = null;
-        Action? currentCondition = null;
-
-        for (int i = myIndex; i < actions.Count; i++)
-        {
-            if (IsConditionAction(actions[i]))
-            {
-                // Start a new branch
-                if (currentBody != null)
-                    branches.Add((currentCondition, currentBody));
-                currentCondition = actions[i];
-                currentBody = new List<Action>();
-            }
-            else
-            {
-                currentBody ??= new List<Action>();
-                currentBody.Add(actions[i]);
-            }
-        }
-        if (currentBody != null)
-            branches.Add((currentCondition, currentBody));
+        var branches = actions.SplitAtConditions(myIndex);
 
         // Execute: first branch uses our already-evaluated result
         for (int b = 0; b < branches.Count; b++)
@@ -119,19 +90,25 @@ public partial class If : IContext, IStep
 
             if (b == 0)
             {
-                // First branch — we already evaluated this
+                // First branch — head condition.if, already evaluated
                 branchResult = firstConditionResult;
+            }
+            else if (condition != null
+                && string.Equals(condition.ActionName, "else", StringComparison.OrdinalIgnoreCase))
+            {
+                // condition.else — no condition, always runs if we get here
+                branchResult = true;
             }
             else if (condition != null)
             {
-                // Elseif — evaluate the condition
+                // condition.elseif — dispatch the handler so its Evaluate + lifecycle fire
                 var elseIfResult = await condition.RunAsync(Context);
                 if (!elseIfResult.Success) return elseIfResult;
                 branchResult = elseIfResult.Value is true;
             }
             else
             {
-                // Else — no condition, always runs if we get here
+                // No explicit condition (trailing body-only tail) — treat as taken
                 branchResult = true;
             }
 
@@ -143,15 +120,23 @@ public partial class If : IContext, IStep
                     lastResult = await action.RunAsync(Context);
                     if (!lastResult.Success) return lastResult;
                 }
+                // Record which branch fired. branchIndex is the position in the chain;
+                // branchLabel mirrors the action name; branchChain is the full declared
+                // shape so the report can show which other branches were never tested.
+                var label = b == 0
+                    ? "if"
+                    : (condition != null && string.Equals(condition.ActionName, "else", StringComparison.OrdinalIgnoreCase))
+                        ? "else"
+                        : $"elseif[{b}]";
+                lastResult.Properties.Set("branchIndex", b);
+                lastResult.Properties.Set("branchLabel", label);
+                lastResult.Properties.Set("branchChain", actions.ComputeBranchChain(myIndex));
                 return lastResult;
             }
         }
 
-        // No branch matched
+        // No branch matched — only possible when there is no condition.else tail.
+        // Leave branchIndex unset so coverage doesn't claim a branch fired.
         return Data(false);
     }
-
-    private static bool IsConditionAction(Action action) =>
-        string.Equals(action.Module, "condition", StringComparison.OrdinalIgnoreCase)
-        && string.Equals(action.ActionName, "if", StringComparison.OrdinalIgnoreCase);
 }

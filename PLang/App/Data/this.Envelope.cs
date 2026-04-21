@@ -28,7 +28,7 @@ public partial class @this
         Converters = { new TypeJsonConverter() },
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { SensitivePropertyFilter.Filter }
+            Modifiers = { SensitivePropertyFilter.Strip }
         }
     };
 

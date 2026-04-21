@@ -35,6 +35,45 @@ public static class Json
     };
 
     /// <summary>
+    /// Diagnostic output — state dumps for humans to debug (test reports, variable
+    /// snapshots in assertion failures, --debug dumps). [Sensitive] string properties
+    /// are masked as "******" so the shape of the data is preserved while secrets are
+    /// redacted. Distinct from storage (keeps sensitive data) and user output
+    /// (strips it entirely).
+    /// </summary>
+    public static readonly JsonSerializerOptions DiagnosticOutput = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { Channels.Serializers.SensitivePropertyFilter.Mask }
+        }
+    };
+
+    /// <summary>
+    /// Formats a value for inclusion in a human-readable diagnostic string (assertion
+    /// failure messages, console test output). Scalars render directly; strings get
+    /// quoted; anything else goes through <see cref="DiagnosticOutput"/> so that
+    /// <see cref="SensitiveAttribute"/> properties are masked. Never falls back to
+    /// <c>value.ToString()</c> on arbitrary objects — that is the leak vector that
+    /// bypasses the mask (e.g. a C# record's auto-generated ToString prints every
+    /// field, [Sensitive] or not).
+    /// </summary>
+    public static string FormatForDiagnostic(object? value)
+    {
+        if (value == null) return "(null)";
+        if (value is string s) return $"\"{s}\"";
+        var type = value.GetType();
+        if (type.IsPrimitive || value is decimal || value is DateTime
+            || value is DateTimeOffset || value is TimeSpan || value is Guid
+            || value is Enum)
+            return value.ToString() ?? "(null)";
+        try { return JsonSerializer.Serialize(value, DiagnosticOutput); }
+        catch { return type.Name; }
+    }
+
+    /// <summary>
     /// .pr file serialization — only properties marked with [Store] are included.
     /// CamelCase, indented, nulls omitted.
     /// </summary>

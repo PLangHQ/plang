@@ -1,0 +1,28 @@
+using App;
+using App.Variables;
+using App.modules.condition.providers;
+
+namespace App.modules.condition;
+
+[Example("if %a% > 10 write 'big'\n, else if %a% > 5 write 'mid'", "Left=%a%, Operator=>, Right=5")]
+[Action("elseif")]
+public partial class Elseif : IContext, IStep
+{
+    public partial Data.@this? Left { get; init; }
+    public partial Data.@this<Operator> Operator { get; init; }
+    public partial Data.@this? Right { get; init; }
+    [Default(false)]
+    public partial Data.@this<bool> Negate { get; init; }
+
+    [Provider]
+    public partial IEvaluator Evaluator { get; }
+
+    public Task<Data.@this> Run()
+    {
+        var evalResult = Evaluator.Evaluate(this);
+        if (!evalResult.Success) return Task.FromResult(evalResult);
+        var b = evalResult.Value is true;
+        if (Negate.Value) b = !b;
+        return Task.FromResult(Data(b));
+    }
+}
