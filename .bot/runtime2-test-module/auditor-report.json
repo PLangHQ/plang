@@ -1,0 +1,58 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-test-module",
+  "timestamp": "2026-04-21T00:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Three of four findings cluster around security fix 9dc148f5 (Sensitive masking): the fix was scoped to results.json only, and the two Report tests that should detect regressions on the JUnit path assert on an input-echo scalar instead of file content. Taken together, a sensitive-data leak via junit.xml has no test coverage. The step-propagation and AfterAction-widening seams are clean.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — root-cause fix at SplitAtConditions indexer is correct; remaining _items[i] call sites don't need Step",
+    "tester": "partial — F11 rated minor but masks a real security gap (junit.xml unmasked + content not verified)",
+    "security": "partial — finding #3 fix (9dc148f5) addresses results.json only; junit.xml leak path still open despite being named in the original finding"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "review-gap",
+      "file": "Tests/TestModule/Report/TestReportWritesJunitXml.test.goal",
+      "line": 9,
+      "issue": "Test asserts %report.format% which echoes the input parameter — passes even if `case \"junit\":` is deleted. Combined with IncludesCoverageTables (same pattern), neither verifies file content. These are the only PLang tests for format routing.",
+      "missed_by": "tester",
+      "impact": "JUnit-path regressions (including the sensitive-data leak in finding #2) have no detection. Tester v6 rated this minor; I rate major because it compounds finding #2.",
+      "suggestion": "Replace `assert %report.format% equals 'junit'` with `assert %report.content% contains '<testsuites'`, and for IncludesCoverageTables use `assert %report.content% contains 'branchCoverage'`."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "category": "contract",
+      "file": "PLang/App/modules/test/report.cs",
+      "line": 307,
+      "issue": "Security fix 9dc148f5 applies SensitivePropertyFilter.Mask only to BuildJson (line 281). BuildJUnit emits run.Error?.Message via raw StringBuilder — no mask. AssertionError.Message is built via value.ToString() (AssertionError.cs:36-46), which can embed the raw content of an object containing [Sensitive] properties (e.g. Identity.PrivateKey). The original security finding #3 explicitly named both results.json and junit.xml.",
+      "missed_by": "security",
+      "impact": "CI artefact (junit.xml) may contain unmasked sensitive values from failed-assert error messages. Same threat model as the fixed JSON path.",
+      "suggestion": "Fix AssertionError.FormatValue (AssertionError.cs:42-47) to serialize non-trivial values via Json.DiagnosticOutput instead of value.ToString(). Benefits console, JSON, and JUnit paths in one place — matches OBP 'behavior belongs to the owner' (AssertionError owns its own formatting)."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "review-gap",
+      "file": "PLang.Tests/App/Serializers/SensitivePropertyFilterTests.cs",
+      "line": 110,
+      "issue": "Unit test Sensitive_DiagnosticOutput_MasksValueAsAsterisks proves the modifier works in isolation. No test asserts the end-to-end path: failing .test.goal with an Identity variable → AssertionError.Variables → report.cs BuildJson → results.json contains '******'. If report.cs:281 reverts from DiagnosticOutput to CamelCaseIndented, all tests still pass.",
+      "missed_by": "tester",
+      "impact": "A regression on the integration point between Variables snapshot and the mask modifier has no detection.",
+      "suggestion": "Add Tests/TestModule/Report/TestReportMasksSensitiveVariables.test.goal — fixture that fails an assert on an Identity-like object, outer asserts `%report.content% contains '******'` and `%report.content% doesNotContain <actual-private-key>`."
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "contract",
+      "file": "PLang/App/Channels/Serializers/SensitivePropertyFilter.cs",
+      "line": 53,
+      "issue": "DiagnosticOutput's docstring states 'distinguishing absent / null / redacted matters — the key must still appear'. But SensitivePropertyFilter.Mask strips non-string [Sensitive] properties (line 58 RemoveAt). Violates the stated intent for any future non-string sensitive prop.",
+      "missed_by": "none",
+      "impact": "Latent. No current non-string [Sensitive] properties exist.",
+      "suggestion": "Replace the strip fallback with a placeholder ValueProvider that emits a static structural stand-in (e.g. { redacted: '<sensitive>' })."
+    }
+  ]
+}

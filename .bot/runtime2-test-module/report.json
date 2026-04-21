@@ -905,6 +905,71 @@
         "health": "No critical/high findings. 4 low findings filed for future hardening.",
         "notes": "Child-App-per-test isolation is solid. Main worry is output-rendering defense in depth, which matters more as test reports get consumed by CI and terminal viewers. Suggest auditor next."
       }
+    },
+    {
+      "id": "a79451e3-1fb7-46d2-aad2-38e86767b501",
+      "bot": "auditor",
+      "timestamp_start": "2026-04-21T10:00:58.817814Z",
+      "timestamp_end": "2026-04-21T10:06:43.227427Z",
+      "intent": "Cross-cutting audit of test module after codeanalyzer/tester/security passes",
+      "before": {
+        "assumptions": "Prior reviewers approved at their own layers; focus on seams, cross-file contracts, security fix 9dc148f5 unreviewed, F11 name-claim gap rated minor",
+        "risk": "AfterAction widening may have missed callers; Sensitive masking fix untested; Step propagation may have other bypass sites"
+      },
+      "plan": "# Auditor v1 Plan \u2014 runtime2-test-module\n\n## Context\n\nLarge branch: PLang test module (+10.4k lines, 216 files). Four previous reviewers:\n- codeanalyzer v1\u2192v2\u2192v3 (clean on commit d05c138d)\n- tester v3\u2192v4\u2192v5\u2192v6 (approved at v6, commit ea7aeb85)\n- security v1 (pass, 4 low findings, #3 auto-fixed in 9dc148f5)\n- coder v1\u2192v2\u2192v3\u2192v4\n\nMy job: find what they missed in the seams.\n\n## Approach\n\nNot re-reviewing individual files \u2014 trust prior passes. Focus on cross-cutting integrity:\n\n1. **AfterAction payload widening** \u2014 signature changed to `(Context, Action?, Data?)`. Verify ALL subscribers adapted across the repo, not just the ones in coder's diff. One missed caller = null-deref.\n2. **Step propagation regression chain** \u2014 codeanalyzer v2 caught `?? true` fallback bug; v3 found root cause (SplitAtConditions `_items[i]`). Check if there are OTHER call sites that still bypass the Step-setting indexer.\n3. **Goal.LoadedFromPrPath / GetRuntimeDirectory contract** \u2014 new property. Any code that calls `Goal.Path` for filesystem resolution must be audited: does it need the runtime directory instead? Check path-relative resolution callers.\n4. **PushCancellation / PopCancellation** \u2014 new Context methods. Is there a symmetric Pop for every Push? What if an exception fires between them?\n5. **Security finding #3 fix (9dc148f5)** \u2014 tester didn't re-test; security said \"open\". Is `Mask` actually called on the diagnostic JSON path? Is there a test proving Sensitive values get masked?\n6. **Sensitive masking completeness** \u2014 assert fail \u2192 `AssertionError.Variables` \u2192 test.report JSON. Does masking cover this path end-to-end? What about the console failure block (non-JSON)?\n7. **Coverage subscriber \u2014 tester F2 in v4**: production coverage subscriber in run.cs was at 0% coverage; tester said tests use a look-alike. Is this still true after v4?\n8. **`test.discover` + `test.tag` + `test.run` integration** \u2014 smart wrappers (Steps, Actions) own iteration. Any place in test module that still iterates from outside owner? (OBP rule 1/5)\n9. **Verdict discipline** \u2014 confirm test-report.json F11 \"name-claim mismatch\" wasn't rubber-stamped by tester. It was flagged minor; should it be major? Deletion test result is telling: deleting `case \"junit\":` leaves both tests passing.\n\n## Risk ranking\n\n- **F11 name-claim gap** \u2014 tester rated minor but per my memory, weak tests with name-claim mismatch are a pattern I flag. This deserves explicit verdict.\n- **Sensitive masking** \u2014 security fix is 1 day old, unreviewed. High blast-radius (all diagnostic JSON output).\n- **Cross-file contract for AfterAction signature** \u2014 if any subscriber missed \u2192 silent observability loss OR crash.\n\n## Deliverables\n\n- `v1/result.md` \u2014 detailed findings\n- `v1/verdict.json` \u2014 pass/fail\n- `.bot/runtime2-test-module/auditor-report.json`\n\nNo code changes unless asked. Read-only audit.\n",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs",
+            "PLang/App/Events/Lifecycle/Bindings/Binding/this.cs",
+            "PLang/App/Actor/Context/this.cs",
+            "PLang/App/modules/event/on.cs",
+            "PLang/App/Goals/Goal/this.cs",
+            "PLang/App/FileSystem/Path.cs",
+            "PLang/App/modules/test/run.cs",
+            "PLang/App/modules/timeout/after.cs",
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Cross-cutting audit passes: AfterAction payload widening (all subscribers conform), Step propagation (SplitAtConditions uses indexer, other _items[i] sites safe), LoadedFromPrPath single consumer in Path.cs, Push/Pop symmetry via try/finally, coverage subscriber in place. All clean."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/test/report.cs",
+            "PLang/App/Channels/Serializers/SensitivePropertyFilter.cs",
+            "PLang/App/Utils/Json.cs",
+            "PLang/App/Errors/AssertionError.cs",
+            "PLang.Tests/App/Serializers/SensitivePropertyFilterTests.cs",
+            "Tests/TestModule/Report/TestReportWritesJunitXml.test.goal",
+            "Tests/TestModule/Report/TestReportIncludesCoverageTables.test.goal"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Security fix 9dc148f5 audit + F11 tester re-rating. Found F1/F2 major: JUnit path unmasked (security #3 only partially fixed); Report tests assert %report.format% (input echo) not file content \u2014 together, junit.xml regression has no detection. F3/F4 minor."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/auditor/v1/plan.md",
+            ".bot/runtime2-test-module/auditor/v1/result.md",
+            ".bot/runtime2-test-module/auditor/v1/summary.md",
+            ".bot/runtime2-test-module/auditor/v1/verdict.json",
+            ".bot/runtime2-test-module/auditor/summary.md",
+            ".bot/runtime2-test-module/auditor-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor deliverables: plan, result.md with 4 findings, summary, verdict.json (fail), cross-session summary, and auditor-report.json."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "two major findings (F1/F2) both around security fix 9dc148f5; one-edit fix available via AssertionError.FormatValue",
+        "notes": "Route back to coder. F2 is the keystone: fixing AssertionError.FormatValue to use Json.DiagnosticOutput closes the leak on console/JSON/JUnit in one place. F1 is one-line per .test.goal."
+      }
     }
   ]
 }
