@@ -1,0 +1,101 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-test-module",
+  "timestamp": "2026-04-21T13:30:00Z",
+  "reviewed_version": "v1",
+  "summary": "Filled all user-facing documentation gaps for the new test module. Created docs/modules/testing.md as the canonical user reference (lifecycle, config, tags, isolation, staleness, timeouts, failure output, sensitive masking, report schemas, coverage tables, actions reference, known limitations). Updated docs/modules/index.md with the test row and appended the notContains action to the assert row. Added notContains to docs/modules/assert.md. Cross-referenced the new user doc from Documentation/v0.2/building_plang_tests.md. Appended a Test Module cross-cutting invariants section to Documentation/v0.2/good_to_know.md. Verified XML docs on the new C# handlers and Test.* types are already thorough — no code-level doc gaps to fill.",
+  "stats": { "gaps_found": 6, "gaps_filled": 6, "docs_updated": 4, "docs_created": 1 },
+  "changes": [
+    {
+      "id": 1,
+      "type": "architecture-doc",
+      "action": "created",
+      "file": "docs/modules/testing.md",
+      "description": "New user-facing reference for the test module — lifecycle, CLI config, tags, isolation, staleness, timeouts, failure output + [Sensitive] masking, .test/ artefacts (json + junit), coverage tables, full actions reference, known security limitations from security-report.json findings 1-3."
+    },
+    {
+      "id": 2,
+      "type": "consistency",
+      "action": "updated",
+      "file": "docs/modules/index.md",
+      "description": "Added the test module row to Events & Testing, and added notContains to the assert module's action list."
+    },
+    {
+      "id": 3,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "docs/modules/assert.md",
+      "description": "Documented the notContains action added on this branch (symmetric in argument order, same container types as contains)."
+    },
+    {
+      "id": 4,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/building_plang_tests.md",
+      "description": "Added a lead paragraph distinguishing authoring (this file) from runtime concerns (docs/modules/testing.md)."
+    },
+    {
+      "id": 5,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "description": "Appended 'Test Module — Cross-Cutting Invariants' covering nine non-obvious facts future devs won't see in any single file: App boundary = file boundary; Coverage.Merge is additive/idempotent; site key includes goal path; test.discover seeds declared chains so unreached sites still appear; [RequiresCapability] is class-level single-instance; staleness uses goal.Hash not mtime; ChildAppCreated is an internal test-only event; test.tag no-ops outside test mode; Variables.Snapshot honors exclusions not [Sensitive] (sensitive filter applies at serialization)."
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "missing-doc",
+      "file": "docs/modules/testing.md",
+      "issue": "The test module had no user-facing documentation before this session. docs/modules/ covered assert and mock but not the runner users invoke with --test.",
+      "resolution": "filled",
+      "detail": "Created docs/modules/testing.md as a full reference."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "inconsistency",
+      "file": "docs/modules/index.md",
+      "issue": "The module index did not list the test module despite it being the most visible new user-facing surface on this branch. Also did not list notContains on the assert row.",
+      "resolution": "filled",
+      "detail": "Added test row and notContains action."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "missing-doc",
+      "file": "docs/modules/assert.md",
+      "issue": "The notContains action exists in code (PLang/App/modules/assert/notContains.cs) but was not documented.",
+      "resolution": "filled",
+      "detail": "Added an action section mirroring the contains entry, plus a note on symmetric argument order."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/building_plang_tests.md",
+      "issue": "The authoring reference was the only test-related doc but never pointed readers to how the runner actually executes, leaving runtime semantics undiscoverable.",
+      "resolution": "filled",
+      "detail": "Added a lead paragraph that distinguishes authoring (this file) from runtime (new testing.md)."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "category": "missing-doc",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "issue": "Nine cross-cutting invariants of the test module are not stated anywhere — each is plausibly derivable from a single file, but the combined picture (App boundary = file boundary, coverage merge semantics, site-key format, chain seeding, RequiresCapability attribute constraints, staleness mechanism, ChildAppCreated as test-only hook, test.tag production no-op, Variables.Snapshot vs [Sensitive]) requires reading ~7 files to assemble.",
+      "resolution": "filled",
+      "detail": "Appended a 'Test Module — Cross-Cutting Invariants' section."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "category": "missing-example",
+      "file": "docs/modules/testing.md",
+      "issue": "Authoring examples beyond the minimal one embedded in testing.md are the tester's job. Flagging for awareness; not a blocker since Tests/TestModule/**/*.test.goal already provides broad coverage.",
+      "resolution": "flagged-for-tester",
+      "detail": "The user doc includes one minimal .test.goal and one meta-test example. Additional patterns (fixture dirs, isolation probes, sensitive-variable handling) live in Tests/TestModule/ and don't need to be duplicated into docs/."
+    }
+  ]
+}

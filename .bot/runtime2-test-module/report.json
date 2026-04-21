@@ -1024,6 +1024,67 @@
         "health": "Branch ready for docs bot. All 4 v1 findings discharged; JUnit Sensitive leak closed; full test suite green.",
         "notes": "Coder 152d2a8e went beyond the v1 suggestion by consolidating three FormatValue copies into Json.FormatForDiagnostic \u2014 a correct OBP move. Committed JUnit snapshot is a nice forensic artefact for reviewers."
       }
+    },
+    {
+      "id": "d4a9f1b7-2c5e-4a83-b6d1-7e98c4f02a15",
+      "bot": "docs",
+      "timestamp_start": "2026-04-21T13:00:00Z",
+      "intent": "Write docs/modules/testing.md (user-facing test runner doc) and backfill index/cross-reference gaps for the new test module.",
+      "before": {
+        "assumptions": "Auditor v2 passes. Test module code is ready to merge. XML docs on new C# are already thorough (audited discover.cs, run.cs, tag.cs, report.cs, Test/this.cs, TestFile, TestRun, TestStatus, Coverage, RequiresCapabilityAttribute). Main gap is user-facing: no testing.md in docs/modules/, no test row in index.md, no cross-ref in building_plang_tests.md, no good_to_know entry.",
+        "risk": "Low. Additive docs only, no code changes. Risk of describing behavior that differs from source \u2014 will cross-check every claim against the handlers."
+      },
+      "plan": "1. Write docs/modules/testing.md covering: overview/lifecycle, .test.goal authoring, plang --test CLI, config dict (timeout/parallel/include/exclude/verbose/format), tags + [RequiresCapability] + exclude-wins, per-test App isolation, staleness check, timeouts, failure output with Variables snapshot + [Sensitive] masking, .test/results.json and .test/junit.xml schemas, coverage tables (module.action and branch), full actions reference (discover/run/tag/report), known limitations (security findings 1-3 from security-report.json). 2. Update docs/modules/index.md adding the test row to Events & Testing. 3. Add one cross-ref line in Documentation/v0.2/building_plang_tests.md pointing to the new user doc. 4. Add a test-module section to Documentation/v0.2/good_to_know.md capturing cross-cutting invariants (App boundary = file boundary, site key format includes goal path, discover seeds chains so unreached sites appear, RequiresCapability is class-level single-instance, goal.Hash vs .pr.Hash = staleness trigger, Coverage.Merge idempotent). 5. Write docs-report.json, verdict.json (pass), summary.md (version + root), result.md, changes.patch. 6. Commit + push.",
+      "actions": [
+        {
+          "paths": ["docs/modules/testing.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "User-facing reference for the test module. Every parameter table cross-checked against the C# handler source; every behavior claim traceable to a specific file/line (exclude-wins at discover.cs:167-176, App boundary at run.cs:75, variable snapshot exclusions at Variables/this.cs:593, chain seeding in discover.cs:SeedBranchChains, site key format at run.cs:99)."
+        },
+        {
+          "paths": ["docs/modules/index.md", "docs/modules/assert.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "index.md: added test row under Events & Testing, and added notContains to the assert action list. assert.md: documented the notContains action (file exists as PLang/App/modules/assert/notContains.cs on this branch but was undocumented); included a note on symmetric argument order per tester v6 L2 resolution (DefaultAssertProvider.Contains is symmetric, tolerates builder LLM flipping Value/Container)."
+        },
+        {
+          "paths": ["Documentation/v0.2/building_plang_tests.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added a lead paragraph splitting the two concerns: this file covers authoring (syntax, error vars, builder quirks); docs/modules/testing.md covers running (CLI, tags, isolation, reports). Prevents future docs bots from trying to cram runtime material into the authoring reference."
+        },
+        {
+          "paths": ["Documentation/v0.2/good_to_know.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Appended 'Test Module — Cross-Cutting Invariants' with nine entries: App boundary = file boundary, Coverage.Merge additive/idempotent, site-key format includes goal path, test.discover seeds declared chains so truly-unreached sites appear in reports, [RequiresCapability] is class-level single-instance (multi-capability via params), staleness uses goal.Hash not mtime, ChildAppCreated is an internal static event for runner meta-tests only, test.tag no-ops outside test mode (enables shared goals), Variables.Snapshot vs [Sensitive] (snapshot excludes !/Dynamic/Settings but sensitivity filter only applies at JSON serialization via Json.DiagnosticOutput)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-test-module/docs/v1/plan.md",
+            ".bot/runtime2-test-module/docs/v1/summary.md",
+            ".bot/runtime2-test-module/docs/v1/result.md",
+            ".bot/runtime2-test-module/docs/v1/verdict.json",
+            ".bot/runtime2-test-module/docs-report.json",
+            ".bot/runtime2-test-module/docs/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session records: plan, version summary, user-visible change list (+ proposed CHANGELOG entry since no CHANGELOG.md exists in repo), pass verdict, docs-report.json with six findings all resolved, root cross-session summary."
+        }
+      ],
+      "after": {
+        "status": "v1 complete. All documentation gaps filled. Verdict: pass (code ready to merge).",
+        "health": "green",
+        "notes": "Docs-only session — no code changes. XML docs on new C# handlers and Test.* types audited and found complete. Main gaps were all on the user-facing side (no testing.md existed). One finding (id 6) flagged-for-tester as informational, not a blocker: Tests/TestModule/**/*.test.goal already provides broad example coverage; additional patterns don't need duplicating into docs/. Next step: commit + push, write changes.patch against runtime2."
+      },
+      "timestamp_end": "2026-04-21T13:35:00Z"
     }
   ]
 }
