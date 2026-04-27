@@ -1,6 +1,6 @@
 {
   "name": "FailOnce",
-  "description": "Throws an error with message \u0022fail\u0022.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,6 +25,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -33,7 +38,7 @@
   "path": "/FailOnce.goal",
   "prPath": "/.build/failonce.pr",
   "hash": "f1648733b8656221b79a27895b2aaed27dd6586ca475761244b73193182e4865",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

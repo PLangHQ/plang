@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets settings.archive.max, reads it back into %maxSize%, and asserts the value equals 20971520.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -72,6 +77,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -101,6 +111,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -109,7 +124,7 @@
   "path": "/Start.test.goal",
   "prPath": "/.build/start.test.pr",
   "hash": "ec751a865962456ca94721ed138f68c2f3b6ca44ff11e1e7b784ace01ee33796",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

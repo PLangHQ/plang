@@ -1,6 +1,6 @@
 {
   "name": "ThrowError",
-  "description": "Throws an error with a tstring message and HTTP status code 500.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/ThrowError.goal",
   "prPath": "/.build/throwerror.pr",
   "hash": "760733522882f786b33a29656b13a929e3aabde1a27dbce83d60c95e0290a596",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

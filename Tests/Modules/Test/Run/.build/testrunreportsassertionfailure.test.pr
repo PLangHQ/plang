@@ -1,6 +1,6 @@
 {
   "name": "TestRunReportsAssertionFailure",
-  "description": "Discovers failing fixtures, counts them, asserts the count is 1, runs the discovered tests, checks that at least one result has Status == \u0027Fail\u0027, and asserts that condition is true.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -53,6 +53,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -95,6 +100,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -124,6 +134,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -166,6 +181,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -223,6 +243,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -247,6 +272,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -255,7 +285,7 @@
   "path": "/TestRunReportsAssertionFailure.test.goal",
   "prPath": "/.build/testrunreportsassertionfailure.test.pr",
   "hash": "5d80694d511162c5034997665a75b5101994906e80d0362ef0137d6c7fc753cd",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

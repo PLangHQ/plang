@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Performs an unsigned HTTP GET to httpbin.org, stores the response in %response%, checks it is not empty, writes a message, then checks StatusCode equals 200 and writes a second message.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -53,6 +53,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -74,7 +79,7 @@
             {
               "name": "Operator",
               "value": "isempty",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -92,6 +97,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Conditional check: if %response% is not empty. The step text says \u0027is not empty then\u0027, so we compile to condition.if with Negate=true and an isempty operator against an empty right-hand value.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -109,11 +119,6 @@
               "name": "Data",
               "value": "GET request returned data",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -121,6 +126,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write output message \u0027GET request returned data\u0027 as a translatable string (tstring). The step text includes write out; no channel parameter exists in the action catalog, so only Data is emitted.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -142,7 +152,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -160,6 +170,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Conditional check: if %response.StatusCode% equals 200 then. Compile to condition.if with == operator and Negate=false.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -177,11 +192,6 @@
               "name": "Data",
               "value": "Status code is 200",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -189,6 +199,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write output message \u0027Status code is 200\u0027 as a translatable string (tstring).",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -197,7 +212,7 @@
   "path": "/GetRequest.test.goal",
   "prPath": "/.build/getrequest.test.pr",
   "hash": "bd80ccafae6164da0d48e695d55f2be1e6b1ba6efc1a1673b0403e0a4638e542",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

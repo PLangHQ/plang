@@ -1,6 +1,6 @@
 {
   "name": "WhenFalse",
-  "description": "WhenFalse step sets %result% to the string \u0022negated\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/WhenFalse.goal",
   "prPath": "/.build/whenfalse.pr",
   "hash": "04427d0c9df712277476d5458f5462b724ffe2a212e88b0db99e6edb0d710010",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

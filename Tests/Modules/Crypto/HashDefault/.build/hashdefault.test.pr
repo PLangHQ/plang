@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %data% to \u0027hello world\u0027, hashes it with default algorithm (keccak256) and writes the result to %hash%, then asserts %hash% is not null (intended to be non-empty).",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -77,6 +82,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -98,7 +108,7 @@
             {
               "name": "Message",
               "value": "hash should produce non-empty result",
-              "type": "string?"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -106,6 +116,11 @@
         }
       ],
       "intent": null,
+      "guidance": "assert that %hash% is not empty. The @known mapping indicates the builder previously compiled this to assert.isNotNull, so we keep that exact mapping.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -114,7 +129,7 @@
   "path": "/HashDefault.test.goal",
   "prPath": "/.build/hashdefault.test.pr",
   "hash": "88e9c5eef8970c8e3db91c82c916d642254d5fb0f21b9f61e6d9ab99ef30eaf6",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

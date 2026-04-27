@@ -1,6 +1,6 @@
 {
   "name": "InnerGoal",
-  "description": "InnerGoal calls ThrowInnerError; if it errors, it calls InnerHandler via error.handle modifier.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -52,7 +52,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": null,
@@ -62,6 +62,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -70,7 +75,7 @@
   "path": "/InnerGoal.goal",
   "prPath": "/.build/innergoal.pr",
   "hash": "a60dacbb90144444eb57f4e9cb6fa09714365e4b956c674f73d69b64dc38f5c7",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

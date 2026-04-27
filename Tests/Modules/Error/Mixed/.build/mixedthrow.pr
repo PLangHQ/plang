@@ -1,6 +1,6 @@
 {
   "name": "MixedThrow",
-  "description": "Throws an error with message \u0027mixed error\u0027 using error.throw.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,6 +25,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -33,7 +38,7 @@
   "path": "/MixedThrow.goal",
   "prPath": "/.build/mixedthrow.pr",
   "hash": "16db04b6bed5cc31a88bc5151212d07f955a2f1958283afe4d62e42372eb57a3",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

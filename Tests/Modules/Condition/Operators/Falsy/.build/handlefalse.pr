@@ -1,6 +1,6 @@
 {
   "name": "HandleFalse",
-  "description": "Set %result% to the string \u0027false-branch\u0027 in the HandleFalse step.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/HandleFalse.goal",
   "prPath": "/.build/handlefalse.pr",
   "hash": "661aa8ff41aeda89a2c135d3233173c7404c02fb01a82652306063cd4cf53ff3",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets variables x/y/z/a/name/b, conditionally calls When* goals based on comparisons (\u003E, \u003C, ==, !=, contains) and a false branch, then asserts the corresponding result variables equal expected strings.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,11 +25,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Initialize %x% to 10 using variable.set.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -46,25 +57,26 @@
             {
               "name": "Left",
               "value": "%x%",
-              "type": "object"
+              "type": "int"
             },
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": 5,
               "type": "int"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "Negate",
+              "name": "negate",
               "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
           "modifiers": []
         },
         {
@@ -75,7 +87,9 @@
               "name": "GoalName",
               "value": {
                 "name": "WhenGreater",
-                "parameters": []
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/whengreater.pr"
               },
               "type": "goal.call"
             }
@@ -85,6 +99,11 @@
         }
       ],
       "intent": null,
+      "guidance": "If %x% \u003E 5, call goal WhenGreater. This is conditional branching; no direct result variable is set here.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -114,6 +133,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition: assert %greaterResult% equals \u0022yes\u0022.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -138,11 +162,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Initialize %y% to 3 using variable.set.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -159,25 +194,26 @@
             {
               "name": "Left",
               "value": "%y%",
-              "type": "object"
+              "type": "int"
             },
             {
               "name": "Operator",
               "value": "\u003C",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": 10,
               "type": "int"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "Negate",
+              "name": "negate",
               "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
           "modifiers": []
         },
         {
@@ -188,7 +224,9 @@
               "name": "GoalName",
               "value": {
                 "name": "WhenLess",
-                "parameters": []
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/whenless.pr"
               },
               "type": "goal.call"
             }
@@ -198,6 +236,11 @@
         }
       ],
       "intent": null,
+      "guidance": "If %y% \u003C 10, call goal WhenLess.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -227,6 +270,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition: assert %lessResult% equals \u0022yes\u0022.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -251,11 +299,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Initialize %z% to 5 using variable.set.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -272,25 +331,26 @@
             {
               "name": "Left",
               "value": "%z%",
-              "type": "object"
+              "type": "int"
             },
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": 5,
               "type": "int"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "Negate",
+              "name": "negate",
               "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
           "modifiers": []
         },
         {
@@ -301,7 +361,9 @@
               "name": "GoalName",
               "value": {
                 "name": "WhenEqual",
-                "parameters": []
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/whenequal.pr"
               },
               "type": "goal.call"
             }
@@ -311,6 +373,11 @@
         }
       ],
       "intent": null,
+      "guidance": "If %z% == 5, call goal WhenEqual.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -340,6 +407,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition: assert %equalResult% equals \u0022yes\u0022.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -364,11 +436,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Initialize %a% to 7 using variable.set.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -385,25 +468,26 @@
             {
               "name": "Left",
               "value": "%a%",
-              "type": "object"
+              "type": "int"
             },
             {
               "name": "Operator",
               "value": "!=",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": 3,
               "type": "int"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "Negate",
+              "name": "negate",
               "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
           "modifiers": []
         },
         {
@@ -414,7 +498,9 @@
               "name": "GoalName",
               "value": {
                 "name": "WhenNotEqual",
-                "parameters": []
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/whennotequal.pr"
               },
               "type": "goal.call"
             }
@@ -424,6 +510,11 @@
         }
       ],
       "intent": null,
+      "guidance": "If %a% != 3, call goal WhenNotEqual.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -453,6 +544,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition: assert %notEqualResult% equals \u0022yes\u0022.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -477,11 +573,22 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Initialize %name% to \u0022hello world\u0022 using variable.set.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -498,25 +605,26 @@
             {
               "name": "Left",
               "value": "%name%",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Operator",
               "value": "contains",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": "world",
               "type": "string"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "Negate",
+              "name": "negate",
               "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
           "modifiers": []
         },
         {
@@ -527,7 +635,9 @@
               "name": "GoalName",
               "value": {
                 "name": "WhenContains",
-                "parameters": []
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/whencontains.pr"
               },
               "type": "goal.call"
             }
@@ -537,6 +647,11 @@
         }
       ],
       "intent": null,
+      "guidance": "If %name% contains \u0022world\u0022, call goal WhenContains.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -566,6 +681,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition: assert %containsResult% equals \u0022yes\u0022.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -590,11 +710,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Initialize %b% to 2 using variable.set.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -616,20 +747,21 @@
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": 100,
               "type": "int"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "Negate",
+              "name": "negate",
               "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
           "modifiers": []
         },
         {
@@ -639,18 +771,12 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "WhenGreater",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/whengreater.pr"
+                "name": "WhenGreater",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/whengreater.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this?(user|service|system)",
-              "type": "actor"
             }
           ],
           "defaults": null,
@@ -658,29 +784,8 @@
         },
         {
           "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%b%",
-              "type": "int"
-            },
-            {
-              "name": "Operator",
-              "value": "\u003E",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": 100,
-              "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": true,
-              "type": "bool"
-            }
-          ],
+          "action": "else",
+          "parameters": [],
           "defaults": null,
           "modifiers": []
         },
@@ -691,18 +796,12 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "WhenFalse",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/whenfalse.pr"
+                "name": "WhenFalse",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/whenfalse.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this?(user|service|system)",
-              "type": "actor"
             }
           ],
           "defaults": null,
@@ -710,6 +809,11 @@
         }
       ],
       "intent": null,
+      "guidance": "If %b% \u003E 100 call WhenGreater, else call WhenFalse. Implement as if \u002B else branch with two goal.call actions in the same step.",
+      "level": "medium",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -739,6 +843,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition: assert %falseResult% equals \u0022no\u0022.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -747,7 +856,7 @@
   "path": "/ConditionCompound.test.goal",
   "prPath": "/.build/conditioncompound.test.pr",
   "hash": "9b189b9e28d5b45c9a83ddf05681b7b878ce40779e9bde3e606bf33dccdd647e",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

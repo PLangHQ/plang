@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Performs an unsigned HTTP GET to httpbin headers endpoint, stores the response in %response%, then conditionally writes an output message if %response% is not empty.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -53,6 +53,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -74,7 +79,7 @@
             {
               "name": "Operator",
               "value": "isempty",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -92,6 +97,11 @@
         }
       ],
       "intent": null,
+      "guidance": "The step is a conditional check: \u0027if %response% is not empty\u0027. Map to condition.if using operator \u0027isempty\u0027 with Negate=true so it passes when response is NOT empty. The Right operand is unused for isempty, so keep it as an empty object/value placeholder.",
+      "level": "high",
+      "confidence": 78,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -109,11 +119,6 @@
               "name": "Data",
               "value": "Unsigned request returned data",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -121,6 +126,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Writes a fixed message to output. The step text uses a translatable string literal, so emit it as tstring.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -129,7 +139,7 @@
   "path": "/UnsignedRequest.test.goal",
   "prPath": "/.build/unsignedrequest.test.pr",
   "hash": "93d478c76da1827002e3bf624afce0f87d3f47ac47759ec7ca8de40d20cdac33",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

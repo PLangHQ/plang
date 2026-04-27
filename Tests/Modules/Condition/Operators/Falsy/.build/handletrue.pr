@@ -1,6 +1,6 @@
 {
   "name": "HandleTrue",
-  "description": "Sets %result% to the string \u0022true-branch\u0022.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/HandleTrue.goal",
   "prPath": "/.build/handletrue.pr",
   "hash": "49e7d4ae7739c7c8735ca92768d80236a99551c8e9a5f12a70a412e97d782cd2",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

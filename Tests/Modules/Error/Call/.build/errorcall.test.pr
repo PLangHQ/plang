@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Sets an empty caught message, calls ThrowTestError with an on-error handler that calls CatchError, then asserts the caught message equals 'test error'.",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %caughtMessage% = \"\"",
+      "text": "set %caughtMessage% = \u0022\u0022",
       "lineNumber": 3,
       "indent": 0,
       "comment": "on error call goal catches error from called goal",
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -46,11 +51,10 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "ThrowTestError",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/throwtesterror.pr"
+                "name": "ThrowTestError",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/throwtesterror.pr"
               },
               "type": "goal.call"
             },
@@ -76,7 +80,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "CatchError"
+                            "name": "CatchError"
                           },
                           "type": "goal.call"
                         }
@@ -85,7 +89,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": [
@@ -101,11 +105,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Call goal ThrowTestError. The step text says \u0027on error call CatchError\u0027, so wrap the goal.call with error.handle Actions=[goal.call CatchError]. Actor is \u0027this?(user|service|system)\u0027 per the provided known mapping.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "assert %caughtMessage% equals \"test error\"",
+      "text": "assert %caughtMessage% equals \u0022test error\u0022",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -130,6 +139,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that caughtMessage equals \u0027test error\u0027.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -138,7 +152,7 @@
   "path": "/ErrorCall.test.goal",
   "prPath": "/.build/errorcall.test.pr",
   "hash": "8c21fb451d36f668ff578e8d092ed6e203cfced3aa3ec24de873a6fafb88d34d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

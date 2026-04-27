@@ -1,6 +1,6 @@
 {
   "name": "WhenLess",
-  "description": "WhenLess: if %result% \u003C= \u0027less\u0027, then set %result% to \u0027less\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -84,6 +84,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -92,7 +97,7 @@
   "path": "/WhenLess.goal",
   "prPath": "/.build/whenless.pr",
   "hash": "8ca0e5ed7d68a2df01d2bf088104851e5201618bc638a3ad359a4642b468c13f",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

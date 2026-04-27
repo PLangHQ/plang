@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity, creates it, sets signing payload data, signs with custom contracts, verifies with the same contracts and stores the result, then asserts verification success.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -63,11 +68,22 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "setasdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Create identity named testSigner. No explicit SetAsDefault requested.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -91,14 +107,25 @@
               "value": {
                 "payload": 42
               },
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %data% to a JSON object payload {\u0022payload\u0022:42}.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -123,7 +150,7 @@
                 "C0",
                 "C1"
               ],
-              "type": "list"
+              "type": "list\u003Cstring\u003E"
             }
           ],
           "defaults": null,
@@ -131,6 +158,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Sign %data% using custom contracts C0 and C1. Capture signed envelope in %__data__% for the next step.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -155,7 +187,7 @@
                 "C0",
                 "C1"
               ],
-              "type": "list"
+              "type": "list\u003Cstring\u003E"
             }
           ],
           "defaults": null,
@@ -176,11 +208,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Verify the signed data in %data% against matching contracts C0 and C1, then write the verification result to %verifyResult%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -207,7 +250,7 @@
             {
               "name": "Message",
               "value": "matching custom contracts should verify",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -215,6 +258,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert verification success is true. Message is translatable (tstring).",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -223,7 +271,7 @@
   "path": "/SigningCustomContracts.test.goal",
   "prPath": "/.build/signingcustomcontracts.test.pr",
   "hash": "101bf6af9ada83955301485d3735405d1c5b454422f1b27e656a79d4e98d48b0",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

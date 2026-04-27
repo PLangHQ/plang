@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls sub/SubGoal and then asserts that %subResult% equals \u0022from sub\u0022.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -28,6 +28,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -57,6 +62,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -65,7 +75,7 @@
   "path": "/GoalCallRelative.test.goal",
   "prPath": "/.build/goalcallrelative.test.pr",
   "hash": "cb01eef210fee7de682ba2b2518a19d73b1aea2dc6f39fb6b7de168b0414c8b0",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

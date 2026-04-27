@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %flag% to false, then conditionally calls HandleTrue or HandleFalse based on whether %flag% equals true, and finally asserts %result% equals the expected false-branch value.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +56,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -74,7 +79,10 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "HandleTrue"
+                "name": "HandleTrue",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/handletrue.pr"
               },
               "type": "goal.call"
             }
@@ -94,7 +102,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -117,7 +125,10 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "HandleFalse"
+                "name": "HandleFalse",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/handlefalse.pr"
               },
               "type": "goal.call"
             }
@@ -127,6 +138,11 @@
         }
       ],
       "intent": null,
+      "guidance": "if %flag%, call HandleTrue, else call HandleFalse compiles to two condition.if checks: first for flag == true (then-branch), and a second condition.if for the else-branch (negated). Each branch calls the corresponding goal.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -161,6 +177,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -169,7 +190,7 @@
   "path": "/ConditionFalsy.test.goal",
   "prPath": "/.build/conditionfalsy.test.pr",
   "hash": "dc5a504602162b53b08ccae42a594e1cb8bcac00e9b7b91321f6229bf1868c4e",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

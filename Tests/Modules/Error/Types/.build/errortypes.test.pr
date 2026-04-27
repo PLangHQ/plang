@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls ThrowUserError with an on-error handler, asserts the thrown error key, then attempts to read a missing file with an on-error handler and asserts the file error was caught.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -17,14 +17,12 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowUserError"
+                "name": "ThrowUserError",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/throwusererror.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this",
-              "type": "actor(user|service|system)"
             }
           ],
           "defaults": null,
@@ -43,7 +41,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "CatchThrow"
+                            "name": "CatchThrow"
                           },
                           "type": "goal.call"
                         }
@@ -52,7 +50,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 },
                 {
                   "name": "IgnoreError",
@@ -67,11 +65,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Call ThrowUserError. If it errors, recover by calling CatchThrow via error.handle. The step text includes \u0027on error call CatchThrow\u0027, so we must wrap the goal.call with error.handle Actions=[goal.call CatchThrow].",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "assert %throwKey% equals \"TestKey\"",
+      "text": "assert %throwKey% equals \u0022TestKey\u0022",
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
@@ -101,11 +104,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "read file 'nonexistent_file_xyz.txt', on error call CatchFileError",
+      "text": "read file \u0027nonexistent_file_xyz.txt\u0027, on error call CatchFileError",
       "lineNumber": 7,
       "indent": 0,
       "comment": "file not found error",
@@ -141,7 +149,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "CatchFileError"
+                            "name": "CatchFileError"
                           },
                           "type": "goal.call"
                         }
@@ -150,7 +158,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 },
                 {
                   "name": "IgnoreError",
@@ -165,6 +173,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Read a nonexistent file. If it errors, recover by calling CatchFileError via error.handle. The step text includes \u0027on error call CatchFileError\u0027, so we must wrap file.read with error.handle Actions=[goal.call CatchFileError].",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -199,6 +212,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -207,7 +225,7 @@
   "path": "/ErrorTypes.test.goal",
   "prPath": "/.build/errortypes.test.pr",
   "hash": "795a83975d59d5634a207d8f3ff7e47d24f549850fe91a0107e5f4123e5a6510",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls llm.query requesting JSON-only output, writes the response to %result%, then asserts %result% is not null.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -20,12 +20,16 @@
                 {
                   "role": "system",
                   "content": "Reply in JSON format only",
-                  "images": []
+                  "images": [],
+                  "toolCallId": null,
+                  "toolCalls": null
                 },
                 {
                   "role": "user",
                   "content": "Return a JSON object with key \u0022color\u0022 set to \u0022blue\u0022",
-                  "images": []
+                  "images": [],
+                  "toolCallId": null,
+                  "toolCalls": null
                 }
               ],
               "type": "list\u003Cllmmessage\u003E"
@@ -36,7 +40,38 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "continuepreviousconversation",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "temperature",
+              "value": 0,
+              "type": "double"
+            },
+            {
+              "name": "maxtokens",
+              "value": 16000,
+              "type": "int"
+            },
+            {
+              "name": "maxtoolcalls",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "maxvalidationretries",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -54,11 +89,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Map the [llm] system/user/format/write-to clauses to llm.query with Messages and Format=json, then store the response body into %result% via variable.set.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -80,7 +126,7 @@
             {
               "name": "Message",
               "value": "Expected %result% to be not null",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -88,6 +134,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: ensure %result% is not null. This is an assert.* action with Value=%result% and the provided message.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -96,7 +147,7 @@
   "path": "/LlmFormat.test.goal",
   "prPath": "/.build/llmformat.test.pr",
   "hash": "a572581de9026488973df4f3364f5d6ea4b68fd7482a223ed3b438130aad6304",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,14 +1,14 @@
 {
   "name": "Start",
-  "description": "Sets %headerFailed% to true (the '<= null' indicates no additional value source).",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "archive identity 'testSigner', force, on error ignore",
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
       "lineNumber": 3,
       "indent": 0,
-      "comment": "Test: verify fails when expected headers don't match signed headers",
+      "comment": "Test: verify fails when expected headers don\u0027t match signed headers",
       "actions": [
         {
           "module": "identity",
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Archive identity \u0027testSigner\u0027 with Force=true. On error ignore, so verification continues even if identity doesn\u0027t exist.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -73,11 +78,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Create identity named testSigner. Do not set as default.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "set %data% = { \"body\": \"content\" }",
+      "text": "set %data% = { \u0022body\u0022: \u0022content\u0022 }",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -96,19 +106,30 @@
               "value": {
                 "body": "content"
               },
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %data% to a JSON object containing body/content.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "set %signHeaders% = { \"method\": \"POST\", \"url\": \"/api/send\" }",
+      "text": "set %signHeaders% = { \u0022method\u0022: \u0022POST\u0022, \u0022url\u0022: \u0022/api/send\u0022 }",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -128,14 +149,25 @@
                 "method": "POST",
                 "url": "/api/send"
               },
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %signHeaders% to JSON object with method/url used for signing.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -157,7 +189,7 @@
             {
               "name": "Headers",
               "value": "%signHeaders%",
-              "type": "dict<string,object>"
+              "type": "dict\u003Cstring,object\u003E"
             }
           ],
           "defaults": null,
@@ -165,11 +197,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Sign %data% using headers %signHeaders%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 5,
-      "text": "set %wrongHeaders% = { \"method\": \"GET\", \"url\": \"/api/send\" }",
+      "text": "set %wrongHeaders% = { \u0022method\u0022: \u0022GET\u0022, \u0022url\u0022: \u0022/api/send\u0022 }",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -189,19 +226,30 @@
                 "method": "GET",
                 "url": "/api/send"
               },
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %wrongHeaders% to JSON object with mismatching method/url.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 6,
-      "text": "verify %data% with contracts ['C0'] and headers %wrongHeaders%, on error call HandleHeaderError",
+      "text": "verify %data% with contracts [\u0027C0\u0027] and headers %wrongHeaders%, on error call HandleHeaderError",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -220,12 +268,12 @@
               "value": [
                 "C0"
               ],
-              "type": "list"
+              "type": "list\u003Cstring\u003E"
             },
             {
               "name": "Headers",
               "value": "%wrongHeaders%",
-              "type": "dict"
+              "type": "dict\u003Cstring,object\u003E"
             }
           ],
           "defaults": null,
@@ -244,7 +292,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "HandleHeaderError"
+                            "name": "HandleHeaderError"
                           },
                           "type": "goal.call"
                         }
@@ -253,7 +301,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": [
@@ -269,11 +317,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Verify %data% against contract C0 and wrong headers. On error, call HandleHeaderError via error.handle recovery chain.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 7,
-      "text": "assert %headerFailed% is true, \"header mismatch should fail verification\"",
+      "text": "assert %headerFailed% is true, \u0022header mismatch should fail verification\u0022",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -298,6 +351,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition: header mismatch should fail verification, so %headerFailed% must be true.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -334,6 +392,11 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
@@ -354,7 +417,7 @@
   "path": "/SigningHeaderMismatch.test.goal",
   "prPath": "/.build/signingheadermismatch.test.pr",
   "hash": "ca2988229674c2ef237cfe215b1ea2279eb19ec83ba354a6ae4ab5493842011d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

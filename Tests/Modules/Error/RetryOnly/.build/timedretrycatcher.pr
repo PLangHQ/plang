@@ -1,6 +1,6 @@
 {
   "name": "TimedRetryCatcher",
-  "description": "Sets %timedRetryCaught% to true in TimedRetryCatcher.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/TimedRetryCatcher.goal",
   "prPath": "/.build/timedretrycatcher.pr",
   "hash": "0c5b0bce71ea2d237dd7b436a42bc5268c0db5828e914f20dc18abea890d7450",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "CatchSwahili",
-  "description": "Sets the %caughtSwahili% variable to true.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/CatchSwahili.goal",
   "prPath": "/.build/catchswahili.pr",
   "hash": "9b4b035307347296916d7c5b39b0a2c058d0ec06b33195186cbd8e4a8c1b2734",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

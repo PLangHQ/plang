@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity, creates it, sets signing data and headers, signs the data with headers, verifies the signed data against contract C0 and the same headers, then asserts verification succeeded.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -63,11 +68,22 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "setasdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Create the identity named testSigner. This is a direct identity.create call.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -91,14 +107,25 @@
               "value": {
                 "body": "content"
               },
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %data% to a JSON object payload {\u0022body\u0022:\u0022content\u0022}.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -123,14 +150,25 @@
                 "method": "POST",
                 "url": "/api/send"
               },
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %headers% to a JSON object containing method and url.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -152,7 +190,7 @@
             {
               "name": "Headers",
               "value": "%headers%",
-              "type": "dictionary"
+              "type": "dict\u003Cstring,object\u003E"
             }
           ],
           "defaults": null,
@@ -160,6 +198,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Sign %data% using the provided headers %headers%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -183,12 +226,12 @@
               "value": [
                 "C0"
               ],
-              "type": "list"
+              "type": "list\u003Cstring\u003E"
             },
             {
               "name": "Headers",
               "value": "%headers%",
-              "type": "dictionary"
+              "type": "dict\u003Cstring,object\u003E"
             }
           ],
           "defaults": null,
@@ -209,11 +252,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Verify %data% against contract C0 and the same headers, then write the verification result into %verifyResult%.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -235,7 +289,7 @@
             {
               "name": "Message",
               "value": "matching headers should verify",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -243,6 +297,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that verifyResult.Success is true with a translatable message.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -251,7 +310,7 @@
   "path": "/SigningWithHeaders.test.goal",
   "prPath": "/.build/signingwithheaders.test.pr",
   "hash": "50db935291681ff124a0177cc3b0b04b35178ca76197ee3ecca9afe30c3c620f",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

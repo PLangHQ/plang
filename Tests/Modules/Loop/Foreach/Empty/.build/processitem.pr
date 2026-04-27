@@ -1,6 +1,6 @@
 {
   "name": "ProcessItem",
-  "description": "Increments %count% by 1 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -36,6 +36,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -44,7 +49,7 @@
   "path": "/ProcessItem.goal",
   "prPath": "/.build/processitem.pr",
   "hash": "2aaee77697119c328a1838907e034bdc41b7dceeed31c45f74f611dc2244e69b",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

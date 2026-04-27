@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name% to \u0027hello world\u0027, checks whether it starts with \u0027hello\u0027 and conditionally calls goal WhenStarts, then asserts %result% equals \u0027starts\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -79,6 +84,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -105,7 +115,7 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for startswith",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -113,6 +123,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %result% equals the expected string. Uses assert.equals with %result% as Actual and a translatable message.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -121,7 +136,7 @@
   "path": "/ConditionStartsWith.test.goal",
   "prPath": "/.build/conditionstartswith.test.pr",
   "hash": "9eab1ffa0ef05bb7e8e7db4591b6dea6797252c0dd395f5a1171047c13377dd2",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

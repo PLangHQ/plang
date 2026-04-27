@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Overrides file.read behavior, attempts to read a nonexistent JSON file into %content%, then writes %content% to output.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -36,6 +36,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -78,11 +83,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "file.read of nonexistent.json, then variable.set to store the read result into %content%. ResolveVariables is false per step text.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -112,6 +128,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -120,7 +141,7 @@
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
   "hash": "b5448c4b88812ee808ca3e3226b391e13d998e31b7122a00fc59a57b61676944",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

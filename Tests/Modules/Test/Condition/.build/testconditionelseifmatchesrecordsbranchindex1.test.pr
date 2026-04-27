@@ -1,6 +1,6 @@
 {
   "name": "TestConditionElseIfMatchesRecordsBranchIndex1",
-  "description": "Sets %x%=7, evaluates an if/elseif/else chain to set %b%=2 via the elseif branch, then asserts the published branchIndex is 1 and that %b% equals 2.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +56,7 @@
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -62,11 +67,6 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -87,7 +87,13 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -102,7 +108,7 @@
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -113,11 +119,6 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -138,19 +139,19 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
           "module": "condition",
           "action": "else",
-          "parameters": [
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
-            }
-          ],
+          "parameters": [],
           "defaults": null,
           "modifiers": []
         },
@@ -169,11 +170,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Compile the if/elseif/else chain. The step text sets %a% when %x% \u003E 10, else sets %b% when %x% \u003E 5, else sets %c%. This maps to condition.if, then condition.elseif, then condition.else, each followed by the corresponding variable.set action.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -208,6 +220,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -242,6 +259,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -250,7 +272,7 @@
   "path": "/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal",
   "prPath": "/.build/testconditionelseifmatchesrecordsbranchindex1.test.pr",
   "hash": "7c7911ff749550d35cadc0bb803035101ce5ffe57232d33e12db07c43107db9d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

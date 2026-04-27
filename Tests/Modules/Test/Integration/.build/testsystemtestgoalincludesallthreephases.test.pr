@@ -1,6 +1,6 @@
 {
   "name": "TestSystemTestGoalIncludesAllThreePhases",
-  "description": "Reads /system/test.goal into %goalText%, then asserts the text contains test.discover, test.run, and test.report.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -48,6 +48,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -82,6 +87,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -116,6 +126,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -150,6 +165,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -158,7 +178,7 @@
   "path": "/TestSystemTestGoalIncludesAllThreePhases.test.goal",
   "prPath": "/.build/testsystemtestgoalincludesallthreephases.test.pr",
   "hash": "82a745b237dd3a8828685ba2701af4a77b9d89e85f6dc797633ddb97243024da",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

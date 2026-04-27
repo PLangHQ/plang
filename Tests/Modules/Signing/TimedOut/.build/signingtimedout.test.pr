@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Sets the %timedOut% flag to true (null comparison noted in step text).",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "archive identity 'testSigner', force, on error ignore",
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: verify fails when Created is older than timeout setting",
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -68,11 +73,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "set %data% = { \"payload\": \"old\" }",
+      "text": "set %data% = { \u0022payload\u0022: \u0022old\u0022 }",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -99,6 +109,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -147,6 +162,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -176,6 +196,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -200,11 +225,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 6,
-      "text": "verify %data% with contracts ['C0'], on error call HandleTimedOut",
+      "text": "verify %data% with contracts [\u0027C0\u0027], on error call HandleTimedOut",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -223,7 +253,7 @@
               "value": [
                 "C0"
               ],
-              "type": "list<string>"
+              "type": "list\u003Cstring\u003E"
             }
           ],
           "defaults": null,
@@ -251,7 +281,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": [
@@ -291,11 +321,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 7,
-      "text": "assert %timedOut% is true, \"signature older than timeout should fail\"",
+      "text": "assert %timedOut% is true, \u0022signature older than timeout should fail\u0022",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -312,7 +347,7 @@
             {
               "name": "Message",
               "value": "signature older than timeout should fail",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -320,6 +355,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %timedOut% is true. This is an assert.* step, not a conditional throw.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -362,6 +402,11 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
@@ -382,7 +427,7 @@
   "path": "/SigningTimedOut.test.goal",
   "prPath": "/.build/signingtimedout.test.pr",
   "hash": "b5caa9d5e8e99346073de3e01bee8e7bef3106cdf4ad8f654d870bc4250b4832",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets a JSON object, hashes it twice, stores both hashes, then asserts the two hashes are identical.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -33,6 +33,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -52,7 +57,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "algorithm",
+              "value": "keccak256",
+              "type": "string"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -70,11 +81,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Hash %obj% using default algorithm (crypto.hash default keccak256) and write the resulting digest to %hash1% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -128,6 +150,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Hash %obj% again but explicitly specify Algorithm=keccak256, then write digest to %hash2%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -162,6 +189,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -170,7 +202,7 @@
   "path": "/HashObject.test.goal",
   "prPath": "/.build/hashobject.test.pr",
   "hash": "b5a9e3b23c5def12f12f8b8e7337e4b70f9ec04aad833d1092d8b38f09c15e75",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "CatchJapanese",
-  "description": "Sets the %caughtJapanese% variable to true.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/CatchJapanese.goal",
   "prPath": "/.build/catchjapanese.pr",
   "hash": "60c802606c976f152d5f57bca81d0e5a510c3c76a762e5b2835c240434bcdc3c",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

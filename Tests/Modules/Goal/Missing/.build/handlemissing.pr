@@ -1,6 +1,6 @@
 {
   "name": "HandleMissing",
-  "description": "Sets %missingCaught% to true when handling missing data (null comparison implied by step text).",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/HandleMissing.goal",
   "prPath": "/.build/handlemissing.pr",
   "hash": "6bfa3e52f470dc006286a5418d0a9270a4a8225a172661b024816e0ad2084865",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

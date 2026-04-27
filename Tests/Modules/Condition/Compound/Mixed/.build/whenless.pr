@@ -1,6 +1,6 @@
 {
   "name": "WhenLess",
-  "description": "WhenLess step: evaluate a condition (Left \u003C= Right) with Negate=false, then if true set %lessResult% to \u0022yes\u0022.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -22,7 +22,7 @@
             {
               "name": "Operator",
               "value": "\u003C=",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -33,11 +33,6 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -69,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Use condition.if with Left/Operator/Right and Negate=false. The step text indicates the body runs when the condition is met, so after condition.if we set %lessResult% to \u0022yes\u0022 via variable.set.",
+      "level": "high",
+      "confidence": 55,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -77,7 +77,7 @@
   "path": "/WhenLess.goal",
   "prPath": "/.build/whenless.pr",
   "hash": "428a59343c2ef05617772887e106049b900979acae829a08f03039b4122c9886",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

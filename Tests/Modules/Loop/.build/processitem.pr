@@ -1,6 +1,6 @@
 {
   "name": "ProcessItem",
-  "description": "Writes an output line for the current loop item.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/ProcessItem.goal",
   "prPath": "/.build/processitem.pr",
   "hash": "cfeb4d0ddd62c20bc3ca1f0a7102830269241c0d6547c72d7e16db832eae042d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity, creates it, signs empty JSON data, verifies the signature against contract C0, stores verification result, and asserts success.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -63,11 +68,22 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "setasdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Create a new identity named testSigner. No explicit SetAsDefault requested.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -89,14 +105,25 @@
             {
               "name": "Value",
               "value": {},
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Assign an empty JSON object to %data% for signing.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -121,6 +148,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Sign the empty/minimal data stored in %data% using the configured signing provider.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -144,7 +176,7 @@
               "value": [
                 "C0"
               ],
-              "type": "list"
+              "type": "list\u003Cstring\u003E"
             }
           ],
           "defaults": null,
@@ -165,11 +197,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Verify the signed envelope in %data% against contract list [\u0027C0\u0027], then store the verification result in %verifyResult%.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -191,7 +234,7 @@
             {
               "name": "Message",
               "value": "empty data should sign and verify",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -199,6 +242,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that verification result indicates success.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -207,7 +255,7 @@
   "path": "/SigningEmptyData.test.goal",
   "prPath": "/.build/signingemptydata.test.pr",
   "hash": "33ef93ba488d8e07892aff6515c98fe60f15a4a982802063ab676b551932d252",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

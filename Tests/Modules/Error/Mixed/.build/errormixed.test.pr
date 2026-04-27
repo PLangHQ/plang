@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Builds a 9-step goal that throws errors with ignore behavior, verifies execution continues, then calls a goal with an on-error handler and verifies the handler ran, then retries an error once and ignores it, verifying execution continues.",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "throw error \"ignored\", on error ignore",
+      "text": "throw error \u0022ignored\u0022, on error ignore",
       "lineNumber": 3,
       "indent": 0,
       "comment": "ignore error \u2014 execution continues",
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": "throw error with message \u0027ignored\u0027 and wrap it with error.handle that ignores the error so execution continues.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -68,16 +73,27 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %afterIgnore% to true after the ignored error.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "assert %afterIgnore% is true, \"should continue after ignored error\"",
+      "text": "assert %afterIgnore% is true, \u0022should continue after ignored error\u0022",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -102,6 +118,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that %afterIgnore% is true to verify execution continued.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -126,11 +147,22 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Initialize %mixedCaught% to false before calling MixedThrow.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -147,11 +179,10 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "MixedThrow",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/mixedthrow.pr"
+                "name": "MixedThrow",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/mixedthrow.pr"
               },
               "type": "goal.call"
             },
@@ -177,7 +208,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "MixedCatcher"
+                            "name": "MixedCatcher"
                           },
                           "type": "goal.call"
                         }
@@ -186,7 +217,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": [
@@ -202,11 +233,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Call goal MixedThrow; on error, run MixedCatcher via error.handle Actions chain. Actor is \u0027this?\u0027 (runtime actor selection).",
+      "level": "medium",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 5,
-      "text": "assert %mixedCaught% is true, \"error handler should be called\"",
+      "text": "assert %mixedCaught% is true, \u0022error handler should be called\u0022",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -231,11 +267,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that %mixedCaught% is true to verify the error handler ran.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 6,
-      "text": "throw error \"retried\", on error retry 1 times, ignore",
+      "text": "throw error \u0022retried\u0022, on error retry 1 times, ignore",
       "lineNumber": 11,
       "indent": 0,
       "comment": "retry then ignore \u2014 execution continues",
@@ -279,6 +320,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Throw error \u0027retried\u0027 with status 500; on error retry once and then ignore so execution continues.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -303,16 +349,27 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %afterRetryIgnore% to true after retry\u002Bignore.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 8,
-      "text": "assert %afterRetryIgnore% is true, \"should continue after retry + ignore\"",
+      "text": "assert %afterRetryIgnore% is true, \u0022should continue after retry \u002B ignore\u0022",
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
@@ -328,7 +385,7 @@
             },
             {
               "name": "Message",
-              "value": "should continue after retry + ignore",
+              "value": "should continue after retry \u002B ignore",
               "type": "string"
             }
           ],
@@ -337,6 +394,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that %afterRetryIgnore% is true to verify execution continued after retry\u002Bignore.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -345,7 +407,7 @@
   "path": "/ErrorMixed.test.goal",
   "prPath": "/.build/errormixed.test.pr",
   "hash": "404b2ab9c62aee50f67d3994779bbabd80df12a865ea0d74496c9b522caf622c",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

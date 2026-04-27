@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %flag% to true, conditionally calls HandleTrue when %flag% is true, then asserts %result% equals the expected true-branch string.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +56,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -59,7 +64,13 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -69,7 +80,10 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "HandleTrue"
+                "name": "HandleTrue",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/handletrue.pr"
               },
               "type": "goal.call"
             }
@@ -79,6 +93,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Conditional branch: if %flag% == true, call the goal named HandleTrue. The @known mapping indicates the exact condition.if \u002B goal.call chain.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -113,6 +132,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -121,7 +145,7 @@
   "path": "/ConditionTruthy.test.goal",
   "prPath": "/.build/conditiontruthy.test.pr",
   "hash": "7c148bf8428f1b535a357771e74061460e768a153f269c0620f8b165fe03f340",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

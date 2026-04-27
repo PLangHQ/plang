@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %flag% to false, then uses condition.if with Negate=true to treat \u0027if not %flag%\u0027 as %flag% == true, calling WhenFalse when the condition matches. Finally asserts %result% equals \u0027negated\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +56,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -75,7 +80,9 @@
               "name": "GoalName",
               "value": {
                 "name": "WhenFalse",
-                "parameters": []
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/whenfalse.pr"
               },
               "type": "goal.call"
             }
@@ -85,6 +92,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Compile \u0060if not %flag%, call WhenFalse\u0060 as a condition.if comparing %flag% to true with Negate=true, then call goal WhenFalse when the condition matches.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -119,6 +131,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -127,7 +144,7 @@
   "path": "/ConditionNot.test.goal",
   "prPath": "/.build/conditionnot.test.pr",
   "hash": "a7710ec1237c989fb1f6596ef87bf1e0552553ce70930fc5fa07832bf42e060a",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

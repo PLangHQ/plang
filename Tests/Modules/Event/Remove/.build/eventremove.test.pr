@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets up an event binding, registers an event handler that increments a counter via output.write, fires it by writing \u0027first\u0027, verifies the counter incremented once, removes the event binding, then writes \u0027second\u0027 and verifies the counter did not increment again.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -45,17 +50,16 @@
           "parameters": [
             {
               "name": "Type",
-              "value": "output.write",
-              "type": "string"
+              "value": "BeforeAction",
+              "type": "eventtype"
             },
             {
               "name": "GoalToCall",
               "value": {
-                "Name": "output.write",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": null
+                "name": "Counter",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/counter.pr"
               },
               "type": "goal.call"
             },
@@ -95,6 +99,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Register a lifecycle hook for BeforeAction that matches output.write and calls the Counter goal on the system actor, binding it to %eventBinding%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -112,11 +121,6 @@
               "name": "Data",
               "value": "first",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -124,6 +128,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write the translatable string \u0027first\u0027 to the configured channel(s) (this).",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -153,6 +162,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -177,6 +191,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -194,11 +213,6 @@
               "name": "Data",
               "value": "second",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -206,6 +220,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write the translatable string \u0027second\u0027 to the configured channel(s) (this). After event removal, Counter should not run again.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -235,6 +254,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -243,7 +267,7 @@
   "path": "/EventRemove.test.goal",
   "prPath": "/.build/eventremove.test.pr",
   "hash": "c1aab1a156ef3b1154f5aa41533b3d21f86b54d517cced7f67aee12e06b04fc5",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

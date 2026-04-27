@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets flag and inner variables, checks flag with condition.if, then runs indented variable.set steps and asserts that the indented steps executed when the condition is true.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -93,6 +103,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -122,6 +137,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -151,6 +171,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -172,7 +197,7 @@
             {
               "name": "Message",
               "value": "indented steps should execute when condition is true",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -180,6 +205,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %innerRan% is true. This must compile to assert.isTrue with the provided tstring message.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -206,7 +236,7 @@
             {
               "name": "Message",
               "value": "indented set should have run",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -214,6 +244,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %innerValue% equals \u0022executed\u0022 with the provided tstring message.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -222,7 +257,7 @@
   "path": "/ConditionSubStepsTrue.test.goal",
   "prPath": "/.build/conditionsubstepstrue.test.pr",
   "hash": "eea24c21cb5c72743bd936eef55669c6a34a956ccc23930f100498a728220900",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

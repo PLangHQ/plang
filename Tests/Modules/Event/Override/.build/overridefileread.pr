@@ -1,6 +1,6 @@
 {
   "name": "OverrideFileRead",
-  "description": "Skip the file read action and set the result to null (as overridden).",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/OverrideFileRead.goal",
   "prPath": "/.build/overridefileread.pr",
   "hash": "a20cae08e3840d08d1e3c63c952b105a657a943912577cae40303948bcd12d82",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

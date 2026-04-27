@@ -1,6 +1,6 @@
 {
   "name": "ReadWithKey",
-  "description": "Reads keytest.txt, caches the file.read for 5 minutes under key \u0027myKeyTest\u0027, then stores the read result into %keyData% via variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -72,6 +72,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -80,7 +85,7 @@
   "path": "/ReadWithKey.goal",
   "prPath": "/.build/readwithkey.pr",
   "hash": "0c4bc9bc4a1f048eae1406d6c63a3bdfe8fca33e193944a9b5f81f3a87e2356a",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

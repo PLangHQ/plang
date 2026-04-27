@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %title%, renders page.html with explicit author parameter and writes output to %result%, then asserts %result% contains expected Title and Author strings.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -94,6 +99,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -123,6 +133,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -152,6 +167,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -160,7 +180,7 @@
   "path": "/RenderWithParams.test.goal",
   "prPath": "/.build/renderwithparams.test.pr",
   "hash": "fd5f4292a59df89e78557a09e4d3b9eb657498f8eff94f7a748741cf33b9ec27",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

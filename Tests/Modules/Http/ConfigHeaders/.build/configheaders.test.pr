@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Configures default HTTP headers, performs an unsigned GET to httpbin headers endpoint, stores the response, checks that the response is not empty, and writes an output message.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -27,6 +27,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -48,7 +53,7 @@
             {
               "name": "Method",
               "value": "GET",
-              "type": "string"
+              "type": "httpmethod"
             },
             {
               "name": "Unsigned",
@@ -56,7 +61,23 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "contenttype",
+              "value": "application/json",
+              "type": "string"
+            },
+            {
+              "name": "encoding",
+              "value": "utf-8",
+              "type": "string"
+            },
+            {
+              "name": "timeoutinsec",
+              "value": 30,
+              "type": "int"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -74,11 +95,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Send an unsigned HTTP GET request to the headers endpoint and write the parsed response body into %response% via variable.set.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -100,7 +132,7 @@
             {
               "name": "Operator",
               "value": "isempty",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -118,6 +150,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Branch when %response% is not empty. Implemented as: if response is empty then negate=true (so the condition passes when response is not empty).",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -139,7 +176,7 @@
             {
               "name": "Channels",
               "value": "this",
-              "type": "string"
+              "type": "channels"
             }
           ],
           "defaults": null,
@@ -147,6 +184,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write a confirmation message to output. The step text includes a channel; map it to output.write parameters as provided by the known mapping.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -155,7 +197,7 @@
   "path": "/ConfigHeaders.test.goal",
   "prPath": "/.build/configheaders.test.pr",
   "hash": "29e2997537ad66df7ec3cd4beb455913b7a6be87f3b2955e8024beda9cffaa69",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

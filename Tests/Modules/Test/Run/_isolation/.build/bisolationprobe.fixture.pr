@@ -1,6 +1,6 @@
 {
   "name": "BIsolationProbe",
-  "description": "BIsolationProbe asserts that %shared_probe% is null at entry to prove no state leakage from AIsolationPollute.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/_isolation/BIsolationProbe.fixture.goal",
   "prPath": "/_isolation/.build/bisolationprobe.fixture.pr",
   "hash": "16437291eac594b25bb2b9d54b8e90dc407e6d5a26f22aad08da7352857485a3",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %a% and %b%, evaluates a compound OR condition, calls DoThing when the condition is true, then asserts %result% equals the expected value.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -80,7 +90,7 @@
             {
               "name": "Operator",
               "value": "or",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -103,18 +113,12 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "DoThing",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/dothing.pr"
+                "name": "DoThing",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/dothing.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this?(user|service|system)",
-              "type": "actor"
             }
           ],
           "defaults": null,
@@ -122,6 +126,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Evaluate compound OR condition (%a% == 1 OR %b% == 2). If true, call goal DoThing. The @known mapping indicates the builder expects a single condition.if with Operator \u0027or\u0027 and Right bound to %b%.",
+      "level": "high",
+      "confidence": 55,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -151,6 +160,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %result% equals the expected string.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -159,7 +173,7 @@
   "path": "/ConditionCompoundOr.test.goal",
   "prPath": "/.build/conditioncompoundor.test.pr",
   "hash": "6c6289984cfa2e19a7b7e38b91b7484f35053cc39a507882b9ee29cd5163698c",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

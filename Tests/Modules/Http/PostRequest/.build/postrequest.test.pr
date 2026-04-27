@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets JSON request body, POSTs it to httpbin with unsigned request, writes response to %response%, then conditionally outputs messages based on whether %response% is empty and whether %response.StatusCode% equals 200.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -33,6 +33,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -95,6 +100,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -116,7 +126,7 @@
             {
               "name": "Operator",
               "value": "isempty",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -134,6 +144,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Conditional check: \u0027if %response% is not empty then\u0027 compiles to condition.if with operator \u0027isempty\u0027 and Negate=true. Left is %response%, Right is empty string.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -151,11 +166,6 @@
               "name": "Data",
               "value": "POST request returned data",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -163,6 +173,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Writes output text for the preceding \u0027if %response% is not empty then\u0027 block. Uses output.write with a translatable string.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -184,7 +199,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -192,11 +207,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Conditional check: \u0027if %response.StatusCode% equals 200 then\u0027 compiles to condition.if with operator == and Right=200.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -214,11 +240,6 @@
               "name": "Data",
               "value": "Status code is 200",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -226,6 +247,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Writes output text for the preceding \u0027if %response.StatusCode% equals 200 then\u0027 block.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -234,7 +260,7 @@
   "path": "/PostRequest.test.goal",
   "prPath": "/.build/postrequest.test.pr",
   "hash": "298d57e541ec98d2f01de92eb72a3556d3f89683fa40cc83d6232a37786ff99b",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives two identities, creates one as default, renames it, asserts the identity name matches the new value, then archives the renamed identity. On archive steps, errors are ignored.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": "archive identity \u0027TestRenameOld\u0027 with Force=true; on error ignore. Map to identity.archive plus error.handle IgnoreError=true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -87,6 +92,11 @@
         }
       ],
       "intent": null,
+      "guidance": "archive identity \u0027TestRenameNew\u0027 with Force=true; on error ignore. Map to identity.archive plus error.handle IgnoreError=true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -116,6 +126,11 @@
         }
       ],
       "intent": null,
+      "guidance": "create identity \u0027TestRenameOld\u0027 and set it as default. Map to identity.create with SetAsDefault=true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -145,6 +160,11 @@
         }
       ],
       "intent": null,
+      "guidance": "rename identity \u0027TestRenameOld\u0027 to \u0027TestRenameNew\u0027. Map to identity.rename.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -174,6 +194,11 @@
         }
       ],
       "intent": null,
+      "guidance": "assert that %MyIdentity.Name% equals \u0027TestRenameNew\u0027. Map to assert.equals Expected vs Actual.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -217,6 +242,11 @@
         }
       ],
       "intent": null,
+      "guidance": "archive identity \u0027TestRenameNew\u0027 with Force=true; on error ignore. Map to identity.archive plus error.handle IgnoreError=true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -225,7 +255,7 @@
   "path": "/IdentityRename.test.goal",
   "prPath": "/.build/identityrename.test.pr",
   "hash": "66c4243ac1f1cba0369638c94312b07722ff908760c88e9afe0c19363a53e9c1",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

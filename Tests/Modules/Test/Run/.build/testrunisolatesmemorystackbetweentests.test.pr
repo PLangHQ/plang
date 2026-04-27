@@ -1,6 +1,6 @@
 {
   "name": "TestRunIsolatesMemoryStackBetweenTests",
-  "description": "Discovers fixture goals, asserts exactly 2 tests, runs them sequentially (parallel=1) to ensure isolation, then checks that all results have Status == \u0027Pass\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -17,7 +17,7 @@
             {
               "name": "Path",
               "value": "_isolation",
-              "type": "path"
+              "type": "string"
             },
             {
               "name": "Pattern",
@@ -48,11 +48,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Discover fixture test files under _isolation matching *.fixture.goal recursively, storing the resulting list into %tests%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -90,11 +101,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Count discovered tests in %tests% and store the count into %count%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -124,6 +146,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the number of discovered tests equals 2; fails the step if not.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -140,7 +167,7 @@
             {
               "name": "Tests",
               "value": "%tests%",
-              "type": "list"
+              "type": "list\u003Ctestfile\u003E"
             },
             {
               "name": "Parallel",
@@ -166,11 +193,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Run the discovered tests sequentially (parallel=1) and store the aggregated results into %results%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -197,7 +235,7 @@
             {
               "name": "Operator",
               "value": "!=",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Value",
@@ -223,11 +261,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Check whether any test result has Status != \u0027Pass\u0027. Store boolean into %hasNonPass%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -252,6 +301,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert %hasNonPass% is false (i.e., all tests passed).",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -260,7 +314,7 @@
   "path": "/TestRunIsolatesMemoryStackBetweenTests.test.goal",
   "prPath": "/.build/testrunisolatesmemorystackbetweentests.test.pr",
   "hash": "4a9ec2134e51a51c2587b3148d38511306e201d7b0f12b272af72cfbbf1d5292",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

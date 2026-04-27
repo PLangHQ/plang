@@ -1,6 +1,6 @@
 {
   "name": "WhenGTE",
-  "description": "Sets %result% to the string \u0022gte\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/WhenGTE.goal",
   "prPath": "/.build/whengte.pr",
   "hash": "beb3790989e3cd356f51555827b10c86bff35ea07dcd4df208b06eddb0f787aa",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

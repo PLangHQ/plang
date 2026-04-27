@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %y% to 3, checks if %y% \u003C 10, calls WhenLess when true, then asserts %result% equals \u0027less\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +56,7 @@
             {
               "name": "Operator",
               "value": "\u003C",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -74,7 +79,10 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenLess"
+                "name": "WhenLess",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/whenless.pr"
               },
               "type": "goal.call"
             }
@@ -84,6 +92,11 @@
         }
       ],
       "intent": null,
+      "guidance": "if %y% \u003C 10, call WhenLess. Compile to condition.if with Left=%y%, Operator \u0027\u003C\u0027, Right=10, then goal.call WhenLess. Negate=false is explicit in the known mapping.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -118,6 +131,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -126,7 +144,7 @@
   "path": "/ConditionLessThan.test.goal",
   "prPath": "/.build/conditionlessthan.test.pr",
   "hash": "b4b4a4c64a60145503c6c66e5743d1be6e41e579c8b2f9bd02c39a39f16bd75c",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

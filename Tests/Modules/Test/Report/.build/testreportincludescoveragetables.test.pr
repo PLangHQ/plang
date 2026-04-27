@@ -1,6 +1,6 @@
 {
   "name": "TestReportIncludesCoverageTables",
-  "description": "Discovers passing fixtures, runs them, reports in json format, then asserts the report content includes branchCoverage and that summaryPass is 1 and the report file exists.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -17,7 +17,7 @@
             {
               "name": "Path",
               "value": "_fixtures_pass",
-              "type": "path"
+              "type": "string"
             },
             {
               "name": "Pattern",
@@ -48,11 +48,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Discover fixture test files under _fixtures_pass matching *.fixture.goal recursively, then store the resulting list in %tests%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -69,7 +80,7 @@
             {
               "name": "Tests",
               "value": "%tests%",
-              "type": "list"
+              "type": "list\u003Ctestfile\u003E"
             }
           ],
           "defaults": null,
@@ -90,11 +101,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Run the discovered tests in %tests% and store the aggregated results in %results%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -111,7 +133,7 @@
             {
               "name": "Results",
               "value": "%results%",
-              "type": "object"
+              "type": "results"
             },
             {
               "name": "Format",
@@ -137,11 +159,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Generate the default JSON test report from %results% and store it in %report%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -171,6 +204,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the report content includes the branchCoverage block to ensure the BuildJson branch actually ran.",
+      "level": "high",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -200,6 +238,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert summaryPass equals 1.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -237,11 +280,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Check whether the report file exists at %report.reportPath% and store the boolean in %exists%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -266,6 +320,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the report file existence flag is true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -274,7 +333,7 @@
   "path": "/TestReportIncludesCoverageTables.test.goal",
   "prPath": "/.build/testreportincludescoveragetables.test.pr",
   "hash": "87128b082985dc6a0b01437b05b745a604d4d5c9a6ccba0268851162c7792b4e",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

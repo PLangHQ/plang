@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets two event flags to false, calls two handlers before writing \u0027trigger\u0027, then asserts both flags became true.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -75,11 +85,10 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "HandlerA",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/handlera.pr"
+                "name": "HandlerA",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/handlera.pr"
               },
               "type": "goal.call"
             },
@@ -94,6 +103,11 @@
         }
       ],
       "intent": null,
+      "guidance": "before action step: call HandlerA on the current actor. The @known mapping indicates the prior compiled form should be reused; it includes output.write call HandlerA semantics and a goal.call with Actor set to this?(user|service|system).",
+      "level": "low",
+      "confidence": 10,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -110,11 +124,10 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "HandlerB",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/handlerb.pr"
+                "name": "HandlerB",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/handlerb.pr"
               },
               "type": "goal.call"
             },
@@ -129,6 +142,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -146,11 +164,6 @@
               "name": "Data",
               "value": "trigger",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -158,6 +171,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -187,6 +205,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -216,6 +239,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -224,7 +252,7 @@
   "path": "/EventMultiple.test.goal",
   "prPath": "/.build/eventmultiple.test.pr",
   "hash": "f3a3f71fd38fe36b01abc8f0cea55fd758d7d86630f1325642df123175142de9",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

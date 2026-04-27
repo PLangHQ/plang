@@ -1,6 +1,6 @@
 {
   "name": "AIsolationPollute",
-  "description": "Sets %shared_probe% to 1 and asserts it equals 1.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -35,6 +35,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -64,6 +69,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -72,7 +82,7 @@
   "path": "/_isolation/AIsolationPollute.fixture.goal",
   "prPath": "/_isolation/.build/aisolationpollute.fixture.pr",
   "hash": "ccfd7c751fa91fde51affd03a2ea8154f89675e6492bcd4f79bce4d4220c49d6",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "InnerGoal",
-  "description": "Sets %x% to the string \u0022modified\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/InnerGoal.goal",
   "prPath": "/.build/innergoal.pr",
   "hash": "f825cd12443c1cd65525ad125c97678711c27853132279ce31186940caf5795e",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

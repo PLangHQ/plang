@@ -1,6 +1,6 @@
 {
   "name": "Failing",
-  "description": "Maps the failing assertion step to assert.equals with Expected=2 and Actual=1.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -35,6 +35,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -43,7 +48,7 @@
   "path": "/_fail/failing.fixture.goal",
   "prPath": "/_fail/.build/failing.fixture.pr",
   "hash": "1b201b7c90b51c91002b5fc862b0101cefd1d520a549e9757fa11e52182de540",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

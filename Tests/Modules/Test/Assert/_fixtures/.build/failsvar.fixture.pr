@@ -1,6 +1,6 @@
 {
   "name": "FailsVar",
-  "description": "Step 0 sets %foo% to 42, then step 1 asserts that %foo% equals 99 (this will fail at runtime).",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -67,7 +77,7 @@
   "path": "/_fixtures/failsvar.fixture.goal",
   "prPath": "/_fixtures/.build/failsvar.fixture.pr",
   "hash": "a3b8caf0cdca46b1831f5814a2fab698f48c0b980dac692378b7f542927e1ad3",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

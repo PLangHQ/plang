@@ -1,6 +1,6 @@
 {
   "name": "TimedRetryGoal",
-  "description": "TimedRetryGoal increments %timedRetryAttempts% by 1 (math.add) and stores it back, then throws an error \u0027timed fail\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -48,6 +48,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -72,6 +77,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -80,7 +90,7 @@
   "path": "/TimedRetryGoal.goal",
   "prPath": "/.build/timedretrygoal.pr",
   "hash": "c3682ca3c59a1d65c0fcf535415978b1d1d02bc7019282c388101c838ccf5612",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

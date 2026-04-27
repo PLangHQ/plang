@@ -1,6 +1,6 @@
 {
   "name": "HighPriority",
-  "description": "Sets the %order% variable to the string \u0022high\u0022.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/HighPriority.goal",
   "prPath": "/.build/highpriority.pr",
   "hash": "356710fa291551e139dca85f61fe0574709c4ad054caa2a68c598610f011bca1",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

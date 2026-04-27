@@ -1,6 +1,6 @@
 {
   "name": "WhenSmall",
-  "description": "Sets %result% to the string \u0022small\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/WhenSmall.goal",
   "prPath": "/.build/whensmall.pr",
   "hash": "b78a89b034c5389d7f2ad908f0dcb266f543b5c1700219da912e6bf2a4c4029f",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

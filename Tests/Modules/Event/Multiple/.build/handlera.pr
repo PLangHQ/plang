@@ -1,6 +1,6 @@
 {
   "name": "HandlerA",
-  "description": "Sets %eventA% to true using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -35,6 +35,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -43,7 +48,7 @@
   "path": "/HandlerA.goal",
   "prPath": "/.build/handlera.pr",
   "hash": "a6ead47c5d066c2ef2a536b1dd146569b15b440e3829769ddb2f5b1a3ee9dfc0",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

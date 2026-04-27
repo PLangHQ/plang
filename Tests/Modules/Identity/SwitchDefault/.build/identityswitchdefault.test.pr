@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives two identities, recreates them with TestSwitchA as default then switches default to TestSwitchB, and asserts %MyIdentity.Name% reflects the new default. Finally archives both identities.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -87,6 +92,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -116,6 +126,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Create identity TestSwitchA and set it as default. The step text matches the known mapping.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -145,6 +160,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Create identity TestSwitchB without setting it as default. The step text matches the known mapping.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -169,6 +189,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Switch the default identity to TestSwitchB. The step text matches the known mapping.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -198,6 +223,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that the current default identity name (%MyIdentity.Name%) equals TestSwitchB. The step text matches the known mapping.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -227,6 +257,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Archive identity TestSwitchA with force. The step text matches the known mapping.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -256,6 +291,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Archive identity TestSwitchB with force. The step text matches the known mapping.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -264,7 +304,7 @@
   "path": "/IdentitySwitchDefault.test.goal",
   "prPath": "/.build/identityswitchdefault.test.pr",
   "hash": "1eaecb5ae8da6ca43025d48fe7d6293e88f02c3cf44315f4bd39675cad6ea31e",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

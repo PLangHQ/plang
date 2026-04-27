@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Generates a random integer between 1 and 100, stores it in %rand%, then asserts it is not null, greater than 0, and less than 101.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -48,6 +48,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -72,6 +77,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -101,6 +111,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -130,6 +145,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -138,7 +158,7 @@
   "path": "/Math2.test.goal",
   "prPath": "/.build/math2.test.pr",
   "hash": "fa123a37c45747945d534f0a00a80b415559cc9573b17c86afbfdea054107e04",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

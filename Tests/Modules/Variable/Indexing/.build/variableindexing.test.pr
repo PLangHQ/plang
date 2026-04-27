@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Initialize list %items% and indices %idx%, %i%, %j%, then assert that the indexed elements match expected values.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -34,6 +34,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -63,6 +68,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -110,6 +120,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -139,6 +154,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -168,6 +188,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -220,6 +245,11 @@
         }
       ],
       "intent": null,
+      "guidance": "list.get to fetch %items[i]% then assert.equals to verify it equals \u0022a\u0022. The Message clause is included in the assertion.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -272,6 +302,11 @@
         }
       ],
       "intent": null,
+      "guidance": "list.get to fetch %items[j]% then assert.equals to verify it equals \u0022c\u0022. The Message clause is included in the assertion.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -280,7 +315,7 @@
   "path": "/VariableIndexing.test.goal",
   "prPath": "/.build/variableindexing.test.pr",
   "hash": "df6a35c2c73a17ab3d107574ff2e64ce3a95146ae40b43751ec3ce71ea830483",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

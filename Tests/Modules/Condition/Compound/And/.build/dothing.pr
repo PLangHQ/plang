@@ -1,6 +1,6 @@
 {
   "name": "DoThing",
-  "description": "Sets %result% to the string \u0022both-true\u0022 (the \u0022\u003C= null\u0022 part is ignored by the compiler since it is not a supported action modifier/parameter).",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/DoThing.goal",
   "prPath": "/.build/dothing.pr",
   "hash": "c9ef2a4feef41411dca98e9dfc8891e7c57d1b2cd95a3e7d46290e11d80adbac",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "WhenGreater",
-  "description": "Sets %result% to the string \u0022greater\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/WhenGreater.goal",
   "prPath": "/.build/whengreater.pr",
   "hash": "8549bd74cad02b311cec50cff51455adff0761b51391d3756636c7d5678e7de5",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

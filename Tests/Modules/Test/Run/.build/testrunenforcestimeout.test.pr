@@ -1,6 +1,6 @@
 {
   "name": "TestRunEnforcesTimeout",
-  "description": "Discovers timeout fixture(s), asserts exactly one discovered test, runs them with a 1ms timeout, then asserts at least one result has Status == \u0027Timeout\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -17,7 +17,7 @@
             {
               "name": "Path",
               "value": "_timeout",
-              "type": "path"
+              "type": "string"
             },
             {
               "name": "Pattern",
@@ -48,11 +48,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Discover fixture goals under _timeout recursively matching *.fixture.goal, then store the resulting list into %tests%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -90,11 +101,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Count discovered tests in %tests% and store the count into %count%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -124,6 +146,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the discovered count equals 1.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -140,7 +167,12 @@
             {
               "name": "Tests",
               "value": "%tests%",
-              "type": "list"
+              "type": "list\u003Ctestfile\u003E"
+            },
+            {
+              "name": "Parallel",
+              "value": 0,
+              "type": "int"
             },
             {
               "name": "Timeout",
@@ -166,11 +198,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Run the discovered tests with timeout=1 and store the results list into %results%.",
+      "level": "medium",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -197,7 +240,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Value",
@@ -219,8 +262,8 @@
             },
             {
               "name": "Value",
-              "value": "%__conditionReturn__%",
-              "type": "bool"
+              "value": "%__data__%",
+              "type": "object"
             }
           ],
           "defaults": [
@@ -234,6 +277,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Check whether any test result has Status == \u0027Timeout\u0027 and store boolean into %hasTimeout%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -250,7 +298,7 @@
             {
               "name": "Value",
               "value": "%hasTimeout%",
-              "type": "bool"
+              "type": "object?"
             },
             {
               "name": "Message",
@@ -263,6 +311,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %hasTimeout% is true; fails the step if not.",
+      "level": "medium",
+      "confidence": 55,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -271,7 +324,7 @@
   "path": "/TestRunEnforcesTimeout.test.goal",
   "prPath": "/.build/testrunenforcestimeout.test.pr",
   "hash": "81ad25af43e071c5d7705ec329d54652a0e0bd6dcb4cacc615ada7477b68527b",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

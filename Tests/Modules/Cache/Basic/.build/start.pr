@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Tests file.read caching behavior: (1) cache hit prevents re-reading changed file, (2) custom cache key keeps cached value despite file changes, then cleans up temp files.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -22,7 +22,7 @@
             {
               "name": "Value",
               "value": "first-value",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Save initial content to testdata.txt so the first cached read has a baseline value.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -47,7 +52,9 @@
               "name": "GoalName",
               "value": {
                 "name": "ReadCached",
-                "parameters": []
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/readcached.pr"
               },
               "type": "goal.call"
             }
@@ -57,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Call ReadCached goal (expected to perform file.read wrapped with cache so the second call can hit).",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -74,11 +86,6 @@
               "name": "Data",
               "value": "  1st call returned: %fileData.Value%",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -86,6 +93,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write the first cached read result to output. Uses tstring because it contains %fileData.Value% interpolation.",
+      "level": "high",
+      "confidence": 93,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -107,7 +119,7 @@
             {
               "name": "Value",
               "value": "second-value",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -115,6 +127,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Overwrite testdata.txt with a new value; the second ReadCached call should still return the cached first value.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -132,7 +149,9 @@
               "name": "GoalName",
               "value": {
                 "name": "ReadCached",
-                "parameters": []
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/readcached.pr"
               },
               "type": "goal.call"
             }
@@ -142,6 +161,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Call ReadCached again; expected to hit cache and return the original cached content.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -159,11 +183,6 @@
               "name": "Data",
               "value": "  2nd call returned: %fileData.Value% (should still be \u0027first-value\u0027 if cached)",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -171,6 +190,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write the second cached read result to output, asserting via message text that it should still be the first value.",
+      "level": "high",
+      "confidence": 93,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -192,7 +216,7 @@
             {
               "name": "Value",
               "value": "key-value-1",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -200,6 +224,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Save initial content to keytest.txt for the custom cache key test.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -217,7 +246,9 @@
               "name": "GoalName",
               "value": {
                 "name": "ReadWithKey",
-                "parameters": []
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/readwithkey.pr"
               },
               "type": "goal.call"
             }
@@ -227,6 +258,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Call ReadWithKey goal (expected to perform file.read wrapped with cache using a custom key).",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -244,11 +280,6 @@
               "name": "Data",
               "value": "  key test 1st: %keyData.Value%",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -256,6 +287,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write the first custom-key cached read result to output.",
+      "level": "high",
+      "confidence": 93,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -277,7 +313,7 @@
             {
               "name": "Value",
               "value": "key-value-2",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -285,6 +321,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Overwrite keytest.txt with a new value; the second ReadWithKey call should still return the cached first value if the custom key is stable.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -302,7 +343,9 @@
               "name": "GoalName",
               "value": {
                 "name": "ReadWithKey",
-                "parameters": []
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/readwithkey.pr"
               },
               "type": "goal.call"
             }
@@ -312,6 +355,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Call ReadWithKey again; expected to hit cache using the custom key and return the original cached content.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -329,11 +377,6 @@
               "name": "Data",
               "value": "  key test 2nd: %keyData.Value% (should still be \u0027key-value-1\u0027 if cached)",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -341,6 +384,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write the second custom-key cached read result to output, indicating it should still be the first value.",
+      "level": "high",
+      "confidence": 93,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -375,6 +423,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Cleanup: delete testdata.txt.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -409,6 +462,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Cleanup: delete keytest.txt.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -417,7 +475,7 @@
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
   "hash": "e2501f37c408164fa0c6814aa53ed48510b581f8b484cad21d95d52c69f99ed9",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

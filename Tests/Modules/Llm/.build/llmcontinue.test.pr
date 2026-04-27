@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Runs two LLM queries: first stores the response in %first%, second reuses conversation context (continuePreviousConversation=true) and stores response in %second%, then asserts both are not null.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -59,6 +59,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -117,6 +122,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -141,6 +151,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -165,6 +180,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -173,7 +193,7 @@
   "path": "/LlmContinue.test.goal",
   "prPath": "/.build/llmcontinue.test.pr",
   "hash": "37b7d06e17c11310edbcf0336bb934cc32b507e0f2f8677603fa4f1f3dbf0202",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name% to \u0027hello world\u0027, conditionally calls WhenEnds when %name% ends with \u0027world\u0027, then asserts %result% equals \u0027ends\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -79,6 +84,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -113,6 +123,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -121,7 +136,7 @@
   "path": "/ConditionEndsWith.test.goal",
   "prPath": "/.build/conditionendswith.test.pr",
   "hash": "33ea9e6482f1d8b3dac0f1b66fc0c2e67ba920fb203421a09a2dbb54ebc73d68",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

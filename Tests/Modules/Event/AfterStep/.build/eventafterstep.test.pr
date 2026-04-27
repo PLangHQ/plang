@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Initializes %afterCount% to 0, calls TrackAfterStep after each step, sets %value% and %value2%, then asserts %afterCount% is greater than 0.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -46,11 +51,10 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "TrackAfterStep",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/trackafterstep.pr"
+                "name": "TrackAfterStep",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/trackafterstep.pr"
               },
               "type": "goal.call"
             }
@@ -60,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": "after step call TrackAfterStep: register a goal call to TrackAfterStep as the after-step handler. The @known mapping indicates the exact prior action shape; emit it verbatim.",
+      "level": "high",
+      "confidence": 60,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -89,6 +98,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -118,6 +132,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -147,6 +166,11 @@
         }
       ],
       "intent": null,
+      "guidance": "assert %afterCount% is greater than 0: post-condition invariant that must hold after previous steps. Map to assert.greaterThan with A=%afterCount% and B=0.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -155,7 +179,7 @@
   "path": "/EventAfterStep.test.goal",
   "prPath": "/.build/eventafterstep.test.pr",
   "hash": "3539e45c2d574207fd135c411c007376e343d558d9548e18408da02f8fa1dc3b",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

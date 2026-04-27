@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Sets %badProvider% to true (the step indicates a null assignment, but the compiler maps it to the provided literal value).",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "archive identity 'testSigner', force, on error ignore",
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
       "lineNumber": 6,
       "indent": 0,
       "comment": "Test: sign with explicit provider param overrides settings default\nNote: at PLang level we only have ed25519 (no DLL loading), so this exercises\nthe provider param \u2192 resolution path. C# tests cover real swap with mocks.\nWe test two things: (1) explicit provider param works, (2) algorithm field reflects it.",
@@ -26,10 +26,29 @@
             }
           ],
           "defaults": null,
-          "modifiers": []
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "IgnoreError",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
+      "guidance": "Archive identity \u0027testSigner\u0027 with Force=true; on error ignore. This is a direct identity.archive call with error handling that ignores failures.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -49,16 +68,27 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "setasdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Create identity named \u0027testSigner\u0027.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "set %data1% = { \"payload\": \"default\" }",
+      "text": "set %data1% = { \u0022payload\u0022: \u0022default\u0022 }",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -77,14 +107,25 @@
               "value": {
                 "payload": "default"
               },
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %data1% to a JSON object payload.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -122,16 +163,27 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Sign %data1% using signing.sign; store the resulting signed envelope back into %data1%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "assert %data1.Signature.Algorithm% equals 'ed25519', \"default provider should be ed25519\"",
+      "text": "assert %data1.Signature.Algorithm% equals \u0027ed25519\u0027, \u0022default provider should be ed25519\u0022",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -153,7 +205,7 @@
             {
               "name": "Message",
               "value": "default provider should be ed25519",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -161,11 +213,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the signature algorithm equals ed25519 for the default provider path. Uses assert.equals with tstring message.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 5,
-      "text": "set %data2% = { \"payload\": \"explicit\" }",
+      "text": "set %data2% = { \u0022payload\u0022: \u0022explicit\u0022 }",
       "lineNumber": 12,
       "indent": 0,
       "comment": "Now sign with explicit provider param \u2014 same provider but exercises the override path",
@@ -184,14 +241,25 @@
               "value": {
                 "payload": "explicit"
               },
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %data2% to a JSON object payload for explicit provider override testing.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -215,7 +283,7 @@
               "value": [
                 "ed25519"
               ],
-              "type": "list<string>"
+              "type": "list\u003Cstring\u003E"
             }
           ],
           "defaults": null,
@@ -236,16 +304,27 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Sign %data2% with explicit provider override via Contracts=[\u0022ed25519\u0022], then store signed envelope back into %data2%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 7,
-      "text": "verify %data2% with contracts ['C0'], write to %verifyResult%",
+      "text": "verify %data2% with contracts [\u0027C0\u0027], write to %verifyResult%",
       "lineNumber": 14,
       "indent": 0,
       "comment": null,
@@ -264,7 +343,7 @@
               "value": [
                 "C0"
               ],
-              "type": "list<string>"
+              "type": "list\u003Cstring\u003E"
             }
           ],
           "defaults": null,
@@ -285,16 +364,27 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Verify %data2% using contracts [\u0027C0\u0027] and store verification result into %verifyResult%.",
+      "level": "high",
+      "confidence": 88,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 8,
-      "text": "assert %verifyResult.Success% is true, \"explicit provider param should verify\"",
+      "text": "assert %verifyResult.Success% is true, \u0022explicit provider param should verify\u0022",
       "lineNumber": 15,
       "indent": 0,
       "comment": null,
@@ -311,7 +401,7 @@
             {
               "name": "Message",
               "value": "explicit provider param should verify",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -319,11 +409,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert verification success is true.",
+      "level": "high",
+      "confidence": 93,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 9,
-      "text": "assert %data2.Signature.Algorithm% equals 'ed25519', \"algorithm should reflect provider used\"",
+      "text": "assert %data2.Signature.Algorithm% equals \u0027ed25519\u0027, \u0022algorithm should reflect provider used\u0022",
       "lineNumber": 16,
       "indent": 0,
       "comment": null,
@@ -345,7 +440,7 @@
             {
               "name": "Message",
               "value": "algorithm should reflect provider used",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -353,11 +448,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert algorithm reflects the provider used (ed25519).",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 10,
-      "text": "set %data3% = { \"payload\": \"bad\" }",
+      "text": "set %data3% = { \u0022payload\u0022: \u0022bad\u0022 }",
       "lineNumber": 18,
       "indent": 0,
       "comment": "Test that setting a non-existent provider fails",
@@ -376,14 +476,25 @@
               "value": {
                 "payload": "bad"
               },
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %data3% to a JSON object payload for the non-existent provider failure test.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -407,7 +518,7 @@
               "value": [
                 "nonexistent-algo"
               ],
-              "type": "list"
+              "type": "list\u003Cstring\u003E"
             }
           ],
           "defaults": null,
@@ -426,7 +537,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "HandleBadProvider"
+                            "name": "HandleBadProvider"
                           },
                           "type": "goal.call"
                         }
@@ -435,7 +546,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": [
@@ -451,11 +562,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Attempt signing with Contracts=[\u0022nonexistent-algo\u0022]. On error, call HandleBadProvider via error.handle recovery Actions chain.",
+      "level": "high",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 12,
-      "text": "assert %badProvider% is true, \"non-existent provider should fail\"",
+      "text": "assert %badProvider% is true, \u0022non-existent provider should fail\u0022",
       "lineNumber": 20,
       "indent": 0,
       "comment": null,
@@ -472,7 +588,7 @@
             {
               "name": "Message",
               "value": "non-existent provider should fail",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -480,6 +596,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert %badProvider% is true after recovery path indicates failure occurred as expected.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -516,6 +637,11 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
@@ -536,7 +662,7 @@
   "path": "/SigningProviderSwap.test.goal",
   "prPath": "/.build/signingproviderswap.test.pr",
   "hash": "bcfb9243cdc097162bdc6894f938511585c0f1fb51fcdb9ad8e4de2bdd9b4d5d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

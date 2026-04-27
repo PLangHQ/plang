@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Saves a file, sets an inner flag, checks file existence with a condition, sets the flag in the true branch, then asserts the flag value.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -106,6 +116,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -135,6 +150,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -161,7 +181,7 @@
             {
               "name": "Message",
               "value": "sub-steps should execute when file exists",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -169,6 +189,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %innerRan% equals \u0022yes\u0022. Uses assert.equals with a translatable message (tstring).",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -177,7 +202,7 @@
   "path": "/ConditionFileExistsSubSteps.test.goal",
   "prPath": "/.build/conditionfileexistssubsteps.test.pr",
   "hash": "d420210fbe207ea104aa6663b47743ef3fd803669e8b75f2f608316b10da4d95",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

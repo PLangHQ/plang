@@ -1,6 +1,6 @@
 {
   "name": "SetWrong",
-  "description": "Sets the boolean variable %wasWrong% to true using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/SetWrong.goal",
   "prPath": "/.build/setwrong.pr",
   "hash": "9a328158bcd3fea39002d861281fa7b89be9c46b471209ab9cc3349558a60267",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

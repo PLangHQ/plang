@@ -1,6 +1,6 @@
 {
   "name": "InspectError",
-  "description": "Maps three assignments from the current error context (%!error.*%) into variables %errorMessage%, %errorKey%, and %errorStatusCode% using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -35,6 +35,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -69,6 +74,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -103,6 +113,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -111,7 +126,7 @@
   "path": "/InspectError.goal",
   "prPath": "/.build/inspecterror.pr",
   "hash": "a04c978e2dcf88fd3ad7c3ff05b8361a9e019e3440c9bbfcef137a4260d21a14",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

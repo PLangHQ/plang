@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets crypto provider to sha256-only via settings, sets input data, hashes it into %hash%, then asserts the hash is not empty.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -112,6 +122,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -138,7 +153,7 @@
             {
               "name": "Message",
               "value": "hash with swapped provider should still work",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -146,6 +161,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: ensure %hash% is not empty. The step text says \u0027assert %hash% is not empty\u0027, so map to assert.isNotNull with a non-empty check is not available; instead use assert.notEquals against an empty string. Since the @known mapping is present, we must keep it as authoritative.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -154,7 +174,7 @@
   "path": "/ProviderSwap.test.goal",
   "prPath": "/.build/providerswap.test.pr",
   "hash": "3586b93a2dde055a6691c33a055afa80aacbeaf0f4cb64ba010449c6c1671770",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

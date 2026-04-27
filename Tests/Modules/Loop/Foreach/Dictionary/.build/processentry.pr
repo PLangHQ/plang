@@ -1,6 +1,6 @@
 {
   "name": "ProcessEntry",
-  "description": "Increments %count% by 1 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -36,6 +36,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -44,7 +49,7 @@
   "path": "/ProcessEntry.goal",
   "prPath": "/.build/processentry.pr",
   "hash": "dc96c15ea16a565a1b88c77e9bf16abae3a520483ad152b7209fef323c228525",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

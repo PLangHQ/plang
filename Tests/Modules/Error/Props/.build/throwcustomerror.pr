@@ -1,6 +1,6 @@
 {
   "name": "ThrowCustomError",
-  "description": "Throws a custom error with message, key, and HTTP status code.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -35,6 +35,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -43,7 +48,7 @@
   "path": "/ThrowCustomError.goal",
   "prPath": "/.build/throwcustomerror.pr",
   "hash": "8e10bd9f6f672d9297e03b262e092f9742b07097098c01f7ea73cd6c11e48d99",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

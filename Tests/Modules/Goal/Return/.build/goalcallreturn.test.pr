@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls ComputeAnswer, stores its result into %answer%, then asserts %answer% is not null.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -46,6 +46,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -70,6 +75,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -78,7 +88,7 @@
   "path": "/GoalCallReturn.test.goal",
   "prPath": "/.build/goalcallreturn.test.pr",
   "hash": "94a30b6d4f5165265be44710715f8d0ca7ff094e2f4ab1d33abd61d10bc2bb8b",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

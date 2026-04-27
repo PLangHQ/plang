@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Saves a test file, uploads it to httpbin, stores the response in %response%, conditionally writes output based on response presence and status code, then deletes the test file.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -109,6 +114,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -130,7 +140,7 @@
             {
               "name": "Operator",
               "value": "isempty",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -148,6 +158,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Conditional check: if %response% is not empty, run the indented body. The step text \u0027is not empty\u0027 maps to condition.if with operator \u0027isempty\u0027 and Negate=true.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -165,11 +180,6 @@
               "name": "Data",
               "value": "Upload returned response",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -177,6 +187,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write a message to output. Step text says \u0027write out ...\u0027 which maps to output.write with a translatable string (tstring).",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -198,7 +213,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -206,11 +221,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Conditional check: if %response.StatusCode% equals 200 then run the indented body. Map to condition.if with operator == and right value 200.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -228,11 +254,6 @@
               "name": "Data",
               "value": "Status code is 200",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -240,6 +261,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write a message to output indicating status code is 200.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -274,6 +300,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -282,7 +313,7 @@
   "path": "/UploadFile.test.goal",
   "prPath": "/.build/uploadfile.test.pr",
   "hash": "296a21da8725826befc0761f8b8d175e1122aceea3e22c7e3717225ef9afa0d2",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

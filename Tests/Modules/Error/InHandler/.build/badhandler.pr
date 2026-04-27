@@ -1,6 +1,6 @@
 {
   "name": "BadHandler",
-  "description": "BadHandler throws an error with message \u0022handler error\u0022.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,6 +25,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -33,7 +38,7 @@
   "path": "/BadHandler.goal",
   "prPath": "/.build/badhandler.pr",
   "hash": "4a219d8c94d25f14b8b0a5c33a9b4ae0aa0948114da0df9b0ac04a0d7e9cbbe8",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

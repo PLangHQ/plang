@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Writes a message, throws an error that is ignored, writes a follow-up message, then throws another error with status code 404.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -46,7 +51,7 @@
             {
               "name": "Message",
               "value": "something went wrong",
-              "type": "tstring"
+              "type": "string"
             },
             {
               "name": "StatusCode",
@@ -73,6 +78,11 @@
         }
       ],
       "intent": null,
+      "guidance": "throw error with message and status code, then ignore the error via error.handle IgnoreError=true so the step does not fail the goal.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -102,6 +112,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -118,7 +133,7 @@
             {
               "name": "Message",
               "value": "expected failure",
-              "type": "tstring"
+              "type": "string"
             },
             {
               "name": "StatusCode",
@@ -131,6 +146,11 @@
         }
       ],
       "intent": null,
+      "guidance": "throw error with message and status code 404; no on-error handling specified, so this should fail the goal/step.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -139,7 +159,7 @@
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
   "hash": "a96260d1a54aa464354c1fe08bfc93e313b755f6038151d2994689831b159765",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity, creates it as default, then asserts that dot-navigation access to %MyIdentity.Name%, %MyIdentity.PublicKey%, and %MyIdentity.IsDefault% works. Finally archives the identity again.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -73,6 +78,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Create identity named \u0027TestDotNav\u0027 and set it as default. This produces identity data in the runtime context for later dot-navigation assertions.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -97,6 +107,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -121,6 +136,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -145,6 +165,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -174,6 +199,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Archive the identity \u0027TestDotNav\u0027 with force. No on-error behavior specified here, so it should fail if archiving errors.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -182,7 +212,7 @@
   "path": "/IdentityDotNavigation.test.goal",
   "prPath": "/.build/identitydotnavigation.test.pr",
   "hash": "547f9ad6d1e97746936a490ed53285414c13889b2f923a1226f3ac93382ca33e",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

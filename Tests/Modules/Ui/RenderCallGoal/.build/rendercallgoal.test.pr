@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets a template string containing a callGoal tag, renders it to %result%, then asserts the rendered output contains \u0027Error\u0027 (expecting the missing goal to produce error text).",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,11 +25,22 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set the %template% variable to the inline template string that includes a callGoal tag. This is a direct variable assignment.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -72,11 +83,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Render the inline Liquid template stored in %template% and write the rendered output into %result% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -111,6 +133,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: the rendered output should contain the substring \u0027Error\u0027.",
+      "level": "medium",
+      "confidence": 60,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -119,7 +146,7 @@
   "path": "/RenderCallGoal.test.goal",
   "prPath": "/.build/rendercallgoal.test.pr",
   "hash": "59103672d31071799eaf8404345ad2c389b1ca7b32019366e4f2029e89e8c560",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

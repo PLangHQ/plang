@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls a non-existent goal expecting an error, then calls an error handler goal, and finally asserts that a missing-goal error was caught.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -52,7 +52,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 },
                 {
                   "name": "IgnoreError",
@@ -67,6 +67,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -96,6 +101,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %missingCaught% equals true. This should fail the step if the value differs.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -104,7 +114,7 @@
   "path": "/GoalCallMissing.test.goal",
   "prPath": "/.build/goalcallmissing.test.pr",
   "hash": "42ff00589e01e37c2a08137308ad6fc27dc45b3a0b3cd118fb5496c7fc4978f7",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "ReadCachedFile",
-  "description": "Reads cachekey.txt with caching for 60 seconds and writes the file contents to %cachedContent% via variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -62,6 +62,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -70,7 +75,7 @@
   "path": "/ReadCachedFile.goal",
   "prPath": "/.build/readcachedfile.pr",
   "hash": "01394b21d4d0e9412ff0456706bbf0e4d71a0a39058be63c291369debec73052",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

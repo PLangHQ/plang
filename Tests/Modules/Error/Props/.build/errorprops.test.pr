@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls ThrowCustomError with an on-error handler that inspects the error, then asserts errorMessage, errorKey, and errorStatusCode match expected values.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -47,7 +47,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": null,
@@ -57,11 +57,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "assert %errorMessage% equals \"bad thing\"",
+      "text": "assert %errorMessage% equals \u0022bad thing\u0022",
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
@@ -86,11 +91,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %errorMessage% equals the literal string \u0022bad thing\u0022.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "assert %errorKey% equals \"CustomKey\"",
+      "text": "assert %errorKey% equals \u0022CustomKey\u0022",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -115,6 +125,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %errorKey% equals the literal string \u0022CustomKey\u0022.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -144,6 +159,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %errorStatusCode% equals 422.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -152,7 +172,7 @@
   "path": "/ErrorProps.test.goal",
   "prPath": "/.build/errorprops.test.pr",
   "hash": "24caa6948f23774e4754f2c176f0c61f3b842b279bc512ccff461edfb54c66ee",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls OuterGoal, then asserts inner error was handled and outer completed successfully.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -28,6 +28,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -57,6 +62,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %innerErrorHandled% equals true. This is an assert.equals with Expected=true and Actual=%innerErrorHandled%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -86,6 +96,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %outerCompleted% equals true. This is an assert.equals with Expected=true and Actual=%outerCompleted%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -94,7 +109,7 @@
   "path": "/ErrorNested.test.goal",
   "prPath": "/.build/errornested.test.pr",
   "hash": "adcb692a108f261a6aea742541701c3d10cb50bd659dc60f7e7a5677d184505a",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

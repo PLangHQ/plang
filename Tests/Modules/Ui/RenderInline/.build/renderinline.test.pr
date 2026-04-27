@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name%, renders an inline template with substitution into %result%, then asserts the rendered output equals \u0027Hello World!\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -77,6 +82,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -106,6 +116,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -114,7 +129,7 @@
   "path": "/RenderInline.test.goal",
   "prPath": "/.build/renderinline.test.pr",
   "hash": "7972161a6d5fa7ca9f24db193bba0b27b0ba42e02d48402f58c503c2bc0aad36",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

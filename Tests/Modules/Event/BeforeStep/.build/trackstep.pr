@@ -1,6 +1,6 @@
 {
   "name": "TrackStep",
-  "description": "Increment %stepCount% by 1 using math.add, then store back into %stepCount%.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -54,6 +54,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -62,7 +67,7 @@
   "path": "/TrackStep.goal",
   "prPath": "/.build/trackstep.pr",
   "hash": "c5d70fc9604bbaee15d05956d88bfac675ad138a291bd2c7e52117ee714c547a",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

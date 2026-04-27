@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Sets the %expired% variable to true.",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "archive identity 'testSigner', force, on error ignore",
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: sign with short TTL, wait, verify fails as expired",
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -68,11 +73,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "set %data% = { \"payload\": \"expiring\" }",
+      "text": "set %data% = { \u0022payload\u0022: \u0022expiring\u0022 }",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -99,6 +109,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -128,6 +143,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -138,8 +158,8 @@
       "comment": null,
       "actions": [
         {
-          "module": "timeout.after",
-          "action": "after",
+          "module": "timer",
+          "action": "sleep",
           "parameters": [
             {
               "name": "Ms",
@@ -152,11 +172,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Wait for 60ms. The step text \u0027wait for 60 ms\u0027 maps to timer.sleep Ms=60.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 5,
-      "text": "verify %data% with contracts ['C0'], on error call HandleExpired",
+      "text": "verify %data% with contracts [\u0027C0\u0027], on error call HandleExpired",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -203,7 +228,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": [
@@ -219,11 +244,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 6,
-      "text": "assert %expired% is true, \"expired signature should fail verification\"",
+      "text": "assert %expired% is true, \u0022expired signature should fail verification\u0022",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -240,7 +270,7 @@
             {
               "name": "Message",
               "value": "expired signature should fail verification",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -248,6 +278,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %expired% is true. Map to assert.isTrue with tstring message.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -284,6 +319,11 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
@@ -304,7 +344,7 @@
   "path": "/SigningExpired.test.goal",
   "prPath": "/.build/signingexpired.test.pr",
   "hash": "591ebadbc139923b807bd95182cb82c57c4f7953f95524214e0762af5608e7d4",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

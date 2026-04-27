@@ -1,6 +1,6 @@
 {
   "name": "ProcessChunk",
-  "description": "Writes an output message for each received stream chunk, including the chunk data.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/ProcessChunk.goal",
   "prPath": "/.build/processchunk.pr",
   "hash": "04c66cdf7538158f70ec86f58de4129957c80656d1b317866d3bab22ac2a7fca",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

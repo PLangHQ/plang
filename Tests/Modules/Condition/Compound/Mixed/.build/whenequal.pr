@@ -1,6 +1,6 @@
 {
   "name": "WhenEqual",
-  "description": "Builds a single-step goal that conditionally sets %equalResult% to \u0022yes\u0022 when the condition matches (Negate=false).",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -69,6 +69,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -77,7 +82,7 @@
   "path": "/WhenEqual.goal",
   "prPath": "/.build/whenequal.pr",
   "hash": "39ca33859cd43cdfa7f65838321b73822acadbd150285dddf482b01296633ee7",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

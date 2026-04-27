@@ -1,6 +1,6 @@
 {
   "name": "WhenEqual",
-  "description": "WhenEqual step sets %result% to the string \u0022equal\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/WhenEqual.goal",
   "prPath": "/.build/whenequal.pr",
   "hash": "830e91bfee72d07e3af29591fa2533c6fd399afd470dadce05fd29da117af8ab",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

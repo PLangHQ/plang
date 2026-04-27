@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %z% to 5, conditionally calls WhenEqual when %z% == 5, then asserts %result% equals \u0022equal\u0022.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -79,6 +84,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -105,7 +115,7 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for z == 5",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -113,6 +123,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: verify %result% equals the string literal \u0027equal\u0027. The step text uses assert.equals with a tstring message.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -121,7 +136,7 @@
   "path": "/ConditionEquals.test.goal",
   "prPath": "/.build/conditionequals.test.pr",
   "hash": "d07f25e0cc5c2de3e3f762de7a372d5b7787bd72a0e29c9b75b4a7bf230c5aca",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "LowPriority",
-  "description": "Sets %order% to the string \u0022%order%,low\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/LowPriority.goal",
   "prPath": "/.build/lowpriority.pr",
   "hash": "4eb64df1d668cf4ee3e39d7bea9e3e0e7915394eceb4ad3cfbde02f8ff6b69f0",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

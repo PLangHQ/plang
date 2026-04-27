@@ -1,6 +1,6 @@
 {
   "name": "BareRetryCatcher",
-  "description": "Sets %bareRetryCaught% to true using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/BareRetryCatcher.goal",
   "prPath": "/.build/bareretrycatcher.pr",
   "hash": "721530b5266483f76149d388538696506be500e36c0e32b9216a91de8f854701",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

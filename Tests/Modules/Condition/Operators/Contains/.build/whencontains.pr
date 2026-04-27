@@ -1,6 +1,6 @@
 {
   "name": "WhenContains",
-  "description": "Sets %result% to the string \u0022contains\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/WhenContains.goal",
   "prPath": "/.build/whencontains.pr",
   "hash": "bc412b7ad89619bbdcdf8753e5dfb056749bc5e2681bd0b75abbb68bec344182",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

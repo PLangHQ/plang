@@ -1,6 +1,6 @@
 {
   "name": "Alpha",
-  "description": "Writes the translatable text \u0027alpha fixture\u0027 to the output channel.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/_fixtures/alpha.fixture.goal",
   "prPath": "/_fixtures/.build/alpha.fixture.pr",
   "hash": "b16c59d1d210115d88c94dae4d72c2e7c2aea1f7bff2ce73353d055091f9df6d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

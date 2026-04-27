@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Overrides the behavior of a file.read call, then reads a nonexistent file into %content%, and asserts the overridden result is used.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -27,6 +27,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -69,11 +74,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Read file \u0027nonexistent.json\u0027 (no variable resolution) and store the produced content into %content% via variable.set.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -100,7 +116,7 @@
             {
               "name": "Message",
               "value": "event override should replace file.read result",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -108,6 +124,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %content% equals the expected string. Uses assert.equals with a translatable message.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -116,7 +137,7 @@
   "path": "/EventOverride.test.goal",
   "prPath": "/.build/eventoverride.test.pr",
   "hash": "5fb494d281fae6874ed5e09c9eb5f8c0ac761a1230456967b2d5a63287c6c811",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "CaptureWrite",
-  "description": "Sets %actionFired% to true using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/CaptureWrite.goal",
   "prPath": "/.build/capturewrite.pr",
   "hash": "65bdcc8b0a165ed6de5773283a379dd4b76b0e06c28829e8d91d5efe8c3b2580",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

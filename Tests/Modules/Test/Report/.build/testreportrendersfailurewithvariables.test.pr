@@ -1,6 +1,6 @@
 {
   "name": "TestReportRendersFailureWithVariables",
-  "description": "Discovers failing fixtures, runs them, reports results, then asserts summaryFail and variableSnapshotCount are each exactly 1.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -53,6 +53,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -95,6 +100,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -137,6 +147,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -166,6 +181,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -195,6 +215,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -203,7 +228,7 @@
   "path": "/TestReportRendersFailureWithVariables.test.goal",
   "prPath": "/.build/testreportrendersfailurewithvariables.test.pr",
   "hash": "48239745160930279840396bf6ddb529a74a9e8b353384c264638664ffdf1ab0",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

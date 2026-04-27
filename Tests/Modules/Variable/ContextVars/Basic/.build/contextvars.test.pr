@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Two assertions: first checks %!engine.Name% is not null, then checks it equals the literal string \u0027!engine\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -64,6 +69,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -72,7 +82,7 @@
   "path": "/ContextVars.test.goal",
   "prPath": "/.build/contextvars.test.pr",
   "hash": "ca47ce4d3665204a26fbccee465d9e04c75fe96e1ecd2049930b79ceade0d054",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

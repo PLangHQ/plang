@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %x% to 5, checks condition %x% \u003E= 5, calls WhenGTE if true, then asserts %result% equals \u0027gte\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +56,7 @@
             {
               "name": "Operator",
               "value": "\u003E=",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -59,7 +64,13 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -69,7 +80,10 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenGTE"
+                "name": "WhenGTE",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/whengte.pr"
               },
               "type": "goal.call"
             }
@@ -79,6 +93,11 @@
         }
       ],
       "intent": null,
+      "guidance": "condition.if checks %x% \u003E= 5; when true, call goal WhenGTE. The call is the conditional body of the same step.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -105,7 +124,7 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for x \u003E= 5",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -113,6 +132,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: %result% must equal \u0027gte\u0027. Use assert.equals with a translatable message.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -121,7 +145,7 @@
   "path": "/ConditionGTE.test.goal",
   "prPath": "/.build/conditiongte.test.pr",
   "hash": "234f3042235ab436cebb469be11e44b3dd2ee4f16b68113748704c09f29c7810",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

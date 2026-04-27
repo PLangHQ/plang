@@ -1,6 +1,6 @@
 {
   "name": "FailsVar",
-  "description": "Sets %score% to 42, then asserts that %score% equals 99 (intentionally failing).",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -67,7 +77,7 @@
   "path": "/_fixtures_fail/failsvar.fixture.goal",
   "prPath": "/_fixtures_fail/.build/failsvar.fixture.pr",
   "hash": "6e25b0b9ea78d3cae7db9ebca5d34f0d47946fd71f04616153de8314869b4a27",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

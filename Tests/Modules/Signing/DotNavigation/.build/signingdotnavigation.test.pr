@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives/creates an identity, signs %data%, then asserts that signed data exposes Signature fields via dot navigation.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -73,6 +78,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -104,6 +114,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -152,6 +167,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -178,7 +198,7 @@
             {
               "name": "Message",
               "value": "algorithm should be ed25519",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -186,6 +206,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that the signed data\u0027s Signature.Algorithm equals ed25519. Uses assert.equals with tstring message.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -212,7 +237,7 @@
             {
               "name": "Message",
               "value": "type should be signature",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -220,6 +245,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that the signed data\u0027s Signature.Type equals signature.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -254,6 +284,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that Signature.Identity is not empty. Implemented as assert.notEquals with an empty expected string.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -288,6 +323,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that Signature.Nonce is not empty. Implemented as assert.notEquals with an empty expected string.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -296,7 +336,7 @@
   "path": "/SigningDotNavigation.test.goal",
   "prPath": "/.build/signingdotnavigation.test.pr",
   "hash": "6dbb1c5e18774987285f6d2743ed655f4001e37fe71e9d40cf80427196afa971",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

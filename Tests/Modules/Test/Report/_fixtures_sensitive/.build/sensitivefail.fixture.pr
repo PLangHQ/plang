@@ -1,6 +1,6 @@
 {
   "name": "SensitiveFail",
-  "description": "SensitiveFail step asserts that %MyIdentity% equals a non-matching string, intentionally failing and producing an assertion error that includes Actual=%MyIdentity% (with PrivateKey masked later by test.report).",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Map the step to assert.equals. The step text is an assertion failure scenario: Expected is the literal \u0027will-not-match\u0027 and Actual is the runtime value %MyIdentity%.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/_fixtures_sensitive/sensitivefail.fixture.goal",
   "prPath": "/_fixtures_sensitive/.build/sensitivefail.fixture.pr",
   "hash": "486a2f266226d16f78281757d2d40fed559a23edf1ac4bdf3a1783581b78d4da",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

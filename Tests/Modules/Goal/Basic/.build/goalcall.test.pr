@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls Greet goal twice with different name parameters, then asserts the returned %greeting% matches expected strings.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -39,6 +39,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -68,6 +73,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -106,6 +116,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -135,6 +150,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -143,7 +163,7 @@
   "path": "/GoalCall.test.goal",
   "prPath": "/.build/goalcall.test.pr",
   "hash": "c887b7562c22131bfe3944e7d52a5e852586bc05c82451610fecbe4f8c0717c3",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

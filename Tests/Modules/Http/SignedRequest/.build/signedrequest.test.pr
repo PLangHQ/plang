@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Fetches headers from httpbin, stores the response in %response%, checks that %response% is not empty, and writes an output message when the check passes.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -22,10 +22,31 @@
             {
               "name": "Method",
               "value": "GET",
-              "type": "string"
+              "type": "httpmethod"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "contenttype",
+              "value": "application/json",
+              "type": "string"
+            },
+            {
+              "name": "encoding",
+              "value": "utf-8",
+              "type": "string"
+            },
+            {
+              "name": "timeoutinsec",
+              "value": 30,
+              "type": "int"
+            },
+            {
+              "name": "unsigned",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -43,11 +64,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "HTTP GET to the headers endpoint and store the parsed response body into %response% via variable.set. The @known mapping indicates the exact prior action chain.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -69,7 +101,7 @@
             {
               "name": "Operator",
               "value": "isempty",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -87,6 +119,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Conditional branch: the step text says \u0027if %response% is not empty then ...\u0027. The @known mapping provided is a condition.if that checks isempty with Negate=true. Keep it exactly as prior.",
+      "level": "high",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -108,7 +145,7 @@
             {
               "name": "Channels",
               "value": "this",
-              "type": "string"
+              "type": "channels"
             }
           ],
           "defaults": null,
@@ -116,6 +153,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write a confirmation message to output. The @known mapping indicates output.write with a tstring and a Channels parameter.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -124,7 +166,7 @@
   "path": "/SignedRequest.test.goal",
   "prPath": "/.build/signedrequest.test.pr",
   "hash": "c616554ac67fad8477f13b1a065394cf31a6a95d3fb9d94fab8083f8e575088d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %items% to a list, iterates over it calling ProcessItem for each item, then writes \u0027Loop done\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -34,6 +34,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -85,6 +90,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -114,6 +124,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -122,7 +137,7 @@
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
   "hash": "b99165365c37203153e256f817f4f1c3f5ac6fd2ce00197f9d4ed0bd65160019",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

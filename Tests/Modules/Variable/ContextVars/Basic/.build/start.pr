@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Writes the value of %!engine.Name% to output using output.write.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
   "hash": "1b3aff6e10b82b9c003d84e8015b6b2c6d5a0d00029529bafcc80efb3f6359a3",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

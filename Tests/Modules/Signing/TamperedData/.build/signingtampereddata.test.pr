@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Sets %tampered% to true (the '<= null' indicates no additional value source).",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "archive identity 'testSigner', force, on error ignore",
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: tamper data after signing, verify fails with hash mismatch",
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -68,11 +73,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "set %data% = { \"amount\": 100 }",
+      "text": "set %data% = { \u0022amount\u0022: 100 }",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -99,6 +109,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -134,11 +149,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "set %data.Value% = { \"amount\": 999 }",
+      "text": "set %data.Value% = { \u0022amount\u0022: 999 }",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -165,11 +185,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 5,
-      "text": "verify %data% with contracts ['C0'], on error call HandleTampered",
+      "text": "verify %data% with contracts [\u0027C0\u0027], on error call HandleTampered",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -181,25 +206,25 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "verify",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": null
+                "name": "verify",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "data",
+                    "value": "%data%",
+                    "type": "string"
+                  },
+                  {
+                    "name": "contracts",
+                    "value": [
+                      "C0"
+                    ],
+                    "type": "list\u003Cobject\u003E"
+                  }
+                ],
+                "prPath": null
               },
               "type": "goal.call"
-            },
-            {
-              "name": "data",
-              "value": "%data%",
-              "type": "string"
-            },
-            {
-              "name": "contracts",
-              "value": [
-                "C0"
-              ],
-              "type": "list"
             }
           ],
           "defaults": null,
@@ -218,7 +243,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "HandleTampered"
+                            "name": "HandleTampered"
                           },
                           "type": "goal.call"
                         }
@@ -227,7 +252,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": [
@@ -243,11 +268,16 @@
         }
       ],
       "intent": null,
+      "guidance": "Verify the tampered signed data against the provided contract list. On error, call HandleTampered via error.handle recovery chain.",
+      "level": "high",
+      "confidence": 55,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 6,
-      "text": "assert %tampered% is true, \"tampered data should fail verification\"",
+      "text": "assert %tampered% is true, \u0022tampered data should fail verification\u0022",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -264,7 +294,7 @@
             {
               "name": "Message",
               "value": "tampered data should fail verification",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -272,6 +302,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %tampered% is true; fails if verification did not detect tampering.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -308,6 +343,11 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
@@ -328,7 +368,7 @@
   "path": "/SigningTamperedData.test.goal",
   "prPath": "/.build/signingtampereddata.test.pr",
   "hash": "28daf25df7bcaaf921a61b8f8498d9cfe549af1bb05b6e009a0d0e74168ece99",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

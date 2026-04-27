@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets up state for bare and timed retry tests, calls the corresponding goals with retry modifiers, then asserts that exhaustion propagates and attempt counts match expected values.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -76,14 +86,16 @@
               "name": "GoalName",
               "value": {
                 "name": "BareRetryGoal",
-                "parameters": []
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/bareretrygoal.pr"
               },
               "type": "goal.call"
             },
             {
               "name": "Actor",
               "value": "this",
-              "type": "actor(user|service|system)"
+              "type": "actor"
             }
           ],
           "defaults": null,
@@ -98,6 +110,11 @@
                   "type": "int"
                 },
                 {
+                  "name": "Order",
+                  "value": "RetryFirst",
+                  "type": "errororder"
+                },
+                {
                   "name": "Actions",
                   "value": [
                     {
@@ -107,7 +124,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "BareRetryCatcher"
+                            "name": "BareRetryCatcher"
                           },
                           "type": "goal.call"
                         }
@@ -116,21 +133,32 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ]
         }
       ],
       "intent": null,
+      "guidance": "Call BareRetryGoal on the current actor, then wrap it with error.handle to retry 2 times. After retries exhaust, call BareRetryCatcher via the recovery Actions chain.",
+      "level": "high",
+      "confidence": 78,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "assert %bareRetryCaught% is true, \"bare retry exhaustion should propagate error to caller\"",
+      "text": "assert %bareRetryCaught% is true, \u0022bare retry exhaustion should propagate error to caller\u0022",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -155,11 +183,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "assert %bareRetryAttempts% equals 3, \"should have 1 initial + 2 retries = 3 attempts\"",
+      "text": "assert %bareRetryAttempts% equals 3, \u0022should have 1 initial \u002B 2 retries = 3 attempts\u0022",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -180,7 +213,7 @@
             },
             {
               "name": "Message",
-              "value": "should have 1 initial + 2 retries = 3 attempts",
+              "value": "should have 1 initial \u002B 2 retries = 3 attempts",
               "type": "tstring"
             }
           ],
@@ -189,6 +222,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -218,6 +256,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -247,6 +290,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -263,17 +311,16 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "TimedRetryGoal",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/timedretrygoal.pr"
+                "name": "TimedRetryGoal",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/timedretrygoal.pr"
               },
               "type": "goal.call"
             },
             {
               "name": "Actor",
-              "value": "this?(user|service|system)",
+              "value": "this",
               "type": "actor"
             }
           ],
@@ -294,6 +341,11 @@
                   "type": "int"
                 },
                 {
+                  "name": "Order",
+                  "value": "RetryFirst",
+                  "type": "errororder"
+                },
+                {
                   "name": "Actions",
                   "value": [
                     {
@@ -303,16 +355,21 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "TimedRetryGoal"
+                            "name": "TimedRetryCatcher"
                           },
                           "type": "goal.call"
+                        },
+                        {
+                          "name": "Actor",
+                          "value": "this",
+                          "type": "actor"
                         }
                       ],
                       "defaults": null,
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": [
@@ -325,38 +382,19 @@
               "modifiers": []
             }
           ]
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "name": "GoalName",
-              "value": {
-                "Name": "TimedRetryCatcher",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/timedretrycatcher.pr"
-              },
-              "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this?(user|service|system)",
-              "type": "actor"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Call TimedRetryGoal with on-error retry policy: retry 2 times, but only up to 500ms total/over-ms window, then run TimedRetryCatcher as recovery action chain.",
+      "level": "medium",
+      "confidence": 55,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 8,
-      "text": "assert %timedRetryCaught% is true, \"timed retry exhaustion should propagate error to caller\"",
+      "text": "assert %timedRetryCaught% is true, \u0022timed retry exhaustion should propagate error to caller\u0022",
       "lineNumber": 12,
       "indent": 0,
       "comment": null,
@@ -381,11 +419,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 9,
-      "text": "assert %timedRetryAttempts% equals 3, \"timed retry should have 1 initial + 2 retries = 3 attempts\"",
+      "text": "assert %timedRetryAttempts% equals 3, \u0022timed retry should have 1 initial \u002B 2 retries = 3 attempts\u0022",
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
@@ -406,7 +449,7 @@
             },
             {
               "name": "Message",
-              "value": "timed retry should have 1 initial + 2 retries = 3 attempts",
+              "value": "timed retry should have 1 initial \u002B 2 retries = 3 attempts",
               "type": "tstring"
             }
           ],
@@ -415,6 +458,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -423,7 +471,7 @@
   "path": "/ErrorRetryOnly.test.goal",
   "prPath": "/.build/errorretryonly.test.pr",
   "hash": "96a26b749f43cc186e430e26b98692236ef09efc220d4930e9241da1aa50525d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "ThrowTestError",
-  "description": "Throws an error with message \u0027test error\u0027 and HTTP status code 500.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/ThrowTestError.goal",
   "prPath": "/.build/throwtesterror.pr",
   "hash": "0d72c2bcd184ed2d49b068fb215733bc3460f6bf0f48e62895c30df638d37c5e",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

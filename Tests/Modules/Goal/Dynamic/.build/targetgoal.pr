@@ -1,6 +1,6 @@
 {
   "name": "TargetGoal",
-  "description": "Sets %dynamicResult% to the string \u0022reached\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/TargetGoal.goal",
   "prPath": "/.build/targetgoal.pr",
   "hash": "2ec9c541c0798889c270f82e43e32097396653042f614f189331cbc6904717c0",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

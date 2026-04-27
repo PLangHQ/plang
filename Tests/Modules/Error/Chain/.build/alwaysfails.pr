@@ -1,6 +1,6 @@
 {
   "name": "AlwaysFails",
-  "description": "AlwaysFails goal throws an error with a fixed message and HTTP status code.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/AlwaysFails.goal",
   "prPath": "/.build/alwaysfails.pr",
   "hash": "a91369207d3e67d7d3fbc2cc7a0fc4e6f2a7558d1ae6c543d01237f04ad35098",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

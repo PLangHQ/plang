@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Asserts required variables are not null, then copies %GUID% into %guid1% and %guid2%, asserts both are not null, and finally asserts they are not equal.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,6 +25,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -49,6 +54,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -88,6 +98,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assign %GUID% into %guid1% with explicit type guid (matches known variable.set mapping).",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -127,6 +142,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assign %GUID% into %guid2% with explicit type guid (matches known variable.set mapping).",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -151,6 +171,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -175,6 +200,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -204,6 +234,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -212,7 +247,7 @@
   "path": "/SystemVariables.test.goal",
   "prPath": "/.build/systemvariables.test.pr",
   "hash": "24b27bcc5826d580f34b269f17f170324a036737587c6549a941ee8126030f50",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

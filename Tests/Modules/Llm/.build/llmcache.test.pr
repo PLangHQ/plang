@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Runs the same llm.query twice with caching enabled, writes results to %first% and %second%, then asserts both are not null.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -59,6 +59,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -117,6 +122,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -141,6 +151,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -165,6 +180,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -173,7 +193,7 @@
   "path": "/LlmCache.test.goal",
   "prPath": "/.build/llmcache.test.pr",
   "hash": "c6cd977022448f7eee0b74dd55759c005e87f335a40599b886bb96a81cc7bc4b",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

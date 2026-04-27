@@ -1,6 +1,6 @@
 {
   "name": "CachedGoal",
-  "description": "CachedGoal reads testdata.txt into %cachedMsg% with a 5-minute cache wrapper, then writes an output line including the cached message.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -62,6 +62,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -79,11 +84,6 @@
               "name": "Data",
               "value": "  CachedGoal read: %cachedMsg%",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -91,6 +91,11 @@
         }
       ],
       "intent": null,
+      "guidance": "output.write Data with a translatable string (tstring) that includes %cachedMsg% placeholder; Channels targets the \u0027this\u0027 output channel.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -99,7 +104,7 @@
   "path": "/CachedGoal.goal",
   "prPath": "/.build/cachedgoal.pr",
   "hash": "530633b1822355ea48057798a87c093a26b5085baac91fec508af31e03850a85",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

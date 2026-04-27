@@ -1,6 +1,6 @@
 {
   "name": "ReadDynamic",
-  "description": "Reads a file whose path is provided by %fileName%, caches the read for 60 seconds, and stores the read content into %dynContent% via variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -57,6 +57,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -65,7 +70,7 @@
   "path": "/ReadDynamic.goal",
   "prPath": "/.build/readdynamic.pr",
   "hash": "1d2fc1baf5a29a95b92c6b8a05ae6c56d673344239838f118ca4d323eea31eb4",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls AlwaysFails with on-error retry (2 times) and then calls HandleError; finally asserts that %errorHandled% is true.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -57,7 +57,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": null,
@@ -67,6 +67,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -96,6 +101,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %errorHandled% equals true. This is an assert.equals with Expected=true and Actual=%errorHandled%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -104,7 +114,7 @@
   "path": "/ErrorChain.test.goal",
   "prPath": "/.build/errorchain.test.pr",
   "hash": "fe394c1e28a212a2da3fad3d2b54cf60555891dbbec803be12826c75c4875960",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

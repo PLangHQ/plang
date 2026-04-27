@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %a% to 7, conditionally calls WhenNotEqual when %a% != 3, then asserts %result% equals \u0027not-equal\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +56,7 @@
             {
               "name": "Operator",
               "value": "!=",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -59,7 +64,13 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -69,7 +80,10 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenNotEqual"
+                "name": "WhenNotEqual",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/whennotequal.pr"
               },
               "type": "goal.call"
             }
@@ -79,6 +93,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Conditional branch: if %a% != 3, call goal WhenNotEqual. The call is the conditional body of condition.if.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -105,7 +124,7 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for a != 3",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -113,6 +132,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition invariant: assert that %result% equals the expected string \u0022not-equal\u0022 with a translatable message.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -121,7 +145,7 @@
   "path": "/ConditionNotEquals.test.goal",
   "prPath": "/.build/conditionnotequals.test.pr",
   "hash": "ad76488613c6199f810beebffe95d913d476903f632a43cdb8832c2219815027",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

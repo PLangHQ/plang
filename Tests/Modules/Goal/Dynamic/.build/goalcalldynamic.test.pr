@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %goalName% to \u0027TargetGoal\u0027, calls the goal referenced by %goalName%, then asserts %dynamicResult% equals \u0027reached\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -46,11 +51,10 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "%goalName%",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": null
+                "name": "%goalName%",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
               },
               "type": "goal.call"
             }
@@ -60,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Call the goal whose name is stored in %goalName%. The @known mapping indicates a goal.call with name=%goalName% and no parameters.",
+      "level": "high",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -89,6 +98,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %dynamicResult% equals \u0027reached\u0027.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -97,7 +111,7 @@
   "path": "/GoalCallDynamic.test.goal",
   "prPath": "/.build/goalcalldynamic.test.pr",
   "hash": "be5fdfa8098f28bad9b07b1562a74bea782e882575a057eeae821965441a287a",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

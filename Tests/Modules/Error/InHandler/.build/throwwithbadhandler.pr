@@ -1,6 +1,6 @@
 {
   "name": "ThrowWithBadHandler",
-  "description": "Calls ThrowOriginal; if it throws, calls BadHandler as the error handler.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -52,7 +52,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": null,
@@ -62,6 +62,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -70,7 +75,7 @@
   "path": "/ThrowWithBadHandler.goal",
   "prPath": "/.build/throwwithbadhandler.pr",
   "hash": "010dce8d9abce373be533dc95dd11a5dabefdaf8f05787372c28dd8580f1cee7",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Unbuilt",
-  "description": "Maps the single step to an output write action.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/_stale/unbuilt.fixture.goal",
   "prPath": "/_stale/.build/unbuilt.fixture.pr",
   "hash": "de64118d119b8e89ffc44a28d82f1f226d47fc0d19c2ccce2a889a799c6bf435",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

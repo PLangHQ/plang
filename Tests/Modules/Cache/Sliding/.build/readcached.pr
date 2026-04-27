@@ -1,6 +1,6 @@
 {
   "name": "ReadCached",
-  "description": "Reads cacheslide.txt from file with a 60-second cache window, then stores the read result into %cachedValue% via variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -62,6 +62,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -70,7 +75,7 @@
   "path": "/ReadCached.goal",
   "prPath": "/.build/readcached.pr",
   "hash": "a42f6e6232c2cd7c67fa24f0938f74634d8cc0e4552c9b7a94d54e1cd2563268",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets a password, hashes it with bcrypt, verifies the hash against the original password, then asserts the verification result is true.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -77,6 +82,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -129,6 +139,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -150,7 +165,7 @@
             {
               "name": "Message",
               "value": "bcrypt verify should return true for correct password",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -158,6 +173,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %isValid% is truthy (true). Uses assert.isTrue with a translatable message.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -166,7 +186,7 @@
   "path": "/HashBcryptVerify.test.goal",
   "prPath": "/.build/hashbcryptverify.test.pr",
   "hash": "ea4ef9d721512fe5c8172833d5ef04ae86edbd498b5aef2b2c081c9a9464c146",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

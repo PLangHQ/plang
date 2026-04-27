@@ -1,6 +1,6 @@
 {
   "name": "ThrowUserError",
-  "description": "Throws a user error with message and key using error.throw.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/ThrowUserError.goal",
   "prPath": "/.build/throwusererror.pr",
   "hash": "ea9ddd08e494e52118b430af4ba6e52104efe7321bf5bbfd891ce7101fb8c920",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

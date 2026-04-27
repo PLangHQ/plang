@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name%, renders template.html to %result%, then asserts %result% equals the expected greeting.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -72,11 +77,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Render a file-based Liquid template (template.html) and write the rendered output into %result% by capturing ui.render output via variable.set. The step explicitly says \u0027render file ... write to %result%\u0027, so ui.render must use IsFile=true and then variable.set stores %__data__.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -106,6 +122,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -114,7 +135,7 @@
   "path": "/RenderFile.test.goal",
   "prPath": "/.build/renderfile.test.pr",
   "hash": "0fc14d1a392d5187223f8d6e4e82cb96a2d1a4752ae6c5fe88759c290e98f2d3",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

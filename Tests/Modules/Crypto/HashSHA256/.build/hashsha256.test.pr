@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %data% to \u0027hello world\u0027, hashes it using sha256 into %hash%, then asserts %hash% is not empty.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -77,6 +82,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -103,7 +113,7 @@
             {
               "name": "Message",
               "value": "sha256 hash should produce non-empty result",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -111,6 +121,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition: ensure %hash% is not empty. Map to assert.notEquals against empty string. Use tstring for the message per spec.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -119,7 +134,7 @@
   "path": "/HashSHA256.test.goal",
   "prPath": "/.build/hashsha256.test.pr",
   "hash": "e83eb8a0c38286de08c91dcc6f3dfc3f86bfa97079e4fcec5880969447188917",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

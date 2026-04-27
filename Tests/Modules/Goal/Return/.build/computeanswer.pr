@@ -1,6 +1,6 @@
 {
   "name": "ComputeAnswer",
-  "description": "Sets %result% to integer 42 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/ComputeAnswer.goal",
   "prPath": "/.build/computeanswer.pr",
   "hash": "5083bb9723ee51750c5ab45c04f13185987ba5e20161b05bfb2124d45b62ea8a",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

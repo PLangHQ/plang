@@ -1,6 +1,6 @@
 {
   "name": "Beta",
-  "description": "Writes the text \u0027beta fixture\u0027 to the output channel.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/_fixtures/beta.fixture.goal",
   "prPath": "/_fixtures/.build/beta.fixture.pr",
   "hash": "eda44719d8c725111b667927fb6dac179c57d69c52448292f1dfad6932344b89",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

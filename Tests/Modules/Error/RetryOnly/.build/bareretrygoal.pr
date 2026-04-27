@@ -1,6 +1,6 @@
 {
   "name": "BareRetryGoal",
-  "description": "BareRetryGoal increments %bareRetryAttempts% by 1 (writing back the result), then always throws an error.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -48,6 +48,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -65,6 +70,11 @@
               "name": "Message",
               "value": "always fails",
               "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
             }
           ],
           "defaults": null,
@@ -72,6 +82,11 @@
         }
       ],
       "intent": null,
+      "guidance": "The step explicitly throws an error with the message \u0022always fails\u0022. Map directly to error.throw.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -80,7 +95,7 @@
   "path": "/BareRetryGoal.goal",
   "prPath": "/.build/bareretrygoal.pr",
   "hash": "a14e6258269311dacfa378adeede9211601390c49ba1730b9d410840b5c59476",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

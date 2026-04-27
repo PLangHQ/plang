@@ -1,6 +1,6 @@
 {
   "name": "WhenNotEqual",
-  "description": "Sets %result% to the string \u0022not-equal\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/WhenNotEqual.goal",
   "prPath": "/.build/whennotequal.pr",
   "hash": "9bc3d19b23c5f3af2f7ff1fa39c16e7cdfa6de4c161b5376ce1d779e368fde14",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

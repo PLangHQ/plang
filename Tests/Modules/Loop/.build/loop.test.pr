@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Initialize %items% and %count%, iterate over %items% calling CountItem for each item, then assert %count% equals 3.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -34,6 +34,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -63,6 +68,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -114,6 +124,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -148,6 +163,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -156,7 +176,7 @@
   "path": "/Loop.test.goal",
   "prPath": "/.build/loop.test.pr",
   "hash": "35f7fcc5b47fdb1e00c1f822dca60c16144d944fb172c65ec24bc411662875f3",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

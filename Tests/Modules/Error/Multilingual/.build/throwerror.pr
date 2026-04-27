@@ -1,6 +1,6 @@
 {
   "name": "ThrowError",
-  "description": "Throws an intentional error with a message and status code.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/ThrowError.goal",
   "prPath": "/.build/throwerror.pr",
   "hash": "227b802a61ecde7ab3c5b00a247f6e6ba6695f0b2db6325dd8b538a69a2642c6",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

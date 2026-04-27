@@ -1,6 +1,6 @@
 {
   "name": "WhenGreater",
-  "description": "Maps the step \u0027set %greaterResult% = \u0022yes\u0022\u0027 to a variable.set action.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/WhenGreater.goal",
   "prPath": "/.build/whengreater.pr",
   "hash": "de1b2350ea4346d265a5ff9ada731caaf2f4e03ca5c99df387838b0bd87206b8",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %x% to 5, conditionally calls WhenLTE when %x% \u003C= 5, then asserts %result% equals \u0022lte\u0022.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +56,7 @@
             {
               "name": "Operator",
               "value": "\u003C=",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -62,11 +67,6 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -80,14 +80,16 @@
               "name": "GoalName",
               "value": {
                 "name": "WhenLTE",
-                "parameters": []
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/whenlte.pr"
               },
               "type": "goal.call"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "actor(user|service|system)"
+              "type": "actor"
             }
           ],
           "defaults": null,
@@ -95,6 +97,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Use condition.if to evaluate %x% \u003C= 5. When true, call goal WhenLTE. The step text includes an explicit actor user, so pass Actor([actor] user) to goal.call.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -121,7 +128,7 @@
             {
               "name": "Message",
               "value": "GoalIfTrue should have been called for x \u003C= 5",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -129,6 +136,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: %result% must equal \u0022lte\u0022. Use assert.equals with Expected as the literal string and Actual as %result%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -137,7 +149,7 @@
   "path": "/ConditionLTE.test.goal",
   "prPath": "/.build/conditionlte.test.pr",
   "hash": "1b6398a4e6e7df9232d3cc7d2161d3ee6f274993dda7cfb44143e32f547f9879",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

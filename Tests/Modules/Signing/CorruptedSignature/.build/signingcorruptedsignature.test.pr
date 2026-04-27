@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Sets %corrupted% to true (the '<= null' indicates no additional value source).",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "archive identity 'testSigner', force, on error ignore",
+      "text": "archive identity \u0027testSigner\u0027, force, on error ignore",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: corrupt signature field, verify fails",
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -68,11 +73,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "set %data% = { \"payload\": \"corrupt\" }",
+      "text": "set %data% = { \u0022payload\u0022: \u0022corrupt\u0022 }",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -99,6 +109,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -147,11 +162,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "set %data.Signature.Signature% = \"AAAA/corrupted+base64==\"",
+      "text": "set %data.Signature.Signature% = \u0022AAAA/corrupted\u002Bbase64==\u0022",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -167,7 +187,7 @@
             },
             {
               "name": "Value",
-              "value": "AAAA/corrupted+base64==",
+              "value": "AAAA/corrupted\u002Bbase64==",
               "type": "string"
             }
           ],
@@ -176,11 +196,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 5,
-      "text": "verify %data% with contracts ['C0'], on error call HandleCorrupt",
+      "text": "verify %data% with contracts [\u0027C0\u0027], on error call HandleCorrupt",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -227,7 +252,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": [
@@ -243,11 +268,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 6,
-      "text": "assert %corrupted% is true, \"corrupted signature should fail verification\"",
+      "text": "assert %corrupted% is true, \u0022corrupted signature should fail verification\u0022",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -272,6 +302,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -308,6 +343,11 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
@@ -328,7 +368,7 @@
   "path": "/SigningCorruptedSignature.test.goal",
   "prPath": "/.build/signingcorruptedsignature.test.pr",
   "hash": "7d053c94ed66d5724020a7c14963e1222e05b6cf4f7bcc08f5c83ecfcd79d0ab",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

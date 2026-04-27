@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Sets %noIdentity% to true (null/<= null in the step text is treated as a boolean assignment to true).",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %data% = { \"payload\": \"unsigned\" }",
+      "text": "set %data% = { \u0022payload\u0022: \u0022unsigned\u0022 }",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: sign without creating identity first, should error",
@@ -24,14 +24,25 @@
               "value": {
                 "payload": "unsigned"
               },
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %data% to a JSON object containing the payload. This is a variable assignment with inline JSON, so Value must be type=json.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -67,7 +78,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "HandleNoIdentity"
+                            "name": "HandleNoIdentity"
                           },
                           "type": "goal.call"
                         }
@@ -76,21 +87,32 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ]
         }
       ],
       "intent": null,
+      "guidance": "Call signing.sign with Data=%data%. On error, run recovery chain that calls goal HandleNoIdentity. The error.handle modifier must wrap the signing.sign action and include Actions=[goal.call HandleNoIdentity].",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "assert %noIdentity% is true, \"sign without identity should fail\"",
+      "text": "assert %noIdentity% is true, \u0022sign without identity should fail\u0022",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -107,7 +129,7 @@
             {
               "name": "Message",
               "value": "sign without identity should fail",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -115,6 +137,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: %noIdentity% must be true. Message is a translatable string (tstring).",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -162,6 +189,11 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
@@ -182,7 +214,7 @@
   "path": "/SigningNoIdentity.test.goal",
   "prPath": "/.build/signingnoidentity.test.pr",
   "hash": "75ae4cb14e476c542ca21c5a53af118b078854e7561b17caf91d6b3c05f3b80f",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

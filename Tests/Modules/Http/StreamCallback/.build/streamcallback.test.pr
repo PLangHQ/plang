@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Fetches a streaming HTTP response from httpbin, invokes ProcessChunk on each stream event via OnStream callback, then writes \u0027Streaming complete\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -53,6 +53,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -70,11 +75,6 @@
               "name": "Data",
               "value": "Streaming complete",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -82,6 +82,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write the completion message to output. The step text uses a translatable string literal.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -90,7 +95,7 @@
   "path": "/StreamCallback.test.goal",
   "prPath": "/.build/streamcallback.test.pr",
   "hash": "5c4c5a3d5158ab94c5bf346b7099b09600511a1d3781802d465ec12193d9a0f8",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

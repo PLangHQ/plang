@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives any existing identity named TestCreate (ignoring errors), creates it as the default identity, asserts %MyIdentity% is not null, then archives TestCreate again.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -73,6 +78,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Create identity named \u0027TestCreate\u0027 and set it as default. This step produces the identity context; %MyIdentity% is expected to be set by the engine/runtime after creation.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -97,6 +107,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %MyIdentity% is not null. This must fail the step if the value is null/unset.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -126,6 +141,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Archive identity \u0027TestCreate\u0027 with Force=true. No explicit on-error behavior is specified here.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -134,7 +154,7 @@
   "path": "/IdentityCreate.test.goal",
   "prPath": "/.build/identitycreate.test.pr",
   "hash": "f4b23be9d46a834bb9d5b94a9d36fb833a23078dd48badfdab3c999b0de9ac75",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

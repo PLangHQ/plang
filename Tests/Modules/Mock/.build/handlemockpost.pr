@@ -1,6 +1,6 @@
 {
   "name": "HandleMockPost",
-  "description": "Skips the next matching event action and records the value \u0027post handled\u0027 (null payload).",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,6 +25,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -33,7 +38,7 @@
   "path": "/HandleMockPost.goal",
   "prPath": "/.build/handlemockpost.pr",
   "hash": "d6c74eaca521f70aff90f198c9f46034e43d7bf98ecdf1feb9ae3475701d6fd3",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

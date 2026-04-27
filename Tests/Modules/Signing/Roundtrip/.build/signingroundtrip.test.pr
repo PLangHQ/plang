@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity, creates it, sets JSON data, signs it, verifies the signature against provided contracts, and asserts verification success.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -73,6 +78,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Create identity named testSigner. Step text does not request setting it as default, so SetAsDefault=false.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -96,14 +106,25 @@
               "value": {
                 "message": "hello world"
               },
-              "type": "json"
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set %data% to a JSON object containing message \u0027hello world\u0027.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -141,11 +162,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Sign %data% using signing.sign, then store the signed envelope back into %data%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -169,7 +201,7 @@
               "value": [
                 "C0"
               ],
-              "type": "list"
+              "type": "list\u003Cstring\u003E"
             }
           ],
           "defaults": null,
@@ -190,11 +222,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Verify the signed %data% against contracts [\u0027C0\u0027], then write the verification result to %verifyResult%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -216,7 +259,7 @@
             {
               "name": "Message",
               "value": "valid signature should verify",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -224,6 +267,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: verifyResult.Success must be true. Message is translatable (tstring).",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -232,7 +280,7 @@
   "path": "/SigningRoundtrip.test.goal",
   "prPath": "/.build/signingroundtrip.test.pr",
   "hash": "94f05c75792f560c2ef8c029b3472270819e94560e27d9ee253b0b34c3271cfe",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

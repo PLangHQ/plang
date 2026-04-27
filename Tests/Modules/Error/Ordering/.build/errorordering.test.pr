@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Sets %order% to empty, calls FailOnce with on-error retry-first behavior and then calls LogRetryError, and finally asserts %order% contains \"error\".",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %order% = \"\"",
+      "text": "set %order% = \u0022\u0022",
       "lineNumber": 3,
       "indent": 0,
       "comment": "retry first then call goal",
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -46,14 +51,17 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "FailOnce"
+                "name": "FailOnce",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/failonce.pr"
               },
               "type": "goal.call"
             },
             {
               "name": "Actor",
               "value": "this",
-              "type": "actor(user|service|system)"
+              "type": "actor"
             }
           ],
           "defaults": null,
@@ -70,7 +78,7 @@
                 {
                   "name": "Order",
                   "value": "RetryFirst",
-                  "type": "string"
+                  "type": "errororder"
                 },
                 {
                   "name": "Actions",
@@ -82,7 +90,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "LogRetryError"
+                            "name": "LogRetryError"
                           },
                           "type": "goal.call"
                         }
@@ -91,21 +99,32 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ]
         }
       ],
       "intent": null,
+      "guidance": "goal.call FailOnce on the current actor, wrapped with error.handle to retry 1 time using RetryFirst, then run a recovery action chain that calls LogRetryError.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "assert %order% contains \"error\"",
+      "text": "assert %order% contains \u0022error\u0022",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -135,6 +154,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -143,7 +167,7 @@
   "path": "/ErrorOrdering.test.goal",
   "prPath": "/.build/errorordering.test.pr",
   "hash": "38ca5305ba8097ecc606cd908d65fc442a1a0650aee0c20e2cc4526b22a82f8c",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

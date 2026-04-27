@@ -1,6 +1,6 @@
 {
   "name": "SetFalse",
-  "description": "Sets %wasFalse% to true using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/SetFalse.goal",
   "prPath": "/.build/setfalse.pr",
   "hash": "b48b1e98e5c83353559c4da0d65e5f66bd4a0fc8a1843466208086a965389769",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

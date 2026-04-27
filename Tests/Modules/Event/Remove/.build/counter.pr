@@ -1,6 +1,6 @@
 {
   "name": "Counter",
-  "description": "Increments %writeCount% by 1 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -36,6 +36,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -44,7 +49,7 @@
   "path": "/Counter.goal",
   "prPath": "/.build/counter.pr",
   "hash": "b5b20fd0f93bd7121b322b5c89dd8ab0cf3f8ff62759fa6637818853573d079f",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

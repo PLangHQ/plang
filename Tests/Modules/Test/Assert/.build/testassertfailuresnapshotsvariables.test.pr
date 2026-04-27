@@ -1,6 +1,6 @@
 {
   "name": "TestAssertFailureSnapshotsVariables",
-  "description": "Maps the fixture test flow: discover fixture goals, run them, detect at least one failing result, then verify that a failure snapshot includes Variables.foo==42 and assert it survived end-to-end.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -48,11 +48,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Discover fixture test files under _fixtures recursively matching *.fixture.goal, then store the resulting list in %tests%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -90,11 +101,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Count discovered tests in %tests% and store the count in %count%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -124,6 +146,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the discovered test count equals 1.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -140,7 +167,7 @@
             {
               "name": "Tests",
               "value": "%tests%",
-              "type": "list"
+              "type": "list\u003Ctestfile\u003E"
             }
           ],
           "defaults": null,
@@ -161,11 +188,22 @@
               "type": "json"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Run the discovered tests in %tests% and store the aggregated results in %results%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -192,7 +230,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Value",
@@ -218,11 +256,22 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Check whether any test result has Status == \u0027Fail\u0027 and store boolean in %hasFail%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -247,6 +296,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that %hasFail% is true.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -273,7 +327,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Value",
@@ -299,11 +353,22 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Check whether any test result contains Error.Variables.foo == 42 and store boolean in %hasSnapshot%.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -328,6 +393,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that %hasSnapshot% is true, confirming the Variables snapshot survived end-to-end.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -336,7 +406,7 @@
   "path": "/TestAssertFailureSnapshotsVariables.test.goal",
   "prPath": "/.build/testassertfailuresnapshotsvariables.test.pr",
   "hash": "3582cc34c81065674a9645a1d8de2904b59298fbe57628ffd5e288c5c1b12116",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

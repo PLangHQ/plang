@@ -1,6 +1,6 @@
 {
   "name": "TestConditionIfRecordsBranchIndexElseBranch",
-  "description": "Sets %x%=0, evaluates chained condition.if/elseif/else to set %c%=3 (else branch), then asserts that the published branchIndex equals 2.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +56,7 @@
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -62,11 +67,6 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -87,7 +87,13 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -102,7 +108,7 @@
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -113,11 +119,6 @@
               "name": "Negate",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -138,19 +139,19 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
           "module": "condition",
           "action": "else",
-          "parameters": [
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
-            }
-          ],
+          "parameters": [],
           "defaults": null,
           "modifiers": []
         },
@@ -169,11 +170,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Chained conditional: compile the first condition as condition.if, then include the elseif and else bodies as additional actions in the same step. The step text sets %a%, %b%, or %c% depending on which branch runs.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -203,6 +215,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -211,7 +228,7 @@
   "path": "/TestConditionIfRecordsBranchIndexElseBranch.test.goal",
   "prPath": "/.build/testconditionifrecordsbranchindexelsebranch.test.pr",
   "hash": "8c811da5c5241ac00a53ca66d71b3b03a2f48c2fd075acb31312f47cf0c59d49",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

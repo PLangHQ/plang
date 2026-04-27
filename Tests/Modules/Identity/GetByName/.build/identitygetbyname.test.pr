@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity (ignoring errors), creates it as default, asserts the created identity name matches, asserts public key is not null, then archives the identity again.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Archive identity \u0027TestGetByName\u0027 with Force=true. Step text includes \u0027on error ignore\u0027 and \u0027force\u0027, so wrap with error.handle IgnoreError=true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -97,6 +102,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Create identity \u0027TestGetByName\u0027 and set it as default. Capture the created identity object into %MyIdentity% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -126,6 +136,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: %MyIdentity.Name% must equal \u0027TestGetByName\u0027.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -150,6 +165,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: %MyIdentity.PublicKey% must not be null.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -179,6 +199,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Archive identity \u0027TestGetByName\u0027 with Force=true to clean up.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -187,7 +212,7 @@
   "path": "/IdentityGetByName.test.goal",
   "prPath": "/.build/identitygetbyname.test.pr",
   "hash": "3a52cacb10b52640c3baf3853e282e78aa53f36096be52879bb8e1c267de6a45",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

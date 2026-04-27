@@ -1,6 +1,6 @@
 {
   "name": "TestSystemTestGoalRespectsTagFilter",
-  "description": "Reads /system/test.goal into %goalText% and asserts the goal text contains \u0027test.discover\u0027 to verify the system runner routes through test.discover for tag filtering.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -48,6 +48,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -82,6 +87,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -90,7 +100,7 @@
   "path": "/TestSystemTestGoalRespectsTagFilter.test.goal",
   "prPath": "/.build/testsystemtestgoalrespectstagfilter.test.pr",
   "hash": "d9a0f8c2ad206cd89d5c8998479251d58329d66fde01b3e8dadb485cb6ffd084",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

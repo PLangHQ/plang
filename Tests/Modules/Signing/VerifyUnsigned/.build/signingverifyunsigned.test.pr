@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Sets %noSig% to true (null comparison noted in step text).",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %data% = { \"payload\": \"unsigned\" }",
+      "text": "set %data% = { \u0022payload\u0022: \u0022unsigned\u0022 }",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: verify data that was never signed",
@@ -32,11 +32,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "verify %data% with contracts ['C0'], on error call HandleNoSig",
+      "text": "verify %data% with contracts [\u0027C0\u0027], on error call HandleNoSig",
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
@@ -51,14 +56,25 @@
               "type": "object"
             },
             {
+              "name": "Hash",
+              "value": "%__data__%",
+              "type": "string"
+            },
+            {
               "name": "Contracts",
               "value": [
                 "C0"
               ],
-              "type": "list"
+              "type": "list\u003Cstring\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "algorithm",
+              "value": "keccak256",
+              "type": "string"
+            }
+          ],
           "modifiers": [
             {
               "module": "error",
@@ -74,7 +90,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "HandleNoSig"
+                            "name": "HandleNoSig"
                           },
                           "type": "goal.call"
                         }
@@ -83,21 +99,32 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ]
         }
       ],
       "intent": null,
+      "guidance": "crypto.verify against contract C0. On error, run recovery chain that calls goal HandleNoSig. The step text implies error handling; map to crypto.verify plus error.handle with Actions containing a single goal.call.",
+      "level": "low",
+      "confidence": 35,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "assert %noSig% is true, \"verify unsigned data should fail\"",
+      "text": "assert %noSig% is true, \u0022verify unsigned data should fail\u0022",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -122,6 +149,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -164,6 +196,11 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
@@ -184,7 +221,7 @@
   "path": "/SigningVerifyUnsigned.test.goal",
   "prPath": "/.build/signingverifyunsigned.test.pr",
   "hash": "ff337cd6a33b420d9649fef0fec77910e00acbd9ee5037fe17efb1b750aa106d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

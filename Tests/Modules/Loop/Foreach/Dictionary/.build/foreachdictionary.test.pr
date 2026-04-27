@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets up a JSON string in %json%, converts it to an object in %dict%, initializes %count%, iterates over %dict% calling ProcessEntry for each entry, then asserts %count% equals 3.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -64,6 +69,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -93,6 +103,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -154,6 +169,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -183,6 +203,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -191,7 +216,7 @@
   "path": "/ForeachDictionary.test.goal",
   "prPath": "/.build/foreachdictionary.test.pr",
   "hash": "cf123b6ee6e7081ddcc9f9a8ec17c9365cd2456f385ee106b354554c1e3ae863",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %order% to empty, registers two before-action hooks for output.write (LowPriority then HighPriority), writes \u0027trigger\u0027, then asserts %order% equals \u0027high,low\u0027 to verify higher priority fires first.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -86,6 +91,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -136,6 +146,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -153,11 +168,6 @@
               "name": "Data",
               "value": "trigger",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -165,6 +175,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Write the literal text \u0027trigger\u0027 to the current output channel. Step text indicates output.write with a translatable string.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -194,6 +209,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %order% equals the expected string \u0027high,low\u0027.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -202,7 +222,7 @@
   "path": "/EventPriority.test.goal",
   "prPath": "/.build/eventpriority.test.pr",
   "hash": "e81d8beb20be948a4cdcb99054aeba99d520f48c1877e2c0c0bfc5f24c32416c",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "LogRetryError",
-  "description": "Sets the %order% variable to the literal string \u0022error\u0022.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/LogRetryError.goal",
   "prPath": "/.build/logretryerror.pr",
   "hash": "51313fa12d49b8619cb31583b870ffabe109bfdafe268ce0f17242a2064d6148",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

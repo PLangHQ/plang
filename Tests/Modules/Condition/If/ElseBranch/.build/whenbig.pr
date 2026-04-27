@@ -1,6 +1,6 @@
 {
   "name": "WhenBig",
-  "description": "WhenBig step sets %result% to the string \u0022big\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/WhenBig.goal",
   "prPath": "/.build/whenbig.pr",
   "hash": "3dffbc0e1cdf035691216d1a5708f49cd6c5dcd74c5e886b58fb647d91f19719",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

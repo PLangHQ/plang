@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %actionFired% to false, calls CaptureWrite after-action hook, writes \u0027hello world\u0027, then asserts %actionFired% becomes true.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -46,11 +51,10 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "CaptureWrite",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/capturewrite.pr"
+                "name": "CaptureWrite",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/capturewrite.pr"
               },
               "type": "goal.call"
             }
@@ -60,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": "The step text says \u0027after action output.write call CaptureWrite\u0027. This maps to a goal.call of CaptureWrite (the @known mapping indicates the builder already resolved the exact goal name and pr path).",
+      "level": "high",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -81,7 +90,7 @@
             {
               "name": "Channels",
               "value": "this",
-              "type": "string"
+              "type": "channels"
             }
           ],
           "defaults": null,
@@ -89,6 +98,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Writes the literal text \u0027hello world\u0027 to output. The @known mapping indicates output.write with Data as a tstring and Channels set to \u0027this\u0027.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -115,7 +129,7 @@
             {
               "name": "Message",
               "value": null,
-              "type": "string?"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -123,6 +137,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: %actionFired% must equal true. Map to assert.equals with Expected=true and Actual=%actionFired%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -131,7 +150,7 @@
   "path": "/EventAfterAction.test.goal",
   "prPath": "/.build/eventafteraction.test.pr",
   "hash": "318f15a4a1a1834bc5ac96a70ab0c1bacd7c13c7e815934b8aa612fe13535290",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

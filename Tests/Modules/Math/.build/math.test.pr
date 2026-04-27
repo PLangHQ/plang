@@ -9,8 +9,56 @@
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 5,
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%sum%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.add to compute 5\u002B3, then variable.set to %sum%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -19,8 +67,32 @@
       "lineNumber": 3,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 8,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%sum%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %sum% equals 8.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -29,8 +101,56 @@
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "subtract",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 10,
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%diff%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.subtract to compute 10-3, then variable.set to %diff%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -39,8 +159,32 @@
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 7,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%diff%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %diff% equals 7.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -49,8 +193,56 @@
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "multiply",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 6,
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 7,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%product%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.multiply to compute 6*7, then variable.set to %product%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,8 +251,32 @@
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 42,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%product%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %product% equals 42.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -69,8 +285,56 @@
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "divide",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 10,
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 4,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%quotient%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.divide to compute 10/4, then variable.set to %quotient%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -79,8 +343,32 @@
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 2.5,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%quotient%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %quotient% equals 2.5.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -89,8 +377,51 @@
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "abs",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": -42,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%absVal%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.abs to compute absolute value of -42, then variable.set to %absVal%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -99,8 +430,32 @@
       "lineNumber": 11,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 42,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%absVal%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %absVal% equals 42.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -109,8 +464,56 @@
       "lineNumber": 12,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "round",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": 3.14159,
+              "type": "object"
+            },
+            {
+              "name": "Decimals",
+              "value": 2,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%rounded%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.round to round 3.14159 to 2 decimals, then variable.set to %rounded%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -119,8 +522,32 @@
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3.14,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%rounded%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %rounded% equals 3.14.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -129,8 +556,56 @@
       "lineNumber": 14,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "min",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 5,
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%minimum%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.min to compute min(5,3), then variable.set to %minimum%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -139,8 +614,32 @@
       "lineNumber": 15,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%minimum%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %minimum% equals 3.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -149,8 +648,56 @@
       "lineNumber": 16,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "max",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 5,
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%maximum%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.max to compute max(5,3), then variable.set to %maximum%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -159,8 +706,32 @@
       "lineNumber": 17,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 5,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%maximum%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %maximum% equals 5.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -169,8 +740,56 @@
       "lineNumber": 19,
       "indent": 0,
       "comment": "power",
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "power",
+          "parameters": [
+            {
+              "name": "Base",
+              "value": 2,
+              "type": "object"
+            },
+            {
+              "name": "Exponent",
+              "value": 3,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%pow%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.power to compute 2^3, then store into %pow% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -179,8 +798,32 @@
       "lineNumber": 20,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 8,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%pow%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %pow% equals 8.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -189,8 +832,51 @@
       "lineNumber": 22,
       "indent": 0,
       "comment": "sqrt",
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "sqrt",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": 16,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%root%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.sqrt to compute sqrt(16), then store into %root% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -199,8 +885,32 @@
       "lineNumber": 23,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 4,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%root%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %root% equals 4.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -209,8 +919,51 @@
       "lineNumber": 25,
       "indent": 0,
       "comment": "floor",
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "floor",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": 3.7,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%floored%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.floor to compute floor(3.7), then store into %floored% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -219,8 +972,32 @@
       "lineNumber": 26,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%floored%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %floored% equals 3.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -229,8 +1006,51 @@
       "lineNumber": 28,
       "indent": 0,
       "comment": "ceiling",
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "ceiling",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": 3.2,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%ceiled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.ceiling to compute ceiling(3.2), then store into %ceiled% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -239,8 +1059,32 @@
       "lineNumber": 29,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 4,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%ceiled%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %ceiled% equals 4.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -249,8 +1093,56 @@
       "lineNumber": 31,
       "indent": 0,
       "comment": "modulo",
-      "actions": [],
+      "actions": [
+        {
+          "module": "math",
+          "action": "modulo",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 10,
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%mod%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "math.modulo to compute 10 mod 3, then store into %mod% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -259,8 +1151,32 @@
       "lineNumber": 32,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%mod%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": "assert.equals to ensure %mod% equals 1.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -269,7 +1185,7 @@
   "path": "/Math.test.goal",
   "prPath": "/.build/math.test.pr",
   "hash": "2d30d897efc6ade166fdc152dfb9b20a8fe0ab7aa0b94fa7815bc406dc3c77ac",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

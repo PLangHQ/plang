@@ -1,6 +1,6 @@
 {
   "name": "CatchFileError",
-  "description": "Sets the %fileErrorCaught% flag to true using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/CatchFileError.goal",
   "prPath": "/.build/catchfileerror.pr",
   "hash": "41c7c19edbdb6bc6e6f6e20355d6163717a2a518dd94db2ab2c1c062b026d233",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

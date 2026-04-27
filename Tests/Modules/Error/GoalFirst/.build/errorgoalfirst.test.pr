@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets tracking variables, calls AlwaysFails with an on-error handler in GoalFirst order, then asserts the handler was invoked.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -76,14 +86,16 @@
               "name": "GoalName",
               "value": {
                 "name": "AlwaysFails",
-                "parameters": []
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/alwaysfails.pr"
               },
               "type": "goal.call"
             },
             {
               "name": "Actor",
               "value": "this",
-              "type": "actor(user|service|system)"
+              "type": "actor"
             }
           ],
           "defaults": null,
@@ -100,7 +112,7 @@
                 {
                   "name": "Order",
                   "value": "GoalFirst",
-                  "type": "string"
+                  "type": "errororder"
                 },
                 {
                   "name": "Actions",
@@ -112,7 +124,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "GoalFirstHandler"
+                            "name": "GoalFirstHandler"
                           },
                           "type": "goal.call"
                         }
@@ -121,21 +133,32 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ]
         }
       ],
       "intent": null,
+      "guidance": "Call AlwaysFails. On error, run the GoalFirstHandler first (GoalFirst order), then retry the failing call 2 times. The @known mapping indicates the exact compiled chain and parameter shape.",
+      "level": "high",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "assert %goalFirstHandled% is true, \"error goal should be called in GoalFirst order\"",
+      "text": "assert %goalFirstHandled% is true, \u0022error goal should be called in GoalFirst order\u0022",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -160,6 +183,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -168,7 +196,7 @@
   "path": "/ErrorGoalFirst.test.goal",
   "prPath": "/.build/errorgoalfirst.test.pr",
   "hash": "e7fff35aa8b251b0726e792f79f6f003fbed9f55b66ef9d316cfb0b40b541245",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

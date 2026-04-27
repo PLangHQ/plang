@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Initializes empty %items% and %count%, iterates over %items% calling ProcessItem for each %item%, then asserts %count% remains 0.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -110,6 +120,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -139,6 +154,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %count% equals 0 after the foreach. Uses assert.equals with Expected=0 and Actual=%count%.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -147,7 +167,7 @@
   "path": "/ForeachEmpty.test.goal",
   "prPath": "/.build/foreachempty.test.pr",
   "hash": "d6a256ddd85de9e00b39467590ee6a4b7798440e444abb7629b43524512f08f9",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "OuterHandler",
-  "description": "OuterHandler catches the propagated error from BadHandler and marks %outerHandled% as true.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/OuterHandler.goal",
   "prPath": "/.build/outerhandler.pr",
   "hash": "6408d926d051e2348b13ffda7f9b733c1ed41db27e8ca3a7ffde98c7172e8c36",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

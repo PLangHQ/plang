@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Configures HTTP base URL, performs an unsigned GET to a relative path, conditionally writes output based on response emptiness and status code.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,6 +25,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -77,6 +82,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -98,7 +108,7 @@
             {
               "name": "Operator",
               "value": "isempty",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -106,11 +116,22 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Conditional check: if %response% is not empty, run the indented body. Map \u0027is not empty\u0027 to condition.if using isempty negation.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -128,11 +149,6 @@
               "name": "Data",
               "value": "Relative URL with base URL worked",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -140,6 +156,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Writes a success message to output. Uses tstring as the step text is a translatable literal.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -161,7 +182,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -169,11 +190,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Conditional check: if %response.StatusCode% equals 200, run the indented body.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -191,11 +223,6 @@
               "name": "Data",
               "value": "Status code is 200",
               "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -203,6 +230,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Writes a status-code success message to output. Uses tstring as the step text is a translatable literal.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -211,7 +243,7 @@
   "path": "/ConfigBaseUrl.test.goal",
   "prPath": "/.build/configbaseurl.test.pr",
   "hash": "01dc137ea19f5d3c1b5db93b973fbe773de24f7bea80089d8d558bf792d295d9",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

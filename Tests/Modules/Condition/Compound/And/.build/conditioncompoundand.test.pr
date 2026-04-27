@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %a% and %b%, evaluates a compound AND condition, calls DoThing when true, then asserts %result% equals the expected string.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,11 +25,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Initialize %a% to 5 using variable.set.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -54,11 +65,22 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Initialize %b% to 3 using variable.set.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -74,47 +96,18 @@
           "parameters": [
             {
               "name": "Left",
-              "value": "%a%",
-              "type": "int"
-            },
-            {
-              "name": "Operator",
-              "value": "\u003E",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": 1,
-              "type": "int"
-            }
-          ],
-          "defaults": [
-            {
-              "name": "negate",
-              "value": false,
+              "value": "%a% \u003E 1",
               "type": "bool"
-            }
-          ],
-          "modifiers": []
-        },
-        {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%b%",
-              "type": "int"
             },
             {
               "name": "Operator",
-              "value": "\u003C",
-              "type": "string"
+              "value": "and",
+              "type": "operator"
             },
             {
               "name": "Right",
-              "value": 10,
-              "type": "int"
+              "value": "%b% \u003C 10",
+              "type": "bool"
             }
           ],
           "defaults": [
@@ -133,18 +126,12 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "DoThing",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": null
+                "name": "DoThing",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/dothing.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this?(user|service|system)",
-              "type": "actor"
             }
           ],
           "defaults": null,
@@ -152,6 +139,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Evaluate compound AND condition: %a% \u003E 1 and %b% \u003C 10. If true, call DoThing. The AND is represented as a single condition.if with operator \u0027and\u0027 and the two boolean sub-expressions as Left/Right.",
+      "level": "medium",
+      "confidence": 62,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -178,7 +170,7 @@
             {
               "name": "Message",
               "value": "AND condition should pass when both sides true",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -186,6 +178,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition invariant: %result% must equal the string \u0022both-true\u0022. Use assert.equals.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -194,7 +191,7 @@
   "path": "/ConditionCompoundAnd.test.goal",
   "prPath": "/.build/conditioncompoundand.test.pr",
   "hash": "1b2c7e71ed1ee4211f422eeead71eb38e7c7849066e50b810718f63ada6ea335",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

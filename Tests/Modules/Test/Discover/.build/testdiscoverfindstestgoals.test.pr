@@ -1,6 +1,6 @@
 {
   "name": "TestDiscoverFindsTestGoals",
-  "description": "Discovers fixture test goals recursively under _fixtures matching *.fixture.goal, stores results in %tests%, counts them into %count%, and asserts the count equals 3.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -53,6 +53,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -90,11 +95,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Count the discovered items in %tests% using list.count, then store the result in %count% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -124,6 +140,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -132,7 +153,7 @@
   "path": "/TestDiscoverFindsTestGoals.test.goal",
   "prPath": "/.build/testdiscoverfindstestgoals.test.pr",
   "hash": "36adcc0116140de0e0f2970372e46d643dfc3d7b93bd971c3815396a3a736fdb",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

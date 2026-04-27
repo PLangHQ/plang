@@ -1,6 +1,6 @@
 {
   "name": "AlwaysFails",
-  "description": "AlwaysFails increments %goalFirstAttempts% by 1 (using math.add) and stores the result back into %goalFirstAttempts%, then throws an error with message \u0027always fails\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -48,6 +48,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -67,11 +72,22 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "This step unconditionally throws an error with the provided message, failing the step/goal.",
+      "level": "high",
+      "confidence": 99,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -80,7 +96,7 @@
   "path": "/AlwaysFails.goal",
   "prPath": "/.build/alwaysfails.pr",
   "hash": "20452d6d06df8961ba441d4dc18fc37c2e6dd04b2658568f70fb8b95f341268d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

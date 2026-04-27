@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets a flag, calls ThrowWithBadHandler with an on-error handler that calls OuterHandler, then asserts the outer handler marked the flag.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -46,14 +51,17 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowWithBadHandler"
+                "name": "ThrowWithBadHandler",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/throwwithbadhandler.pr"
               },
               "type": "goal.call"
             },
             {
               "name": "Actor",
               "value": "this",
-              "type": "actor(user|service|system)"
+              "type": "actor"
             }
           ],
           "defaults": null,
@@ -72,7 +80,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "OuterHandler"
+                            "name": "OuterHandler"
                           },
                           "type": "goal.call"
                         }
@@ -81,16 +89,27 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ]
         }
       ],
       "intent": null,
+      "guidance": "Call ThrowWithBadHandler on the current actor, and wrap it with error.handle so that if it errors, the recovery chain calls OuterHandler. This matches the known mapping and ensures the error propagates to the outer handler.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -125,6 +144,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -133,7 +157,7 @@
   "path": "/ErrorInHandler.test.goal",
   "prPath": "/.build/errorinhandler.test.pr",
   "hash": "ac84eb8f196a13e591d4c452ae6710b5c53c7d96d635bf06dba62927d1efa8da",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

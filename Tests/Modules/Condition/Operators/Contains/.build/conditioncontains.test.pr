@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name%, checks if it contains substring \u0027world\u0027, calls WhenContains if true, then asserts %result% equals \u0027contains\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +56,7 @@
             {
               "name": "Operator",
               "value": "contains",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -59,7 +64,13 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -69,7 +80,10 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenContains"
+                "name": "WhenContains",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/whencontains.pr"
               },
               "type": "goal.call"
             }
@@ -79,6 +93,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Use condition.if with operator \u0027contains\u0027 to branch on whether %name% includes the substring \u0027world\u0027. In the true branch, call the goal \u0027WhenContains\u0027.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -113,6 +132,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -121,7 +145,7 @@
   "path": "/ConditionContains.test.goal",
   "prPath": "/.build/conditioncontains.test.pr",
   "hash": "9ffdba833592c772bb37f764984e7b08eccddd6431e756d5aaa861b9befcb91c",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

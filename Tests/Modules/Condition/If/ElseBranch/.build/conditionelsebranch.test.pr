@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %x% to 2, then checks if %x% \u003E 100; if false, calls WhenSmall. Finally asserts %result% equals \u0022small\u0022.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -51,7 +56,7 @@
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
@@ -66,7 +71,7 @@
             {
               "name": "Step",
               "value": "this",
-              "type": "string"
+              "type": "step"
             }
           ],
           "defaults": null,
@@ -79,14 +84,17 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenBig"
+                "name": "WhenBig",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/whenbig.pr"
               },
               "type": "goal.call"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "actor(user|service|system)"
+              "type": "actor"
             }
           ],
           "defaults": null,
@@ -99,7 +107,7 @@
             {
               "name": "Step",
               "value": "this",
-              "type": "string"
+              "type": "step"
             }
           ],
           "defaults": null,
@@ -112,14 +120,17 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "WhenSmall"
+                "name": "WhenSmall",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/whensmall.pr"
               },
               "type": "goal.call"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "actor(user|service|system)"
+              "type": "actor"
             }
           ],
           "defaults": null,
@@ -127,6 +138,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Use condition.if to evaluate %x% \u003E 100. The step includes an else branch, so emit condition.if first, then condition.else, each followed by the corresponding goal.call. Actor is user as specified in the known mapping.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -161,6 +177,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -169,7 +190,7 @@
   "path": "/ConditionElseBranch.test.goal",
   "prPath": "/.build/conditionelsebranch.test.pr",
   "hash": "1e47a3ea8ece27ced425e78c62abeb15ec688a4e4e4b3cef98ab293a43b3efa7",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
