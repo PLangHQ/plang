@@ -1,0 +1,4 @@
+# codeanalyzer — runtime2-builder-bootstrap
+
+## v1 (2026-04-27) — NEEDS WORK
+First review of the bootstrap branch. 10 actionable findings: 3 MAJOR (5 bare-catch sites; 2 throws from a `Try*` method in TypeConverter; live diagnostic probe in DefaultBuilderProvider that's a deletion-test win), 4 MEDIUM (key-name heuristic in `Data.IsDeferredActionTemplate`; Clone/CreateChild divergence in `Actor.Context.@this`; asymmetric recovery-value handling in `error.handle.Wrap`; incomplete `PlangTypeIndex.Reset()` + DCL on non-volatile flag), 3 MINOR (triple-implementation of "formal syntax" rendering; culture-sensitive `ToString`s). Architecture (Catalog, PlangType, Trace, ParamSnapshot, BuildResponse) is solid — the issues are bug-hardening. See `v1/result.md` for the full per-file analysis and `v1/summary.md` for the handover narrative.

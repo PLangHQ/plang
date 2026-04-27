@@ -1,0 +1,84 @@
+{
+  "branch": "runtime2-builder-bootstrap",
+  "sessions": [
+    {
+      "id": "637e3a9e-a983-4fb9-9a91-51eb55329bc6",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-27T22:44:26Z",
+      "timestamp_end": "2026-04-27T23:01:13Z",
+      "intent": "Code-quality analysis of the runtime2-builder-bootstrap branch — OBP/simplicity/readability + behavioral reasoning + deletion test on the new and most-changed C# files.",
+      "before": {
+        "assumptions": "Branch is huge (2347 files, ~69k insertions). Coder report described 3 small gap fixes; actual branch contains the full v2 self-rebuild pipeline + diagnostics + module sweep. Will scope analysis to the highest-risk new/changed C# files in PLang/.",
+        "risk": "Scope is too large to deeply analyze every file; have to triage. Risk of missing systemic issues in modules I don't open. Builder is non-deterministic so I avoid asserting anything about .pr files."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the v1 plan with Tier 1 (deep dive on ~10 files) and Tier 2 (lighter scan on ~12 files), explicitly scoping out .goal/.pr files and tests. User approved with 'good, go'."
+        },
+        {
+          "paths": [
+            "PLang/App/Utils/PlangTypeIndex.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/Utils/TypeMapping.cs",
+            "PLang/App/Utils/MimeTypes.cs",
+            "PLang/App/Catalog/this.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/Catalog/ActionSpec.cs",
+            "PLang/App/Catalog/ExampleSpec.cs",
+            "PLang/App/Catalog/TypeEntry.cs",
+            "PLang/App/Catalog/ExampleHelpers.cs",
+            "PLang/App/modules/builder/validateResponse.cs",
+            "PLang/App/modules/builder/BuildResponse.cs",
+            "PLang/App/modules/builder/enrichResponse.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/Actor/Context/Trace/this.cs",
+            "PLang/App/Actor/Context/this.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang/App/Errors/ParamSnapshot.cs",
+            "PLang/App/Attributes/PlangTypeAttribute.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/Goals/Goal/Steps/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/Goals/Goal/this.cs",
+            "PLang/App/FileSystem/Path.cs",
+            "PLang/App/Data/this.cs",
+            "PLang.Generators/LazyParamsGenerator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read all Tier 1 files in full and Tier 2 files via diff. Cross-referenced commit messages (50351d8b builder-bootstrap squash, ada1901a CLR-type guard, 711c2107 rebuild-clean) and the coder/v1/report.md handover. Ran 5 analysis passes: OBP / Simplification / Readability / Behavioral reasoning / Deletion test."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v1/result.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v1/verdict.json",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v1/summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the per-file findings (result.md), the structured verdict (verdict.json: status=fail, NEEDS WORK), the v1 narrative (summary.md), and the cross-session bot summary. 10 prioritized actionable findings."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "NEEDS WORK — 3 MAJOR / 4 MEDIUM / 3 MINOR. Core architecture (Catalog, PlangType, Trace, ParamSnapshot, BuildResponse) is solid; the issues are bug-hardening: bare-catch silent swallows, throws from Try* methods, a live diagnostic probe deletable as-is, and a key-name heuristic.",
+        "notes": "Top-priority handovers to the coder: (1) delete DefaultBuilderProvider.DiagGoal block (lines 171–198), (2) convert TypeConverter throws at lines 266 + 295 into structured Error returns, (3) sweep 5 bare-catch sites for specific exception filters. Debug/this.cs (282 lines changed) deferred — recommend its own focused review pass."
+      }
+    }
+  ]
+}
