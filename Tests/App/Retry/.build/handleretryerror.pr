@@ -1,0 +1,47 @@
+{
+  "name": "HandleRetryError",
+  "description": "Sets the %retryErrorHandled% flag to true using variable.set.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %retryErrorHandled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%retryErrorHandled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/HandleRetryError.goal",
+  "prPath": "/.build/handleretryerror.pr",
+  "hash": "07977c4a77a01653f722fc2cc4587a4232ba762697c7e13ac982efcf4dcb38c8",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

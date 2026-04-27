@@ -17,9 +17,9 @@ Fixes 2 major bugs and 4 minor issues found by the auditor's cross-cutting integ
 6. **ParseToolArguments error surfacing** — `JsonException` now adds a `__parse_error__` Data entry with the error message, which flows as tool result text back to the LLM.
 
 ### Files Modified
-- `PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs` — all 6 code fixes
-- `PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs` — finding 4
-- `PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs` — finding 4
+- `PLang/App/modules/llm/providers/OpenAiProvider.cs` — all 6 code fixes
+- `PLang.Tests/App/Modules/llm/QueryToolTests.cs` — finding 4
+- `PLang.Tests/App/Modules/llm/QueryEdgeCaseTests.cs` — finding 4
 
 ## Code Example
 

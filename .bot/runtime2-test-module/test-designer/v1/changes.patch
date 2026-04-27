@@ -1,0 +1,1432 @@
+diff --git a/PLang.Tests/App/Testing/AfterActionPayloadTests.cs b/PLang.Tests/App/Testing/AfterActionPayloadTests.cs
+new file mode 100644
+index 00000000..85304a79
+--- /dev/null
++++ b/PLang.Tests/App/Testing/AfterActionPayloadTests.cs
+@@ -0,0 +1,78 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 6 — AfterAction event payload widening.
++/// Today: lifecycle.After.Run(context, EventType.AfterAction).
++/// After:  lifecycle.After.Run(context, EventType.AfterAction, this, result).
++/// Subscribers now receive (Context, Action, Data) — unlocking module.action coverage
++/// and branch coverage without touching the Data type itself. All call sites and
++/// subscribers updated in the same commit; no backward-compat shim.
++/// v1 widens only AfterAction; BeforeAction stays as-is.
++/// </summary>
++public class AfterActionPayloadTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // Subscribers to AfterAction receive the Action that just ran — Action.Module,
++    // .ActionName, .Step, .Goal all accessible from the payload.
++    [Test]
++    public async Task AfterAction_Fires_PassesActionInstanceInPayload()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Subscribers receive the Data the action returned — Data.Value, .Properties,
++    // .Error, .Success all readable for coverage and branch tracking.
++    [Test]
++    public async Task AfterAction_Fires_PassesResultDataInPayload()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // timeout.after wrapping http.request emits two AfterAction events — one for the
++    // modifier itself, one for the inner action. Confirms coverage inventory includes
++    // modifiers (architect §5.6). Each Action.RunAsync fires its own AfterAction.
++    [Test]
++    public async Task AfterAction_ForModifierAction_FiresSeparatelyFromInnerAction()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Regression guard: architect widened only AfterAction. BeforeAction stays at
++    // (context, EventType). If BeforeAction is widened in the future, this test flags
++    // it as an intentional scope change.
++    [Test]
++    public async Task BeforeAction_SignatureUnchanged_NoPayloadWidening()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Failed action (Data.Success == false) still triggers AfterAction — the error is
++    // visible to the user so the action "threw" from their perspective, and coverage
++    // tracks attempted execution. (independent — architect flagged as open question §5.6)
++    [Test]
++    public async Task AfterAction_OnActionFailure_FiresWithErrorData()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Action.Step.Goal navigation works from the payload — branch coverage keys sites
++    // as "goalName:stepIndex", which requires the Action to carry Step + Goal refs.
++    [Test]
++    public async Task AfterAction_Payload_ActionCarriesStepAndGoalForSiteKey()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/AssertionErrorVariablesTests.cs b/PLang.Tests/App/Testing/AssertionErrorVariablesTests.cs
+new file mode 100644
+index 00000000..e61e672a
+--- /dev/null
++++ b/PLang.Tests/App/Testing/AssertionErrorVariablesTests.cs
+@@ -0,0 +1,66 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 5 — AssertionError.Variables + assert handlers.
++/// AssertionError gains a nullable Variables property (Dictionary&lt;string, object?&gt;).
++/// Each assert handler, on failure, populates this by calling Context.Variables.Snapshot().
++/// The runner then reads AssertionError.Variables to render the failure diagnostic with
++/// the variable state at the moment of failure.
++/// </summary>
++public class AssertionErrorVariablesTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // New AssertionError has Variables == null. Only handlers populate it; unrelated error
++    // construction paths leave it null.
++    [Test]
++    public async Task AssertionError_Variables_DefaultNull()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Property is settable and gettable — handlers assign Context.Variables.Snapshot()
++    // on failure; readers (renderer, JSON export) pull the dict back out.
++    [Test]
++    public async Task AssertionError_Variables_PropertyRoundtrip()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Canonical failure path: assert.equals fails → returned Data.Error is AssertionError
++    // with Variables populated from the current Context.Variables.Snapshot().
++    [Test]
++    public async Task EqualsHandler_OnFailure_PopulatesVariablesFromSnapshot()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Guard (architect spec): no snapshot cost on passing assertions. A successful
++    // equals does not touch Variables — stays null on the success Data path.
++    [Test]
++    public async Task EqualsHandler_OnSuccess_VariablesNotPopulated()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Reflection-based smoke across all 9 assert handlers (equals, notEquals, isTrue,
++    // isFalse, isNull, isNotNull, lessThan, greaterThan, contains): force a failure
++    // scenario and verify AssertionError.Variables is populated. Prevents drift when
++    // a new handler is added without wiring up the snapshot capture.
++    [Test]
++    public async Task AllAssertHandlers_OnFailure_ConsistentlyPopulateVariables()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/ConditionIfBranchIndexTests.cs b/PLang.Tests/App/Testing/ConditionIfBranchIndexTests.cs
+new file mode 100644
+index 00000000..29f606ff
+--- /dev/null
++++ b/PLang.Tests/App/Testing/ConditionIfBranchIndexTests.cs
+@@ -0,0 +1,73 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 7 — condition.if branch_index.
++/// condition.if publishes Properties["branchIndex"] (int) on its returned Data so the
++/// coverage subscriber can track which branch fired at each site.
++/// Uniform indexing: simple-if uses 0 for true, 1 for false. Multi-branch uses the
++/// branch's position in the chain (0 = if, 1 = first elseif, 2 = second elseif, ...,
++/// N = else). One mental model for all forms.
++/// PLang access syntax: %__data__!branchIndex% (! separator for properties).
++/// </summary>
++public class ConditionIfBranchIndexTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // Simple non-orchestrating form: if(true) → result.Properties["branchIndex"] == 0.
++    [Test]
++    public async Task Simple_IfTrue_BranchIndexIs0()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Simple non-orchestrating form: if(false) → result.Properties["branchIndex"] == 1.
++    [Test]
++    public async Task Simple_IfFalse_BranchIndexIs1()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // if/elseif chain where the first condition matches → branchIndex == 0.
++    [Test]
++    public async Task MultiBranch_FirstBranchMatches_BranchIndexIs0()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // if/elseif chain where the second condition matches → branchIndex == 1.
++    [Test]
++    public async Task MultiBranch_SecondBranchMatches_BranchIndexIs1()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // if / elseif / elseif / else where no condition matches → else fires with
++    // branchIndex == 3 (the else's position in the chain).
++    [Test]
++    public async Task MultiBranch_NoneMatch_ElseBranchIndexEqualsElsePosition()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // If condition evaluation produces an error Data, no branch is taken and
++    // branchIndex is not set in the returned Data.Properties. Coverage subscriber
++    // skips the site — avoids false-positive coverage for tests that never actually
++    // selected a branch. (independent — architect §5.6 flagged as open)
++    [Test]
++    public async Task Evaluation_ThrowsOrErrors_NoBranchIndexPublished()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/CoverageTests.cs b/PLang.Tests/App/Testing/CoverageTests.cs
+new file mode 100644
+index 00000000..5f1c71a3
+--- /dev/null
++++ b/PLang.Tests/App/Testing/CoverageTests.cs
+@@ -0,0 +1,62 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 2 — Coverage tracker.
++/// Each test's App has its own Coverage populated via AfterAction subscription.
++/// At test end, the parent's Coverage absorbs the child's via Merge.
++/// Two dimensions: module.action coverage (which handlers fired) and branch coverage
++/// (which branch indices were observed at each condition.if site).
++/// </summary>
++public class CoverageTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // Fresh Coverage has no observed (module, action) entries.
++    [Test]
++    public async Task NewInstance_ModuleActions_ObservedIsEmpty()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Fresh Coverage has no observed branch-site entries.
++    [Test]
++    public async Task NewInstance_Branches_ObservedIsEmpty()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Recording a (module, action) pair adds it to the observed set; recording the
++    // same pair twice is idempotent (set semantics, not a counter).
++    [Test]
++    public async Task RecordModuleAction_AddsObservationToSet()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // A single site (identified by goal:step location) observing branch_index=0
++    // then later branch_index=1 accumulates the set {0, 1} for that site.
++    [Test]
++    public async Task RecordBranch_AtSameSite_AccumulatesIndicesObserved()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // parent.Merge(child) unions both trackers — module.action pairs and branch-site
++    // indices. This is the merge point between per-test isolation and the run-wide view.
++    [Test]
++    public async Task Merge_FromChildCoverage_UnionsModuleActionsAndBranches()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/DiscoverActionTests.cs b/PLang.Tests/App/Testing/DiscoverActionTests.cs
+new file mode 100644
+index 00000000..cc1c7f32
+--- /dev/null
++++ b/PLang.Tests/App/Testing/DiscoverActionTests.cs
+@@ -0,0 +1,121 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 8 — test.discover action.
++/// C# handler: filesystem walk + .pr parsing. Inputs: Path (default "."), Pattern
++/// (default "*.test.goal"). Returns List&lt;TestFile&gt; with file path, entry goal,
++/// .pr path, tags, status.
++///
++/// Freshness uses Goal.Hash (SHA-256 over Name + Steps.Text, [Store]-persisted in
++/// .pr). Comment-only edits to a .goal DO NOT trigger stale — only Name/Step.Text
++/// changes do. This is intentional: comments and whitespace shouldn't force rebuilds.
++///
++/// Auto-tags come from [RequiresCapability] on action handlers. Tags propagate across
++/// sub-goals reached via static goal.call chains; dynamic goal names (via %var%) are
++/// not traversed.
++/// </summary>
++public class DiscoverActionTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // Walks the tree of *.test.goal files under the target path; every match surfaces
++    // in the returned List<TestFile>.
++    [Test]
++    public async Task Discover_RecursiveWalk_FindsAllTestGoalFiles()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // A .goal with no matching .pr in .build/ → TestStatus.Stale with reason "no .pr".
++    [Test]
++    public async Task Discover_NoPrFile_MarksStaleWithReasonNoPr()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Fresh Goal.Hash (from current .goal) differs from the hash stored in the .pr
++    // (Name or Step.Text changed since last build) → TestStatus.Stale with reason
++    // "rebuild needed". Comment-only edits do NOT trigger stale.
++    [Test]
++    public async Task Discover_GoalAndPrHashMismatch_MarksStaleRebuildNeeded()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Scans .pr for test.tag actions, collects their Tags parameter into the test's
++    // user-tag set. Multiple test.tag actions accumulate.
++    [Test]
++    public async Task Discover_UserTags_ExtractedFromTestTagActionInPr()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // For each action in the .pr, resolves the handler class (via App.Modules.
++    // GetCodeGenerated) and reads [RequiresCapability] via reflection. Capabilities
++    // union into the test's auto-tag set. e.g. a test using http.request gains "network".
++    [Test]
++    public async Task Discover_AutoTags_ExtractedFromHandlerAttributes()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Sub-goal reached via static goal.call: its actions' capabilities propagate up
++    // to the caller test. Test uses goal.call "Helper" where Helper uses http.request
++    // → test gains "network" auto-tag even though its own entry goal doesn't use http.
++    [Test]
++    public async Task Discover_AutoTags_TraverseSubGoals_UnionsAcrossCallChain()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Config.Include=["fast"]: tests without the "fast" tag are returned as
++    // TestStatus.Skipped — not removed from the list, so the run reports them as
++    // skipped (CI visibility).
++    [Test]
++    public async Task Discover_IncludeFilter_NonMatchingTests_MarkedSkipped()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Config.Exclude=["slow"]: tests carrying the "slow" tag are returned as
++    // TestStatus.Skipped.
++    [Test]
++    public async Task Discover_ExcludeFilter_MatchingTests_MarkedSkipped()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Filter composition: Include=["http"], Exclude=["slow"]. A test tagged
++    // [http, slow] ends up Skipped — exclude wins on conflict.
++    // (independent — boundary, locks the filter-order semantics)
++    [Test]
++    public async Task Discover_IncludeAndExclude_ExcludeAppliedAfterInclude()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Robustness: a path that doesn't exist does not throw; returns empty list.
++    // Logged for diagnostics but not fatal — discovery is non-destructive.
++    // (independent — robustness)
++    [Test]
++    public async Task Discover_NonExistentPath_ReturnsEmptyList_NoError()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/EdgeCaseTests.cs b/PLang.Tests/App/Testing/EdgeCaseTests.cs
+new file mode 100644
+index 00000000..b9635395
+--- /dev/null
++++ b/PLang.Tests/App/Testing/EdgeCaseTests.cs
+@@ -0,0 +1,91 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 14 — safety net. Independent edge cases and security tests that don't
++/// fit any single feature. Config boundary robustness (negative/zero/invalid),
++/// re-entrant test.run, path-traversal constraints, ANSI stripping in captured
++/// output (prevents injection into the failure diagnostic), nested-Data JSON
++/// serialization, invalid format values.
++/// These catch the cross-cutting failure modes that show up only in integration.
++/// </summary>
++public class EdgeCaseTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // --test={"timeout":-5} → error returned (not silently clamped). Prevents
++    // zero-or-negative timeouts from causing immediate-cancel pathology.
++    [Test]
++    public async Task Config_Timeout_Negative_RejectedWithError()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // --test={"parallel":0} or {"parallel":-1} → error. Zero parallel means no
++    // tests run (silently useless); negative is nonsense. Both surfaced as
++    // config errors, not accepted and then silently ignored.
++    [Test]
++    public async Task Config_Parallel_ZeroOrNegative_RejectedWithError()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // A test whose goal calls test.run itself (nested runner). The inner run's
++    // results do not leak into the parent run's Results; no deadlock on the
++    // semaphore; both inner and outer complete. Keeps test.run re-entrant so
++    // meta-tests that exercise the runner are feasible.
++    [Test]
++    public async Task Run_RecursiveTestRun_InsideTest_IsolatedAndCompletes()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // --test={"path":"../../../etc"} → rejected. Discovery is constrained to
++    // paths under the app's working directory — prevents a malicious test
++    // config from enumerating system directories. (security)
++    [Test]
++    public async Task Discover_PathTraversal_OutsideProjectRoot_Rejected()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // A test that writes ANSI escape sequences via output.write: when the
++    // captured output is rendered in the failure diagnostic, escape sequences
++    // are stripped or escaped so the terminal renders literal text. Prevents
++    // captured-output injection that could forge success messages, clear the
++    // screen, or reposition the cursor. (security)
++    [Test]
++    public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Variables snapshot where a Data's Value is itself a Data: JSON
++    // serialization during report rendering completes without circular-
++    // reference errors. Defensive case for nested Data in user code.
++    [Test]
++    public async Task Snapshot_DataContainingData_RenderedCorrectly_NoCircularReference()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // --test={"format":"csv"} → error. Only "json" and "junit" are valid values
++    // for the Batch 11 format selector. Robustness on the config surface.
++    [Test]
++    public async Task Config_Format_InvalidValue_RejectedWithError()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/ReportActionTests.cs b/PLang.Tests/App/Testing/ReportActionTests.cs
+new file mode 100644
+index 00000000..c900ae1e
+--- /dev/null
++++ b/PLang.Tests/App/Testing/ReportActionTests.cs
+@@ -0,0 +1,97 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 11 — test.report action.
++/// Three output surfaces: console (always), file artifact (format-selected), and
++/// coverage tables (console). Output directory is ".test/" relative to the discovery
++/// path — artifacts live alongside the tests they describe, dot-prefix hides them.
++/// Format selector: --test={"format":"json"|"junit"}. Default "json".
++/// File format is single-select; if users need both, they run twice (v1 decision).
++/// Failure rendering matches architect §4.6: Expected/Actual + Variables snapshot block.
++/// </summary>
++public class ReportActionTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // Console output (summary + per-test status) is independent of the format selector.
++    // Always writes. Format only controls which file artifact is produced.
++    [Test]
++    public async Task Report_Console_AlwaysWritesSummary_RegardlessOfFormat()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Discovery at "Tests/Foo/" → report files at "Tests/Foo/.test/".
++    // Discovery at "." → "./.test/". Keeps run artifacts co-located with the tests
++    // they describe. The dot-prefix convention hides them from default listings.
++    [Test]
++    public async Task Report_OutputDirectory_IsDotTestRelativeToDiscoveryPath()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Default (no --test format override): .test/results.json is written,
++    // .test/junit.xml is NOT. Format defaults to "json".
++    [Test]
++    public async Task Report_Format_DefaultIsJson_WritesResultsJson()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // --test={"format":"junit"}: .test/junit.xml is written, .test/results.json is NOT.
++    // Single-select format — each file artifact is either-or per run.
++    [Test]
++    public async Task Report_Format_Junit_WritesJunitXml()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Test named "asserts <x> & <y>" → junit.xml properly XML-escapes (&lt;, &gt;, &amp;).
++    // Prevents XML injection that would break CI parsers (GitHub Actions, Gradle, Jenkins).
++    // (independent — security)
++    [Test]
++    public async Task Report_JUnit_TestNameWithXmlSpecialChars_Escaped()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Module.action coverage table: rows = every registered handler in App.Modules.All,
++    // columns mark observed vs not-observed across the run. Coverage percentage computed.
++    [Test]
++    public async Task Report_Coverage_ModuleActionTable_ShowsUniverseVsObserved()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Branch coverage table: one row per condition.if site (keyed "goalName:stepIndex"),
++    // columns show which branch indices were observed. Sites with gaps (e.g., only {0}
++    // seen, missing {1}) flagged in the rendering.
++    [Test]
++    public async Task Report_Coverage_BranchTable_PerSiteShowsObservedIndices()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Architect §4.6 format: "FAIL: <step text>" header, then Expected/Actual lines,
++    // then "Variables:" block with one line per variable. Unset vars render "(unset)",
++    // null vars render "(null)", complex values (lists, dicts) JSON-serialized.
++    [Test]
++    public async Task Report_FailureDetail_RendersVariablesSnapshot_WithUnsetAndNullMarkers()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/RequiresCapabilityAttributeTests.cs b/PLang.Tests/App/Testing/RequiresCapabilityAttributeTests.cs
+new file mode 100644
+index 00000000..8077a12c
+--- /dev/null
++++ b/PLang.Tests/App/Testing/RequiresCapabilityAttributeTests.cs
+@@ -0,0 +1,58 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 3 — [RequiresCapability] attribute.
++/// Pure C# metadata attribute applied to action handler classes. Test discovery
++/// reflects on handlers referenced in a test's .pr (and sub-goals) and unions
++/// the capabilities into the test's tag set. v1 applications:
++///   [RequiresCapability("network")] on http.request / http.download / http.upload
++///   [RequiresCapability("llm")]     on llm.ask
++/// </summary>
++public class RequiresCapabilityAttributeTests
++{
++    // [RequiresCapability("network")] on a class → reflection returns Capabilities == ["network"].
++    [Test]
++    public async Task Attribute_SingleCapability_ReadableViaReflection()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // [RequiresCapability("network", "auth", "disk")] → Capabilities reflects all three
++    // in the order declared.
++    [Test]
++    public async Task Attribute_MultipleCapabilities_AllReadable()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // [RequiresCapability()] with no args → Capabilities is empty array, not null.
++    // Defensive behavior for an attribute authored with zero capabilities. (boundary — independent)
++    [Test]
++    public async Task Attribute_EmptyParams_CapabilitiesIsEmptyArray()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Architect spec: AttributeUsage(AttributeTargets.Class, AllowMultiple = false).
++    // Verified via reflection on the attribute's own AttributeUsageAttribute — guards
++    // against spec drift if someone adds AttributeTargets.Method or flips AllowMultiple.
++    [Test]
++    public async Task Attribute_UsageIsClassLevelOnly_AttributeTargetsEnforced()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Smoke test against real handler classes: http.request, http.download, http.upload
++    // carry [RequiresCapability("network")]; llm.ask carries [RequiresCapability("llm")].
++    // Catches forgotten applications on future handlers in these modules.
++    [Test]
++    public async Task RealHandlers_HaveExpectedCapabilities_VerifiedByReflection()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/ResultsTests.cs b/PLang.Tests/App/Testing/ResultsTests.cs
+new file mode 100644
+index 00000000..9cc49415
+--- /dev/null
++++ b/PLang.Tests/App/Testing/ResultsTests.cs
+@@ -0,0 +1,60 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 2 — Results collection.
++/// Results is the run-wide collection of TestRun entries. Parallel test execution
++/// means Add is called concurrently from multiple Tasks — thread-safety is essential.
++/// TestRun.Complete transitions the per-test status and records duration.
++/// </summary>
++public class ResultsTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // Fresh Results starts empty — Count == 0, enumeration yields nothing.
++    [Test]
++    public async Task NewInstance_Count_IsZero()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Adding a TestRun makes it enumerable via the Results collection.
++    [Test]
++    public async Task Add_TestRun_AppearsInEnumeration()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Mixed Pass/Fail/Timeout/Stale/Skipped TestRuns produce correct per-status counts.
++    [Test]
++    public async Task Summary_CountsByStatus_AggregatesCorrectly()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Parallel test.run appends from multiple Tasks concurrently — Results.Add must be
++    // thread-safe: no lost entries, no corruption. Critical for parallel runs.
++    [Test]
++    public async Task Add_ConcurrentFromMultipleTasks_AllEntriesPreserved()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // TestRun.Complete(status) sets the terminal status and captures elapsed
++    // duration measured from TestRun start.
++    [Test]
++    public async Task TestRun_Complete_TransitionsStatusAndRecordsDuration()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/RunActionTests.cs b/PLang.Tests/App/Testing/RunActionTests.cs
+new file mode 100644
+index 00000000..5d3097be
+--- /dev/null
++++ b/PLang.Tests/App/Testing/RunActionTests.cs
+@@ -0,0 +1,114 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 10 — test.run action. The main loop.
++/// C# handler — NOT a PLang foreach, immune to the silent-skip bug that motivated
++/// this whole module. Fresh App.@this per test (file boundary = App boundary),
++/// semaphore-throttled parallel execution, per-test timeout via CancellationToken,
++/// AfterAction subscription for coverage, child Coverage merged into parent at end.
++/// test.run never throws for child-test failures — failure is data.
++/// </summary>
++public class RunActionTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // Each TestFile gets its own App.@this instance. Two tests cannot observe each
++    // other's MemoryStack, SQLite, or provider state. Headline feature of the module.
++    [Test]
++    public async Task Run_FreshAppPerTest_IsolationBoundaryIsFileLevel()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // With Config.Parallel=2 and 4 tests, at most 2 tests run concurrently.
++    // SemaphoreSlim throttling verified via an observed concurrent-count probe.
++    [Test]
++    public async Task Run_ParallelExecution_RespectsSemaphoreLimit()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // A test that sleeps past the configured timeout → TestStatus.Timeout.
++    // Test App is disposed (CancellationToken fired; IAsyncDisposable chain
++    // cancels actors, providers, channels, keep-alives).
++    [Test]
++    public async Task Run_TimeoutExceeded_TestMarkedTimeout()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // The AfterAction subscription attached to each test's App.Events records every
++    // (module, action) fired inside that test into the test's own Coverage tracker.
++    [Test]
++    public async Task Run_AfterActionSubscription_CapturesCoverageOnChildApp()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // After a test completes, its App.Testing.Coverage is merged into the parent
++    // App.Testing.Coverage via Coverage.Merge. Run-wide view accumulates observations
++    // from all child tests (unions module.action pairs and branch-site indices).
++    [Test]
++    public async Task Run_TestChildCoverage_MergedIntoParentCoverage()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Child App.SystemDirectory is set from context.App.SystemDirectory so shared
++    // system/ goals (e.g. setup helpers) resolve identically in every test.
++    [Test]
++    public async Task Run_SystemDirectory_InheritedFromParentApp()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // testApp.Testing.IsEnabled = true before the test starts. Subsystems that branch
++    // on test mode (in-memory DBs, stubbed identity, etc.) observe the flag.
++    [Test]
++    public async Task Run_TestingIsEnabled_SetToTrueInChildApp()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Tests with TestStatus.Stale or Skipped are NOT executed but are included in
++    // the returned TestRun[] results with their original status. Reporter shows the
++    // full surface — hiding filtered tests would hurt CI visibility.
++    [Test]
++    public async Task Run_OnlyReadyTests_Executed_StaleAndSkippedPreserved()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // A test that fails an assertion: TestRun.Status == Fail, error on the TestRun,
++    // AssertionError.Variables populated (from Batch 5). test.run itself does not
++    // throw — child failure is data, not exception. Keeps the main loop parallel-safe.
++    [Test]
++    public async Task Run_AssertionFailureInTest_CapturedInResult_NoPropagatedException()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Boundary: Tests=[] → TestRun[] is empty, no exception, no subscription
++    // leakage. (independent — robustness)
++    [Test]
++    public async Task Run_EmptyTestList_ReturnsEmptyResults_NoError()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/TagActionTests.cs b/PLang.Tests/App/Testing/TagActionTests.cs
+new file mode 100644
+index 00000000..ec4796e6
+--- /dev/null
++++ b/PLang.Tests/App/Testing/TagActionTests.cs
+@@ -0,0 +1,58 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 9 — test.tag action.
++/// Declarative metadata: "- set test tag 'http', 'fast'". Parameter Tags: string[].
++/// Runtime behavior is a thin write to Testing.CurrentTest.UserTags + Data.Ok.
++/// The real work (extracting tags from .pr) happens at discovery time — see Batch 8.
++/// Outside test mode (CurrentTest == null), this action no-ops so users can embed
++/// test.tag in shared goals without breaking production runs.
++/// </summary>
++public class TagActionTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // When Testing.CurrentTest is set (test in flight), test.tag with Tags=["http","fast"]
++    // writes both tags into CurrentTest.UserTags.
++    [Test]
++    public async Task Tag_InsideTest_WritesToCurrentTestUserTags()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // test.tag always returns Data.Ok; does not write to MemoryStack, does not touch
++    // Variables or Results. Pure tag-metadata action.
++    [Test]
++    public async Task Tag_ReturnsDataOk_NoSideEffectsBeyondTags()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Testing.CurrentTest == null (normal plang run, not --test mode) → test.tag is a
++    // no-op: returns Data.Ok, does not throw, does not write anywhere. Lets users
++    // embed test.tag in shared goals without breaking production. (independent)
++    [Test]
++    public async Task Tag_OutsideTest_CurrentTestNull_NoOpsSafely()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Two test.tag calls: ["http"], then ["fast","slow"] → CurrentTest.UserTags
++    // contains {"http","fast","slow"}. Set semantics — duplicate adds are idempotent,
++    // order not preserved.
++    [Test]
++    public async Task Tag_MultipleInvocations_TagsAccumulate()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/TestMetadataTests.cs b/PLang.Tests/App/Testing/TestMetadataTests.cs
+new file mode 100644
+index 00000000..ac42aa42
+--- /dev/null
++++ b/PLang.Tests/App/Testing/TestMetadataTests.cs
+@@ -0,0 +1,61 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 13 — per-test metadata.
++/// Every TestRun captures the builder version that produced its .pr, plus the
++/// Goal.Hash from the .pr. Surfaced in results.json so tooling can correlate
++/// drift: if the current plang builder is a newer version than the one that
++/// produced a test's .pr, the report flags it. Drift is informational, not
++/// enforced — users decide when to rebuild.
++/// </summary>
++public class TestMetadataTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // The .pr file carries a builder-version field (written at build time). At
++    // discovery, TestRun reads and stores it in its Metadata so the report can
++    // surface "built by version X".
++    [Test]
++    public async Task Metadata_TestRun_CapturesBuilderVersionFromPr()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // TestRun captures Goal.Hash (Name + Steps.Text SHA-256) from the .pr.
++    // Combined with current-file Goal.Hash, enables drift correlation: "this
++    // .pr was built from goal text at hash Y".
++    [Test]
++    public async Task Metadata_TestRun_CapturesGoalHashFromPr()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // results.json exposes the builder version per test run entry. Tooling can
++    // spot tests built by an old builder version and prompt a rebuild. Surfacing
++    // the field is a report contract — dropping it breaks downstream parsers.
++    [Test]
++    public async Task Metadata_Report_SurfacesBuilderVersion_InResultsJson()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // When the current plang builder version differs from the .pr's builder
++    // version, the report flags the test with a "builder drift" note.
++    // Non-fatal — drift correlation, not enforcement. Users see the flag and
++    // can decide whether to rebuild on their own schedule.
++    [Test]
++    public async Task Metadata_Report_FlagsDriftWhenPrBuilderVersionMismatchesCurrent()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/TestingClassTests.cs b/PLang.Tests/App/Testing/TestingClassTests.cs
+new file mode 100644
+index 00000000..2c6ce2ee
+--- /dev/null
++++ b/PLang.Tests/App/Testing/TestingClassTests.cs
+@@ -0,0 +1,100 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 1 — Testing class shape and configuration.
++/// The Testing class owns runner state (IsEnabled, per-test slot) AND runner configuration
++/// (timeout, parallel, include, exclude, verbose) — no separate Config class.
++/// Collaborator classes Results and Coverage are owned by Testing but tested separately
++/// (ResultsTests.cs, CoverageTests.cs in Batch 2).
++/// </summary>
++public class TestingClassTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // Fresh Testing starts disabled — today's stub behavior is preserved.
++    [Test]
++    public async Task NewInstance_IsEnabled_FalseByDefault()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Testing owns a Results collection, initialized, empty on construction.
++    [Test]
++    public async Task NewInstance_Results_InitializedEmpty()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Testing owns a Coverage tracker, initialized with zero observed module.action and branch entries.
++    [Test]
++    public async Task NewInstance_Coverage_InitializedEmpty()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Per-test in-flight state slot starts null; test.run assigns it for the currently running test.
++    [Test]
++    public async Task NewInstance_CurrentTest_NullUntilAssigned()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Architect spec: TimeoutSeconds defaults to 30.
++    [Test]
++    public async Task NewInstance_TimeoutSeconds_DefaultIs30()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Architect spec: Parallel defaults to Environment.ProcessorCount.
++    [Test]
++    public async Task NewInstance_Parallel_DefaultIsProcessorCount()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // No tag filter by default — Include is empty, meaning every discovered test matches.
++    [Test]
++    public async Task NewInstance_Include_DefaultIsEmpty()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // No tag filter by default — Exclude is empty, meaning nothing is excluded.
++    [Test]
++    public async Task NewInstance_Exclude_DefaultIsEmpty()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Quiet mode by default — output.write is captured and shown only on failure.
++    [Test]
++    public async Task NewInstance_Verbose_DefaultIsFalse()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // --test={"timeout":60,"parallel":4,"include":["fast"],"exclude":["slow"],"verbose":true}
++    // applies all five fields to the Testing instance.
++    [Test]
++    public async Task Configure_FromJson_AllFieldsApplied()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/VariablesSnapshotTests.cs b/PLang.Tests/App/Testing/VariablesSnapshotTests.cs
+new file mode 100644
+index 00000000..c02eb7d8
+--- /dev/null
++++ b/PLang.Tests/App/Testing/VariablesSnapshotTests.cs
+@@ -0,0 +1,92 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Batch 4 — Variables.Snapshot().
++/// Captures current variable state for assertion-failure diagnostics. Returns a flat
++/// Dictionary&lt;string, object?&gt; of user-visible variables at the point of call.
++/// Called from assert handlers on failure only (guard: no snapshot on success).
++/// System vars (%!app%, Now, etc.) are excluded by default; the renderer can opt in
++/// to include specific system vars the user referenced (render-time concern, Batch 11).
++/// </summary>
++public class VariablesSnapshotTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    // Fresh Variables — after filtering system vars (!app, Now, GUID, etc.) — snapshots to an empty dict.
++    [Test]
++    public async Task Snapshot_EmptyNonSystemVars_ReturnsEmptyDictionary()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Setting %foo%=1, %bar%="x", %baz%=[1,2,3] — snapshot contains all three with correct values.
++    [Test]
++    public async Task Snapshot_UserVariables_AllIncludedInDictionary()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Convention: %!app%, %!fileSystem%, Now, GUID, etc. are excluded from the default
++    // assertion-failure view. The renderer may opt in to include specific system vars
++    // the user referenced in the failing step (see Batch 11).
++    [Test]
++    public async Task Snapshot_SystemVariables_ExcludedByDefault()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // A variable explicitly set to null is in the dict with value==null — distinguishable
++    // from the "never set" case. Matters for the "(null)" vs "(unset)" failure rendering.
++    [Test]
++    public async Task Snapshot_NullValuedVariable_PresentAsNull_NotAbsent()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // A name never set is not in the dict. Architect's example: %result% rendered as "(unset)".
++    [Test]
++    public async Task Snapshot_UnsetVariable_AbsentFromDictionary()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Architect spec: snapshot values are by-reference, no deep clone. Mutating a list
++    // in the Variables store after snapshot changes the snapshot too. Acceptable because
++    // the App is about to be disposed — no further mutations happen after render.
++    [Test]
++    public async Task Snapshot_CapturesByReference_MutationAfterSnapshotIsReflected()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Nested scope via Save/Restore: outer sets %x%=1, inner sets %x%=2 and snapshots —
++    // snapshot shows %x%=2 (inner wins, flat-dict mechanics). Architect's "innermost wins"
++    // is trivially satisfied because only one value per name exists at any time.
++    [Test]
++    public async Task Snapshot_AfterInnerScopeSet_ReflectsMostRecentWrite()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++
++    // Backing is ConcurrentDictionary; Snapshot iteration must not throw while another
++    // thread is calling Set. (independent — thread-safety)
++    [Test]
++    public async Task Snapshot_DuringConcurrentWrite_DoesNotThrow()
++    {
++        await Task.Yield();
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.goal b/Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.goal
+new file mode 100644
+index 00000000..567db54d
+--- /dev/null
++++ b/Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.goal
+@@ -0,0 +1,7 @@
++TestAssertFailureSnapshotsVariables
++/ Verifies that when an assertion fails, the AssertionError exposes a Variables
++/ snapshot containing the user variables in scope at failure time.
++/ Setup: set %foo% = 1, then assert %foo% equals 2 (which fails).
++/ Caught error should expose Variables dict with %foo% == 1, proving the
++/ snapshot captured the pre-failure state.
++- throw "not implemented"
+diff --git a/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.goal b/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.goal
+new file mode 100644
+index 00000000..03701599
+--- /dev/null
++++ b/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.goal
+@@ -0,0 +1,5 @@
++TestConditionIfRecordsBranchIndexElseBranch
++/ Verifies condition.if publishes the else-branch index when nothing else matches.
++/ Setup: set %x% = 0. Then: if %x% > 10 do A; else if %x% > 5 do B; else do C.
++/ After the if step, inspect %__data__!branchIndex% — should be 2 (else position).
++- throw "not implemented"
+diff --git a/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.goal b/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.goal
+new file mode 100644
+index 00000000..6b77d866
+--- /dev/null
++++ b/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.goal
+@@ -0,0 +1,5 @@
++TestConditionIfRecordsBranchIndexTrueBranch
++/ Verifies condition.if publishes branchIndex=0 when the condition is true.
++/ Setup: set %x% = true. Then: if %x% is true, write 'ok'.
++/ After the if step, inspect %__data__!branchIndex% — should be 0 (the true branch position).
++- throw "not implemented"
+diff --git a/Tests/TestModule/Discover/TestDiscoverFindsTestGoals.goal b/Tests/TestModule/Discover/TestDiscoverFindsTestGoals.goal
+new file mode 100644
+index 00000000..7fdf0ea1
+--- /dev/null
++++ b/Tests/TestModule/Discover/TestDiscoverFindsTestGoals.goal
+@@ -0,0 +1,5 @@
++TestDiscoverFindsTestGoals
++/ Integration: discover on a fixture directory containing three .test.goal files,
++/ all with matching .pr files — returned list has length 3 and all entries are
++/ TestStatus.Ready.
++- throw "not implemented"
+diff --git a/Tests/TestModule/Discover/TestDiscoverReportsStaleWhenPrMissing.goal b/Tests/TestModule/Discover/TestDiscoverReportsStaleWhenPrMissing.goal
+new file mode 100644
+index 00000000..b6b940b4
+--- /dev/null
++++ b/Tests/TestModule/Discover/TestDiscoverReportsStaleWhenPrMissing.goal
+@@ -0,0 +1,5 @@
++TestDiscoverReportsStaleWhenPrMissing
++/ Integration: discover on a fixture where one .test.goal has no corresponding
++/ .pr file — that entry returns with TestStatus.Stale and a reason string
++/ mentioning "no .pr".
++- throw "not implemented"
+diff --git a/Tests/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.goal b/Tests/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.goal
+new file mode 100644
+index 00000000..251c5f3e
+--- /dev/null
++++ b/Tests/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.goal
+@@ -0,0 +1,6 @@
++TestDiscoverHandlesIcelandicGoalNames
++/ End-to-end: fixture with a .test.goal whose filename and goal name use
++/ non-ASCII characters (e.g., "Próf.test.goal" with goal name "Próf").
++/ Discovery finds it, runs it, and reports it. Proves the runner is
++/ encoding-safe for non-English .goal files (PLang is multilingual by design).
++- throw "not implemented"
+diff --git a/Tests/TestModule/Integration/TestSystemTestGoalNoForeach.goal b/Tests/TestModule/Integration/TestSystemTestGoalNoForeach.goal
+new file mode 100644
+index 00000000..96f681b4
+--- /dev/null
++++ b/Tests/TestModule/Integration/TestSystemTestGoalNoForeach.goal
+@@ -0,0 +1,6 @@
++TestSystemTestGoalNoForeach
++/ Structural regression guard: read system/test.goal and assert its step
++/ text contains no "foreach" token. The whole point of the rewrite is to
++/ eliminate the silent-skip bug — this test keeps anyone from reintroducing
++/ the pattern in the system test runner.
++- throw "not implemented"
+diff --git a/Tests/TestModule/Integration/TestSystemTestGoalReportsTimeout.goal b/Tests/TestModule/Integration/TestSystemTestGoalReportsTimeout.goal
+new file mode 100644
+index 00000000..952ca14c
+--- /dev/null
++++ b/Tests/TestModule/Integration/TestSystemTestGoalReportsTimeout.goal
+@@ -0,0 +1,5 @@
++TestSystemTestGoalReportsTimeout
++/ End-to-end: fixture containing a test that sleeps 60s, system/test.goal
++/ runs with --test={"timeout":2}. That test reports TestStatus.Timeout;
++/ other tests in the same run continue normally; overall run does not hang.
++- throw "not implemented"
+diff --git a/Tests/TestModule/Integration/TestSystemTestGoalRespectsTagFilter.goal b/Tests/TestModule/Integration/TestSystemTestGoalRespectsTagFilter.goal
+new file mode 100644
+index 00000000..3f743201
+--- /dev/null
++++ b/Tests/TestModule/Integration/TestSystemTestGoalRespectsTagFilter.goal
+@@ -0,0 +1,6 @@
++TestSystemTestGoalRespectsTagFilter
++/ End-to-end: 3 fixture tests tagged [fast], [fast,slow], [slow]. Run with
++/ --test={"include":["fast"]}. Two tests execute (both carry "fast");
++/ the third is reported Skipped. Proves the discover → run filter pipeline
++/ works through the full system/test.goal invocation.
++- throw "not implemented"
+diff --git a/Tests/TestModule/Integration/TestSystemTestGoalRunsAllDiscovered.goal b/Tests/TestModule/Integration/TestSystemTestGoalRunsAllDiscovered.goal
+new file mode 100644
+index 00000000..d919a856
+--- /dev/null
++++ b/Tests/TestModule/Integration/TestSystemTestGoalRunsAllDiscovered.goal
+@@ -0,0 +1,5 @@
++TestSystemTestGoalRunsAllDiscovered
++/ End-to-end: invoke the rewritten system/test.goal against a fixture tree
++/ containing 5 .test.goal files. All 5 must appear in the run results —
++/ none silently skipped. Verifies the foreach-bug fix (architect plan §1).
++- throw "not implemented"
+diff --git a/Tests/TestModule/Report/TestReportIncludesCoverageTables.goal b/Tests/TestModule/Report/TestReportIncludesCoverageTables.goal
+new file mode 100644
+index 00000000..4ccfd074
+--- /dev/null
++++ b/Tests/TestModule/Report/TestReportIncludesCoverageTables.goal
+@@ -0,0 +1,5 @@
++TestReportIncludesCoverageTables
++/ Integration: after a run, console output contains both the module.action
++/ coverage table and the branch coverage table (when any condition.if site
++/ was observed). Verifies the final surface, not internal Coverage state.
++- throw "not implemented"
+diff --git a/Tests/TestModule/Report/TestReportRendersFailureWithVariables.goal b/Tests/TestModule/Report/TestReportRendersFailureWithVariables.goal
+new file mode 100644
+index 00000000..44246724
+--- /dev/null
++++ b/Tests/TestModule/Report/TestReportRendersFailureWithVariables.goal
+@@ -0,0 +1,5 @@
++TestReportRendersFailureWithVariables
++/ Integration: fixture test fails with %foo%=1 in scope. Console output must
++/ contain "Variables:" section listing "%foo% = 1". Proves the Batch 5
++/ snapshot capture flows through to the final rendered diagnostic.
++- throw "not implemented"
+diff --git a/Tests/TestModule/Report/TestReportWritesJunitXml.goal b/Tests/TestModule/Report/TestReportWritesJunitXml.goal
+new file mode 100644
+index 00000000..19fc9f66
+--- /dev/null
++++ b/Tests/TestModule/Report/TestReportWritesJunitXml.goal
+@@ -0,0 +1,6 @@
++TestReportWritesJunitXml
++/ Integration: run a 3-test fixture with --test={"format":"junit"}. Verify
++/ .test/junit.xml exists, is valid XML, and contains 3 <testcase> entries
++/ under <testsuite>. .test/results.json must NOT exist (format selector
++/ is single-select).
++- throw "not implemented"
+diff --git a/Tests/TestModule/Run/TestRunEnforcesTimeout.goal b/Tests/TestModule/Run/TestRunEnforcesTimeout.goal
+new file mode 100644
+index 00000000..ac6e91b5
+--- /dev/null
++++ b/Tests/TestModule/Run/TestRunEnforcesTimeout.goal
+@@ -0,0 +1,5 @@
++TestRunEnforcesTimeout
++/ Integration: a fixture test that sleeps 60 seconds with runner timeout set to 2s.
++/ That test must finish as TestStatus.Timeout (not Pass, not Fail) within ~2s.
++/ Runner must not hang, must not cancel other tests in the same run.
++- throw "not implemented"
+diff --git a/Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.goal b/Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.goal
+new file mode 100644
+index 00000000..70d2d987
+--- /dev/null
++++ b/Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.goal
+@@ -0,0 +1,5 @@
++TestRunIsolatesMemoryStackBetweenTests
++/ Integration: two tests discovered — TestA sets %shared%=1, TestB asserts
++/ %shared% is unset. Both must pass — proves fresh App per test boundary.
++/ If isolation breaks, TestB would see %shared%=1 and fail.
++- throw "not implemented"
+diff --git a/Tests/TestModule/Run/TestRunReportsAssertionFailure.goal b/Tests/TestModule/Run/TestRunReportsAssertionFailure.goal
+new file mode 100644
+index 00000000..01a01ae1
+--- /dev/null
++++ b/Tests/TestModule/Run/TestRunReportsAssertionFailure.goal
+@@ -0,0 +1,6 @@
++TestRunReportsAssertionFailure
++/ Integration: fixture test that deliberately fails an assertion (assert %x%
++/ equals 'wrong' when %x%='right'). Expected TestStatus.Fail with the
++/ AssertionError carrying Expected, Actual, and Variables snapshot (the
++/ full diagnostic surface from Batch 5).
++- throw "not implemented"
+diff --git a/Tests/TestModule/Run/TestRunSubscribesAfterActionForCoverage.goal b/Tests/TestModule/Run/TestRunSubscribesAfterActionForCoverage.goal
+new file mode 100644
+index 00000000..4877f18a
+--- /dev/null
++++ b/Tests/TestModule/Run/TestRunSubscribesAfterActionForCoverage.goal
+@@ -0,0 +1,6 @@
++TestRunSubscribesAfterActionForCoverage
++/ Integration: fixture test uses file.read and output.write. After the run
++/ completes, run-wide Coverage contains observed (file,read) and (output,write)
++/ entries — verifies AfterAction subscription wired per child App and merged
++/ back into parent Coverage.
++- throw "not implemented"
+diff --git a/Tests/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.goal b/Tests/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.goal
+new file mode 100644
+index 00000000..af7800ee
+--- /dev/null
++++ b/Tests/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.goal
+@@ -0,0 +1,5 @@
++TestTagAccumulatesUserTagsOnRun
++/ Integration: goal calls "set test tag 'http'" then "set test tag 'fast', 'slow'".
++/ After execution under the test runner, the test's UserTags contains all three:
++/ http, fast, slow (union semantics). Verifies runtime accumulation end-to-end.
++- throw "not implemented"
+diff --git a/Tests/TestModule/Tag/TestTagOutsideTestIsNoOp.goal b/Tests/TestModule/Tag/TestTagOutsideTestIsNoOp.goal
+new file mode 100644
+index 00000000..4fc05b00
+--- /dev/null
++++ b/Tests/TestModule/Tag/TestTagOutsideTestIsNoOp.goal
+@@ -0,0 +1,5 @@
++TestTagOutsideTestIsNoOp
++/ Integration: run this goal normally via plang (not via test runner).
++/ The "set test tag" step must not throw and must not break execution —
++/ it no-ops because Testing.CurrentTest is null outside test mode.
++- throw "not implemented"

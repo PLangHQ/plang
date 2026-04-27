@@ -1,0 +1,47 @@
+{
+  "name": "HandleMissing",
+  "description": "Sets %missingCaught% to true when handling missing data (null comparison implied by step text).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %missingCaught% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%missingCaught%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/HandleMissing.goal",
+  "prPath": "/.build/handlemissing.pr",
+  "hash": "6bfa3e52f470dc006286a5418d0a9270a4a8225a172661b024816e0ad2084865",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

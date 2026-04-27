@@ -1,0 +1,259 @@
+{
+  "name": "TestConditionElseIfMatchesRecordsBranchIndex1",
+  "description": "Sets %x%=7, evaluates an if/elseif/else chain to set %b%=2 via the elseif branch, then asserts the published branchIndex is 1 and that %b% equals 2.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = 7",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Verifies condition.elseif publishes branchIndex=1 when the elseif matches\n(if false, elseif true). Also asserts the elseif body ran (%b% was set).",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 7,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %x% \u003E 10 set %a% = 1, else if %x% \u003E 5 set %b% = 2, else set %c% = 3",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%x%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%a%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "elseif",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%x%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%b%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 2,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "else",
+          "parameters": [
+            {
+              "name": "Step",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%c%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %__data__.branchIndex% equals 1",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%__data__.branchIndex%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %b% equals 2",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 2,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%b%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal",
+  "prPath": "/.build/testconditionelseifmatchesrecordsbranchindex1.test.pr",
+  "hash": "7c7911ff749550d35cadc0bb803035101ce5ffe57232d33e12db07c43107db9d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

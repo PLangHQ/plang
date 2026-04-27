@@ -1,0 +1,86 @@
+{
+  "name": "WhenLTE",
+  "description": "Implements the WhenLTE step by conditionally setting %result% to \u0022lte\u0022 when the Left \u003C= Right comparison is true (with Negate=false).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022lte\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003C=",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "lte",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/WhenLTE.goal",
+  "prPath": "/.build/whenlte.pr",
+  "hash": "6f6d08cdd0d061b9851262b738c479468c504dc7a9f1d895452abcf4f2d3d7c1",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

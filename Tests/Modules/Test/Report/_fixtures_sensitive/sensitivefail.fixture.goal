@@ -1,0 +1,8 @@
+SensitiveFail
+/ Fails an assertion where %MyIdentity% (which carries a [Sensitive] PrivateKey)
+/ is the Actual value. Drives Identity into both AssertionError.Actual and the
+/ captured Variables snapshot — the outer test verifies test.report masks the
+/ PrivateKey as '******' before writing. %MyIdentity% is a reserved DynamicData
+/ that lazily get-or-creates the default identity, so the fixture is idempotent
+/ across runs (no "already exists" error).
+- assert %MyIdentity% equals 'will-not-match'

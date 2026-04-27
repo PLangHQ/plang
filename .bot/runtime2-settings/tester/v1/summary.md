@@ -1,7 +1,7 @@
 # Tester v1 Summary — runtime2-settings
 
 ## What this is
-Test quality review of the Settings infrastructure for PLang Runtime2. The coder implemented a scope-chained settings system: `Scope` (ConcurrentDictionary wrapper), `Settings` (scope chain resolution + engine defaults), and `ModuleView` (context-bound typed view). 15 C# tests and 1 PLang test were written.
+Test quality review of the Settings infrastructure for PLang App. The coder implemented a scope-chained settings system: `Scope` (ConcurrentDictionary wrapper), `Settings` (scope chain resolution + engine defaults), and `ModuleView` (context-bound typed view). 15 C# tests and 1 PLang test were written.
 
 ## Test run
 - C# tests: **1254 pass, 0 fail, 0 skipped**
@@ -12,7 +12,7 @@ Test quality review of the Settings infrastructure for PLang Runtime2. The coder
 
 ### Finding 1: CRITICAL — InvalidCastException on type mismatch in Resolve<T>
 
-**File:** `PLang/Runtime2/Engine/Settings/this.cs:34,40`
+**File:** `PLang/App/Settings/this.cs:34,40`
 
 `Resolve<T>` does `(T)value` — a hard unboxing cast. In C#, unboxing requires an **exact type match**: `(long)(object)42` throws `InvalidCastException` when 42 is boxed as `int`.
 
@@ -38,7 +38,7 @@ public async Task Resolve_HandlesNumericWidening()
 
 ### Finding 2: MAJOR — Goal save/restore of SettingsScope not tested
 
-**File:** `PLang/Runtime2/Engine/Goals/Goal/Methods.cs:29-32,89`
+**File:** `PLang/App/Goals/Goal/Methods.cs:29-32,89`
 
 `RunAsync` saves/restores `context.SettingsScope` in a try/finally — nulling it at goal entry, restoring on exit. This is the mechanism that scopes settings to individual goals when the **same context** is passed to sequential goals.
 
@@ -54,7 +54,7 @@ These are two **different isolation mechanisms** and the tests only cover one:
 
 ### Finding 3: MAJOR — Scope chain gap (3+ level parent chain) not tested
 
-**File:** `PLang/Runtime2/Engine/Settings/this.cs:28-37`
+**File:** `PLang/App/Settings/this.cs:28-37`
 
 The scope chain walk does `if (current.SettingsScope != null)` to skip contexts without a settings scope. But the only parent-chain test (`Resolve_InheritsFromParentContext`) uses a 2-level chain where the parent has a scope.
 
@@ -80,13 +80,13 @@ public async Task Resolve_SkipsParentWithNoScope()
 
 ### Finding 4: MINOR — Scope overwrite behavior not tested
 
-**File:** `PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs`
+**File:** `PLang.Tests/App/Settings/ScopeTests.cs`
 
 No test sets the same key twice and verifies the second value wins. The ConcurrentDictionary handles this correctly by default, but the test should document this contract. If the implementation changed (e.g., to a dictionary that throws on duplicate), no test would catch it.
 
 ### Finding 5: MINOR — Null value in Scope.Set will throw
 
-**File:** `PLang/Runtime2/Engine/Settings/Scope.cs:20-23`
+**File:** `PLang/App/Settings/Scope.cs:20-23`
 
 `Scope.Set(string key, object value)` passes value directly to `ConcurrentDictionary[key] = value`. ConcurrentDictionary does **not** allow null values — this throws `ArgumentNullException`. But `Scope.Get` returns null for missing keys. There's no way to "unset" a setting once set.
 
@@ -94,7 +94,7 @@ Not tested, not documented. This may be intentional (settings are write-once-per
 
 ### Finding 6: MINOR — Only one PLang .goal test
 
-**File:** `Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal`
+**File:** `Tests/App/Settings/SetMaxGzipSize/Start.test.goal`
 
 There's only one PLang integration test (set + get + assert). Missing PLang tests for:
 - Setting engine defaults (`set default max gzip size to 50mb`)

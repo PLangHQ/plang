@@ -12,17 +12,17 @@ Analyzed: 2026-02-24
 The coder added two integration tests in `SettingsDataTests.cs`:
 
 ```csharp
-// ErrorPropagation_MemoryStackGet_SettingsMissing_ReturnsAskError
+// ErrorPropagation_VariablesGet_SettingsMissing_ReturnsAskError
 var resolved = memoryStack.Get("Settings.MissingKey");
 await Assert.That(resolved!.Success).IsFalse();
 await Assert.That(resolved.Error is AskError).IsTrue();
 
-// ErrorPropagation_MemoryStackGet_SettingsExists_ReturnsSuccess
+// ErrorPropagation_VariablesGet_SettingsExists_ReturnsSuccess
 var resolved = memoryStack.Get("Settings.ApiKey");
 await Assert.That(resolved!.Success).IsTrue();
 ```
 
-**Assessment: PARTIALLY ADDRESSED.** These tests exercise `MemoryStack.Get()` → `SettingsData.GetChild()` → `AskError`, which is the data path. But they do NOT exercise the generated `CodeGeneratedExecuteAsync` → `__Resolve<T>` → `__resolutionError` path. The generated code has its own control flow (`if (__resolved != null && !__resolved.Success) { __resolutionError = __resolved; return default; }`) that is still untested.
+**Assessment: PARTIALLY ADDRESSED.** These tests exercise `Variables.Get()` → `SettingsData.GetChild()` → `AskError`, which is the data path. But they do NOT exercise the generated `CodeGeneratedExecuteAsync` → `__Resolve<T>` → `__resolutionError` path. The generated code has its own control flow (`if (__resolved != null && !__resolved.Success) { __resolutionError = __resolved; return default; }`) that is still untested.
 
 **However**, this is a reasonable tradeoff. Testing the generated code end-to-end requires building a `.pr` file with `%Settings.Key%` parameters and running it through the engine — that's a PLang integration test, not a C# unit test. The C# tests prove the underlying data flow is correct. The generated code is mechanical (pattern-match + delegate). **Acceptable for merge.**
 
@@ -49,7 +49,7 @@ Four tests added in `DataSourceTests.cs`:
 
 ---
 
-## v1 Finding #3 (MEDIUM-HIGH): MemoryStack.Clone() loses SettingsData type
+## v1 Finding #3 (MEDIUM-HIGH): Variables.Clone() loses SettingsData type
 
 ### Fix Review
 
@@ -71,8 +71,8 @@ else
 ```
 
 Two tests added:
-- `MemoryStack_Clone_PreservesSettingsData` — verifies Settings resolves in cloned stack
-- `MemoryStack_Clone_SettingsData_MissingKey_ReturnsAskError` — verifies AskError in cloned stack
+- `Variables_Clone_PreservesSettingsData` — verifies Settings resolves in cloned stack
+- `Variables_Clone_SettingsData_MissingKey_ReturnsAskError` — verifies AskError in cloned stack
 
 **Assessment: FULLY ADDRESSED.** The fix is correct: SettingsData is stateless (loads from DB each call), so sharing by reference is safe — no mutation risk. The `GetType() != typeof(Data)` check is a clean way to detect subclasses without listing them.
 
@@ -181,11 +181,11 @@ Five tests added covering all classification branches:
 
 The fixes themselves add code that needs review:
 
-### MemoryStack.Clone() — reference sharing concern
+### Variables.Clone() — reference sharing concern
 
 **Line 184**: `if (kvp.Value is DynamicData || kvp.Value.GetType() != typeof(Data))`
 
-The reference-sharing means the original and cloned MemoryStack point to the SAME SettingsData instance. This is safe because:
+The reference-sharing means the original and cloned Variables point to the SAME SettingsData instance. This is safe because:
 1. SettingsData is stateless — reads from DB each time
 2. SettingsData only stores `_engine` (immutable reference) and constant `SettingsTable`
 3. No mutable fields on SettingsData

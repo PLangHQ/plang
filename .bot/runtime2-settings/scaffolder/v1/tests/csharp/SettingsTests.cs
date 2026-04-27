@@ -1,8 +1,8 @@
-using PLang.Runtime2.Engine;
-using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Settings;
-using EngineType = PLang.Runtime2.Engine.@this;
+using App;
+using App.Context;
+using App.Variables;
+using App.Settings;
+using EngineType = App.@this;
 
 namespace PLang.Tests.Runtime2.Engine.Settings;
 
@@ -11,7 +11,7 @@ public class SettingsTests
     private (EngineType engine, PLangContext context) CreateEngine()
     {
         var engine = new EngineType("/app");
-        var context = new PLangContext(engine, new MemoryStack());
+        var context = new PLangContext(engine, new Variables());
         return (engine, context);
     }
 

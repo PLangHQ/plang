@@ -1,12 +1,12 @@
-using PLang.Runtime2.Context;
-using PLang.Runtime2.Errors;
-using PLang.Runtime2.Memory;
-using PLang.Runtime2.modules;
-using PLang.Runtime2.Serialization;
+using App.Context;
+using App.Errors;
+using App.Memory;
+using App.modules;
+using App.Serialization;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace PLang.Runtime2.Core;
+namespace App.Core;
 
 /// <summary>
 /// Main runtime engine for PLang Runtime2.
@@ -138,7 +138,7 @@ public sealed class Engine : IAsyncDisposable
     public Actor User => _user ??= new Actor("User", this);
 
     public PLangContext Context => User.Context;
-    public Memory.MemoryStack MemoryStack => User.Context.MemoryStack;
+    public Memory.Variables Variables => User.Context.Variables;
 
     /// <summary>
     /// Resolves an actor by name. Returns error instead of null — object reports its own errors.
@@ -201,13 +201,13 @@ public sealed class Engine : IAsyncDisposable
         context ??= User.Context;
 
         // Resolve %var% references in the goal name
-        var resolvedName = ResolveVariables(goalCall.Name, context.MemoryStack);
+        var resolvedName = ResolveVariables(goalCall.Name, context.Variables);
 
-        // Inject GoalCall parameters into the context's MemoryStack
+        // Inject GoalCall parameters into the context's Variables
         if (goalCall.Parameters != null)
         {
             foreach (var param in goalCall.Parameters)
-                context.MemoryStack.Set(param.Key, param.Value);
+                context.Variables.Set(param.Key, param.Value);
         }
 
         // Try PrPath first (when available)
@@ -225,7 +225,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Resolves %variable% patterns in a string using the memory stack.
     /// </summary>
-    private static string ResolveVariables(string input, MemoryStack memoryStack)
+    private static string ResolveVariables(string input, Variables memoryStack)
     {
         if (string.IsNullOrEmpty(input) || !input.Contains('%'))
             return input;
@@ -294,7 +294,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Creates a new execution context.
     /// </summary>
-    public PLangContext CreateContext(MemoryStack? memoryStack = null)
+    public PLangContext CreateContext(Variables? memoryStack = null)
     {
         var context = new PLangContext(this, memoryStack)
         {

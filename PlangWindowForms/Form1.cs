@@ -9,12 +9,13 @@ using PLang;
 using PLang.Container;
 using PLang.Errors;
 using PLang.Events;
-using PLang.Interfaces;
+using App.FileSystem;
+using App.FileSystem.Default;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
-using PLang.Utils;
+using App.Utils;
 using PLangWindowForms;
 using Scriban;
 using Scriban.Syntax;
@@ -32,7 +33,7 @@ using System.Windows.Forms;
 using static PLang.Executor;
 using static PLang.Modules.OutputModule.Program;
 using static PLang.Modules.UiModule.Program;
-using static PLang.Utils.StepHelper;
+using static App.Utils.StepHelper;
 
 namespace PlangWindowForms
 {
@@ -249,7 +250,7 @@ namespace PlangWindowForms
 		public record JsVariable(string name, string goalToCall, Dictionary<string, object?>? parameters);
 		public async Task ListenToVariables()
 		{
-			var variables = context.MemoryStack.GetVariablesWithEvent(VariableEventType.OnChange);
+			var variables = context.Variables.GetVariablesWithEvent(VariableEventType.OnChange);
 			List<JsVariable> jsVars = new();
 			foreach (var variable in variables)
 			{
@@ -345,7 +346,7 @@ namespace PlangWindowForms
 			{
 				var parsedUrl = ParseUrl(e.Uri);
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-				//engine.GetMemoryStack().GetMemoryStack().Clear();
+				//engine.GetVariables().GetVariables().Clear();
 				//goalName = args.Request.Uri.ToString().Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
 				Task.Run(() =>
 				{
@@ -405,7 +406,7 @@ namespace PlangWindowForms
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
 
 				var variable = @event["Variable"];
-				var memoryStack = context.MemoryStack;
+				var variables = context.Variables;
 				memoryStack.Put(variable["name"].Value<string>(), variable["value"].Value<object?>());
 
 			}
@@ -511,7 +512,7 @@ namespace PlangWindowForms
 
 				GoalToCallInfo goalToCall = new GoalToCallInfo(parsedUrl.goalName, parsedUrl.param);
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-				//engine.GetMemoryStack().GetMemoryStack().Clear();
+				//engine.GetVariables().GetVariables().Clear();
 				//goalName = args.Request.Uri.ToString().Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
 				var wait =  pseudoRuntime.RunGoal(engine, contextAccessor, "", goalToCall).ConfigureAwait(false);
 				var goalResult = await wait;

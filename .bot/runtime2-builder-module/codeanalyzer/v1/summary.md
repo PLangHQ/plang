@@ -11,7 +11,7 @@ Full 5-pass analysis (OBP, simplification, readability, behavioral reasoning, de
 2. `Goal.Parse()` bare dash `- ` with no text — untested
 3. `EngineModules.GetDefaults()` uses `Activator.CreateInstance` that can throw unhandled
 4. `GetDefaults()` IConfigure<T> path — untested
-5. `FormatForLlm` references Runtime1 type `PLang.Interfaces.PLangContext`
+5. `FormatForLlm` references Runtime1 type `App.FileSystem.Default.PLangContext`
 
 ## Files analyzed
 - `DefaultBuilderProvider.cs` (344 lines) — CLEAN
@@ -26,4 +26,4 @@ Full 5-pass analysis (OBP, simplification, readability, behavioral reasoning, de
 - `DefaultHttpProvider.cs` change — CLEAN
 
 ## Recommendation
-Send findings #1-4 to coder. Finding #5 may need architect input on whether `FormatForLlm` should use a Runtime2 context type.
+Send findings #1-4 to coder. Finding #5 may need architect input on whether `FormatForLlm` should use a App context type.

@@ -29,10 +29,10 @@ Tests for how PLang variables flow into Liquid templates.
 
 | # | Test Name | Intent |
 |---|-----------|--------|
-| 7 | `Render_MemoryStackVariables_AccessibleInTemplate` | Variables set in MemoryStack are available as `{{ varName }}` |
-| 8 | `Render_ExplicitParams_OverrideMemoryStack` | Parameters dict overrides same-named memory stack variable |
+| 7 | `Render_VariablesVariables_AccessibleInTemplate` | Variables set in Variables are available as `{{ varName }}` |
+| 8 | `Render_ExplicitParams_OverrideVariables` | Parameters dict overrides same-named memory stack variable |
 | 9 | `Render_ExplicitParams_CreateAliases` | Parameters dict creates new names not in memory stack |
-| 10 | `Render_ScopedVars_SkippedFromMemoryStack` | Variables prefixed with `!` are not loaded into template context |
+| 10 | `Render_ScopedVars_SkippedFromVariables` | Variables prefixed with `!` are not loaded into template context |
 
 ### Batch 3: Custom Tags & Partials (C# — 4 tests)
 
@@ -111,13 +111,13 @@ Full pipeline tests: `.goal` → builder → `.pr` → GoalMapper → runtime.
 
 | Type | Path |
 |------|------|
-| C# tests | `PLang.Tests/Runtime2/Modules/ui/RenderTests.cs` |
-| PLang tests | `Tests/Runtime2/Ui/` (one `.test.goal` + supporting files per test) |
+| C# tests | `PLang.Tests/App/Modules/ui/RenderTests.cs` |
+| PLang tests | `Tests/App/Ui/` (one `.test.goal` + supporting files per test) |
 
 ## Notes for Coder
 
 - FluidProvider needs `IPLangFileSystem` to read template files — navigate via `action.Context.Engine.FileSystem`
 - `callGoal` needs engine access — navigate via `action.Context.Engine`
-- Template variable loading: iterate `MemoryStack.GetAll()`, skip `!`-prefixed names
+- Template variable loading: iterate `Variables.GetAll()`, skip `!`-prefixed names
 - For C# tests: mock `ITemplateProvider` for provider swap test; use real `FluidProvider` for all others
 - For PLang tests: create fixture template files in test directories

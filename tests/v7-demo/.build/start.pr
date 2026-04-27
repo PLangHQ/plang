@@ -1,0 +1,100 @@
+{
+  "name": "Start",
+  "description": "Sets runtime variables city and message, then writes the message to output.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %city% = \u0027Reykjav\u00EDk\u0027",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "v7 demo \u2014 builder smoke test after silent-error fix",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%city%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "Reykjav\u00EDk",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %message% = \u0027v7 builder is alive in %city%\u0027",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%message%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "v7 builder is alive in %city%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out %message%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%message%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
+  "hash": "fdb724562aa79517a159a70408c0335b59d27e87d6374bea30eb548c2c8a5c56",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

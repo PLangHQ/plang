@@ -2,11 +2,11 @@
 
 ## Scope
 Only files changed in coder v2 (focus on fix-introduced code):
-- `PLang/Runtime2/modules/identity/get.cs` — removed Update on by-name, delegates to GetOrCreateDefaultAsync
-- `PLang/Runtime2/modules/identity/types.cs` — sealed, GetOrCreateDefaultAsync, fixed Created, removed dead code
-- `PLang/Runtime2/modules/identity/IdentityData.cs` — delegates to GetOrCreateDefaultAsync
-- `PLang/Runtime2/modules/identity/rename.cs` — save-first-then-remove
-- `PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs` — 2 new tests
+- `PLang/App/modules/identity/get.cs` — removed Update on by-name, delegates to GetOrCreateDefaultAsync
+- `PLang/App/modules/identity/types.cs` — sealed, GetOrCreateDefaultAsync, fixed Created, removed dead code
+- `PLang/App/modules/identity/IdentityData.cs` — delegates to GetOrCreateDefaultAsync
+- `PLang/App/modules/identity/rename.cs` — save-first-then-remove
+- `PLang.Tests/App/Modules/identity/IdentityHandlerTests.cs` — 2 new tests
 
 ## Focus
 - Does the fix actually resolve the bug? Trace the by-name path end-to-end.

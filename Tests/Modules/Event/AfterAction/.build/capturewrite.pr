@@ -1,0 +1,47 @@
+{
+  "name": "CaptureWrite",
+  "description": "Sets %actionFired% to true using variable.set.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %actionFired% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%actionFired%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/CaptureWrite.goal",
+  "prPath": "/.build/capturewrite.pr",
+  "hash": "65bdcc8b0a165ed6de5773283a379dd4b76b0e06c28829e8d91d5efe8c3b2580",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

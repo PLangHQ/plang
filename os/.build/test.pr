@@ -1,0 +1,28 @@
+{
+  "name": "Test",
+  "description": "Writes the provided greeting text to the output, preserving the %name% placeholder for runtime substitution.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Hello %name%\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Test.goal",
+  "prPath": "/.build/test.pr",
+  "hash": "01e6641e11452e2b6b4df6df36b232498a95ef3a16bbe01a167d203cd900c791",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

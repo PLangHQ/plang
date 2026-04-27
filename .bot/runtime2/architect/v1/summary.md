@@ -16,17 +16,17 @@ Designed the Setup system for runtime2 through iterative discussion with Ingi. T
 - Setup goals excluded from regular goal lookup
 - Error info stored in Executions row for diagnostics; error tolerance policy deferred
 
-**Discrepancy from runtime1:** Runtime1 only tracked steps in `IsSetup` goals. Runtime2 tracks ALL steps reachable from setup execution (including goals called via goal.call). This was intentional — Ingi confirmed the old behavior was a bug.
+**Discrepancy from runtime1:** Runtime1 only tracked steps in `IsSetup` goals. App tracks ALL steps reachable from setup execution (including goals called via goal.call). This was intentional — Ingi confirmed the old behavior was a bug.
 
 **Files to change:**
-- `PLang/Runtime2/Engine/Goals/this.cs` — Setup property becomes object, exclude setup from regular lookup
-- `PLang/Runtime2/Engine/Goals/Goal/Methods.cs` — delegate step iteration to Steps.RunAsync
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` — add RunAsync with setup check
-- `PLang/Runtime2/Engine/Context/PLangContext.cs` — add Setup property, update Clone/CreateChild
+- `PLang/App/Goals/this.cs` — Setup property becomes object, exclude setup from regular lookup
+- `PLang/App/Goals/Goal/Methods.cs` — delegate step iteration to Steps.RunAsync
+- `PLang/App/Goals/Goal/Steps/this.cs` — add RunAsync with setup check
+- `PLang/App/Context/PLangContext.cs` — add Setup property, update Clone/CreateChild
 
 **Files to create:**
-- `PLang/Runtime2/Engine/Goals/Setup/this.cs` — Setup class
-- `PLang/Runtime2/Engine/Goals/Setup/Executions.cs` — Executions smart collection
+- `PLang/App/Goals/Setup/this.cs` — Setup class
+- `PLang/App/Goals/Setup/Executions.cs` — Executions smart collection
 
 **Builder change needed:** Verify Step.Hash composition is `hash(goalPath + compiledAction)` without step index.
 

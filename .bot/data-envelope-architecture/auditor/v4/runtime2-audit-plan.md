@@ -1,4 +1,4 @@
-# Runtime2 Full Audit — Phased Plan
+# App Full Audit — Phased Plan
 
 ## Overview
 
@@ -6,7 +6,7 @@
 
 ---
 
-## Phase 1: Data + Type + MemoryStack (Foundation)
+## Phase 1: Data + Type + Variables (Foundation)
 **Risk: Highest — every module depends on these**
 
 Files:
@@ -14,16 +14,16 @@ Files:
 - `Engine/Memory/Data.Result.cs` — Ok/Fail/Merge/Error
 - `Engine/Memory/Data.Navigation.cs` — GetChild, dot-notation, bracket indexing
 - `Engine/Memory/Data.Envelope.cs` (231 lines) — Wrap/Compress/Encrypt pipeline
-- `Engine/Memory/MemoryStack.cs` (261 lines) — ConcurrentDictionary, system vars, Clone, variable resolution
+- `Engine/Memory/Variables.cs` (261 lines) — ConcurrentDictionary, system vars, Clone, variable resolution
 - `Engine/Memory/Properties.cs` (109 lines) — IList<Data> wrapper
 - `Engine/Memory/Path.cs` (302 lines) — PLangPath rich path type
 - `Engine/Memory/TypeJsonConverter.cs` — Type serialization
 - `Engine/Types/this.cs` (662 lines) — PLang↔CLR types, Kind, MIME, compressibility
 - `Engine/Utility/TypeMapping.cs` (363 lines) — static type conversion (pre-Engine.Types)
 
-Tests: `Memory/DataTests.cs`, `Memory/MemoryStackTests.cs`, `Types/EngineTypesTests.cs`, `Utility/`, `Modules/Path/`
+Tests: `Memory/DataTests.cs`, `Memory/VariablesTests.cs`, `Types/EngineTypesTests.cs`, `Utility/`, `Modules/Path/`
 
-Focus: Thread safety (MemoryStack concurrent access), Value setter side effects, Type derivation correctness, TypeMapping↔Engine.Types overlap/migration path, navigation edge cases, serialization round-trips.
+Focus: Thread safety (Variables concurrent access), Value setter side effects, Type derivation correctness, TypeMapping↔Engine.Types overlap/migration path, navigation edge cases, serialization round-trips.
 
 ---
 
@@ -129,7 +129,7 @@ Split into sub-phases if needed:
 **Risk: Lower — but GoalMapper is critical for builder pipeline**
 
 Files:
-- `Engine/Utility/GoalMapper.cs` (150 lines) — Building.Model → Runtime2 mapping
+- `Engine/Utility/GoalMapper.cs` (150 lines) — Building.Model → App mapping
 - `Engine/Utility/PrParser.cs` (181 lines) — .pr.json parsing
 - `Engine/Cache/` — step cache with TTL
 - `Engine/Properties/this.cs` (114 lines) — key-value store
@@ -139,14 +139,14 @@ Files:
 
 Tests: `Utility/`, `Core/StepCacheTests.cs`, `Modules/LibrariesTests.cs`
 
-Focus: GoalMapper fidelity (does the mapped Runtime2 goal match what the builder intended?), PrParser error handling for malformed .pr files, cache TTL enforcement, library discovery and action resolution.
+Focus: GoalMapper fidelity (does the mapped App goal match what the builder intended?), PrParser error handling for malformed .pr files, cache TTL enforcement, library discovery and action resolution.
 
 ---
 
 ## Recommended Order
 
 ```
-Phase 1 (Data/Type/MemoryStack)     ← everything depends on this
+Phase 1 (Data/Type/Variables)     ← everything depends on this
   ↓
 Phase 2 (Engine/Context/Actor)      ← orchestration root
   ↓

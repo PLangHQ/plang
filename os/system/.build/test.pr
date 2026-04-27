@@ -1,0 +1,170 @@
+{
+  "name": "Test",
+  "description": "Sets default %path%, discovers tests under %path% recursively into %tests%, runs them into %results%, then reports %results%.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set default %path% = \u0027.\u0027",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Replacement for the iteration-based runner \u2014 uses C# test.discover/run/report.\nThe C# test.run loop ensures one test\u0027s failure can\u0027t silent-skip the rest.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%path%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": ".",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            },
+            {
+              "name": "AsDefault",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "test.discover tests in %path% recursive, write to %tests%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "discover",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%path%",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%tests%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "test.run tests %tests%, write to %results%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "run",
+          "parameters": [
+            {
+              "name": "Tests",
+              "value": "%tests%",
+              "type": "list"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%results%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "test.report results %results%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "report",
+          "parameters": [
+            {
+              "name": "Results",
+              "value": "%results%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/PlangConsole/bin/Debug/net10.0/system/test.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/test.pr",
+  "hash": "925df3ab6a65e8b48f5efa755fba3f08ee9b9eee225babc23ab1393e862b5aa3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

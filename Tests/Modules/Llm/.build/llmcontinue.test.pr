@@ -1,0 +1,182 @@
+{
+  "name": "Start",
+  "description": "Runs two LLM queries: first stores the response in %first%, second reuses conversation context (continuePreviousConversation=true) and stores response in %second%, then asserts both are not null.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "[llm] system: \u0027You are a helpful assistant\u0027\nuser: \u0027My favorite color is blue. Remember that.\u0027\nwrite to %first%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Two queries \u2014 second uses continuePreviousConversation, verify LLM remembers context",
+      "actions": [
+        {
+          "module": "llm",
+          "action": "query",
+          "parameters": [
+            {
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "You are a helpful assistant",
+                  "images": []
+                },
+                {
+                  "role": "user",
+                  "content": "My favorite color is blue. Remember that.",
+                  "images": []
+                }
+              ],
+              "type": "list\u003Cllmmessage\u003E"
+            },
+            {
+              "name": "ContinuePreviousConversation",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%first%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "[llm] system: \u0027You are a helpful assistant\u0027\nuser: \u0027What is my favorite color?\u0027\ncontinuePreviousConversation: true\nwrite to %second%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "llm",
+          "action": "query",
+          "parameters": [
+            {
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "You are a helpful assistant",
+                  "images": []
+                },
+                {
+                  "role": "user",
+                  "content": "What is my favorite color?",
+                  "images": []
+                }
+              ],
+              "type": "list\u003Cllmmessage\u003E"
+            },
+            {
+              "name": "ContinuePreviousConversation",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%second%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %first% is not null",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%first%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %second% is not null",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%second%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/LlmContinue.test.goal",
+  "prPath": "/.build/llmcontinue.test.pr",
+  "hash": "37b7d06e17c11310edbcf0336bb934cc32b507e0f2f8677603fa4f1f3dbf0202",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -7,7 +7,7 @@ Identity module error path tests — covers untested exception chains identified
 ## What was done
 
 ### File created
-- `PLang.Tests/Runtime2/Modules/identity/IdentityErrorPathTests.cs` — 8 tests covering all identified gaps
+- `PLang.Tests/App/Modules/identity/IdentityErrorPathTests.cs` — 8 tests covering all identified gaps
 
 ### Tests added
 

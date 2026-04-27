@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "set business wallet as current wallet",
-    "response": "{\"FunctionName\": \"SetCurrentWallet\", \n\"Parameters\": [{\"Type\": \"String\", \n\"Name\": \"walletName\", \n\"Value\": \"My business wallet\"}], \n\"ReturnValue\": null}",
-    "created": "2024-02-07T12:13:46.9402053+00:00"
-  }
-]

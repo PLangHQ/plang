@@ -1,0 +1,28 @@
+{
+  "name": "Start",
+  "description": "Writes the literal text \u0022git client\u0022 to the output channel.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022git client\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/apps/Git/Start.goal",
+  "prPath": "/apps/Git/.build/start.pr",
+  "hash": "6adf92b3e9e750e1f5a81e7ae4227f00d2f198d8b88bc6d3405893291268b0c6",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

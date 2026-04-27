@@ -1,0 +1,15 @@
+TestForeachCallsGoalPerItem
+/ Narrow repro of the "only step 0 applies" class: iterate a 3-item list,
+/ call AddProcessed per item, verify all three calls happened.
+/ Same shape as builder's BuildGoalCore → ProcessGroup → ApplyStep chain,
+/ without the Building/LLM machinery. If this fails, the regression is in
+/ the loop.foreach + goal.call dispatch, not in ApplyStep.
+- set %items% = ["a", "b", "c"]
+- set %processed% = []
+- foreach %items%, call AddProcessed item=%x%
+- assert %processed.Count% equals 3
+
+
+AddProcessed
+/ Shared-state mutation via list.add proves AddProcessed fired per iteration
+- add "x" to %processed%

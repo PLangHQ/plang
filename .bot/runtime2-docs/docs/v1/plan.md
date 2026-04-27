@@ -1,7 +1,7 @@
 # Documentation Plan v1
 
 ## Goal
-Write the foundational PLang website documentation — Getting Started guide and Module Reference for all 16 Runtime2 modules.
+Write the foundational PLang website documentation — Getting Started guide and Module Reference for all 16 App modules.
 
 ## Phase 1: Getting Started (5 files)
 - `docs/index.md` — landing page, what PLang is, quick example, navigation
@@ -11,7 +11,7 @@ Write the foundational PLang website documentation — Getting Started guide and
 - `docs/getting-started/folder-structure.md` — .goal, .build/, .db/, what to commit
 
 ## Phase 2: Module Reference (17 files)
-One file per Runtime2 module, each following this template:
+One file per App module, each following this template:
 - What it does (one sentence)
 - Actions with PLang examples
 - Parameter tables (name, type, required, default, description)
@@ -23,9 +23,9 @@ Modules: variable, output, file, list (16 actions), math (14 actions), convert (
 Plus `docs/modules/index.md` — module overview with categorized table linking to each module page.
 
 ## Source Material
-- All handler source code from `PLang/Runtime2/modules/` (83 handlers across 16 modules)
+- All handler source code from `PLang/App/modules/` (83 handlers across 16 modules)
 - Existing test .goal files for authentic syntax examples
-- Engine architecture from `PLang/Runtime2/Engine/`
+- Engine architecture from `PLang/App/`
 - Existing docs in `Documentation/` for installation details
 
 ## Approach

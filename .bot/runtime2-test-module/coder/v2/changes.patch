@@ -1,0 +1,1250 @@
+diff --git a/PLang.Tests/App/Testing/AfterActionPayloadTests.cs b/PLang.Tests/App/Testing/AfterActionPayloadTests.cs
+index 72c8a1a6..c76c41e8 100644
+--- a/PLang.Tests/App/Testing/AfterActionPayloadTests.cs
++++ b/PLang.Tests/App/Testing/AfterActionPayloadTests.cs
+@@ -146,9 +146,13 @@ public class AfterActionPayloadTests
+ 
+         await _app.RunGoalAsync(goal, _app.User.Context);
+ 
+-        // Both the modifier and the inner action fire AfterAction.
+-        await Assert.That(observed.Any(o => o is { Module: "timeout", ActionName: "after" })).IsTrue();
+-        await Assert.That(observed.Any(o => o is { Module: "variable", ActionName: "set" })).IsTrue();
++        // Exact count and order — Modifiers.RunAsync emits the modifier's AfterAction
++        // first (inside its own post-loop), then control returns to Action.RunAsync which
++        // emits the inner action's AfterAction. Duplicate firings would corrupt
++        // coverage counts silently; unexpected order signals a lifecycle regression.
++        await Assert.That(observed.Count).IsEqualTo(2);
++        await Assert.That(observed[0]).IsEqualTo(("timeout", "after"));
++        await Assert.That(observed[1]).IsEqualTo(("variable", "set"));
+     }
+ 
+     // Regression guard: architect widened only AfterAction. BeforeAction stays at
+diff --git a/PLang.Tests/App/Testing/ConditionIfBranchIndexTests.cs b/PLang.Tests/App/Testing/ConditionIfBranchIndexTests.cs
+index e416d963..70e58fe5 100644
+--- a/PLang.Tests/App/Testing/ConditionIfBranchIndexTests.cs
++++ b/PLang.Tests/App/Testing/ConditionIfBranchIndexTests.cs
+@@ -223,9 +223,11 @@ public class ConditionIfBranchIndexTests
+ 
+         var result = await RunSingleStep(action);
+         await Assert.That(result).IsNotNull();
+-        // Either success with a legitimate branchIndex, or failure with none.
+-        // Per spec: if eval errored, branchIndex should not be published.
+-        if (!result.Success)
+-            await Assert.That(result.Properties.Contains("branchIndex")).IsFalse();
++        // Pre-condition: the fixture must actually trigger an eval error — otherwise
++        // the branchIndex-absence check is vacuously true and the test proves nothing.
++        // If this assertion fires, the fixture needs to be strengthened (pick a
++        // different non-comparable pair) rather than relaxing the guard.
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Properties.Contains("branchIndex")).IsFalse();
+     }
+ }
+diff --git a/PLang.Tests/App/Testing/CoverageTests.cs b/PLang.Tests/App/Testing/CoverageTests.cs
+index 3f0dfd0c..9b13b596 100644
+--- a/PLang.Tests/App/Testing/CoverageTests.cs
++++ b/PLang.Tests/App/Testing/CoverageTests.cs
+@@ -92,4 +92,107 @@ public class CoverageTests
+         await Assert.That(g1.Contains(1)).IsTrue();
+         await Assert.That(parent.Branches["H:5"].Contains(0)).IsTrue();
+     }
++
++    // RecordBranchLabel exposes human-readable branch labels per site. Same site
++    // accumulates labels (e.g. {"if", "elseif[1]"}) so a report can show which
++    // specific branches fired and which were never tested.
++    [Test]
++    public async Task RecordBranchLabel_SiteAndLabel_Recorded()
++    {
++        var coverage = _app.Testing.Coverage;
++        coverage.RecordBranchLabel("G:3", "if");
++
++        await Assert.That(coverage.BranchLabels.ContainsKey("G:3")).IsTrue();
++        await Assert.That(coverage.BranchLabels["G:3"].Contains("if")).IsTrue();
++    }
++
++    // Two different labels at the same site accumulate — both get rendered in reports.
++    [Test]
++    public async Task RecordBranchLabel_SameSite_Multiple_Accumulated()
++    {
++        var coverage = _app.Testing.Coverage;
++        coverage.RecordBranchLabel("G:3", "if");
++        coverage.RecordBranchLabel("G:3", "elseif[1]");
++        coverage.RecordBranchLabel("G:3", "if"); // idempotent — set semantics
++
++        var labels = coverage.BranchLabels["G:3"];
++        await Assert.That(labels.Count).IsEqualTo(2);
++        await Assert.That(labels.Contains("if")).IsTrue();
++        await Assert.That(labels.Contains("elseif[1]")).IsTrue();
++    }
++
++    // RecordBranchChain records the declared chain at a site. First fire wins —
++    // re-seeding with a different chain is a silent no-op (seed-then-observe safety).
++    [Test]
++    public async Task RecordBranchChain_FirstWins_SecondIgnored()
++    {
++        var coverage = _app.Testing.Coverage;
++        coverage.RecordBranchChain("G:3", new List<string> { "if", "elseif[1]", "else" });
++        coverage.RecordBranchChain("G:3", new List<string> { "true", "false" }); // ignored
++
++        var chain = coverage.BranchChains["G:3"];
++        await Assert.That(chain.Count).IsEqualTo(3);
++        await Assert.That(chain[0]).IsEqualTo("if");
++        await Assert.That(chain[1]).IsEqualTo("elseif[1]");
++        await Assert.That(chain[2]).IsEqualTo("else");
++    }
++
++    // RecordBranchChain ignores null/empty input — guards the merge path when a
++    // caller (condition.if on the simple-path eval-error branch) publishes an empty chain.
++    [Test]
++    public async Task RecordBranchChain_EmptyOrNull_Ignored()
++    {
++        var coverage = _app.Testing.Coverage;
++        coverage.RecordBranchChain("G:3", new List<string>());
++        coverage.RecordBranchChain("G:3", null!);
++
++        await Assert.That(coverage.BranchChains.ContainsKey("G:3")).IsFalse();
++    }
++
++    // Merge unions branch labels across parent and child trackers. Both sides'
++    // labels remain observable after the merge — nothing dropped on collision.
++    [Test]
++    public async Task Merge_UnionsBranchLabels()
++    {
++        var parent = _app.Testing.Coverage;
++        parent.RecordBranchLabel("G:1", "if");
++
++        var child = new Coverage();
++        child.RecordBranchLabel("G:1", "elseif[1]"); // same site
++        child.RecordBranchLabel("H:2", "true");       // new site
++
++        parent.Merge(child);
++
++        var g1 = parent.BranchLabels["G:1"];
++        await Assert.That(g1.Count).IsEqualTo(2);
++        await Assert.That(g1.Contains("if")).IsTrue();
++        await Assert.That(g1.Contains("elseif[1]")).IsTrue();
++        await Assert.That(parent.BranchLabels["H:2"].Contains("true")).IsTrue();
++    }
++
++    // Merge unions branch chains, first-seeder wins on collision. Symmetric with
++    // RecordBranchChain's first-wins semantics.
++    [Test]
++    public async Task Merge_UnionsBranchChains_FirstWins()
++    {
++        var parent = _app.Testing.Coverage;
++        parent.RecordBranchChain("G:1", new List<string> { "if", "else" });
++
++        var child = new Coverage();
++        // Child reseeds same site with a different chain — parent's wins (first).
++        child.RecordBranchChain("G:1", new List<string> { "true", "false" });
++        // Child adds a brand-new site — that gets added.
++        child.RecordBranchChain("H:2", new List<string> { "if", "elseif[1]", "elseif[2]" });
++
++        parent.Merge(child);
++
++        var g1 = parent.BranchChains["G:1"];
++        await Assert.That(g1.Count).IsEqualTo(2);
++        await Assert.That(g1[0]).IsEqualTo("if");
++        await Assert.That(g1[1]).IsEqualTo("else");
++
++        var h2 = parent.BranchChains["H:2"];
++        await Assert.That(h2.Count).IsEqualTo(3);
++        await Assert.That(h2[0]).IsEqualTo("if");
++    }
+ }
+diff --git a/PLang.Tests/App/Testing/DebugSmokeTests.cs b/PLang.Tests/App/Testing/DebugSmokeTests.cs
+new file mode 100644
+index 00000000..04897978
+--- /dev/null
++++ b/PLang.Tests/App/Testing/DebugSmokeTests.cs
+@@ -0,0 +1,77 @@
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Smoke guard for the Debug module's widened AfterAction/BeforeAction bindings.
++/// The handlers were widened from (context) → (context, action, result) as part of the
++/// Batch 6 payload-widening. Debug ignores the extra params (`(context, _, _) =>`) but
++/// the dispatch path still pushes them — a mis-typed lambda signature would crash at
++/// first fire. This test verifies Debug.Apply + Level="action" + one real action fires
++/// all four handlers without throwing.
++/// </summary>
++public class DebugSmokeTests
++{
++    private global::App.@this _app = null!;
++    private TextWriter _originalErr = null!;
++    private StringWriter _err = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++        _originalErr = Console.Error;
++        _err = new StringWriter();
++        Console.SetError(_err);
++    }
++
++    [After(Test)]
++    public async Task Teardown()
++    {
++        Console.SetError(_originalErr);
++        await _app.DisposeAsync();
++    }
++
++    // Debug.Apply with level="action" attaches BeforeAction + AfterAction widened handlers.
++    // Running a goal with one action must fire them without throwing.
++    [Test]
++    public async Task Debug_LevelAction_AttachesWidenedHandlers_NoThrowOnFire()
++    {
++        _app.Debug.Apply(new Dictionary<string, object?> { ["level"] = "action" });
++
++        var goal = new Goal
++        {
++            Name = "Dbg",
++            Path = "/Dbg.goal",
++            Steps = new GoalSteps
++            {
++                new Step
++                {
++                    Index = 0,
++                    Text = "set x",
++                    Actions = new StepActions
++                    {
++                        new PrAction
++                        {
++                            Module = "variable",
++                            ActionName = "set",
++                            Parameters = new List<Data> { new("Name", "x"), new("Value", 1) }
++                        }
++                    }
++                }
++            }
++        };
++        _app.Goals.Add(goal);
++
++        // If the widened lambda mis-handles the (action, result) params (e.g. dereferences a
++        // null), this call throws. If signatures are correct, it completes and emits to stderr.
++        await _app.RunGoalAsync(goal, _app.User.Context);
++
++        var debugOut = _err.ToString();
++        // Step-level markers come from the always-on handlers.
++        await Assert.That(debugOut).Contains("DEBUG [BEFORE]");
++        await Assert.That(debugOut).Contains("DEBUG [AFTER]");
++        // Action-level markers come from the widened BeforeAction/AfterAction handlers —
++        // their presence proves the widened lambdas ran without throwing.
++        await Assert.That(debugOut).Contains("ACTION [BEFORE]");
++        await Assert.That(debugOut).Contains("ACTION [AFTER]");
++    }
++}
+diff --git a/PLang.Tests/App/Testing/ExecutorTests.cs b/PLang.Tests/App/Testing/ExecutorTests.cs
+new file mode 100644
+index 00000000..17b6153c
+--- /dev/null
++++ b/PLang.Tests/App/Testing/ExecutorTests.cs
+@@ -0,0 +1,175 @@
++using global::PLang;
++
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Coverage for PLang.Executor.Configure — the CLI argv parsing and routing layer.
++/// The previous test surface covered Testing.Apply / Debug.Apply directly with
++/// dictionaries, but the argv → CommandLineParser → engine-state pipeline was 0%.
++/// Mis-mapped flags (e.g. --test silently not enabling, --debug= value not reaching
++/// Debug.Apply) would ship without a test catching them.
++///
++/// Tests exercise Configure() — the split that returns the configured engine without
++/// executing Start(). Run() is Configure() + Start(), so covering Configure covers the
++/// entire argv-to-engine-state path.
++/// </summary>
++public class ExecutorTests
++{
++    private string _tempDir = null!;
++    private PLangFileSystem _fs = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang-executor-" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _fs = new PLangFileSystem(_tempDir, "");
++    }
++
++    [After(Test)]
++    public void Teardown()
++    {
++        if (System.IO.Directory.Exists(_tempDir))
++            System.IO.Directory.Delete(_tempDir, true);
++    }
++
++    private Executor NewExecutor() => new(_fs);
++
++    // --test flag turns on test mode and routes to system/.build/test.pr when the
++    // default Start.goal is the target. Users expect `plang --test` to run the test
++    // runner, not Start.goal.
++    [Test]
++    public async Task Configure_TestFlag_SetsTestingIsEnabled_RoutesToSystemTestPr()
++    {
++        var executor = NewExecutor();
++        var (engine, error) = executor.Configure(new[] { "Start.goal", "--test" });
++
++        await Assert.That(error).IsNull();
++        await Assert.That(engine).IsNotNull();
++        await Assert.That(engine!.Testing.IsEnabled).IsTrue();
++        await Assert.That(engine.System.Context.Variables.Get<string>("goalFile"))
++            .IsEqualTo("/system/.build/test.pr");
++        await using var _ = engine;
++    }
++
++    // --test={"timeout":5} routes through Testing.Apply with the parsed dict and sets
++    // TimeoutSeconds. Exercises the CommandLineParser JSON collection path.
++    [Test]
++    public async Task Configure_TestFlagWithConfig_AppliesToTesting()
++    {
++        var executor = NewExecutor();
++        var (engine, error) = executor.Configure(new[] { "--test={\"timeout\":5,\"parallel\":3}" });
++
++        await Assert.That(error).IsNull();
++        await Assert.That(engine).IsNotNull();
++        await Assert.That(engine!.Testing.IsEnabled).IsTrue();
++        await Assert.That(engine.Testing.TimeoutSeconds).IsEqualTo(5);
++        await Assert.That(engine.Testing.Parallel).IsEqualTo(3);
++        await using var _ = engine;
++    }
++
++    // --test with invalid config (negative timeout) surfaces as an error Data returned
++    // from Configure. Run() propagates it as the final result without calling Start().
++    [Test]
++    public async Task Configure_TestFlagWithInvalidConfig_ReturnsApplyError()
++    {
++        var executor = NewExecutor();
++        var (engine, error) = executor.Configure(new[] { "--test={\"timeout\":-1}" });
++
++        await Assert.That(error).IsNotNull();
++        await Assert.That(error!.Success).IsFalse();
++        await Assert.That(engine).IsNull();
++    }
++
++    // --debug=Start routes to Debug.Apply which sets IsEnabled and parses the argument.
++    // A string value (vs dict) is accepted — scalar values set the IsEnabled bit only.
++    [Test]
++    public async Task Configure_DebugFlag_InvokesDebugApply()
++    {
++        var executor = NewExecutor();
++        var (engine, error) = executor.Configure(new[] { "Start.goal", "--debug=Start" });
++
++        await Assert.That(error).IsNull();
++        await Assert.That(engine).IsNotNull();
++        await Assert.That(engine!.Debug.IsEnabled).IsTrue();
++        await using var _ = engine;
++    }
++
++    // --build sets Building.IsEnabled and syncs the !build.cache variable so the
++    // PLang builder's Build.goal reads it. Default cache flag is Building.Cache's default.
++    [Test]
++    public async Task Configure_BuildFlag_SetsBuildingIsEnabled_SyncsCacheVar()
++    {
++        var executor = NewExecutor();
++        var (engine, error) = executor.Configure(new[] { "--build" });
++
++        await Assert.That(error).IsNull();
++        await Assert.That(engine).IsNotNull();
++        await Assert.That(engine!.Building.IsEnabled).IsTrue();
++        var cacheVar = engine.User.Context.Variables.Get("!build.cache");
++        await Assert.That(cacheVar).IsNotNull();
++        await using var _ = engine;
++    }
++
++    // Positional "build" arg is normalized to --build — equivalent invocation.
++    [Test]
++    public async Task Configure_PositionalBuild_NormalizedToBuildFlag()
++    {
++        var executor = NewExecutor();
++        var (engine, error) = executor.Configure(new[] { "build" });
++
++        await Assert.That(error).IsNull();
++        await Assert.That(engine).IsNotNull();
++        await Assert.That(engine!.Building.IsEnabled).IsTrue();
++        await using var _ = engine;
++    }
++
++    // CLI parameters (non-!, non-system) are injected as user Variables. `name=my-app`
++    // ends up as %name% = "my-app" accessible from PLang code.
++    [Test]
++    public async Task Configure_CliParameters_InjectedIntoUserVariables()
++    {
++        var executor = NewExecutor();
++        var (engine, error) = executor.Configure(new[] { "Start.goal", "count=42", "label=hello" });
++
++        await Assert.That(error).IsNull();
++        await Assert.That(engine).IsNotNull();
++        var vars = engine!.User.Context.Variables;
++        await Assert.That(vars.Get<long>("count")).IsEqualTo(42L);
++        await Assert.That(vars.Get<string>("label")).IsEqualTo("hello");
++        await using var _ = engine;
++    }
++
++    // No special flags: goalFile is computed from the positional arg, routed into
++    // .build/start.pr. Test mode is disabled, Debug is disabled, Building is disabled.
++    [Test]
++    public async Task Configure_NoSpecialFlags_RoutesToGoalPrPath()
++    {
++        var executor = NewExecutor();
++        var (engine, error) = executor.Configure(new[] { "Start.goal" });
++
++        await Assert.That(error).IsNull();
++        await Assert.That(engine).IsNotNull();
++        await Assert.That(engine!.Testing.IsEnabled).IsFalse();
++        await Assert.That(engine.Debug.IsEnabled).IsFalse();
++        await Assert.That(engine.Building.IsEnabled).IsFalse();
++        await Assert.That(engine.System.Context.Variables.Get<string>("goalFile"))
++            .IsEqualTo("/.build/start.pr");
++        await using var _ = engine;
++    }
++
++    // --test AND --debug can compose: test mode on, debug handlers attached.
++    [Test]
++    public async Task Configure_TestAndDebugFlags_BothApplied()
++    {
++        var executor = NewExecutor();
++        var (engine, error) = executor.Configure(new[] { "--test", "--debug=Start" });
++
++        await Assert.That(error).IsNull();
++        await Assert.That(engine).IsNotNull();
++        await Assert.That(engine!.Testing.IsEnabled).IsTrue();
++        await Assert.That(engine.Debug.IsEnabled).IsTrue();
++        await using var _ = engine;
++    }
++}
+diff --git a/PLang.Tests/App/Testing/OrchestrateBranchCoverageTests.cs b/PLang.Tests/App/Testing/OrchestrateBranchCoverageTests.cs
+new file mode 100644
+index 00000000..db9ffaff
+--- /dev/null
++++ b/PLang.Tests/App/Testing/OrchestrateBranchCoverageTests.cs
+@@ -0,0 +1,209 @@
++using global::App.modules.condition;
++using global::App.modules.condition.providers;
++using global::App.Test;
++
++namespace PLang.Tests.App.Testing;
++
++/// <summary>
++/// Regression guard for the three-bug cluster fixed by commit d05c138d.
++///
++/// Root cause: `SplitAtConditions` used `_items[i]` instead of the indexer, so inner
++/// elseif actions were returned with `Step == null`. Three symptoms cascaded:
++///   1. Coverage subscriber recorded at phantom site "?:?" instead of "goal:step".
++///   2. `alreadyOrchestrating` guard-key mismatch (hash of null != hash of real step)
++///      caused inner elseifs to re-enter orchestration on the simple path.
++///   3. `DisableChildrenOf` silently skipped when invoked from an inner elseif.
++///
++/// This test attaches a production-shaped coverage subscriber (same filter as run.cs
++/// L77-115: `action.IsCondition && action.IsFirstConditionInStep`), runs a multi-action
++/// orchestrate step where the outer `if` is false and the inner `elseif` is true,
++/// and asserts:
++///   - No "?:?" site is recorded (Step propagated to inner elseif)
++///   - The observed branchIndex at the correct site is 1 (elseif matched)
++///   - Inner elseif's `IsFirstConditionInStep` is false (filter works)
++///   - Indented sub-step ran (DisableChildrenOf worked per-branch)
++/// </summary>
++public class OrchestrateBranchCoverageTests
++{
++    private global::App.@this _app = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/test");
++    }
++
++    [After(Test)]
++    public async Task Cleanup() => await _app.DisposeAsync();
++
++    // Attaches the same-shape subscriber used by test.run's RunSingleAsync, writing
++    // observations into a fresh Coverage instance and keeping the list of (action,
++    // isFirstCondition) pairs seen so the test can make filter-level assertions.
++    private (Coverage coverage, List<(PrAction action, bool isFirstCondition)> observed) RegisterCoverageProbe()
++    {
++        var coverage = new Coverage();
++        var observed = new List<(PrAction action, bool isFirstCondition)>();
++        _app.User.Context.Events.Register(new EventBinding(
++            EventType.AfterAction,
++            (ctx, action, result) =>
++            {
++                if (action != null)
++                {
++                    coverage.RecordModuleAction(action.Module, action.ActionName);
++                    if (action.IsCondition)
++                        observed.Add((action, action.IsFirstConditionInStep));
++                    if (action.IsCondition
++                        && result != null && result.Properties.Contains("branchIndex")
++                        && action.IsFirstConditionInStep)
++                    {
++                        var goal = action.Step?.Goal;
++                        var goalId = goal?.Path ?? goal?.Name ?? "?";
++                        var stepIndex = action.Step?.Index.ToString() ?? "?";
++                        var site = $"{goalId}:{stepIndex}";
++                        coverage.RecordBranch(site, result.Properties.Get<int>("branchIndex"));
++                    }
++                }
++                return Task.FromResult(Data.Ok());
++            },
++            priority: int.MaxValue,
++            stopOnError: false));
++        return (coverage, observed);
++    }
++
++    private static PrAction IfAction(object? left, string op, object? right) => new()
++    {
++        Module = "condition",
++        ActionName = "if",
++        Parameters = new List<Data>
++        {
++            new("Left", left),
++            new("Operator", new Operator(op)),
++            new("Right", right)
++        }
++    };
++
++    private static PrAction SetAction(string name, object value) => new()
++    {
++        Module = "variable",
++        ActionName = "set",
++        Parameters = new List<Data> { new("Name", name), new("Value", value) }
++    };
++
++    // Multi-action orchestrate step where outer if is false and inner elseif is true.
++    // Before d05c138d: inner elseif's Step was null, so the coverage subscriber recorded
++    // at "?:?", the orchestrate guard mis-matched, and DisableChildrenOf silently skipped.
++    // After d05c138d: Step is populated via the Actions indexer, so all three paths work.
++    [Test]
++    public async Task MultiActionOrchestrate_InnerElseIfMatches_FilterSkipsPhantomSites_SubStepsRun()
++    {
++        _app.User.Context.Variables.Set("x", 5);
++
++        var orchestrateStep = new Step
++        {
++            Index = 0,
++            Indent = 0,
++            Text = "if outer false elseif inner true",
++            Actions = new StepActions
++            {
++                IfAction("%x%", ">", 100),   // outer — false (5 > 100)
++                SetAction("bodyA", 1),       // body under outer if
++                IfAction("%x%", ">", 0),     // inner — true (5 > 0)
++                SetAction("bodyB", 2)        // body under inner elseif
++            }
++        };
++
++        // Indented sub-step: only reached when DisableChildrenOf leaves it enabled.
++        var subStep = new Step
++        {
++            Index = 1,
++            Indent = 1,
++            Text = "set subran",
++            Actions = new StepActions { SetAction("subran", 1) }
++        };
++
++        var goal = new Goal
++        {
++            Name = "Orch",
++            Path = "/Orch.goal",
++            Steps = new GoalSteps { orchestrateStep, subStep }
++        };
++        _app.Goals.Add(goal);
++
++        var (coverage, observed) = RegisterCoverageProbe();
++
++        await _app.RunGoalAsync(goal, _app.User.Context);
++
++        // 1. DisableChildrenOf worked: the inner elseif matched so the sub-step ran.
++        var vars = _app.User.Context.Variables;
++        await Assert.That(vars.Get<int>("subran")).IsEqualTo(1);
++
++        // 2. alreadyOrchestrating guard keyed on the real step: inner elseif's body
++        //    ran (bodyB set) and outer's body didn't (bodyA unset because outer was false).
++        await Assert.That(vars.Get<int>("bodyB")).IsEqualTo(2);
++        await Assert.That(vars.Contains("bodyA")).IsFalse();
++
++        // 3. Coverage subscriber never recorded "?:?" — Step was propagated.
++        await Assert.That(coverage.Branches.ContainsKey("?:?")).IsFalse();
++
++        // 4. Exactly one site was recorded, at the orchestrate step's real key.
++        await Assert.That(coverage.Branches.Count).IsEqualTo(1);
++        await Assert.That(coverage.Branches.ContainsKey("/Orch.goal:0")).IsTrue();
++
++        // 5. branchIndex=1 recorded — the elseif matched (position 1 in the chain).
++        await Assert.That(coverage.Branches["/Orch.goal:0"].Contains(1)).IsTrue();
++
++        // 6. The filter distinguishes outer vs inner condition.if actions.
++        //    Both condition.if actions fire AfterAction — the outer as orchestrator
++        //    (IsFirstConditionInStep==true), the inner on the simple path during elseif
++        //    evaluation (IsFirstConditionInStep==false).
++        var outerObservations = observed.Where(o => o.isFirstCondition).ToList();
++        var innerObservations = observed.Where(o => !o.isFirstCondition).ToList();
++        await Assert.That(outerObservations.Count).IsGreaterThanOrEqualTo(1);
++        await Assert.That(innerObservations.Count).IsGreaterThanOrEqualTo(1);
++    }
++
++    // Belt-and-suspenders: direct assertion on Actions propagation. Ensures
++    // SplitAtConditions reads via the indexer (Step propagated on every returned action),
++    // matching the fix from d05c138d.
++    [Test]
++    public async Task SplitAtConditions_PropagatesStepToEveryReturnedAction()
++    {
++        var step = new Step
++        {
++            Index = 0,
++            Text = "multi",
++            Actions = new StepActions
++            {
++                IfAction(1, ">", 100),
++                SetAction("a", 1),
++                IfAction(1, ">", 0),
++                SetAction("b", 2)
++            }
++        };
++        // Force Actions → step binding (same path the runtime takes via enumeration).
++        _ = step.Actions;
++
++        var branches = step.Actions.SplitAtConditions(0);
++
++        await Assert.That(branches.Count).IsEqualTo(2);
++        foreach (var (condition, body) in branches)
++        {
++            await Assert.That(condition).IsNotNull();
++            await Assert.That(condition!.Step).IsNotNull();
++            await Assert.That(condition.Step!.Index).IsEqualTo(0);
++            foreach (var bodyAction in body)
++            {
++                await Assert.That(bodyAction.Step).IsNotNull();
++                await Assert.That(bodyAction.Step!.Index).IsEqualTo(0);
++            }
++        }
++
++        // Inner elseif (second condition action) must report IsFirstConditionInStep=false.
++        var innerElseIf = branches[1].condition!;
++        await Assert.That(innerElseIf.IsFirstConditionInStep).IsFalse();
++
++        // Outer if (first condition action) must report IsFirstConditionInStep=true.
++        var outerIf = branches[0].condition!;
++        await Assert.That(outerIf.IsFirstConditionInStep).IsTrue();
++    }
++}
+diff --git a/PLang.Tests/App/Testing/ReportActionTests.cs b/PLang.Tests/App/Testing/ReportActionTests.cs
+index 937f8689..f69d44c5 100644
+--- a/PLang.Tests/App/Testing/ReportActionTests.cs
++++ b/PLang.Tests/App/Testing/ReportActionTests.cs
+@@ -173,9 +173,92 @@ public class ReportActionTests
+ 
+         var output = _console.ToString();
+         await Assert.That(output.Contains("Branch coverage")).IsTrue();
+-        await Assert.That(output.Contains("MyGoal:3")).IsTrue();
+-        await Assert.That(output.Contains("0")).IsTrue();
+-        await Assert.That(output.Contains("1")).IsTrue();
++        // Parse the site line to verify the exact rendered contents at MyGoal:3,
++        // instead of the old loose Contains("0") / Contains("1") check that passed
++        // accidentally on any single digit appearing anywhere in the summary.
++        var siteLine = output.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("MyGoal:3:"));
++        await Assert.That(siteLine).IsNotNull();
++        await Assert.That(siteLine!).Contains("0");
++        await Assert.That(siteLine!).Contains("1");
++        // The rendering wraps branches in {}, so the structural marker must be present.
++        await Assert.That(siteLine!).Contains("{");
++        await Assert.That(siteLine!).Contains("}");
++    }
++
++    // JUnit <failure> element for Fail status carries the error message. CI dashboards
++    // parse this — malformed XML or missing elements break the reporting pipeline.
++    [Test]
++    public async Task Report_Junit_FailStatus_EmitsFailureElement()
++    {
++        _app.Testing.Format = "junit";
++        var err = new AssertionError(1, 2, "mismatch");
++        _app.Testing.Results.Add(NewRun("Failing", TestStatus.Fail, err));
++
++        await Report();
++
++        var junitPath = System.IO.Path.Combine(_tempDir, ".test", "junit.xml");
++        var doc = XDocument.Parse(await System.IO.File.ReadAllTextAsync(junitPath));
++        var testcase = doc.Descendants("testcase").Single();
++        var failure = testcase.Element("failure");
++        await Assert.That(failure).IsNotNull();
++        await Assert.That(failure!.Value).Contains("Expected: 1");
++    }
++
++    // JUnit <failure type="timeout"> distinguishes timeout from assertion failure —
++    // dashboards colour them differently. Missing type attribute breaks CI filtering.
++    [Test]
++    public async Task Report_Junit_TimeoutStatus_EmitsFailureWithTypeTimeout()
++    {
++        _app.Testing.Format = "junit";
++        _app.Testing.Results.Add(NewRun("SlowTest", TestStatus.Timeout));
++
++        await Report();
++
++        var junitPath = System.IO.Path.Combine(_tempDir, ".test", "junit.xml");
++        var doc = XDocument.Parse(await System.IO.File.ReadAllTextAsync(junitPath));
++        var testcase = doc.Descendants("testcase").Single();
++        var failure = testcase.Element("failure");
++        await Assert.That(failure).IsNotNull();
++        await Assert.That(failure!.Attribute("type")?.Value).IsEqualTo("timeout");
++    }
++
++    // JUnit <skipped> with reason for tests filtered out by tag include/exclude.
++    [Test]
++    public async Task Report_Junit_SkippedStatus_EmitsSkippedElement()
++    {
++        _app.Testing.Format = "junit";
++        var run = NewRun("Filtered", TestStatus.Skipped);
++        run.File.StatusReason = "excluded by tag";
++        _app.Testing.Results.Add(run);
++
++        await Report();
++
++        var junitPath = System.IO.Path.Combine(_tempDir, ".test", "junit.xml");
++        var doc = XDocument.Parse(await System.IO.File.ReadAllTextAsync(junitPath));
++        var testcase = doc.Descendants("testcase").Single();
++        var skipped = testcase.Element("skipped");
++        await Assert.That(skipped).IsNotNull();
++        await Assert.That(skipped!.Value).Contains("excluded by tag");
++    }
++
++    // Stale tests (source hash changed but not rebuilt) also render as <skipped> with
++    // the reason — CI surfaces them as not-run, the report explains why.
++    [Test]
++    public async Task Report_Junit_StaleStatus_EmitsSkippedWithReason()
++    {
++        _app.Testing.Format = "junit";
++        var run = NewRun("StaleTest", TestStatus.Stale);
++        run.File.StatusReason = "goal hash changed since build";
++        _app.Testing.Results.Add(run);
++
++        await Report();
++
++        var junitPath = System.IO.Path.Combine(_tempDir, ".test", "junit.xml");
++        var doc = XDocument.Parse(await System.IO.File.ReadAllTextAsync(junitPath));
++        var testcase = doc.Descendants("testcase").Single();
++        var skipped = testcase.Element("skipped");
++        await Assert.That(skipped).IsNotNull();
++        await Assert.That(skipped!.Value).Contains("goal hash changed");
+     }
+ 
+     // Architect §4.6 format: "FAIL: <step text>" header, then Expected/Actual lines,
+diff --git a/PLang.Tests/App/Testing/RunActionTests.cs b/PLang.Tests/App/Testing/RunActionTests.cs
+index ec7b454c..9fe17bf2 100644
+--- a/PLang.Tests/App/Testing/RunActionTests.cs
++++ b/PLang.Tests/App/Testing/RunActionTests.cs
+@@ -136,28 +136,63 @@ public class RunActionTests
+     }
+ 
+     // With Config.Parallel=2 and 4 tests, at most 2 tests run concurrently.
+-    // SemaphoreSlim throttling verified via an observed concurrent-count probe.
++    // Each fixture's BeforeAction delays asynchronously for long enough that another
++    // fixture can enter the same window. The observed max concurrent depth equals the
++    // semaphore size — parallel=2 → max 2; parallel=1 would observe max 1.
+     [Test]
+     public async Task Run_ParallelExecution_RespectsSemaphoreLimit()
+     {
+-        // Fixtures that do nothing — we just need the runner to process them. We
+-        // check the observed max-concurrent count on the parent's running tally.
+-        var tests = new List<TestFile>();
+-        for (int i = 0; i < 4; i++)
+-            tests.Add(BuildFixture($"T{i}.test.goal", $"T{i}", new (string, string, List<Data>)[]
+-            {
+-                ("variable", "set", new List<Data>
+-                {
+-                    new("Name", "x"),
+-                    new("Value", i)
+-                })
+-            }));
++        int currentDepth = 0;
++        int maxDepth = 0;
++        var depthLock = new object();
+ 
+-        var results = await RunTests(tests, parallel: 2);
+-        var runs = results.ToList();
++        // Filter by _tempDir — static event is shared across parallel tests.
++        void Probe(global::App.@this childApp)
++        {
++            if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
++            childApp.User.Context.Events.Register(new EventBinding(
++                EventType.BeforeAction,
++                async (ctx, action, result) =>
++                {
++                    lock (depthLock)
++                    {
++                        currentDepth++;
++                        if (currentDepth > maxDepth) maxDepth = currentDepth;
++                    }
++                    // Hold long enough that at most semaphore-size fixtures overlap.
++                    // 100ms is plenty for the scheduler to start the next task.
++                    await Task.Delay(100);
++                    lock (depthLock) currentDepth--;
++                    return Data.Ok();
++                },
++                priority: int.MaxValue,
++                stopOnError: false));
++        }
+ 
+-        await Assert.That(runs.Count).IsEqualTo(4);
+-        await Assert.That(runs.All(r => r.Status == TestStatus.Pass)).IsTrue();
++        global::App.modules.test.run.ChildAppCreated += Probe;
++        try
++        {
++            var tests = new List<TestFile>();
++            for (int i = 0; i < 4; i++)
++                tests.Add(BuildFixture($"T{i}.test.goal", $"T{i}", new (string, string, List<Data>)[]
++                {
++                    ("variable", "set", new List<Data> { new("Name", "x"), new("Value", i) })
++                }));
++
++            var results = await RunTests(tests, parallel: 2);
++            var runs = results.ToList();
++
++            await Assert.That(runs.Count).IsEqualTo(4);
++            await Assert.That(runs.All(r => r.Status == TestStatus.Pass)).IsTrue();
++            // The semaphore caps concurrency at 2 — the delay forces overlap to prove it.
++            // A regression to parallel=1 (serial) would drop maxDepth to 1; a regression
++            // to unbounded parallelism would push it to 4.
++            await Assert.That(maxDepth).IsEqualTo(2);
++        }
++        finally
++        {
++            global::App.modules.test.run.ChildAppCreated -= Probe;
++        }
+     }
+ 
+     // A test that sleeps past the configured timeout → TestStatus.Timeout.
+@@ -223,69 +258,116 @@ public class RunActionTests
+ 
+     // Child App.SystemDirectory is set from context.App.SystemDirectory so shared
+     // system/ goals (e.g. setup helpers) resolve identically in every test.
++    // Uses the ChildAppCreated hook to snapshot the child's SystemDirectory.
+     [Test]
+     public async Task Run_SystemDirectory_InheritedFromParentApp()
+     {
+         _app.SystemDirectory = "/some/system/dir";
+ 
+-        // Register a probe binding that captures child App's SystemDirectory during run.
+         string? observedChildSystemDir = null;
+-        var test = BuildFixture("SysDir.test.goal", "S", new (string, string, List<Data>)[]
++        // Filter by _tempDir prefix — ChildAppCreated is a static event, so in a
++        // parallel test run other tests' child Apps would otherwise overwrite our
++        // observation with their own (empty) SystemDirectory.
++        void Probe(global::App.@this childApp)
+         {
+-            ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
+-        });
+-
+-        // We can't easily probe inside the child App. Instead verify indirectly:
+-        // the parent test.run sets childApp.SystemDirectory BEFORE running.
+-        // A simpler check: run-time does not throw and the parent's value is unchanged.
+-        _ = observedChildSystemDir;
++            if (childApp.AbsolutePath.StartsWith(_tempDir))
++                observedChildSystemDir = childApp.SystemDirectory;
++        }
++        global::App.modules.test.run.ChildAppCreated += Probe;
++        try
++        {
++            var test = BuildFixture("SysDir.test.goal", "S", new (string, string, List<Data>)[]
++            {
++                ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
++            });
+ 
+-        await RunTests(new List<TestFile> { test });
++            await RunTests(new List<TestFile> { test });
+ 
+-        await Assert.That(_app.SystemDirectory).IsEqualTo("/some/system/dir");
++            await Assert.That(observedChildSystemDir).IsEqualTo("/some/system/dir");
++            // Parent unchanged — the propagation is one-way (parent → child).
++            await Assert.That(_app.SystemDirectory).IsEqualTo("/some/system/dir");
++        }
++        finally
++        {
++            global::App.modules.test.run.ChildAppCreated -= Probe;
++        }
+     }
+ 
+     // testApp.Testing.IsEnabled = true before the test starts. Subsystems that branch
+     // on test mode (in-memory DBs, stubbed identity, etc.) observe the flag.
++    // Uses the ChildAppCreated hook to snapshot IsEnabled directly on the child App.
+     [Test]
+     public async Task Run_TestingIsEnabled_SetToTrueInChildApp()
+     {
+-        // Use !app.Testing.IsEnabled via MemoryStack — the child App should see true.
+-        // Construct a goal that sets %ran% based on testing-enabled state. Simplest:
+-        // just rely on the runner's code path setting IsEnabled; verify the test ran.
+-        var test = BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
++        bool? observed = null;
++        // Filter by _tempDir — static event is shared across parallel tests.
++        void Probe(global::App.@this childApp)
+         {
+-            ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
+-        });
++            if (childApp.AbsolutePath.StartsWith(_tempDir))
++                observed = childApp.Testing.IsEnabled;
++        }
++        global::App.modules.test.run.ChildAppCreated += Probe;
++        try
++        {
++            var test = BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
++            {
++                ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
++            });
+ 
+-        var results = await RunTests(new List<TestFile> { test });
+-        var run = results.Single();
++            var results = await RunTests(new List<TestFile> { test });
++            var run = results.Single();
+ 
+-        await Assert.That(run.Status).IsEqualTo(TestStatus.Pass);
++            await Assert.That(run.Status).IsEqualTo(TestStatus.Pass);
++            await Assert.That(observed).IsEqualTo(true);
++        }
++        finally
++        {
++            global::App.modules.test.run.ChildAppCreated -= Probe;
++        }
+     }
+ 
+     // Tests with TestStatus.Stale or Skipped are NOT executed but are included in
+     // the returned TestRun[] results with their original status. Reporter shows the
+     // full surface — hiding filtered tests would hurt CI visibility.
++    // Side-effect probe: count ChildAppCreated invocations — only the Ready test
++    // should trigger a child App. Stale/Skipped take the early-return path.
+     [Test]
+     public async Task Run_OnlyReadyTests_Executed_StaleAndSkippedPreserved()
+     {
+-        var ready = BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
++        int childAppsCreated = 0;
++        // Filter by _tempDir — static event is shared across parallel tests.
++        void Probe(global::App.@this childApp)
+         {
+-            ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
+-        });
+-        var stale = new TestFile { Path = "Stale.test.goal", Directory = _tempDir,
+-            PrPath = ".build/stale.test.pr", Status = TestStatus.Stale, StatusReason = "no .pr" };
+-        var skipped = new TestFile { Path = "Skip.test.goal", Directory = _tempDir,
+-            PrPath = ".build/skip.test.pr", Status = TestStatus.Skipped, StatusReason = "excluded by tag" };
++            if (childApp.AbsolutePath.StartsWith(_tempDir))
++                Interlocked.Increment(ref childAppsCreated);
++        }
++        global::App.modules.test.run.ChildAppCreated += Probe;
++        try
++        {
++            var ready = BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
++            {
++                ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
++            });
++            var stale = new TestFile { Path = "Stale.test.goal", Directory = _tempDir,
++                PrPath = ".build/stale.test.pr", Status = TestStatus.Stale, StatusReason = "no .pr" };
++            var skipped = new TestFile { Path = "Skip.test.goal", Directory = _tempDir,
++                PrPath = ".build/skip.test.pr", Status = TestStatus.Skipped, StatusReason = "excluded by tag" };
+ 
+-        var results = await RunTests(new List<TestFile> { ready, stale, skipped });
+-        var runs = results.ToList();
++            var results = await RunTests(new List<TestFile> { ready, stale, skipped });
++            var runs = results.ToList();
+ 
+-        await Assert.That(runs.Count).IsEqualTo(3);
+-        await Assert.That(runs.Count(r => r.Status == TestStatus.Pass)).IsEqualTo(1);
+-        await Assert.That(runs.Count(r => r.Status == TestStatus.Stale)).IsEqualTo(1);
+-        await Assert.That(runs.Count(r => r.Status == TestStatus.Skipped)).IsEqualTo(1);
++            await Assert.That(runs.Count).IsEqualTo(3);
++            await Assert.That(runs.Count(r => r.Status == TestStatus.Pass)).IsEqualTo(1);
++            await Assert.That(runs.Count(r => r.Status == TestStatus.Stale)).IsEqualTo(1);
++            await Assert.That(runs.Count(r => r.Status == TestStatus.Skipped)).IsEqualTo(1);
++
++            // Only the one Ready test spun up a child App.
++            await Assert.That(childAppsCreated).IsEqualTo(1);
++        }
++        finally
++        {
++            global::App.modules.test.run.ChildAppCreated -= Probe;
++        }
+     }
+ 
+     // A test that fails an assertion: TestRun.Status == Fail, error on the TestRun,
+@@ -294,8 +376,11 @@ public class RunActionTests
+     [Test]
+     public async Task Run_AssertionFailureInTest_CapturedInResult_NoPropagatedException()
+     {
++        // Fixture sets a variable before the assert so AssertionError.Variables can
++        // demonstrate it carried through test.run's failure path (end-to-end check).
+         var test = BuildFixture("Fail.test.goal", "F", new (string, string, List<Data>)[]
+         {
++            ("variable", "set", new List<Data> { new("Name", "score"), new("Value", 42) }),
+             ("assert", "equals", new List<Data>
+             {
+                 new("Expected", 1),
+@@ -309,6 +394,15 @@ public class RunActionTests
+         await Assert.That(run.Status).IsEqualTo(TestStatus.Fail);
+         await Assert.That(run.Error).IsNotNull();
+         await Assert.That(run.Error is global::App.Errors.AssertionError).IsTrue();
++
++        // Variables snapshot flowed from assert handler → provider → test.run's
++        // failure path → TestRun.Error. Batch 5's headline feature.
++        var assertionError = (global::App.Errors.AssertionError)run.Error!;
++        await Assert.That(assertionError.Variables).IsNotNull();
++        await Assert.That(assertionError.Variables!.ContainsKey("score")).IsTrue();
++        // Value roundtrips through JSON (int→long via System.Text.Json);
++        // normalize to long for a type-tolerant check.
++        await Assert.That(Convert.ToInt64(assertionError.Variables["score"])).IsEqualTo(42L);
+     }
+ 
+     // Boundary: Tests=[] → TestRun[] is empty, no exception, no subscription
+diff --git a/PLang.Tests/App/Testing/TestingClassTests.cs b/PLang.Tests/App/Testing/TestingClassTests.cs
+index 6f3df358..45eae428 100644
+--- a/PLang.Tests/App/Testing/TestingClassTests.cs
++++ b/PLang.Tests/App/Testing/TestingClassTests.cs
+@@ -108,4 +108,42 @@ public class TestingClassTests
+         await Assert.That(_app.Testing.Exclude.Contains("slow")).IsTrue();
+         await Assert.That(_app.Testing.Verbose).IsTrue();
+     }
++
++    // Applying Include/Exclude is replace-semantics, not merge — a second Apply wipes
++    // the prior contents so repeated --test= calls don't silently accumulate tags.
++    [Test]
++    public async Task Configure_FromJson_IncludeAndExclude_ReplaceExisting()
++    {
++        _app.Testing.Include.Add("oldInclude");
++        _app.Testing.Exclude.Add("oldExclude");
++
++        var result = _app.Testing.Apply(new Dictionary<string, object?>
++        {
++            ["include"] = new List<object?> { "newInclude" },
++            ["exclude"] = new List<object?> { "newExclude" }
++        });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_app.Testing.Include.Count).IsEqualTo(1);
++        await Assert.That(_app.Testing.Include.Contains("newInclude")).IsTrue();
++        await Assert.That(_app.Testing.Include.Contains("oldInclude")).IsFalse();
++        await Assert.That(_app.Testing.Exclude.Count).IsEqualTo(1);
++        await Assert.That(_app.Testing.Exclude.Contains("newExclude")).IsTrue();
++        await Assert.That(_app.Testing.Exclude.Contains("oldExclude")).IsFalse();
++    }
++
++    // Unknown config keys are silently ignored — forward-compat contract so users can
++    // carry config files written for newer versions without the runner erroring on them.
++    [Test]
++    public async Task Configure_FromJson_UnknownKey_IgnoredReturnsOk()
++    {
++        var result = _app.Testing.Apply(new Dictionary<string, object?>
++        {
++            ["timeout"] = 10,
++            ["futureOption"] = "not a valid key yet"
++        });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_app.Testing.TimeoutSeconds).IsEqualTo(10);
++    }
+ }
+diff --git a/PLang/App/modules/test/run.cs b/PLang/App/modules/test/run.cs
+index fd97cecf..8880e823 100644
+--- a/PLang/App/modules/test/run.cs
++++ b/PLang/App/modules/test/run.cs
+@@ -21,6 +21,13 @@ namespace App.modules.test;
+ [Action("run", Cacheable = false)]
+ public partial class run : IContext
+ {
++    // Test hook: fires once per child App after it's constructed and configured
++    // (SystemDirectory inherited, Testing.IsEnabled=true, CurrentTest assigned),
++    // before the test's entry goal runs. Tests attach probes here to snapshot
++    // observable child-App state (parallel count, SystemDirectory, IsEnabled).
++    // Subscribers must be thread-safe — parallel tests fire this concurrently.
++    internal static event Action<App.@this>? ChildAppCreated;
++
+     [IsNotNull]
+     public partial Data.@this<List<TestFile>> Tests { get; init; }
+ 
+@@ -114,6 +121,9 @@ public partial class run : IContext
+             stopOnError: false);
+         childApp.User.Context.Events.Register(coverageBinding);
+ 
++        // Test-only hook — see ChildAppCreated declaration above.
++        ChildAppCreated?.Invoke(childApp);
++
+         using var cts = CancellationTokenSource.CreateLinkedTokenSource(Context.CancellationToken);
+         cts.CancelAfter(timeout);
+ 
+diff --git a/PLang/Executor.cs b/PLang/Executor.cs
+index 7d1d3c99..9dbae6d6 100644
+--- a/PLang/Executor.cs
++++ b/PLang/Executor.cs
+@@ -15,6 +15,20 @@ namespace PLang
+ 		}
+ 
+ 		public async Task<App.Data.@this> Run(string[] args, CancellationToken cancellationToken = default)
++		{
++			var (engine, configError) = Configure(args);
++			if (configError != null) return configError;
++			return await engine!.Start();
++		}
++
++		/// <summary>
++		/// Parses argv and prepares an App engine for execution: wires CLI parameters
++		/// to user variables, applies --test / --debug / --build / --app config, and
++		/// sets the goalFile variable on System.Context that Start() reads.
++		/// Returns (engine, null) on success, (null, errorData) if --test= config is invalid.
++		/// Separated from Run() so tests can observe configuration without executing Start().
++		/// </summary>
++		internal (App.@this? Engine, App.Data.@this? Error) Configure(string[] args)
+ 		{
+ 			// Normalize: "build" or "--build" both become the --build flag
+ 			if (args.Length > 0 && args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
+@@ -48,7 +62,7 @@ namespace PLang
+ 				if (testValue is IDictionary<string, object?> testDict)
+ 				{
+ 					var applyResult = engine.Testing.Apply(testDict);
+-					if (!applyResult.Success) return applyResult;
++					if (!applyResult.Success) return (null, applyResult);
+ 				}
+ 			}
+ 
+@@ -75,7 +89,7 @@ namespace PLang
+ 			if (engine.Testing.IsEnabled && goalFile == "Start.goal")
+ 			{
+ 				engine.System.Context.Variables.Set("goalFile", "/system/.build/test.pr");
+-				return await engine.Start();
++				return (engine, null);
+ 			}
+ 
+ 			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
+@@ -83,7 +97,7 @@ namespace PLang
+ 				prPath = ".build/" + prPath;
+ 			engine.System.Context.Variables.Set("goalFile", "/" + prPath.ToLowerInvariant());
+ 
+-			return await engine.Start();
++			return (engine, null);
+ 		}
+ 	}
+ }
+diff --git a/Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.goal b/Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.test.goal
+similarity index 100%
+rename from Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.goal
+rename to Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.test.goal
+diff --git a/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.goal b/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal
+similarity index 69%
+rename from Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.goal
+rename to Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal
+index 03701599..ccbf7125 100644
+--- a/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.goal
++++ b/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal
+@@ -2,4 +2,6 @@ TestConditionIfRecordsBranchIndexElseBranch
+ / Verifies condition.if publishes the else-branch index when nothing else matches.
+ / Setup: set %x% = 0. Then: if %x% > 10 do A; else if %x% > 5 do B; else do C.
+ / After the if step, inspect %__data__!branchIndex% — should be 2 (else position).
+-- throw "not implemented"
++- set %x% = 0
++- if %x% > 10 set %a% = 1, else if %x% > 5 set %b% = 2, else set %c% = 3
++- assert %__data__!branchIndex% equals 2
+diff --git a/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.goal b/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.goal
+deleted file mode 100644
+index 6b77d866..00000000
+--- a/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.goal
++++ /dev/null
+@@ -1,5 +0,0 @@
+-TestConditionIfRecordsBranchIndexTrueBranch
+-/ Verifies condition.if publishes branchIndex=0 when the condition is true.
+-/ Setup: set %x% = true. Then: if %x% is true, write 'ok'.
+-/ After the if step, inspect %__data__!branchIndex% — should be 0 (the true branch position).
+-- throw "not implemented"
+diff --git a/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.test.goal b/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.test.goal
+new file mode 100644
+index 00000000..d965cc94
+--- /dev/null
++++ b/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.test.goal
+@@ -0,0 +1,7 @@
++TestConditionIfRecordsBranchIndexTrueBranch
++/ Verifies condition.if publishes branchIndex=0 when the condition is true.
++/ Self-contained: one condition.if with a matching condition, then assert the
++/ branchIndex Property carried on %__data__!branchIndex%.
++- set %x% = true
++- if %x% is true, write 'ok'
++- assert %__data__!branchIndex% equals 0
+diff --git a/Tests/TestModule/Discover/TestDiscoverFindsTestGoals.goal b/Tests/TestModule/Discover/TestDiscoverFindsTestGoals.test.goal
+similarity index 100%
+rename from Tests/TestModule/Discover/TestDiscoverFindsTestGoals.goal
+rename to Tests/TestModule/Discover/TestDiscoverFindsTestGoals.test.goal
+diff --git a/Tests/TestModule/Discover/TestDiscoverReportsStaleWhenPrMissing.goal b/Tests/TestModule/Discover/TestDiscoverReportsStaleWhenPrMissing.test.goal
+similarity index 100%
+rename from Tests/TestModule/Discover/TestDiscoverReportsStaleWhenPrMissing.goal
+rename to Tests/TestModule/Discover/TestDiscoverReportsStaleWhenPrMissing.test.goal
+diff --git a/Tests/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.goal b/Tests/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal
+similarity index 100%
+rename from Tests/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.goal
+rename to Tests/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal
+diff --git a/Tests/TestModule/Integration/TestSystemTestGoalNoForeach.goal b/Tests/TestModule/Integration/TestSystemTestGoalNoForeach.goal
+deleted file mode 100644
+index 96f681b4..00000000
+--- a/Tests/TestModule/Integration/TestSystemTestGoalNoForeach.goal
++++ /dev/null
+@@ -1,6 +0,0 @@
+-TestSystemTestGoalNoForeach
+-/ Structural regression guard: read system/test.goal and assert its step
+-/ text contains no "foreach" token. The whole point of the rewrite is to
+-/ eliminate the silent-skip bug — this test keeps anyone from reintroducing
+-/ the pattern in the system test runner.
+-- throw "not implemented"
+diff --git a/Tests/TestModule/Integration/TestSystemTestGoalNoForeach.test.goal b/Tests/TestModule/Integration/TestSystemTestGoalNoForeach.test.goal
+new file mode 100644
+index 00000000..dc6a82b7
+--- /dev/null
++++ b/Tests/TestModule/Integration/TestSystemTestGoalNoForeach.test.goal
+@@ -0,0 +1,7 @@
++TestSystemTestGoalNoForeach
++/ Structural regression guard: read system/test.goal and assert its content
++/ contains no "foreach" token. The whole point of the rewrite is to eliminate
++/ the silent-skip bug — this test keeps anyone from reintroducing the pattern
++/ in the system test runner.
++- read file '/system/test.goal', write to %goalText%
++- assert %goalText% does not contain 'foreach'
+diff --git a/Tests/TestModule/Integration/TestSystemTestGoalReportsTimeout.goal b/Tests/TestModule/Integration/TestSystemTestGoalReportsTimeout.test.goal
+similarity index 100%
+rename from Tests/TestModule/Integration/TestSystemTestGoalReportsTimeout.goal
+rename to Tests/TestModule/Integration/TestSystemTestGoalReportsTimeout.test.goal
+diff --git a/Tests/TestModule/Integration/TestSystemTestGoalRespectsTagFilter.goal b/Tests/TestModule/Integration/TestSystemTestGoalRespectsTagFilter.test.goal
+similarity index 100%
+rename from Tests/TestModule/Integration/TestSystemTestGoalRespectsTagFilter.goal
+rename to Tests/TestModule/Integration/TestSystemTestGoalRespectsTagFilter.test.goal
+diff --git a/Tests/TestModule/Integration/TestSystemTestGoalRunsAllDiscovered.goal b/Tests/TestModule/Integration/TestSystemTestGoalRunsAllDiscovered.test.goal
+similarity index 100%
+rename from Tests/TestModule/Integration/TestSystemTestGoalRunsAllDiscovered.goal
+rename to Tests/TestModule/Integration/TestSystemTestGoalRunsAllDiscovered.test.goal
+diff --git a/Tests/TestModule/Report/TestReportIncludesCoverageTables.goal b/Tests/TestModule/Report/TestReportIncludesCoverageTables.test.goal
+similarity index 100%
+rename from Tests/TestModule/Report/TestReportIncludesCoverageTables.goal
+rename to Tests/TestModule/Report/TestReportIncludesCoverageTables.test.goal
+diff --git a/Tests/TestModule/Report/TestReportRendersFailureWithVariables.goal b/Tests/TestModule/Report/TestReportRendersFailureWithVariables.test.goal
+similarity index 100%
+rename from Tests/TestModule/Report/TestReportRendersFailureWithVariables.goal
+rename to Tests/TestModule/Report/TestReportRendersFailureWithVariables.test.goal
+diff --git a/Tests/TestModule/Report/TestReportWritesJunitXml.goal b/Tests/TestModule/Report/TestReportWritesJunitXml.test.goal
+similarity index 100%
+rename from Tests/TestModule/Report/TestReportWritesJunitXml.goal
+rename to Tests/TestModule/Report/TestReportWritesJunitXml.test.goal
+diff --git a/Tests/TestModule/Run/TestRunEnforcesTimeout.goal b/Tests/TestModule/Run/TestRunEnforcesTimeout.test.goal
+similarity index 100%
+rename from Tests/TestModule/Run/TestRunEnforcesTimeout.goal
+rename to Tests/TestModule/Run/TestRunEnforcesTimeout.test.goal
+diff --git a/Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.goal b/Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal
+similarity index 100%
+rename from Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.goal
+rename to Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal
+diff --git a/Tests/TestModule/Run/TestRunReportsAssertionFailure.goal b/Tests/TestModule/Run/TestRunReportsAssertionFailure.test.goal
+similarity index 100%
+rename from Tests/TestModule/Run/TestRunReportsAssertionFailure.goal
+rename to Tests/TestModule/Run/TestRunReportsAssertionFailure.test.goal
+diff --git a/Tests/TestModule/Run/TestRunSubscribesAfterActionForCoverage.goal b/Tests/TestModule/Run/TestRunSubscribesAfterActionForCoverage.test.goal
+similarity index 100%
+rename from Tests/TestModule/Run/TestRunSubscribesAfterActionForCoverage.goal
+rename to Tests/TestModule/Run/TestRunSubscribesAfterActionForCoverage.test.goal
+diff --git a/Tests/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.goal b/Tests/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.test.goal
+similarity index 100%
+rename from Tests/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.goal
+rename to Tests/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.test.goal
+diff --git a/Tests/TestModule/Tag/TestTagOutsideTestIsNoOp.goal b/Tests/TestModule/Tag/TestTagOutsideTestIsNoOp.test.goal
+similarity index 100%
+rename from Tests/TestModule/Tag/TestTagOutsideTestIsNoOp.goal
+rename to Tests/TestModule/Tag/TestTagOutsideTestIsNoOp.test.goal

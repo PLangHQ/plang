@@ -1,0 +1,80 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-builder-plan",
+  "timestamp": "2026-04-16T20:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Cross-cutting audit of runtime2-builder-plan. 6 findings total: 1 major (NeedsResolution race in Data.Value getter), 3 minor (clone family missing _valueFactory, IStatic Scope dead code, condition Disabled concurrency), 2 nit. No critical findings. The branch is in good shape — the Null→NotFound migration is complete and correct, circular resolution is properly guarded, and the codeanalyzer/tester/security reviews were thorough within their scope. The gaps are in cross-file interaction patterns that no single-file review would catch.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — v2 PASS is correct. All 10 fixes verified, OBP patterns followed. The dict count perf finding (LOW) is real but not blocking.",
+    "tester": "partial — v8 APPROVED is justified for test count (2085/2086), but the JsonElement path gap in validateResponse is more significant than 'major'. It's the actual production path and has 0% coverage. Tests pass because they test the wrong branch.",
+    "security": "agree — v2 PASS is correct. All 11 fixes verified. The 3 new findings (ResolveDeep infra leak, throughput threshold, SSRF IP) are correctly rated and non-blocking."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "foundation",
+      "file": "PLang/App/Data/this.cs",
+      "line": 194,
+      "issue": "NeedsResolution race condition in Data.Value getter. The flag is set to false AFTER calling ResolveDeep (line 195), but should be set BEFORE (line 193). In concurrent access, another thread can read NeedsResolution=true between lines 194-195 and call ResolveDeep again on partially-resolved data. While double-resolution is currently benign (already-resolved strings pass through), this creates unnecessary work and could become a bug if ResolveDeep behavior changes. The fix is trivial: swap lines 194 and 195.",
+      "missed_by": "codeanalyzer",
+      "impact": "Low immediate impact (double-resolution is benign), but the pattern is wrong and violates the principle of setting guards before entering guarded regions. Foundation-level code should be correct, not 'works by accident'.",
+      "suggestion": "Set NeedsResolution = false BEFORE calling ResolveDeep. Move line 195 to before line 194: `NeedsResolution = false; _value = _context.Variables.ResolveDeep(_value);`"
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "cross-file",
+      "file": "PLang/App/Data/this.cs",
+      "line": 436,
+      "issue": "Clone() and ShallowClone() do not copy _valueFactory. If a Data object has a lazy value factory set via SetValue(Func<object?>), cloning it loses the factory and the clone's Value will be null. Currently no code calls Data.SetValue(Func), so this is latent — but the method is public and the Clone family contract says 'creates a copy'. Adding a field without updating Clone is the exact bug pattern documented in CLAUDE.md.",
+      "missed_by": "codeanalyzer",
+      "impact": "Latent — no current callers of SetValue(Func). Will become a real bug the moment someone uses it.",
+      "suggestion": "Add `_valueFactory = _valueFactory` (or equivalent) to both Clone() and ShallowClone(). Or mark SetValue(Func) as internal/remove it if it's not part of the public API."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "cross-file",
+      "file": "PLang/App/modules/timer/start.cs",
+      "line": 8,
+      "issue": "IStatic Scope parameter is accepted but has no effect. timer.start accepts Scope (default 'goal') and stores it in TimerEntry, but the source generator always calls the single-arg GetModuleStatic(namespace) — never the scope overload GetModuleStatic(namespace, scope). The Scope property is dead metadata. Users who set Scope='app' expecting app-lifetime timers will get goal-scoped behavior silently.",
+      "missed_by": "codeanalyzer",
+      "impact": "User-facing silent misconfiguration. PLang developers writing 'start timer, scope app' will believe they have app-scoped timers, but they don't.",
+      "suggestion": "Either wire the scope overload in the source generator (pass Scope to GetModuleStatic) or remove the Scope parameter from timer.start to avoid misleading users."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "category": "architectural",
+      "file": "PLang/App/modules/condition/if.cs",
+      "line": 35,
+      "issue": "Disabled flag set on shared Step objects via system context. When condition evaluates, it sets steps[i].Context = Context.App.System.Context and steps[i].Disabled = !conditionResult. The Step objects are loaded once from .pr and shared. If two async executions run the same goal concurrently, they race on the same Step's Disabled flag through the same system context. Currently PLang is single-execution-at-a-time, so this is safe, but the pattern won't survive the introduction of concurrent goal execution.",
+      "missed_by": "none",
+      "impact": "No current impact — PLang is single-execution. Becomes a race condition if parallel execution is added.",
+      "suggestion": "Consider using per-execution-context disabled state instead of mutating shared Step objects. The current approach works but creates hidden shared-mutable-state."
+    },
+    {
+      "id": 5,
+      "severity": "nit",
+      "category": "review-gap",
+      "file": "PLang/App/Actor/Context/this.cs",
+      "line": 228,
+      "issue": "GetModuleStatic scope overload only handles 'app' case — all other scope values ('step', 'goal', 'context') silently fall through to the default (context-lifetime). The docstring promises step, goal, context, and app scoping, but only app is differentiated.",
+      "missed_by": "codeanalyzer",
+      "impact": "Incomplete implementation. Not blocking since the overload isn't called yet, but the code promises more than it delivers.",
+      "suggestion": "Either implement the other scope levels or simplify the docstring to match reality."
+    },
+    {
+      "id": 6,
+      "severity": "nit",
+      "category": "review-gap",
+      "file": "PLang/App/Data/this.cs",
+      "line": 436,
+      "issue": "Clone() and ShallowClone() do not copy OnChange/OnCreate/OnDelete events. CopyEventsFrom() exists specifically for this purpose but is only called by Variables.Set(), not by Clone(). A cloned Data won't fire events that the original would. This is likely intentional (clones shouldn't inherit event subscriptions), but it's undocumented and inconsistent with CopyEventsFrom existing.",
+      "missed_by": "none",
+      "impact": "Minimal — events are wired by Variables.Set() at storage time, not at creation. Clones that go through Variables.Set() will get events wired properly.",
+      "suggestion": "Add a comment in Clone() explaining why events are intentionally not copied."
+    }
+  ]
+}

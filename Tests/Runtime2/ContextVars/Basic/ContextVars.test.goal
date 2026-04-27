@@ -1,3 +1,0 @@
-Start
-- assert %!engine.Name% is not null, "engine name should be set"
-- assert %!engine.Name% equals "Runtime2"

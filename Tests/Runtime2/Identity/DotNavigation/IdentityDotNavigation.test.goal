@@ -1,3 +1,0 @@
-Start
-/ Test: access %MyIdentity.Name% and %MyIdentity.PublicKey% via dot navigation
-- throw "not implemented"

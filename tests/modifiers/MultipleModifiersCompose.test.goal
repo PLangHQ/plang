@@ -1,0 +1,17 @@
+TestMultipleModifiersCompose
+/ Verifies that cache + error modifiers compose correctly on one action.
+/ Both reads use the same explicit cache key so the second hits the cache
+/ even after the file is deleted.
+- save 'testdata/compose_test.txt' with content 'hello compose'
+- read file 'testdata/compose_test.txt'
+    cache for 60 seconds key='compose-key'
+    on error ignore
+    write to %result%
+- assert %result% equals 'hello compose'
+- delete file 'testdata/compose_test.txt'
+/ Second read should come from cache even though file is deleted
+- read file 'testdata/compose_test.txt'
+    cache for 60 seconds key='compose-key'
+    on error ignore
+    write to %cachedResult%
+- assert %cachedResult% equals 'hello compose'

@@ -14,7 +14,7 @@
 
 ## Root Cause
 
-`PLang/Runtime2/Engine/Memory/Path.cs:34`:
+`PLang/App/Memory/Path.cs:34`:
 
 ```csharp
 _absolutePath = _fs.ValidatePath(rawPath);
@@ -69,7 +69,7 @@ Option A is cleaner — keeps the resolution logic in `Memory.Path` and follows 
 
 ## How to Validate
 
-There are existing tests in `PLang.Tests/Runtime2/Core/PrPipelineTests.cs` ready to validate the fix.
+There are existing tests in `PLang.Tests/App/Core/PrPipelineTests.cs` ready to validate the fix.
 
 ### Test that currently documents the bug:
 
@@ -84,7 +84,7 @@ await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
 To:
 ```csharp
 await Assert.That(result.Success).IsTrue();
-await Assert.That(context.MemoryStack.GetValue("content")!.ToString()).IsEqualTo("Hello from subfolder");
+await Assert.That(context.Variables.GetValue("content")!.ToString()).IsEqualTo("Hello from subfolder");
 ```
 
 ### Test that passes but for wrong reason:
@@ -107,12 +107,12 @@ await Assert.That(context.MemoryStack.GetValue("content")!.ToString()).IsEqualTo
 
 And assert:
 ```csharp
-await Assert.That(context.MemoryStack.GetValue("localRelative")!.ToString()).IsEqualTo("Hello from subfolder");
+await Assert.That(context.Variables.GetValue("localRelative")!.ToString()).IsEqualTo("Hello from subfolder");
 ```
 
 ### Also update PathTests.cs:
 
-`PLang.Tests/Runtime2/Modules/Path/PathTests.cs` — `Absolute_ResolvesRelativePath` currently expects resolution against the engine's temp dir root. After the fix, if the Path has context with a goal, it should resolve against the goal's directory.
+`PLang.Tests/App/Modules/Path/PathTests.cs` — `Absolute_ResolvesRelativePath` currently expects resolution against the engine's temp dir root. After the fix, if the Path has context with a goal, it should resolve against the goal's directory.
 
 ### Run all tests:
 
@@ -127,8 +127,8 @@ All 1912 tests should pass. The 3 existing failures are pre-existing TestFixture
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Memory/Path.cs` | Add context parameter, resolve relative paths against goal folder |
+| `PLang/App/Memory/Path.cs` | Add context parameter, resolve relative paths against goal folder |
 | `PLang.Generators/LazyParamsGenerator.cs` | Pass context to `Path.Resolve()` in generated code |
-| `PLang.Tests/Runtime2/Core/PrPipelineTests.cs` | Update `FilePaths_RelativeResolvesAgainstRoot_NotGoalFolder` to expect success |
-| `PLang.Tests/Runtime2/Fixtures/pr/sub/FilePathsFromSub.pr` | Re-add relative step (`subdata.txt`) |
-| `PLang.Tests/Runtime2/Modules/Path/PathTests.cs` | Update `Absolute_ResolvesRelativePath` if needed |
+| `PLang.Tests/App/Core/PrPipelineTests.cs` | Update `FilePaths_RelativeResolvesAgainstRoot_NotGoalFolder` to expect success |
+| `PLang.Tests/App/Fixtures/pr/sub/FilePathsFromSub.pr` | Re-add relative step (`subdata.txt`) |
+| `PLang.Tests/App/Modules/Path/PathTests.cs` | Update `Absolute_ResolvesRelativePath` if needed |

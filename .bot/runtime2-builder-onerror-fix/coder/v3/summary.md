@@ -11,8 +11,8 @@ Fixes the 3 PLang test failures reported by tester v1: builder non-determinism i
 **Fix**: Changed all increment steps to `add 1 to %var%, write to %var%` — unambiguous step text that consistently maps to `math.add` with `return`.
 
 Files modified:
-- `Tests/Runtime2/ErrorRetryOnly/TimedRetryGoal.goal`
-- `Tests/Runtime2/ErrorRetryOnly/BareRetryGoal.goal`
+- `Tests/App/ErrorRetryOnly/TimedRetryGoal.goal`
+- `Tests/App/ErrorRetryOnly/BareRetryGoal.goal`
 
 ### Issue 2 — ErrorGoalFirst (GoalFirst skips retries by design)
 **Root cause**: GoalFirst (order: 0) calls the error goal first. If it succeeds, the runtime considers the error handled and returns — **skipping retries entirely**. This is correct behavior per `Step/Methods.cs:HandleErrorAsync()`. The test incorrectly expected `%goalFirstAttempts% > 1`.
@@ -20,11 +20,11 @@ Files modified:
 **Fix**: Removed the `assert %goalFirstAttempts% is greater than 1` assertion. The test now only verifies that the error goal was called (the GoalFirst invariant).
 
 Files modified:
-- `Tests/Runtime2/ErrorGoalFirst/ErrorGoalFirst.test.goal`
-- `Tests/Runtime2/ErrorGoalFirst/AlwaysFails.goal` (same increment pattern fix)
+- `Tests/App/ErrorGoalFirst/ErrorGoalFirst.test.goal`
+- `Tests/App/ErrorGoalFirst/AlwaysFails.goal` (same increment pattern fix)
 
 ### Issue 3 — ConditionCompound (pre-existing failure)
-**Fix**: Reverted `.build/` to runtime2 baseline via `git checkout runtime2 -- Tests/Runtime2/ConditionCompound/.build/`.
+**Fix**: Reverted `.build/` to runtime2 baseline via `git checkout runtime2 -- Tests/App/ConditionCompound/.build/`.
 
 **Finding**: ConditionCompound also fails on runtime2 itself (NullReferenceException). This is a pre-existing issue, not a regression from this branch.
 

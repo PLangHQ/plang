@@ -2,7 +2,7 @@
 
 ## What this is
 
-Security review of the new Settings infrastructure added to PLang Runtime2. The feature provides strongly-typed, goal-scoped module configuration (~200 LOC production code) with a scope chain resolution pattern.
+Security review of the new Settings infrastructure added to PLang App. The feature provides strongly-typed, goal-scoped module configuration (~200 LOC production code) with a scope chain resolution pattern.
 
 ## What was done
 

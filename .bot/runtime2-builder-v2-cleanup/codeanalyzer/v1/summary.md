@@ -10,7 +10,7 @@ Analyzed all changed C# files across 5 passes: OBP compliance, simplification, r
 
 1. **Engine.Channels disposal gap** (Medium) — Engine creates `Channels = new EngineChannels(this)` but never disposes it. Actors dispose their own Channels, but the engine-level instance leaks. Not a regression, but should be fixed. File: `Engine/this.cs:330-376`.
 
-2. **Data.Name public setter** (Low-Medium) — Changed from init-only to `{ get; set; }` for identity rename flow. But Data objects are keyed by Name on MemoryStack — public setter allows Name/key divergence. Recommend `internal set`. File: `Data.cs:76`.
+2. **Data.Name public setter** (Low-Medium) — Changed from init-only to `{ get; set; }` for identity rename flow. But Data objects are keyed by Name on Variables — public setter allows Name/key divergence. Recommend `internal set`. File: `Data.cs:76`.
 
 3. **Test coverage gaps** (Medium) — 464 lines of new code with zero direct tests:
    - `PlangSerializer` (94 lines) — new serializer, no tests

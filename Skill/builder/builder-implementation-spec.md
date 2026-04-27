@@ -333,7 +333,7 @@ public Task<GoalResult> SaveGoal(Goal goal, string path)
 **Serialization rules:**
 - Null/empty optional fields should be omitted from the JSON (not written as `null`)
 - `Data.Data` is serialized as-is (the object the LLM produced)
-- `%variable%` strings are stored literally — they get resolved at runtime by the MemoryStack
+- `%variable%` strings are stored literally — they get resolved at runtime by the Variables
 
 ### 2.6 SaveApp
 
@@ -433,7 +433,7 @@ The LLM receives this full text and parses intent, method, data, error handling,
 
 ```
 PLang/
-├── Runtime2/                    ← Runtime (existing)
+├── App/                    ← Runtime (existing)
 │   ├── Engine.cs
 │   ├── ...
 │   └── GoalData.cs

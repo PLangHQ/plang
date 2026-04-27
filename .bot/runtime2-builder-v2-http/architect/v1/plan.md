@@ -42,7 +42,7 @@ public partial class request : IContext
 **Signing parameter design:**
 - `Unsigned = false` (default) → request is signed. LLM doesn't touch this unless developer explicitly says "unsigned" or "do not sign".
 - `Unsigned = true` → no signing. Named so the LLM's natural "not mentioned = false" gives us signed-by-default.
-- `SignOptions` → the `sign` action record from `PLang.Runtime2.modules.signing.sign`. Action records are the type system — no need for a separate options record. The LLM maps developer overrides (`ExpiresInMs`, `Contracts`, `Provider`) onto it. The HTTP handler fills in internal fields (`Data`, `Headers`) and runs via `engine.RunAction<sign>(...)`. Only relevant when `Unsigned = false`.
+- `SignOptions` → the `sign` action record from `App.modules.signing.sign`. Action records are the type system — no need for a separate options record. The LLM maps developer overrides (`ExpiresInMs`, `Contracts`, `Provider`) onto it. The HTTP handler fills in internal fields (`Data`, `Headers`) and runs via `engine.RunAction<sign>(...)`. Only relevant when `Unsigned = false`.
 - This pattern (bool + action record) is reusable: e.g., future `encrypt? EncryptOptions` on file write.
 
 **PLang usage:**
@@ -79,7 +79,7 @@ public partial class request : IContext
    - If `OnStream` is set → read chunks, call goal per chunk (see Streaming section)
    - If not success status code → return `Data.FromError` with status code, reason phrase, and response body (best-effort read). Properties still populated (StatusCode, Headers, etc.).
    - If `application/plang` response and `Unsigned = true` → return error (unsigned `application/plang` is not allowed)
-   - If `application/plang` response → deserialize as `Data` object (see application/plang Protocol), validate signature (must be valid — error if not), extract `SignedData.Identity` → set `%!ServiceIdentity%` via `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)`
+   - If `application/plang` response → deserialize as `Data` object (see application/plang Protocol), validate signature (must be valid — error if not), extract `SignedData.Identity` → set `%!ServiceIdentity%` via `context.Variables.Set("!ServiceIdentity", signedData.Identity)`
    - If `application/json` → deserialize JSON
    - If XML → convert to JSON (same as runtime1)
    - If binary (non-text) → return raw bytes
@@ -294,7 +294,7 @@ Developer can override with `StreamAs`:
 - `StreamFormat.Bytes` — raw byte chunks as they arrive from transport. `%!data%` = byte array.
 
 **For each chunk:**
-- Set `%!data%` via `context.MemoryStack.Set("!data", chunk)` (or custom name from `GoalCall.Parameters`)
+- Set `%!data%` via `context.Variables.Set("!data", chunk)` (or custom name from `GoalCall.Parameters`)
 - Call `engine.RunGoalAsync(OnStream, Context, ...)`
 
 **Return value:** After streaming completes, `request` returns `Data.Ok()` with response properties (StatusCode, Headers, etc.) but no body value — the body was delivered via callbacks.
@@ -347,7 +347,7 @@ PLang-native content type for PLang-to-PLang communication.
 - **Response parsing:** check content type — `application/plang` or `application/plang+json` → JSON deserialize. Future: `application/plang+protobuf` → protobuf. Missing suffix = JSON.
 - **Response handling:** body is a `Data` object containing `SignedData`
 - **Signature validation:** signature MUST be valid — if verification fails, return error. No silent pass.
-- **Identity:** `SignedData.Identity` from the response → `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)` — the service proves who it is. Scoped variable, does not overwrite developer's `%Service%`.
+- **Identity:** `SignedData.Identity` from the response → `context.Variables.Set("!ServiceIdentity", signedData.Identity)` — the service proves who it is. Scoped variable, does not overwrite developer's `%Service%`.
 - **Streaming:** `application/plang` responses can stream multiple `Data` objects via newline-delimited JSON (`\n` separated) — each line is a complete JSON `Data` object delivered via `OnStream`. Each chunk's signature must be valid.
 
 ---
@@ -367,11 +367,11 @@ When `Unsigned = false` (default):
 
 On `application/plang` responses:
 - Verify signature — MUST be valid, error if not
-- `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)` (scoped variable — does not overwrite developer's `%Service%`)
+- `context.Variables.Set("!ServiceIdentity", signedData.Identity)` (scoped variable — does not overwrite developer's `%Service%`)
 
 On signed error responses (same as runtime1):
 - Check for `signature` field in error JSON
-- Verify signature → `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)`
+- Verify signature → `context.Variables.Set("!ServiceIdentity", signedData.Identity)`
 
 ---
 
@@ -379,7 +379,7 @@ On signed error responses (same as runtime1):
 
 Follows the existing provider pattern (`IProvider` → `engine.Providers`). The HTTP module resolves its provider via `engine.Providers.Get<IHttpProvider>()`. Tests and developers can swap implementations.
 
-**`IHttpProvider`** (in `PLang/Runtime2/Engine/Providers/`):
+**`IHttpProvider`** (in `PLang/App/Providers/`):
 ```csharp
 public interface IHttpProvider : IProvider, IDisposable
 {
@@ -388,7 +388,7 @@ public interface IHttpProvider : IProvider, IDisposable
 }
 ```
 
-**`DefaultHttpProvider`** (in `PLang/Runtime2/Engine/Providers/`):
+**`DefaultHttpProvider`** (in `PLang/App/Providers/`):
 ```csharp
 public sealed class DefaultHttpProvider : IHttpProvider
 {
@@ -454,14 +454,14 @@ public sealed class DefaultHttpProvider : IHttpProvider
 ## Module Structure
 
 ```
-PLang/Runtime2/modules/http/
+PLang/App/modules/http/
 ├── request.cs           — request action handler
 ├── download.cs          — download action handler
 ├── upload.cs            — upload action handler
 ├── configure.cs         — configuration action (scope chain)
 ├── Config.cs            — ISettings implementation with defaults
 ├── types.cs             — HttpMethod, StreamFormat, ContentAs, FileExists enums, TransferProgress type
-PLang/Runtime2/modules/http/providers/
+PLang/App/modules/http/providers/
 ├── IHttpProvider.cs     — HTTP provider interface
 ├── DefaultHttpProvider.cs — default implementation (lazy HttpClient, SocketsHttpHandler)
 ```
@@ -535,14 +535,14 @@ PLang/Runtime2/modules/http/providers/
 
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/http/request.cs` | Request action handler |
-| `PLang/Runtime2/modules/http/download.cs` | Download action handler |
-| `PLang/Runtime2/modules/http/upload.cs` | Upload action handler |
-| `PLang/Runtime2/modules/http/configure.cs` | Configuration action (scope chain) |
-| `PLang/Runtime2/modules/http/Config.cs` | ISettings implementation with defaults |
-| `PLang/Runtime2/modules/http/types.cs` | TransferProgress type |
-| `PLang/Runtime2/modules/http/providers/IHttpProvider.cs` | HTTP provider interface |
-| `PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs` | Default implementation (SocketsHttpHandler) |
+| `PLang/App/modules/http/request.cs` | Request action handler |
+| `PLang/App/modules/http/download.cs` | Download action handler |
+| `PLang/App/modules/http/upload.cs` | Upload action handler |
+| `PLang/App/modules/http/configure.cs` | Configuration action (scope chain) |
+| `PLang/App/modules/http/Config.cs` | ISettings implementation with defaults |
+| `PLang/App/modules/http/types.cs` | TransferProgress type |
+| `PLang/App/modules/http/providers/IHttpProvider.cs` | HTTP provider interface |
+| `PLang/App/modules/http/providers/DefaultHttpProvider.cs` | Default implementation (SocketsHttpHandler) |
 
 ## Definition of Done
 
@@ -552,7 +552,7 @@ PLang/Runtime2/modules/http/providers/
 - Request signing on by default via `engine.RunAction<sign, SignedData>(...)` (signing module resolves identity from system actor context)
 - `Unsigned` parameter for opt-out, `sign?` action record for signing configuration overrides
 - `Accept: application/plang` added automatically on signed requests
-- `application/plang` responses parsed as `Data` objects (default JSON, extensible to `+protobuf`), signature must be valid (error if not), `SignedData.Identity` → `context.MemoryStack.Set("!ServiceIdentity", ...)` (scoped — doesn't overwrite developer variables)
+- `application/plang` responses parsed as `Data` objects (default JSON, extensible to `+protobuf`), signature must be valid (error if not), `SignedData.Identity` → `context.Variables.Set("!ServiceIdentity", ...)` (scoped — doesn't overwrite developer variables)
 - Unsigned request receiving `application/plang` response returns error — unsigned `application/plang` is never allowed
 - `IHttpProvider` + `DefaultHttpProvider` (SocketsHttpHandler) — follows existing provider pattern, swappable via `engine.Providers`. `IHttpProvider.Configure(ISettings)` — provider receives `ISettings`, casts to what it needs. Returns `Data` (never throws).
 - `OnStream` callback works for streaming responses with `StreamFormat` enum (`Line`, `SSE`, `Bytes`). Auto-detects from content type when `StreamAs` is null. `application/plang` always uses NDJSON (not configurable). Timeout applies to initial response only (`ResponseHeadersRead`). Returns `Data.Ok()` with response properties after streaming completes.

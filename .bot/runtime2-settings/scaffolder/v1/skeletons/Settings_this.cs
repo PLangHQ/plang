@@ -1,6 +1,6 @@
-using PLang.Runtime2.Engine.Context;
+using App.Context;
 
-namespace PLang.Runtime2.Engine.Settings;
+namespace App.Settings;
 
 /// <summary>
 /// Engine-level settings registry. Owns:

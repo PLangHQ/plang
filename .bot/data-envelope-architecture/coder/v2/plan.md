@@ -90,43 +90,43 @@ Where Data gets context set:
 
 | Point | File | How |
 |-------|------|-----|
-| MemoryStack.Set | MemoryStack.cs | MemoryStack gets `Context` property, stamps on new/existing Data |
-| MemoryStack.Put | MemoryStack.cs | Same |
+| Variables.Set | Variables.cs | Variables gets `Context` property, stamps on new/existing Data |
+| Variables.Put | Variables.cs | Same |
 | Action.RunAsync | Action/Methods.cs | Stamp context on result Data before return variable binding |
 | Data.GetChild | Data.cs | Child inherits context from parent |
 | PLangContext.RegisterContextVariables | PLangContext.cs | Stamp `this` on Data/DynamicData created there |
-| PLangContext constructor | PLangContext.cs | Set `MemoryStack.Context = this` |
+| PLangContext constructor | PLangContext.cs | Set `Variables.Context = this` |
 
 **Data.Ok() / Data.FromError()** — static factories create contextless Data (unchanged). Context stamped later by whoever receives it.
 
-### 6. MemoryStack gets context reference
+### 6. Variables gets context reference
 
 ```csharp
-public class MemoryStack
+public class Variables
 {
     [JsonIgnore] internal PLangContext? Context { get; set; }
 }
 ```
 
-PLangContext constructor sets `MemoryStack.Context = this` after creating the MemoryStack.
-MemoryStack.Clone() creates a new MemoryStack without context — PLangContext.CreateChild stamps context on the child's MemoryStack via its constructor.
+PLangContext constructor sets `Variables.Context = this` after creating the Variables.
+Variables.Clone() creates a new Variables without context — PLangContext.CreateChild stamps context on the child's Variables via its constructor.
 
 ## File Changes Summary
 
 | File | Action | What |
 |------|--------|------|
-| `PLang/Runtime2/Engine/Memory/Data.cs` | **Modify** | Add Context property to Data, lazy Type derivation, child context inheritance |
-| `PLang/Runtime2/Engine/Memory/MemoryStack.cs` | **Modify** | Add Context property, stamp on Set/Put |
-| `PLang/Runtime2/Engine/Types/this.cs` | **Modify** | Add KindOf(), _allKinds, _mimeToKind |
-| `PLang/Runtime2/Engine/Context/PLangContext.cs` | **Modify** | Set MemoryStack.Context, stamp on context variables |
-| `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` | **Modify** | Stamp context on result Data |
-| `PLang.Tests/Runtime2/Types/EngineTypesTests.cs` | **Modify** | Add KindOf tests |
-| `PLang.Tests/Runtime2/Memory/DataTests.cs` | **Modify or Create** | Test lazy derivation, context stamping, context inheritance |
+| `PLang/App/Memory/Data.cs` | **Modify** | Add Context property to Data, lazy Type derivation, child context inheritance |
+| `PLang/App/Memory/Variables.cs` | **Modify** | Add Context property, stamp on Set/Put |
+| `PLang/App/Types/this.cs` | **Modify** | Add KindOf(), _allKinds, _mimeToKind |
+| `PLang/App/Context/PLangContext.cs` | **Modify** | Set Variables.Context, stamp on context variables |
+| `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs` | **Modify** | Stamp context on result Data |
+| `PLang.Tests/App/Types/EngineTypesTests.cs` | **Modify** | Add KindOf tests |
+| `PLang.Tests/App/Memory/DataTests.cs` | **Modify or Create** | Test lazy derivation, context stamping, context inheritance |
 
 ## What is NOT changing
 
 - TypeJsonConverter — serialization unchanged
 - Static TypeMapping — still exists, used as fallback for contextless Type
 - Static factories (Data.Ok, Data.FromError) — create contextless Data
-- DynamicData — inherits context from MemoryStack.Put stamping
+- DynamicData — inherits context from Variables.Put stamping
 - Data<T> — inherits context behavior from base Data

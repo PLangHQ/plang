@@ -1,0 +1,47 @@
+{
+  "name": "ThrowError",
+  "description": "Throws an intentional error with a message and status code.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw \u0022intentional error\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "intentional error",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ThrowError.goal",
+  "prPath": "/.build/throwerror.pr",
+  "hash": "227b802a61ecde7ab3c5b00a247f6e6ba6695f0b2db6325dd8b538a69a2642c6",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

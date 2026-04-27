@@ -42,7 +42,7 @@ Added 4 tests for `GetOrDefault<T>` and `Has<T>` which were flagged as untested.
 [Test]
 public async Task ListAction_UnknownType_ReturnsError()
 {
-    var action = new PLang.Runtime2.modules.provider.list
+    var action = new App.modules.provider.list
     {
         Context = Ctx,
         Type = "quantum"
@@ -55,8 +55,8 @@ public async Task ListAction_UnknownType_ReturnsError()
 ```
 
 ## Files modified
-- `PLang.Tests/Runtime2/Modules/provider/ProviderModuleTests.cs` — 6 new tests
-- `PLang.Tests/Runtime2/Modules/signing/Ed25519ProviderTests.cs` — 4 new tests
-- `PLang.Tests/Runtime2/Modules/signing/SignActionTests.cs` — 2 strengthened assertions
-- `PLang.Tests/Runtime2/Modules/signing/VerifyActionTests.cs` — 4 new tests + 1 strengthened
-- `PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs` — 16 new tests
+- `PLang.Tests/App/Modules/provider/ProviderModuleTests.cs` — 6 new tests
+- `PLang.Tests/App/Modules/signing/Ed25519ProviderTests.cs` — 4 new tests
+- `PLang.Tests/App/Modules/signing/SignActionTests.cs` — 2 strengthened assertions
+- `PLang.Tests/App/Modules/signing/VerifyActionTests.cs` — 4 new tests + 1 strengthened
+- `PLang.Tests/App/Core/NamedProviderRegistryTests.cs` — 16 new tests

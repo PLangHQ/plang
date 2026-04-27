@@ -1,0 +1,135 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read \u0027data.txt\u0027, on error key 404, write out \u0022primary missing\u0022, read \u0027fallback.txt\u0027, write to %content%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "data.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Key",
+                  "value": "404",
+                  "type": "string"
+                },
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "output",
+                      "action": "write",
+                      "Parameters": [
+                        {
+                          "name": "Data",
+                          "value": "primary missing",
+                          "type": "string"
+                        }
+                      ],
+                      "Defaults": null,
+                      "Modifiers": [],
+                      "Errors": [],
+                      "Warnings": [],
+                      "Examples": [],
+                      "ReturnType": null
+                    },
+                    {
+                      "module": "file",
+                      "action": "read",
+                      "Parameters": [
+                        {
+                          "name": "Path",
+                          "value": "fallback.txt",
+                          "type": "path"
+                        }
+                      ],
+                      "Defaults": null,
+                      "Modifiers": [],
+                      "Errors": [],
+                      "Warnings": [],
+                      "Examples": [],
+                      "ReturnType": null
+                    },
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "Parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%content%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": "%__data__%",
+                          "type": "object"
+                        }
+                      ],
+                      "Defaults": null,
+                      "Modifiers": [],
+                      "Errors": [],
+                      "Warnings": [],
+                      "Examples": [],
+                      "ReturnType": null
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "file.read data.txt is the primary action. The step specifies an on-error handler for key 404 that writes out a message and then reads fallback.txt, storing its content into %content%.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
+  "hash": "72acb1471c5421abea83649c06b98d2e359e4deb8dee20e693ccbda0d8196592",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

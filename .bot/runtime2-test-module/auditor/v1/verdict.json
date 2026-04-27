@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "Security fix 9dc148f5 is incomplete (JUnit XML path unmasked + no e2e test) and the only two Report format-routing tests don't verify content — together, a JUnit-side sensitive-data leak has no detection."
+}

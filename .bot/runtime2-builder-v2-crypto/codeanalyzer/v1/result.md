@@ -1,6 +1,6 @@
 # Code Analysis v1 — Crypto Module + Engine.Providers
 
-## PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs
+## PLang/App/modules/crypto/providers/DefaultProvider.cs
 
 ### OBP Violations
 None.
@@ -28,7 +28,7 @@ Redundant algorithm validation will diverge from `Hash()` when algorithms are ad
 
 ---
 
-## PLang/Runtime2/modules/crypto/hash.cs
+## PLang/App/modules/crypto/hash.cs
 
 ### OBP Violations
 None. Navigation through `context.Engine.Providers` is correct OBP.
@@ -54,7 +54,7 @@ Static allocation fix is trivial. Data/Data shadowing is a design trade-off wort
 
 ---
 
-## PLang/Runtime2/modules/crypto/verify.cs
+## PLang/App/modules/crypto/verify.cs
 
 ### OBP Violations
 None.
@@ -70,7 +70,7 @@ Same Data shadowing issue as hash.cs.
 
 ---
 
-## PLang/Runtime2/modules/crypto/types.cs
+## PLang/App/modules/crypto/types.cs
 
 ### OBP Violations
 None.
@@ -86,7 +86,7 @@ Simple POCO with `ToString()` override for PLang string context.
 
 ---
 
-## PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs
+## PLang/App/modules/crypto/providers/ICryptoProvider.cs
 
 ### OBP Violations
 None.
@@ -102,7 +102,7 @@ Clean two-method interface.
 
 ---
 
-## PLang/Runtime2/Engine/Providers/this.cs
+## PLang/App/Providers/this.cs
 
 ### OBP Violations
 None. Lives on Engine, which owns it. OBP-compliant.
@@ -122,7 +122,7 @@ Well-designed registry. Unused methods are reasonable API surface.
 
 ---
 
-## PLang/Runtime2/Engine/Context/Actor.cs (identity changes)
+## PLang/App/Context/Actor.cs (identity changes)
 
 ### OBP Violations
 None. `Identity` property follows the same lazy pattern as `DataSource`.
@@ -140,7 +140,7 @@ None.
 
 ---
 
-## PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs
+## PLang/App/Channels/Serializers/SensitivePropertyFilter.cs
 
 ### OBP Violations
 None.
@@ -155,7 +155,7 @@ None.
 
 ---
 
-## PLang/Runtime2/modules/identity/types.cs (IdentityVariable)
+## PLang/App/modules/identity/types.cs (IdentityVariable)
 
 ### OBP Violations
 None. Persistence methods (`LoadAsync`, `SaveAsync`, `RemoveAsync`) belong to the owner — correct OBP.
@@ -173,7 +173,7 @@ None.
 
 ---
 
-## PLang/Runtime2/modules/identity/IdentityData.cs
+## PLang/App/modules/identity/IdentityData.cs
 
 ### OBP Violations
 None.

@@ -22,11 +22,11 @@ Replaced `retryOverSeconds` -> `retryOverMs` in two builder .pr files:
 
 **Changes:**
 
-- `Tests/Runtime2/ErrorRetryOnly/BareRetryGoal.goal` — Now increments `%bareRetryAttempts%` before throwing (no onError on throw)
-- `Tests/Runtime2/ErrorRetryOnly/TimedRetryGoal.goal` — Same pattern with `%timedRetryAttempts%`
-- `Tests/Runtime2/ErrorRetryOnly/ErrorRetryOnly.test.goal` — Initializes counters to 0, moves `on error retry 2 times` to the `call` step, asserts counter equals 3
-- `Tests/Runtime2/ErrorGoalFirst/AlwaysFails.goal` — Increments `%goalFirstAttempts%` before throwing
-- `Tests/Runtime2/ErrorGoalFirst/ErrorGoalFirst.test.goal` — Initializes counter, asserts `%goalFirstAttempts%` > 1
+- `Tests/App/ErrorRetryOnly/BareRetryGoal.goal` — Now increments `%bareRetryAttempts%` before throwing (no onError on throw)
+- `Tests/App/ErrorRetryOnly/TimedRetryGoal.goal` — Same pattern with `%timedRetryAttempts%`
+- `Tests/App/ErrorRetryOnly/ErrorRetryOnly.test.goal` — Initializes counters to 0, moves `on error retry 2 times` to the `call` step, asserts counter equals 3
+- `Tests/App/ErrorGoalFirst/AlwaysFails.goal` — Increments `%goalFirstAttempts%` before throwing
+- `Tests/App/ErrorGoalFirst/ErrorGoalFirst.test.goal` — Initializes counter, asserts `%goalFirstAttempts%` > 1
 - Deleted stale `.build/` folders for both test suites (need LLM rebuild)
 
 ## Code example
@@ -55,7 +55,7 @@ Test assertion (ErrorRetryOnly.test.goal):
 
 Test .build folders were deleted (stale). Tests cannot be built or run without an OpenAI API key for the LLM builder. Run these commands when a key is available:
 ```bash
-cd Tests/Runtime2/ErrorRetryOnly && plang p build --llmservice=openai
-cd Tests/Runtime2/ErrorGoalFirst && plang p build --llmservice=openai
+cd Tests/App/ErrorRetryOnly && plang p build --llmservice=openai
+cd Tests/App/ErrorGoalFirst && plang p build --llmservice=openai
 plang p !test
 ```

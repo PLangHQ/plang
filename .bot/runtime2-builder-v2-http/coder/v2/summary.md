@@ -6,17 +6,17 @@ OBP compliance refactor of the HTTP module. The `HttpHelper` static utility clas
 ## What was done
 
 ### Deleted
-- `PLang/Runtime2/modules/http/HttpHelper.cs` — all methods absorbed into `DefaultHttpProvider`
+- `PLang/App/modules/http/HttpHelper.cs` — all methods absorbed into `DefaultHttpProvider`
 
 ### Modified
-- `PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs` — major refactor:
+- `PLang/App/modules/http/providers/DefaultHttpProvider.cs` — major refactor:
   - All pipeline methods (signing, parsing, streaming, headers, URL resolution, progress) moved in as private instance/static methods
   - `ExecuteHttpAsync(Func<Task<Data>>)` — unified error handling (was duplicated 3x)
   - `CreateClient(ModuleView<Config>)` — reads redirect config from scope chain, no duplicate `_followRedirects`/`_maxRedirects` state
   - `ResolveCallbackVarName(GoalCall?, string)` — progress callback var name resolved from GoalCall params (was hardcoded `"!data"`)
   - `using` on `HttpResponseMessage` for non-streaming paths
-- `PLang/Runtime2/modules/http/providers/IHttpProvider.cs` — removed stale doc comment
-- `PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs` — replaced `HttpHelper.ResolveUrl()` call in mock with direct `Data.FromError`
+- `PLang/App/modules/http/providers/IHttpProvider.cs` — removed stale doc comment
+- `PLang.Tests/App/Modules/http/RequestActionTests.cs` — replaced `HttpHelper.ResolveUrl()` call in mock with direct `Data.FromError`
 
 ### Not changed
 - Action records (`request.cs`, `download.cs`, `upload.cs`, `configure.cs`) — untouched

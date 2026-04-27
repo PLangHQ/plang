@@ -1,3 +1,0 @@
-Start
-/ Verify response properties accessible via %result!TotalTokens%, %result!Model%, etc.
-- throw "not implemented"

@@ -6,7 +6,7 @@ Cross-cutting audit of the UI module (Liquid template rendering via Fluid 2.31.0
 
 ## What was done
 
-Reviewed all production files (render.cs, FluidProvider.cs, ITemplateProvider.cs), the provider registry (Providers/this.cs), PathData.cs, MemoryStack.GetAll(), and the full test file (RenderTests.cs, 29 tests). Ran the full test suite (1890 pass, 0 fail).
+Reviewed all production files (render.cs, FluidProvider.cs, ITemplateProvider.cs), the provider registry (Providers/this.cs), PathData.cs, Variables.GetAll(), and the full test file (RenderTests.cs, 29 tests). Ran the full test suite (1890 pass, 0 fail).
 
 ### Findings
 
@@ -20,7 +20,7 @@ Reviewed all production files (render.cs, FluidProvider.cs, ITemplateProvider.cs
 
 ### Cross-file contract verification
 
-- **MemoryStack.GetAll()** → FluidProvider correctly iterates Data objects, uses `.Value` for Fluid values and `.Name` for variable names. Contract holds.
+- **Variables.GetAll()** → FluidProvider correctly iterates Data objects, uses `.Value` for Fluid values and `.Name` for variable names. Contract holds.
 - **PathData constructor** → Used correctly with `(templateContent, action.Context)` for relative-to-goal resolution. Contract holds.
 - **Engine.RunGoalAsync** → Called with GoalCall + PLangContext from ambient values. Contract holds.
 - **Provider registration** → ITemplateProvider registered in RegisterDefaults(), type mapping "template" added. Consistent with all other provider types.

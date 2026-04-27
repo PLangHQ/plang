@@ -6,7 +6,7 @@ Cross-cutting review of the UI module (Liquid template rendering via Fluid) afte
 
 ## What I'll focus on
 
-1. **Cross-file contracts** — Does FluidProvider's usage of PathData, MemoryStack.GetAll(), Engine.RunGoalAsync match their contracts?
+1. **Cross-file contracts** — Does FluidProvider's usage of PathData, Variables.GetAll(), Engine.RunGoalAsync match their contracts?
 2. **Catch filter consistency** — Codeanalyzer v1 flagged catch-all issues. v2 said "catch filters correct." Verify ALL catch blocks, not just the ones in the diff.
 3. **Review quality** — Are the tester's minor findings correctly classified? Did codeanalyzer miss anything?
 4. **Architectural fit** — Does the FluidProvider follow OBP? Is the provider registration correct?
@@ -14,13 +14,13 @@ Cross-cutting review of the UI module (Liquid template rendering via Fluid) afte
 
 ## Files reviewed
 
-- `PLang/Runtime2/modules/ui/render.cs`
-- `PLang/Runtime2/modules/ui/providers/FluidProvider.cs`
-- `PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs`
-- `PLang/Runtime2/Engine/Providers/this.cs`
-- `PLang/Runtime2/Engine/FileSystem/PathData.cs`
-- `PLang/Runtime2/Engine/Memory/MemoryStack.cs`
-- `PLang.Tests/Runtime2/Modules/ui/RenderTests.cs`
+- `PLang/App/modules/ui/render.cs`
+- `PLang/App/modules/ui/providers/FluidProvider.cs`
+- `PLang/App/modules/ui/providers/ITemplateProvider.cs`
+- `PLang/App/Providers/this.cs`
+- `PLang/App/FileSystem/PathData.cs`
+- `PLang/App/Memory/Variables.cs`
+- `PLang.Tests/App/Modules/ui/RenderTests.cs`
 
 ## Previous reviewer verdicts
 

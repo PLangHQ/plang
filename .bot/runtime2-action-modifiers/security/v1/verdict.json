@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "0 critical, 0 high, 1 medium (shared GoalCall mutation in error.handle), 3 low (negative Ms, unbounded retry, non-thread-safe cancellation stack). Feature is fit to merge; Finding 1 is a clean 5-line fix worth doing before parallel modifiers land."
+}

@@ -2,7 +2,7 @@
 
 ## What this is
 
-Code review of the Settings infrastructure — strongly-typed, goal-scoped module configuration for Runtime2. ~200 LOC production code, 23 dedicated tests, 1262 total tests pass.
+Code review of the Settings infrastructure — strongly-typed, goal-scoped module configuration for App. ~200 LOC production code, 23 dedicated tests, 1262 total tests pass.
 
 ## What was reviewed
 

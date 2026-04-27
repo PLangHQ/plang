@@ -16,7 +16,7 @@ Address tester v8 findings. One blocking, two minor.
 // With cycle guard: items[idx] → [idx] left unresolved → navigation fails → null
 ```
 
-**Files**: `PLang.Tests/Runtime2/Memory/MemoryStackTests.cs`
+**Files**: `PLang.Tests/App/Memory/VariablesTests.cs`
 
 ## Finding 2 (Minor): Clr() depth boundary at 20/21
 
@@ -24,7 +24,7 @@ Existing test nests 25 levels (well above MaxGenericDepth=20). Add boundary test
 - 20 nestings → should resolve (exactly at limit)
 - 21 nestings → should return null (one over limit)
 
-**Files**: `PLang.Tests/Runtime2/Types/EngineTypesTests.cs`
+**Files**: `PLang.Tests/App/Types/EngineTypesTests.cs`
 
 ## Finding 3 (Minor/observation): JsonDepthExceeded dead code
 
@@ -34,7 +34,7 @@ No action. Tester acknowledged it's defensive code that would activate if STJ's 
 
 | File | Change |
 |------|--------|
-| `PLang.Tests/Runtime2/Memory/MemoryStackTests.cs` | Add cycle detection test |
-| `PLang.Tests/Runtime2/Types/EngineTypesTests.cs` | Add Clr() boundary tests at 20/21 |
+| `PLang.Tests/App/Memory/VariablesTests.cs` | Add cycle detection test |
+| `PLang.Tests/App/Types/EngineTypesTests.cs` | Add Clr() boundary tests at 20/21 |
 
 No production code changes needed — tests only.

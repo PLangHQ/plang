@@ -1,0 +1,742 @@
+{
+  "branch": "runtime2-builder-plan",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "architect",
+      "timestamp_start": "2026-04-09T00:00:00Z",
+      "intent": "Create comprehensive builder architecture and eval strategy document",
+      "before": {
+        "assumptions": "Builder works for simple hello world. Two-pass LLM strategy exists but needsDetail is crude. No eval suite. Prior work in builder-improvement-options.md.",
+        "risk": "Low \u2014 planning/documentation session, no code changes"
+      },
+      "plan": "",
+      "actions": [],
+      "after": {}
+    },
+    {
+      "id": "c0d3r001-eval-suite-0001-0001-000000000001",
+      "bot": "coder",
+      "timestamp_start": "2026-04-09T17:00:00Z",
+      "timestamp_end": null,
+      "intent": "Implement Data.Compare, 38 eval .goal files, and eval runner",
+      "before": {
+        "assumptions": "Data class exists at PLang/App/Data/this.cs as partial class. No Compare method exists. 127 module actions registered. .pr format uses Json.CamelCaseIndented with [Store] filtering. Builder works for existing test .goal files.",
+        "risk": "Medium \u2014 new method on core Data class, 38 new files. Compare method must handle JSON boxing issues (int/long/double)."
+      },
+      "plan": "1. Add Data.Compare as new partial file (this.Compare.cs) \u2014 JSON-level structural diff. 2. C# tests for Compare. 3. Write 38 eval .goal files per architect catalogue. 4. Build, verify .pr output, save as .golden. 5. Write eval runner PLang goal.",
+      "actions": [],
+      "after": {}
+    },
+    {
+      "id": "c0d3r004-data-t-props-0001-0001-000000000004",
+      "bot": "coder",
+      "timestamp_start": "2026-04-14T00:00:00Z",
+      "timestamp_end": null,
+      "intent": "Convert action handler properties from plain types to Data<T> in list/, loop/, math/, event/ modules",
+      "before": {
+        "assumptions": "Data.@this<T> wrapper exists and is used in file/ modules already. Pattern is established. Source generator handles lazy resolution.",
+        "risk": "Medium \u2014 many files, mechanical but must be precise with .Value/.Value! access in Run() methods."
+      },
+      "plan": "",
+      "actions": [],
+      "after": {}
+    },
+    {
+      "id": "c0d3r006-builder-data-t-unwrap-0001",
+      "bot": "coder",
+      "timestamp_start": "2026-04-14T14:00:00Z",
+      "timestamp_end": null,
+      "intent": "Make builder correctly unwrap Data<T> in type names, valid values, and parameter type stamping",
+      "before": {
+        "assumptions": "GetTypeName doesn't unwrap Data<T>, GetValidValues doesn't unwrap Data<T>, NormalizeParameterTypes doesn't stamp missing types from schema. UnwrapType already exists for schema discovery but isn't used elsewhere.",
+        "risk": "Low \u2014 additive changes to existing methods, no behavior change for non-Data types"
+      },
+      "plan": "1. Add Data<T> unwrapping to GetTypeName() and GetValidValues() in TypeMapping.cs. 2. Add parameter type stamping from action schema in NormalizeParameterTypes(). 3. Add C# tests for all changes. 4. Verify with dotnet build and test run.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Utils/TypeMapping.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Data<T> unwrapping in GetTypeName() and GetValidValues()"
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added parameter type stamping from action schema in NormalizeParameterTypes()"
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Utility/TypeMappingTests.cs",
+            "PLang.Tests/App/Engine/Modules/DescribeTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "6 new tests for Data<T> unwrapping and Describe integration"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green \u2014 2062/2064 tests pass (2 pre-existing failures)",
+        "notes": "Ready for end-to-end verification with plang build"
+      }
+    },
+    {
+      "id": "ca-v1-2026-04-16-analysis",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-16T12:00:00Z",
+      "timestamp_end": "2026-04-16T13:00:00Z",
+      "intent": "Full 5-pass code analysis of all runtime changes on the branch",
+      "before": {
+        "assumptions": "Branch has ~200 changed files implementing Data<T> composition, return removal, condition orchestration, foreach inline, builder eval suite. Multiple coder sessions completed.",
+        "risk": "Analysis only \u2014 no code changes"
+      },
+      "plan": "5-pass analysis (OBP, Simplification, Readability, Behavioral, Deletion) on all changed C# runtime files. Focus on behavioral corners where the architectural changes could silently break existing PLang programs.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang/App/Data/this.Compare.cs",
+            "PLang/App/Data/this.Navigation.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Core Data changes: events, NeedsResolution, Value factory, AsEnumerable, As<T>, ShallowClone, ToBoolean, implicit operator"
+        },
+        {
+          "paths": [
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Variables: Data-aware Set, ResolveDeep depth guard + typed object mutation, bracket indexing"
+        },
+        {
+          "paths": [
+            "PLang/App/modules/condition/if.cs",
+            "PLang/App/modules/loop/foreach.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Condition orchestration and foreach inline body \u2014 the two major behavioral changes"
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/builder/validateResponse.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Builder: PromoteGroups, validation suggestions, IBuildValidatable, Data<T> parameter wrapping"
+        },
+        {
+          "paths": [
+            "PLang.Generators/LazyParamsGenerator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Source generator: Data<T> support, IStatic, field reset, __ResolveData"
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Entity hierarchy: IDataWrappable, Return removal, Handled break, AsData()"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL \u2014 3 critical findings, 8 should-fix",
+        "notes": "23 total findings. Critical: foreach drops dict support, ResolveDeep mutates shared templates, old .pr Return silently lost. Architecture direction is excellent OBP \u2014 issues are in migration edges."
+      }
+    },
+    {
+      "id": "ca-v2-2026-04-16-rereview",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-16T14:00:00Z",
+      "timestamp_end": "2026-04-16T14:30:00Z",
+      "intent": "Re-review coder's fixes for v1 findings",
+      "before": {
+        "assumptions": "Coder addressed 10 of 13 v1 findings in commit db09e0f4 on fix-plang-tests. Changes span 28 files.",
+        "risk": "Analysis only \u2014 no code changes"
+      },
+      "plan": "5-pass analysis on coder's fix commit. Verify each fix against original finding. Check for new issues introduced by the fixes.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Data/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "EnumerateItems(), Value caching, As<T> cache \u2014 all verified correct"
+        },
+        {
+          "paths": [
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "ResolveDeep clone via MemberwiseClone \u2014 verified safe for string-only mutation"
+        },
+        {
+          "paths": [
+            "PLang/App/modules/condition/if.cs",
+            "PLang/App/modules/loop/foreach.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Condition guard moved to Context._data, foreach uses EnumerateItems"
+        },
+        {
+          "paths": [
+            "PLang/App/modules/list/any.cs",
+            "PLang/App/modules/list/contains.cs",
+            "PLang/App/modules/list/count.cs",
+            "PLang/App/modules/list/first.cs",
+            "PLang/App/modules/list/get.cs",
+            "PLang/App/modules/list/group.cs",
+            "PLang/App/modules/list/indexof.cs",
+            "PLang/App/modules/list/join.cs",
+            "PLang/App/modules/list/last.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "7 list modules rewritten to use Data.EnumerateItems/GetChild \u2014 excellent OBP"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS \u2014 all critical fixes verified correct, 1 new LOW finding",
+        "notes": "All 10 fixes correctly resolve v1 findings. 1 new LOW: count.cs dict count is O(n). 3 carried from v1 unaddressed. Ready for tester."
+      }
+    },
+    {
+      "id": "tester-v6-2026-04-16-quality",
+      "bot": "tester",
+      "timestamp_start": "2026-04-16T13:30:00Z",
+      "timestamp_end": "2026-04-16T14:15:00Z",
+      "intent": "Test quality analysis for full runtime2-builder-plan branch",
+      "before": {
+        "assumptions": "Branch has 693 files changed with multiple coder sessions. No prior tester analysis exists.",
+        "risk": "Analysis only \u2014 no code changes"
+      },
+      "plan": "Run C# test suite, collect Cobertura coverage, analyze test quality across all changed areas, hunt false greens, write test-report.json",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran full test suite: 2069 total, 2065 pass, 4 fail (non-deterministic LLM and actor settings tests)"
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/validateResponse.cs",
+            "PLang/App/modules/builder/promoteGroups.cs",
+            "PLang/App/modules/list/any.cs",
+            "PLang/App/modules/list/group.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "4 critical coverage gaps: new production files with 0% test coverage"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-plan/test-report.json",
+            ".bot/runtime2-builder-plan/tester/v6/"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Test report, coverage data, verdict, and summary"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL \u2014 4 critical gaps, 6 major issues, 5 minor",
+        "notes": "15 findings total. Critical: validateResponse (0%), list.any (0%), list.group (0%), promoteGroups (0%). Major: broken LLM retry test, actor settings leak, cache.store 0%, timer 0%. Send to coder for fixes."
+      }
+    },
+    {
+      "id": "tester-v7-2026-04-16-post-merge",
+      "bot": "tester",
+      "timestamp_start": "2026-04-16T14:00:00Z",
+      "timestamp_end": "2026-04-16T14:15:00Z",
+      "intent": "Re-evaluate test quality after fix-plang-tests merge",
+      "before": {
+        "assumptions": "fix-plang-tests branch merged by coder, bringing foreach dict fix, condition guard, list OBP rewrites, test restructuring with 142 PLang test files",
+        "risk": "Analysis only \u2014 no code changes"
+      },
+      "plan": "Run C# tests, collect coverage, run PLang tests, map v6 findings to fix outcomes, identify new issues, write updated report",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# tests: 2071 total, 2069 pass, 2 fail. Improvement from 4 failures to 2."
+        },
+        {
+          "paths": [
+            "Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "PLang tests: 143 discovered, 57 ran, 86 silently skipped. Critical discovery."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-plan/test-report.json",
+            ".bot/runtime2-builder-plan/tester/v7/"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated test report, v7 summary, verdict, v6 review mapping"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL \u2014 2 critical, 8 major, 5 minor. New critical: 60% PLang tests silently skipped.",
+        "notes": "Foreach dict and condition orchestration fixed. But PLang test runner skips 86/143 files. All condition/cache/crypto/event tests never execute. Send to coder."
+      }
+    },
+    {
+      "id": "c0d3r-v7-fixes-2026-04-16",
+      "bot": "coder",
+      "timestamp_start": "2026-04-16T15:00:00Z",
+      "timestamp_end": "2026-04-16T15:30:00Z",
+      "intent": "Address tester v7 C# findings: validateResponse tests, list.any/group tests, fix LLM retry assertion",
+      "before": {
+        "assumptions": "Tester found validateResponse 0%, list.any/group 0%, 2 broken LLM tests. PLang test runner skip issue noted but deferred.",
+        "risk": "Low \u2014 adding tests and fixing one assertion"
+      },
+      "plan": "Write validateResponse tests (8), list.any tests (4), list.group tests (3), fix LLM retry assertion. Skip PLang test runner \u2014 better tooling being built for it.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/builder/ValidateResponseTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "8 tests: valid response, wrong count, missing steps/index/actions, index gaps, null inputs, multiple errors"
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/list/ListTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "7 tests: any match/no-match/empty/not-equals, group by-key/empty/missing-key"
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/llm/QueryCallbackTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Fixed assertion: 'LLM validation failed' instead of non-existent 'Validation failed after 3 retries'"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "2085 passed, 1 failed (pre-existing LLM tool call snapshot issue)",
+        "notes": "NOTE FOR TESTER: Ignore PLang tests for now \u2014 better tooling is being built for PLang test runner. Focus C# analysis only. The 1 remaining failure (Query_ToolCall_LlmRequestsToolAndHandlesError) is a snapshot data mismatch, not a code bug."
+      }
+    },
+    {
+      "id": "tester-v8-2026-04-16-post-fixes",
+      "bot": "tester",
+      "timestamp_start": "2026-04-16T16:00:00Z",
+      "timestamp_end": "2026-04-16T16:30:00Z",
+      "intent": "Re-evaluate test quality after coder fixed v7 findings #2-#5",
+      "before": {
+        "assumptions": "Coder added 8 validateResponse tests, 7 list tests (any+group), fixed LLM retry assertion. PLang tests skipped per user.",
+        "risk": "Analysis only \u2014 no code changes"
+      },
+      "plan": "Run C# tests, analyze quality of new tests (deletion test, weak assertions, edge cases), update test-report.json",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/builder/ValidateResponseTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "8 tests cover all error paths via IDictionary. JsonElement path (production) at 0%."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/list/ListTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "7 tests for any+group \u2014 solid edge cases, verify values not just success"
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/llm/QueryCallbackTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Fixed assertion matches actual error message"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "APPROVED \u2014 2085/2086 pass, 9 findings (0 critical)",
+        "notes": "Coder fixes correct. New finding: JsonElement path in validateResponse untested. Suggest running security analyst next."
+      }
+    },
+    {
+      "id": "sec-v1-2026-04-16-full-audit",
+      "bot": "security",
+      "timestamp_start": "2026-04-16T17:00:00Z",
+      "timestamp_end": null,
+      "intent": "Full security audit of runtime2-builder-plan branch \u2014 blue team + red team",
+      "before": {
+        "assumptions": "147 runtime source files changed. Major areas: Data/Navigators, variable resolution, builder pipeline, HTTP/file/crypto/LLM modules, engine/goal/step execution, actor/config/cache/utils. Multiple coder sessions, 2085/2086 tests passing.",
+        "risk": "Analysis only \u2014 no code changes. Risk is in missing security issues."
+      },
+      "plan": "Blue team: map attack surface across 147 changed files via 6 parallel agents (Data/Navigators, Variables, Builder, HTTP/File/Crypto/LLM, Engine/Goal/Step/Event, Actor/Config/Cache/Utils). Red team: exploit sketches for each finding. Filter through PLang threat model (user-sovereign, external data is the real attack surface).",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "3 HIGH findings: download no size limit (line 911-948), SSE buffer overflow (828-835), slow-loris no per-read timeout (290-330)"
+        },
+        {
+          "paths": [
+            "PLang/App/modules/signing/providers/Ed25519Provider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "2 MEDIUM findings: timing side-channel on header comparison (line 104), nonce replay after restart (85-89)"
+        },
+        {
+          "paths": [
+            "PLang/App/Data/Navigators/JsonStringNavigator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "2 MEDIUM findings: no element count limit (59-76), no explicit depth guard (45-56)"
+        },
+        {
+          "paths": [
+            "PLang/App/modules/file/providers/DefaultFileProvider.cs",
+            "PLang/App/Data/Navigators/ObjectNavigator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Info disclosure: absolute paths in error messages (39, 76), type names in errors (28)"
+        },
+        {
+          "paths": [
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "MEDIUM: ResolveDeep no breadth guard (412-434)"
+        },
+        {
+          "paths": [
+            "PLang/App/modules/ui/providers/FluidProvider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Accepted risk SSTI: UnsafeMemberAccessStrategy + callGoal + app in AmbientValues. Confirmed MaxSteps now configured (100K)"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL \u2014 3 HIGH open in HTTP module, 6 MEDIUM, 2 LOW",
+        "notes": "12 findings after threat-model filtering. HTTP module is the primary concern \u2014 its core job is safe external data handling. Send to coder for HTTP fixes."
+      }
+    },
+    {
+      "id": "c0d3r-v7-security-2026-04-16",
+      "bot": "coder",
+      "timestamp_start": "2026-04-16T18:00:00Z",
+      "timestamp_end": "2026-04-16T18:30:00Z",
+      "intent": "Fix all 11 open security findings from audit v1",
+      "before": {
+        "assumptions": "Security audit found 12 findings (1 accepted-risk). 3 HIGH in HTTP module, 6 MEDIUM, 2 LOW. All have clear fix proposals.",
+        "risk": "Medium \u2014 touching HTTP transport, crypto verification, JSON parsing, and variable resolution. All fixes are additive guards."
+      },
+      "plan": "Fix F1 (download size limit), F2 (SSE overflow counter), F3 (slow-loris throughput), F11 (URL scheme), F7 (constant-time headers), F8 (nonce TTL documentation), F5 (JSON element count), F6 (JSON depth guard), F9 (path disclosure), F10 (ResolveDeep breadth), F12 (type name disclosure).",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1: maxBytes param on StreamWithProgressAsync. F2: consecutiveOverflows counter in SSE. F3: throughput check in all read methods. F11: URL scheme validation in ResolveUrl."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/signing/providers/Ed25519Provider.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F7: CryptographicOperations.FixedTimeEquals for header comparison. F8: documented existing timeout bounds nonce replay."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/Navigators/JsonStringNavigator.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F5: MaxElementCount=100K with ref counter. F6: depth parameter with MaxDepth=64."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/file/providers/DefaultFileProvider.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F9: removed path.Absolute from error message"
+        },
+        {
+          "paths": [
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F10: _resolveItemCount breadth guard at 100K"
+        },
+        {
+          "paths": [
+            "PLang/App/Data/Navigators/ObjectNavigator.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F12: removed GetType().Name from error message"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green \u2014 2085/2086 pass (1 pre-existing)",
+        "notes": "All 11 open findings fixed. F4 (Fluid SSTI) accepted-risk, skipped. Ready for security re-audit."
+      }
+    },
+    {
+      "id": "sec-v2-2026-04-16-reaudit",
+      "bot": "security",
+      "timestamp_start": "2026-04-16T19:00:00Z",
+      "timestamp_end": "2026-04-16T19:30:00Z",
+      "intent": "Re-audit after coder fixed all 11 open security findings \u2014 verify fixes + fresh-eyes scan",
+      "before": {
+        "assumptions": "Coder fixed all 11 open findings from security v1. Changes in 6 files: DefaultHttpProvider, Ed25519Provider, JsonStringNavigator, DefaultFileProvider, Variables, ObjectNavigator.",
+        "risk": "Analysis only \u2014 no code changes"
+      },
+      "plan": "1. Verify all 11 fixes by reading actual code (not just diff). 2. Fresh-eyes scan: HTTP SSRF/redirects/Content-Type, variable resolution ThreadStatic/injection/skipInfra, action dispatch type safety. 3. Write updated security-report.json + verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1/F2/F3/F11 fixes verified correct. Fresh scan: no new HIGH. Low: throughput threshold generous, no SSRF IP filtering."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/signing/providers/Ed25519Provider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F7/F8 fixes verified correct. FixedTimeEquals + nonce bounded by timeout."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/Navigators/JsonStringNavigator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F5/F6 fixes verified correct. MaxElementCount + MaxDepth with proper threading."
+        },
+        {
+          "paths": [
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F10 fix verified. New finding: ResolveDeep lacks skipInfrastructure (F13 MEDIUM)."
+        },
+        {
+          "paths": [
+            "PLang/App/Modules/this.cs",
+            "PLang/App/Goals/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Action dispatch verified secure: string lookup, no type injection, whitelist types."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS \u2014 0 critical/high open, 1 medium, 2 low, 1 accepted-risk",
+        "notes": "All v1 fixes correct. 3 new findings (F13-F15). Recommend auditor next."
+      }
+    },
+    {
+      "id": "af94ee14-c6d3-4884-833a-ca2988005298",
+      "bot": "auditor",
+      "timestamp_start": "2026-04-16T20:00:00Z",
+      "timestamp_end": "2026-04-16T20:30:00Z",
+      "intent": "Cross-cutting audit of runtime2-builder-plan branch",
+      "before": {
+        "assumptions": "All 3 prior reviewers passed (codeanalyzer v2, tester v8, security v2). Branch has ~148 changed files under PLang/.",
+        "risk": "Low \u2014 review-only session, no code changes"
+      },
+      "plan": "Read all prior bot reports. Review full code diff focusing on cross-file contracts, clone family completeness, NotFound migration, Data.Value circular resolution, and gaps between reviewers.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang/App/Data/this.Navigation.cs",
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Core Data/Variables cross-file contract analysis. Found NeedsResolution race and clone family gap."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/condition/if.cs",
+            "PLang/App/modules/timer/start.cs",
+            "PLang/App/Actor/Context/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "IStatic/condition orchestration cross-file analysis. Found scope dead code and Disabled concurrency concern."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-plan/auditor-report.json",
+            ".bot/runtime2-builder-plan/auditor/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Audit report and verdict written."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 0 critical, 1 major, 3 minor, 2 nit",
+        "health": "Branch is safe to proceed. Major finding (NeedsResolution race) is a trivial 2-line swap.",
+        "notes": "Recommend running docs bot next."
+      }
+    },
+    {
+      "id": "34713140-11f1-4ba4-bbc6-4932a204c507",
+      "bot": "docs",
+      "timestamp_start": "2026-04-16T21:00:00Z",
+      "timestamp_end": "2026-04-16T21:35:00Z",
+      "intent": "Documentation review and gap-filling for runtime2-builder-plan branch",
+      "before": {
+        "assumptions": "Coder v7 (security fixes), auditor v1 PASS, tester v8 APPROVED, security v2 PASS. No prior docs bot run.",
+        "risk": "Large branch with many changes \u2014 stale docs likely in architecture.md, execution-flow.md, goals-steps.md around Return removal and condition orchestration"
+      },
+      "plan": "Update 5 stale architecture docs (goals-steps, architecture, execution-flow, good_to_know, variables) for __data__ flow, condition orchestration, step.Disabled. Add XML docs on JsonStringNavigator limits, Data.Clone() events, ResolveDeep guards. Add Data.Compare and security hardening docs.",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/goals-steps.md",
+            "Documentation/v0.2/architecture.md",
+            "Documentation/v0.2/execution-flow.md",
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/variables.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated stale references to Return property, added __data__ flow, condition orchestration, security hardening sections"
+        },
+        {
+          "paths": [
+            "PLang/App/Data/Navigators/JsonStringNavigator.cs",
+            "PLang/App/Data/this.cs",
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added XML doc comments on security guards and Clone() event semantics"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-plan/docs-report.json",
+            ".bot/runtime2-builder-plan/docs/v1/verdict.json",
+            ".bot/runtime2-builder-plan/docs/v1/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Final reports and verdict"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS \u2014 all 10 gaps filled",
+        "notes": "Ready to merge"
+      }
+    }
+  ]
+}

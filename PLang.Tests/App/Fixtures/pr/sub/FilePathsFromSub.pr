@@ -1,0 +1,28 @@
+{
+  "name": "FilePathsFromSub",
+  "path": "/sub/FilePathsFromSub.goal",
+  "steps": [
+    {
+      "index": 0,
+      "text": "read /testdata.txt, write to %rootAbsolute%",
+      "lineNumber": 2,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            { "name": "path", "value": "/testdata.txt" }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "Name", "value": "rootAbsolute" },
+            { "name": "Value", "value": "%__data__%" }
+          ]
+        }
+      ]
+    }
+  ]
+}

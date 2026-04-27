@@ -1,7 +1,7 @@
 # v14 Result — Law of Names Restructuring
 
 ## Objective
-Restructure PLang Runtime2 so folder structure, namespaces, and class names align with the OBP ownership hierarchy. When you see `EngineGoals`, you know it belongs to Engine. When you see `GoalSteps`, you know it belongs to Goal.
+Restructure PLang App so folder structure, namespaces, and class names align with the OBP ownership hierarchy. When you see `EngineGoals`, you know it belongs to Engine. When you see `GoalSteps`, you know it belongs to Goal.
 
 ## Execution
 
@@ -10,23 +10,23 @@ Restructure PLang Runtime2 so folder structure, namespaces, and class names alig
 **Approach**: Longest-match-first sed replacement across all 668 .cs files, followed by `git mv` for folder moves.
 
 **Namespace replacements** (10 total, in order):
-1. `PLang.Runtime2.Memory.Navigators` -> `PLang.Runtime2.Engine.Memory.Navigators`
-2. `PLang.Runtime2.Serialization` -> `PLang.Runtime2.Engine.Serializers`
-3. `PLang.Runtime2.Context` -> `PLang.Runtime2.Engine.Context`
-4. `PLang.Runtime2.Memory` -> `PLang.Runtime2.Engine.Memory`
-5. `PLang.Runtime2.Core` -> `PLang.Runtime2.Engine`
-6. `PLang.Runtime2.IO` -> `PLang.Runtime2.Engine.Channels`
-7. `PLang.Runtime2.Errors` -> `PLang.Runtime2.Engine.Errors`
-8. `PLang.Runtime2.Utility` -> `PLang.Runtime2.Engine.Utility`
-9. `PLang.Runtime2.Parsing` -> `PLang.Runtime2.Engine.Parsing`
-10. `PLang.Runtime2.Mapping` -> `PLang.Runtime2.Engine.Mapping`
+1. `App.Memory.Navigators` -> `App.Variables.Navigators`
+2. `App.Serialization` -> `App.Serializers`
+3. `App.Context` -> `App.Context`
+4. `App.Memory` -> `App.Variables`
+5. `App.Core` -> `App.Engine`
+6. `App.IO` -> `App.Channels`
+7. `App.Errors` -> `App.Errors`
+8. `App.Utility` -> `App.Utility`
+9. `App.Parsing` -> `App.Parsing`
+10. `App.Mapping` -> `App.Mapping`
 
 **Issues resolved**:
 - **Relative namespace references** in modules (`Core.Action` -> `Engine.Action`, etc.)
-- **Namespace-type conflict**: `Engine` is both a namespace and a class. Fixed with `using EngineType = PLang.Runtime2.Engine.Engine;` alias in `IClass.cs` and `ICodeGenerated.cs`
+- **Namespace-type conflict**: `Engine` is both a namespace and a class. Fixed with `using EngineType = App.Engine;` alias in `IClass.cs` and `ICodeGenerated.cs`
 - **`Memory.Type` conflict**: `Memory.Type.FromName()` confused with `System.Memory<T>`. Fixed with fully-qualified paths
-- **Double replacement**: Second sed pass created `PLang.Runtime2.Engine.PLang.Runtime2.Engine.Memory.Type`. Fixed by replacing the double pattern
-- **v1 relative references**: `Executor.cs` and `PlangModule/Program.cs` used `Runtime2.Core.X` (without `PLang.` prefix)
+- **Double replacement**: Second sed pass created `App.App.Variables.Type`. Fixed by replacing the double pattern
+- **v1 relative references**: `Executor.cs` and `PlangModule/Program.cs` used `App.Core.X` (without `PLang.` prefix)
 - **Source generator**: Hardcoded namespace strings in `LazyParamsGenerator.cs` updated
 
 **Result**: 212 files changed, 0 build errors, 1167/1167 tests passing.

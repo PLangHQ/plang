@@ -6,7 +6,7 @@ Code analysis of the UI template rendering module (piece 6) and associated clone
 ## What was done
 5-pass analysis on all files changed vs `runtime2-builder-v2-cleanup`. Analyzed:
 - **3 new UI module files**: `render.cs`, `ITemplateProvider.cs`, `FluidProvider.cs`
-- **5 clone family fix files**: `Data.cs`, `Properties.cs`, `PathData.cs`, `IdentityData types.cs`, `MemoryStack.cs`
+- **5 clone family fix files**: `Data.cs`, `Properties.cs`, `PathData.cs`, `IdentityData types.cs`, `Variables.cs`
 - **3 other fixes**: `Data.Envelope.cs`, `DefaultEvaluator.cs`, `Providers/this.cs`
 
 ## Key findings

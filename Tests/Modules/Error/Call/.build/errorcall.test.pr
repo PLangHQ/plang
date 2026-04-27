@@ -1,0 +1,147 @@
+{
+  "name": "Start",
+  "description": "Sets an empty caught message, calls ThrowTestError with an on-error handler that calls CatchError, then asserts the caught message equals 'test error'.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %caughtMessage% = \"\"",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "on error call goal catches error from called goal",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%caughtMessage%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call ThrowTestError, on error call CatchError",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "Name": "ThrowTestError",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": "/.build/throwtesterror.pr"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this?(user|service|system)",
+              "type": "actor"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "Name": "CatchError"
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list<action>"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %caughtMessage% equals \"test error\"",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "test error",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%caughtMessage%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ErrorCall.test.goal",
+  "prPath": "/.build/errorcall.test.pr",
+  "hash": "8c21fb451d36f668ff578e8d092ed6e203cfced3aa3ec24de873a6fafb88d34d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

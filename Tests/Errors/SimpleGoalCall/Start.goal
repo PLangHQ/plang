@@ -1,0 +1,12 @@
+Start
+/ Minimum case: a single step that's just a goal.call with one parameter.
+/ If the saved .pr has camelCase value, the bug is builder-specific.
+/ If it has PascalCase + nulls, the bug is in general goal.call handling.
+
+- call DoStuff name=World
+
+
+DoStuff
+/ Trivial sub-goal called by Start.
+
+- write out "Hello %name%"

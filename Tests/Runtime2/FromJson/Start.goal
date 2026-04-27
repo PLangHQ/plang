@@ -1,9 +1,0 @@
-Start
-- convert '{"name":"test","values":[1,2,3],"nested":{"flag":true,"data":null}}' from json, write to %obj%
-- write out %obj.name%
-- write out %obj.values[0]%
-- write out %obj.values[2]%
-- write out %obj.nested.flag%
-- convert '[{"id":1},{"id":2}]' from json, write to %arr%
-- write out %arr[0].id%
-- write out %arr[1].id%

@@ -2,27 +2,27 @@
 
 ## Overview
 
-Implement the `PLang.Runtime2.modules.builder` module: 8 actions + `GoalFile` class + `Step.Merge()` + `Goal.MergeFrom()`. Zero Runtime1 dependencies. All file I/O through `engine.RunAction` with the `file` module. Building guard on every action.
+Implement the `App.modules.builder` module: 8 actions + `GoalFile` class + `Step.Merge()` + `Goal.MergeFrom()`. Zero Runtime1 dependencies. All file I/O through `engine.RunAction` with the `file` module. Building guard on every action.
 
 ## Implementation Order
 
 ### Phase 1: Entity Methods (Step.Merge, Goal.MergeFrom)
 These are prerequisites for the actions.
 
-**1. `Step.Merge(Step from)`** — Add to `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs`
+**1. `Step.Merge(Step from)`** — Add to `PLang/App/Goals/Goal/Steps/Step/this.cs`
 - Copies LLM-derived fields: Actions, Cache, OnError
 - Preserves structural fields: Text, Index, Indent, LineNumber
 - Replaces Errors/Warnings only when source has entries
 - Reference: v1 `MergeStep` in Program.cs lines 382-414
 
-**2. `Goal.MergeFrom(Goal existing)`** — Add to `PLang/Runtime2/Engine/Goals/Goal/this.cs`
+**2. `Goal.MergeFrom(Goal existing)`** — Add to `PLang/App/Goals/Goal/this.cs`
 - Matches steps by `Step.Text` (case-sensitive)
 - Delegates to `Step.Merge(existingStep)` for each match
 - Unmatched steps keep empty Actions
 - Null/empty existing → no-op
 
 ### Phase 2: GoalFile
-**3. `GoalFile.cs`** — New file `PLang/Runtime2/modules/builder/GoalFile.cs`
+**3. `GoalFile.cs`** — New file `PLang/App/modules/builder/GoalFile.cs`
 - Instance class, not static — a GoalFile IS the file format
 - `Parse(string text, string path)` → `List<Goal>`
 - Rules: blank lines skip, `/` = comments, `- ` = steps, continuation lines, goal headers
@@ -87,27 +87,27 @@ The architect plan says "file I/O goes through engine.RunAction". But the v1 cod
 
 I'll use `engine.FileSystem` directly for reads and `engine.RunAction<file.Save>` for writes. This is the pragmatic approach — file reads are simple string I/O, but writes benefit from the action pipeline (events, error handling). For listing files, I'll use `engine.FileSystem.Directory.GetFiles()`.
 
-**Note**: The architect plan mentions updating system/builder/*.goal files to use `builder.*` instead of `[plang]`. This is deferred — the builder runs on v1 runtime and can't call Runtime2 actions until migration. The module is being built so it's ready when that migration happens.
+**Note**: The architect plan mentions updating system/builder/*.goal files to use `builder.*` instead of `[plang]`. This is deferred — the builder runs on v1 runtime and can't call App actions until migration. The module is being built so it's ready when that migration happens.
 
 ## Files Created
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/builder/GoalFile.cs` | .goal file format parser |
-| `PLang/Runtime2/modules/builder/getActions.cs` | Action registry metadata |
-| `PLang/Runtime2/modules/builder/getTypeInfo.cs` | Type names + schemas |
-| `PLang/Runtime2/modules/builder/getGoals.cs` | Find + parse + merge .goal files |
-| `PLang/Runtime2/modules/builder/validateActions.cs` | Validate + resolve + defaults |
-| `PLang/Runtime2/modules/builder/mergeStep.cs` | Step merge delegation |
-| `PLang/Runtime2/modules/builder/getApp.cs` | Load/create app.pr |
-| `PLang/Runtime2/modules/builder/saveApp.cs` | Save app.pr |
-| `PLang/Runtime2/modules/builder/saveGoals.cs` | Save goals as .pr |
+| `PLang/App/modules/builder/GoalFile.cs` | .goal file format parser |
+| `PLang/App/modules/builder/getActions.cs` | Action registry metadata |
+| `PLang/App/modules/builder/getTypeInfo.cs` | Type names + schemas |
+| `PLang/App/modules/builder/getGoals.cs` | Find + parse + merge .goal files |
+| `PLang/App/modules/builder/validateActions.cs` | Validate + resolve + defaults |
+| `PLang/App/modules/builder/mergeStep.cs` | Step merge delegation |
+| `PLang/App/modules/builder/getApp.cs` | Load/create app.pr |
+| `PLang/App/modules/builder/saveApp.cs` | Save app.pr |
+| `PLang/App/modules/builder/saveGoals.cs` | Save goals as .pr |
 
 ## Files Modified
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Goals/Goal/this.cs` | Add `MergeFrom(Goal existing)` |
-| `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs` | Add `Merge(Step from)` |
-| `PLang.Tests/Runtime2/Modules/builder/*.cs` | Implement all test stubs |
+| `PLang/App/Goals/Goal/this.cs` | Add `MergeFrom(Goal existing)` |
+| `PLang/App/Goals/Goal/Steps/Step/this.cs` | Add `Merge(Step from)` |
+| `PLang.Tests/App/Modules/builder/*.cs` | Implement all test stubs |
 
 ## Key Decisions
 1. **No engine.RunAction for reads** — Direct fileSystem access for reading .goal and .pr files. Simpler, faster, and the v1 code does the same.

@@ -5,23 +5,23 @@
 All production code changed on `runtime2-builder-v2-identity` vs `runtime2`:
 
 **Identity module (8 handlers + 3 support files):**
-- `PLang/Runtime2/modules/identity/create.cs`
-- `PLang/Runtime2/modules/identity/get.cs`
-- `PLang/Runtime2/modules/identity/getAll.cs`
-- `PLang/Runtime2/modules/identity/archive.cs`
-- `PLang/Runtime2/modules/identity/unarchive.cs`
-- `PLang/Runtime2/modules/identity/rename.cs`
-- `PLang/Runtime2/modules/identity/setDefault.cs`
-- `PLang/Runtime2/modules/identity/export.cs`
-- `PLang/Runtime2/modules/identity/types.cs` (IdentityVariable)
-- `PLang/Runtime2/modules/identity/IdentityData.cs`
-- `PLang/Runtime2/modules/identity/KeyGenerator.cs`
+- `PLang/App/modules/identity/create.cs`
+- `PLang/App/modules/identity/get.cs`
+- `PLang/App/modules/identity/getAll.cs`
+- `PLang/App/modules/identity/archive.cs`
+- `PLang/App/modules/identity/unarchive.cs`
+- `PLang/App/modules/identity/rename.cs`
+- `PLang/App/modules/identity/setDefault.cs`
+- `PLang/App/modules/identity/export.cs`
+- `PLang/App/modules/identity/types.cs` (IdentityVariable)
+- `PLang/App/modules/identity/IdentityData.cs`
+- `PLang/App/modules/identity/KeyGenerator.cs`
 
 **Infrastructure changes:**
-- `PLang/Runtime2/Engine/View.cs` (SensitiveAttribute)
-- `PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs`
-- `PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs`
-- `PLang/Runtime2/Engine/Context/Actor.cs`
+- `PLang/App/View.cs` (SensitiveAttribute)
+- `PLang/App/Channels/Serializers/SensitivePropertyFilter.cs`
+- `PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs`
+- `PLang/App/Context/Actor.cs`
 
 ## 5-Pass Analysis
 

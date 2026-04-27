@@ -1,0 +1,275 @@
+{
+  "name": "Start",
+  "description": "Maps two tests: (1) retry exhaustion with ignore continues execution, (2) retry exhaustion triggers an error-goal call that sets %retryErrorHandled% for the final assertion.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %beforeRetry% = true",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test 1: retry exhaustion + ignore continues execution",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%beforeRetry%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %beforeRetry% is true",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%beforeRetry%",
+              "type": "object?"
+            },
+            {
+              "name": "Message",
+              "value": "",
+              "type": "string?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "throw error \"temporary failure\", on error retry 2 times, ignore",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "temporary failure",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "RetryCount",
+                  "value": 2,
+                  "type": "int?"
+                },
+                {
+                  "name": "IgnoreError",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %afterRetryIgnore% = true",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%afterRetryIgnore%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %afterRetryIgnore% is true, \"execution should continue after retry exhaustion + ignore\"",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%afterRetryIgnore%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "execution should continue after retry exhaustion + ignore",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "throw error \"retry then goal\", on error retry 1 times, then call HandleRetryError",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": "Test 2: retry + error goal captures error info",
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "retry then goal",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "RetryCount",
+                  "value": 1,
+                  "type": "int?"
+                },
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "Name": "HandleRetryError"
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list<action>"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %retryErrorHandled% is true, \"error goal should have been called after retry exhausted\"",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%retryErrorHandled%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "error goal should have been called after retry exhausted",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Retry.test.goal",
+  "prPath": "/.build/retry.test.pr",
+  "hash": "daa61c8cd8de798605b131e658ccad57e85fe7626e33908e4a8bdd2502745ce8",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

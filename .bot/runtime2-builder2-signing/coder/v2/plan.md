@@ -47,8 +47,8 @@ Load requires a real DLL; the existing test for assembly-not-found is reasonable
 PLang tests require builder + LLM. Not in scope for this session.
 
 ## Files modified
-- `PLang.Tests/Runtime2/Modules/provider/ProviderModuleTests.cs`
-- `PLang.Tests/Runtime2/Modules/signing/Ed25519ProviderTests.cs`
-- `PLang.Tests/Runtime2/Modules/signing/SignActionTests.cs`
-- `PLang.Tests/Runtime2/Modules/signing/VerifyActionTests.cs`
-- `PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs`
+- `PLang.Tests/App/Modules/provider/ProviderModuleTests.cs`
+- `PLang.Tests/App/Modules/signing/Ed25519ProviderTests.cs`
+- `PLang.Tests/App/Modules/signing/SignActionTests.cs`
+- `PLang.Tests/App/Modules/signing/VerifyActionTests.cs`
+- `PLang.Tests/App/Core/NamedProviderRegistryTests.cs`

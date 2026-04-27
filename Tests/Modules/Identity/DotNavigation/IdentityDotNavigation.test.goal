@@ -1,0 +1,8 @@
+Start
+/ Test: access %MyIdentity.Name%, %MyIdentity.PublicKey%, %MyIdentity.IsDefault% via dot navigation
+- archive identity 'TestDotNav', force, on error ignore, force
+- create identity 'TestDotNav', set as default
+- assert %MyIdentity.Name% is not null
+- assert %MyIdentity.PublicKey% is not null
+- assert %MyIdentity.IsDefault% is true
+- archive identity 'TestDotNav', force

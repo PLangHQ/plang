@@ -1,0 +1,96 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read \u0027data.txt\u0027, on error key 404, write out \u0022missing\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "data.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Key",
+                  "value": "404",
+                  "type": "string"
+                },
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "output",
+                      "action": "write",
+                      "Parameters": [
+                        {
+                          "name": "Data",
+                          "value": "missing",
+                          "type": "string"
+                        }
+                      ],
+                      "Defaults": null,
+                      "Modifiers": [],
+                      "Errors": [],
+                      "Warnings": [],
+                      "Examples": [],
+                      "ReturnType": null
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "file.read produces the file content; the step specifies an on-error handler for key 404 that writes a fallback message to output. Use error.handle with an Actions chain containing output.write.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
+  "hash": "dcb20aa88cbbb6eb830a76a9c4867a72c5067db9f65339c09b73377da756245b",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

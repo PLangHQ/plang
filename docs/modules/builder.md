@@ -80,7 +80,7 @@ Validates that LLM-returned actions exist in the module registry, resolves `goal
 
 ### steps.merge
 
-Merges LLM-derived fields from one step onto another. Structural fields (Text, Index, Indent, LineNumber) are preserved; LLM fields (Actions, Cache, OnError) are copied from the source.
+Merges LLM-derived fields from one step onto another. Structural fields (Text, Index, Indent, LineNumber) are preserved; LLM fields (Actions — including each action's Modifiers, Errors, Warnings) are copied from the source.
 
 ```plang
 - merge step %step% with %stepFromLlm%
@@ -171,7 +171,7 @@ SecondGoal
 
 When rebuilding, the builder preserves LLM work from previous builds:
 - **Goal-level**: `Goal.MergeFrom()` matches steps by `Text` — unchanged steps keep their existing actions
-- **Step-level**: `Step.Merge()` copies Actions, Cache, OnError, Errors, and Warnings from the source step
+- **Step-level**: `Step.Merge()` copies Actions, Errors, and Warnings from the source step. Each action's `Modifiers` (cache/timeout/error) travel inside Actions.
 - Unmatched steps (new or changed text) keep empty Actions for the LLM to fill
 
 ### BuildingGuard

@@ -1,7 +1,7 @@
 # Auditor v1 Summary — runtime2-builder2-signing
 
 ## What this is
-Cross-cutting audit of the signing/crypto/identity/provider module additions to PLang Runtime2. Four new module families (signing, crypto, identity, provider) plus foundation changes to Engine, Data.Envelope, ICache, and Actor.
+Cross-cutting audit of the signing/crypto/identity/provider module additions to PLang App. Four new module families (signing, crypto, identity, provider) plus foundation changes to Engine, Data.Envelope, ICache, and Actor.
 
 ## What was done
 Reviewed all production code across 30+ files, traced cross-file contracts, ran all 1827 tests (pass), and assessed the three previous reviews.
@@ -15,7 +15,7 @@ Reviewed all production code across 30+ files, traced cross-file contracts, ran 
 
 1. **Critical** — `IdentityData.ResolveDefault()` silently swallows all errors (provider failure, DataSource corruption, key generation failure) and returns null. The `%MyIdentity%` variable becomes silently null with no diagnostic trail. IdentityData already inherits `Data.Error` — the error should be stored there, not discarded. Needs a fix + test.
 
-2. **Nit** — `NowUtc` MemoryStack variable cast without null check in `SignedData.CreateAsync` and `DefaultIdentityProvider.GenerateIdentity`. Safe because MemoryStack always registers it, but fragile in theory.
+2. **Nit** — `NowUtc` Variables variable cast without null check in `SignedData.CreateAsync` and `DefaultIdentityProvider.GenerateIdentity`. Safe because Variables always registers it, but fragile in theory.
 
 3. **Nit** — `ToSigningBytes()` save-mutate-restore pattern (already flagged by security as Low #4). Safe in PLang's single-threaded model.
 

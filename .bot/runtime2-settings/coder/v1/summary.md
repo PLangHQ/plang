@@ -1,7 +1,7 @@
 # v1 Summary — Implement Settings method bodies
 
 ## What this is
-Implements the Settings infrastructure for PLang Runtime2 — a scope-chained settings system that lets modules declare typed configuration (e.g., `archive.max`) resolvable per-goal with inheritance and engine-level defaults.
+Implements the Settings infrastructure for PLang App — a scope-chained settings system that lets modules declare typed configuration (e.g., `archive.max`) resolvable per-goal with inheritance and engine-level defaults.
 
 ## What was done
 Replaced 6 `NotImplementedException` bodies across 3 files:

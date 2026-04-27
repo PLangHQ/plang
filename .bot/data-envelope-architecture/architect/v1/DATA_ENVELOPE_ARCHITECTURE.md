@@ -1,4 +1,4 @@
-# Data Envelope Architecture — PLang Runtime2
+# Data Envelope Architecture — PLang App
 
 ## Status: Design Complete, Ready for Architecture Review
 
@@ -8,7 +8,7 @@ This document captures the design decisions from an iterative design session. Th
 
 ## Problem Statement
 
-PLang Runtime2 uses `Data` as its universal type (variable wrapper, result type, parameter carrier). When Data crosses the runtime boundary (io.read/io.write), it needs to:
+PLang App uses `Data` as its universal type (variable wrapper, result type, parameter carrier). When Data crosses the runtime boundary (io.read/io.write), it needs to:
 
 1. Be self-describing so receivers can route it without understanding every specific type
 2. Support automatic signing/verification (PLang's identity system)
@@ -360,7 +360,7 @@ When `Verified = false` (signature check failed), should the runtime:
 - Passed through context?
 
 ### 5. Properties serialization scope
-Properties changes from [JsonIgnore] to serializing when non-empty. Need to verify this doesn't break .pr file serialization or MemoryStack behavior. Consider: only serialize Properties in the channel serialization path, not in the Store/LlmBuilder views.
+Properties changes from [JsonIgnore] to serializing when non-empty. Need to verify this doesn't break .pr file serialization or Variables behavior. Consider: only serialize Properties in the channel serialization path, not in the Store/LlmBuilder views.
 
 ### 6. Compress() needs to know the content type
 When Compress() is called, it needs to determine compressibility. After Wrap(), the outer type is the category (e.g., "image"). Compress() checks the outer type — that's the category level where compressibility is defined.
@@ -369,6 +369,6 @@ When Compress() is called, it needs to determine compressibility. After Wrap(), 
 
 ## Reference
 
-See **DATA_DEEP_DIVE.md** for comprehensive documentation of the existing Data class, its construction, value unwrapping, navigation, MemoryStack integration, and flow through the execution pipeline.
+See **DATA_DEEP_DIVE.md** for comprehensive documentation of the existing Data class, its construction, value unwrapping, navigation, Variables integration, and flow through the execution pipeline.
 
-See **SKILL.md** (Runtime2 skill) for the full Runtime2 architecture including Engine, Goals, Steps, Actions, Events, Channels, and Serialization systems.
+See **SKILL.md** (App skill) for the full App architecture including Engine, Goals, Steps, Actions, Events, Channels, and Serialization systems.

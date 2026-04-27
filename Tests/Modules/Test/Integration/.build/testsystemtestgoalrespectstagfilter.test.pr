@@ -1,0 +1,99 @@
+{
+  "name": "TestSystemTestGoalRespectsTagFilter",
+  "description": "Reads /system/test.goal into %goalText% and asserts the goal text contains \u0027test.discover\u0027 to verify the system runner routes through test.discover for tag filtering.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027/system/test.goal\u0027, write to %goalText%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Structural guard: the tag filter lives on Testing.Include / Testing.Exclude\nand is applied inside test.discover. A system runner that respects\ninclude/exclude must route through test.discover \u2014 verify it does.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "/system/test.goal",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalText%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %goalText% contains \u0027test.discover\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "test.discover",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "%goalText%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestSystemTestGoalRespectsTagFilter.test.goal",
+  "prPath": "/.build/testsystemtestgoalrespectstagfilter.test.pr",
+  "hash": "d9a0f8c2ad206cd89d5c8998479251d58329d66fde01b3e8dadb485cb6ffd084",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

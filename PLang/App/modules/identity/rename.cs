@@ -1,0 +1,22 @@
+using App.Variables;
+using App.modules.identity.providers;
+
+namespace App.modules.identity;
+
+/// <summary>
+/// Renames an identity. Keys are preserved, old name is removed from DataSource.
+/// If the renamed identity is the default, updates %MyIdentity%.
+/// PLang: rename identity 'alice' to 'alice-prod'
+/// </summary>
+[System.ComponentModel.Description("Rename an identity from Name to NewName, preserving its key pair")]
+[Action("rename", Cacheable = false)]
+public partial class Rename : IContext
+{
+    public partial Data.@this<string> Name { get; init; }
+    public partial Data.@this<string> NewName { get; init; }
+
+    [Provider]
+    public partial IIdentityProvider Identity { get; }
+
+    public async Task<Data.@this> Run() => await Identity.RenameAsync(this);
+}

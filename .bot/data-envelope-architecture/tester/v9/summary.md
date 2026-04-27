@@ -11,7 +11,7 @@ Review of coder v7's test-only changes that address tester v8's blocking finding
 
 ### Finding #1 (Major, blocking: cycle detection) — RESOLVED
 
-Two tests added in `MemoryStackCycleDetectionTests`:
+Two tests added in `VariablesCycleDetectionTests`:
 
 **`Get_CircularVariableReference_LeavesUnresolved`** — Honest test. Uses reflection to pre-seed the `[ThreadStatic] _resolvingVars` HashSet with "idx", then calls `Get("data.items[idx]")`. Since "idx" is already in the visited set, `_resolvingVars.Add(varName)` returns false → `[idx]` stays as literal text → navigation fails → returns null. The test contrasts this with a normal resolution that returns "one" — same inputs, different outcome due to cycle guard.
 

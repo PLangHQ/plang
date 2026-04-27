@@ -1,0 +1,66 @@
+{
+  "name": "Slow",
+  "description": "Sleep for 5000ms, then attempt to write output that should not be reached (as written, there is no control-flow preventing it).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "timer.sleep 5000 milliseconds",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "timer",
+          "action": "sleep",
+          "parameters": [
+            {
+              "name": "Ms",
+              "value": 5000,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out \u0027should not reach here\u0027",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "should not reach here",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/_timeout/slow.fixture.goal",
+  "prPath": "/_timeout/.build/slow.fixture.pr",
+  "hash": "9682a9791f742a7d824d627884e29bc544707a3f97b23c9ace6e9d5a9e198e83",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

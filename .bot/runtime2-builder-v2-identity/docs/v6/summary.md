@@ -2,7 +2,7 @@
 
 ## What this is
 
-Documentation pass for the identity module (Ed25519 key pair management). Final gate before merge — ensures architecture docs, file trees, and cross-cutting patterns are documented for both PLang users and Runtime2 developers.
+Documentation pass for the identity module (Ed25519 key pair management). Final gate before merge — ensures architecture docs, file trees, and cross-cutting patterns are documented for both PLang users and App developers.
 
 ## What was done
 
@@ -25,6 +25,6 @@ All 10 `.test.goal` stubs are placeholders, blocked on builder prompt update. Fl
 
 ## Files modified
 
-- `Documentation/Runtime2/modules.md` — identity module table entry + details section
-- `Documentation/Runtime2/good_to_know.md` — 3 new architectural pattern sections
-- `Documentation/Runtime2/README.md` — object graph, file tree, View.cs description
+- `Documentation/App/modules.md` — identity module table entry + details section
+- `Documentation/App/good_to_know.md` — 3 new architectural pattern sections
+- `Documentation/App/README.md` — object graph, file tree, View.cs description

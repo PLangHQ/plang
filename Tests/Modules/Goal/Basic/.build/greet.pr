@@ -1,0 +1,47 @@
+{
+  "name": "Greet",
+  "description": "Sets %greeting% to the string \u0027hello %name%\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %greeting% = \u0022hello %name%\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%greeting%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "hello %name%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Greet.goal",
+  "prPath": "/.build/greet.pr",
+  "hash": "72898260a2b952d69739148b4726df3957311adb7aa7e77b2130a90faf8423cf",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

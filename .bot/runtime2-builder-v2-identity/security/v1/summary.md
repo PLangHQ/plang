@@ -17,14 +17,14 @@ Blue team (defensive audit) + red team (offensive assessment) across all identit
 
 ### Files reviewed
 
-- `PLang/Runtime2/modules/identity/*.cs` (all 11 files)
-- `PLang/Runtime2/Engine/Context/Actor.cs`
-- `PLang/Runtime2/Engine/View.cs`
-- `PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs`
-- `PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs`
-- `PLang/Runtime2/Engine/Memory/Data.Envelope.cs`
-- `PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs`
-- All test files in `PLang.Tests/Runtime2/Modules/identity/`
+- `PLang/App/modules/identity/*.cs` (all 11 files)
+- `PLang/App/Context/Actor.cs`
+- `PLang/App/View.cs`
+- `PLang/App/Channels/Serializers/SensitivePropertyFilter.cs`
+- `PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs`
+- `PLang/App/Memory/Data.Envelope.cs`
+- `PLang/App/DataSource/SqliteDataSource.cs`
+- All test files in `PLang.Tests/App/Modules/identity/`
 
 ### Findings
 

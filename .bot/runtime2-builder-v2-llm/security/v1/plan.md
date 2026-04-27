@@ -2,13 +2,13 @@
 
 ## Scope
 New files on `runtime2-builder-v2-llm`:
-- `PLang/Runtime2/modules/llm/query.cs` — action record
-- `PLang/Runtime2/modules/llm/LlmMessage.cs` — message type
-- `PLang/Runtime2/modules/llm/ToolCall.cs` — tool call carrier
-- `PLang/Runtime2/modules/llm/providers/ILlmProvider.cs` — provider interface
-- `PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs` — OpenAI provider (~846 lines)
-- `PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs` — GoalCall additions (Description, Parallel)
-- `PLang/Runtime2/Engine/Providers/this.cs` — ILlmProvider registration
+- `PLang/App/modules/llm/query.cs` — action record
+- `PLang/App/modules/llm/LlmMessage.cs` — message type
+- `PLang/App/modules/llm/ToolCall.cs` — tool call carrier
+- `PLang/App/modules/llm/providers/ILlmProvider.cs` — provider interface
+- `PLang/App/modules/llm/providers/OpenAiProvider.cs` — OpenAI provider (~846 lines)
+- `PLang/App/Goals/Goal/GoalCall.cs` — GoalCall additions (Description, Parallel)
+- `PLang/App/Providers/this.cs` — ILlmProvider registration
 
 ## Approach
 1. **Blue Team**: Map attack surface — external data boundaries, tool execution, image handling, regex, caching, conversation state

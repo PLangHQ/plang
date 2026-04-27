@@ -1,0 +1,230 @@
+{
+  "name": "Start",
+  "description": "Saves an existing file, downloads the same URL with IfExists=Skip, reads the file into %content%, verifies it still equals the original content, writes a confirmation message, then deletes the file.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "save \u0027existing content\u0027 to \u0027skip-test.txt\u0027",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: Download with IfExists=Skip, verify no re-download",
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "skip-test.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "existing content",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "download https://httpbin.org/bytes/100, save to skip-test.txt, skip if exists, unsigned",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "http",
+          "action": "download",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "https://httpbin.org/bytes/100",
+              "type": "string"
+            },
+            {
+              "name": "SaveTo",
+              "value": "skip-test.txt",
+              "type": "string"
+            },
+            {
+              "name": "IfExists",
+              "value": "Skip",
+              "type": "fileexists"
+            },
+            {
+              "name": "Unsigned",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "read \u0027skip-test.txt\u0027, write to %content%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "skip-test.txt",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%content%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "if %content% equals \u0027existing content\u0027 then",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%content%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "existing content",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "write out \u0027File was not re-downloaded (skip worked)\u0027",
+      "lineNumber": 7,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "File was not re-downloaded (skip worked)",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "delete file \u0027skip-test.txt\u0027",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "delete",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "skip-test.txt",
+              "type": "path"
+            },
+            {
+              "name": "IgnoreIfNotFound",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Recursive",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/DownloadSkip.test.goal",
+  "prPath": "/.build/downloadskip.test.pr",
+  "hash": "2d89ef5b3ef512867d5fc30a7d644804f499d4a3accbfa8de1e9c5c187211799",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -1,0 +1,42 @@
+{
+  "name": "ThrowInnerError",
+  "description": "Throws an inner error with message \u0022inner error\u0022 using error.throw.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022inner error\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "inner error",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ThrowInnerError.goal",
+  "prPath": "/.build/throwinnererror.pr",
+  "hash": "7d8dc891f5dc542946212b275eb7dd377c3208351c17761e0c6b02e233a7cc75",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -1,0 +1,53 @@
+{
+  "name": "Counter",
+  "description": "Increments %writeCount% by 1 using variable.set.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %writeCount% = %writeCount% \u002B 1",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%writeCount%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%writeCount% \u002B 1",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Counter.goal",
+  "prPath": "/.build/counter.pr",
+  "hash": "b5b20fd0f93bd7121b322b5c89dd8ab0cf3f8ff62759fa6637818853573d079f",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

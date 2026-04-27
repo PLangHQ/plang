@@ -2,7 +2,7 @@
 
 ## Scope
 
-All code in `PLang/Runtime2/modules/identity/`, plus supporting infrastructure:
+All code in `PLang/App/modules/identity/`, plus supporting infrastructure:
 - `Engine/Context/Actor.cs` — identity lifecycle, `%MyIdentity%` resolver
 - `Engine/View.cs` — `[Sensitive]` attribute
 - `Serializers/SensitivePropertyFilter.cs` — output filtering

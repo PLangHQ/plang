@@ -1,0 +1,125 @@
+{
+  "name": "Start",
+  "description": "Overrides the behavior of a file.read call, then reads a nonexistent file into %content%, and asserts the overridden result is used.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "before action file.read call OverrideFileRead",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "OverrideFileRead"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "read file \u0022nonexistent.json\u0022, write to %content%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "nonexistent.json",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%content%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %content% equals \u0022overridden\u0022, \u0022event override should replace file.read result\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "overridden",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%content%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "event override should replace file.read result",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/EventOverride.test.goal",
+  "prPath": "/.build/eventoverride.test.pr",
+  "hash": "5fb494d281fae6874ed5e09c9eb5f8c0ac761a1230456967b2d5a63287c6c811",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

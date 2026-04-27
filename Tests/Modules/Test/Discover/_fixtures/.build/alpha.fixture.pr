@@ -1,0 +1,47 @@
+{
+  "name": "Alpha",
+  "description": "Writes the translatable text \u0027alpha fixture\u0027 to the output channel.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0027alpha fixture\u0027",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "alpha fixture",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/_fixtures/alpha.fixture.goal",
+  "prPath": "/_fixtures/.build/alpha.fixture.pr",
+  "hash": "b16c59d1d210115d88c94dae4d72c2e7c2aea1f7bff2ce73353d055091f9df6d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

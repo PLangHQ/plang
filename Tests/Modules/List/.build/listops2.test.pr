@@ -1,0 +1,361 @@
+{
+  "name": "Start",
+  "description": "Tests list.range generation, list.set by index mutation, list.get retrieval, and list.flatten behavior with assertions.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "generate range from 1 to 5, write to %rangeResult%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: list.range generates a sequence",
+      "actions": [
+        {
+          "module": "list",
+          "action": "range",
+          "parameters": [
+            {
+              "name": "Start",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "End",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "Step",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%rangeResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %rangeResult% is not null",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%rangeResult%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "rangeResult should not be null",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %myList% = [10, 20, 30]",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Test: list.set mutates by index",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": [
+                10,
+                20,
+                30
+              ],
+              "type": "json"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set item at index 1 in %myList% to 99",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Index",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Value",
+              "value": 99,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "get item at index 1 from %myList%, write to %updated%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "Index",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%updated%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %updated% equals 99",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 99,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%updated%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "updated item should equal 99",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "set %nested% = [[1, 2], [3, 4]]",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": "Test: list.flatten",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%nested%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": [
+                [
+                  1,
+                  2
+                ],
+                [
+                  3,
+                  4
+                ]
+              ],
+              "type": "json"
+            },
+            {
+              "name": "AsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "flatten %nested%, write to %flatResult%",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "flatten",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%nested%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%flatResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "assert %flatResult% is not null",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%flatResult%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "flatResult should not be null",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ListOps2.test.goal",
+  "prPath": "/.build/listops2.test.pr",
+  "hash": "effabce62b55fc0d7aae9e54cfa0577166483ccd7be748d8cdbbc52071ab10a2",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

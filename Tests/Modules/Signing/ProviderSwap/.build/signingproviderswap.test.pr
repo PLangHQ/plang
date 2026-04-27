@@ -1,0 +1,545 @@
+{
+  "name": "Start",
+  "description": "Sets %badProvider% to true (the step indicates a null assignment, but the compiler maps it to the provided literal value).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "archive identity 'testSigner', force, on error ignore",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Test: sign with explicit provider param overrides settings default\nNote: at PLang level we only have ed25519 (no DLL loading), so this exercises\nthe provider param \u2192 resolution path. C# tests cover real swap with mocks.\nWe test two things: (1) explicit provider param works, (2) algorithm field reflects it.",
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "create identity testSigner",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "testSigner",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %data1% = { \"payload\": \"default\" }",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data1%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "default"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "sign %data1%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data1%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data1%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %data1.Signature.Algorithm% equals 'ed25519', \"default provider should be ed25519\"",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "ed25519",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%data1.Signature.Algorithm%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "default provider should be ed25519",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "set %data2% = { \"payload\": \"explicit\" }",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": "Now sign with explicit provider param \u2014 same provider but exercises the override path",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data2%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "explicit"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "sign %data2%, provider ed25519",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data2%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "ed25519"
+              ],
+              "type": "list<string>"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data2%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "verify %data2% with contracts ['C0'], write to %verifyResult%",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data2%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "C0"
+              ],
+              "type": "list<string>"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%verifyResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "assert %verifyResult.Success% is true, \"explicit provider param should verify\"",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%verifyResult.Success%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "explicit provider param should verify",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "assert %data2.Signature.Algorithm% equals 'ed25519', \"algorithm should reflect provider used\"",
+      "lineNumber": 16,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "ed25519",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%data2.Signature.Algorithm%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "algorithm should reflect provider used",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "set %data3% = { \"payload\": \"bad\" }",
+      "lineNumber": 18,
+      "indent": 0,
+      "comment": "Test that setting a non-existent provider fails",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data3%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "bad"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "sign %data3%, provider nonexistent-algo, on error call HandleBadProvider",
+      "lineNumber": 19,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data3%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "nonexistent-algo"
+              ],
+              "type": "list"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "Name": "HandleBadProvider"
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list<action>"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "assert %badProvider% is true, \"non-existent provider should fail\"",
+      "lineNumber": 20,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%badProvider%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "non-existent provider should fail",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "HandleBadProvider",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %badProvider% = true",
+          "lineNumber": 23,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%badProvider%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/SigningProviderSwap.test.goal",
+      "prPath": "/.build/signingproviderswap.test.pr",
+      "hash": "c23566d2a672216ab04eb1a9b4c8a438f45952cf57c594b664370229bfaa66f4",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/SigningProviderSwap.test.goal",
+  "prPath": "/.build/signingproviderswap.test.pr",
+  "hash": "bcfb9243cdc097162bdc6894f938511585c0f1fb51fcdb9ad8e4de2bdd9b4d5d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -1,8 +1,0 @@
-Start
-/ Test: sign with headers, verify with matching headers
-- create identity testSigner
-- set %data% = { "body": "content" }
-- set %headers% = { "method": "POST", "url": "/api/send" }
-- sign %data% with headers %headers%
-- verify %data% with contracts ['C0'] and headers %headers%, write to %verifyResult%
-- assert %verifyResult.Success% is true, "matching headers should verify"

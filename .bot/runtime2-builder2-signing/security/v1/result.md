@@ -115,7 +115,7 @@ The attack surface that matters is **untrusted external data**: signed messages 
 
 ### Finding 5: Empty Nonce Not Validated (Low)
 
-**Vector**: Nonce comes from `MemoryStack.GetValue("GUID")`. If GUID is somehow empty, cache key is `"nonce:"` — all empty-nonce messages collide.
+**Vector**: Nonce comes from `Variables.GetValue("GUID")`. If GUID is somehow empty, cache key is `"nonce:"` — all empty-nonce messages collide.
 
 **Behavior**: First passes, rest fail (NonceReplay error). This is **fail-secure** — it denies service rather than allowing replay.
 

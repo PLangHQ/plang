@@ -1,449 +1,103 @@
-﻿using LightInject;
-using PLang.Building;
-using PLang.Building.Model;
-using PLang.Building.Parsers;
-using PLang.Container;
-using PLang.Errors;
-using PLang.Errors.Handlers;
-using PLang.Interfaces;
-using PLang.Runtime;
-using PLang.SafeFileSystem;
-using PLang.Utils;
-using System.IO.Abstractions;
+using App.FileSystem;
+using App.FileSystem.Default;
+using App.Utils;
 using System.Reflection;
-using static PLang.Executor;
 
 namespace PLang
 {
 	public class Executor
 	{
-		private readonly IServiceContainer container;
-		private readonly PrParser prParser;
 		private readonly IPLangFileSystem fileSystem;
-		private readonly IErrorHandler errorHandler;
-		private IEngine engine;
 
-		private IBuilder builder;
-
-		private static IFileSystemWatcher? watcher = null;
-
-		public Executor(IServiceContainer container)
+		public Executor(IPLangFileSystem fileSystem)
 		{
-			this.container = container;
-
-			this.prParser = container.GetInstance<PrParser>();
-			this.fileSystem = container.GetInstance<IPLangFileSystem>();
-
+			this.fileSystem = fileSystem;
 		}
 
-		public enum ExecuteType
+		public async Task<App.Data.@this> Run(string[] args, CancellationToken cancellationToken = default)
 		{
-			Runtime = 0,
-			Builder = 1
+			var (engine, configError) = Configure(args);
+			if (configError != null) return configError;
+			return await engine!.Start();
 		}
 
-		public async static Task<(IEngine Engine, object? Variables, IError? Error)> RunGoal(string goalName, Dictionary<string, object?>? parameters = null)
+		/// <summary>
+		/// Parses argv and prepares an App engine for execution: wires CLI parameters
+		/// to user variables, applies --test / --debug / --build / --app config, and
+		/// sets the goalFile variable on System.Context that Start() reads.
+		/// Returns (engine, null) on success, (null, errorData) if --test= config is invalid.
+		/// Separated from Run() so tests can observe configuration without executing Start().
+		/// </summary>
+		internal (App.@this? Engine, App.Data.@this? Error) Configure(string[] args)
 		{
-			throw new NotImplementedException("This needs to be fixed, RunGoal needs to take in context. Since only one method calls this, maybe delete this method?");
-			/*
-			AppContext.SetSwitch("InternalGoalRun", true);
-			AppContext.SetSwitch("Runtime", true);
-			using (var container = new ServiceContainer())
-			{
-				container.RegisterForPLangConsole(Environment.CurrentDirectory, System.IO.Path.DirectorySeparatorChar.ToString());
-				
-				var engine = container.GetInstance<IEngine>();
-				engine.Init(container, nu);
+			// Normalize: "build" or "--build" both become the --build flag
+			if (args.Length > 0 && args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
+				args = ["--build", .. args[1..]];
 
-				var context = new PLangContext(container.GetInstance<MemoryStack>(), engine);
+			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
-				if (parameters != null)
-				{
-					foreach (var param in parameters)
-					{
-						engine.GetMemoryStack().Put(param.Key, param.Value);
-					}
-				}
-				var prParser = container.GetInstance<PrParser>();
-				var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-				var fileSystem = container.GetInstance<IPLangFileSystem>();
+			var engine = new App.@this(fileSystem);
+			engine.SystemDirectory = fileSystem.SystemDirectory;
 
-				await prParser.GoalFromGoalsFolder(fileSystem.RootDirectory, fileAccessHandler);
+			var userVars = engine.User.Context.Variables;
 
-				var allGoals = prParser.GetAllGoals();
-				var goal = allGoals.FirstOrDefault(p => p.RelativeGoalPath.Equals(goalName.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
-				if (goal == null) return (engine, null, new Error($"Goal {goalName} could not be found"));
-
-				var (vars, error) = await engine.RunGoal(goal, context);
-				AppContext.SetSwitch("InternalGoalRun", false);
-				return (engine, vars, error);
-			}*/
-		}
-
-		
-
-		public async Task<(object? Variables, IError? Error)> Execute(string[] args, ExecuteType executeType, CancellationToken cancellationToken = default)
-		{
-			var version = args.FirstOrDefault(p => p == "--version") != null;
-			if (version)
-			{
-				var assembly = Assembly.GetAssembly(this.GetType());
-
-				Console.WriteLine("plang version: " + assembly.GetName().Version.ToString());
-				return (null, null);
-			}
-
-			if (args.Length > 0 && args[0] == "p")
-			{
-				if (executeType == ExecuteType.Runtime)
-				{
-					var result2 = await Run2(args[1..], cancellationToken);
-					return (result2.Value, null);
-				} else if (executeType == ExecuteType.Builder)
-				{
-					var buildResult = await Build2(args[1..]);
-					return (buildResult.Variables, buildResult.Error);
-				}
-					
-			}
-
-			var debug = args.FirstOrDefault(p => p == "--debug") != null;
-			var validate = args.FirstOrDefault(p => p == "--validate") != null;
-			var test = args.FirstOrDefault(p => p == "--test") != null;
-			var watch = args.FirstOrDefault(p => p == "--watch") != null;
-
-			LoadParametersToAppContext(args);
-			if (args.FirstOrDefault(p => p == "exec") != null)
-			{
-				var list = args.ToList();
-				list.Remove("exec");
-				args = list.ToArray();
-			}
-
-			AppContext.SetSwitch("Builder", (executeType == ExecuteType.Builder));
-			AppContext.SetSwitch("Runtime", (executeType == ExecuteType.Runtime));
-			AppContext.SetSwitch("Validate", validate);
-
-			if (executeType == ExecuteType.Builder)
-			{
-				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
-				await Build(args);
-				if (watch)
-				{
-					WatchFolder(fileSystem.GoalsPath, "*.goal");
-					Console.Read();
-				}
-				return (null, null);
-			}
-
-			if (watch)
-			{
-				WatchFolder(fileSystem.GoalsPath, "*.goal");
-			}
-			
-			var result = await Run(debug, test, args);
-			return (result.Variables, result.Error);
-
-		}
-
-		private void LoadParametersToAppContext(string[] args)
-		{
-			var loggerLovel = args.FirstOrDefault(p => p.StartsWith("--logger"));
-			if (loggerLovel != null)
-			{
-				AppContext.SetData("--logger", loggerLovel.Replace("--logger=", ""));
-			}
-			var llmerror = args.FirstOrDefault(p => p.ToLower().StartsWith("--llmerror"));
-			if (llmerror != null)
-			{
-				AppContext.SetSwitch("llmerror", true);
-			}
-			var sharedPath = args.FirstOrDefault(p => p.ToLower().StartsWith("--sharedpath"));
-			if (sharedPath != null)
-			{
-				AppContext.SetData("sharedPath", sharedPath);
-				var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-				fileAccessHandler.GiveAccess(Environment.CurrentDirectory, fileSystem.Path.Join(AppContext.BaseDirectory, "os"));
-			}
-
-			// This is only for development of plang as it is hardcoded to point to http://localhost:10000
-			// It will overwrite the default PlangLLMService class to use the local url
-			var llmurl = args.FirstOrDefault(p => p.ToLower().StartsWith("--localllm"));
-			if (llmurl != null)
-			{
-				AppContext.SetSwitch("localllm", true);
-			}
-
-
-			AppContext.SetSwitch("skipCode", args.FirstOrDefault(p => p.ToLower() == "--skipcode") != null);
-
-		}
-
-		public void SetupDebug()
-		{
-
-			Console.WriteLine("-- Debug mode");
-			AppContext.SetSwitch(ReservedKeywords.Debug, true);
-			/*
-			var eventsPath = fileSystem.Path.Join(fileSystem.GoalsPath, "events", "external", "plang", "runtime");
-
-			if (fileSystem.Directory.Exists(eventsPath)) return;
-
-			fileSystem.Directory.CreateDirectory(eventsPath);
-
-			using (MemoryStream ms = new MemoryStream(InternalApps.Runtime))
-			using (ZipArchive archive = new ZipArchive(ms))
-			{
-				archive.ExtractToDirectory(fileSystem.GoalsPath, true);
-			}*/
-			return;
-
-		}
-
-
-		private void WatchFolder(string path, string filter)
-		{
-			if (watcher == null)
-			{
-				watcher = fileSystem.FileSystemWatcher.New();
-			}
-
-			if (!fileSystem.Directory.Exists(path))
-			{
-				fileSystem.Directory.CreateDirectory(path);
-			}
-
-			watcher.Path = path;
-
-			watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
-			watcher.IncludeSubdirectories = true;
-			// Only watch text files.
-			watcher.Filter = filter;
-
-			// Add event handlers.
-			watcher.Changed += async (object sender, FileSystemEventArgs e) =>
-			{
-				using (var container = new ServiceContainer())
-				{
-					container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
-
-					var pLanguage = new Executor(container);
-					await pLanguage.Build(null);
-
-					prParser.ForceLoadAllGoals();
-				}
-			};
-
-
-			watcher.Renamed += async (object sender, RenamedEventArgs e) =>
-			{
-				using (var container = new ServiceContainer())
-				{
-					container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
-
-					var pLanguage = new Executor(container);
-					await pLanguage.Build(null);
-
-					prParser.ForceLoadAllGoals();
-				}
-			}; ;
-
-			// Begin watching.
-			watcher.EnableRaisingEvents = true;
-
-		}
-
-		public async Task Build(string[]? args)
-		{
-
-			PLangContext context = null;
-			try
-			{
-				this.engine = container.GetInstance<IEngine>();
-
-				var msa = container.GetInstance<IMemoryStackAccessor>();
-				var memoryStack = MemoryStack.New(container, engine);
-				msa.Current = memoryStack;
-
-				context = new PLangContext(memoryStack, this.engine, ExecutionMode.Console);
-				var ca = container.GetInstance<IPLangContextAccessor>();
-				ca.Current = context;
-
-				this.engine.Init(container);
-
-				LoadArgsToMemoryStack(args, memoryStack);
-
-				this.builder = container.GetInstance<IBuilder>();
-				var errors = await builder.Start(container, context);
-				if (errors != null && errors.Count > 0)
-				{
-					foreach (var error in errors)
-					{
-						await this.engine.GetEventRuntime().AppErrorEvents(error);
-					}
-				}
-				else
-				{
-					prParser.LoadAllGoals(true);
-				}
-			}
-			catch (Exception ex)
-			{
-				var error = new ExceptionError(ex);
-
-				await this.engine.GetEventRuntime().AppErrorEvents(error);
-			}
-		}
-		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Build2(string[] args)
-		{
-			var (_, parameters) = CommandLineParser.Parse(args);
-
-			// Create v2 engine rooted at the user's project directory
-			var engine2 = new Runtime2.Engine.@this(fileSystem);
-			// SystemDirectory points to the system/ folder next to plang.exe
-			engine2.SystemDirectory = fileSystem.SystemDirectory;
-			engine2.Building.IsEnabled = true;
-
-			// Debug: --debug=true or --debug={"goal":"X","step":3}
-			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
-			{
-				engine2.Debug.Apply(debugValue);
-			}
-			parameters.Remove("!debug");
-
-			// Resolve build path relative to user's project root
-			if (!parameters.TryGetValue("path", out var pathValue) || pathValue is not string pathStr)
-				pathStr = ".";
-			parameters["path"] = System.IO.Path.GetFullPath(System.IO.Path.Join(fileSystem.RootDirectory, pathStr));
-
-			// Parameters already have ! prefix for system params (--build → !build)
+			// Route CLI parameters to user Variables
 			foreach (var param in parameters)
-				engine2.MemoryStack.Set(param.Key, param.Value);
-
-			// Run /system/Build which calls /system/builder/Build → BuildGoal → ApplyStep etc.
-			// Absolute path so user can override by placing system/ in their app folder.
-			var result = await engine2.RunGoalAsync(
-				new Runtime2.Engine.Goals.Goal.GoalCall { Name = "/system/Build" },
-				cancellationToken: CancellationToken.None);
-
-			if (!result.Success)
 			{
-				return (null, null, result.Error != null
-					? new Error(result.Error.Format())
-					: new Error("Build failed"));
+				if (param.Key.StartsWith("!")) continue; // app config, not variables
+				userVars.Set(param.Key, param.Value);
 			}
-			return (null, result.Value, null);
-		}
 
-
-		public async Task<Runtime2.Engine.Memory.Data> Run2(string[] args, CancellationToken cancellationToken = default)
-		{
-			var (goalName, parameters) = CommandLineParser.Parse(args);
-
-			var engine = new Runtime2.Engine.@this(fileSystem);
-
-			// Debug: --debug=true or --debug={"goal":"X","step":3}
+			// Debug mode
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
-			{
 				engine.Debug.Apply(debugValue);
-			}
-			parameters.Remove("!debug");
 
+			// Test mode
 			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
 			{
-				parameters.Remove("!test");
-				foreach (var param in parameters)
-					engine.MemoryStack.Set(param.Key, param.Value);
+				engine.Testing.IsEnabled = true;
+				if (!parameters.ContainsKey("path"))
+					userVars.Set("path", fileSystem.RootDirectory);
 
-				var exitCode = await engine.Testing.RunAsync(cancellationToken);
-				return exitCode == 0 ? Runtime2.Engine.Memory.Data.Ok() : Runtime2.Engine.Memory.Data.FromError(new Runtime2.Engine.Errors.Error("Tests failed", "TestsFailed", exitCode));
-			}
-
-			// Parameters already have ! prefix for system params (--run → !run)
-			foreach (var param in parameters)
-				engine.MemoryStack.Set(param.Key, param.Value);
-
-			// Run setup goals before the main goal (discovery happens internally)
-			var setupResult = await engine.Goals.Setup.RunAsync(engine, engine.Context, cancellationToken);
-			if (!setupResult.Success) return setupResult;
-
-			// When goalName is "setup", only run setup — no main goal after
-			if (goalName.Equals("setup", StringComparison.OrdinalIgnoreCase) && engine.Goals.Setup.Goals.Any())
-				return setupResult;
-
-			return await engine.RunGoalAsync(new Runtime2.Engine.Goals.Goal.GoalCall { Name = goalName }, cancellationToken: cancellationToken);
-		}
-
-		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Run(bool debug = false, bool test = false, string[]? args = null)
-		{
-			if (test) AppContext.SetSwitch(ReservedKeywords.Test, true);
-
-			this.engine = container.GetInstance<IEngine>();
-
-			
-			var msa = container.GetInstance<IMemoryStackAccessor>();
-			var memoryStack = MemoryStack.New(container, engine);
-			msa.Current = memoryStack;
-
-			var context = new PLangContext(memoryStack, this.engine, ExecutionMode.Console);
-			var contextAccessor = container.GetInstance<IPLangContextAccessor>();
-			contextAccessor.Current = context;
-
-			this.engine.Init(container);
-
-			var goalToRun = LoadArgsToMemoryStack(args, memoryStack);
-
-			(var vars, var error) = await engine.Run(goalToRun, context);
-			return (engine, vars, error);
-		}
-
-		private string LoadArgsToMemoryStack(string[]? args, MemoryStack memoryStack)
-		{
-			string goalToRun = "Start.goal";
-			for (int i = 0; args != null && i < args.Length; i++)
-			{
-				if (args[i].StartsWith("--")) continue;
-				if (args[i].Contains("="))
+				if (testValue is IDictionary<string, object?> testDict)
 				{
-					var value = args[i].Split('=')[1];
-					if (value.StartsWith("\"")) value = value.Substring(1).Trim();
-					if (value.EndsWith("\"")) value = value.Substring(0, value.Length - 1).Trim();
-
-					var valueAsType = GetValueAsType(value);
-
-					memoryStack.Put(args[i].Split('=')[0].Trim(), valueAsType);
-				}
-				else if (args[i].ToLower() != "run" && !string.IsNullOrEmpty(args[i]))
-				{
-					goalToRun = args[i].Trim();
+					var applyResult = engine.Testing.Apply(testDict);
+					if (!applyResult.Success) return (null, applyResult);
 				}
 			}
-			return goalToRun;
-		}
 
-		private object GetValueAsType(string value)
-		{
-			if (int.TryParse(value, out int i))
+			// App settings (--app={"create":true})
+			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
+				TypeMapping.Populate(engine, appDict);
+
+			// Build mode
+			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
 			{
-				return i;
+				engine.Building.IsEnabled = true;
+				if (!parameters.ContainsKey("path"))
+					userVars.Set("path", fileSystem.RootDirectory);
+
+				if (buildValue is IDictionary<string, object?> buildDict)
+					TypeMapping.Populate(engine.Building, buildDict);
+
+				// Sync cache flag to %!build.cache% for Build.goal
+				userVars.Set("!build.cache", engine.Building.Cache);
 			}
 
-			if (long.TryParse(value, out long l))
+			// Set the goal file on system context — Start() reads it
+			// Test mode routes to system test runner instead of Start.goal
+			if (engine.Testing.IsEnabled && goalFile == "Start.goal")
 			{
-				return l;
-			}
-			if (double.TryParse(value, out double d))
-			{
-				return d;
-			}
-
-			if (bool.TryParse(value, out bool b))
-			{
-				return b;
+				engine.System.Context.Variables.Set("goalFile", "/system/.build/test.pr");
+				return (engine, null);
 			}
 
-			return value;
+			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
+			if (!prPath.StartsWith(".build"))
+				prPath = ".build/" + prPath;
+			engine.System.Context.Variables.Set("goalFile", "/" + prPath.ToLowerInvariant());
+
+			return (engine, null);
 		}
 	}
-
 }

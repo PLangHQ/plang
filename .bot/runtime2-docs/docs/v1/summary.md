@@ -1,7 +1,7 @@
 # v1 Summary
 
 ## What this is
-Foundational website documentation for PLang — the Getting Started guide and complete Module Reference for all 16 Runtime2 modules (83 action handlers). Written for PLang users, not C# developers.
+Foundational website documentation for PLang — the Getting Started guide and complete Module Reference for all 16 App modules (83 action handlers). Written for PLang users, not C# developers.
 
 ## What was done
 
@@ -21,7 +21,7 @@ Foundational website documentation for PLang — the Getting Started guide and c
   - Full working examples at bottom of each file
 
 ### Approach
-- Read all 83 handler source files from `PLang/Runtime2/modules/` for accurate parameter names, types, defaults, and error keys
+- Read all 83 handler source files from `PLang/App/modules/` for accurate parameter names, types, defaults, and error keys
 - Used authentic PLang syntax from test .goal files
 - Every example follows real PLang patterns (foreach calls a goal, %percent% variables, etc.)
 

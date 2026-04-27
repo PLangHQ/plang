@@ -12,9 +12,9 @@ Documentation for the new UI module that renders Liquid templates via Fluid 2.31
 
 2. **Updated `docs/modules/index.md`** — Added UI module to the I/O section table.
 
-3. **Updated `Documentation/Runtime2/modules.md`** — Added `ui | render | Liquid template rendering` to the Built-in Action Handlers table.
+3. **Updated `Documentation/App/modules.md`** — Added `ui | render | Liquid template rendering` to the Built-in Action Handlers table.
 
-4. **Updated `Documentation/Runtime2/good_to_know.md`** — Added `ITemplateProvider : IProvider` to the provider interfaces list and `"template"` / `"itemplateprovider"` to the type name mapping.
+4. **Updated `Documentation/App/good_to_know.md`** — Added `ITemplateProvider : IProvider` to the provider interfaces list and `"template"` / `"itemplateprovider"` to the type name mapping.
 
 5. **Added XML doc on `ITemplateProvider.Render`** — The only missing XML doc on a public member.
 

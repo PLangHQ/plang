@@ -4,10 +4,10 @@
 
 | Area | Files | References to update |
 |------|-------|---------------------|
-| Runtime2 production | ~165 files | Every namespace declaration |
+| App production | ~165 files | Every namespace declaration |
 | LazyParamsGenerator | 1 file | 15 hardcoded namespace strings |
-| PlangModule/Program.cs | 1 file | ~32 Runtime2 references |
-| C# test files | 55 files | ~322 Runtime2 references |
+| PlangModule/Program.cs | 1 file | ~32 App references |
+| C# test files | 55 files | ~322 App references |
 | PLang .goal test files | 0 | No namespace refs in .goal files |
 
 **Total**: ~222 files touched. Zero behavior change in phases 1-3.
@@ -42,16 +42,16 @@ This is one atomic commit. We do NOT split it into sub-phases because:
 
 | Old namespace | New namespace |
 |---|---|
-| `PLang.Runtime2.Core` | `PLang.Runtime2.Engine` |
-| `PLang.Runtime2.Context` | `PLang.Runtime2.Engine.Context` |
-| `PLang.Runtime2.Memory.Navigators` | `PLang.Runtime2.Engine.Memory.Navigators` |
-| `PLang.Runtime2.Memory` | `PLang.Runtime2.Engine.Memory` |
-| `PLang.Runtime2.IO` | `PLang.Runtime2.Engine.Channels` |
-| `PLang.Runtime2.Errors` | `PLang.Runtime2.Engine.Errors` |
-| `PLang.Runtime2.Serialization` | `PLang.Runtime2.Engine.Serializers` |
-| `PLang.Runtime2.Utility` | `PLang.Runtime2.Engine.Utility` |
-| `PLang.Runtime2.Parsing` | `PLang.Runtime2.Engine.Parsing` |
-| `PLang.Runtime2.Mapping` | `PLang.Runtime2.Engine.Mapping` |
+| `App.Core` | `App.Engine` |
+| `App.Context` | `App.Context` |
+| `App.Memory.Navigators` | `App.Variables.Navigators` |
+| `App.Memory` | `App.Variables` |
+| `App.IO` | `App.Channels` |
+| `App.Errors` | `App.Errors` |
+| `App.Serialization` | `App.Serializers` |
+| `App.Utility` | `App.Utility` |
+| `App.Parsing` | `App.Parsing` |
+| `App.Mapping` | `App.Mapping` |
 
 **Important ordering**: `Memory.Navigators` must be replaced BEFORE `Memory` (longer match first). Same for any nested namespaces.
 
@@ -61,16 +61,16 @@ The `modules/` folder has two kinds of files:
 
 **Infrastructure** (IClass, ICodeGenerated, Libraries, Library, ActionAttribute, DefaultAttribute, VariableNameAttribute, IContext):
 - Move to: `Engine/Libraries/`
-- New namespace: `PLang.Runtime2.Engine.Libraries`
+- New namespace: `App.Libraries`
 
 **Handlers** (variable/, file/, output/, etc.):
 - Move to: `Engine/modules/{module}/`
-- New namespace: `PLang.Runtime2.Engine.modules` (or `.modules.{subfolder}` if they already use sub-namespaces)
-- Update `Library.Discover("PLang.Runtime2.modules")` → `Library.Discover("PLang.Runtime2.Engine.modules")`
+- New namespace: `App.modules` (or `.modules.{subfolder}` if they already use sub-namespaces)
+- Update `Library.Discover("App.modules")` → `Library.Discover("App.modules")`
 
 ### File moves
 
-Create this folder structure under `PLang/Runtime2/Engine/`:
+Create this folder structure under `PLang/App/`:
 ```
 Engine/
 ├── Goals/
@@ -130,7 +130,7 @@ Move files per the tree map in `result.md`. Key moves:
 - `dotnet run --project PLang.Tests` — all tests pass
 - `plang p build` — PLang builder still works
 
-**Commit message**: `refactor: Move Runtime2 to Engine/ folder structure (Law of Names phase 1)`
+**Commit message**: `refactor: Move App to Engine/ folder structure (Law of Names phase 1)`
 
 ---
 
@@ -192,8 +192,8 @@ Move files per the tree map in `result.md`. Key moves:
 - etc.
 
 ### Watch out for
-- `Actions` is used both as the collection type AND in `using Actions = PLang.Runtime2.Core.Actions` in PlangModule. Update the alias.
-- `Events` is a common word — make sure we only rename `PLang.Runtime2.Engine.Events` class, not the `EventType` enum or event-related types.
+- `Actions` is used both as the collection type AND in `using Actions = App.Core.Actions` in PlangModule. Update the alias.
+- `Events` is a common word — make sure we only rename `App.Events` class, not the `EventType` enum or event-related types.
 - LazyParamsGenerator references: none of the renamed classes appear in the generator (it references namespaces, not class names). But verify.
 
 ### Verification
@@ -277,14 +277,14 @@ Move files per the tree map in `result.md`. Key moves:
 The generator sees:
 ```csharp
 // In Engine/Goals/this.cs
-namespace PLang.Runtime2.Engine.Goals;
+namespace App.Goals;
 public sealed class EngineGoals { ... }
 ```
 
 It generates:
 ```csharp
 // Engine.Goals.g.cs
-namespace PLang.Runtime2.Engine;
+namespace App.Engine;
 partial class Engine
 {
     private Lazy<Goals.EngineGoals> _goals = new(() => new Goals.EngineGoals());
@@ -324,7 +324,7 @@ partial class Engine
 
 ### What this means
 
-Currently, `MemoryStack.Get("engine")` returns the Engine object, and dot-navigation (`engine.Goals`) uses reflection/navigators to find the `Goals` property. This already works because the properties exist on Engine.
+Currently, `Variables.Get("engine")` returns the Engine object, and dot-navigation (`engine.Goals`) uses reflection/navigators to find the `Goals` property. This already works because the properties exist on Engine.
 
 After Phase 5, the properties are source-generated. They still exist on Engine, so dot-navigation still works. **Phase 6 may be a no-op** if the generated properties are public and visible to the navigators.
 
@@ -374,4 +374,4 @@ This is an optimization, not a requirement. The object graph + reflection works 
 
 Phases 1-4 are pure Coder work — mechanical refactoring, no design decisions left. Phase 5 is Coder + Architect (generator design is settled, but implementation may surface edge cases). Phase 6 is verification.
 
-**Recommended approach**: Hand off Phases 1-3 as a single task ("restructure Runtime2 per Law of Names tree map"). Phase 4 as a follow-up. Phase 5 as a separate task.
+**Recommended approach**: Hand off Phases 1-3 as a single task ("restructure App per Law of Names tree map"). Phase 4 as a follow-up. Phase 5 as a separate task.

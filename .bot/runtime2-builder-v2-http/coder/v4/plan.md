@@ -34,8 +34,8 @@ Actually, even simpler: the `SigningOptions` already exists. Add a `TypeInfoReso
 - ToSigningBytes called concurrently → consistent results
 
 ## Files Modified
-- `PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs` — size-limited reads, SSE limit
-- `PLang/Runtime2/modules/http/Config.cs` — MaxResponseSize, MaxSSEBufferSize
-- `PLang/Runtime2/modules/signing/SignedData.cs` — thread-safe ToSigningBytes
-- `PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs` — size limit tests
-- `PLang.Tests/Runtime2/Modules/signing/SignedDataTests.cs` — thread safety test (if exists, else new region in SignActionTests)
+- `PLang/App/modules/http/providers/DefaultHttpProvider.cs` — size-limited reads, SSE limit
+- `PLang/App/modules/http/Config.cs` — MaxResponseSize, MaxSSEBufferSize
+- `PLang/App/modules/signing/SignedData.cs` — thread-safe ToSigningBytes
+- `PLang.Tests/App/Modules/http/RequestActionTests.cs` — size limit tests
+- `PLang.Tests/App/Modules/signing/SignedDataTests.cs` — thread safety test (if exists, else new region in SignActionTests)

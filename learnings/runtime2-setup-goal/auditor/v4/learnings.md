@@ -14,7 +14,7 @@ Tests that manually construct and `Add()` objects bypass the real discovery/load
 
 ## 3. Lazy-load vs pre-load design tension
 
-Runtime2 uses lazy loading for regular goals (`GetAsync` loads from `.pr` files on demand). But setup goals need pre-loading because they're discovered by type (`IsSetup` flag), not requested by name. This is a fundamental design tension: lazy loading works when you know the name, pre-loading is needed when you need to scan. The setup system correctly implements the iteration-over-loaded-goals pattern but nobody loads the goals first.
+App uses lazy loading for regular goals (`GetAsync` loads from `.pr` files on demand). But setup goals need pre-loading because they're discovered by type (`IsSetup` flag), not requested by name. This is a fundamental design tension: lazy loading works when you know the name, pre-loading is needed when you need to scan. The setup system correctly implements the iteration-over-loaded-goals pattern but nobody loads the goals first.
 
 ## 4. OBP compliance was solid
 

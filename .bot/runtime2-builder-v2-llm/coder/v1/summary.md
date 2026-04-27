@@ -2,21 +2,21 @@
 
 ## What this is
 
-The LLM module for PLang Runtime2 — enables PLang developers to query LLMs (OpenAI-compatible APIs) with support for tools, streaming, validation, conversation continuity, caching, structured output (JSON/code blocks), and multimodal images.
+The LLM module for PLang App — enables PLang developers to query LLMs (OpenAI-compatible APIs) with support for tools, streaming, validation, conversation continuity, caching, structured output (JSON/code blocks), and multimodal images.
 
 ## What was done
 
 ### Files Created
-- `PLang/Runtime2/modules/llm/query.cs` — Action record with all parameters (Messages, Tools, Schema, Format, Model, etc.), delegates to ILlmProvider via `[Provider]`
-- `PLang/Runtime2/modules/llm/LlmMessage.cs` — Message type (Role, Text, Images, internal ToolCallId/ToolCalls)
-- `PLang/Runtime2/modules/llm/ToolCall.cs` — Tool call carrier (Id, Name, Arguments)
-- `PLang/Runtime2/modules/llm/providers/ILlmProvider.cs` — Provider interface extending IProvider
-- `PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs` — Full OpenAI-compatible implementation (~550 lines)
-- `PLang.Tests/Runtime2/Modules/llm/LlmTestHelper.cs` — Shared test infrastructure (MockHttpMessageHandler, response builders)
+- `PLang/App/modules/llm/query.cs` — Action record with all parameters (Messages, Tools, Schema, Format, Model, etc.), delegates to ILlmProvider via `[Provider]`
+- `PLang/App/modules/llm/LlmMessage.cs` — Message type (Role, Text, Images, internal ToolCallId/ToolCalls)
+- `PLang/App/modules/llm/ToolCall.cs` — Tool call carrier (Id, Name, Arguments)
+- `PLang/App/modules/llm/providers/ILlmProvider.cs` — Provider interface extending IProvider
+- `PLang/App/modules/llm/providers/OpenAiProvider.cs` — Full OpenAI-compatible implementation (~550 lines)
+- `PLang.Tests/App/Modules/llm/LlmTestHelper.cs` — Shared test infrastructure (MockHttpMessageHandler, response builders)
 
 ### Files Modified
-- `PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs` — Added `Description` (string?) and `Parallel` (bool) properties
-- `PLang/Runtime2/Engine/Providers/this.cs` — Added `"llm"` to ResolveType(), registered OpenAiProvider in RegisterDefaults()
+- `PLang/App/Goals/Goal/GoalCall.cs` — Added `Description` (string?) and `Parallel` (bool) properties
+- `PLang/App/Providers/this.cs` — Added `"llm"` to ResolveType(), registered OpenAiProvider in RegisterDefaults()
 - All 9 test files — Implemented all 61 test stubs (removed 1 API key test per Ingi's direction)
 
 ### Key Design Decisions

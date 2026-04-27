@@ -1,6 +1,0 @@
-Start
-/ Test: Download file, verify file exists
-- download https://httpbin.org/bytes/100, save to downloads/test.bin, unsigned
-- if file 'downloads/test.bin' exists then
-    - write out 'Downloaded file exists'
-- delete file 'downloads/test.bin'

@@ -8,14 +8,14 @@ Test suites defining the behavioral contract for the architect's action-based co
 
 ### C# Tests (69 tests in 4 files)
 
-- `PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs` — 49 tests: all operators (==, !=, >, <, >=, <=, contains, startswith, endswith, in, isEmpty, NOT, AND, OR), type normalization (int/long, int/double, string/int), null handling, IsTruthy for every type
-- `PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs` — 8 tests: truthy/falsy checks, operator delegation, goal branching, sub-step mode, error propagation
-- `PLang.Tests/Runtime2/Modules/condition/CompareHandlerTests.cs` — 3 tests: returns Data.Ok(bool), type verification
-- `PLang.Tests/Runtime2/Modules/condition/StepsSubStepTests.cs` — 9 tests: skip logic, nested conditions, consecutive conditions, deeply nested, non-condition false doesn't trigger skip
+- `PLang.Tests/App/Modules/condition/DefaultEvaluatorTests.cs` — 49 tests: all operators (==, !=, >, <, >=, <=, contains, startswith, endswith, in, isEmpty, NOT, AND, OR), type normalization (int/long, int/double, string/int), null handling, IsTruthy for every type
+- `PLang.Tests/App/Modules/condition/IfHandlerTests.cs` — 8 tests: truthy/falsy checks, operator delegation, goal branching, sub-step mode, error propagation
+- `PLang.Tests/App/Modules/condition/CompareHandlerTests.cs` — 3 tests: returns Data.Ok(bool), type verification
+- `PLang.Tests/App/Modules/condition/StepsSubStepTests.cs` — 9 tests: skip logic, nested conditions, consecutive conditions, deeply nested, non-condition false doesn't trigger skip
 
 ### PLang Tests (21 tests in 21 directories)
 
-Each directory under `Tests/Runtime2/Condition*` has a `.test.goal` plus supporting `.goal` files:
+Each directory under `Tests/App/Condition*` has a `.test.goal` plus supporting `.goal` files:
 - 8 basic operator tests (truthy, falsy, >, <, ==, !=, >=, <=)
 - 3 string operator tests (contains, startswith, endswith)
 - 3 sub-step tests (true, false, nested)

@@ -1,0 +1,42 @@
+{
+  "name": "MixedThrow",
+  "description": "Throws an error with message \u0027mixed error\u0027 using error.throw.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022mixed error\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "mixed error",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/MixedThrow.goal",
+  "prPath": "/.build/mixedthrow.pr",
+  "hash": "16db04b6bed5cc31a88bc5151212d07f955a2f1958283afe4d62e42372eb57a3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -5,7 +5,7 @@ Analyzed: 2026-02-23
 
 ---
 
-## PLang/Runtime2/Engine/DataSource/IDataSource.cs
+## PLang/App/DataSource/IDataSource.cs
 
 ### OBP Violations
 None.
@@ -21,7 +21,7 @@ Well-designed interface. All methods return `Task<Data>`, never throw. XML docs 
 
 ---
 
-## PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs
+## PLang/App/DataSource/SqliteDataSource.cs
 
 ### OBP Violations
 None. Constructor receives primitives (`string dbPath`, `IPLangFileSystem`) rather than navigating Engine, but this is acceptable at the infrastructure boundary — SqliteDataSource should not depend on the Engine graph.
@@ -44,7 +44,7 @@ Solid implementation. The bare `catch` in `DeserializeValue` is the main issue �
 
 ---
 
-## PLang/Runtime2/Engine/DataSource/SettingsData.cs
+## PLang/App/DataSource/SettingsData.cs
 
 ### OBP Violations
 None. Keeps engine reference (OBP rule 3), navigates via `_engine.System.DataSource` (OBP rule 2).
@@ -58,16 +58,16 @@ Clean. 74 lines. Clear variable names. The `GetAwaiter().GetResult()` has a comm
 ### Behavioral Reasoning
 1. **Lines 51-52: `GetAwaiter().GetResult()` is fragile** — Safe for SQLite (no async I/O), but if `IDataSource` ever gets a non-SQLite implementation with real async, this becomes a deadlock risk on UI/ASP.NET synchronization contexts. Should be documented as an architectural constraint on IDataSource implementations.
 
-2. **MemoryStack.Clone() does NOT preserve SettingsData type** — `MemoryStack.Clone()` (line 182 in MemoryStack.cs) creates `new Data(kvp.Value.Name, clonedValue, kvp.Value.Type)` — plain `Data`, not `SettingsData`. If the System actor's context is ever cloned (via `PLangContext.CreateChild()` or `PLangContext.Clone()`), the cloned stack will have a plain `Data` named "Settings" whose value is `null`, losing the lazy-loading override. Any `%Settings.ApiKey%` resolution in child contexts would get `null` instead of loading from the database.
+2. **Variables.Clone() does NOT preserve SettingsData type** — `Variables.Clone()` (line 182 in Variables.cs) creates `new Data(kvp.Value.Name, clonedValue, kvp.Value.Type)` — plain `Data`, not `SettingsData`. If the System actor's context is ever cloned (via `PLangContext.CreateChild()` or `PLangContext.Clone()`), the cloned stack will have a plain `Data` named "Settings" whose value is `null`, losing the lazy-loading override. Any `%Settings.ApiKey%` resolution in child contexts would get `null` instead of loading from the database.
    - **Severity**: Medium-High. Depends on whether System actor contexts are ever cloned. If System actor only runs single-context (no child goals), this is theoretical. If goals can run under System context, it's a real bug.
-   - **Fix options**: (a) Make SettingsData a DynamicData-like approach where the Value itself is the lookup mechanism rather than overriding GetChild. (b) Add SettingsData awareness to MemoryStack.Clone(). (c) Register SettingsData with `!Settings` prefix so it's treated as a system variable (skipped during clone, shared by reference).
+   - **Fix options**: (a) Make SettingsData a DynamicData-like approach where the Value itself is the lookup mechanism rather than overriding GetChild. (b) Add SettingsData awareness to Variables.Clone(). (c) Register SettingsData with `!Settings` prefix so it's treated as a system variable (skipped during clone, shared by reference).
 
 ### Verdict: NEEDS WORK
-The MemoryStack.Clone() type-loss is a design concern that should be addressed or explicitly documented as a known limitation.
+The Variables.Clone() type-loss is a design concern that should be addressed or explicitly documented as a known limitation.
 
 ---
 
-## PLang/Runtime2/Engine/Errors/AskError.cs
+## PLang/App/Errors/AskError.cs
 
 ### OBP Violations
 None.
@@ -82,7 +82,7 @@ Clean. 29 lines. Clear purpose.
 
 ---
 
-## PLang/Runtime2/Engine/Errors/DataSourceError.cs
+## PLang/App/Errors/DataSourceError.cs
 
 ### OBP Violations
 None.
@@ -97,7 +97,7 @@ Clean. 63 lines. `FormatExtra` follows the established pattern.
 
 ---
 
-## PLang/Runtime2/Engine/Memory/Data.Navigation.cs
+## PLang/App/Memory/Data.Navigation.cs
 
 ### OBP Violations
 None.
@@ -116,7 +116,7 @@ Minimal, surgical change. Correct.
 
 ---
 
-## PLang/Runtime2/Engine/Context/Actor.cs
+## PLang/App/Context/Actor.cs
 
 ### OBP Violations
 None. Actor owns its DataSource (OBP rule 1). Navigates Engine for file system and paths (OBP rule 2).
@@ -137,7 +137,7 @@ Minor thread-safety concern on lazy init, but pragmatically fine for current usa
 
 ---
 
-## PLang/Runtime2/actions/settings/get.cs
+## PLang/App/actions/settings/get.cs
 
 ### OBP Violations
 None. Navigates `Context.Engine.System.DataSource` — correct OBP chain.
@@ -152,7 +152,7 @@ Clean. 32 lines.
 
 ---
 
-## PLang/Runtime2/actions/settings/set.cs
+## PLang/App/actions/settings/set.cs
 
 ### OBP Violations
 None.
@@ -167,7 +167,7 @@ Clean. 25 lines.
 
 ---
 
-## PLang/Runtime2/actions/settings/remove.cs
+## PLang/App/actions/settings/remove.cs
 
 ### OBP Violations
 None.
@@ -182,7 +182,7 @@ Clean. 24 lines.
 
 ---
 
-## PLang/Runtime2/actions/settings/types.cs
+## PLang/App/actions/settings/types.cs
 
 ### OBP Violations
 None.
@@ -222,7 +222,7 @@ The `__resolutionError` single-check pattern is a design limitation. It works fo
 
 ---
 
-## PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs
+## PLang.Tests/App/Modules/datasource/DataSourceTests.cs
 
 ### OBP Violations
 None. Tests are exempt from OBP production code rules.
@@ -237,7 +237,7 @@ Clean. Good test names, clear arrange-act-assert pattern.
 
 ---
 
-## PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs
+## PLang.Tests/App/Modules/settings/SettingsDataTests.cs
 
 ### OBP Violations
 None.
@@ -246,7 +246,7 @@ None.
 None.
 
 ### Readability
-Clean. Comprehensive coverage of the SettingsData → MemoryStack → handler chain.
+Clean. Comprehensive coverage of the SettingsData → Variables → handler chain.
 
 ### Verdict: CLEAN
 
@@ -270,12 +270,12 @@ These code paths have no test that would fail if deleted:
 ## Summary of Issues by Severity
 
 ### High
-1. **LazyParamsGenerator error propagation is untested** — No test exercises the full path: PLang step with `%Settings.Key%` → generated code → `MemoryStack.Get()` → `SettingsData.GetChild()` → AskError → `__resolutionError` → returned from `CodeGeneratedExecuteAsync`. This is the core integration that motivated the LazyParamsGenerator changes, yet it has no test.
+1. **LazyParamsGenerator error propagation is untested** — No test exercises the full path: PLang step with `%Settings.Key%` → generated code → `Variables.Get()` → `SettingsData.GetChild()` → AskError → `__resolutionError` → returned from `CodeGeneratedExecuteAsync`. This is the core integration that motivated the LazyParamsGenerator changes, yet it has no test.
 
 2. **`SanitizeTableName` untested** — Security-critical code with no test coverage.
 
 ### Medium-High
-3. **MemoryStack.Clone() loses SettingsData type** — Cloning the System actor's MemoryStack creates plain `Data` objects, losing the `GetChild` override. If System context is ever cloned, Settings lazy-loading breaks silently.
+3. **Variables.Clone() loses SettingsData type** — Cloning the System actor's Variables creates plain `Data` objects, losing the `GetChild` override. If System context is ever cloned, Settings lazy-loading breaks silently.
 
 ### Medium
 4. **DeserializeValue bare `catch`** — Should be `catch (JsonException)` to avoid masking non-JSON errors.

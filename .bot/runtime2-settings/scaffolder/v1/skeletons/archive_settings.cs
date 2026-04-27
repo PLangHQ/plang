@@ -1,7 +1,7 @@
 using System.IO.Compression;
-using PLang.Runtime2.Engine.Memory;
+using App.Variables;
 
-namespace PLang.Runtime2.actions.archive;
+namespace App.actions.archive;
 
 /// <summary>
 /// Settings action handler for the archive module.

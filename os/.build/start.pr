@@ -1,0 +1,47 @@
+{
+  "name": "Start",
+  "description": "Writes the literal text 'hello plang world' to the output channel.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out 'hello plang world'",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hello plang world",
+              "type": "string"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
+  "hash": "f4c2fa67d24d391b600c41abeeb3ec3273f76c27b99fcd455f3fe610368f9a71",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

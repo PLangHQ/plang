@@ -18,7 +18,7 @@ Actions pass `this`, provider navigates: `Files.Copy(this)`, `Files.Read(this)`.
 Methods return `IdentityData` directly instead of `Data.Ok(identity)`. Error carried on the object via `identity.Error = ...`. This is actually better OBP — the object owns its state, including error state.
 
 ### Streaming Callbacks — CLEAN ✓
-`RunCallbackAsync` creates a new `GoalCall` per chunk instead of mutating shared MemoryStack. Cleaner isolation.
+`RunCallbackAsync` creates a new `GoalCall` per chunk instead of mutating shared Variables. Cleaner isolation.
 
 ### DefaultEvaluator — CLEAN ✓
 `Evaluate(If action)` / `Evaluate(Compare action)` — provider receives the action, navigates for values. Correct OBP.
@@ -48,7 +48,7 @@ PrParser, ChannelData, StepCacheEntry, AssertHelper, Channel.File(), all types.c
 ## Pass 3: Readability
 
 ### Event `On` Action Type Parsing
-`PLang/Runtime2/modules/event/on.cs:30` — `Enum.TryParse<EventType>(Type, ignoreCase: true, out var eventType)` is clean and simple. The consolidation from 6 separate actions to one is a significant readability improvement.
+`PLang/App/modules/event/on.cs:30` — `Enum.TryParse<EventType>(Type, ignoreCase: true, out var eventType)` is clean and simple. The consolidation from 6 separate actions to one is a significant readability improvement.
 
 ### DefaultIdentityProvider Flow — CLEAN
 Many error paths but each is short and clear. The `identity.Error = ...` pattern is consistent. `GenerateIdentity` returns `IdentityData` directly with error state when needed.
@@ -65,7 +65,7 @@ Many error paths but each is short and clear. The `identity.Error = ...` pattern
 ### Finding 1: `__condition__` Signal Removed — Verify Complete
 **Severity: Medium (verify needed)**
 
-The `__condition__` MemoryStack signal was removed entirely. The new approach in `Steps/this.cs:57` checks `stepResult.Value is bool` directly, gated by `IsConditionStep()`. This is correct for the simple case, but:
+The `__condition__` Variables signal was removed entirely. The new approach in `Steps/this.cs:57` checks `stepResult.Value is bool` directly, gated by `IsConditionStep()`. This is correct for the simple case, but:
 
 **Trace the data flow:**
 1. `If.Run()` calls `Evaluator.Evaluate(this)` → returns `Data.Ok(bool)`
@@ -78,9 +78,9 @@ However, the old `__condition__` was also consumed by tests and potentially by u
 
 ### Finding 2: `Data.Name` Setter — Mutation Risk
 **Severity: Low-Medium**
-**File:** `PLang/Runtime2/Engine/Memory/Data.cs:76`
+**File:** `PLang/App/Memory/Data.cs:76`
 
-`Name` was changed from `{ get; }` (init-only via constructor) to `{ get; set; }`. This was needed for `IdentityData.Name = action.NewName` in the rename flow. However, Data objects live on MemoryStack and are keyed by Name. If someone changes `data.Name` after it's been Put on the stack, the stack key and the object's Name diverge.
+`Name` was changed from `{ get; }` (init-only via constructor) to `{ get; set; }`. This was needed for `IdentityData.Name = action.NewName` in the rename flow. However, Data objects live on Variables and are keyed by Name. If someone changes `data.Name` after it's been Put on the stack, the stack key and the object's Name diverge.
 
 **Current usage:** Only `DefaultIdentityProvider.RenameAsync` mutates Name, and it does save+remove correctly. But the setter is now public on the base class, making it available to all Data consumers.
 
@@ -88,13 +88,13 @@ However, the old `__condition__` was also consumed by tests and potentially by u
 
 ### Finding 3: `Data.Clone()` Uses DeepCloner — Verify Library Available
 **Severity: Low**
-**File:** `PLang/Runtime2/Engine/Memory/Data.cs:216`
+**File:** `PLang/App/Memory/Data.cs:216`
 
 `Data.Clone()` uses `Force.DeepCloner` (`_value.DeepClone()`). This is a new NuGet dependency. Verify it's in the csproj. Also: `Clone()` is defined but has zero callers — it's dead code currently.
 
 ### Finding 4 (Critical): Engine.Channels Not Disposed
 **Severity: Medium**
-**File:** `PLang/Runtime2/Engine/this.cs:330-376`
+**File:** `PLang/App/this.cs:330-376`
 
 Engine creates `Channels = new EngineChannels(this)` at line 232 but never disposes it in `DisposeAsync`. Actors have their own Channels which ARE disposed. The engine-level `Channels` property holds a separate instance that could leak stream handles.
 
@@ -102,7 +102,7 @@ Engine creates `Channels = new EngineChannels(this)` at line 232 but never dispo
 
 ### GoalCall.Parameters Type Change — VERIFIED SAFE
 `Dictionary<string, object?>` → `List<Data>`. Traced all callers:
-- `Engine.RunGoalAsync`: iterates and calls `context.MemoryStack.Put(param)` — correct, Data has Name+Value
+- `Engine.RunGoalAsync`: iterates and calls `context.Variables.Put(param)` — correct, Data has Name+Value
 - `GoalMapper.MapGoalInfo`: wraps v1 params as `new Data(p.Key, p.Value)` — correct bridge
 - `TypeMapping.ConvertTo` for GoalCall: builds `List<Data>` from dict/JsonElement — correct
 - `DefaultHttpProvider.RunCallbackAsync`: creates fresh GoalCall with `List<Data>` per chunk — correct
@@ -120,15 +120,15 @@ Engine creates `Channels = new EngineChannels(this)` at line 232 but never dispo
 Could delete these 15 lines and no test would fail. The method exists for future use but is currently dead code.
 
 ### Finding 6: `PlangSerializer` — Zero Test Coverage
-**File:** `PLang/Runtime2/Engine/Channels/Serializers/Serializer/PlangSerializer.cs` (94 lines)
+**File:** `PLang/App/Channels/Serializers/Serializer/PlangSerializer.cs` (94 lines)
 No tests in PLang.Tests reference PlangSerializer. Could delete the entire file and no test would fail. This is a new serializer for PLang-to-PLang transport — important functionality that should have tests.
 
 ### Finding 7: `DefaultAssertProvider` — Zero Direct Test Coverage
-**File:** `PLang/Runtime2/modules/assert/providers/DefaultAssertProvider.cs` (159 lines)
+**File:** `PLang/App/modules/assert/providers/DefaultAssertProvider.cs` (159 lines)
 No C# tests reference `DefaultAssertProvider` directly. The assert module tests may test through the action records, but the provider's comparison logic (numeric coercion, truthiness, collection contains) needs direct unit tests to prove correctness — especially edge cases like `int 5 equals long 5L`.
 
 ### Finding 8: `DefaultFileProvider` — Minimal Test Coverage
-**File:** `PLang/Runtime2/modules/file/providers/DefaultFileProvider.cs` (211 lines)
+**File:** `PLang/App/modules/file/providers/DefaultFileProvider.cs` (211 lines)
 Only `PathTests.cs` references `DefaultFileProvider`. The Read/Save/Delete/Copy/Move/List/Exists methods each have multiple error paths. Edge cases (directory delete non-recursive with contents, copy file into directory, move with overwrite) need tests.
 
 ### Finding 9: `DataList<T>` — Tests Only Through Identity

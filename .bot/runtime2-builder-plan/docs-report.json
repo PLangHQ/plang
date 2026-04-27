@@ -1,0 +1,19 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-builder-plan",
+  "timestamp": "2026-04-16T21:30:00Z",
+  "reviewed_version": "v1",
+  "summary": "First docs pass for runtime2-builder-plan. Updated 5 architecture docs to reflect %__data__% action result flow, condition orchestration (if/elseif/else), and step.Disabled mechanism. Added XML doc comments for security guards (JsonStringNavigator limits, ResolveDeep breadth guard) and Data.Clone() event semantics. Added new sections for Data.Compare and security hardening summary.",
+  "stats": { "gaps_found": 10, "gaps_filled": 10, "docs_updated": 8, "docs_created": 0 },
+  "changes": [
+    { "id": 1, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/goals-steps.md", "description": "Removed Return from Action properties, updated run sequence to %__data__%, added Step.Disabled property, updated execution flow diagram" },
+    { "id": 2, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/architecture.md", "description": "Updated dispatch kernel to show %__data__% storage, removed Return from Action entity, updated sub-step control description" },
+    { "id": 3, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/execution-flow.md", "description": "Updated User context action flow to show %__data__% instead of Return mapping" },
+    { "id": 4, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Rewrote sub-step execution section to reflect context-backed step.Disabled. Added condition orchestration section. Added Data.Compare section. Added security hardening limits table." },
+    { "id": 5, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/variables.md", "description": "Added %__data__% action result variable section with usage example" },
+    { "id": 6, "type": "xml-doc", "action": "updated", "file": "PLang/App/Data/Navigators/JsonStringNavigator.cs", "description": "Added XML docs on MaxElementCount and MaxDepth constants" },
+    { "id": 7, "type": "xml-doc", "action": "updated", "file": "PLang/App/Data/this.cs", "description": "Added XML docs on Clone() and ShallowClone() explaining intentional event exclusion" },
+    { "id": 8, "type": "xml-doc", "action": "updated", "file": "PLang/App/Variables/this.cs", "description": "Documented depth and breadth guards on ResolveDeep" }
+  ],
+  "findings": []
+}

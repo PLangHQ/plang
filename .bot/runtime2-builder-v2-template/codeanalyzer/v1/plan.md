@@ -5,26 +5,26 @@
 Files changed on `runtime2-builder-v2-template` vs `runtime2-builder-v2-cleanup`:
 
 ### New UI module files
-1. `PLang/Runtime2/modules/ui/render.cs` — action handler
-2. `PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs` — provider interface
-3. `PLang/Runtime2/modules/ui/providers/FluidProvider.cs` — Fluid implementation (310 lines, main target)
+1. `PLang/App/modules/ui/render.cs` — action handler
+2. `PLang/App/modules/ui/providers/ITemplateProvider.cs` — provider interface
+3. `PLang/App/modules/ui/providers/FluidProvider.cs` — Fluid implementation (310 lines, main target)
 
 ### Clone family fixes
-4. `PLang/Runtime2/Engine/Memory/Data.cs` — Clone() now virtual, Properties.Clone()
-5. `PLang/Runtime2/Engine/Memory/Properties.cs` — Clone() method added
-6. `PLang/Runtime2/Engine/FileSystem/PathData.cs` — Clone() override
-7. `PLang/Runtime2/modules/identity/types.cs` — IdentityData.Clone() override
-8. `PLang/Runtime2/Engine/Memory/MemoryStack.cs` — clone logic narrowed to SettingsData only
+4. `PLang/App/Memory/Data.cs` — Clone() now virtual, Properties.Clone()
+5. `PLang/App/Memory/Properties.cs` — Clone() method added
+6. `PLang/App/FileSystem/PathData.cs` — Clone() override
+7. `PLang/App/modules/identity/types.cs` — IdentityData.Clone() override
+8. `PLang/App/Memory/Variables.cs` — clone logic narrowed to SettingsData only
 
 ### Other fixes
-9. `PLang/Runtime2/Engine/Memory/Data.Envelope.cs` — InvalidOperationException catch added
-10. `PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs` — InvalidCastException added to catch
-11. `PLang/Runtime2/Engine/Providers/this.cs` — ITemplateProvider registration
-12. `PLang/Runtime2/modules/Attributes.cs` — XML doc comments added (no behavior change)
+9. `PLang/App/Memory/Data.Envelope.cs` — InvalidOperationException catch added
+10. `PLang/App/modules/condition/providers/DefaultEvaluator.cs` — InvalidCastException added to catch
+11. `PLang/App/Providers/this.cs` — ITemplateProvider registration
+12. `PLang/App/modules/Attributes.cs` — XML doc comments added (no behavior change)
 13. Various `on.cs`, `skipAction.cs`, `remove.cs`, `GoalCall.cs` — XML doc comments only
 
 ### Test file
-14. `PLang.Tests/Runtime2/Modules/ui/RenderTests.cs` — 29 tests
+14. `PLang.Tests/App/Modules/ui/RenderTests.cs` — 29 tests
 
 ## Analysis Plan
 
@@ -44,7 +44,7 @@ Files changed on `runtime2-builder-v2-template` vs `runtime2-builder-v2-cleanup`
 
 ### Pass 4: Behavioral Reasoning
 - callGoal: does the catch(Exception) mask programming errors?
-- MemoryStack clone change: does narrowing to SettingsData break DynamicData cloning?
+- Variables clone change: does narrowing to SettingsData break DynamicData cloning?
 - Data.Clone() virtual: does DataList.Clone() preserve all fields?
 
 ### Pass 5: Deletion Test

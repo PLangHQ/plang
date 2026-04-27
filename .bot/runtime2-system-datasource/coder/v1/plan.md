@@ -1,13 +1,13 @@
 # Plan: Fix 6 Failing PLang Tests
 
 ## Part 1: Runtime Fix — Array/Index Navigation (3 tests)
-Fix `MemoryStack.Get()` line 82 — the `+1` skip assumes a dot separator after root name but when root is followed by `[`, it incorrectly skips the bracket character.
+Fix `Variables.Get()` line 82 — the `+1` skip assumes a dot separator after root name but when root is followed by `[`, it incorrectly skips the bracket character.
 
 **Fix**: Check if the character after rootName is `.` before skipping it.
 
-**File**: `PLang/Runtime2/Engine/Memory/MemoryStack.cs`
+**File**: `PLang/App/Memory/Variables.cs`
 
-**New C# tests**: 4 tests in `PLang.Tests/Runtime2/Memory/MemoryStackTests.cs`:
+**New C# tests**: 4 tests in `PLang.Tests/App/Memory/VariablesTests.cs`:
 - `Get_ArrayIndexWithProperty_NavigatesCorrectly` — `arr[0].id`
 - `Get_NestedArrayNavigation_NavigatesCorrectly` — `list[0].items[0].val`
 - `Get_VariableIndex_ResolvesAndNavigates` — `items[idx]`

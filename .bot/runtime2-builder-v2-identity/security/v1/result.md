@@ -48,7 +48,7 @@
 **3e. `Data.Envelope.Compress()` path** — THEORETICAL GAP
 - `_envelopeJsonOptions` (Data.Envelope.cs:21-27) does NOT include `SensitivePropertyFilter`
 - If an `IdentityVariable` wrapped in `Data` were compressed, the private key would be serialized unfiltered
-- **Currently not exploitable**: `Compress()` is never called anywhere in Runtime2 (zero call sites)
+- **Currently not exploitable**: `Compress()` is never called anywhere in App (zero call sites)
 - **Recommendation**: Add `SensitivePropertyFilter.Filter` to `_envelopeJsonOptions` as defense-in-depth for when Compress is wired up
 
 ---

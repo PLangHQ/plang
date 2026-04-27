@@ -9,7 +9,7 @@ in-memory SQLite datasource support for PLang tests, builder, and C# unit tests.
 
 ### 1. `SqliteDataSource.InMemory(name)` — static factory + sentinel
 
-**File**: `PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs`
+**File**: `PLang/App/DataSource/SqliteDataSource.cs`
 
 - Add `private readonly SqliteConnection? _sentinel;` field
 - Add private constructor for in-memory mode:
@@ -21,11 +21,11 @@ in-memory SQLite datasource support for PLang tests, builder, and C# unit tests.
 
 ### 2. `Engine/Build/this.cs` — new file
 
-**New file**: `PLang/Runtime2/Engine/Build/this.cs`
+**New file**: `PLang/App/Build/this.cs`
 
 Follows Debug/Test pattern exactly:
 ```csharp
-namespace PLang.Runtime2.Engine.Build;
+namespace App.Build;
 public sealed class @this
 {
     private readonly Engine.@this _engine;
@@ -36,26 +36,26 @@ public sealed class @this
 
 ### 3. Wire `Building` into Engine
 
-**File**: `PLang/Runtime2/Engine/this.cs`
+**File**: `PLang/App/this.cs`
 
 - Add property: `public Building Building { get; }` (after Testing)
 - In constructor: `Building = new Building(this);` (after Testing init)
 
 ### 4. Add global alias
 
-**File**: `PLang/Runtime2/GlobalUsings.cs`
+**File**: `PLang/App/GlobalUsings.cs`
 
-- Add: `global using Building = PLang.Runtime2.Engine.Build.@this;` (after Testing alias)
+- Add: `global using Building = App.Build.@this;` (after Testing alias)
 
 ### 5. Update `Actor.CreateDataSource()`
 
-**File**: `PLang/Runtime2/Engine/Context/Actor.cs`
+**File**: `PLang/App/Context/Actor.cs`
 
 Navigate to Engine.Testing.IsEnabled and Engine.Building.IsEnabled. If either is true, use `SqliteDataSource.InMemory(Name.ToLowerInvariant())`. Otherwise, file-backed path unchanged.
 
 ### 6. Tests
 
-**File**: `PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs` (extend)
+**File**: `PLang.Tests/App/Modules/datasource/DataSourceTests.cs` (extend)
 
 Add 7 new tests:
 - `InMemory_CrudOperations` — Set/Get/Remove/Exists/GetAll work

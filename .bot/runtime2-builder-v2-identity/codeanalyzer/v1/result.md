@@ -1,6 +1,6 @@
 # Code Analysis: Identity Module — runtime2-builder-v2-identity
 
-## PLang/Runtime2/modules/identity/types.cs (IdentityVariable)
+## PLang/App/modules/identity/types.cs (IdentityVariable)
 
 ### OBP Violations
 None. Persistence methods (`LoadAsync`, `SaveAsync`, `RemoveAsync`) live on the owner and navigate to `engine.System.DataSource` internally. Good OBP.
@@ -35,7 +35,7 @@ Seal the class. Fix the double TryGetValue — it's confusing to read and redund
 
 ---
 
-## PLang/Runtime2/modules/identity/IdentityData.cs
+## PLang/App/modules/identity/IdentityData.cs
 
 ### OBP Violations
 None. IdentityData owns its own lazy resolution and cache update.
@@ -64,7 +64,7 @@ The duplicate auto-create logic is the main issue. One creation path, not two.
 
 ---
 
-## PLang/Runtime2/modules/identity/create.cs
+## PLang/App/modules/identity/create.cs
 
 ### OBP Violations
 
@@ -80,7 +80,7 @@ Clean. Good validation, clear flow.
 
 ---
 
-## PLang/Runtime2/modules/identity/get.cs
+## PLang/App/modules/identity/get.cs
 
 ### Simplifications
 
@@ -101,14 +101,14 @@ The `Update(identity)` call on the by-name path overwrites `%MyIdentity%` with w
 
 ---
 
-## PLang/Runtime2/modules/identity/getAll.cs
+## PLang/App/modules/identity/getAll.cs
 
 ### Verdict: CLEAN
 Three lines of logic, all correct.
 
 ---
 
-## PLang/Runtime2/modules/identity/rename.cs
+## PLang/App/modules/identity/rename.cs
 
 ### Behavioral Reasoning
 
@@ -124,7 +124,7 @@ Non-atomic rename is a data loss risk.
 
 ---
 
-## PLang/Runtime2/modules/identity/setDefault.cs
+## PLang/App/modules/identity/setDefault.cs
 
 ### OBP Violations
 Same borderline note as create.cs — iterates `all.Where(i => i.IsDefault)` externally. Acceptable since it's a plain list.
@@ -133,7 +133,7 @@ Same borderline note as create.cs — iterates `all.Where(i => i.IsDefault)` ext
 
 ---
 
-## PLang/Runtime2/modules/identity/archive.cs
+## PLang/App/modules/identity/archive.cs
 
 ### Simplifications
 
@@ -143,14 +143,14 @@ Same borderline note as create.cs — iterates `all.Where(i => i.IsDefault)` ext
 
 ---
 
-## PLang/Runtime2/modules/identity/unarchive.cs
+## PLang/App/modules/identity/unarchive.cs
 
 ### Verdict: CLEAN
 Mirror of archive with correct semantics. Returns identity on success.
 
 ---
 
-## PLang/Runtime2/modules/identity/export.cs
+## PLang/App/modules/identity/export.cs
 
 ### Deletion Test
 
@@ -160,21 +160,21 @@ Mirror of archive with correct semantics. Returns identity on success.
 
 ---
 
-## PLang/Runtime2/modules/identity/KeyGenerator.cs
+## PLang/App/modules/identity/KeyGenerator.cs
 
 ### Verdict: CLEAN
 Simple, focused, sealed (internal static). Correct use of NSec. Key export policy explicitly set.
 
 ---
 
-## PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs
+## PLang/App/Channels/Serializers/SensitivePropertyFilter.cs
 
 ### Verdict: CLEAN
 Static utility, single responsibility, correct reverse-iteration for removal. Well-tested (5 tests).
 
 ---
 
-## PLang/Runtime2/Engine/View.cs (SensitiveAttribute)
+## PLang/App/View.cs (SensitiveAttribute)
 
 ### Readability
 
@@ -184,7 +184,7 @@ Static utility, single responsibility, correct reverse-iteration for removal. We
 
 ---
 
-## PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs
+## PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs
 
 ### Simplifications
 The `SensitivePropertyFilter.Filter` is wired into default options (line 30) and also explicitly in `ForView` (line 50). This is correct — view serializers inherit from base options via `new JsonSerializerOptions(_options)`, but `TypeInfoResolver` isn't inherited (it's replaced), so both places need it.
@@ -193,7 +193,7 @@ The `SensitivePropertyFilter.Filter` is wired into default options (line 30) and
 
 ---
 
-## PLang/Runtime2/Engine/Context/Actor.cs
+## PLang/App/Context/Actor.cs
 
 ### OBP Violations
 None. Identity is a lazy property on Actor. DynamicData registers `%MyIdentity%` via lambda navigating to `engine.System.Identity.Value`. Clean navigation.
@@ -202,7 +202,7 @@ None. Identity is a lazy property on Actor. DynamicData registers `%MyIdentity%`
 
 1. **Line 79: All actors get `%MyIdentity%` pointing to System identity** — `engine.System.Identity.Value` is evaluated on every access via `DynamicData`. This means `%MyIdentity%` in User context and Service context also resolves to the System actor's default identity. This is the intended design (confirmed by architect plan). Good.
 
-2. **Clone/copy family audit** — `Actor` has no `Clone()` method. Actors are singletons per engine (System, Service, User). No copy needed. `PLangContext.Clone()` and `CreateChild()` share the same `MemoryStack`, which inherits the `DynamicData` registration. No property was missed.
+2. **Clone/copy family audit** — `Actor` has no `Clone()` method. Actors are singletons per engine (System, Service, User). No copy needed. `PLangContext.Clone()` and `CreateChild()` share the same `Variables`, which inherits the `DynamicData` registration. No property was missed.
 
 ### Verdict: CLEAN
 

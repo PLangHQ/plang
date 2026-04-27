@@ -1,0 +1,47 @@
+{
+  "name": "AlwaysFails",
+  "description": "AlwaysFails goal throws an error with a fixed message and HTTP status code.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022always fails\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "always fails",
+              "type": "tstring"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/AlwaysFails.goal",
+  "prPath": "/.build/alwaysfails.pr",
+  "hash": "a91369207d3e67d7d3fbc2cc7a0fc4e6f2a7558d1ae6c543d01237f04ad35098",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

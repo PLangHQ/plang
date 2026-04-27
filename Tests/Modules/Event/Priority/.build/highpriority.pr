@@ -1,0 +1,47 @@
+{
+  "name": "HighPriority",
+  "description": "Sets the %order% variable to the string \u0022high\u0022.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %order% = \u0022high\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%order%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "high",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/HighPriority.goal",
+  "prPath": "/.build/highpriority.pr",
+  "hash": "356710fa291551e139dca85f61fe0574709c4ad054caa2a68c598610f011bca1",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

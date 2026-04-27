@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "hash %text%, no salt, use sha256, write to %textHashed%",
-    "response": "{\"FunctionName\": \"HashInput\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"input\", \"Value\": \"%text%\"},\n    {\"Type\": \"Boolean\", \"Name\": \"useSalt\", \"Value\": false},\n    {\"Type\": \"String\", \"Name\": \"hashAlgorithm\", \"Value\": \"sha256\"}\n],\n\"ReturnValue\": [{\"Type\": \"String\", \"VariableName\": \"textHashed\"}]}",
-    "created": "2024-02-07T12:55:12.1913774+00:00"
-  }
-]

@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "No critical findings. 1 major (NeedsResolution race — trivial fix), 3 minor, 2 nit. Branch is safe to proceed."
+}

@@ -35,7 +35,7 @@ This branch is Ingi's manual cleanup of pieces 1-4 (identity, crypto, signing, h
 ### Pass 4: Behavioral Reasoning
 - **GoalCall.Parameters type change**: `Dictionary<string, object?>` → `List<Data>`. Trace ALL callers.
 - **ICache type change**: `object` → `Data`. Check if StepCache still works.
-- **IdentityData removal**: Was lazy-resolving, now uses DynamicData on MemoryStack. Trace resolution path.
+- **IdentityData removal**: Was lazy-resolving, now uses DynamicData on Variables. Trace resolution path.
 - **Data.Name setter**: Was readonly, now has `set`. Check who mutates it and whether that's safe.
 - **IEvaluator interface change**: Methods now take action objects, not primitives. Check if `__condition__` is still set.
 - **RunCallbackAsync**: Creates new GoalCall per chunk. Check if parameter naming works correctly.

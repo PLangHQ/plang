@@ -46,7 +46,7 @@ public class IdentityVariable
 | `%Identity%` | User | Set by HTTP/signing layer | No |
 | `%ServiceIdentity%` | Service | Set by HTTP/signing layer | No |
 
-Only `%MyIdentity%` has a lazy resolver. `%Identity%` and `%ServiceIdentity%` are plain MemoryStack values set by the HTTP/signing modules (Pieces 2-3). The identity module does not manage them.
+Only `%MyIdentity%` has a lazy resolver. `%Identity%` and `%ServiceIdentity%` are plain Variables values set by the HTTP/signing modules (Pieces 2-3). The identity module does not manage them.
 
 ### Key generation: Ed25519, internal
 
@@ -93,7 +93,7 @@ This is added to the default `JsonStreamSerializer` constructor's options as a T
 ## Module structure
 
 ```
-PLang/Runtime2/modules/identity/
+PLang/App/modules/identity/
 ├── create.cs           — generate key pair, store in DataSource
 ├── get.cs              — get by name or default, auto-create if none exist
 ├── getAll.cs           — list all non-archived identities
@@ -116,7 +116,7 @@ PLang/Runtime2/modules/identity/
 2. Build `IdentityVariable` (Name, PublicKey, PrivateKey, IsDefault, Created=now)
 3. If SetAsDefault: clear IsDefault on all others in DataSource, set this one as default
 4. Store in `System.DataSource.Set("identity", name, identityVariable)`
-5. If it became default: register/update `%MyIdentity%` on System MemoryStack
+5. If it became default: register/update `%MyIdentity%` on System Variables
 6. Return `Data.Ok(identityVariable)`
 
 ### get
@@ -128,7 +128,7 @@ PLang/Runtime2/modules/identity/
 1. If name provided: `System.DataSource.Get("identity", name)` → return
 2. If no name: scan all identities, find `IsDefault == true`
 3. If no default exists: call create internally (name="default", setAsDefault=true)
-4. Register/update `%MyIdentity%` on System MemoryStack
+4. Register/update `%MyIdentity%` on System Variables
 5. Return `Data.Ok(identityVariable)`
 
 ### getAll
@@ -161,7 +161,7 @@ PLang/Runtime2/modules/identity/
 1. Load all non-archived identities
 2. Clear IsDefault on all, set IsDefault on target
 3. Save all changed identities back to DataSource
-4. Update `%MyIdentity%` on System MemoryStack with the new default
+4. Update `%MyIdentity%` on System Variables with the new default
 5. Return `Data.Ok(identityVariable)`
 
 ### export
@@ -178,11 +178,11 @@ PLang/Runtime2/modules/identity/
 
 ## Lazy resolver for %MyIdentity%
 
-Registered on System actor's MemoryStack during engine initialization. Pattern similar to `%Now%` — a func/lazy that triggers on first access.
+Registered on System actor's Variables during engine initialization. Pattern similar to `%Now%` — a func/lazy that triggers on first access.
 
 **Flow:**
-1. Engine starts → registers `%MyIdentity%` as lazy resolver on System MemoryStack
-2. PLang step accesses `%MyIdentity%` → MemoryStack invokes resolver
+1. Engine starts → registers `%MyIdentity%` as lazy resolver on System Variables
+2. PLang step accesses `%MyIdentity%` → Variables invokes resolver
 3. Resolver: query DataSource for default identity → auto-create if none → cache IdentityVariable → return
 4. Subsequent accesses return cached value (updated by create/setDefault/archive actions)
 
@@ -256,22 +256,22 @@ internal static class KeyGenerator
 ### New files
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/identity/create.cs` | Create action handler |
-| `PLang/Runtime2/modules/identity/get.cs` | Get action handler |
-| `PLang/Runtime2/modules/identity/getAll.cs` | GetAll action handler |
-| `PLang/Runtime2/modules/identity/archive.cs` | Archive action handler |
-| `PLang/Runtime2/modules/identity/setDefault.cs` | SetDefault action handler |
-| `PLang/Runtime2/modules/identity/export.cs` | Export action handler |
-| `PLang/Runtime2/modules/identity/types.cs` | IdentityVariable class |
-| `PLang/Runtime2/modules/identity/KeyGenerator.cs` | Ed25519 key generation (internal) |
-| `PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs` | [Sensitive] filter |
+| `PLang/App/modules/identity/create.cs` | Create action handler |
+| `PLang/App/modules/identity/get.cs` | Get action handler |
+| `PLang/App/modules/identity/getAll.cs` | GetAll action handler |
+| `PLang/App/modules/identity/archive.cs` | Archive action handler |
+| `PLang/App/modules/identity/setDefault.cs` | SetDefault action handler |
+| `PLang/App/modules/identity/export.cs` | Export action handler |
+| `PLang/App/modules/identity/types.cs` | IdentityVariable class |
+| `PLang/App/modules/identity/KeyGenerator.cs` | Ed25519 key generation (internal) |
+| `PLang/App/Channels/Serializers/SensitivePropertyFilter.cs` | [Sensitive] filter |
 
 ### Modified files
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/View.cs` | Add `[Sensitive]` attribute |
-| `PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs` | Add SensitivePropertyFilter to default options |
-| `PLang/Runtime2/Engine/this.cs` | Register `%MyIdentity%` lazy resolver on System MemoryStack |
+| `PLang/App/View.cs` | Add `[Sensitive]` attribute |
+| `PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs` | Add SensitivePropertyFilter to default options |
+| `PLang/App/this.cs` | Register `%MyIdentity%` lazy resolver on System Variables |
 
 ## Definition of done
 

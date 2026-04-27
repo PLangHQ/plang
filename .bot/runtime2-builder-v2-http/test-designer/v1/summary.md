@@ -11,12 +11,12 @@ Test suite for the HTTP module (piece 4). 62 test stubs (52 C# + 10 PLang) defin
 - Follows existing patterns from signing/crypto/identity modules
 
 ### Files created
-- `PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs` — 27 tests (happy path, signing, streaming, timeout)
-- `PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs` — 8 tests
-- `PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs` — 7 tests
-- `PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs` — 7 tests
-- `PLang.Tests/Runtime2/Modules/http/DefaultHttpProviderTests.cs` — 4 tests
-- `Tests/Runtime2/Http/*/` — 10 PLang test goals + 1 supporting goal
+- `PLang.Tests/App/Modules/http/RequestActionTests.cs` — 27 tests (happy path, signing, streaming, timeout)
+- `PLang.Tests/App/Modules/http/DownloadActionTests.cs` — 8 tests
+- `PLang.Tests/App/Modules/http/UploadActionTests.cs` — 7 tests
+- `PLang.Tests/App/Modules/http/ConfigureActionTests.cs` — 7 tests
+- `PLang.Tests/App/Modules/http/DefaultHttpProviderTests.cs` — 4 tests
+- `Tests/App/Http/*/` — 10 PLang test goals + 1 supporting goal
 
 ## Code example
 ```csharp

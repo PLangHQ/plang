@@ -1,0 +1,47 @@
+{
+  "name": "GoalFirstHandler",
+  "description": "Sets the %goalFirstHandled% flag to true using variable.set.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %goalFirstHandled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalFirstHandled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/GoalFirstHandler.goal",
+  "prPath": "/.build/goalfirsthandler.pr",
+  "hash": "2b7ff65f48a8799450de40bf1ac28c41b8556607bbbc18e685f8f69d90ab6108",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

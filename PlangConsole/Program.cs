@@ -1,84 +1,30 @@
-
-using LightInject;
-using Microsoft.Extensions.Logging;
 using PLang;
-using PLang.Container;
-using PLang.Interfaces;
-using PLang.Runtime;
-using PLang.Utils;
-using System.Collections;
-using System.ComponentModel;
-using static PLang.Executor;
+using App.FileSystem;
+using App.FileSystem.Default;
+using App.Utils;
+using Path = System.IO.Path;
 
 using var cts = new CancellationTokenSource();
 
-(var builder, var runtime) = RegisterStartupParameters.Register(args);
+RegisterStartupParameters.Register(args);
 
 Console.CancelKeyPress += (_, e) =>
 {
 	e.Cancel = true;
 	cts.Cancel();
-
 	Environment.Exit(0);
-	
 };
 
+(string currentDirectory, args) = GetCurrentDirectory(args);
 
-if (builder)
+var fileSystem = new PLangFileSystem(currentDirectory, Path.DirectorySeparatorChar.ToString());
+
+var executor = new Executor(fileSystem);
+var result = executor.Run(args, cts.Token).GetAwaiter().GetResult();
+if (!result.Success && result.Error != null)
 {
-	AppContext.SetSwitch("Builder", true);
-
-	var container = new ServiceContainer();
-	container.RegisterForPLangBuilderConsole(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString());
-
-
-	var pLanguage = new Executor(container);
-	var result = pLanguage.Execute(args, ExecuteType.Builder, cts.Token).GetAwaiter().GetResult();
-	if (result.Error != null)
-	{
-		var logger = container.GetInstance<ILogger>();
-		logger.LogError(result.Error.ToString());
-	}
-
-	container.Dispose();
+	Console.Error.WriteLine(result.Error.Format());
 }
-
-if (runtime)
-{
-	(string currentDirectory, args) = GetCurrentDirectory(args);
-
-	var container = new ServiceContainer();
-	container.RegisterForPLangConsole(currentDirectory, Path.DirectorySeparatorChar.ToString());
-
-	var context = container.GetInstance<PLangAppContext>();
-
-	var fileAccessHandler = container.GetInstance<PLang.SafeFileSystem.IFileAccessHandler>();
-	fileAccessHandler.GiveAccess(Environment.CurrentDirectory, Path.Join(AppContext.BaseDirectory, "os"));
-	var engine = container.GetInstance<IEngine>();
-	engine.Name = "Console";
-	
-	var pLanguage = new Executor(container);
-
-	if (args.Length > 0 && args[0] == "p")
-	{
-		var result2 = pLanguage.Run2(args[1..], cts.Token).GetAwaiter().GetResult();
-		if (!result2.Success && result2.Error != null)
-		{
-			Console.Error.WriteLine(result2.Error.Format());
-		}
-	}
-	else
-	{
-		var result = pLanguage.Execute(args, ExecuteType.Runtime, cts.Token).GetAwaiter().GetResult();
-		if (result.Error != null)
-		{
-			var logger = container.GetInstance<ILogger>();
-			logger.LogError(result.Error.ToFormat("text").ToString());
-		}
-	}
-	container.Dispose();
-}
-
 
 (string, string[]) GetCurrentDirectory(string[] args)
 {
@@ -103,5 +49,4 @@ if (runtime)
 	}
 
 	return (Environment.CurrentDirectory, args);
-
 }

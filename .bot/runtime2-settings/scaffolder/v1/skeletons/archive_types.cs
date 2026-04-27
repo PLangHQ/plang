@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.actions.archive;
+namespace App.actions.archive;
 
 /// <summary>
 /// Result types for archive module actions.

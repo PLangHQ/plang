@@ -107,7 +107,7 @@ Built-in provider supports:
 ### Module structure
 
 ```
-PLang/Runtime2/modules/crypto/
+PLang/App/modules/crypto/
 ├── hash.cs              — hash action handler
 ├── verify.cs            — verify hash action handler
 ├── types.cs             — HashedData type (reused by signing)
@@ -154,11 +154,11 @@ This type is shared — the signing module uses it in `SignedMessage.Data`.
 
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/crypto/hash.cs` | Hash action handler |
-| `PLang/Runtime2/modules/crypto/verify.cs` | Verify action handler |
-| `PLang/Runtime2/modules/crypto/types.cs` | HashedData type |
-| `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs` | Provider interface |
-| `PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs` | Keccak256 + SHA256 + Bcrypt |
+| `PLang/App/modules/crypto/hash.cs` | Hash action handler |
+| `PLang/App/modules/crypto/verify.cs` | Verify action handler |
+| `PLang/App/modules/crypto/types.cs` | HashedData type |
+| `PLang/App/modules/crypto/providers/ICryptoProvider.cs` | Provider interface |
+| `PLang/App/modules/crypto/providers/DefaultProvider.cs` | Keccak256 + SHA256 + Bcrypt |
 
 ### Definition of done
 
@@ -327,7 +327,7 @@ Pass-through. `List<string>`, defaults to `["C0"]`. On verify, if the verifier r
 ### Module structure
 
 ```
-PLang/Runtime2/modules/signing/
+PLang/App/modules/signing/
 ├── sign.cs              — sign action handler
 ├── verify.cs            — verify action handler
 ├── types.cs             — SignedMessage type
@@ -368,18 +368,18 @@ PLang/Runtime2/modules/signing/
 
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/signing/sign.cs` | Sign action handler |
-| `PLang/Runtime2/modules/signing/verify.cs` | Verify action handler |
-| `PLang/Runtime2/modules/signing/types.cs` | SignedMessage type |
-| `PLang/Runtime2/modules/signing/providers/ISigningProvider.cs` | Provider interface |
-| `PLang/Runtime2/modules/signing/providers/Ed25519Provider.cs` | Default Ed25519 provider |
+| `PLang/App/modules/signing/sign.cs` | Sign action handler |
+| `PLang/App/modules/signing/verify.cs` | Verify action handler |
+| `PLang/App/modules/signing/types.cs` | SignedMessage type |
+| `PLang/App/modules/signing/providers/ISigningProvider.cs` | Provider interface |
+| `PLang/App/modules/signing/providers/Ed25519Provider.cs` | Default Ed25519 provider |
 
 ### Modified files (from piece 1 revision)
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/modules/identity/create.cs` | Delegate key generation to signing provider instead of internal KeyGenerator |
-| `PLang/Runtime2/modules/identity/KeyGenerator.cs` | Remove (moved to Ed25519Provider) |
+| `PLang/App/modules/identity/create.cs` | Delegate key generation to signing provider instead of internal KeyGenerator |
+| `PLang/App/modules/identity/KeyGenerator.cs` | Remove (moved to Ed25519Provider) |
 
 ### Definition of done
 

@@ -1,0 +1,585 @@
+{
+  "changed_production_files": 145,
+  "files_with_coverage": 139,
+  "zero_coverage": [
+    "PLang.Generators/LazyParamsGenerator.cs",
+    "PLang/App/Utils/ReservedKeywords.cs",
+    "PLang/App/modules/IDataWrappable.cs",
+    "PLang/App/modules/IStatic.cs",
+    "PLang/App/modules/builder/promoteGroups.cs",
+    "PLang/App/modules/builder/providers/IBuilderProvider.cs",
+    "PLang/App/modules/builder/validateResponse.cs",
+    "PLang/App/modules/cache/store.cs",
+    "PLang/App/modules/file/providers/IFileProvider.cs",
+    "PLang/App/modules/identity/providers/IIdentityProvider.cs",
+    "PLang/App/modules/list/any.cs",
+    "PLang/App/modules/list/group.cs",
+    "PLang/App/modules/timer/end.cs",
+    "PLang/App/modules/timer/start.cs",
+    "PLang/App/modules/ui/render.cs",
+    "PLang/Executor.cs"
+  ],
+  "low_coverage": {
+    "PLang/App/Cache/MemoryStepCache.cs": 40.9,
+    "PLang/App/Data/Navigators/DictionaryNavigator.cs": 57.1,
+    "PLang/App/Data/Navigators/JsonStringNavigator.cs": 14.3
+  },
+  "full_data": {
+    "PLang/App/Actor/Context/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Actor/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Build/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Cache/MemoryStepCache.cs": {
+      "line": 40.9,
+      "branch": 25.0
+    },
+    "PLang/App/Config/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Data/Navigators/DictionaryNavigator.cs": {
+      "line": 57.1,
+      "branch": 50.0
+    },
+    "PLang/App/Data/Navigators/JsonStringNavigator.cs": {
+      "line": 14.3,
+      "branch": 20.0
+    },
+    "PLang/App/Data/Navigators/ListNavigator.cs": {
+      "line": 88.9,
+      "branch": 75.0
+    },
+    "PLang/App/Data/Navigators/ObjectNavigator.cs": {
+      "line": 66.7,
+      "branch": 50.0
+    },
+    "PLang/App/Data/Navigators/ValueNavigators.cs": {
+      "line": 93.3,
+      "branch": 75.0
+    },
+    "PLang/App/Data/this.Compare.cs": {
+      "line": 80.8,
+      "branch": 77.8
+    },
+    "PLang/App/Data/this.Navigation.cs": {
+      "line": 100.0,
+      "branch": 85.7
+    },
+    "PLang/App/Data/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Debug/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Errors/Error.cs": {
+      "line": 63.8,
+      "branch": 44.1
+    },
+    "PLang/App/FileSystem/Path.cs": {
+      "line": 85.9,
+      "branch": 76.8
+    },
+    "PLang/App/Goals/Goal/GoalCall.cs": {
+      "line": 77.8,
+      "branch": 100.0
+    },
+    "PLang/App/Goals/Goal/Methods.cs": {
+      "line": 62.2,
+      "branch": 63.6
+    },
+    "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Goals/Goal/Steps/Step/CacheSettings.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Goals/Goal/Steps/Step/ErrorHandler.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Goals/Goal/Steps/Step/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Goals/Goal/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Goals/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/Utils/Json.cs": {
+      "line": 100.0,
+      "branch": 83.3
+    },
+    "PLang/App/Utils/ReservedKeywords.cs": {
+      "line": 0.0,
+      "branch": 0.0
+    },
+    "PLang/App/Utils/StringDistance.cs": {
+      "line": 100.0,
+      "branch": 71.4
+    },
+    "PLang/App/Utils/TypeMapping.cs": {
+      "line": 73.2,
+      "branch": 59.6
+    },
+    "PLang/App/Variables/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/Attributes.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/app/run.cs": {
+      "line": 90.0,
+      "branch": 83.3
+    },
+    "PLang/App/modules/assert/contains.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/assert/equals.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/assert/greaterThan.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/assert/isFalse.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/assert/isNotNull.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/assert/isNull.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/assert/isTrue.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/assert/lessThan.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/assert/notEquals.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/assert/providers/DefaultAssertProvider.cs": {
+      "line": 94.0,
+      "branch": 60.2
+    },
+    "PLang/App/modules/builder/app.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/builder/appSave.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/builder/goals.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/builder/goalsSave.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/builder/merge.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/builder/promoteGroups.cs": {
+      "line": 0.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs": {
+      "line": 100.0,
+      "branch": 87.5
+    },
+    "PLang/App/modules/builder/validate.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/builder/validateResponse.cs": {
+      "line": 0.0,
+      "branch": 0.0
+    },
+    "PLang/App/modules/cache/check.cs": {
+      "line": 100.0,
+      "branch": 92.9
+    },
+    "PLang/App/modules/cache/store.cs": {
+      "line": 0.0,
+      "branch": 0.0
+    },
+    "PLang/App/modules/condition/compare.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/condition/if.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/condition/providers/DefaultEvaluator.cs": {
+      "line": 100.0,
+      "branch": 50.0
+    },
+    "PLang/App/modules/crypto/hash.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/crypto/providers/DefaultProvider.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/crypto/verify.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/error/check.cs": {
+      "line": 100.0,
+      "branch": 92.9
+    },
+    "PLang/App/modules/error/throw.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/event/on.cs": {
+      "line": 100.0,
+      "branch": 85.7
+    },
+    "PLang/App/modules/event/remove.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/event/skipAction.cs": {
+      "line": 100.0,
+      "branch": 85.7
+    },
+    "PLang/App/modules/file/copy.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/file/delete.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/file/exists.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/file/list.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/file/move.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/file/providers/DefaultFileProvider.cs": {
+      "line": 100.0,
+      "branch": 83.3
+    },
+    "PLang/App/modules/file/read.cs": {
+      "line": 62.5,
+      "branch": 33.3
+    },
+    "PLang/App/modules/file/save.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/goal/call.cs": {
+      "line": 100.0,
+      "branch": 66.7
+    },
+    "PLang/App/modules/goal/return.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/http/configure.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/http/download.cs": {
+      "line": 100.0,
+      "branch": 94.4
+    },
+    "PLang/App/modules/http/providers/DefaultHttpProvider.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/http/request.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/http/upload.cs": {
+      "line": 100.0,
+      "branch": 94.4
+    },
+    "PLang/App/modules/identity/archive.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/identity/create.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/identity/export.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/identity/get.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/identity/providers/DefaultIdentityProvider.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/identity/rename.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/identity/setDefault.cs": {
+      "line": 100.0,
+      "branch": 66.7
+    },
+    "PLang/App/modules/identity/types.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/identity/unarchive.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/list/add.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/list/any.cs": {
+      "line": 0.0,
+      "branch": 0.0
+    },
+    "PLang/App/modules/list/contains.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/list/get.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/list/group.cs": {
+      "line": 0.0,
+      "branch": 0.0
+    },
+    "PLang/App/modules/list/indexof.cs": {
+      "line": 83.3,
+      "branch": 50.0
+    },
+    "PLang/App/modules/list/join.cs": {
+      "line": 81.8,
+      "branch": 62.5
+    },
+    "PLang/App/modules/list/range.cs": {
+      "line": 62.5,
+      "branch": 50.0
+    },
+    "PLang/App/modules/list/remove.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/list/set.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/list/sort.cs": {
+      "line": 70.0,
+      "branch": 50.0
+    },
+    "PLang/App/modules/list/split.cs": {
+      "line": 100.0,
+      "branch": 50.0
+    },
+    "PLang/App/modules/llm/LlmMessage.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/llm/providers/OpenAiProvider.cs": {
+      "line": 96.1,
+      "branch": 87.7
+    },
+    "PLang/App/modules/llm/query.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/loop/foreach.cs": {
+      "line": 100.0,
+      "branch": 80.0
+    },
+    "PLang/App/modules/math/abs.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/math/add.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/math/ceiling.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/math/divide.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/math/floor.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/math/max.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/math/min.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/math/modulo.cs": {
+      "line": 75.0,
+      "branch": 50.0
+    },
+    "PLang/App/modules/math/multiply.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/math/power.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/math/random.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/math/round.cs": {
+      "line": 83.3,
+      "branch": 50.0
+    },
+    "PLang/App/modules/math/sqrt.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/math/subtract.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/mock/action.cs": {
+      "line": 100.0,
+      "branch": 85.7
+    },
+    "PLang/App/modules/mock/reset.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/mock/verify.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/module/add.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/module/remove.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/provider/list.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/provider/load.cs": {
+      "line": 100.0,
+      "branch": 94.4
+    },
+    "PLang/App/modules/provider/remove.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/provider/setDefault.cs": {
+      "line": 100.0,
+      "branch": 66.7
+    },
+    "PLang/App/modules/settings/get.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/settings/remove.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/settings/set.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/signing/providers/Ed25519Provider.cs": {
+      "line": 100.0,
+      "branch": 78.6
+    },
+    "PLang/App/modules/signing/sign.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/signing/verify.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/timer/end.cs": {
+      "line": 0.0,
+      "branch": 0.0
+    },
+    "PLang/App/modules/timer/start.cs": {
+      "line": 0.0,
+      "branch": 0.0
+    },
+    "PLang/App/modules/ui/providers/FluidProvider.cs": {
+      "line": 96.3,
+      "branch": 80.0
+    },
+    "PLang/App/modules/ui/render.cs": {
+      "line": 0.0,
+      "branch": 100.0
+    },
+    "PLang/App/modules/variable/set.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/App/this.cs": {
+      "line": 100.0,
+      "branch": 100.0
+    },
+    "PLang/Executor.cs": {
+      "line": 0.0,
+      "branch": 100.0
+    }
+  }
+}

@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "6 test failures (streaming), 5 critical 0% coverage gaps (error/check, app/run, goal/call, goal/return, cache), 15+ false-green findings across events/disposal/LLM/builder tests" }

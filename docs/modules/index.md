@@ -29,7 +29,18 @@ You don't need to know the module name — just write what you want and the LLM 
 | [condition](condition.md) | If/else branching | if |
 | [loop](loop.md) | Iterate over collections | foreach |
 | [goal](goal.md) | Call other goals | call |
-| [error](error.md) | Throw errors | throw |
+| [error](error.md) | Throw and handle errors | throw, handle (on error) |
+| [timer](timer.md) | Sleep and measure elapsed time | sleep, start, end |
+
+### Action Modifiers
+
+Modifiers attach to a single action and change how it runs — retry on failure, cap its duration, or return a cached result. They're written as trailing clauses on the action they guard.
+
+| Module | Description | Actions |
+|--------|-------------|---------|
+| [error](error.md) | Handle errors on a single action — filter, retry, call a goal, or ignore | handle (on error) |
+| [cache](cache.md) | Cache an action's result for a duration | wrap (cache for) |
+| [timeout](timeout.md) | Cap an action's runtime with a deadline | after (timeout after) |
 
 ### Data
 
@@ -61,8 +72,9 @@ You don't need to know the module name — just write what you want and the LLM 
 | Module | Description | Actions |
 |--------|-------------|---------|
 | [event](event.md) | Hook into execution lifecycle | on, remove, skipAction |
-| [assert](assert.md) | Test assertions | equals, notEquals, contains, greaterThan, lessThan, isTrue, isFalse, isNull, isNotNull |
+| [assert](assert.md) | Test assertions | equals, notEquals, contains, notContains, greaterThan, lessThan, isTrue, isFalse, isNull, isNotNull |
 | [mock](mock.md) | Mock actions in tests | intercept, verify, reset |
+| [test](testing.md) | Test runner — discovery, execution, tagging, reporting | discover, run, tag, report |
 
 ### System
 

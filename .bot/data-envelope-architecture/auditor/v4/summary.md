@@ -6,10 +6,10 @@ Code review of the data-envelope-architecture branch, covering Phases 1-4 of the
 
 ## What was reviewed
 
-4 phases of work adding self-describing Data to PLang Runtime2:
+4 phases of work adding self-describing Data to PLang App:
 
 - **Phase 1**: `Engine.Types` — consolidates PLang name/CLR type, file extension/Kind/MIME, and compressibility into one live instance on Engine.
-- **Phase 2**: Type gets context + lazy derivation. Data gets late-bound context. MemoryStack/PLangContext propagate context automatically.
+- **Phase 2**: Type gets context + lazy derivation. Data gets late-bound context. Variables/PLangContext propagate context automatically.
 - **Phase 3**: Data.cs split into 4 partial class files (core, result, navigation, envelope). `Out` view added for transport serialization.
 - **Phase 4**: Envelope pipeline methods: `Wrap().Compress().Encrypt()` (outbound) and `Decrypt().Decompress().Unwrap()` (inbound).
 
@@ -31,7 +31,7 @@ Code review of the data-envelope-architecture branch, covering Phases 1-4 of the
 
 ### 2 Nit
 
-7. Newtonsoft `[JsonConstructor]` attribute on Data constructor (should be System.Text.Json only in Runtime2).
+7. Newtonsoft `[JsonConstructor]` attribute on Data constructor (should be System.Text.Json only in App).
 8. Decompress error tests don't assert `Error.Key`.
 
 ## OBP Assessment
@@ -51,18 +51,18 @@ Tests are thorough. 1372 pass, covering all phases including error paths, multi-
 
 ## Files reviewed
 
-- `PLang/Runtime2/Engine/Types/this.cs`
-- `PLang/Runtime2/Engine/Memory/Data.cs`
-- `PLang/Runtime2/Engine/Memory/Data.Result.cs`
-- `PLang/Runtime2/Engine/Memory/Data.Navigation.cs`
-- `PLang/Runtime2/Engine/Memory/Data.Envelope.cs`
-- `PLang/Runtime2/Engine/Memory/MemoryStack.cs`
-- `PLang/Runtime2/Engine/Context/PLangContext.cs`
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`
-- `PLang/Runtime2/Engine/View.cs`
-- `PLang/Runtime2/Engine/this.cs`
-- `PLang/Runtime2/GlobalUsings.cs`
-- `PLang.Tests/Runtime2/Types/EngineTypesTests.cs`
-- `PLang.Tests/Runtime2/Memory/DataTests.cs`
-- `PLang.Tests/Runtime2/Memory/MemoryStackTests.cs`
+- `PLang/App/Types/this.cs`
+- `PLang/App/Memory/Data.cs`
+- `PLang/App/Memory/Data.Result.cs`
+- `PLang/App/Memory/Data.Navigation.cs`
+- `PLang/App/Memory/Data.Envelope.cs`
+- `PLang/App/Memory/Variables.cs`
+- `PLang/App/Context/PLangContext.cs`
+- `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Methods.cs`
+- `PLang/App/View.cs`
+- `PLang/App/this.cs`
+- `PLang/App/GlobalUsings.cs`
+- `PLang.Tests/App/Types/EngineTypesTests.cs`
+- `PLang.Tests/App/Memory/DataTests.cs`
+- `PLang.Tests/App/Memory/VariablesTests.cs`
 - `PLang.Tests/GlobalUsings.cs`

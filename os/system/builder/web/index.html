@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLang Builder Trace</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --accent: #e94560;
+    --text: #eee;
+    --text-dim: #999;
+    --border: #2a2a4a;
+    --green: #4ecca3;
+    --yellow: #f0c040;
+    --orange: #e87040;
+    --blue: #5b9bd5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Sidebar */
+  #sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #sidebar header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  #sidebar header .meta {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+  #sidebar header .meta.live { color: var(--green); }
+
+  #goal-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  /* Recent traces panel — so you can see at a glance which build was most
+     recent and jump straight into it without hunting through the tree. */
+  #recent-panel {
+    padding: 10px 12px 8px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.18);
+    flex-shrink: 0;
+  }
+  .recent-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  /* Scrollable list — 5 items fit before vertical scroll kicks in. 20 total. */
+  #recent-list {
+    max-height: 140px;
+    overflow-y: auto;
+  }
+  .recent-item {
+    padding: 5px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 11px;
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    gap: 6px;
+    align-items: baseline;
+  }
+  .recent-item:hover { background: var(--surface2); }
+  .recent-item .rec-goal {
+    color: var(--text);
+    font-weight: 500;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    white-space: nowrap;
+  }
+  .recent-item .rec-bucket {
+    color: var(--text-dim);
+    font-size: 10px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .recent-item .rec-ts {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+  .recent-item.fresh .rec-ts { color: var(--green); }
+  .recent-item .rec-badge {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(233,69,96,0.2);
+    color: var(--accent);
+  }
+  .badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  .badge-steps { background: var(--surface2); color: var(--text-dim); }
+  .badge-ok { background: rgba(78,204,163,0.15); color: var(--green); }
+  .badge-warn { background: rgba(240,192,64,0.15); color: var(--yellow); }
+  .badge-err { background: rgba(233,69,96,0.15); color: var(--accent); }
+  .badge-detail { background: rgba(91,155,213,0.15); color: var(--blue); }
+
+  /* Tree sidebar — 2 levels: bucket → file */
+  .tree-bucket { margin-bottom: 6px; }
+  .tree-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    user-select: none;
+  }
+  .tree-row:hover { background: var(--surface2); }
+  .tree-row.active { background: var(--surface2); border-left: 3px solid var(--accent); padding-left: 7px; }
+  .tree-caret {
+    display: inline-block;
+    width: 10px;
+    font-size: 10px;
+    color: var(--text-dim);
+    transition: transform 0.1s;
+  }
+  .tree-caret.open { transform: rotate(90deg); }
+  .tree-dir-row { font-weight: 600; }
+  .tree-dir-row .tree-label {
+    flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tree-file-row {
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .tree-file-row .tree-label {
+    flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tree-children { display: none; }
+  .tree-children.open { display: block; }
+
+  #controls {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #controls label { cursor: pointer; color: var(--text-dim); }
+
+  /* Main panel */
+  #main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+  }
+  #main.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 15px;
+  }
+
+  /* File header */
+  .file-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .file-header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .file-header h1 .copy-btn {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+  .file-header .subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .file-header .subtitle span { margin-right: 16px; }
+
+  .file-stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .stat-chip {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .stat-chip strong { color: var(--text); font-weight: 600; margin-right: 4px; }
+  .stat-chip.err { color: var(--accent); border-color: rgba(233,69,96,0.4); }
+  .stat-chip.err strong { color: var(--accent); }
+  .stat-chip.warn { color: var(--yellow); border-color: rgba(240,192,64,0.4); }
+  .stat-chip.warn strong { color: var(--yellow); }
+
+  /* Goal section (per-goal within the file) */
+  .goal-section {
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .goal-section-header {
+    padding: 12px 16px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .goal-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    flex: 1;
+  }
+  .goal-vis {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.04);
+  }
+  .goal-vis.priv { color: var(--orange); background: rgba(232,112,64,0.08); }
+
+  /* Goal sub-section — parent + each sub-goal inside a trace renders as one
+     of these, stacked vertically below the trace tabs. */
+  .goal-subsection {
+    border-top: 1px solid var(--border);
+  }
+  .goal-subsection.sub {
+    background: rgba(91,155,213,0.03);
+  }
+  .goal-subsection.failed {
+    background: rgba(233,69,96,0.06);
+  }
+  .goal-subsection.failed .goal-subsection-header {
+    background: rgba(233,69,96,0.12);
+  }
+  .goal-subsection.failed .goal-subsection-badge {
+    background: rgba(233,69,96,0.2);
+    color: var(--accent);
+  }
+  .goal-subsection-header {
+    padding: 10px 16px;
+    background: rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .goal-subsection.sub .goal-subsection-header {
+    background: rgba(91,155,213,0.07);
+  }
+  .goal-subsection-badge {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: var(--surface2);
+    color: var(--blue);
+  }
+  .goal-subsection.sub .goal-subsection-badge { background: rgba(91,155,213,0.15); }
+  .goal-subsection-title {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .formal-toggle {
+    font-size: 10px;
+    font-family: inherit;
+    padding: 3px 9px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .formal-toggle:hover { background: var(--surface2); color: var(--text); }
+  .formal-toggle.on {
+    color: var(--blue);
+    border-color: rgba(91,155,213,0.4);
+    background: rgba(91,155,213,0.08);
+  }
+  .copy-btn {
+    font-size: 10px;
+    font-family: inherit;
+    padding: 2px 7px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .copy-btn:hover { background: var(--surface2); color: var(--text); }
+  .copy-btn.copied {
+    color: var(--green);
+    border-color: rgba(78,204,163,0.5);
+    background: rgba(78,204,163,0.1);
+  }
+
+  /* Goal-level LLM Request block — one per trace (system/user/response shared
+     by every step in the goal). Sits between the tabs and the steps block. */
+  .goal-llm {
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.15);
+  }
+  .goal-llm-header {
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    user-select: none;
+  }
+  .goal-llm-header:hover { color: var(--text); background: rgba(0,0,0,0.25); }
+  .goal-llm-header.open { color: var(--blue); }
+  .goal-llm-label { flex: 1; }
+  .goal-llm-meta {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .goal-llm-body {
+    padding: 10px 16px 12px;
+    background: rgba(0,0,0,0.25);
+    border-top: 1px dashed var(--border);
+  }
+
+  /* Trace tabs */
+  .tab-row {
+    display: flex;
+    gap: 0;
+    padding: 0 8px;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 8px 14px;
+    font-size: 11px;
+    cursor: pointer;
+    color: var(--text-dim);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text); background: var(--surface2); }
+  .tab.active {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+  .tab .tab-stepcount {
+    font-size: 9px;
+    color: var(--text-dim);
+    margin-left: 6px;
+  }
+  .tab .tab-err { color: var(--accent); }
+  .tab .tab-warn { color: var(--yellow); }
+
+  /* Build failure box */
+  .build-failure {
+    margin: 16px;
+    border: 1px solid rgba(233,69,96,0.5);
+    border-radius: 8px;
+    background: rgba(233,69,96,0.06);
+    overflow: hidden;
+  }
+  .build-failure-header {
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(233,69,96,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .build-failure-header .build-failure-key {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .build-failure-message {
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+  .build-failure-detail {
+    border-top: 1px solid var(--border);
+  }
+  .build-failure-detail-label {
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: rgba(0,0,0,0.2);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .build-failure-detail-label:hover { color: var(--text); }
+  .build-failure-detail-body {
+    display: none;
+    max-height: 500px;
+    overflow: auto;
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.3);
+  }
+  .build-failure-detail-body.open { display: block; }
+  .build-failure-detail-body pre {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Steps block — code-editor style */
+  .steps-block {
+    background: rgba(0,0,0,0.25);
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    padding: 4px 0;
+  }
+  .step-row { border-left: 3px solid transparent; }
+  .step-row.open { border-left-color: var(--accent); background: rgba(91,155,213,0.03); }
+  .step-row.has-error { border-left-color: var(--accent); background: rgba(233,69,96,0.04); }
+  .step-line {
+    padding: 6px 16px 6px 12px;
+    font-size: 13px;
+    line-height: 1.55;
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 10px;
+    align-items: start;
+  }
+  .step-line .idx {
+    color: var(--text-dim);
+    text-align: right;
+    font-size: 11px;
+    padding-top: 2px;
+  }
+  .step-line .body { min-width: 0; }
+  .step-line .text {
+    color: var(--text);
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+  .formal-inline {
+    display: block;
+    color: var(--blue);
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    margin-top: 4px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    word-break: break-word;
+    white-space: pre-wrap;
+    user-select: none;
+    line-height: 1.6;
+    border-left: 2px solid rgba(91,155,213,0.3);
+  }
+  .formal-inline:hover { background: rgba(91,155,213,0.1); }
+  .formal-inline.open { background: rgba(91,155,213,0.15); color: var(--text); border-left-color: var(--accent); }
+  /* Each chained action renders on its own line, in the same blue as the first
+     action. A centered ↓ glyph sits on the dashed separator so the flow direction
+     is visually clear without a raw `|` character. */
+  .formal-inline .pipe {
+    display: block;
+    color: var(--blue);
+    margin-top: 14px;
+    padding-top: 14px;
+    position: relative;
+    border-top: 1px dashed rgba(91,155,213,0.4);
+  }
+  .formal-inline .pipe::before {
+    content: '↓';
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg);
+    color: var(--blue);
+    padding: 0 6px;
+    font-size: 11px;
+    line-height: 1;
+  }
+  .formal-inline.open .pipe::before { background: var(--surface); }
+  .formal-inline.empty { color: var(--text-dim); font-style: italic; cursor: default; border-left-color: transparent; }
+  .formal-inline.empty:hover { background: transparent; }
+  .step-line .conf {
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .step-line .conf.medium { color: var(--yellow); }
+  .step-line .conf.low { color: var(--accent); }
+
+  /* Nested sublayers: formal → json → llm */
+  .sublayer {
+    margin-left: 48px;
+    border-left: 2px solid var(--border);
+  }
+  .sublayer-row {
+    padding: 6px 16px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    background: rgba(0,0,0,0.15);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+  .sublayer-row:hover { color: var(--text); background: rgba(0,0,0,0.3); }
+  .sublayer-row.open { color: var(--blue); }
+  .sublayer-row .sub-meta { font-size: 10px; font-weight: 400; color: var(--text-dim); margin-left: auto; text-transform: none; letter-spacing: 0; }
+  .sublayer-body {
+    padding: 10px 16px;
+    background: rgba(0,0,0,0.35);
+    border-top: 1px dashed var(--border);
+    max-height: 500px;
+    overflow: auto;
+    font-weight: 400;
+  }
+  .sublayer-body.formal {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    color: var(--blue);
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .sublayer-body.formal .pipe { color: var(--orange); font-weight: 700; }
+  .sublayer-body pre {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Prompt/Response blocks (used inside LLM sublayer and build-failure) */
+  .block {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .block-label {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: rgba(0,0,0,0.2);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .block-label:hover { color: var(--text); }
+  .block-content {
+    display: none;
+    max-height: 500px;
+    overflow: auto;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.3);
+  }
+  .block-content.open { display: block; }
+
+  /* Loading shim */
+  .loading {
+    padding: 14px 20px;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  /* Mobile hamburger + drawer overlay.
+     Hidden on desktop; shown below 768px. Sidebar slides in from the left,
+     main panel gets full width when the drawer is closed. */
+  #menu-toggle {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 30;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+  }
+  #backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 15;
+  }
+  #backdrop.open { display: block; }
+
+  @media (max-width: 768px) {
+    #menu-toggle { display: flex; }
+    #sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 20;
+      transform: translateX(-100%);
+      transition: transform 0.2s ease;
+      width: 80vw;
+      max-width: 320px;
+    }
+    #sidebar.open { transform: translateX(0); }
+    #main {
+      padding: 60px 12px 16px;   /* top room for the hamburger */
+    }
+    .file-header h1 { font-size: 17px; word-break: break-all; }
+    .file-header .subtitle span { display: inline-block; margin-right: 10px; }
+    .file-stats { gap: 6px; }
+    .stat-chip { font-size: 10px; padding: 3px 8px; }
+    .goal-section-header { padding: 10px 12px; }
+    .goal-section-title { font-size: 13px; }
+    .tab { padding: 8px 10px; font-size: 10px; }
+    .step-line {
+      padding: 6px 10px 6px 8px;
+      font-size: 12px;
+      grid-template-columns: 22px 1fr auto;
+      gap: 6px;
+    }
+    .step-line .idx { font-size: 10px; }
+    .formal-inline { font-size: 11px; padding: 2px 4px; }
+    .sublayer { margin-left: 22px; }
+    .sublayer-row { padding: 6px 10px; font-size: 10px; }
+    .sublayer-body { padding: 8px 10px; }
+    .sublayer-body pre { font-size: 11px; }
+    .build-failure { margin: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<button id="menu-toggle" onclick="toggleDrawer()" aria-label="Toggle menu">&#9776;</button>
+<div id="backdrop" onclick="closeDrawer()"></div>
+
+<div id="sidebar">
+  <header>
+    <span>Builder Trace</span>
+    <div class="meta" id="build-meta">waiting for build data...</div>
+  </header>
+  <div id="recent-panel">
+    <div class="recent-title">Recent builds</div>
+    <div id="recent-list"></div>
+  </div>
+  <div id="goal-list"></div>
+  <div id="controls">
+    <input type="checkbox" id="auto-refresh" checked>
+    <label for="auto-refresh">Auto-refresh (3s)</label>
+  </div>
+</div>
+
+<div id="main" class="empty">
+  <span>Select a file from the sidebar...</span>
+</div>
+
+<script>
+const POLL_MS = 3000;
+
+let entries = [];                 // all summary entries from /api/traces
+let bucketTree = { label: '', fullPath: '', dirs: [], files: [] };  // hierarchical root node
+let selectedFileKey = null;
+let lastHash = null;
+
+// Trace bodies fetched on demand — one network trip per trace, then cached.
+const traceCache = new Map();     // traceId -> full entry (from traceToEntry)
+
+// Which trace tab is active for each goal in the current file.
+// Key is fileKey + "::" + goalName so switching files doesn't bleed state.
+const activeTraceByGoal = new Map();
+
+// Sidebar expansion (bucket only — file is a leaf now).
+const expandedBuckets = new Set();
+
+// Per-step disclosure depth: 0 = text+formal only, 1 = +json.
+// Key is traceId + "::" + stepIdx. The goal-level LLM Request block is shared
+// across the whole trace (same system/user prompt for every step), so it lives
+// in goalLlmOpen (below) rather than duplicating under each step.
+const stepDepth = new Map();
+
+// Which goal sections have the "LLM Request" panel expanded. Keyed by subKey.
+const goalLlmOpen = new Set();
+
+// Which goal sections have their formal-notation hidden (default = shown).
+// Keyed by subKey; present means HIDDEN.
+const formalHidden = new Set();
+
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return h.toString(36);
+}
+
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+function sizeLabel(val) {
+  if (val === null || val === undefined) return '0B';
+  const s = typeof val === 'string' ? val : JSON.stringify(val);
+  const b = new Blob([s]).size;
+  return b < 1024 ? b + 'B' : (b / 1024).toFixed(1) + 'KB';
+}
+
+function formatTs(ts) {
+  if (!ts) return '';
+  return ts.substring(0, 19).replace('T', ' ');
+}
+
+function setMeta(text, live) {
+  const el = document.getElementById('build-meta');
+  el.textContent = text;
+  el.className = live ? 'meta live' : 'meta';
+}
+
+// ---------- Data fetching ----------
+
+async function poll() {
+  try {
+    const apiR = await fetch('/api/traces', { cache: 'no-store' }).catch(() => null);
+    if (!apiR?.ok) { setMeta('no data', false); return; }
+    const items = await apiR.json();
+    entries = items.map(summaryToEntry);
+
+    const h = hashStr(entries.map(e => e.traceId).join('|'));
+    if (h === lastHash) return;
+    lastHash = h;
+    bucketTree = buildBucketTree(entries);
+    setMeta(`${entries.length} traces | ${new Date().toISOString().substring(11,19)}`, true);
+    renderRecent();
+    renderTree();
+
+    // First load: auto-open the newest trace's file so the main panel isn't
+    // blank. entries[0] is the global newest (server sorts desc by filename).
+    if (selectedFileKey === null && entries.length > 0) {
+      const latest = entries[0];
+      const path = latest.path || '';
+      const fileKey = path ? latest.bucket + path : latest.bucket + '::' + latest.name;
+      activeTraceByGoal.set(fileKey + '::' + latest.name, latest.traceId);
+      const file = findFile(fileKey);
+      if (file) { await selectFile(file); return; }
+    }
+
+    // Keep current file view fresh if new traces show up.
+    if (selectedFileKey !== null) {
+      const file = findFile(selectedFileKey);
+      if (file) await renderFile(file);
+    }
+  } catch(e) {
+    setMeta('error: ' + e.message, false);
+  }
+}
+
+function summaryToEntry(item) {
+  return {
+    traceId: item.id,
+    name: item.goal || '?',
+    path: item.path || '',
+    bucket: item.bucket || '',
+    visibility: normalizeVisibility(item.visibility),
+    timestamp: item.timestamp || '',
+    stepCount: item.stepCount || 0,
+    errorCount: item.errors || 0,
+    warningCount: item.warnings || 0,
+    buildError: item.buildError || null,
+    _isSummary: true,
+  };
+}
+
+// list.add stores Data wrappers like {name, value, type}. Sub-goal passes live
+// in trace.subGoals as these wrappers; unwrap .value to get the actual pass.
+function unwrapDataWrapper(obj) {
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)
+      && 'value' in obj && ('name' in obj || 'type' in obj)) {
+    return obj.value;
+  }
+  return obj;
+}
+
+// Turn one pass ({goal, system, user, response}) into a goal-section entry
+// with steps pre-zipped from source.steps[].text.
+function passToGoalSection(pass, isParent) {
+  const p = unwrapDataWrapper(pass) || {};
+  const goalObj = (p.goal && typeof p.goal === 'object') ? p.goal : null;
+  const goalName = goalObj ? (goalObj.name || '?') : (typeof p.goal === 'string' ? p.goal : '?');
+  const goalPath = goalObj ? (goalObj.path || '') : '';
+  const goalVis  = goalObj ? goalObj.visibility : null;
+  const sourceSteps = goalObj && Array.isArray(goalObj.steps) ? goalObj.steps : [];
+  const resp = unwrapDataWrapper(p.response) || {};
+
+  const steps = (resp.steps || []).map(s => {
+    const src = sourceSteps.find(ss => ss && ss.index === s.index);
+    return {
+      index: s.index,
+      text: (src && src.text) || s.guidance || '',
+      guidance: s.guidance || '',
+      formal: s.formal || '',
+      finalLevel: s.level || 'high',
+      finalConfidence: s.confidence || 0,
+      actions: s.actions || [],
+      raw: s,
+    };
+  });
+
+  return {
+    isParent,
+    name: goalName,
+    path: goalPath,
+    visibility: normalizeVisibility(goalVis),
+    steps,
+    warnings: Array.isArray(resp.warnings) ? resp.warnings : [],
+    errors: Array.isArray(resp.errors) ? resp.errors : [],
+    durationMs: typeof p.durationMs === 'number' ? p.durationMs : null,
+    buildError: p.buildError || null,   // per-goal build failure (captured on the failing pass)
+    buildGoal: { system: p.system || '', user: p.user || '', response: resp },
+  };
+}
+
+function traceToEntry(trace) {
+  // Legacy traces had flat `goal`/`path`/`visibility` strings + single `pass1`.
+  // New traces wrap the whole parent Goal under `goal` AND carry sub-goal passes
+  // in `subGoals[]`. Both formats produce one or more goal sections.
+  const goalObj = (trace.goal && typeof trace.goal === 'object') ? trace.goal : null;
+  const rootName = goalObj ? (goalObj.name || '?') : (trace.goal || '?');
+  const rootPath = goalObj ? (goalObj.path || '') : (trace.path || '');
+
+  const parentPass = trace.pass1 ? { ...unwrapDataWrapper(trace.pass1), goal: goalObj || trace.goal } : null;
+  const parentSection = parentPass ? passToGoalSection(parentPass, /*isParent*/ true) : null;
+  const subSections = Array.isArray(trace.subGoals)
+    ? trace.subGoals.map(sg => passToGoalSection(sg, /*isParent*/ false))
+    : [];
+
+  const goals = parentSection ? [parentSection, ...subSections] : subSections;
+  const totalSteps = goals.reduce((n, g) => n + (g.steps?.length || 0), 0);
+
+  return {
+    traceId: trace.id || (rootName + '@' + trace.timestamp),
+    name: rootName,
+    path: rootPath,
+    bucket: trace.bucket || '',
+    visibility: normalizeVisibility(goalObj ? goalObj.visibility : trace.visibility),
+    timestamp: trace.timestamp || '',
+    stepCount: totalSteps,
+    durationMs: typeof trace.durationMs === 'number' ? trace.durationMs : null,
+    buildError: trace.buildError || null,
+    goals,       // [parent, ...subGoals]
+  };
+}
+
+async function fetchTrace(traceId) {
+  if (traceCache.has(traceId)) return traceCache.get(traceId);
+  const r = await fetch(`/api/traces/${encodeURI(traceId)}`, { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const full = await r.json();
+  const entry = traceToEntry(full);
+  traceCache.set(traceId, entry);
+  return entry;
+}
+
+function normalizeVisibility(v) {
+  if (v === 'public' || v === 'Public' || v === 1 || v === '1') return 'public';
+  if (v === 'private' || v === 'Private' || v === 0 || v === '0') return 'private';
+  return 'unknown';
+}
+
+// Format milliseconds: 42 → "42ms", 1234 → "1.2s", 65000 → "1m 5s"
+function formatDuration(ms) {
+  if (ms == null || isNaN(ms)) return '';
+  if (ms < 1000) return Math.round(ms) + 'ms';
+  if (ms < 60000) return (ms / 1000).toFixed(1) + 's';
+  const s = Math.round(ms / 1000);
+  return `${Math.floor(s / 60)}m ${s % 60}s`;
+}
+
+// ---------- Tree build ----------
+
+// Build a hierarchical tree. Each bucket label (e.g. "Tests/Modules/Cache/Basic")
+// splits on '/' into nested directory nodes; each .goal file becomes a leaf
+// under its directory. Node shape:
+//   { label, fullPath, dirs: Dir[], files: File[] }
+// A File is { key, bucket, path, label, goals: [...] }. A goal groups the
+// traces that came from the same {bucket, goalName}.
+function buildBucketTree(entries) {
+  const fileMap = new Map();  // fileKey → file
+  for (const e of entries) {
+    const bucketLabel = e.bucket || '(unknown)';
+    const path = e.path || '';
+    const fileKey = path ? bucketLabel + path : bucketLabel + '::' + e.name;
+    const fileLabel = path ? path.replace(/^\/+/, '') : `${e.name} (no path)`;
+    if (!fileMap.has(fileKey)) {
+      fileMap.set(fileKey, {
+        key: fileKey, bucket: bucketLabel, path,
+        label: fileLabel, goals: new Map()
+      });
+    }
+    const file = fileMap.get(fileKey);
+    if (!file.goals.has(e.name)) {
+      file.goals.set(e.name, { name: e.name, visibility: e.visibility, traces: [] });
+    }
+    file.goals.get(e.name).traces.push(e);
+  }
+
+  const root = { label: '', fullPath: '', dirs: new Map(), files: [] };
+  for (const file of fileMap.values()) {
+    const parts = (file.bucket || '').split('/').filter(Boolean);
+    let node = root;
+    for (const part of parts) {
+      if (!node.dirs.has(part)) {
+        const fullPath = node.fullPath ? node.fullPath + '/' + part : part;
+        node.dirs.set(part, { label: part, fullPath, dirs: new Map(), files: [] });
+      }
+      node = node.dirs.get(part);
+    }
+    // Finalize goals within this file.
+    const goals = [...file.goals.values()];
+    for (const g of goals) g.traces.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+    goals.sort((a, b) => {
+      if (a.visibility !== b.visibility) {
+        if (a.visibility === 'public') return -1;
+        if (b.visibility === 'public') return 1;
+      }
+      return String(a.name).localeCompare(String(b.name));
+    });
+    node.files.push({ ...file, goals });
+  }
+
+  // Convert Map<dir> → sorted arrays recursively.
+  function finalize(node) {
+    const dirs = [...node.dirs.values()];
+    dirs.forEach(finalize);
+    dirs.sort((a, b) => String(a.label).localeCompare(String(b.label)));
+    node.dirs = dirs;
+    node.files.sort((a, b) => String(a.label).localeCompare(String(b.label)));
+  }
+  finalize(root);
+  return root;
+}
+
+function findFile(fileKey) {
+  let found = null;
+  function visit(node) {
+    if (found) return;
+    for (const f of node.files) {
+      if (f.key === fileKey) { found = f; return; }
+    }
+    for (const d of node.dirs) visit(d);
+  }
+  visit(bucketTree);
+  return found;
+}
+
+// Sum latest-trace issues across all files under a directory (recursive).
+// "failed" intentionally NOT rolled up — a single failing file would otherwise
+// put a "failed" badge on every ancestor dir (file + parent + grandparent...),
+// which reads as duplicate noise. The file-row badge is enough; parents show
+// LLM-level err/warn rollups only.
+function dirStats(node) {
+  let files = 0, errors = 0, warnings = 0;
+  function visit(n) {
+    files += n.files.length;
+    for (const f of n.files) {
+      const c = fileIssueCounts(f);
+      errors += c.errors; warnings += c.warnings;
+    }
+    for (const d of n.dirs) visit(d);
+  }
+  visit(node);
+  return { files, errors, warnings, failed: 0 };
+}
+
+// ---------- Sidebar ----------
+
+function fileIssueCounts(file) {
+  let errors = 0, warnings = 0, failed = 0;
+  for (const g of file.goals) {
+    const latest = g.traces[0];
+    if (!latest) continue;
+    errors += latest.errorCount || 0;
+    warnings += latest.warningCount || 0;
+    if (latest.buildError) failed += 1;
+  }
+  return { errors, warnings, failed };
+}
+
+function issueBadges(counts) {
+  let html = '';
+  if (counts.failed > 0) html += `<span class="badge badge-err">${counts.failed > 1 ? counts.failed + ' ' : ''}failed</span>`;
+  if (counts.errors > 0) html += `<span class="badge badge-err">${counts.errors} err</span>`;
+  if (counts.warnings > 0) html += `<span class="badge badge-warn">${counts.warnings} warn</span>`;
+  return html;
+}
+
+// Newest N entries (already globally sorted newest-first by the server).
+// Clicking a recent item jumps to its file AND activates the matching trace
+// tab — so "latest build" is exactly one click away.
+function renderRecent() {
+  const list = document.getElementById('recent-list');
+  list.innerHTML = '';
+  // Show 20; list scrolls after ~5 items (CSS max-height).
+  const fresh = entries.slice(0, 20);
+  const nowMs = Date.now();
+  for (const e of fresh) {
+    const tsMs = Date.parse(e.timestamp || '') || 0;
+    const ageSec = (nowMs - tsMs) / 1000;
+    const isFresh = ageSec < 60;
+    const item = document.createElement('div');
+    item.className = 'recent-item' + (isFresh ? ' fresh' : '');
+    item.innerHTML = `
+      <span class="rec-goal">${esc(e.name)}</span>
+      ${e.buildError ? '<span class="rec-badge">failed</span>' : '<span></span>'}
+      <span class="rec-bucket">${esc(e.bucket)}</span>
+      <span class="rec-ts">${esc(formatTs(e.timestamp))}</span>
+    `;
+    item.onclick = () => jumpToTraceEntry(e);
+    list.appendChild(item);
+  }
+}
+
+async function jumpToTraceEntry(e) {
+  const path = e.path || '';
+  const fileKey = path ? e.bucket + path : e.bucket + '::' + e.name;
+  activeTraceByGoal.set(fileKey + '::' + e.name, e.traceId);
+  const file = findFile(fileKey);
+  if (file) await selectFile(file);
+}
+
+function renderTree() {
+  const list = document.getElementById('goal-list');
+  list.innerHTML = '';
+  // Root directories render at depth 0. Each dir recurses with depth+1 for
+  // progressive indentation; files inside a dir share that dir's depth + 1.
+  for (const dir of bucketTree.dirs) {
+    list.appendChild(renderDirNode(dir, 0));
+  }
+  // Files that live directly at the root (rare — happens when a bucket label
+  // is empty). Still render so we don't silently drop them.
+  for (const file of bucketTree.files) {
+    list.appendChild(renderFileNode(file, 0));
+  }
+}
+
+function renderDirNode(dir, depth) {
+  const open = expandedBuckets.has(dir.fullPath);
+  const wrap = document.createElement('div');
+  wrap.className = 'tree-bucket';
+
+  const row = document.createElement('div');
+  row.className = 'tree-row tree-dir-row';
+  row.style.paddingLeft = (10 + depth * 14) + 'px';
+  const stats = dirStats(dir);
+  row.innerHTML = `
+    <span class="tree-caret ${open ? 'open' : ''}">&#9656;</span>
+    <span class="tree-label">${esc(dir.label)}</span>
+    <span class="badge badge-steps">${stats.files}</span>
+    ${issueBadges(stats)}
+  `;
+  row.onclick = () => {
+    if (open) expandedBuckets.delete(dir.fullPath);
+    else expandedBuckets.add(dir.fullPath);
+    renderTree();
+  };
+  wrap.appendChild(row);
+
+  const children = document.createElement('div');
+  children.className = 'tree-children' + (open ? ' open' : '');
+  for (const sub of dir.dirs) children.appendChild(renderDirNode(sub, depth + 1));
+  for (const file of dir.files) children.appendChild(renderFileNode(file, depth + 1));
+  wrap.appendChild(children);
+  return wrap;
+}
+
+function renderFileNode(file, depth) {
+  const row = document.createElement('div');
+  row.className = 'tree-row tree-file-row' + (file.key === selectedFileKey ? ' active' : '');
+  row.style.paddingLeft = (10 + depth * 14) + 'px';
+  const counts = fileIssueCounts(file);
+  row.innerHTML = `
+    <span class="tree-label">${esc(file.label)}</span>
+    <span class="badge badge-steps">${file.goals.length}</span>
+    ${issueBadges(counts)}
+  `;
+  row.onclick = (ev) => {
+    ev.stopPropagation();
+    selectFile(file);
+  };
+  return row;
+}
+
+// ---------- File view (main panel) ----------
+
+async function selectFile(file) {
+  selectedFileKey = file.key;
+  // Expand every ancestor dir so the selected file is visible in the tree.
+  const parts = (file.bucket || '').split('/').filter(Boolean);
+  let acc = '';
+  for (const p of parts) {
+    acc = acc ? acc + '/' + p : p;
+    expandedBuckets.add(acc);
+  }
+  renderTree();
+  closeDrawer();  // mobile: don't make the user close the drawer by hand after picking a file
+  await renderFile(file);
+}
+
+async function renderFile(file) {
+  const main = document.getElementById('main');
+  main.className = '';
+
+  // Default each goal's active tab to its newest trace if not already set.
+  for (const g of file.goals) {
+    const k = file.key + '::' + g.name;
+    if (!activeTraceByGoal.has(k) && g.traces[0]) {
+      activeTraceByGoal.set(k, g.traces[0].traceId);
+    }
+  }
+
+  // Paint header + placeholders immediately; fetch trace bodies in parallel.
+  main.innerHTML = `
+    <div id="file-header-slot">${renderFileHeader(file, null)}</div>
+    ${file.goals.map(g => `
+      <div class="goal-section" id="goal-section-${esc(g.name)}">
+        ${renderGoalSectionChrome(file, g)}
+        <div class="loading">Loading trace...</div>
+      </div>
+    `).join('')}
+  `;
+
+  await Promise.all(file.goals.map(g => renderGoalSection(file, g)));
+
+  // After fetch: repaint header with full trace stats (sub-goal counts,
+  // confidence breakdown) using the active trace of the first (only) goal.
+  const firstGoal = file.goals[0];
+  if (firstGoal) {
+    const activeId = activeTraceByGoal.get(file.key + '::' + firstGoal.name);
+    const entry = traceCache.get(activeId);
+    const slot = document.getElementById('file-header-slot');
+    if (entry && slot) slot.innerHTML = renderFileHeader(file, entry);
+  }
+}
+
+function renderFileHeader(file, entry) {
+  // When the active trace is loaded we use its goals (parent + subGoals); that
+  // way the stat chips count sub-goals and include confidence breakdown. Before
+  // fetch we fall back to the sidebar summary counts.
+  const fileGoals = file.goals;
+  let latestTs = '';
+  let totalTraces = 0;
+  for (const g of fileGoals) {
+    totalTraces += g.traces.length;
+    const latest = g.traces[0];
+    if (latest && latest.timestamp > latestTs) latestTs = latest.timestamp;
+  }
+
+  const entryGoals = entry?.goals || null;
+  const goalCount = entryGoals ? entryGoals.length : fileGoals.length;
+  const pubCount = entryGoals
+    ? entryGoals.filter(g => g.visibility === 'public').length
+    : fileGoals.filter(g => g.visibility === 'public').length;
+  const privCount = entryGoals
+    ? entryGoals.filter(g => g.visibility === 'private').length
+    : fileGoals.filter(g => g.visibility === 'private').length;
+
+  let totalSteps = 0, totalErr = 0, totalWarn = 0, lowCount = 0, medCount = 0;
+  if (entryGoals) {
+    for (const g of entryGoals) {
+      totalSteps += g.steps?.length || 0;
+      totalErr += g.errors?.length || 0;
+      totalWarn += g.warnings?.length || 0;
+      for (const s of g.steps || []) {
+        if (s.finalLevel === 'low') lowCount++;
+        else if (s.finalLevel === 'medium') medCount++;
+      }
+    }
+  } else {
+    for (const g of fileGoals) {
+      const latest = g.traces[0];
+      if (!latest) continue;
+      totalSteps += latest.stepCount || 0;
+      totalErr += latest.errorCount || 0;
+      totalWarn += latest.warningCount || 0;
+    }
+  }
+
+  const goalsChip = privCount > 0
+    ? `<span class="stat-chip"><strong>${goalCount}</strong> goals <span style="color:var(--text-dim)">(${pubCount} pub, ${privCount} priv)</span></span>`
+    : `<span class="stat-chip"><strong>${goalCount}</strong> goal${goalCount === 1 ? '' : 's'}</span>`;
+
+  // The full path users usually want on their clipboard is bucket + path —
+  // e.g. "tests/simple/Start.goal" — so you can jump to the source directly.
+  const fullPath = [file.bucket || '', file.path || ''].filter(Boolean).join('').replace(/\/+/g, '/');
+  return `
+    <div class="file-header">
+      <h1>
+        ${esc(file.label)}
+        ${fullPath ? `<button class="copy-btn" onclick="copyPath(this, '${esc(fullPath)}')" title="Copy path: ${esc(fullPath)}">copy path</button>` : ''}
+      </h1>
+      <div class="subtitle">
+        <span>${esc(file.bucket)}</span>
+        <span>last built ${esc(formatTs(latestTs))}</span>
+      </div>
+      <div class="file-stats">
+        ${goalsChip}
+        <span class="stat-chip"><strong>${totalSteps}</strong> step${totalSteps === 1 ? '' : 's'}</span>
+        ${entry?.durationMs != null ? `<span class="stat-chip"><strong>${formatDuration(entry.durationMs)}</strong> total</span>` : ''}
+        ${medCount > 0 ? `<span class="stat-chip warn"><strong>${medCount}</strong> medium</span>` : ''}
+        ${lowCount > 0 ? `<span class="stat-chip err"><strong>${lowCount}</strong> low</span>` : ''}
+        <span class="stat-chip"><strong>${totalTraces}</strong> trace${totalTraces === 1 ? '' : 's'}</span>
+        ${totalErr > 0 ? `<span class="stat-chip err"><strong>${totalErr}</strong> error${totalErr === 1 ? '' : 's'}</span>` : ''}
+        ${totalWarn > 0 ? `<span class="stat-chip warn"><strong>${totalWarn}</strong> warning${totalWarn === 1 ? '' : 's'}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// Header + tabs only — body filled in by renderGoalSection once trace is fetched.
+function renderGoalSectionChrome(file, goal) {
+  const activeKey = file.key + '::' + goal.name;
+  const activeId = activeTraceByGoal.get(activeKey);
+  const tabs = goal.traces.map(t => {
+    const issues = [];
+    if (t.errorCount > 0) issues.push(`<span class="tab-err">${t.errorCount}e</span>`);
+    if (t.warningCount > 0) issues.push(`<span class="tab-warn">${t.warningCount}w</span>`);
+    const metaParts = [`${t.stepCount} step${t.stepCount === 1 ? '' : 's'}`, ...issues];
+    return `
+      <div class="tab ${t.traceId === activeId ? 'active' : ''}"
+           onclick="activateTab('${esc(file.key)}','${esc(goal.name)}','${esc(t.traceId)}')">
+        <span>${esc(formatTs(t.timestamp))}</span>
+        <span class="tab-stepcount">${metaParts.join(' · ')}</span>
+      </div>
+    `;
+  }).join('');
+  // No extra header row — each sub-section below already shows the goal name.
+  return `<div class="tab-row">${tabs}</div>`;
+}
+
+async function renderGoalSection(file, goal) {
+  const key = file.key + '::' + goal.name;
+  const activeId = activeTraceByGoal.get(key);
+  const section = document.getElementById('goal-section-' + goal.name);
+  if (!section) return;
+
+  // Repaint the chrome (so the active tab highlight is current).
+  section.innerHTML = renderGoalSectionChrome(file, goal) + `<div class="loading">Loading trace...</div>`;
+
+  let entry;
+  try {
+    entry = await fetchTrace(activeId);
+  } catch (e) {
+    section.innerHTML = renderGoalSectionChrome(file, goal)
+      + `<div class="loading" style="color:var(--accent)">Failed: ${esc(e.message)}</div>`;
+    return;
+  }
+
+  // Guard: if the user switched tabs while we were fetching, the active id
+  // might have changed. Only paint if we're still the target.
+  if (activeTraceByGoal.get(key) !== activeId) return;
+
+  const body = renderTraceBody(entry);
+  section.innerHTML = renderGoalSectionChrome(file, goal) + body;
+}
+
+function activateTab(fileKey, goalName, traceId) {
+  const key = fileKey + '::' + goalName;
+  if (activeTraceByGoal.get(key) === traceId) return;
+  activeTraceByGoal.set(key, traceId);
+  const file = findFile(fileKey);
+  const goal = file?.goals.find(g => g.name === goalName);
+  if (goal) renderGoalSection(file, goal);
+}
+
+function renderTraceBody(entry) {
+  let html = '';
+  // If the trace has a top-level buildError but no goal section carries it
+  // (older traces, or HandleBuildGoalFailure ran a path that didn't tag the
+  // pass), surface it at the top so the user sees what went wrong.
+  const sectionHasError = (entry.goals || []).some(g => !!g.buildError);
+  if (entry.buildError && !sectionHasError) html += renderBuildFailure(entry.buildError);
+  // Render parent + each sub-goal as its own section. Each section gets its
+  // own LLM Request block and its own steps block. The trace's top-level
+  // buildError is also attached to the specific failing pass (pass1 or a
+  // sub-goal) so the error is shown inline next to the goal that caused it.
+  for (let i = 0; i < entry.goals.length; i++) {
+    const g = entry.goals[i];
+    html += renderGoalSubSection(entry, g, i);
+  }
+  return html;
+}
+
+function renderGoalSubSection(entry, goalSection, idx) {
+  const subKey = entry.traceId + '::goal::' + idx;
+  const hideFormal = formalHidden.has(subKey);
+  // Sub-goals often don't have their own .path (they're inside the parent file),
+  // so fall back to the parent goal's path or the entry's path.
+  const copyPath = goalSection.path || entry.path || '';
+  const failed = !!goalSection.buildError;
+  let html = `
+    <div class="goal-subsection ${goalSection.isParent ? 'parent' : 'sub'} ${failed ? 'failed' : ''}">
+      <div class="goal-subsection-header">
+        <span class="goal-subsection-badge">${goalSection.isParent ? 'main' : 'sub-goal'}</span>
+        <span class="goal-subsection-title">${esc(goalSection.name)}</span>
+        <span class="goal-vis ${goalSection.visibility === 'private' ? 'priv' : ''}">${esc(goalSection.visibility)}</span>
+        <span class="badge badge-steps">${goalSection.steps.length} step${goalSection.steps.length === 1 ? '' : 's'}</span>
+        ${goalSection.durationMs != null ? `<span class="badge badge-detail">${esc(formatDuration(goalSection.durationMs))}</span>` : ''}
+        ${failed ? `<span class="badge badge-err">failed</span>` : ''}
+        <button class="formal-toggle ${hideFormal ? '' : 'on'}"
+                onclick="toggleFormal('${esc(subKey)}')"
+                title="Toggle formal notation">
+          ${hideFormal ? 'Show' : 'Hide'} formal
+        </button>
+      </div>
+  `;
+  if (failed) html += renderBuildFailure(goalSection.buildError);
+  html += renderGoalLlmBlockForSection(goalSection, subKey);
+  html += '<div class="steps-block">';
+  for (const step of goalSection.steps) {
+    html += renderStepRow(entry, goalSection, step, subKey);
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function toggleFormal(subKey) {
+  if (formalHidden.has(subKey)) formalHidden.delete(subKey);
+  else formalHidden.add(subKey);
+  repaintCurrentFile();
+}
+
+function copyPath(btn, path) {
+  // navigator.clipboard needs https or localhost; fall back to a textarea hack
+  // for broader compatibility (older Safari on iOS, some WebViews).
+  const done = () => {
+    const prev = btn.textContent;
+    btn.textContent = 'copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = prev; btn.classList.remove('copied'); }, 1200);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(path).then(done).catch(() => fallback());
+  } else {
+    fallback();
+  }
+  function fallback() {
+    const ta = document.createElement('textarea');
+    ta.value = path;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); }
+    catch (e) { btn.textContent = 'fail'; }
+    finally { document.body.removeChild(ta); }
+  }
+}
+
+function renderGoalLlmBlockForSection(goalSection, subKey) {
+  const bg = goalSection.buildGoal;
+  if (!bg || (!bg.system && !bg.user && !bg.response)) return '';
+  const open = goalLlmOpen.has(subKey);
+  const respSize = bg.response ? sizeLabel(bg.response) : '0B';
+  const meta = `${sizeLabel(bg.system || '')} system · ${sizeLabel(bg.user || '')} user · ${respSize} response`;
+  return `
+    <div class="goal-llm">
+      <div class="goal-llm-header ${open ? 'open' : ''}"
+           onclick="toggleGoalLlm('${esc(subKey)}')">
+        <span class="tree-caret ${open ? 'open' : ''}">&#9656;</span>
+        <span class="goal-llm-label">LLM Request</span>
+        <span class="goal-llm-meta">${esc(meta)}</span>
+      </div>
+      ${open ? `<div class="goal-llm-body">${renderPromptBlocks(bg.system, bg.user, bg.response)}</div>` : ''}
+    </div>
+  `;
+}
+
+function toggleGoalLlm(subKey) {
+  if (goalLlmOpen.has(subKey)) goalLlmOpen.delete(subKey);
+  else goalLlmOpen.add(subKey);
+  repaintCurrentFile();
+}
+
+// ---------- Step rendering (nested disclosure) ----------
+
+function renderStepRow(entry, goalSection, step, subKey) {
+  const hideFormal = subKey ? formalHidden.has(subKey) : false;
+  const stepKey = entry.traceId + '::' + goalSection.name + '::' + step.index;
+  // Disclosure: 0 = text+formal only, 1 = +json. (LLM request is goal-level.)
+  const depth = stepDepth.get(stepKey) || 0;
+  const hasError = ((goalSection.errors || []).some(e => stepIndexFromKey(e.key) === step.index));
+
+  const conf = step.finalConfidence;
+  const confCls = step.finalLevel === 'medium' ? 'medium' : step.finalLevel === 'low' ? 'low' : '';
+
+  // Split on ` | ` so each action in a multi-action step renders on its own
+  // line. The leading `|` marker is drawn by CSS `::before` so we just wrap
+  // each segment after the first in a .pipe span.
+  const formalHtml = step.formal
+    ? esc(step.formal)
+        .split(/\s*\|\s*/)
+        .map((seg, i) => i === 0 ? seg : `<span class="pipe">${seg}</span>`)
+        .join('')
+    : 'no formal';
+  const formalCls = 'formal-inline'
+    + (step.formal ? '' : ' empty')
+    + (depth >= 1 ? ' open' : '');
+  const formalClick = step.formal
+    ? `setStepDepth('${stepKey}', ${depth >= 1 ? 0 : 1})`
+    : '';
+
+  let html = `
+    <div class="step-row ${depth > 0 ? 'open' : ''} ${hasError ? 'has-error' : ''}">
+      <div class="step-line">
+        <span class="idx">${step.index}</span>
+        <div class="body">
+          <div class="text">${esc(step.text || '').replace(/\n/g, '<br>')}</div>
+          ${hideFormal ? '' : `<div class="${formalCls}" ${formalClick ? `onclick="${formalClick}"` : ''}>${formalHtml}</div>`}
+        </div>
+        <span class="conf ${confCls}">${conf}%</span>
+      </div>
+  `;
+
+  if (depth >= 1) {
+    html += `<div class="sublayer">`;
+    html += renderSublayer(stepKey, 'json', sizeLabel(step.raw || {}), true,
+      `<div class="sublayer-body"><pre>${esc(JSON.stringify(step.raw || { actions: step.actions }, null, 2))}</pre></div>`,
+      0  // clicking closes json back to depth 0
+    );
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function renderSublayer(stepKey, label, meta, open, body, nextDepth) {
+  return `
+    <div class="sublayer-row ${open ? 'open' : ''}" onclick="setStepDepth('${stepKey}', ${nextDepth})">
+      <span class="tree-caret ${open ? 'open' : ''}">&#9656;</span>
+      <span>${esc(label)}</span>
+      <span class="sub-meta">${esc(meta)}</span>
+    </div>
+    ${open && body ? body : ''}
+  `;
+}
+
+function setStepDepth(stepKey, target) {
+  stepDepth.set(stepKey, target);
+  repaintCurrentFile();
+}
+
+function repaintCurrentFile() {
+  const file = findFile(selectedFileKey);
+  if (!file) return;
+  // Only repaint goal sections whose trace is cached; skip loading spinners.
+  for (const g of file.goals) {
+    const key = file.key + '::' + g.name;
+    const activeId = activeTraceByGoal.get(key);
+    if (activeId && traceCache.has(activeId)) {
+      const section = document.getElementById('goal-section-' + g.name);
+      if (section) section.innerHTML = renderGoalSectionChrome(file, g) + renderTraceBody(traceCache.get(activeId));
+    }
+  }
+}
+
+// ---------- Build failure ----------
+
+function renderBuildFailure(be) {
+  const details = be.details && typeof be.details === 'object' ? be.details : null;
+  const raw = details?.RawResponse;
+  const schema = details?.Schema;
+  const model = details?.Model;
+
+  const metaParts = [];
+  if (be.statusCode != null) metaParts.push(`HTTP ${esc(be.statusCode)}`);
+  if (model) metaParts.push(`model: ${esc(model)}`);
+
+  let html = `
+    <div class="build-failure">
+      <div class="build-failure-header">
+        <span>Build failed: ${esc(be.key || 'Error')}</span>
+        <span class="build-failure-key">${metaParts.join(' · ')}</span>
+      </div>
+      <div class="build-failure-message">${esc(be.message || '')}</div>
+  `;
+
+  if (raw) {
+    html += `
+      <div class="build-failure-detail">
+        <div class="build-failure-detail-label" onclick="toggleEl(this.nextElementSibling)">
+          <span>Raw LLM Response</span>
+          <span>${sizeLabel(raw)}</span>
+        </div>
+        <div class="build-failure-detail-body open"><pre>${esc(raw)}</pre></div>
+      </div>
+    `;
+  }
+
+  if (schema) {
+    html += `
+      <div class="build-failure-detail">
+        <div class="build-failure-detail-label" onclick="toggleEl(this.nextElementSibling)">
+          <span>Requested Schema</span>
+          <span>${sizeLabel(schema)}</span>
+        </div>
+        <div class="build-failure-detail-body"><pre>${esc(typeof schema === 'string' ? schema : JSON.stringify(schema, null, 2))}</pre></div>
+      </div>
+    `;
+  }
+
+  if (details) {
+    const otherKeys = Object.keys(details).filter(k => !['RawResponse', 'Schema', 'Model'].includes(k));
+    if (otherKeys.length > 0) {
+      const otherObj = {};
+      for (const k of otherKeys) otherObj[k] = details[k];
+      html += `
+        <div class="build-failure-detail">
+          <div class="build-failure-detail-label" onclick="toggleEl(this.nextElementSibling)">
+            <span>Other Details</span><span>${otherKeys.length}</span>
+          </div>
+          <div class="build-failure-detail-body"><pre>${esc(JSON.stringify(otherObj, null, 2))}</pre></div>
+        </div>
+      `;
+    }
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// ---------- Prompt/Response blocks ----------
+
+function renderPromptBlocks(system, user, response) {
+  let html = '';
+  if (system) {
+    html += `<div class="block">
+      <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
+        <span>System Prompt</span><span>${sizeLabel(system)}</span>
+      </div>
+      <div class="block-content"><pre>${esc(typeof system === 'string' ? system : JSON.stringify(system, null, 2))}</pre></div>
+    </div>`;
+  }
+  if (user) {
+    html += `<div class="block">
+      <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
+        <span>User Prompt</span><span>${sizeLabel(user)}</span>
+      </div>
+      <div class="block-content open"><pre>${esc(typeof user === 'string' ? user : JSON.stringify(user, null, 2))}</pre></div>
+    </div>`;
+  }
+  if (response) {
+    html += `<div class="block">
+      <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
+        <span>LLM Response</span><span>${sizeLabel(response)}</span>
+      </div>
+      <div class="block-content open"><pre>${esc(typeof response === 'string' ? response : JSON.stringify(response, null, 2))}</pre></div>
+    </div>`;
+  }
+  return html;
+}
+
+function stepIndexFromKey(key) {
+  const m = (key || '').match(/step[-_]?(\d+)/i);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+function toggleEl(el) { el.classList.toggle('open'); }
+
+// Mobile drawer. No-op on desktop (the CSS keeps the sidebar in place).
+function toggleDrawer() {
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('backdrop');
+  const open = sb.classList.toggle('open');
+  bd.classList.toggle('open', open);
+}
+function closeDrawer() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('open');
+}
+
+// ---------- Polling ----------
+
+poll();
+setInterval(() => {
+  if (document.getElementById('auto-refresh').checked) poll();
+}, POLL_MS);
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-test-module",
+  "timestamp": "2026-04-21T00:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "test.discover filesystem walk",
+      "exposure": "Walks Path directory for *.test.goal, reads each file's .pr and .goal text, recurses static goal.call chains.",
+      "trust_boundary": "User's own project tree during --test. No network/untrusted data ingress.",
+      "mitigations": ["fs.ValidatePath gates entry directory", "IOException/UnauthorizedAccessException/JsonException narrowed try/catch", "visited-set + depth cap (50) on recursion"],
+      "gaps": ["ValidatePath is string-prefix based; symlink-escape is an existing FS-wrapper concern, not new here"]
+    },
+    {
+      "area": "test.run child App isolation",
+      "exposure": "Spawns fresh App per test with own MemoryStack/Goals/FileSystem rooted at TestFile.Directory; timeout via linked CancellationTokenSource; parallel semaphore.",
+      "trust_boundary": "Each child App has its own root; SystemDirectory inherited from parent.",
+      "mitigations": ["await using childApp (IAsyncDisposable)", "linked CTS + CancelAfter", "Results uses ConcurrentQueue", "Coverage uses ConcurrentDictionary and Merge is idempotent", "OutOfMemoryException/StackOverflowException excluded from catch filter"],
+      "gaps": ["AfterAction coverage binding captures childApp by closure — disposed-timing is fine because binding only lives on childApp.User.Context.Events"]
+    },
+    {
+      "area": "test.report output rendering",
+      "exposure": "Writes console summary, JSON (results.json) or JUnit XML (junit.xml) under .test/; surfaces file content in Data.Properties.",
+      "trust_boundary": "Output consumed by CI and dev terminals. Content sourced from test errors + captured stdout.",
+      "mitigations": ["SecurityElement.Escape for XML attributes and bodies", "Regex strip of ANSI CSI sequences in captured output"],
+      "gaps": ["ANSI strip regex only covers CSI (\\x1B[); misses OSC (\\x1B]), DCS (\\x1BP), charset designators (\\x1B(B) — OSC-8 hyperlink forging or terminal-title manipulation still possible via a failing test's stdout", "SecurityElement.Escape does not strip invalid-for-XML C0 controls (\\x00-\\x08, \\x0B-\\x0C, \\x0E-\\x1F) — a failing test whose error message contains raw control bytes produces XML that strict JUnit parsers reject (DoS-of-reporting, not security)"]
+    },
+    {
+      "area": "AssertionError.Variables snapshot",
+      "exposure": "On assert failure, Variables.Snapshot() captures all user variables (excluding !-infra, DynamicData, SettingsVariable) into the error; flows into test.report JSON output and into the console failure block.",
+      "trust_boundary": "Report artefact consumed by CI.",
+      "mitigations": ["Excludes ! infrastructure vars (!fileSystem, !engine, ...)", "Excludes SettingsVariable (backed by settings store, not printed)"],
+      "gaps": ["Ordinary user variables may hold secrets (HTTP bearer tokens, DB connection strings, response bodies with PII) — these WILL appear verbatim in a failing test's artefact. By design for diagnostics, but downstream publishing of results.json/junit.xml should be treated as sensitive."]
+    },
+    {
+      "area": "Executor --test={…} config apply",
+      "exposure": "Reads untyped IDictionary<string,object?> from CLI parsing into Testing.Apply.",
+      "trust_boundary": "User's own CLI invocation.",
+      "mitigations": ["Apply enforces bounds (timeout>0, parallel>0, format∈{json,junit}) and returns typed ConfigError", "Unknown keys silently ignored — forward-compatible"],
+      "gaps": []
+    },
+    {
+      "area": "condition.if/elseif/else orchestration + branchIndex publish",
+      "exposure": "Multi-action step with condition.* actions is orchestrated by the head if; branch metadata is attached to Data.Properties and consumed by coverage.",
+      "trust_boundary": "Internal Context flow, no external data.",
+      "mitigations": ["Guard key stored on Context (not Variables) so PLang user can't overwrite", "Re-entry guarded per Step.GetHashCode", "branchIndex unset when evaluation errors"],
+      "gaps": ["Step.GetHashCode is identity-based in .NET (System.Runtime.CompilerServices.RuntimeHelpers) — collisions are theoretically possible but benign: worst case is a sibling step sharing a hash would see alreadyOrchestrating=true and skip orchestration, degrading to simple path. Not a security issue."]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Terminal escape injection via captured test stdout rendered in failure blocks.",
+      "preconditions": "A test runs under --test and produces captured stdout containing OSC/DCS escape sequences (e.g. OSC 8 hyperlink, OSC 0 window title). Test fails → test.report renders the stdout inline via StripAnsi which only matches CSI. Attacker-controlled content reaching a test's stdout (e.g. an echo of an HTTP response body) could forge hyperlinks or hijack the terminal title when the CI log viewer renders the console output.",
+      "impact": "Spoofed clickable URLs in terminal output, manipulated window title. Confused-deputy for a developer reading test logs.",
+      "affected_files": ["PLang/App/modules/test/report.cs"],
+      "exploit_sketch": "Fixture that writes \"\\x1B]8;;https://evil.example/\\x07click me\\x1B]8;;\\x07\" to stdout, then fails an assert. Render pipeline preserves the OSC because StripAnsi regex `\\x1B\\[[0-?]*[ -/]*[@-~]` only matches CSI (`\\x1B[...`).",
+      "proposed_fix": "Broaden the regex to strip OSC (`\\x1B\\][^\\x07\\x1B]*(?:\\x07|\\x1B\\\\)`), DCS/APC/PM/SOS, and charset designators, OR blanket-strip 0x1B entirely from captured output before rendering. Same treatment should apply to console rendering of AssertionError.Actual/Expected strings.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "JUnit/JSON report may contain invalid XML 1.0 control characters, breaking strict parsers.",
+      "preconditions": "Test error message or captured output contains C0 control bytes (e.g. \\x00 from a binary comparison failure, \\x01–\\x1F from raw-bytes assertions).",
+      "impact": "CI JUnit ingester (Jenkins, GitHub Actions junit-reporter) rejects the whole file → test results invisible. Denial-of-reporting, not a security boundary break.",
+      "affected_files": ["PLang/App/modules/test/report.cs"],
+      "exploit_sketch": "Assert on `new byte[] {0x00}` → AssertionError.Actual stringified contains \\x00 → <failure>…\\x00…</failure> written verbatim (SecurityElement.Escape only covers <>&\"').",
+      "proposed_fix": "Pre-filter error message and captured output through a C0-stripper (allow only \\t, \\n, \\r; drop 0x00-0x08, 0x0B-0x0C, 0x0E-0x1F) before XML escape.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Variables snapshot on assertion failure may serialize secrets into results.json.",
+      "preconditions": "A failing test's MemoryStack holds user variables with sensitive content (API token loaded via http.request, row fetched from a users table, etc.). Testing.Apply does not scrub the snapshot. Report artefact uploaded to shared storage.",
+      "impact": "Secret exfiltration into CI artefacts. Responsibility-relative severity: user owns their vars; PLang's job is to be conservative about what ends up in failure diagnostics.",
+      "affected_files": ["PLang/App/modules/assert/AssertSnapshot.cs", "PLang/App/Variables/this.cs", "PLang/App/modules/test/report.cs"],
+      "exploit_sketch": "Existing [Sensitive] attribute system marks specific Data values. Snapshot() does not check it — all non-!, non-dynamic, non-SettingsVariable vars are included raw.",
+      "proposed_fix": "Honor [Sensitive] in Variables.Snapshot(): replace values of Sensitive-flagged Data with a placeholder token (e.g. \"(sensitive)\"). Also consider redacting values whose type hint is `password` / `token` / `secret`. Document the leak surface in test.report header.",
+      "status": "open"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "test.discover recursion depth cap of 50 protects goal.call chains but ExtractAutoTags and SeedBranchChains each have their own visited set — a pathological cyclic graph with 50+ distinct nodes forcing 50-deep recursion twice costs O(N×steps×actions).",
+      "preconditions": "User's own .pr tree. Since this runs only under --test on the user's machine, not a real attack.",
+      "impact": "CPU burn at discovery time. Bounded, terminates.",
+      "affected_files": ["PLang/App/modules/test/discover.cs"],
+      "exploit_sketch": "N/A — within user's own trust domain.",
+      "proposed_fix": "No fix required. Noting for the record.",
+      "status": "accepted-risk"
+    }
+  ],
+  "summary": "Test module is opt-in local/CI tooling with a narrow attack surface. Isolation (child App per test, linked CTS, ConcurrentQueue Results, ConcurrentDictionary Coverage) is correct. Main concerns are defense-in-depth on output rendering (incomplete ANSI strip, no C0 filter) and an info-disclosure caveat on Variables snapshots in failure artefacts — all low severity given the threat model (user-owned test runs, user-owned vars). No critical/high findings. Verdict: pass. Suggest auditor next."
+}

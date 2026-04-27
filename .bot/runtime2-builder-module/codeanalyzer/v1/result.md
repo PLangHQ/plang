@@ -6,7 +6,7 @@ The builder module follows the established handler → provider delegation patte
 
 ---
 
-## PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs
+## PLang/App/modules/builder/providers/DefaultBuilderProvider.cs
 
 ### OBP Violations
 
@@ -48,14 +48,14 @@ DefaultBuilderProvider follows the handler → provider delegation pattern corre
 
 ---
 
-## PLang/Runtime2/modules/builder/providers/IBuilderProvider.cs
+## PLang/App/modules/builder/providers/IBuilderProvider.cs
 
 ### Verdict: CLEAN
 Standard provider interface. Method names match action names (consistent naming convention confirmed by commit `b0335f94`). All methods take action records — correct OBP.
 
 ---
 
-## PLang/Runtime2/modules/builder/ (action handlers)
+## PLang/App/modules/builder/ (action handlers)
 
 ### actions.cs, app.cs, appSave.cs, goals.cs, goalsSave.cs, merge.cs, validate.cs, types.cs
 
@@ -71,14 +71,14 @@ These are the cleanest handlers in the codebase. No findings.
 
 ---
 
-## PLang/Runtime2/modules/builder/BuilderTypeInfo.cs
+## PLang/App/modules/builder/BuilderTypeInfo.cs
 
 ### Verdict: CLEAN
 Single-line record. Carries builder type metadata.
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/this.cs (Parse, MergeFrom, ToText)
+## PLang/App/Goals/Goal/this.cs (Parse, MergeFrom, ToText)
 
 ### OBP Violations
 None. `Parse()` is static on Goal — Goal owns its text format. `MergeFrom()` is an instance method — Goal owns step matching. Both correct.
@@ -117,7 +117,7 @@ Two untested `Parse()` paths: implicit "Start" goal (step before any header) and
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/Methods.cs (FormatForLlm)
+## PLang/App/Goals/Goal/Methods.cs (FormatForLlm)
 
 ### OBP Violations
 None.
@@ -132,18 +132,18 @@ None.
 
 ### Behavioral Reasoning
 
-1. **Line 84: `FormatForLlm` takes `PLang.Interfaces.PLangContext?`** — This references `PLang.Interfaces`, which is a Runtime1 namespace. The rest of this branch is pure Runtime2. **Finding: Runtime1 type reference in Runtime2 code.** Check if this method existed before this branch or was added here.
+1. **Line 84: `FormatForLlm` takes `App.FileSystem.Default.PLangContext?`** — This references `App.FileSystem.Default`, which is a Runtime1 namespace. The rest of this branch is pure App. **Finding: Runtime1 type reference in App code.** Check if this method existed before this branch or was added here.
 
 ### Deletion Test
 
 1. **`FormatForLlm` and `FormatForLlmFallback`** — No tests exist for these methods on this branch. Could delete the entire `Methods.cs` file and no builder module test would fail. However, these may be tested elsewhere or used by the builder goals at runtime. **Flag but don't block on this.**
 
 ### Verdict: NEEDS WORK
-Runtime1 type reference (`PLang.Interfaces.PLangContext`) in `FormatForLlm`. Empty `JsonSerializerOptions` should be removed or replaced with centralized options.
+Runtime1 type reference (`App.FileSystem.Default.PLangContext`) in `FormatForLlm`. Empty `JsonSerializerOptions` should be removed or replaced with centralized options.
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs (Merge, Clone)
+## PLang/App/Goals/Goal/Steps/Step/this.cs (Merge, Clone)
 
 ### OBP Violations
 None. Step owns both `Merge()` and `Clone()`.
@@ -184,7 +184,7 @@ None.
 
 ---
 
-## PLang/Runtime2/Engine/Modules/this.cs (Describe, GetDefaults)
+## PLang/App/Modules/this.cs (Describe, GetDefaults)
 
 ### OBP Violations
 
@@ -212,14 +212,14 @@ None.
 
 ---
 
-## PLang/Runtime2/Engine/Utility/Json.cs
+## PLang/App/Utility/Json.cs
 
 ### Verdict: CLEAN
 Two static readonly options. Clean consolidation. Used consistently across the builder module.
 
 ---
 
-## PLang/Runtime2/Engine/Utility/TypeMapping.cs (ConvertTo, GetBuilderTypeNames, GetComplexTypeSchemas)
+## PLang/App/Utility/TypeMapping.cs (ConvertTo, GetBuilderTypeNames, GetComplexTypeSchemas)
 
 ### OBP Violations
 None. TypeMapping is a utility class (static, stateless).
@@ -244,7 +244,7 @@ None.
 
 ---
 
-## PLang/Runtime2/Engine/Providers/this.cs
+## PLang/App/Providers/this.cs
 
 ### Change: Line 203 — `"builder" or "ibuilderprovider" => typeof(modules.builder.providers.IBuilderProvider)`
 ### Change: Line 226 — `Register<modules.builder.providers.IBuilderProvider>(new modules.builder.providers.DefaultBuilderProvider())`
@@ -254,7 +254,7 @@ Standard provider registration. Consistent with all other modules.
 
 ---
 
-## PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs
+## PLang/App/modules/http/providers/DefaultHttpProvider.cs
 
 ### Changes: Lines 44 and 629 — replaced `new JsonSerializerOptions { PropertyNameCaseInsensitive = true }` with `Json.CaseInsensitiveRead`.
 
@@ -276,7 +276,7 @@ None.
 | 2 | Goal/this.cs | 279 | `Parse()` bare dash (`- ` with no text) is untested | minor |
 | 3 | Modules/this.cs | 211 | `Activator.CreateInstance` in `GetDefaults()` can throw unhandled | minor |
 | 4 | Modules/this.cs | 206-224 | `GetDefaults()` IConfigure<T> path is untested | minor |
-| 5 | Goal/Methods.cs | 84 | `FormatForLlm` references Runtime1 type `PLang.Interfaces.PLangContext` | minor |
+| 5 | Goal/Methods.cs | 84 | `FormatForLlm` references Runtime1 type `App.FileSystem.Default.PLangContext` | minor |
 
 ## Nits (2)
 
@@ -289,4 +289,4 @@ None.
 
 # Overall Verdict: NEEDS WORK
 
-Five minor findings, no major issues. The builder module is well-structured and follows OBP correctly. The action handlers are the cleanest in the codebase. Main gaps are: two untested `Parse()` edge cases, one unguarded `Activator.CreateInstance`, one untested defaults path, and a Runtime1 type reference. Send back to coder to address findings #1-4 (finding #5 may need architect input on whether `FormatForLlm` should move to Runtime1 or use a Runtime2 context type).
+Five minor findings, no major issues. The builder module is well-structured and follows OBP correctly. The action handlers are the cleanest in the codebase. Main gaps are: two untested `Parse()` edge cases, one unguarded `Activator.CreateInstance`, one untested defaults path, and a Runtime1 type reference. Send back to coder to address findings #1-4 (finding #5 may need architect input on whether `FormatForLlm` should move to Runtime1 or use a App context type).

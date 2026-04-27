@@ -1,0 +1,131 @@
+{
+  "name": "Start",
+  "description": "Sets %items% to a list, iterates over it calling ProcessItem for each item, then writes \u0027Loop done\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %items% = [\u0022apple\u0022, \u0022banana\u0022, \u0022cherry\u0022]",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%items%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": [
+                "apple",
+                "banana",
+                "cherry"
+              ],
+              "type": "list"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "foreach %items%, call ProcessItem item=%item%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%items%",
+              "type": "object"
+            },
+            {
+              "name": "ItemName",
+              "value": "item",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ProcessItem",
+                "parameters": [
+                  {
+                    "name": "item",
+                    "value": "%item%",
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out \u0022Loop done\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Loop done",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
+  "hash": "b99165365c37203153e256f817f4f1c3f5ac6fd2ce00197f9d4ed0bd65160019",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

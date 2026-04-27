@@ -1,7 +1,7 @@
 # Tester v1 Plan — Builder Module
 
 ## Scope
-Reviewing coder v1 + codeanalyzer v4 (PASS) output for the `PLang.Runtime2.modules.builder` module.
+Reviewing coder v1 + codeanalyzer v4 (PASS) output for the `App.modules.builder` module.
 
 ## Steps
 1. Run full C# test suite, collect pass/fail counts
@@ -11,8 +11,8 @@ Reviewing coder v1 + codeanalyzer v4 (PASS) output for the `PLang.Runtime2.modul
 5. Write test-report.json and verdict
 
 ## Key Files
-- Production: `PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs` (352 lines)
+- Production: `PLang/App/modules/builder/providers/DefaultBuilderProvider.cs` (352 lines)
 - 8 action handlers (thin delegators)
 - Entity: `Goal.MergeFrom()`, `Goal.Parse()`, `Step.Merge()`
-- Tests: 10 test files in `PLang.Tests/Runtime2/Modules/builder/`
-- PLang tests: 6 files in `Tests/Runtime2/Builder/`
+- Tests: 10 test files in `PLang.Tests/App/Modules/builder/`
+- PLang tests: 6 files in `Tests/App/Builder/`

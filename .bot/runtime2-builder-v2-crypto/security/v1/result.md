@@ -45,7 +45,7 @@ Crypto module (hash, verify, DefaultProvider, ICryptoProvider), Engine.Providers
 - `SensitivePropertyFilter` strips `[Sensitive]` properties from `JsonStreamSerializer` output.
 - `Data.Envelope._envelopeJsonOptions` now includes `SensitivePropertyFilter.Filter` — this was the medium finding from the identity audit, now fixed.
 - Storage path (raw `JsonSerializer` via DataSource) correctly does NOT filter — private keys persist to SQLite.
-- Dot navigation (`%MyIdentity.PrivateKey%`) resolves through MemoryStack, not serialization — returns raw value. This is by design (user-sovereign).
+- Dot navigation (`%MyIdentity.PrivateKey%`) resolves through Variables, not serialization — returns raw value. This is by design (user-sovereign).
 
 ### Identity Module (carry-forward)
 

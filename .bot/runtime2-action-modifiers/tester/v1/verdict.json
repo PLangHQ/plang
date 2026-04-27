@@ -1,0 +1,1 @@
+{"verdict":"FAIL","reason":"Latest fix (f3752384) at 0% coverage — CallErrorGoal never invoked, GoalFirst/RetryFirst goal branches untested, parameter mutation fix unexercised. 7 must-fix items for coder.","tests_total":2122,"tests_pass":2121,"tests_fail":1,"modifier_tests":43,"modifier_pass":43,"critical_gaps":7}

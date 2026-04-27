@@ -1,0 +1,47 @@
+{
+  "name": "TargetGoal",
+  "description": "Sets %dynamicResult% to the string \u0022reached\u0022 using variable.set.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %dynamicResult% = \u0022reached\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%dynamicResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "reached",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TargetGoal.goal",
+  "prPath": "/.build/targetgoal.pr",
+  "hash": "2ec9c541c0798889c270f82e43e32097396653042f614f189331cbc6904717c0",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

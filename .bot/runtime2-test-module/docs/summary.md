@@ -1,0 +1,7 @@
+# Docs — runtime2-test-module
+
+Cross-session summary. One paragraph per version.
+
+## v1 — PLang test module user documentation (2026-04-21)
+
+First docs pass on the test module branch. XML docs on the new C# were already thorough (audited `discover.cs`, `run.cs`, `tag.cs`, `report.cs`, `Test/this.cs`, `TestFile`, `TestRun`, `TestStatus`, `Coverage`, `RequiresCapabilityAttribute`), so this session focused on user-facing gaps. Created `docs/modules/testing.md` as the canonical reference — lifecycle, `plang --test` CLI, config dict, tags + `[RequiresCapability]`, per-test App isolation, staleness, timeouts, failure output and `[Sensitive]` masking, `.test/results.json` and `.test/junit.xml` schemas, module + branch coverage tables, actions reference, `TestStatus` enum, and the three low-severity security limitations from `security-report.json`. Updated `docs/modules/index.md` (added the `test` row + `notContains` on `assert`), added `notContains` to `docs/modules/assert.md`, cross-referenced the new user doc from `Documentation/v0.2/building_plang_tests.md`, and appended a "Test Module — Cross-Cutting Invariants" section to `Documentation/v0.2/good_to_know.md` covering nine facts that span multiple files (App boundary = file boundary, `Coverage.Merge` additive/idempotent, site key includes goal path, `test.discover` chain seeding, attribute constraints, hash-based staleness, `ChildAppCreated` test-only hook, `test.tag` production no-op, `Variables.Snapshot` vs `[Sensitive]`). Verdict: **pass** — code is ready to merge. See [v1/summary.md](v1/summary.md).

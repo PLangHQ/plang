@@ -1,0 +1,81 @@
+{
+  "name": "AIsolationPollute",
+  "description": "Sets %shared_probe% to 1 and asserts it equals 1.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %shared_probe% = 1",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Writes %shared_probe%=1. Paired with BIsolationProbe. When the outer\ntest.run launches this first (alphabetical \u002B parallel=1), a regression\nthat shared MemoryStack across tests would leak this value into\nBIsolationProbe\u0027s entry state.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%shared_probe%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Type",
+              "value": "int",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %shared_probe% equals 1",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%shared_probe%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/_isolation/AIsolationPollute.fixture.goal",
+  "prPath": "/_isolation/.build/aisolationpollute.fixture.pr",
+  "hash": "ccfd7c751fa91fde51affd03a2ea8154f89675e6492bcd4f79bce4d4220c49d6",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

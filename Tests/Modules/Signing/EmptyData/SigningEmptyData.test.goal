@@ -1,0 +1,8 @@
+Start
+/ Test: sign empty/minimal data, verify succeeds
+- archive identity 'testSigner', force, on error ignore
+- create identity testSigner
+- set %data% = {}
+- sign %data%
+- verify %data% with contracts ['C0'], write to %verifyResult%
+- assert %verifyResult.Success% is true, "empty data should sign and verify"

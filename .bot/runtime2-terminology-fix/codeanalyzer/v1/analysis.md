@@ -8,7 +8,7 @@ Higher-level cross-concern analysis of the terminology rename: `actions/` → `m
 
 | Surface | Status | Notes |
 |---------|--------|-------|
-| Namespace (`PLang.Runtime2.modules`) | Clean | All production + test code updated |
+| Namespace (`App.modules`) | Clean | All production + test code updated |
 | Interface (`IAction`) | Clean | No remaining `IClass` references |
 | Library field (`_actions`) | Clean | No remaining `_handlers` |
 | Tuple field (`Action`) | Clean | All call sites use destructuring, no `.Handler` access |
@@ -19,7 +19,7 @@ Higher-level cross-concern analysis of the terminology rename: `actions/` → `m
 
 ### Finding #1 — Stale "HandlerError" in ErrorInfoTests (Minor)
 
-**File:** `PLang.Tests/Runtime2/Errors/ErrorInfoTests.cs:198,204`
+**File:** `PLang.Tests/App/Errors/ErrorInfoTests.cs:198,204`
 
 ```csharp
 var error2 = new Error("Handler error", step, "HandlerError", 500);
@@ -35,7 +35,7 @@ The `Format_IncludesErrorChain` test uses `"HandlerError"` as test data for erro
 
 ### Finding #2 — Scaffolder skeleton files have stale namespace (Non-blocking)
 
-**Files:** 4 files in `.bot/runtime2-settings/scaffolder/v1/` still reference `PLang.Runtime2.actions`:
+**Files:** 4 files in `.bot/runtime2-settings/scaffolder/v1/` still reference `App.actions`:
 - `skeletons/ArchiveSettings.cs`
 - `skeletons/archive_settings.cs`
 - `skeletons/archive_types.cs`

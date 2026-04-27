@@ -1,0 +1,191 @@
+{
+  "name": "Start",
+  "description": "Sets %noIdentity% to true (null/<= null in the step text is treated as a boolean assignment to true).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %data% = { \"payload\": \"unsigned\" }",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: sign without creating identity first, should error",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "unsigned"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "sign %data%, on error call HandleNoIdentity",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "Name": "HandleNoIdentity"
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list<action>"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %noIdentity% is true, \"sign without identity should fail\"",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%noIdentity%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "sign without identity should fail",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "HandleNoIdentity",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %noIdentity% = true",
+          "lineNumber": 8,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%noIdentity%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                },
+                {
+                  "name": "Type",
+                  "value": "bool",
+                  "type": "string"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/SigningNoIdentity.test.goal",
+      "prPath": "/.build/signingnoidentity.test.pr",
+      "hash": "78852fea53a9ef8e4d8aafea747e5b552909c12a5b36a3c4b8824e5ff13ea63c",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/SigningNoIdentity.test.goal",
+  "prPath": "/.build/signingnoidentity.test.pr",
+  "hash": "75ae4cb14e476c542ca21c5a53af118b078854e7561b17caf91d6b3c05f3b80f",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

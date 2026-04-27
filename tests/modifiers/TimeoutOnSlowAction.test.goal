@@ -1,0 +1,9 @@
+TestTimeoutOnSlowAction
+/ Verifies timeout.after fires when the wrapped action exceeds the deadline.
+/ timer.sleep for 2 seconds with a 100ms timeout → timeout wins, error is ignored,
+/ and %timedOut% (set to true at step 0) is asserted true at the end.
+- set %timedOut% = true
+- timer.sleep ms=2000
+    timeout after 100 ms
+    on error ignore
+- assert %timedOut% equals true

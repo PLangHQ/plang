@@ -1,0 +1,99 @@
+{
+  "name": "TestSystemTestGoalDoesNotUseForeach",
+  "description": "Reads /system/test.goal into %goalText% and asserts the file content does not contain the substring \u0027foreach\u0027 (regression guard).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027/system/test.goal\u0027, write to %goalText%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Structural guard against the silent-skip regression that motivated this\nrewrite: the foreach-based runner skipped tests when one errored. The\nreplacement uses test.run (a C# loop). Assert system/test.goal contains\nno \u0027foreach\u0027 \u2014 a regression that reverted to the foreach loop would fail.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "/system/test.goal",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalText%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %goalText% does not contain \u0027foreach\u0027",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "notContains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "foreach",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "%goalText%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Regression guard: /system/test.goal must not contain \u0027foreach\u0027.",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestSystemTestGoalDoesNotUseForeach.test.goal",
+  "prPath": "/.build/testsystemtestgoaldoesnotuseforeach.test.pr",
+  "hash": "3ae85387f722c2d4a7810b5e7de8373fc5a9c3cfc5425c83411342148b2510ec",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

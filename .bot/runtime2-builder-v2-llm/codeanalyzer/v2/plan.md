@@ -2,8 +2,8 @@
 
 ## Scope
 Re-review of coder v2 fixes addressing all 8 findings from code analysis v1. Two files changed:
-- `PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs` (78 line delta)
-- `PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs` (98 lines added)
+- `PLang/App/modules/llm/providers/OpenAiProvider.cs` (78 line delta)
+- `PLang.Tests/App/Modules/llm/QueryToolTests.cs` (98 lines added)
 
 ## Approach
 1. Verify each of the 8 v1 findings is resolved

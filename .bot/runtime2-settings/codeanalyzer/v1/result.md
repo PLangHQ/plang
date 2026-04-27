@@ -5,7 +5,7 @@ Three passes per file: OBP compliance, simplification, readability.
 
 ---
 
-## PLang/Runtime2/Engine/Settings/ISettings.cs
+## PLang/App/Settings/ISettings.cs
 
 ### OBP Violations
 None. Marker interface — no behavior to misplace.
@@ -20,7 +20,7 @@ Good XML doc explaining the source generator contract (read side, write side, ma
 
 ---
 
-## PLang/Runtime2/Engine/Settings/this.cs
+## PLang/App/Settings/this.cs
 
 ### OBP Violations
 
@@ -31,7 +31,7 @@ Good XML doc explaining the source generator contract (read side, write side, ma
      var lastDot = fullName.LastIndexOf('.');
      var modulePrefix = lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
      ```
-   - This derives the module name from the CLR namespace. `PLang.Runtime2.actions.archive` → `"archive"`. The module identity is extracted from a string rather than being a property on the type itself.
+   - This derives the module name from the CLR namespace. `App.actions.archive` → `"archive"`. The module identity is extracted from a string rather than being a property on the type itself.
    - **OBP perspective:** This is "extracting a field" from the type system rather than asking the object. If `ISettings` had a `string Module { get; }` property, each settings class would declare its own module name.
    - **However:** The namespace-based convention is consistent with how the handler registry works (`[Action]` types use namespace-based module discovery in `Library.Discover`). Adding a `Module` property to `ISettings` would duplicate what the namespace already provides.
    - **Verdict: Acceptable convention.** Same pattern used elsewhere in the codebase. If the convention ever breaks (settings class in a non-standard namespace), it would need a fix. Consider a comment noting this assumption.
@@ -59,7 +59,7 @@ Well-structured. One defensive improvement opportunity (hard cast in Resolve).
 
 ---
 
-## PLang/Runtime2/Engine/Settings/Scope.cs
+## PLang/App/Settings/Scope.cs
 
 ### OBP Violations
 None. Simple key-value store, owns its own data.
@@ -68,13 +68,13 @@ None. Simple key-value store, owns its own data.
 None. 29 lines, three methods. Minimal.
 
 ### Readability
-Clean. ConcurrentDictionary with case-insensitive keys. Consistent with MemoryStack's approach.
+Clean. ConcurrentDictionary with case-insensitive keys. Consistent with Variables's approach.
 
 ### Verdict: CLEAN
 
 ---
 
-## PLang/Runtime2/Engine/Settings/ModuleView.cs
+## PLang/App/Settings/ModuleView.cs
 
 ### OBP Violations
 None.
@@ -96,7 +96,7 @@ Clean. XML doc shows usage example.
 
 ---
 
-## PLang/Runtime2/actions/archive/Settings.cs
+## PLang/App/actions/archive/Settings.cs
 
 ### OBP Violations
 None.
@@ -116,7 +116,7 @@ None needed. Two properties with defaults. The class is `partial` — source gen
 
 ---
 
-## PLang/Runtime2/actions/archive/types.cs
+## PLang/App/actions/archive/types.cs
 
 ### OBP Violations
 None.
@@ -133,7 +133,7 @@ None.
 
 ---
 
-## PLang/Runtime2/Engine/this.cs (diff only)
+## PLang/App/this.cs (diff only)
 
 ### OBP Violations
 None.
@@ -148,7 +148,7 @@ Follows established Engine property pattern. Good XML doc with navigation exampl
 
 ---
 
-## PLang/Runtime2/Engine/Context/PLangContext.cs (diff only)
+## PLang/App/Context/PLangContext.cs (diff only)
 
 ### OBP Violations
 
@@ -167,7 +167,7 @@ Good XML doc explaining the resolution chain.
 
 ---
 
-## PLang/Runtime2/Engine/Goals/Goal/Methods.cs (diff only)
+## PLang/App/Goals/Goal/Methods.cs (diff only)
 
 ### OBP Violations
 None.
@@ -193,7 +193,7 @@ Clean. Follows established pattern.
 
 ---
 
-## PLang/Runtime2/GlobalUsings.cs (diff only)
+## PLang/App/GlobalUsings.cs (diff only)
 
 ### OBP Violations
 N/A.
@@ -205,7 +205,7 @@ Two new aliases: `EngineSettings` and `SettingsScope`. Follow established naming
 
 ---
 
-## PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs
+## PLang.Tests/App/Settings/SettingsTests.cs
 
 ### Readability
 
@@ -219,7 +219,7 @@ Two new aliases: `EngineSettings` and `SettingsScope`. Follow established naming
 
 ---
 
-## PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs
+## PLang.Tests/App/Settings/ScopeTests.cs
 
 ### Readability
 Straightforward: set/get, null when not set, contains, case-insensitive. Clean.
@@ -228,7 +228,7 @@ Straightforward: set/get, null when not set, contains, case-insensitive. Clean.
 
 ---
 
-## PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs
+## PLang.Tests/App/Settings/ModuleViewTests.cs
 
 ### Readability
 
@@ -240,7 +240,7 @@ Straightforward: set/get, null when not set, contains, case-insensitive. Clean.
 
 ---
 
-## Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal
+## Tests/App/Settings/SetMaxGzipSize/Start.test.goal
 
 ### Readability
 Three lines: set, get, assert. Good PLang-level integration test.
@@ -254,17 +254,17 @@ Three lines: set, get, assert. Good PLang-level integration test.
 ## Finding 1: Hard cast in Resolve<T> (Medium)
 `Settings.Resolve<T>` does `(T)value` which throws InvalidCastException on type mismatch. Should use `value is T typed ? typed : classDefault` for safety. A PLang developer writing `set max gzip size to "twenty"` would produce a confusing cast error instead of falling through to the default.
 
-**File:** `PLang/Runtime2/Engine/Settings/this.cs:34,40`
+**File:** `PLang/App/Settings/this.cs:34,40`
 
 ## Finding 2: Module prefix assumption (Info)
 `For<T>()` derives module name from namespace. Works because handler discovery uses the same convention. But if a settings class is placed in a non-standard namespace, the prefix will be wrong. A comment noting this assumption would help.
 
-**File:** `PLang/Runtime2/Engine/Settings/this.cs:52-54`
+**File:** `PLang/App/Settings/this.cs:52-54`
 
 ## Finding 3: No test for type mismatch in Resolve (Low)
 No test verifies what happens when a setting value has the wrong type. Related to Finding 1 — if the cast is changed to a safe pattern, a test should verify the fallback behavior.
 
-**File:** `PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs`
+**File:** `PLang.Tests/App/Settings/SettingsTests.cs`
 
 ---
 

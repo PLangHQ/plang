@@ -1,10 +1,10 @@
-# Restructure Runtime2/Core/ Plan
+# Restructure App/Core/ Plan
 
 ## Goal
-Move 26 files from flat `PLang/Runtime2/Core/` into subfolders that mirror the object graph.
+Move 26 files from flat `PLang/App/Core/` into subfolders that mirror the object graph.
 
 ## Approach
-**Folder-only move, keep namespace `PLang.Runtime2.Core`.**
+**Folder-only move, keep namespace `App.Core`.**
 - C# does not require namespace-to-folder matching
 - Zero downstream using changes needed (58 files untouched)
 - Build stays green immediately after moves
@@ -13,7 +13,7 @@ Move 26 files from flat `PLang/Runtime2/Core/` into subfolders that mirror the o
 ## Target Structure
 
 ```
-PLang/Runtime2/Core/
+PLang/App/Core/
 ├── Engine.cs              (stays - root)
 ├── Property.cs            (stays - engine's key-value store)
 ├── ErrorHandler.cs        (stays - error config struct)

@@ -1,0 +1,161 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-action-modifiers",
+  "timestamp": "2026-04-17T21:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "modifier-fold",
+      "exposure": "New dispatch path in Action.RunAsync → Modifiers.RunAsync. Each modifier action resolves its own handler via WrapAround, casts to IModifier, runs ExecuteAsync to populate source-generated props, then wraps the inner delegate. Right-to-left fold: first in list = outermost wrapper.",
+      "trust_boundary": "Signed .pr file. Modifier actions in the .pr are trusted inputs once signature passes.",
+      "mitigations": [
+        "WrapAround checks handler is IModifier and returns typed error if not — no silent misconfiguration.",
+        "GetCodeGenerated returns (handler, error) tuple, error propagated correctly.",
+        "Data.@this is passed to .ExecuteAsync, the source generator populates params fresh each call (backing field set-flags reset)."
+      ],
+      "gaps": [
+        "No depth limit on Modifiers.Count per action. A .pr with thousands of modifier entries wraps into a stack of closures. Not directly exploitable (closures are cheap), but worth noting as a latent DoS knob if the .pr trust boundary is ever weakened."
+      ]
+    },
+    {
+      "area": "timeout-after-cancellation",
+      "exposure": "Pushes a CancellationTokenSource onto a per-context Stack<CancellationTokenSource>. Sets CancelAfter(Ms). Pops in finally.",
+      "trust_boundary": "Ms value resolved via source generator from .pr → Data<int>. Source-generated param is [IsNotNull], so Ms.Value is always present.",
+      "mitigations": [
+        "Parent token captured before push — when-filter uses captured parentToken, not context.CancellationToken (correctness fix per docstring).",
+        "Fallback catch handles handlers that re-throw OCE instead of wrapping.",
+        "finally clause guarantees PopCancellation even on exception paths.",
+        "`using var cts` disposes even if CancelAfter throws."
+      ],
+      "gaps": [
+        "No validation of negative Ms. `CancelAfter(-2)` throws ArgumentOutOfRangeException — propagates through the modifier fold. User-sovereign, but a %variable%-sourced Ms from untrusted external input would crash the action.",
+        "_cancellationStack is Stack<T>, not ConcurrentStack<T>. Safe today (events and handlers execute serially on the same context), but will corrupt under the planned `async.fire` / `parallel.set` modifiers noted in the architect roadmap."
+      ]
+    },
+    {
+      "area": "cache-wrap",
+      "exposure": "cache.GetAsync(key) before inner; cache.SetAsync(key, result, settings) after successful inner. On hit, mutates `cached.Name = \"__data__\"` then Puts into Variables.",
+      "trust_boundary": "Cache key is either user-supplied Key.Value (from %variable%) or DefaultKey = step:{goalPath}:{step.Index}. Both are trusted — goalPath is signed, user-supplied key is user-sovereign.",
+      "mitigations": [
+        "MemoryStepCache uses System.Runtime.Caching.MemoryCache — thread-safe for get/set.",
+        "Cache only stores Data on Success — failed results not cached.",
+        "DurationMs/Sliding from typed Data<long>/Data<bool>."
+      ],
+      "gaps": [
+        "cached.Name = \"__data__\" mutates the cached Data. Safe today (the mutation is idempotent since every wrap sets the same Name), but fragile — any future code that reads cached.Name expecting its original name will get clobbered.",
+        "Cache stores Data by reference. If a downstream step mutates Data.Value (e.g., modifies a list inside it), the cached copy changes too. User-sovereign but foot-gun.",
+        "No size cap on cached values — a huge Data.Value (e.g., a 2GB file read result) sits in memory until expiration. User-controlled, but a %variable%-influenced key could let untrusted input multiply cache entries."
+      ]
+    },
+    {
+      "area": "error-handle",
+      "exposure": "Wraps inner action; on failure, matches filters (StatusCode/Key/Message), retries (RetryCount × RetryOverMs), calls error goal, or ignores. Orders retry and goal per ErrorOrder enum.",
+      "trust_boundary": "All parameters from .pr via source generator. Goal.Value resolves to a GoalCall instance from the deserialized action record.",
+      "mitigations": [
+        "MatchesError handles null filters correctly (all-null matches all).",
+        "CallStack has MaxDepth = 1000 — error goal recursion cannot blow the .NET stack (throws CallStackOverflowException instead).",
+        "CallErrorGoal filters existing !error before appending, so serial retries self-heal.",
+        "delayMs only applied if > 0 — negative delays are skipped, not thrown at Task.Delay.",
+        "IgnoreError runs after retry and goal are exhausted — a successful retry/goal short-circuits.",
+        "Existing test DoesNotMutateOriginalParameters verifies the original List<Data> is not mutated."
+      ],
+      "gaps": [
+        "CallErrorGoal reassigns goalCall.Parameters and sets goalCall.Action ??= on a shared GoalCall singleton (see Finding 1).",
+        "RetryCount sourced from .pr with no upper bound — if a %variable% resolves to int.MaxValue, the retry loop dominates the event loop. User-sovereign but no defense-in-depth cap.",
+        "When retry succeeds inside the RetryFirst path (line 54), the retry result is returned directly; the original error's ErrorChain is NOT surfaced. Intended behavior per docstring."
+      ]
+    },
+    {
+      "area": "timer-sleep",
+      "exposure": "await Task.Delay(Ms, Context.CancellationToken).",
+      "trust_boundary": "Ms from .pr, signed.",
+      "mitigations": [
+        "Honours context.CancellationToken — parent timeout / cancellation aborts the delay.",
+        "[IsNotNull] on Ms."
+      ],
+      "gaps": [
+        "No validation of negative Ms (same issue as timeout.after). Task.Delay(negative, ...) throws ArgumentOutOfRangeException for < -1."
+      ]
+    },
+    {
+      "area": "builder-group-modifiers",
+      "exposure": "DefaultBuilderProvider.GoalsSave → step.Actions.GroupModifiers(app.Modules). Takes the flat LLM output, groups modifier actions onto the preceding executable action, sorts by [Modifier(Order)].",
+      "trust_boundary": "LLM output. The builder pipeline is run by the developer building their own app; output is signed afterwards. Builder is not exposed to untrusted input at build time.",
+      "mitigations": [
+        "IsModifier looks up the ActionAttribute by reflection — no parsing.",
+        "Leading modifier (no preceding executable) is silently dropped — no crash on malformed LLM output.",
+        "Each action's Modifiers are sorted by ModifierAttribute.Order to ensure deterministic nesting regardless of LLM output order."
+      ],
+      "gaps": [
+        "Silently dropping a leading modifier means a builder bug (LLM starts step with `onError` etc.) produces a .pr with no error handling — developer has no signal. Correctness, not security, but worth a warning.",
+        "GetModifierOrder returns int.MaxValue when the attribute is missing — a module marked as modifier but without the attribute would sort last unpredictably. Today only actions with [Modifier] are reachable via IsModifier=true, so this is latent."
+      ]
+    },
+    {
+      "area": "legacy-removal",
+      "exposure": "Step.OnError / Cache / Timeout properties deleted, plus ErrorHandler.cs, cache/check.cs, cache/store.cs, error/check.cs.",
+      "trust_boundary": "n/a — pure deletion.",
+      "mitigations": [
+        "All call sites verified removed (coder v1 notes); full C# test suite still green.",
+        "Legacy .pr files containing step-level OnError/Cache/Timeout would fail deserialization of Step — but Ingi is rebuilding all .pr files post-merge (per coder summary)."
+      ],
+      "gaps": [
+        "No runtime error or informative message if a stale .pr with step-level OnError/Cache/Timeout is loaded (old properties simply vanish on deserialization). Users upgrading from an older runtime who forget to rebuild will silently lose their error handling. Low severity — user responsibility — but easy to help with a warning."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "injection",
+      "vector": "error.handle.CallErrorGoal mutates goalCall.Parameters (line 113) and goalCall.Action (line 126) on the shared deserialized GoalCall singleton. GoalCall is reached via Goal?.Value, and Data<T>.Value caches its resolved value — every invocation of this error handler writes through to the same GoalCall instance.",
+      "preconditions": "Two concurrent invocations of the same step that has an error.handle modifier with a Goal param, under current runtime via events or the planned async.fire/parallel.set modifiers. Request-driven concurrency (HTTP server, message queue) would also trigger it once such a channel exists.",
+      "impact": "Race on !error parameter: thread A's error goal receives thread B's error. Wrong recovery path, wrong error chained, potential information confusion between concurrent tenants if a multi-tenant server is built on this primitive. No cross-trust-boundary leak today, but a correctness/reliability defect that violates the per-invocation semantics the docstring implies.",
+      "affected_files": ["PLang/App/modules/error/handle.cs"],
+      "exploit_sketch": "Build a goal with `step: callSomething, onError call ErrorHandler` where ErrorHandler reads %!error%.Message. Invoke the goal twice concurrently, each failing with a distinct error. Observe that ErrorHandler occasionally sees the WRONG error's Message. Root cause: both invocations do `goalCall.Parameters = <list with !error=theirs>` and then read it back via RunGoalAsync; last-writer-wins makes one thread read the other's !error.",
+      "proposed_fix": "Don't mutate shared state. Two options: (a) clone goalCall (`var call = new GoalCall { Name = goalCall.Name, Parameters = parameters, Action = context.Step?.Actions.FirstOrDefault() ?? goalCall.Action, PrPath = goalCall.PrPath, Parallel = goalCall.Parallel, Description = goalCall.Description };` then pass clone to RunGoalAsync), or (b) change RunGoalAsync to accept parameters as a separate argument without touching the GoalCall. Option (a) is less invasive. While at it, remove `goalCall.Action ??= ...` and pass Action on the cloned copy too.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "timeout.after and timer.sleep do not validate Ms for negative values before calling CancellationTokenSource.CancelAfter / Task.Delay. CancelAfter(< -1) throws ArgumentOutOfRangeException; Task.Delay(< -1) throws likewise.",
+      "preconditions": "A developer writes `timeout after %ms%` (or `sleep %ms%`) with %ms% bound from an untrusted external source (HTTP query string, user input) without sanitizing. An attacker supplies ms=-2 or ms=-1000.",
+      "impact": "Uncaught ArgumentOutOfRangeException propagates up through the modifier fold. Depending on outer error handling, the step fails with a non-obvious message. User-sovereign code is responsible for validation, but the module should defend its boundary.",
+      "affected_files": [
+        "PLang/App/modules/timeout/after.cs",
+        "PLang/App/modules/timer/sleep.cs"
+      ],
+      "exploit_sketch": "Expose an HTTP endpoint that passes %requestTimeout% from query string into `timeout after %requestTimeout% ms ... ...`. Hit `?requestTimeout=-5`. The modifier throws instead of returning a typed Timeout error.",
+      "proposed_fix": "At the top of timeout.after.Wrap(): `if (ms < 0) return () => Task.FromResult(Data.@this.FromError(new ServiceError(\"timeout.after.Ms must be >= 0\", \"InvalidArgument\", 400)));`. Symmetric fix in timer.sleep.Run(). Zero is a valid edge case (instantaneous timeout) and should be preserved.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "error.handle.Retry does not bound RetryCount. RetryCount comes from .pr as Data<int>? and is used as a loop ceiling with no upper limit.",
+      "preconditions": "Developer writes `onError retry %retryCount% times` with %retryCount% bound from untrusted external input.",
+      "impact": "Attacker-controlled %retryCount% set to int.MaxValue makes the action effectively hang. Combined with a retry-for-transient handler, a single request can lock a thread for minutes/hours. Not a critical DoS since the context cancellation token still interrupts `Task.Delay` inside the retry, but the cancel-free path (delayMs == 0) does unbounded work on `next()`.",
+      "affected_files": ["PLang/App/modules/error/handle.cs"],
+      "exploit_sketch": "Same shape as Finding 2 — untrusted input bound to %retryCount%.",
+      "proposed_fix": "Cap RetryCount at a sane hard ceiling inside the module (e.g., `var count = Math.Min(RetryCount?.Value ?? 0, 1000);`) OR add a config-backed default. Hardcoded 1000 is a reasonable ceiling — retry-to-exhaustion is pathological regardless of user intent.",
+      "status": "open"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Context._cancellationStack uses System.Collections.Generic.Stack<CancellationTokenSource>, which is not thread-safe. Safe today because events and actions execute serially on the same context, but the architect roadmap explicitly plans async.fire and parallel.set modifiers that would run on the same context concurrently.",
+      "preconditions": "Two concurrent push/pop operations on the same context's cancellation stack. Not reachable today via current modifier set.",
+      "impact": "Stack corruption under concurrent modifiers: wrong CTS popped, memory corruption in worst case, InvalidOperationException in best case. Would manifest as flaky cancellations / wrong tokens propagating to inner actions.",
+      "affected_files": ["PLang/App/Actor/Context/this.cs"],
+      "exploit_sketch": "Not reachable today — requires async.fire or parallel.set to land.",
+      "proposed_fix": "Swap Stack<T> for ConcurrentStack<T>, or scope the stack to AsyncLocal<ImmutableStack<T>> so each async branch sees its own view. The current Peek()/Push()/Pop() surface is tiny — conversion is low-risk now, high-risk once parallel modifiers land.",
+      "status": "open"
+    }
+  ],
+  "summary": "Action modifiers feature adds 4 small, well-scoped runtime paths (IModifier fold, timeout.after, cache.wrap, error.handle) plus one builder restructuring step. Overall security posture is GOOD. Codeanalyzer v1 already flagged the IgnoreError ordering and that has been redesigned (retry → goal → IgnoreError — verified correct). Four findings: one medium (shared-state mutation in CallErrorGoal, a real race under any concurrent execution of the same step) and three low (negative Ms, unbounded retry, non-thread-safe cancellation stack — all latent, either user-sovereign or not-reachable-today). No criticals, no high. Cache, timeout, and builder grouping are clean. Recommended next: send Finding 1 back to coder as a clone-not-mutate fix; Findings 2-4 can be accepted as hardening backlog since they're user-sovereign / latent."
+}

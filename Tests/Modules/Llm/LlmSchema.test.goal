@@ -1,0 +1,8 @@
+Start
+/ Query with JSON schema — verify response is parsed and dot-navigable
+- [llm] system: 'You analyze sentiment. Respond in JSON only.'
+    user: 'Analyze: I love sunny days'
+    scheme: {sentiment:string, score:number}
+    write to %result%
+- assert %result% is not null
+- assert %result.sentiment% is not null

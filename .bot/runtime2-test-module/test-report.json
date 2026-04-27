@@ -1,0 +1,62 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-test-module",
+  "timestamp": "2026-04-21T12:45:00Z",
+  "tested_version": "v4",
+  "test_run": {
+    "csharp": { "total": 2275, "passed": 2274, "failed": 1, "skipped": 0, "note": "Pre-existing LLM flake (Query_ToolCall_LlmRequestsToolAndHandlesError) — same as v5 baseline, unchanged. 3 new OperatorTests for enum↔string normalization all green." },
+    "plang": { "total": 18, "passed": 18, "failed": 0, "timeout": 0, "stale": 0, "skipped": 0, "note": "Tests/TestModule/**/*.test.goal — coder v4 summary claimed 19 but actual count is 18 (F1 deleted, F4 added, F2 replaced 1:1, F3 rewrote 3:3 → net -1 = 18). Full outer suite: 167 total, 100 pass, 48 fail (pre-existing unrelated), 19 stale." }
+  },
+  "coverage": {
+    "changed_files_covered": "n/a — coverage rerun skipped; changes are additive (new actions/tests). See v5 baseline for delta.",
+    "notes": "Added: PLang/App/modules/assert/notContains.cs (covered end-to-end by TestSystemTestGoalDoesNotUseForeach + symmetric containment branches covered via flipped-arg Contains path). Added: 3 OperatorTests for enum↔string (discharges v5 F8)."
+  },
+  "verification_matrix": {
+    "F1_tautology": {
+      "v4_fix": "Deleted TestRunSubscribesAfterActionForCoverage.test.goal and its .pr",
+      "deletion_test": "C# PLang.Tests/App/Testing/OrchestrateBranchCoverageTests attaches a production-shaped EventType.AfterAction subscriber and asserts observations come through. If the AfterAction subscriber in run.cs:83-119 were deleted, those C# tests would fail.",
+      "status": "discharged"
+    },
+    "F2_false_green_isolation": {
+      "v4_fix": "Replaced with _isolation/AIsolationPollute.fixture.goal (sets %shared_probe%=1) and _isolation/BIsolationProbe.fixture.goal (asserts %shared_probe% is null at entry); outer TestRunIsolatesMemoryStackBetweenTests runs both under parallel=1 with a count-equals-2 guard so a silent-discovery miss fails the test.",
+      "deletion_test": "If run.cs:75 `await using var childApp = new App.@this(test.Directory)` were changed to reuse the same App across tests (broken isolation), Probe would read the polluted %shared_probe%=1 and fail. Parallel=1 guarantees deterministic ordering (alphabetical A before B).",
+      "status": "discharged"
+    },
+    "F3_identical_reports": {
+      "v4_fix": "test.report now exposes observable scalars on Data.Properties (format, reportPath, content, summaryTotal, summaryPass, summaryFail, variableSnapshotCount). The 3 Report tests now assert distinct scalars: WritesJunitXml asserts format='junit' + summaryPass + file.exists; IncludesCoverageTables asserts format='json' + summaryPass + file.exists; RendersFailureWithVariables asserts summaryFail=1 + variableSnapshotCount=1 against a _fixtures_fail fixture.",
+      "deletion_test": "PARTIAL: RendersFailureWithVariables discriminates strongly — deleting AssertionError.Variables makes variableSnapshotCount=0. But WritesJunitXml and IncludesCoverageTables have a name-claim gap: neither verifies the actual content of the written file (junit XML vs JSON coverage tables). Deleting `case \"junit\":` routing would leave both passing (format var is preserved regardless of the switch path taken). See F11 below.",
+      "status": "discharged-with-followup"
+    },
+    "F4_missing_elseif_match": {
+      "v4_fix": "Added TestConditionElseIfMatchesRecordsBranchIndex1.test.goal with %x%=7, if/elseif/else chain, asserts branchIndex=1 and %b%=2.",
+      "deletion_test": ".pr correctly maps `module=condition, action=elseif`. Breaking condition.elseif to publish branchIndex=0 → first assert fails. Breaking the elseif body skip → %b% unset → second assert fails.",
+      "status": "discharged"
+    }
+  },
+  "bonus_discharges": {
+    "F5_assert_variables_snapshot": "Now drills into `list.any %results% where Error.Variables.foo equals 42, write to %hasSnapshot%` + `assert %hasSnapshot% is true`. ObjectNavigator was also fixed to walk the inheritance chain so AssertionError.Variables doesn't collide with IError.Variables (AmbiguousMatchException).",
+    "F6_misleading_tagoutside_test": "TestTagOutsideTestIsNoOp.test.goal deleted entirely (honest: no-op branch is unreachable from a .test.goal).",
+    "F7_stale_filter_mirror": "OrchestrateBranchCoverageTests updated to use action.IsIfHead matching the new production filter. Legacy IsFirstConditionInStep kept as a Step-propagation distinguisher.",
+    "F8_operator_enum_string_unit_test": "PLang.Tests/App/Modules/condition/OperatorTests.cs added 3 tests: Equal_EnumLeft_StringRight_NormalizesToEnumName, mirror, and mismatch. All green.",
+    "F9_integration_overlap": "Renamed and split: TestSystemTestGoalDoesNotUseForeach uses assert.notContains (negative test); TestSystemTestGoalIncludesAllThreePhases asserts contains test.discover + test.run + test.report (positive test). Clear discrimination.",
+    "F10_timeout_cancellation": "Run.cs:130 childApp.User.Context.PushCancellation(cts) + PopCancellation in finally. TestRunEnforcesTimeout wallclock dropped from ~5008ms to 1005ms. Latent runtime bug discharged."
+  },
+  "findings": [
+    {
+      "id": 11,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "Tests/TestModule/Report/TestReportWritesJunitXml.test.goal, Tests/TestModule/Report/TestReportIncludesCoverageTables.test.goal",
+      "code_file": "PLang/App/modules/test/report.cs",
+      "issue": "Both tests assert %report.format% on the scalar observable, but neither asserts on the actual content of the written file or the filename. %report.format% just echoes back the Format parameter — it passes even if the file routing is broken. WritesJunitXml would still pass if `case \"junit\":` were deleted (format='junit' still set, default branch writes results.json, file still exists). IncludesCoverageTables has a name-claim about coverage-tables but only verifies format=='json' and that some file exists — deleting the branchCoverage block in BuildJson leaves the test passing.",
+      "impact": "Name-claim mismatch. Tests carry 'WritesJunitXml' and 'IncludesCoverageTables' in their names but don't assert the content those names imply.",
+      "suggestion": "Add one discriminating assert per test: WritesJunitXml → `assert %report.reportPath% contains 'junit.xml'` OR `assert %report.content% contains '<testsuites'`. IncludesCoverageTables → `assert %report.content% contains 'branchCoverage'` OR `assert %report.reportPath% contains 'results.json'`. One line per test. Not a blocker — the tests now discriminate under the deletion test for the scalar-routing itself."
+    }
+  ],
+  "latent_bugs_resolved": {
+    "L1_resolved": "Fixed in commit ea7aeb85. Goal gained LoadedFromPrPath property + GetRuntimeDirectory() method. Path.Resolve (Path.cs:49-73) now derives the runtime directory from where the .pr was loaded (`<dir>/.build/<name>.pr` → `<dir>`), so child-App goal-relative paths resolve correctly. Falls back to the old Goal.Path behaviour for in-memory goals (tests/fixtures built without a file path).",
+    "L2_resolved": "Fixed at provider level (DefaultAssertProvider.Contains:65-81). Both Contains and NotContains now check `ContainsValue(v, c) || ContainsValue(c, v)` — symmetric — so the builder LLM's Value/Container flip is tolerated. Runtime behaviour is correct regardless of which way the arguments were mapped. (Action-class parameter names still read 'backwards' to a human, but it no longer breaks tests.)"
+  },
+  "verdict": "approved",
+  "summary": "All 4 major findings from tester v5 (F1-F4) discharged. Bonus: F5-F10 all discharged (F10 was flagged as out-of-scope latent runtime bug — coder shipped the cts.Token-binding fix anyway, TestRunEnforcesTimeout wallclock dropped from ~5s to 1s). C# 2274/2275 (same pre-existing LLM flake), PLang Tests/TestModule 18/18 green. One minor new finding F11: WritesJunitXml and IncludesCoverageTables have name-claims their scalar assertions don't verify — the file CONTENT isn't checked. Not a blocker; one-line fix per test. Recommend routing to security next."
+}

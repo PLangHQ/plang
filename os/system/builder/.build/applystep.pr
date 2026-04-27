@@ -1,0 +1,521 @@
+{
+  "name": "ApplyStep",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "if %stepResult.keep% is true, call ApplyKeptStep",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Validates and applies step result\nkeep:true \u2192 reuse prior .pr actions, no merge, no detail pass\notherwise level=high \u2192 use as-is, medium/low \u2192 run BuildStep with guidance",
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%stepResult.keep%",
+              "type": "bool"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ApplyKeptStep",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "When %stepResult.keep% is true, call ApplyKeptStep. This is a conditional branch step; the body is a single goal.call. Use condition.if with Left as bool, Operator ==, Right true.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %stepResult.keep% is not true, call ApplyBuiltStep",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%stepResult.keep%",
+              "type": "bool"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Negate",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ApplyBuiltStep",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Second conditional branch: when stepResult.keep is not true, call ApplyBuiltStep. This is the else-case for keep=true, so it should be a condition.if with Negate=true and then a goal.call to ApplyBuiltStep.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "ApplyKeptStep",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out \u0022  Kept prior mapping for step %stepResult.index%\u0022",
+          "lineNumber": 12,
+          "indent": 0,
+          "comment": "keep:true short-circuit \u2014 prior actions are already on the step from MergeFrom\nNothing to validate, nothing to merge. The step is ready as-is.",
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "  Kept prior mapping for step %stepResult.index%",
+                  "type": "string"
+                },
+                {
+                  "name": "Channels",
+                  "value": "this",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/ApplyStep.goal",
+      "prPath": "/.build/applystep.pr",
+      "hash": "e333486ac6233a0a30c2e93c2af202d4c33e6f264a8b5fcc4beef45020601d8e",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "ApplyBuiltStep",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "builder.validate actions=%stepResult.actions%, on error call HandleValidationError",
+          "lineNumber": 17,
+          "indent": 0,
+          "comment": "Standard apply path for fresh-build or refined steps",
+          "actions": [
+            {
+              "module": "builder",
+              "action": "validate",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": "%stepResult.actions%",
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": null,
+              "modifiers": [
+                {
+                  "module": "error",
+                  "action": "handle",
+                  "parameters": [
+                    {
+                      "name": "Actions",
+                      "value": [
+                        {
+                          "module": "goal",
+                          "action": "call",
+                          "parameters": [
+                            {
+                              "name": "GoalName",
+                              "value": {
+                                "name": "HandleValidationError"
+                              },
+                              "type": "goal.call"
+                            }
+                          ],
+                          "defaults": null,
+                          "modifiers": []
+                        }
+                      ],
+                      "type": "list\u003Caction\u003E"
+                    }
+                  ],
+                  "defaults": [
+                    {
+                      "name": "ignoreerror",
+                      "value": false,
+                      "type": "bool"
+                    }
+                  ],
+                  "modifiers": []
+                }
+              ]
+            }
+          ],
+          "intent": null,
+          "guidance": "Run builder.validate for the LLM-produced step actions. If validation fails, handle the error by calling HandleValidationError via error.handle Actions=[goal.call ...].",
+          "level": "high",
+          "confidence": 92,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "builder.merge step=%goal.Steps[stepResult.index]%, stepFromLlm=%stepResult%, write to %goal.Steps[stepResult.index]%",
+          "lineNumber": 18,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "builder",
+              "action": "merge",
+              "parameters": [
+                {
+                  "name": "Step",
+                  "value": "%goal.Steps[stepResult.index]%",
+                  "type": "step"
+                },
+                {
+                  "name": "StepFromLlm",
+                  "value": "%stepResult%",
+                  "type": "step"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%goal.Steps[stepResult.index]%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Merge the LLM step result into the existing goal step, then write the merged step back into %goal.Steps[stepResult.index]% by setting the variable to %__data__%.",
+          "level": "high",
+          "confidence": 90,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "if %stepResult.level% != \u0022high\u0022, call BuildStep",
+          "lineNumber": 19,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%stepResult.level%",
+                  "type": "string"
+                },
+                {
+                  "name": "Operator",
+                  "value": "!=",
+                  "type": "operator"
+                },
+                {
+                  "name": "Right",
+                  "value": "high",
+                  "type": "string"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "negate",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "BuildStep",
+                    "parallel": false,
+                    "parameters": null,
+                    "prPath": "/.build/buildstep.pr"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Conditional refinement: if the built step\u0027s level is not \u0027high\u0027, call BuildStep. The @known mapping indicates the exact prior structure, so we keep it.",
+          "level": "high",
+          "confidence": 92,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/ApplyStep.goal",
+      "prPath": "/.build/applystep.pr",
+      "hash": "c0d98d2d1c7e1f248db0a70c2c8e0d28d9fa845bc4619e023fd49a30b278bc7a",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "HandleValidationError",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out \u0022  Validation error: %!error.Message%\u0022",
+          "lineNumber": 23,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "  Validation error: %!error%",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "write out the validation error message. The placeholder %!error.Message% is invalid in this context; use the runtime error message variable %!error% (object) is not directly printable. Instead, write the error object as-is to match the known mapping intent. Keep the exact output text but remove the invalid placeholder.",
+          "level": "high",
+          "confidence": 55,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "set %goal.Steps[stepResult.index].validationError% = %!error%",
+          "lineNumber": 24,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%goal.Steps[stepResult.index].validationError%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%!error%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "set the step\u0027s validationError variable to the current error object. This is a variable.set with Name referencing the indexed goal step path and Value set to %!error%.",
+          "level": "high",
+          "confidence": 90,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "call BuildStep",
+          "lineNumber": 25,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "BuildStep",
+                    "parallel": false,
+                    "parameters": null,
+                    "prPath": "/.build/buildstep.pr"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "call BuildStep as a goal invocation; @known confirms the exact goal.call shape and prPath, so we keep it canonical.",
+          "level": "high",
+          "confidence": 92,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/ApplyStep.goal",
+      "prPath": "/.build/applystep.pr",
+      "hash": "d44ef719ec271b3d4a9ab83019aa388ac185a38f3b7d3808dd9e7949b348d70c",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/ApplyStep.goal",
+  "prPath": "/.build/applystep.pr",
+  "hash": "a35056ab5e95d7b508f7c72693b636f9b6d251acc1548e569e5ffc0311f0bd24",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

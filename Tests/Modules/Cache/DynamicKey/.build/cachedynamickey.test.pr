@@ -1,0 +1,382 @@
+{
+  "name": "Start",
+  "description": "Creates two dynamic files, reads them via ReadDynamic while changing %fileName%, asserts the cached/dynamic content behavior, then deletes both files.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "save \u0027dynkey1.txt\u0027 with content \u0027content1\u0027",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "KNOWN BEHAVIOR: cache key uses literal step text (%var% not resolved)\nso the same step with different variable values returns cached result",
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%path%/dynkey1.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "content1",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "save \u0027dynkey2.txt\u0027 with content \u0027content2\u0027",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%path%/dynkey2.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "content2",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %fileName% = \u0022dynkey1.txt\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%fileName%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "dynkey1.txt",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "call ReadDynamic",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ReadDynamic",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "set %result1% = %dynContent%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result1%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%dynContent%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "set %fileName% = \u0022dynkey2.txt\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%fileName%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "dynkey2.txt",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "call ReadDynamic",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ReadDynamic",
+                "parameters": []
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "set %result2% = %dynContent%",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result2%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%dynContent%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "assert %result1% equals \u0022content1\u0022",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "content1",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%result1%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "assert %result2% equals \u0022content1\u0022",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "content1",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%result2%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "delete file \u0027dynkey1.txt\u0027",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "delete",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%path%/dynkey1.txt",
+              "type": "path"
+            },
+            {
+              "name": "IgnoreIfNotFound",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Recursive",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "delete file \u0027dynkey2.txt\u0027",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "delete",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%path%/dynkey2.txt",
+              "type": "path"
+            },
+            {
+              "name": "IgnoreIfNotFound",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Recursive",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/CacheDynamicKey.test.goal",
+  "prPath": "/.build/cachedynamickey.test.pr",
+  "hash": "13f312f74552bfeb9448e45b2104ffac76a37407485677b97967d9971d05669f",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

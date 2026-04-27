@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "POST http://example.org, write to %json%",
-    "response": "{\"FunctionName\": \"Post\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"url\",\n\"Value\": \"http://example.org\"},\n{\"Type\": \"Object\",\n\"Name\": \"data\",\n\"Value\": null},\n{\"Type\": \"Boolean\",\n\"Name\": \"doNotSignRequest\",\n\"Value\": false},\n{\"Type\": \"Dictionary`2<String, Object>\",\n\"Name\": \"headers\",\n\"Value\": null},\n{\"Type\": \"String\",\n\"Name\": \"encoding\",\n\"Value\": \"utf-8\"},\n{\"Type\": \"String\",\n\"Name\": \"contentType\",\n\"Value\": \"application/json\"},\n{\"Type\": \"Int32\",\n\"Name\": \"timeoutInSeconds\",\n\"Value\": 30}],\n\"ReturnValue\": [{\"Type\": \"Object\",\n\"VariableName\": \"json\"}]}",
-    "created": "2024-02-07T13:05:25.4429642+00:00"
-  }
-]

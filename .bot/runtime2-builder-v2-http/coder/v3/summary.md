@@ -14,12 +14,12 @@ Added 25 tests across 3 files. All 59 HTTP tests pass (1915 total, 3 pre-existin
 - FormatException → InvalidContent/400
 
 **Streaming (7 tests)** — `RequestActionTests.cs`
-- StreamLines: multi-line text, verifies MemoryStack receives each line
+- StreamLines: multi-line text, verifies Variables receives each line
 - StreamSSE: SSE format parsing (data: fields + blank line boundaries)
 - StreamSSE multi-line: concatenates multi-data events with newline
 - StreamBytes: binary chunk delivery
 - Stream error response: 500 returns error, doesn't attempt streaming
-- Custom var name: GoalCall parameter %myChunk% maps to MemoryStack key
+- Custom var name: GoalCall parameter %myChunk% maps to Variables key
 - Unsigned plang stream: rejects application/plang streaming when unsigned
 
 **Header merging (2 tests)** — `RequestActionTests.cs`
@@ -29,7 +29,7 @@ Added 25 tests across 3 files. All 59 HTTP tests pass (1915 total, 3 pre-existin
 **Signed requests (4 tests)** — `RequestActionTests.cs`
 - Unsigned=false → X-Signature header present + Accept: application/plang
 - X-Signature is valid JSON with Identity and Signature fields
-- Valid signed plang response → !ServiceIdentity set on MemoryStack
+- Valid signed plang response → !ServiceIdentity set on Variables
 - Invalid signature in plang response → error returned
 
 **Form upload (4 tests)** — `UploadActionTests.cs`
@@ -56,6 +56,6 @@ public async Task Get_HttpRequestException_ReturnsHttpError()
 ```
 
 ## Files modified
-- `PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs` — 16→35 tests
-- `PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs` — 7→11 tests
-- `PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs` — 6→7 tests
+- `PLang.Tests/App/Modules/http/RequestActionTests.cs` — 16→35 tests
+- `PLang.Tests/App/Modules/http/UploadActionTests.cs` — 7→11 tests
+- `PLang.Tests/App/Modules/http/ConfigureActionTests.cs` — 6→7 tests

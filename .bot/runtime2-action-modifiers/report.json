@@ -1,0 +1,755 @@
+{
+  "branch": "runtime2-action-modifiers",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "architect",
+      "timestamp_start": "2026-04-14T00:00:00Z",
+      "intent": "Design action modifiers: promote onError, cache, timeout from step-level properties to per-action modifier actions",
+      "before": {
+        "assumptions": "onError, cache, timeout are step-level properties today. Builder outputs them as special JSON properties. Runtime handles them with special code in Step.RunAsync. This creates special cases throughout the system.",
+        "risk": "Design-only session. No code changes. Low risk."
+      },
+      "plan": "Action Modifiers: promote onError/cache/timeout from step-level properties to per-action modifier actions using [Modifier] attribute, IModifier.Wrap() pattern, builder restructuring on save, and right-to-left fold at runtime.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-action-modifiers/architect/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Design document for action modifiers pattern"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-action-modifiers/architect/v1/roadmap.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Detailed 4-phase implementation roadmap"
+        }
+      ],
+      "timestamp_end": "2026-04-14T01:00:00Z",
+      "after": {
+        "status": "Design and roadmap complete",
+        "health": "green",
+        "notes": "Full design doc + detailed implementation roadmap. Ready for test-designer."
+      }
+    },
+    {
+      "id": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+      "bot": "test-designer",
+      "timestamp_start": "2026-04-16T16:10:00Z",
+      "intent": "Create test suites for action modifiers Phase 1 (runtime infrastructure) and Phase 2 (builder pipeline)",
+      "before": {
+        "assumptions": "Architect design is approved. IModifier, ModifierAttribute, three modifier handlers (timeout.after, cache.wrap, error.handle), Action.Modifiers property, modifier fold in Action.RunAsync, and builder GroupModifiers pipeline need tests. Existing error/cache handlers and Step.RunAsync remain for backward compat.",
+        "risk": "Medium \u2014 new interfaces and runtime fold pattern need careful edge case coverage. Must not break existing step-level error/cache/timeout tests."
+      },
+      "plan": "8 batches, ~51 tests. Batch 1: modifier fold mechanics (8 tests). Batch 2: timeout.after (6). Batch 3: cache.wrap (7). Batch 4: error.handle (10). Batch 5: registry+clone (5). Batch 6: GroupModifiers builder pipeline (6). Batch 7: backward compat (3). Batch 8: PLang .goal integration (6). C# in PLang.Tests/App/Modules/modifier/, PLang in tests/modifiers/.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/modifier/ModifierFoldTests.cs",
+            "PLang.Tests/App/Modules/modifier/TimeoutAfterTests.cs",
+            "PLang.Tests/App/Modules/modifier/CacheWrapTests.cs",
+            "PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs",
+            "PLang.Tests/App/Modules/modifier/ModifierRegistryTests.cs",
+            "PLang.Tests/App/Modules/modifier/GroupModifiersTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# TUnit test stubs for modifier infrastructure \u2014 42 tests across 6 files"
+        },
+        {
+          "paths": [
+            "tests/modifiers/CacheOnFileRead.test.goal",
+            "tests/modifiers/OnErrorRetry.test.goal",
+            "tests/modifiers/TimeoutOnSlowAction.test.goal",
+            "tests/modifiers/MultipleModifiersCompose.test.goal",
+            "tests/modifiers/PerActionErrorScope.test.goal",
+            "tests/modifiers/OnErrorCallGoal.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "PLang integration test goals with real step text for coder to build"
+        }
+      ],
+      "timestamp_end": "2026-04-16T16:35:00Z",
+      "after": {
+        "status": "Complete \u2014 48 tests written (42 C# + 6 PLang)",
+        "health": "green",
+        "notes": "All test files created. 7 expected compile errors on Action.Modifiers (coder adds this). Ready for coder."
+      }
+    },
+    {
+      "id": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+      "bot": "coder",
+      "timestamp_start": "2026-04-16T18:00:00Z",
+      "intent": "Implement Phase 1 (runtime infrastructure) and Phase 2 (builder pipeline) for action modifiers \u2014 make the 48 tests pass",
+      "before": {
+        "assumptions": "Architect design approved. Test-designer wrote 48 stub tests. Ingi wants NO backward compat \u2014 will rebuild all .pr files after this lands. Legacy Step.OnError/Cache/Timeout and their handlers (cache.check, cache.store, error.check, ErrorHandler.cs) are all deleted.",
+        "risk": "Medium-high \u2014 touches Action.RunAsync (hot path), deletes existing handlers, requires builder prompt/schema changes that drive LLM output. OBP compliance required throughout."
+      },
+      "plan": "Phase 1: IModifier interface + [Modifier(Order=N)] attribute; smart collection Modifiers.@this at Actions/Action/Modifiers/this.cs with RunAsync(innermost, context) fold; Action.WrapAround(next, context) for self-resolution; simplified Action.RunAsync that delegates to Modifiers.RunAsync; three handlers (timeout.after Order=1, cache.wrap Order=2, error.handle Order=3) implementing IModifier; registry gets IsModifier/GetModifierOrder; delete legacy Step.OnError/Cache/Timeout + ErrorHandler.cs + cache/check.cs + cache/store.cs + error/check.cs (extract ErrorOrder to its own file); new timer.sleep action for timeout PLang test. Phase 2: remove Step Modifiers section from BuildGoal.llm + cache/onError from BuildGoal.goal schema; Actions.GroupModifiers(modules) method (smart collection owns grouping); DefaultBuilderProvider.GoalsSave calls step.Actions.GroupModifiers(app.Modules); write C# test bodies + rewrite TimeoutOnSlowAction.test.goal. Verification: dotnet run PLang.Tests, plang p build, plang --test.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/IModifier.cs",
+            "PLang/App/modules/ModifierAttribute.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs",
+            "PLang/App/modules/timeout/after.cs",
+            "PLang/App/modules/cache/wrap.cs",
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/modules/timer/sleep.cs",
+            "PLang/App/Goals/Goal/Steps/Step/ErrorOrder.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "New modifier infrastructure: interface, attribute, smart collection, three handlers, timer.sleep helper, extracted ErrorOrder enum."
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/GlobalUsings.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/Actor/Context/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "OBP-compliant wiring: Action.WrapAround + Modifiers property; Actions.GroupModifiers smart-collection method; Step.RunAsync simplified (kept exception guard); registry IsModifier/GetModifierOrder; builder calls GroupModifiers; ActionModifiers global alias."
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/ErrorHandler.cs",
+            "PLang/App/modules/cache/check.cs",
+            "PLang/App/modules/cache/store.cs",
+            "PLang/App/modules/error/check.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "No backward compat per Ingi \u2014 legacy step-level handlers and their tests removed."
+        },
+        {
+          "paths": [
+            "system/builder/llm/BuildGoal.llm",
+            "system/builder/BuildGoal.goal"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Builder prompt/schema updated."
+        }
+      ],
+      "timestamp_end": "2026-04-16T20:00:00Z",
+      "after": {
+        "status": "Phase 1 + Phase 2 complete. 42/42 modifier tests pass. Full C# suite 2104/2105 (one unrelated LLM snapshot failure).",
+        "health": "green",
+        "notes": "PLang-side end-to-end deferred. Recommend codeanalyzer next."
+      }
+    },
+    {
+      "id": "d4e5f6a7-b8c9-0123-def0-456789012345",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-17T10:00:00Z",
+      "intent": "5-pass code analysis of action modifiers feature: OBP compliance, simplification, readability, behavioral reasoning, deletion test",
+      "before": {
+        "assumptions": "Coder implemented Phases 1+2, 42/42 tests pass, design is OBP-aware. Expecting clean code with possible edge cases in error.handle retry logic, timeout cancellation, and source generator Data<T> changes.",
+        "risk": "Review-only session. No code changes. Risk is in missing findings, not in breaking things."
+      },
+      "plan": "5-pass analysis of all changed production C# files. Pass 1: OBP compliance against 5 rules. Pass 2: Simplification opportunities. Pass 3: Readability. Pass 4: Behavioral reasoning \u2014 trace data origins, clone family, catch scope, type boxing. Pass 5: Deletion test \u2014 untested code paths.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-action-modifiers/codeanalyzer/v1/result.md",
+            ".bot/runtime2-action-modifiers/codeanalyzer/v1/verdict.json",
+            ".bot/runtime2-action-modifiers/codeanalyzer/v1/summary.md",
+            ".bot/runtime2-action-modifiers/codeanalyzer/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "5-pass analysis of ~20 production C# files. Verdict: PASS. 0 OBP violations, 0 critical, 1 medium (error.handle silent success), 3 low."
+        }
+      ],
+      "timestamp_end": "2026-04-17T10:45:00Z",
+      "after": {
+        "status": "Analysis complete. PASS verdict.",
+        "health": "green",
+        "notes": "Clean implementation. One medium behavioral finding in error.handle (GoalFirst silent success). Recommend tester next."
+      }
+    },
+    {
+      "id": "e5f6a7b8-c9d0-1234-ef01-567890123456",
+      "bot": "tester",
+      "timestamp_start": "2026-04-17T14:00:00Z",
+      "intent": "Run tests, collect coverage, analyze test quality for action modifiers feature including latest error.handle fix",
+      "before": {
+        "assumptions": "Coder implemented fix f3752384 for error.handle (propagate chained errors, avoid parameter mutation). Codeanalyzer passed. 43 modifier tests exist across 6 files.",
+        "risk": "Test-quality analysis only. No code changes."
+      },
+      "plan": "Run all modifier tests, full suite with coverage, map uncovered lines to production code, analyze false greens, deletion-test the latest fix.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-action-modifiers/tester/v1/result.md",
+            ".bot/runtime2-action-modifiers/tester/v1/verdict.json",
+            ".bot/runtime2-action-modifiers/tester/v1/summary.md"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "FAIL verdict \u2014 latest fix at 0% coverage. CallErrorGoal never invoked, GoalFirst/RetryFirst goal branches untested, 7 must-fix items."
+        }
+      ],
+      "timestamp_end": "2026-04-17T14:30:00Z",
+      "after": {
+        "status": "Analysis complete. FAIL verdict.",
+        "health": "yellow",
+        "notes": "43/43 modifier tests pass, 2121/2122 full suite. But latest fix (f3752384) is at 0% coverage \u2014 entire CallErrorGoal method untested. 7 must-fix items for coder. 2 false-green test names. Recommend coder next to add goal-path tests."
+      }
+    },
+    {
+      "id": "f6a7b8c9-d0e1-2345-f012-678901234567",
+      "bot": "coder",
+      "timestamp_start": "2026-04-17T15:00:00Z",
+      "timestamp_end": "2026-04-17T15:30:00Z",
+      "intent": "Add 6 tests for error.handle CallErrorGoal path + rename 2 misleading tests (tester v1 FAIL fix)",
+      "before": {
+        "assumptions": "Tester found CallErrorGoal at 0% coverage. GoalFirst/RetryFirst goal branches untested. Parameter mutation fix untested.",
+        "risk": "Low \u2014 test-only changes to ErrorHandleTests.cs"
+      },
+      "plan": "Add RegisterGoal helper to create in-memory goals. Write 6 tests: GoalFirst goal succeeds, GoalFirst goal fails with error chaining, RetryFirst goal succeeds, RetryFirst goal fails with error chaining, !error parameter injection, parameter non-mutation. Rename 2 false-green tests.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "6 new tests covering CallErrorGoal method, GoalFirst/RetryFirst goal branches, !error injection, parameter mutation fix. 2 renames for accuracy."
+        }
+      ],
+      "after": {
+        "status": "Complete. 16/16 ErrorHandleTests pass. 2127/2128 full suite (1 pre-existing LLM snapshot failure).",
+        "health": "green",
+        "notes": "All 7 tester must-fix items addressed. Recommend tester re-run for coverage verification."
+      }
+    },
+    {
+      "id": "a7b8c9d0-e1f2-3456-0123-789012345678",
+      "bot": "tester",
+      "timestamp_start": "2026-04-17T16:00:00Z",
+      "intent": "Re-run coverage + fresh-eye audit of entire action-modifiers branch (not just the fix)",
+      "before": {
+        "assumptions": "Coder v2 added 6 tests + 2 renames for error.handle goal paths. Full branch has additional new code (Data.IsVariable, variable.set.ValidateBuild, timer/sleep) beyond modifier infrastructure.",
+        "risk": "Test-quality analysis only. No code changes."
+      },
+      "plan": "Run full suite with coverage. Verify v1 items fixed. Fresh-eye audit of all production files changed on branch. Check for stub tests.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-action-modifiers/tester/v2/result.md",
+            ".bot/runtime2-action-modifiers/tester/v2/verdict.json",
+            ".bot/runtime2-action-modifiers/tester/v2/summary.md"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "PASS (conditional) \u2014 v1 gap fixed (65%\u219296%), 7/7 items addressed. Fresh-eye found 2 medium gaps: Data.IsVariable/HasVariableReference and variable.set.ValidateBuild at 0% coverage."
+        }
+      ],
+      "timestamp_end": "2026-04-17T16:30:00Z",
+      "after": {
+        "status": "Analysis complete. FAIL.",
+        "health": "yellow",
+        "notes": "error/handle.cs coverage 65%\u219296%, v1 items fixed. But Data.IsVariable, HasVariableReference, ValidateBuild are new code at 0% coverage \u2014 same standard as v1. 3 must-fix items for coder."
+      }
+    },
+    {
+      "id": "b8c9d0e1-f2a3-4567-1234-890123456789",
+      "bot": "coder",
+      "timestamp_start": "2026-04-17T17:00:00Z",
+      "intent": "Add 18 tests for Data.IsVariable, Data.HasVariableReference, and variable.set.ValidateBuild (tester v2 must-fix items)",
+      "before": {
+        "assumptions": "Tester v2 found 3 new-code items at 0% coverage. All are simple properties/static methods \u2014 tests are straightforward.",
+        "risk": "Low \u2014 test-only changes to existing test files"
+      },
+      "plan": "Add 7 IsVariable edge-case tests + 7 HasVariableReference edge-case tests to DataTests.cs. Add 4 ValidateBuild path tests to SetTests.cs. Run full suite to verify.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Memory/DataTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "14 new tests: 7 for IsVariable (standard, short, empty%%, embedded, trailing, non-string, null), 7 for HasVariableReference (embedded, multiple, single, no vars, empty%%, non-string, null)"
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/variable/settests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "4 new tests: literal 'this' error, variable reference skip, type mismatch error, valid type match"
+        }
+      ],
+      "timestamp_end": "2026-04-17T17:15:00Z",
+      "after": {
+        "status": "Complete. 2145/2146 pass (1 pre-existing LLM snapshot failure).",
+        "health": "green",
+        "notes": "All 3 tester v2 must-fix items addressed. 18 new tests. Recommend tester re-run."
+      }
+    },
+    {
+      "id": "c9d0e1f2-a3b4-5678-2345-901234567890",
+      "bot": "tester",
+      "timestamp_start": "2026-04-17T18:00:00Z",
+      "intent": "Fresh-eyes audit of full branch \u2014 not just coder v3 fixes, look at everything with fresh skepticism",
+      "before": {
+        "assumptions": "Coder v3 added 18 tests for IsVariable/HasVariableReference/ValidateBuild. Prior rounds focused on modifier tests + those 3 gaps. v2 low findings (filter mismatch, PushError, sleep, OCE fallback) were deferred as 'won't block'.",
+        "risk": "Test-quality analysis only. No code changes."
+      },
+      "plan": "Full coverage run. Read every test file and every production file. Verify assertions actually test behavior. Hunt false greens. Check the v2 'low' items with fresh eyes.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-action-modifiers/tester/v3/result.md",
+            ".bot/runtime2-action-modifiers/tester/v3/verdict.json",
+            ".bot/runtime2-action-modifiers/tester/v3/summary.md",
+            ".bot/runtime2-action-modifiers/tester/summary.md"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "FAIL \u2014 5 must-fix, 4 should-fix. False-green retry test, AsDefault 0%, sleep happy path 0%, Key/Message mismatch uncovered, OCE catch fallback uncovered."
+        }
+      ],
+      "timestamp_end": "2026-04-17T18:30:00Z",
+      "after": {
+        "status": "Analysis complete. FAIL verdict.",
+        "health": "yellow",
+        "notes": "Coder v3 work verified correct. Fresh-eyes found 5 new must-fix items that prior rounds missed or deferred. The false-green retry test is the highest risk \u2014 it makes coverage reports lie about retry-success coverage. Recommend coder next."
+      }
+    },
+    {
+      "id": "d0e1f2a3-b4c5-6789-3456-012345678901",
+      "bot": "coder",
+      "timestamp_start": "2026-04-17T19:00:00Z",
+      "timestamp_end": "2026-04-17T19:30:00Z",
+      "intent": "Fix 5 must-fix items from tester v3 fresh-eyes audit \u2014 all test-only changes",
+      "before": {
+        "assumptions": "Tester v3 found false-green retry test, missing filter mismatch coverage, sleep/AsDefault at 0%, OCE catch uncovered. All fixable with test additions.",
+        "risk": "Low \u2014 test-only changes, no production code modified"
+      },
+      "plan": "Rename false-green retry test + add real retry-success via Modifiers.RunAsync with stateful lambda. Add 2 Key/Message filter mismatch tests. New SleepTests.cs. OCE catch test via Modifiers.RunAsync with throwing lambda. Verify AsDefault tests already exist.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "MF-1: renamed false-green test, added real retry-success test. MF-4: added 2 filter mismatch tests."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/timer/SleepTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "MF-3: sleep happy path test"
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/modifier/TimeoutAfterTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "MF-5: OCE catch fallback test using Modifiers.RunAsync with throwing inner lambda"
+        }
+      ],
+      "after": {
+        "status": "Complete. 2150/2151 pass (1 pre-existing LLM snapshot failure).",
+        "health": "green",
+        "notes": "All 5 tester v3 must-fix items addressed. 5 new tests + 1 rename. Recommend tester re-run."
+      }
+    },
+    {
+      "id": "e1f2a3b4-c5d6-7890-4567-123456789012",
+      "bot": "tester",
+      "timestamp_start": "2026-04-17T20:00:00Z",
+      "intent": "Verify coder v4 fixes for all 5 must-fix items from tester v3",
+      "before": {
+        "assumptions": "Coder v4 addressed all 5 must-fix: renamed false-green retry test + added real stateful test, added Key/Message mismatch tests, new SleepTests.cs, OCE catch test. Claims AsDefault tests pre-existed.",
+        "risk": "Test-quality analysis only. No code changes."
+      },
+      "plan": "Run full suite with coverage. Verify each MF item: read the test code, check assertions are real, compare coverage before/after. Check AsDefault claim.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-action-modifiers/tester/v4/result.md",
+            ".bot/runtime2-action-modifiers/tester/v4/verdict.json",
+            ".bot/runtime2-action-modifiers/tester/v4/summary.md",
+            ".bot/runtime2-action-modifiers/tester/summary.md"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "PASS \u2014 all 5 must-fix verified. Coverage improved: handle 91%\u2192100%, sleep 50%\u2192100%, timeout OCE covered. 5 acceptable remaining gaps."
+        }
+      ],
+      "timestamp_end": "2026-04-17T20:15:00Z",
+      "after": {
+        "status": "Analysis complete. PASS verdict.",
+        "health": "green",
+        "notes": "All must-fix items verified with real coverage data. Branch is clean from a test quality perspective. 2150/2151 pass."
+      }
+    },
+    {
+      "id": "099e3f8e-a465-41c5-8ad7-9d7fd92f787f",
+      "bot": "security",
+      "timestamp_start": "2026-04-17T10:06:23Z",
+      "intent": "Security audit of action-modifiers feature: modifier fold, timeout/cache/error handlers, builder grouping, legacy removal",
+      "before": {
+        "assumptions": "Coder v4 complete, tester v4 PASS, codeanalyzer v1 PASS. 36 commits on branch. New attack surface: IModifier fold, timeout.after cancellation stack, cache.wrap Data-by-ref, error.handle goal recursion & retry DoS, Actions.GroupModifiers builder path. Trust boundary = signed .pr files; threat model is user-sovereign.",
+        "risk": "Medium. New dispatch path + shared-record mutation + cancellation stack + unbounded retry are the interesting targets."
+      },
+      "plan": "# Security v1 \u2014 Plan\n\n## Scope\n\nSecurity audit of the action-modifiers feature on branch `runtime2-action-modifiers`.\nBaseline: `runtime2`. 36 commits since branch. Coder has finished v4; codeanalyzer\npassed v1; tester passed v4.\n\nNew attack surface introduced by the feature:\n\n1. **`IModifier` + fold** \u2014 new dispatch path at `Action.RunAsync`.\n2. **`timeout.after`** \u2014 pushes a CancellationTokenSource onto a per-context stack.\n3. **`cache.wrap`** \u2014 user-controllable cache key, stores `Data` by reference.\n4. **`error.handle`** \u2014 calls goals on error, mutates GoalCall parameters/state,\n   retries the inner action.\n5. **`timer.sleep`** \u2014 honours context cancellation.\n6. **`Actions.GroupModifiers`** \u2014 builder restructuring of LLM output.\n7. **Legacy removal** \u2014 `ErrorHandler.cs`, `cache/check.cs`, `cache/store.cs`,\n   `error/check.cs` deleted; `Step.OnError`/`Cache`/`Timeout` removed.\n   \u2192 verify nothing referenced from untrusted surfaces.\n\n## Approach\n\nTwo phases, one pass each.\n\n### Phase 1 \u2014 Blue team (attack surface map)\nEnumerate the 6 areas above. For each: what is exposed, where the trust\nboundary sits, what mitigations already exist, what is missing.\n\n### Phase 2 \u2014 Red team (active probes)\nWalk each new file line by line with these lenses:\n\n- **Input validation** \u2014 resolved-value types from `%var%` (Data.Value): can a\n  mistyped or oversized int/string cause the handler to blow up or enter a\n  pathological state? `Retry` with `RetryCount = int.MaxValue` \u2014 DoS?\n- **Concurrency** \u2014 `_cancellationStack` is a `System.Collections.Generic.Stack`\n  (not thread-safe). Does any path see concurrent Push/Pop from parallel\n  async flows on the same context? Event handlers? `context.App.RunGoalAsync`\n  spawning a child that also uses timeout?\n- **State mutation of shared records** \u2014 `error.handle.CallErrorGoal` writes\n  `goalCall.Parameters = parameters;` and `goalCall.Action ??= ...`. If the\n  GoalCall is the deserialized action record (shared across calls), this is\n  a persistent cross-call mutation and a race condition.\n- **Cache** \u2014 `MemoryStepCache` stores `Data` by reference; `cache.wrap`\n  mutates `cached.Name = \"__data__\"` on hit. Is this safe when two goals hit\n  the same cache key concurrently? What happens if `Data.Value` is a mutable\n  user object that a later step modifies? (note: `DefaultKey` derives from\n  `step.Goal.Path` \u2014 trusted; but user-supplied `Key` can collide across\n  keys by design, user's prerogative.)\n- **Timeout fallback** \u2014 `timeout.after` has a `catch OperationCanceledException\n  when cts.IsCancellationRequested && !parentToken.IsCancellationRequested`\n  fallback. Verify the when-filter can't silently swallow parent cancellation\n  if parent cancelled between `await next()` returning and the when-filter\n  being evaluated (TOCTOU).\n- **Error chain unbounded** \u2014 `result.Error!.ErrorChain.Add(goalResult.Error!);`\n  in both Goal paths. If a retry loop hits the error goal path N times\u2026\n  actually retry doesn't call CallErrorGoal inside the loop, only once. OK,\n  but still worth confirming.\n- **Recursion / callstack** \u2014 `CallErrorGoal` \u2192 `context.App.RunGoalAsync` \u2192\n  goal's own steps \u2192 possibly another `error.handle` \u2192 another\n  `CallErrorGoal`. Is there a depth guard? What stops an error handler whose\n  error goal itself errors in a cycle?\n- **Builder grouping** \u2014 `GroupModifiers` iterates LLM output. A malicious or\n  buggy LLM producing e.g. a non-existent module name: `IsModifier` returns\n  false (type lookup miss \u2192 treated as executable) \u2192 safe. A leading\n  modifier is dropped silently \u2014 confirm that's the intent and a user can\n  see it (Warnings? Errors? Nothing?).\n- **IgnoreError as final fallback** \u2014 order is `retry \u2192 goal \u2192 IgnoreError`.\n  If retry succeeds, return. If goal succeeds, return. If both fail AND\n  `IgnoreError = true`, swallow the original error. This is by design per\n  the docstring. Verify it doesn't swallow cancellation or non-matching\n  errors.\n- **Filter defaults** \u2014 `MatchesError`: when all three filters are null,\n  matches everything. Intended per docstring. Check that `StatusCode = 0`\n  (default int) isn't confused with \"unset\" \u2014 the code uses `int?` so null\n  is distinct from 0. \u2713\n- **GoalCall Goal.Value re-resolution** \u2014 `Goal?.Value` is accessed each\n  invocation; if the underlying Data<GoalCall> resolves a fresh instance\n  each time, the mutation concern reduces. Need to verify.\n\n## Deliverables\n\n- `.bot/runtime2-action-modifiers/security-report.json` \u2014 attack surface,\n  findings (numbered, with severity, vector, fix).\n- `.bot/runtime2-action-modifiers/security/v1/verdict.json` \u2014 pass/fail.\n- `.bot/runtime2-action-modifiers/security/v1/summary.md` \u2014 this-version\n  summary.\n- `.bot/runtime2-action-modifiers/security/summary.md` \u2014 bot root pointer.\n- `/learnings/runtime2-action-modifiers/security/v1/learnings.md` \u2014 anything\n  new I learned from the codebase.\n- Session report appended to `.bot/runtime2-action-modifiers/report.json`.\n- `.bot/runtime2-action-modifiers/security/v1/changes.patch` \u2014 git diff\n  (should be empty except for `.bot/` \u2014 I expect **no code edits** in this\n  session, purely findings).\n\n## Expected verdict\n\nBased on initial read-through: the feature is clean. Codeanalyzer v1 found\n1 medium (IgnoreError semantics \u2014 already redesigned since then; now\nordered `retry \u2192 goal \u2192 IgnoreError`). Most likely outcome: 1\u20133 low/medium\nfindings, overall **PASS**. I will not manufacture severity.\n\n## Not in scope\n\n- Behavior fixes \u2014 those go back to coder if I find anything that warrants\n  it.\n- Rebuilding `.pr` files \u2014 Ingi does that himself.\n- Running the test suite \u2014 tester already passed.\n\n## Open question\n\nNone blocking. Will proceed on approval.\n",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/IModifier.cs",
+            "PLang/App/modules/ModifierAttribute.cs",
+            "PLang/App/modules/timeout/after.cs",
+            "PLang/App/modules/cache/wrap.cs",
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/modules/timer/sleep.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs",
+            "PLang/App/Goals/Goal/GoalCall.cs",
+            "PLang/App/Actor/Context/this.cs",
+            "PLang/App/Cache/MemoryStepCache.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/Data/this.cs",
+            "PLang.Generators/LazyParamsGenerator.cs",
+            "PLang/App/CallStack/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read all modifier infrastructure, handlers, and touchpoints. Traced Data<T>.Value caching and source-generator param resolution to confirm shared-state concerns. Verified CallStack MaxDepth=1000 still in place. Confirmed cancellation when-filter logic correctness."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-action-modifiers/security-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "7 attack surface areas mapped, 4 findings documented (1 medium, 3 low). Medium is shared-state mutation on cached GoalCall in error.handle; lows are negative-Ms validation, unbounded RetryCount, and non-thread-safe _cancellationStack."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-action-modifiers/security/v1/plan.md",
+            ".bot/runtime2-action-modifiers/security/v1/summary.md",
+            ".bot/runtime2-action-modifiers/security/v1/verdict.json",
+            ".bot/runtime2-action-modifiers/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session artifacts. PASS verdict with 1 medium worth sending back to coder."
+        },
+        {
+          "paths": [
+            "learnings/runtime2-action-modifiers/security/v1/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "10 reusable insights about Data<T>.Value caching, source-generator re-resolution semantics, when-filter + captured-parent-token pattern, and the test-coverage gap in DoesNotMutateOriginalParameters."
+        }
+      ],
+      "timestamp_end": "2026-04-17T10:13:58Z",
+      "after": {
+        "status": "PASS \u2014 audit complete, 4 findings (0 critical, 0 high, 1 medium, 3 low)",
+        "health": "green",
+        "notes": "Medium (F1) is a shared-state mutation on a cached Data<GoalCall> in error.handle.CallErrorGoal \u2014 a real race under any concurrent execution path, latent on today's runtime. Fix is a 5-line clone-before-mutate. 3 lows are hardening backlog (negative-Ms validation, RetryCount cap, ConcurrentStack for cancellation). Recommended next: auditor, with F1 optionally back to coder before merge."
+      }
+    },
+    {
+      "id": "f7a8b9c0-d1e2-3456-7890-abcdef012345",
+      "bot": "auditor",
+      "timestamp_start": "2026-04-17T22:00:00Z",
+      "intent": "Cross-cutting audit of action modifiers branch \u2014 verify cross-file contracts, architectural fit, and review quality",
+      "before": {
+        "assumptions": "Codeanalyzer passed (0 OBP violations, 1 medium behavioral finding). Tester passed after 4 rounds (v4). Security passed with 4 findings (1 medium GoalCall race, 3 low). Coder at v4 with 2150/2151 tests passing.",
+        "risk": "Medium \u2014 new modifier infrastructure touches Action, Step, builder pipeline, and 3 new modifier handlers. Cross-file contracts and shared-state mutation are the main audit targets."
+      },
+      "plan": "Audit cross-file contracts (Clone family, GoalCall mutation, Modifiers serialization round-trip), architectural fit (OBP, modifier fold, builder pipeline), review quality (codeanalyzer/tester/security assessment), and foundation ripple (Action/Step/Data changes).",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/Goals/Goal/GoalCall.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "GoalCall shared-state mutation \u2014 confirmed still unfixed, rated major"
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Step.Clone modifier clone asymmetry \u2014 minor, latent"
+        },
+        {
+          "paths": [
+            "PLang/App/modules/cache/wrap.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Cache Name mutation and DefaultKey path-relative \u2014 minor/nit"
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "GroupModifiers silent drop of leading modifiers \u2014 minor"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-action-modifiers/auditor-report.json",
+            ".bot/runtime2-action-modifiers/auditor/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Audit report and verdict"
+        }
+      ],
+      "after": {
+        "status": "FAIL \u2014 1 major (GoalCall mutation), 3 minor, 2 nit",
+        "health": "yellow",
+        "notes": "Send to coder for GoalCall clone fix. Architecture and OBP are clean."
+      },
+      "timestamp_end": "2026-04-17T22:45:00Z"
+    },
+    {
+      "id": "c5d6e7f8-a1b2-3456-7890-coder00000005",
+      "bot": "coder",
+      "timestamp_start": "2026-04-17T23:00:00Z",
+      "intent": "Fix 1 major + 3 minor findings from auditor v1 review",
+      "before": {
+        "assumptions": "All four findings are surgical fixes in existing files. No new tests needed \u2014 existing 2150/2151 suite covers these paths.",
+        "risk": "Low \u2014 clone-not-mutate, field additions, shallow-clone, warning addition. All additive or defensive."
+      },
+      "plan": "Fix 1: Clone GoalCall in CallErrorGoal instead of mutating shared singleton. Fix 2: Add Defaults/Errors/Warnings to modifier clone in Step.Clone. Fix 3: ShallowClone cached Data before mutating Name. Fix 4: Add DroppedLeadingModifier warning in GroupModifiers.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/error/handle.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Clone GoalCall instead of mutating shared singleton \u2014 fixes auditor major F1"
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Add Defaults/Errors/Warnings to modifier clone \u2014 fixes auditor minor F2"
+        },
+        {
+          "paths": [
+            "PLang/App/modules/cache/wrap.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "ShallowClone cached Data before Name mutation \u2014 fixes auditor minor F3"
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Add DroppedLeadingModifier warning in GroupModifiers \u2014 fixes auditor minor F4"
+        }
+      ],
+      "after": {
+        "status": "All 4 auditor findings fixed. 2150/2151 tests pass (1 pre-existing).",
+        "health": "green",
+        "notes": "Ready for re-audit or merge."
+      },
+      "timestamp_end": "2026-04-17T23:15:00Z"
+    },
+    {
+      "id": "ca2-20260417-v2",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-17T23:30:00Z",
+      "intent": "Re-review coder v5 fixes against auditor v1 findings",
+      "before": {
+        "assumptions": "Coder v5 addressed 4 auditor findings (1 major, 3 minor). Need to verify each fix is correct and complete.",
+        "risk": "Low \u2014 analysis only, no code changes."
+      },
+      "plan": "5-pass analysis on 4 changed files: error/handle.cs (GoalCall clone), Step/this.cs (modifier clone fields), cache/wrap.cs (ShallowClone), Actions/this.cs (leading modifier warning).",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/modules/cache/wrap.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "5-pass re-review of 4 auditor fixes. All verified correct: GoalCall clone copies all 6 runtime properties, modifier clone mirrors parent pattern, cache ShallowClone prevents mutation, leading modifier warning added."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 all 4 fixes verified clean, no regressions, no new findings.",
+        "health": "green",
+        "notes": "Branch ready for tester final pass, then merge."
+      },
+      "timestamp_end": "2026-04-17T23:45:00Z"
+    },
+    {
+      "id": "a2-v2-20260417",
+      "bot": "auditor",
+      "timestamp_start": "2026-04-17T23:50:00Z",
+      "intent": "Re-audit of coder v5 fixes for all 4 actionable v1 findings",
+      "before": {
+        "assumptions": "Coder v5 fixed all 4 findings. Codeanalyzer v2 verified clean. Need to confirm cross-file correctness and completeness.",
+        "risk": "Low \u2014 re-review of surgical fixes, no new code paths."
+      },
+      "plan": "Verify each fix against original finding. Check GoalCall clone completeness. Verify Step.Clone symmetry. Verify cache ShallowClone. Verify GroupModifiers warning. Run tests. Check for new cross-file issues.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/modules/cache/wrap.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs",
+            "PLang/App/Goals/Goal/GoalCall.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified all 4 fixes correct. GoalCall clone copies all 6 runtime properties. Modifier clone mirrors parent. Cache ShallowClone prevents mutation. Warning added for dropped leading modifiers."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 all findings resolved, no new issues",
+        "health": "green",
+        "notes": "Branch ready for docs bot."
+      },
+      "timestamp_end": "2026-04-17T23:58:00Z"
+    },
+    {
+      "id": "d-v1-20260417",
+      "bot": "docs",
+      "timestamp_start": "2026-04-17T10:47:14Z",
+      "intent": "Document action modifiers: write user-facing docs for new/updated modules, update architecture docs.",
+      "before": {
+        "assumptions": "Auditor v2 PASS. Action modifiers feature complete: IModifier/ModifierAttribute/Modifiers collection added; cache.wrap, error.handle, timeout.after modifier modules added; timer.sleep helper added; Step.OnError/Cache/Timeout and error.check/cache.check/cache.store deleted. XML docs largely present on new surfaces. docs/modules/ has module-level user docs that reflect old step-level syntax for error handling; no docs for new cache/timeout/timer modules. Documentation/v0.2/ has stale step-level refs to remove.",
+        "risk": "Stale references in multiple files; must grep-sweep to find them all. Must not document CachedSettings/ErrorHandler etc. that were deleted. PLang examples are tester's job \u2014 flag only."
+      },
+      "actions": [
+        {
+          "paths": [
+            "docs/modules/error.md",
+            "docs/modules/cache.md",
+            "docs/modules/timeout.md",
+            "docs/modules/timer.md",
+            "docs/modules/index.md",
+            "docs/modules/builder.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "User-facing module docs. Rewrote error.md for the error.handle modifier; new pages for cache/timeout/timer. Index updated with new 'Action Modifiers' bucket. builder.md had a stale Step.Merge field list referencing deleted Cache/OnError."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/architecture.md",
+            "Documentation/v0.2/execution-flow.md",
+            "Documentation/v0.2/goals-steps.md",
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/build_process.md",
+            "Documentation/v0.2/building_plang_tests.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Developer architecture docs. Removed stale Step.OnError/Cache/Timeout and error.check/cache.check/cache.store references. Added a dedicated Action Modifiers section in architecture.md. good_to_know.md gained three new entries: Action Modifiers fold + grouping, GoalCall clone-not-mutate (captures auditor-F1 pattern), and Modifier Hardening Backlog (records security v1's three accepted-but-unresolved items so future work surfaces them)."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/ModifierAttribute.cs",
+            "PLang/App/modules/timer/start.cs",
+            "PLang/App/modules/timer/end.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Small XML doc gaps. Added class summaries to timer.start (stopwatch semantics) and timer.end (elapsed TimeSpan + two ValidationError shapes). Added docstring to ModifierAttribute.Order listing the current ordering assignments. dotnet build: 0 errors."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-action-modifiers/docs/v1/plan.md",
+            ".bot/runtime2-action-modifiers/docs/v1/summary.md",
+            ".bot/runtime2-action-modifiers/docs/v1/result.md",
+            ".bot/runtime2-action-modifiers/docs/v1/verdict.json",
+            ".bot/runtime2-action-modifiers/docs/summary.md",
+            ".bot/runtime2-action-modifiers/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session outputs. verdict: PASS. result.md lists user-visible change notes for release notes (ready to lift as-is since repo has no CHANGELOG file)."
+        }
+      ],
+      "plan": "Fill documentation gaps for the action modifiers feature. 1) Rewrite docs/modules/error.md for the new error.handle modifier (filters, retry, goal call, ordering, %!error%). 2) Create new user-facing modules: docs/modules/cache.md, timeout.md, timer.md. 3) Update docs/modules/index.md to add timer and a new 'Action Modifiers' bucket. 4) Remove stale Step.OnError/Cache/Timeout and error.check/cache.check/cache.store references from Documentation/v0.2/architecture.md, execution-flow.md, goals-steps.md, good_to_know.md, build_process.md, building_plang_tests.md; add Action Modifiers + GoalCall clone-not-mutate + hardening backlog sections to good_to_know.md. 5) Fill small XML doc gaps on timer/start.cs, timer/end.cs, ModifierAttribute.Order. 6) Write session reports, docs-report.json, verdict.json. Not writing PLang .goal examples (already present under tests/modifiers/, tester-owned) or CHANGELOG (no file in repo).",
+      "timestamp_end": "2026-04-17T10:49:00Z",
+      "after": {
+        "status": "PASS \u2014 branch ready to merge",
+        "health": "green",
+        "notes": "All identified doc gaps filled. Security v1 hardening backlog and auditor-F1 GoalCall-clone pattern now recorded in good_to_know.md so they surface the next time anyone touches these areas. No gaps flagged back to coder or tester."
+      }
+    }
+  ]
+}

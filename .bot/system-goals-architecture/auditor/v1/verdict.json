@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "2 critical (foreach ignores Returned flag breaking goal.return contract, skipInfrastructure missing on channel output), 2 major (security fixes without tests, fragile condition detection). Architecture is strong but cross-file contracts have gaps."
+}

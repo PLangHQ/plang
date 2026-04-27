@@ -1,7 +1,0 @@
-{% if step.Comment %}/ {{ step.Comment }}
-{% endif %}- {{ step.Text }}
-{% if step.Actions.size > 0 %}  <= actions: [{% for a in step.Actions %}{"module":"{{ a.Module }}","action":"{{ a.ActionName }}"{% if a.Parameters.size > 0 %},"parameters":[{% for p in a.Parameters %}{"name":"{{ p.Name }}","value":"{{ p.Value }}"}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}{% if a.Return %},"return":[{% for r in a.Return %}{"name":"{{ r.Name }}"}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}
-{% if step.HasSubSteps %}  <= hasSubSteps: true (runtime handles branching via indent — do NOT add GoalIfTrue/GoalIfFalse){% endif %}
-{% if stepResult.guidance %}  <= guidance from pass 1: {{ stepResult.guidance }}{% endif %}
-{% if step.Errors.size > 0 %}  <= errors: [{% for e in step.Errors %}{"key":"{{ e.Key }}","message":"{{ e.Message }}"}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}
-{% if step.Warnings.size > 0 %}  <= warnings: [{% for w in step.Warnings %}{"key":"{{ w.Key }}","message":"{{ w.Message }}"}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}

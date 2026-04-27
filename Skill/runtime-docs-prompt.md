@@ -2,11 +2,11 @@
 
 You are documenting the PLang Runtime — the core execution engine of the PLang programming language. This is the **technical reference** aimed at experienced programmers who need to understand the internals: contributors, module authors, and anyone working deeply with PLang's execution model.
 
-**Important naming**: Call it "Runtime" throughout. Do not call it "Runtime2" — it will be renamed.
+**Important naming**: Call it "Runtime" throughout. Do not call it "App" — it will be renamed.
 
 ## Source Material
 
-Read all C# source files under `PLang/Runtime2/` before writing anything. The documentation must reflect the actual code, not assumptions.
+Read all C# source files under `PLang/App/` before writing anything. The documentation must reflect the actual code, not assumptions.
 
 ## Output
 
@@ -33,7 +33,7 @@ docs/runtime/
 **README.md** is the entry point. It contains:
 - Architecture overview (object-based design philosophy, component diagram)
 - One-paragraph summary of each component with a link to its detail page
-- File structure reference (`PLang/Runtime2/` listing)
+- File structure reference (`PLang/App/` listing)
 
 **Each section file** follows this template:
 
@@ -43,7 +43,7 @@ docs/runtime/
 4. **Code Examples** — C# for internal/runtime APIs. For module public methods (`public Task<GoalResult> Execute(...)` and similar), show PLang usage examples since the caller is a PLang developer, not C#
 5. **Relationships** — how it connects to other components, with links to those docs
 
-Use relative links between files (e.g., `[MemoryStack](memory-stack.md)`, `[GoalResult](goal-result.md)`).
+Use relative links between files (e.g., `[Variables](memory-stack.md)`, `[GoalResult](goal-result.md)`).
 
 ---
 
@@ -71,7 +71,7 @@ Engine
 ├── Goals           (Goal collection loaded from .pr files)
 ├── CallStack       (optional, inherited)
 ├── Events          (before/after goals, variable changes)
-├── MemoryStack     (variable storage with change tracking)
+├── Variables     (variable storage with change tracking)
 ├── Serializers     (pluggable, content-type based)
 └── Modules         (registry of Execute-based modules)
 ```
@@ -82,7 +82,7 @@ Then list each component with a one-paragraph summary and a link to its detail p
 
 The central object. Cover:
 - Constructor — what gets initialized
-- Properties: `System` (PLangAppContext), `User` (PLangContext), `Out` (IO), `In` (IO), `Goals`, `CallStack`, `Events`, `MemoryStack`, `Serializers`, `Modules`
+- Properties: `System` (PLangAppContext), `User` (PLangContext), `Out` (IO), `In` (IO), `Goals`, `CallStack`, `Events`, `Variables`, `Serializers`, `Modules`
 - `Run(string path, object? parameters = null)` — loads goal by path, pushes to CallStack, fires before events, executes, fires after events, pops CallStack, returns GoalResult
 - Lifecycle: construction → load goals → run
 - The Engine class is `partial` — users can extend it in their own files
@@ -158,7 +158,7 @@ The universal return type. Cover:
 - `ErrorInfo` struct: `Message`, `StackTrace`, `Exception`
 - Pattern: no exceptions for control flow — check `result.IsError` instead
 
-### memory-stack.md — MemoryStack & Variables
+### memory-stack.md — Variables & Variables
 
 Cover:
 - `Set(string name, object value, TypeInfo type)` — stores variable with type metadata
@@ -167,7 +167,7 @@ Cover:
 - `TypeInfo` record: `TypeInfo(string ShortName)` with `FullName` property
 - `Properties` — a collection of `ObjectValue` items
 - Change tracking: before `Set()`, fires `OnVariableChanging` event with clone of previous value. After `Set()`, fires `OnVariableChanged`. This only happens when CallStack is enabled
-- `%variable%` syntax in PLang maps to MemoryStack lookups at runtime
+- `%variable%` syntax in PLang maps to Variables lookups at runtime
 - PLang handles type conversion automatically — never manually serialize/convert types, just use variables directly
 
 ### call-stack.md — CallStack & Debugging
@@ -178,7 +178,7 @@ Cover:
 - Inheritance: if a Goal has CallStack enabled, its Steps inherit the same CallStack
 - `engine.CallStack`, `engine.Goals.CallStack`, `goal.CallStack`, `channel.CallStack` — each component can track its own execution
 - CallStack is optional — only tracks when enabled. Disabling = faster execution
-- When enabled, MemoryStack fires variable change events (clone-before-change for undo/audit)
+- When enabled, Variables fires variable change events (clone-before-change for undo/audit)
 - When disabled, no change tracking overhead
 
 ### events.md — Events
@@ -266,7 +266,7 @@ The compiled goal format. Cover:
 - `steps[].module` — which module handles this step
 - `steps[].method` — which method on the module
 - `steps[].line` — line number in original .goal file
-- Variable syntax in text: `%name%` resolved at runtime from MemoryStack
+- Variable syntax in text: `%name%` resolved at runtime from Variables
 - Type hints in text: `%name%(type:object)` — parsed by builder, stored as TypeInfo
 
 ### exceptions.md — Exceptions
@@ -303,12 +303,12 @@ Use the example from the source README if one exists, or construct one that exer
 - Keep prose tight. If a code example explains it, don't also explain it in words
 - No marketing language. No "powerful", "elegant", "seamless"
 - Use tables for comparisons and property listings
-- Cross-reference between files using relative links (e.g., "See [MemoryStack](memory-stack.md) for variable storage details")
+- Cross-reference between files using relative links (e.g., "See [Variables](memory-stack.md) for variable storage details")
 
 ## File Structure Reference
 
 ```
-PLang/Runtime2/
+PLang/App/
 ├── Engine.cs
 ├── Contexts.cs            (PLangAppContext, PLangContext)
 ├── IO.cs
@@ -322,7 +322,7 @@ PLang/Runtime2/
 ├── CallStack.cs
 ├── CallFrame.cs
 ├── EventCollection.cs
-├── MemoryStack.cs
+├── Variables.cs
 ├── ObjectValue.cs
 ├── Properties.cs
 ├── SerializerRegistry.cs

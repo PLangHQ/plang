@@ -2,7 +2,7 @@
 
 ## Why
 
-PLang Runtime2 needs Data to be self-describing at IO boundaries — wrapping, compression, encryption as transparent layers. This requires Type to know its Kind, and Kind to drive pipeline decisions. Today type knowledge is scattered across three static/instance lookups with no object ownership. Data itself lacks context, preventing it from navigating to the services it needs.
+PLang App needs Data to be self-describing at IO boundaries — wrapping, compression, encryption as transparent layers. This requires Type to know its Kind, and Kind to drive pipeline decisions. Today type knowledge is scattered across three static/instance lookups with no object ownership. Data itself lacks context, preventing it from navigating to the services it needs.
 
 ---
 
@@ -19,7 +19,7 @@ PLang Runtime2 needs Data to be self-describing at IO boundaries — wrapping, c
 - Add/Remove for runtime extensibility
 
 **What moves:**
-- `PLang/Runtime2/Engine/Utility/TypeMapping.cs` static dictionaries → `Engine.Types` instance
+- `PLang/App/Utility/TypeMapping.cs` static dictionaries → `Engine.Types` instance
 - `PLang/Modules/FileModule/TypeMapping.cs` category + MIME data → `Engine.Types`
 - Pure logic (`ConvertTo`, `IsPrimitive`) is stateless — can stay as static helpers or move, coder's call
 
@@ -32,10 +32,10 @@ PLang Runtime2 needs Data to be self-describing at IO boundaries — wrapping, c
 - Fix `.key` extension conflict (both "presentation" and "certificate" in old code — keep "certificate")
 
 **Source files to read:**
-- `PLang/Runtime2/Engine/Utility/TypeMapping.cs` — current static type mapping (absorb into Types)
+- `PLang/App/Utility/TypeMapping.cs` — current static type mapping (absorb into Types)
 - `PLang/Modules/FileModule/TypeMapping.cs` — category + MIME tables (absorb data)
 - `PLang/Utils/MimeTypeHelper.cs` — MIME data (redundant, dies)
-- `PLang/Runtime2/Engine/this.cs` — Engine root, where Types property goes
+- `PLang/App/this.cs` — Engine root, where Types property goes
 
 ---
 
@@ -59,11 +59,11 @@ PLang Runtime2 needs Data to be self-describing at IO boundaries — wrapping, c
 
 Context is a settable property on Data. Stamped by whoever creates or receives Data and has context:
 
-- **MemoryStack.Set** — stamps context (MemoryStack has it)
+- **Variables.Set** — stamps context (Variables has it)
 - **CodeGeneratedExecuteAsync** — stamps context (receives it as parameter)
 - **Action.RunAsync** — stamps context on result Data before return variable binding
 - **Data.GetChild** — child inherits context from parent
-- **DynamicData** — created by MemoryStack/PLangContext, gets context there
+- **DynamicData** — created by Variables/PLangContext, gets context there
 - **Data.Ok() / Data.FromError()** — creates contextless Data (static factories survive unchanged, context stamped later by pipeline)
 
 ### Type derivation becomes lazy
@@ -81,10 +81,10 @@ Three states:
 - **None** — no explicit Type, Value is null, Type is null
 
 **Source files to read:**
-- `PLang/Runtime2/Engine/Memory/Data.cs` — Data + Type + DynamicData (all three classes)
-- `PLang/Runtime2/Engine/Memory/TypeJsonConverter.cs` — Type serialization (unchanged)
-- `PLang/Runtime2/Engine/Context/` — PLangContext, where context is created
-- `PLang/Runtime2/Engine/Memory/MemoryStack` — where Data is stored and context is available
+- `PLang/App/Memory/Data.cs` — Data + Type + DynamicData (all three classes)
+- `PLang/App/Memory/TypeJsonConverter.cs` — Type serialization (unchanged)
+- `PLang/App/Context/` — PLangContext, where context is created
+- `PLang/App/Memory/Variables` — where Data is stored and context is available
 
 ---
 
@@ -119,8 +119,8 @@ Properties tagged with `[Out]`:
 Inside the runtime (Store, LlmBuilder, Debug, Default views), these stay invisible.
 
 **Source files to read:**
-- `PLang/Runtime2/Engine/View.cs` — existing View enum + attributes
-- `PLang/Runtime2/Engine/Memory/Data.cs` — what goes where in the split
+- `PLang/App/View.cs` — existing View enum + attributes
+- `PLang/App/Memory/Data.cs` — what goes where in the split
 
 ---
 

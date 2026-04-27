@@ -13,9 +13,9 @@ Documentation completeness pass after the cleanup branch (241 files changed). En
 - `Engine/Goals/Goal/GoalCall.cs` — Name, Parameters, PrPath properties
 
 ### Architecture Docs (3 files)
-- `Documentation/Runtime2/modules.md` — library→module rename, IdentityVariable→IdentityData, signing pipeline→ISigningProvider, export returns IdentityData
-- `Documentation/Runtime2/good_to_know.md` — IdentityData is pure Data subclass (not lazy wrapper), condition-only child skipping, PathData : Data, [Sensitive] reference fix
-- `Documentation/Runtime2/README.md` — fixed stale IdentityVariable reference, convert→module in directory tree
+- `Documentation/App/modules.md` — library→module rename, IdentityVariable→IdentityData, signing pipeline→ISigningProvider, export returns IdentityData
+- `Documentation/App/good_to_know.md` — IdentityData is pure Data subclass (not lazy wrapper), condition-only child skipping, PathData : Data, [Sensitive] reference fix
+- `Documentation/App/README.md` — fixed stale IdentityVariable reference, convert→module in directory tree
 
 ### User-Facing Docs (8 files)
 - **Created**: `crypto.md`, `http.md`, `identity.md`, `signing.md`, `provider.md`, `module.md`

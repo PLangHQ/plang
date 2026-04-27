@@ -1,9 +1,9 @@
-using PLang.Runtime2.Engine;
-using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Settings;
-using PLang.Runtime2.actions.archive;
-using EngineType = PLang.Runtime2.Engine.@this;
+using App;
+using App.Context;
+using App.Variables;
+using App.Settings;
+using App.actions.archive;
+using EngineType = App.@this;
 
 namespace PLang.Tests.Runtime2.Engine.Settings;
 
@@ -12,7 +12,7 @@ public class ModuleViewTests
     private (EngineType engine, PLangContext context) CreateEngine()
     {
         var engine = new EngineType("/app");
-        var context = new PLangContext(engine, new MemoryStack());
+        var context = new PLangContext(engine, new Variables());
         return (engine, context);
     }
 
@@ -60,7 +60,7 @@ public class ModuleViewTests
     {
         // Two contexts with different settings. Each ModuleView should see its own value.
         var (engine, context1) = CreateEngine();
-        var context2 = new PLangContext(engine, new MemoryStack());
+        var context2 = new PLangContext(engine, new Variables());
         long classDefault = 100 * 1024 * 1024;
 
         engine.Settings.Set("archive.max", 20L * 1024 * 1024, context1);

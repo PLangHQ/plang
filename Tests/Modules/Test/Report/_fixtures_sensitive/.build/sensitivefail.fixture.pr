@@ -1,0 +1,47 @@
+{
+  "name": "SensitiveFail",
+  "description": "SensitiveFail step asserts that %MyIdentity% equals a non-matching string, intentionally failing and producing an assertion error that includes Actual=%MyIdentity% (with PrivateKey masked later by test.report).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "assert %MyIdentity% equals \u0027will-not-match\u0027",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": "Fails an assertion where %MyIdentity% (which carries a [Sensitive] PrivateKey)\nis the Actual value. Drives Identity into both AssertionError.Actual and the\ncaptured Variables snapshot \u2014 the outer test verifies test.report masks the\nPrivateKey as \u0027******\u0027 before writing. %MyIdentity% is a reserved DynamicData\nthat lazily get-or-creates the default identity, so the fixture is idempotent\nacross runs (no \u0022already exists\u0022 error).",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "will-not-match",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%MyIdentity%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/_fixtures_sensitive/sensitivefail.fixture.goal",
+  "prPath": "/_fixtures_sensitive/.build/sensitivefail.fixture.pr",
+  "hash": "486a2f266226d16f78281757d2d40fed559a23edf1ac4bdf3a1783581b78d4da",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -32,17 +32,17 @@ User asked: "why would there be goal without pr?" → decided to enforce strictl
 ## Files modified
 
 **Production code:**
-- `PLang/Runtime2/Engine/Goals/this.cs` — Enforce PrPath in Add(), fix Names, fix Get() variations, fix GetByPrPathAsync
+- `PLang/App/Goals/this.cs` — Enforce PrPath in Add(), fix Names, fix Get() variations, fix GetByPrPathAsync
 
 **Test code (Path enforcement):**
-- `PLang.Tests/Runtime2/Core/GoalsTests.cs` — All goal creations set Path, 7 new PrPath tests
-- `PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs` — 3 DiscoverAsync tests → RunAsync, 2 new convention tests, Path added
-- `PLang.Tests/Runtime2/Core/EngineTests.cs` — Path added to 10 goals
-- `PLang.Tests/Runtime2/Core/StepRetryTests.cs` — Path added to factory methods
-- `PLang.Tests/Runtime2/Core/StartGoalTests.cs` — Path added to 6 goals
-- `PLang.Tests/Runtime2/Modules/loop/ForeachTests.cs` — Path added to 3 goals
-- `PLang.Tests/Runtime2/Core/StepErrorHandlingTests.cs` — Path added to 2 goals
-- `PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs` — Path added to 3 goals
+- `PLang.Tests/App/Core/GoalsTests.cs` — All goal creations set Path, 7 new PrPath tests
+- `PLang.Tests/App/Goals/Setup/SetupTests.cs` — 3 DiscoverAsync tests → RunAsync, 2 new convention tests, Path added
+- `PLang.Tests/App/Core/EngineTests.cs` — Path added to 10 goals
+- `PLang.Tests/App/Core/StepRetryTests.cs` — Path added to factory methods
+- `PLang.Tests/App/Core/StartGoalTests.cs` — Path added to 6 goals
+- `PLang.Tests/App/Modules/loop/ForeachTests.cs` — Path added to 3 goals
+- `PLang.Tests/App/Core/StepErrorHandlingTests.cs` — Path added to 2 goals
+- `PLang.Tests/App/Modules/condition/ConditionHandlerTests.cs` — Path added to 3 goals
 - `Tests/Builder/Start.pr.json` — Added "path" to JSON fixture
 
 ## Code example

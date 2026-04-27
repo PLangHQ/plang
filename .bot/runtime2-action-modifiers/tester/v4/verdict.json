@@ -1,0 +1,10 @@
+{
+  "verdict": "PASS",
+  "must_fix": 0,
+  "should_fix": 0,
+  "accepted_gaps": 5,
+  "tests_pass": "2150/2151",
+  "pre_existing_failures": 1,
+  "new_failures": 0,
+  "next_bot": null
+}

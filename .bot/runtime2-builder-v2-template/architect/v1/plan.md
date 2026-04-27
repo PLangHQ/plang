@@ -108,7 +108,7 @@ The `callGoal` tag needs engine access to run a goal. The provider gets this thr
 ## Module Structure
 
 ```
-PLang/Runtime2/modules/ui/
+PLang/App/modules/ui/
 ├── render.cs                          — render action handler
 ├── providers/
 │   ├── ITemplateProvider.cs           — provider interface
@@ -159,16 +159,16 @@ In `ResolveProviderType()`:
 
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/ui/render.cs` | Render action handler |
-| `PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs` | Provider interface |
-| `PLang/Runtime2/modules/ui/providers/FluidProvider.cs` | Default Liquid provider (Fluid) |
+| `PLang/App/modules/ui/render.cs` | Render action handler |
+| `PLang/App/modules/ui/providers/ITemplateProvider.cs` | Provider interface |
+| `PLang/App/modules/ui/providers/FluidProvider.cs` | Default Liquid provider (Fluid) |
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Providers/this.cs` | Register `ITemplateProvider` + type mapping |
-| `PLang/Runtime2/GlobalUsings.cs` | Add UI module alias if needed |
+| `PLang/App/Providers/this.cs` | Register `ITemplateProvider` + type mapping |
+| `PLang/App/GlobalUsings.cs` | Add UI module alias if needed |
 
 ## Definition of Done
 

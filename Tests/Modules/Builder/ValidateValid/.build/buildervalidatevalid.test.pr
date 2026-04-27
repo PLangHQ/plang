@@ -1,0 +1,125 @@
+{
+  "name": "Start",
+  "description": "Builds a list of available actions via builder.actions, stores it in %actions%, validates that list with builder.validate, stores the boolean result in %result%, then asserts the result is true.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "get all actions, write to %actions%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test that builder.validateActions accepts known valid module.action pairs",
+      "actions": [
+        {
+          "module": "builder",
+          "action": "actions",
+          "parameters": [],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%actions%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "validate actions %actions%, write to %result%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "builder",
+          "action": "validate",
+          "parameters": [
+            {
+              "name": "Actions",
+              "value": "%actions%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %result% is true, \u0022validateActions should pass for known actions\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "validateActions should pass for known actions",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/BuilderValidateValid.test.goal",
+  "prPath": "/.build/buildervalidatevalid.test.pr",
+  "hash": "98504c4083c32cd63ac88f29d0f91c775bca6cdb3e3e1b518ce79c912cb715c5",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

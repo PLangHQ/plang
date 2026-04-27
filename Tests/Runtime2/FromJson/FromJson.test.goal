@@ -1,9 +1,0 @@
-Start
-- convert '{"name":"test","values":[1,2,3],"nested":{"flag":true,"data":null}}' from json, write to %obj%
-- assert %obj.name% equals "test"
-- assert %obj.values[0]% equals 1
-- assert %obj.values[2]% equals 3
-- assert %obj.nested.flag% is true
-- convert '[{"id":1},{"id":2}]' from json, write to %arr%
-- assert %arr[0].id% equals 1
-- assert %arr[1].id% equals 2

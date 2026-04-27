@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "3 medium findings: PrPath backslash on Linux, GoalCall parameter pollution, Newtonsoft in CommandLineParser. 0 critical." }

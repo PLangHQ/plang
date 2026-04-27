@@ -1,0 +1,177 @@
+{
+  "name": "CreateTemplateFile",
+  "description": "No goal was provided. Please send the %goalForLlm% content (or describe the task you want completed) so I can generate the required JSON plan.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "ask user \u0022Give me a description of the template you need for %fileName%\u0022, write to %user%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call goal ProcessAnswer continue=false",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [],
+      "intent": null,
+      "onError": null,
+      "cache": null,
+      "timeout": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "ProcessAnswer",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "read file llm/CreateTemplateFileSystem.llm, load vars, write to %system%",
+          "lineNumber": 6,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "[llm] system: %system%\nuser: %user%\nmodel: \u0027gpt-4o\u0027\ncontinue prev: %continue%\nscheme: {ask:string|null, templateContent:string}\nwrite to %result%",
+          "lineNumber": 7,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "if %result.ask% is not empty then call AskUser ask=%result.ask%, else SaveTemplate",
+          "lineNumber": 13,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/PlangConsole/bin/Debug/net10.0/system/modules/UiModule/CreateTemplateFile.goal",
+      "prPath": "/PlangConsole/bin/Debug/net10.0/system/modules/UiModule/.build/createtemplatefile.pr",
+      "hash": "5fa48e8d54fc1e69571e6eaf5edaa33bd64a6b20db110b6f855c2aea221a940b",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "AskUser",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "ask user %ask%, write to %user%",
+          "lineNumber": 16,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "call goal ProcessAnswer continue=true",
+          "lineNumber": 17,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/PlangConsole/bin/Debug/net10.0/system/modules/UiModule/CreateTemplateFile.goal",
+      "prPath": "/PlangConsole/bin/Debug/net10.0/system/modules/UiModule/.build/createtemplatefile.pr",
+      "hash": "22482ba5968b232fd026dc84a48199ac360d4669f2eec70e9cfb74f7a381ce36",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "SaveTemplate",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "save %result.templateContent% to %goal.AbsoluteGoalFolderPath%/%fileName%",
+          "lineNumber": 20,
+          "indent": 0,
+          "comment": null,
+          "actions": [],
+          "intent": null,
+          "onError": null,
+          "cache": null,
+          "timeout": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/PlangConsole/bin/Debug/net10.0/system/modules/UiModule/CreateTemplateFile.goal",
+      "prPath": "/PlangConsole/bin/Debug/net10.0/system/modules/UiModule/.build/createtemplatefile.pr",
+      "hash": "199a2f6ae3bccfada9d6acafb432458a788585735ceb56a2e4ee18a0c27fbed7",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/PlangConsole/bin/Debug/net10.0/system/modules/UiModule/CreateTemplateFile.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/modules/UiModule/.build/createtemplatefile.pr",
+  "hash": "bb1df998193eb92e2f535d7f2a83e6fee3d1f8f039ea8b2101bbada12a8631de",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

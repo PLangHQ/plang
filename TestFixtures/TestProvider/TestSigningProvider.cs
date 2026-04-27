@@ -1,7 +1,6 @@
-using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Providers;
-using PLang.Runtime2.modules.signing;
-using PLang.Runtime2.modules.signing.providers;
+using App.Providers;
+using App.modules.signing;
+using App.modules.signing.providers;
 
 namespace TestProvider;
 
@@ -14,18 +13,18 @@ public class TestSigningProvider : ISigningProvider
     public string Name => "test-signing";
     public bool IsDefault { get; set; }
 
-    public Data<KeyPair> GenerateKeyPair()
-        => Data<KeyPair>.Ok(new KeyPair("testPub", "testPriv"));
+    public App.Data.@this<KeyPair> GenerateKeyPair()
+        => App.Data.@this<KeyPair>.Ok(new KeyPair("testPub", "testPriv"));
 
-    public Data Sign(byte[] data, string privateKey)
-        => Data.Ok(new byte[64]);
+    public App.Data.@this Sign(byte[] data, string privateKey)
+        => App.Data.@this.Ok(new byte[64]);
 
-    public Data Verify(byte[] data, byte[] signature, string publicKey)
-        => Data.Ok(true);
+    public App.Data.@this Verify(byte[] data, byte[] signature, string publicKey)
+        => App.Data.@this.Ok(true);
 
-    public Task<Data> SignAsync(sign action)
-        => Task.FromResult(Data.Ok());
+    public Task<App.Data.@this> SignAsync(sign action)
+        => Task.FromResult(App.Data.@this.Ok());
 
-    public Task<Data> VerifyAsync(verify action)
-        => Task.FromResult(Data.Ok(true));
+    public Task<App.Data.@this> VerifyAsync(verify action)
+        => Task.FromResult(App.Data.@this.Ok(true));
 }

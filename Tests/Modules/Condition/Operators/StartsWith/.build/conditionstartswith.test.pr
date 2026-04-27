@@ -1,0 +1,130 @@
+{
+  "name": "Start",
+  "description": "Sets %name% to \u0027hello world\u0027, checks whether it starts with \u0027hello\u0027 and conditionally calls goal WhenStarts, then asserts %result% equals \u0027starts\u0027.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %name% = \u0022hello world\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: startswith string operator calls goal when prefix matches",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "hello world",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %name% startswith \u0022hello\u0022, call WhenStarts",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%name%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "startswith",
+              "type": "string"
+            },
+            {
+              "name": "Right",
+              "value": "hello",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "WhenStarts"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %result% equals \u0022starts\u0022, \u0022GoalIfTrue should have been called for startswith\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "starts",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "GoalIfTrue should have been called for startswith",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ConditionStartsWith.test.goal",
+  "prPath": "/.build/conditionstartswith.test.pr",
+  "hash": "9eab1ffa0ef05bb7e8e7db4591b6dea6797252c0dd395f5a1171047c13377dd2",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -32,5 +32,5 @@ Blocked: requires LLM builder to generate .pr files. Note as future work.
 - Relative returns "." for root path instead of empty string
 
 ## Files to modify
-- `PLang/Runtime2/Engine/Memory/Path.cs` — ResolveDestination in Move, Relative root="."
-- `PLang.Tests/Runtime2/Modules/Path/PathTests.cs` — new + strengthened tests
+- `PLang/App/Memory/Path.cs` — ResolveDestination in Move, Relative root="."
+- `PLang.Tests/App/Modules/Path/PathTests.cs` — new + strengthened tests

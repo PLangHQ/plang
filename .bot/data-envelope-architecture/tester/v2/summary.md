@@ -2,7 +2,7 @@
 
 ## What this is
 
-Test quality analysis of coder v2 — Phase 2 adds Type context navigation (Kind, Compressible, ClrType), Data late-bound context, MemoryStack/PLangContext context stamping, and Engine.Types.KindOf(). 23 new tests added across 3 test files.
+Test quality analysis of coder v2 — Phase 2 adds Type context navigation (Kind, Compressible, ClrType), Data late-bound context, Variables/PLangContext context stamping, and Engine.Types.KindOf(). 23 new tests added across 3 test files.
 
 ## What was done
 

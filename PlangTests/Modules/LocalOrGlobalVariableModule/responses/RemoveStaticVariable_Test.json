@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "remove static variable 'name'",
-    "response": "{\"FunctionName\": \"RemoveStaticVariable\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"name\"}],\n\"ReturnValue\": null}",
-    "created": "2024-02-07T14:11:32.6483662+00:00"
-  }
-]

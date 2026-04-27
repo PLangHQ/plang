@@ -1,7 +1,7 @@
 # Code Analyzer v1 — Summary
 
 ## What this is
-Code simplicity analysis of the `runtime2-settings` branch — strongly typed, goal-scoped module settings for PLang Runtime2. New subsystem: ISettings marker, Settings registry, Scope chain, ModuleView, plus archive.Settings as first consumer.
+Code simplicity analysis of the `runtime2-settings` branch — strongly typed, goal-scoped module settings for PLang App. New subsystem: ISettings marker, Settings registry, Scope chain, ModuleView, plus archive.Settings as first consumer.
 
 ## What was done
 Three-pass analysis (OBP compliance, simplification, readability) of 14 files — 6 new production, 4 modified production (diffs), 3 test files, 1 PLang test goal.
@@ -48,8 +48,8 @@ public T Resolve<T>(string key, PLangContext context, T classDefault)
 Simple, readable, 18 lines. Walks the hierarchy, falls through. The only issue is the hard cast — a one-line fix.
 
 ## Files analyzed
-- `PLang/Runtime2/Engine/Settings/` (ISettings.cs, this.cs, Scope.cs, ModuleView.cs)
-- `PLang/Runtime2/actions/archive/` (Settings.cs, types.cs)
-- `PLang/Runtime2/Engine/this.cs` (diff), `PLangContext.cs` (diff), `Goal/Methods.cs` (diff), `GlobalUsings.cs` (diff)
-- `PLang.Tests/Runtime2/Engine/Settings/` (3 test files)
-- `Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal`
+- `PLang/App/Settings/` (ISettings.cs, this.cs, Scope.cs, ModuleView.cs)
+- `PLang/App/actions/archive/` (Settings.cs, types.cs)
+- `PLang/App/this.cs` (diff), `PLangContext.cs` (diff), `Goal/Methods.cs` (diff), `GlobalUsings.cs` (diff)
+- `PLang.Tests/App/Settings/` (3 test files)
+- `Tests/App/Settings/SetMaxGzipSize/Start.test.goal`

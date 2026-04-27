@@ -1,0 +1,89 @@
+{
+  "name": "ReadWithKey",
+  "description": "Reads keytest.txt, caches the file.read for 5 minutes under key \u0027myKeyTest\u0027, then stores the read result into %keyData% via variable.set.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027keytest.txt\u0027, write to %keyData%\ncache for 5 minutes, key \u0027myKeyTest\u0027",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "keytest.txt",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "cache",
+              "action": "wrap",
+              "parameters": [
+                {
+                  "name": "DurationMs",
+                  "value": 300000,
+                  "type": "long"
+                },
+                {
+                  "name": "Sliding",
+                  "value": false,
+                  "type": "bool"
+                },
+                {
+                  "name": "Key",
+                  "value": "myKeyTest",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%keyData%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ReadWithKey.goal",
+  "prPath": "/.build/readwithkey.pr",
+  "hash": "0c4bc9bc4a1f048eae1406d6c63a3bdfe8fca33e193944a9b5f81f3a87e2356a",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

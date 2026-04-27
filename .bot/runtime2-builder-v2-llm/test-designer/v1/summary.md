@@ -6,7 +6,7 @@ Comprehensive test contract for the LLM module (Piece 7). Defines 70 test stubs 
 
 ## What was done
 
-- Created 8 C# test files in `PLang.Tests/Runtime2/Modules/llm/`:
+- Created 8 C# test files in `PLang.Tests/App/Modules/llm/`:
   - `LlmTypeTests.cs` — 8 tests for LlmMessage, ToolCall, GoalCall changes, ILlmProvider
   - `QueryBasicTests.cs` — 8 tests for simple query, model override, errors, response properties
   - `QueryFormatTests.cs` — 9 tests for format/schema instruction, JSON validation, code block extraction
@@ -17,7 +17,7 @@ Comprehensive test contract for the LLM module (Piece 7). Defines 70 test stubs 
   - `QueryImageTests.cs` — 3 tests for URL/file/multi-image handling
   - `QueryEdgeCaseTests.cs` — 5 tests for empty messages, max tool tracking, null args, missing provider
 
-- Created 8 PLang test files in `Tests/Runtime2/Llm/`:
+- Created 8 PLang test files in `Tests/App/Llm/`:
   - `LlmQuery.test.goal` — basic query
   - `LlmSchema.test.goal` — JSON schema parsing
   - `LlmFormat.test.goal` — format extraction

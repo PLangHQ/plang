@@ -1,0 +1,12 @@
+TestOnErrorRetry
+/ Verifies that error.handle modifier retries a failing action
+- set %counter% = 0
+- call IncrementAndFail
+    on error retry 3 times
+    on error ignore
+/ After 3 retries + original = counter should be 4
+- assert %counter% equals 4
+
+IncrementAndFail
+- set %counter% = %counter% + 1
+- throw error 'intentional failure'

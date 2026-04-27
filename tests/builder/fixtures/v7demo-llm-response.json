@@ -1,0 +1,76 @@
+{
+  "description": "Sets %city% and %message%, then writes %message% to output. The %city% step is annotated @known so the engine will reuse the prior mapping.",
+  "steps": [
+    {
+      "index": 0,
+      "keep": true,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%city%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "Reykjavík",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "formal": "variable.set Name([string] %city%), Value([string] Reykjavík)",
+      "source": "known"
+    },
+    {
+      "index": 1,
+      "guidance": "Assign literal string to %message% using variable.set.",
+      "formal": "variable.set Name([string] %message%), Value([string] \"v7 builder is alive in %city%\")",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%message%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "v7 builder is alive in %city%",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "level": "high",
+      "confidence": 92,
+      "source": "new"
+    },
+    {
+      "index": 2,
+      "guidance": "Write %message% to the current output channel.",
+      "formal": "output.write Data([object] %message%)",
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%message%",
+              "type": "object"
+            }
+          ]
+        }
+      ],
+      "level": "high",
+      "confidence": 95,
+      "source": "new"
+    }
+  ]
+}

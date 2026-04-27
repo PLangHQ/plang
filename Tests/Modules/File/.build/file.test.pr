@@ -1,0 +1,558 @@
+{
+  "name": "Start",
+  "description": "Writes a file, reads it back into %content%, asserts its contents, checks existence into %info%, copies to test_copy.txt and asserts %copied%, moves to test_moved.txt and asserts %moved%, lists files in \u0027.\u0027 into %files% and asserts non-null, then deletes test_output.txt and test_moved.txt for cleanup.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "save \u0022hello world\u0022 to file \u0027test_output.txt\u0027",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "save and read",
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "test_output.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "hello world",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "read file \u0027test_output.txt\u0027, write to %content%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "test_output.txt",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%content%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %content% equals \u0022hello world\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "hello world",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%content%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "check if file \u0027test_output.txt\u0027 exists, write to %info%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "exists",
+      "actions": [
+        {
+          "module": "file",
+          "action": "exists",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "test_output.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%info%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %info% is not null",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%info%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "copy file \u0027test_output.txt\u0027 to \u0027test_copy.txt\u0027",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": "copy",
+      "actions": [
+        {
+          "module": "file",
+          "action": "copy",
+          "parameters": [
+            {
+              "name": "Source",
+              "value": "test_output.txt",
+              "type": "path"
+            },
+            {
+              "name": "Destination",
+              "value": "test_copy.txt",
+              "type": "path"
+            },
+            {
+              "name": "Overwrite",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "IncludeSubfolders",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "read file \u0027test_copy.txt\u0027, write to %copied%",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "test_copy.txt",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%copied%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %copied% equals \u0022hello world\u0022",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "hello world",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%copied%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "move file \u0027test_copy.txt\u0027 to \u0027test_moved.txt\u0027",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": "move",
+      "actions": [
+        {
+          "module": "file",
+          "action": "move",
+          "parameters": [
+            {
+              "name": "Source",
+              "value": "test_copy.txt",
+              "type": "path"
+            },
+            {
+              "name": "Destination",
+              "value": "test_moved.txt",
+              "type": "path"
+            },
+            {
+              "name": "Overwrite",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "read file \u0027test_moved.txt\u0027, write to %moved%",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "test_moved.txt",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%moved%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "assert %moved% equals \u0022hello world\u0022",
+      "lineNumber": 16,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "hello world",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%moved%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "list files in \u0027.\u0027, write to %files%",
+      "lineNumber": 18,
+      "indent": 0,
+      "comment": "list",
+      "actions": [
+        {
+          "module": "file",
+          "action": "list",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": ".",
+              "type": "path"
+            },
+            {
+              "name": "Pattern",
+              "value": "*",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%files%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "assert %files% is not null",
+      "lineNumber": 19,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%files%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "delete file \u0027test_output.txt\u0027",
+      "lineNumber": 21,
+      "indent": 0,
+      "comment": "delete \u002B cleanup",
+      "actions": [
+        {
+          "module": "file",
+          "action": "delete",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "test_output.txt",
+              "type": "path"
+            },
+            {
+              "name": "IgnoreIfNotFound",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Recursive",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 14,
+      "text": "delete file \u0027test_moved.txt\u0027",
+      "lineNumber": 22,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "delete",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "test_moved.txt",
+              "type": "path"
+            },
+            {
+              "name": "IgnoreIfNotFound",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Recursive",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/File.test.goal",
+  "prPath": "/.build/file.test.pr",
+  "hash": "10dc1d6f914c66e6f522885478af03e53d89874069e7d0eebe8434a8c04aefcc",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

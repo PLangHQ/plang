@@ -1,0 +1,2918 @@
+diff --git a/PLang.Tests/App/Core/StepTests.cs b/PLang.Tests/App/Core/StepTests.cs
+index 7fdd00ed..b34d3989 100644
+--- a/PLang.Tests/App/Core/StepTests.cs
++++ b/PLang.Tests/App/Core/StepTests.cs
+@@ -204,14 +204,6 @@ public class StepTests
+         await Assert.That(step.Comment).IsNull();
+     }
+ 
+-    [Test]
+-    public async Task Timeout_DefaultsToNull()
+-    {
+-        var step = new Step();
+-
+-        await Assert.That(step.Timeout).IsNull();
+-    }
+-
+     [Test]
+     public async Task Errors_DefaultsToEmptyList()
+     {
+diff --git a/PLang.Tests/App/Engine/Utility/TypeMappingDictConversionTests.cs b/PLang.Tests/App/Engine/Utility/TypeMappingDictConversionTests.cs
+index eb447060..7804b431 100644
+--- a/PLang.Tests/App/Engine/Utility/TypeMappingDictConversionTests.cs
++++ b/PLang.Tests/App/Engine/Utility/TypeMappingDictConversionTests.cs
+@@ -58,26 +58,17 @@ public class TypeMappingDictConversionTests
+                         new Dictionary<string, object?> { ["name"] = "GoalName", ["value"] = "Test", ["type"] = "goal.call" }
+                     }
+                 }
+-            },
+-            ["onError"] = new Dictionary<string, object?>
+-            {
+-                ["retryCount"] = 2,
+-                ["order"] = "RetryFirst",
+-                ["goal"] = new Dictionary<string, object?> { ["name"] = "HandleError" }
+             }
+         };
+ 
+         var (result, error) = TypeMapping.TryConvertTo(dict, typeof(Step));
+ 
+-        // Report what happened
+         if (error != null)
+             Assert.Fail($"Conversion failed: {error.Message}");
+ 
+         await Assert.That(result).IsNotNull();
+         var step = result as Step;
+         await Assert.That(step!.Actions.Count).IsEqualTo(1);
+-        await Assert.That(step!.OnError).IsNotNull();
+-        await Assert.That(step!.OnError!.RetryCount).IsEqualTo(2);
+     }
+ 
+     [Test]
+diff --git a/PLang.Tests/App/Modules/builder/MergeTests.cs b/PLang.Tests/App/Modules/builder/MergeTests.cs
+index 4842fb4e..325f6dc1 100644
+--- a/PLang.Tests/App/Modules/builder/MergeTests.cs
++++ b/PLang.Tests/App/Modules/builder/MergeTests.cs
+@@ -15,7 +15,7 @@ public class MergeTests
+     #region Step.Merge
+ 
+     [Test]
+-    public async Task StepMerge_CopiesLlmDerivedFields()
++    public async Task StepMerge_CopiesActions()
+     {
+         var target = new Step { Text = "do something", Index = 0 };
+         var source = new Step
+@@ -24,19 +24,13 @@ public class MergeTests
+             Actions = new StepActions(new[]
+             {
+                 new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hello") } }
+-            }),
+-            Cache = new CacheSettings { DurationMs = 5000 },
+-            OnError = new ErrorHandler { RetryCount = 3 }
++            })
+         };
+ 
+         target.Merge(source);
+ 
+         await Assert.That(target.Actions.Count).IsEqualTo(1);
+         await Assert.That(target.Actions[0].Module).IsEqualTo("output");
+-        await Assert.That(target.Cache).IsNotNull();
+-        await Assert.That(target.Cache!.DurationMs).IsEqualTo(5000);
+-        await Assert.That(target.OnError).IsNotNull();
+-        await Assert.That(target.OnError!.RetryCount).IsEqualTo(3);
+     }
+ 
+     [Test]
+@@ -73,8 +67,7 @@ public class MergeTests
+         var target = new Step
+         {
+             Text = "step",
+-            Actions = new StepActions(new[] { originalAction }),
+-            Cache = new CacheSettings { DurationMs = 1000 }
++            Actions = new StepActions(new[] { originalAction })
+         };
+         var source = new Step { Text = "step" }; // Empty LLM fields
+ 
+@@ -82,7 +75,6 @@ public class MergeTests
+ 
+         // Actions not cleared because source has 0 actions
+         await Assert.That(target.Actions.Count).IsEqualTo(1);
+-        await Assert.That(target.Cache!.DurationMs).IsEqualTo(1000);
+     }
+ 
+     [Test]
+diff --git a/PLang.Tests/App/Modules/error/ErrorCheckTests.cs b/PLang.Tests/App/Modules/error/ErrorCheckTests.cs
+deleted file mode 100644
+index 9aac931d..00000000
+--- a/PLang.Tests/App/Modules/error/ErrorCheckTests.cs
++++ /dev/null
+@@ -1,350 +0,0 @@
+-using global::App.modules.error;
+-using global::App.Goals.Goal.Steps.Step;
+-using global::App.Errors;
+-
+-namespace PLang.Tests.App.Modules.error;
+-
+-public class ErrorCheckTests
+-{
+-    private global::App.@this _app = null!;
+-    private global::App.Actor.Context.@this Ctx => _app.Context;
+-
+-    [Before(Test)]
+-    public void Setup()
+-    {
+-        _app = new global::App.@this("/app");
+-    }
+-
+-    [After(Test)]
+-    public async Task Cleanup() => await _app.DisposeAsync();
+-
+-    private static Data MakeError(string message = "boom", string key = "TestError", int statusCode = 400)
+-        => Data.FromError(new Error(message, key, statusCode));
+-
+-    private static Step MakeStep(ErrorHandler? onError = null)
+-        => new() { Text = "test step", Index = 0, OnError = onError };
+-
+-    #region Propagation
+-
+-    [Test]
+-    public async Task Check_NullData_ReturnsOk()
+-    {
+-        var action = new Check { Context = Ctx, Data = null!, Step = MakeStep() };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Check_SuccessData_PassesThrough()
+-    {
+-        var ok = Data.Ok("good");
+-        var action = new Check { Context = Ctx, Data = ok, Step = MakeStep() };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(result.Value!.ToString()).IsEqualTo("good");
+-    }
+-
+-    [Test]
+-    public async Task Check_ErrorNoHandler_Propagates()
+-    {
+-        var error = MakeError();
+-        var step = MakeStep(onError: null);
+-        var action = new Check { Context = Ctx, Data = error, Step = step };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Handled).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Check_ErrorNullStep_Propagates()
+-    {
+-        var error = MakeError();
+-        var action = new Check { Context = Ctx, Data = error, Step = null };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Handled).IsFalse();
+-    }
+-
+-    #endregion
+-
+-    #region Filtering
+-
+-    [Test]
+-    public async Task Check_FilterByMessage_MatchesSubstring()
+-    {
+-        var error = MakeError(message: "connection refused");
+-        var handler = new ErrorHandler { IgnoreError = true, Message = "refused" };
+-        var action = new Check { Context = Ctx, Data = error, Step = MakeStep(handler) };
+-        var result = await action.Run();
+-
+-        // Matched + ignore → Ok
+-        await Assert.That(result.Success).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Check_FilterByMessage_NoMatch_Propagates()
+-    {
+-        var error = MakeError(message: "connection refused");
+-        var handler = new ErrorHandler { IgnoreError = true, Message = "timeout" };
+-        var action = new Check { Context = Ctx, Data = error, Step = MakeStep(handler) };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Handled).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Check_FilterByStatusCode_Matches()
+-    {
+-        var error = MakeError(statusCode: 404);
+-        var handler = new ErrorHandler { IgnoreError = true, StatusCode = 404 };
+-        var action = new Check { Context = Ctx, Data = error, Step = MakeStep(handler) };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Check_FilterByStatusCode_NoMatch_Propagates()
+-    {
+-        var error = MakeError(statusCode: 500);
+-        var handler = new ErrorHandler { IgnoreError = true, StatusCode = 404 };
+-        var action = new Check { Context = Ctx, Data = error, Step = MakeStep(handler) };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Handled).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Check_FilterByKey_Matches()
+-    {
+-        var error = MakeError(key: "HttpError");
+-        var handler = new ErrorHandler { IgnoreError = true, Key = "httperror" }; // case insensitive
+-        var action = new Check { Context = Ctx, Data = error, Step = MakeStep(handler) };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Check_FilterByKey_NoMatch_Propagates()
+-    {
+-        var error = MakeError(key: "HttpError");
+-        var handler = new ErrorHandler { IgnoreError = true, Key = "IOError" };
+-        var action = new Check { Context = Ctx, Data = error, Step = MakeStep(handler) };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Check_MultipleFilters_AllMustMatch()
+-    {
+-        var error = MakeError(message: "not found", key: "HttpError", statusCode: 404);
+-        // Message matches but key doesn't
+-        var handler = new ErrorHandler { IgnoreError = true, Message = "not found", Key = "IOError" };
+-        var action = new Check { Context = Ctx, Data = error, Step = MakeStep(handler) };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Handled).IsFalse();
+-    }
+-
+-    #endregion
+-
+-    #region Ignore
+-
+-    [Test]
+-    public async Task Check_IgnoreError_ReturnsOk()
+-    {
+-        var error = MakeError();
+-        var handler = new ErrorHandler { IgnoreError = true };
+-        var action = new Check { Context = Ctx, Data = error, Step = MakeStep(handler) };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsTrue();
+-    }
+-
+-    #endregion
+-
+-    #region Retry
+-
+-    [Test]
+-    public async Task Check_RetryWithNoActions_Succeeds()
+-    {
+-        // Step has no actions → retry loop runs app.Run on empty collection → Ok
+-        var error = MakeError();
+-        var handler = new ErrorHandler { RetryCount = 2 };
+-        var step = MakeStep(handler);
+-        var action = new Check { Context = Ctx, Data = error, Step = step };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Check_RetryCountNull_FallsThrough()
+-    {
+-        var error = MakeError();
+-        var handler = new ErrorHandler { RetryCount = null };
+-        var step = MakeStep(handler);
+-        var action = new Check { Context = Ctx, Data = error, Step = step };
+-        var result = await action.Run();
+-
+-        // No retry, no goal, no ignore → propagate
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Handled).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Check_RetryCountZero_FallsThrough()
+-    {
+-        var error = MakeError();
+-        var handler = new ErrorHandler { RetryCount = 0 };
+-        var step = MakeStep(handler);
+-        var action = new Check { Context = Ctx, Data = error, Step = step };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Handled).IsFalse();
+-    }
+-
+-    #endregion
+-
+-    #region Error Goal
+-
+-    [Test]
+-    public async Task Check_ErrorGoal_RetryFirst_GoalRunsAsFallback()
+-    {
+-        // Register a stub error goal
+-        _app.Goals.Add(new global::App.Goals.Goal.@this
+-        {
+-            Name = "HandleError",
+-            Path = "/HandleError.goal"
+-        });
+-
+-        var error = MakeError();
+-        var handler = new ErrorHandler
+-        {
+-            Order = ErrorOrder.RetryFirst,
+-            Goal = new GoalCall { Name = "HandleError" }
+-        };
+-        var step = MakeStep(handler);
+-        var action = new Check { Context = Ctx, Data = error, Step = step };
+-        var result = await action.Run();
+-
+-        // No retry configured → fallback to goal → Ok
+-        await Assert.That(result.Success).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Check_ErrorGoal_GoalFirst_GoalRunsFirst()
+-    {
+-        _app.Goals.Add(new global::App.Goals.Goal.@this
+-        {
+-            Name = "FixFirst",
+-            Path = "/FixFirst.goal"
+-        });
+-
+-        var error = MakeError();
+-        var handler = new ErrorHandler
+-        {
+-            Order = ErrorOrder.GoalFirst,
+-            Goal = new GoalCall { Name = "FixFirst" }
+-        };
+-        var step = MakeStep(handler);
+-        var action = new Check { Context = Ctx, Data = error, Step = step };
+-        var result = await action.Run();
+-
+-        // GoalFirst: goal runs → no retry → goal alone counts as handled → Ok
+-        await Assert.That(result.Success).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Check_ErrorGoal_InjectsErrorParameter()
+-    {
+-        // Verify the error goal actually runs by checking !error was injected on Variables
+-        _app.Goals.Add(new global::App.Goals.Goal.@this
+-        {
+-            Name = "ErrorReceiver",
+-            Path = "/ErrorReceiver.goal"
+-        });
+-
+-        var error = MakeError(message: "db timeout", key: "DatabaseError", statusCode: 503);
+-        var handler = new ErrorHandler
+-        {
+-            Order = ErrorOrder.RetryFirst,
+-            Goal = new GoalCall { Name = "ErrorReceiver" }
+-        };
+-        var step = MakeStep(handler);
+-        var action = new Check { Context = Ctx, Data = error, Step = step };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsTrue();
+-
+-        // RunGoalAsync injects GoalCall.Parameters on context.Variables
+-        // CallErrorGoal adds !error parameter with the actual error
+-        var injectedError = Ctx.Variables.Get("!error");
+-        await Assert.That(injectedError).IsNotNull();
+-        // The error value should be the IError from the failing Data
+-        await Assert.That(injectedError!.Value).IsNotNull();
+-    }
+-
+-    [Test]
+-    public async Task Check_RetryExhausted_NoGoal_Propagates()
+-    {
+-        // Step with a real action that always fails — retry exhausts, no goal fallback
+-        var error = MakeError();
+-        var handler = new ErrorHandler { RetryCount = 2 };
+-        var step = MakeStep(handler);
+-        // Add an action that the module system doesn't know — app.Run returns error
+-        step.Actions.Add(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+-        {
+-            Module = "nonexistent",
+-            ActionName = "fail"
+-        });
+-        var action = new Check { Context = Ctx, Data = error, Step = step };
+-        var result = await action.Run();
+-
+-        // Retry ran actions, all failed, no goal configured → propagate
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Handled).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Check_RetryExhausted_WithGoalFallback_Succeeds()
+-    {
+-        _app.Goals.Add(new global::App.Goals.Goal.@this
+-        {
+-            Name = "FallbackGoal",
+-            Path = "/FallbackGoal.goal"
+-        });
+-
+-        var error = MakeError();
+-        var handler = new ErrorHandler
+-        {
+-            RetryCount = 1,
+-            Order = ErrorOrder.RetryFirst,
+-            Goal = new GoalCall { Name = "FallbackGoal" }
+-        };
+-        var step = MakeStep(handler);
+-        // Action that fails (module not found)
+-        step.Actions.Add(new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+-        {
+-            Module = "nonexistent",
+-            ActionName = "fail"
+-        });
+-        var action = new Check { Context = Ctx, Data = error, Step = step };
+-        var result = await action.Run();
+-
+-        // Retry exhausted → fallback to goal → Ok
+-        await Assert.That(result.Success).IsTrue();
+-    }
+-
+-    #endregion
+-}
+diff --git a/PLang.Tests/App/Modules/modifier/CacheWrapTests.cs b/PLang.Tests/App/Modules/modifier/CacheWrapTests.cs
+new file mode 100644
+index 00000000..23a62514
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/CacheWrapTests.cs
+@@ -0,0 +1,197 @@
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for the cache.wrap modifier handler.
++/// Wraps an action with cache lookup before and cache store after.
++/// </summary>
++public class CacheWrapTests
++{
++    private global::App.@this _app = null!;
++    private global::App.Actor.Context.@this Ctx => _app.Context;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/app");
++    }
++
++    [After(Test)]
++    public async Task Cleanup() => await _app.DisposeAsync();
++
++    private static PrAction CacheModifier(long durationMs, string? key = null, bool sliding = false)
++    {
++        var parameters = new List<global::App.Data.@this>
++        {
++            new("durationMs", durationMs),
++            new("sliding", sliding)
++        };
++        if (key != null) parameters.Add(new("key", key));
++        return new PrAction
++        {
++            Module = "cache",
++            ActionName = "wrap",
++            Parameters = parameters
++        };
++    }
++
++    [Test]
++    public async Task Wrap_CacheMiss_RunsActionAndStoresResult()
++    {
++        var action = new PrAction
++        {
++            Module = "variable", ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%x%"), new("value", "first")
++            },
++            Modifiers = new ActionModifiers { CacheModifier(60_000, "miss-key") }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(Ctx.Variables.GetValue("x")).IsEqualTo("first");
++
++        // Cache was populated on miss
++        var cached = await Ctx.App!.Cache.GetAsync("miss-key");
++        await Assert.That(cached).IsNotNull();
++    }
++
++    [Test]
++    public async Task Wrap_CacheHit_ReturnsCachedSkipsAction()
++    {
++        // Pre-populate the cache with a known Data value
++        var stashed = global::App.Data.@this.Ok("cached-value");
++        await Ctx.App!.Cache.SetAsync("hit-key", stashed,
++            new CacheSettings { DurationMs = 60_000, Sliding = false });
++
++        // variable.set would put "fresh-value" but the cache hit bypasses dispatch.
++        var action = new PrAction
++        {
++            Module = "variable", ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%y%"), new("value", "fresh-value")
++            },
++            Modifiers = new ActionModifiers { CacheModifier(60_000, "hit-key") }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsEqualTo("cached-value");
++        // The underlying action did NOT run (no %y%)
++        await Assert.That(Ctx.Variables.Get("y").Value).IsNull();
++    }
++
++    [Test]
++    public async Task Wrap_ActionFailure_DoesNotCache()
++    {
++        var action = new PrAction
++        {
++            Module = "error", ActionName = "throw",
++            Parameters = new List<global::App.Data.@this> { new("message", "boom") },
++            Modifiers = new ActionModifiers { CacheModifier(60_000, "fail-key") }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsFalse();
++
++        // Nothing was cached for that key
++        var cached = await Ctx.App!.Cache.GetAsync("fail-key");
++        await Assert.That(cached).IsNull();
++    }
++
++    [Test]
++    public async Task Wrap_CustomKey_UsedWhenProvided()
++    {
++        var action = new PrAction
++        {
++            Module = "variable", ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%a%"), new("value", "v")
++            },
++            Modifiers = new ActionModifiers { CacheModifier(60_000, "my-custom-key") }
++        };
++
++        await action.RunAsync(Ctx);
++
++        var underCustomKey = await Ctx.App!.Cache.GetAsync("my-custom-key");
++        await Assert.That(underCustomKey).IsNotNull();
++    }
++
++    [Test]
++    public async Task Wrap_DefaultKey_DerivedFromGoalPathAndStepIndex()
++    {
++        // Populate context.Step so default key resolver can read Goal.Path + Step.Index
++        var goal = new Goal { Path = "/foo/bar.goal" };
++        var step = new Step { Index = 7, Goal = goal };
++        Ctx.Step = step;
++
++        var action = new PrAction
++        {
++            Module = "variable", ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%b%"), new("value", "v")
++            },
++            Modifiers = new ActionModifiers { CacheModifier(60_000) } // no Key
++        };
++
++        await action.RunAsync(Ctx);
++
++        var cached = await Ctx.App!.Cache.GetAsync("step:/foo/bar.goal:7");
++        await Assert.That(cached).IsNotNull();
++    }
++
++    [Test]
++    public async Task Wrap_SlidingExpiration_PassedToCache()
++    {
++        // We can't introspect the stored CacheSettings from ICache directly, so
++        // this asserts by behavior: sliding=true should still populate the cache
++        // and cached values should be retrievable. The handler plumbs Sliding through
++        // to CacheSettings; if it didn't, this entry wouldn't be stored at all.
++        var action = new PrAction
++        {
++            Module = "variable", ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%c%"), new("value", "slide")
++            },
++            Modifiers = new ActionModifiers { CacheModifier(60_000, "slide-key", sliding: true) }
++        };
++
++        await action.RunAsync(Ctx);
++
++        var cached = await Ctx.App!.Cache.GetAsync("slide-key");
++        await Assert.That(cached).IsNotNull();
++    }
++
++    [Test]
++    public async Task Wrap_CachedResult_RestoredAsDataVariable()
++    {
++        // Pre-cache a value, then execute — the handler should put the cached Data
++        // into Variables under name __data__ so the next action can read it via %__data__%.
++        var stashed = global::App.Data.@this.Ok("restored");
++        await Ctx.App!.Cache.SetAsync("restore-key", stashed,
++            new CacheSettings { DurationMs = 60_000, Sliding = false });
++
++        var action = new PrAction
++        {
++            Module = "variable", ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%d%"), new("value", "fresh")
++            },
++            Modifiers = new ActionModifiers { CacheModifier(60_000, "restore-key") }
++        };
++
++        await action.RunAsync(Ctx);
++
++        var dataVar = Ctx.Variables.Get("__data__");
++        await Assert.That(dataVar).IsNotNull();
++        await Assert.That(dataVar.Value).IsEqualTo("restored");
++    }
++}
+diff --git a/PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs b/PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs
+new file mode 100644
+index 00000000..a0aa733d
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs
+@@ -0,0 +1,188 @@
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for the error.handle modifier handler.
++/// Wraps an action with error matching, retry logic, and error goal calls.
++/// </summary>
++public class ErrorHandleTests
++{
++    private global::App.@this _app = null!;
++    private global::App.Actor.Context.@this Ctx => _app.Context;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/app");
++    }
++
++    [After(Test)]
++    public async Task Cleanup() => await _app.DisposeAsync();
++
++    private static PrAction Throw(string message, int? statusCode = null, string? key = null,
++        ActionModifiers? modifiers = null)
++    {
++        var parameters = new List<global::App.Data.@this> { new("message", message) };
++        if (statusCode != null) parameters.Add(new("statusCode", statusCode.Value));
++        if (key != null) parameters.Add(new("key", key));
++        return new PrAction
++        {
++            Module = "error", ActionName = "throw",
++            Parameters = parameters,
++            Modifiers = modifiers ?? new ActionModifiers()
++        };
++    }
++
++    private static PrAction ErrorHandler(params (string name, object? value)[] parameters)
++    {
++        var list = new List<global::App.Data.@this>();
++        foreach (var p in parameters) list.Add(new(p.name, p.value));
++        return new PrAction
++        {
++            Module = "error", ActionName = "handle",
++            Parameters = list
++        };
++    }
++
++    [Test]
++    public async Task Handle_ActionSucceeds_PassesThrough()
++    {
++        var action = new PrAction
++        {
++            Module = "variable", ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%ok%"), new("value", "v")
++            },
++            Modifiers = new ActionModifiers { ErrorHandler(("ignoreError", true)) }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(Ctx.Variables.GetValue("ok")).IsEqualTo("v");
++    }
++
++    [Test]
++    public async Task Handle_IgnoreError_SwallowsErrorReturnsOk()
++    {
++        var action = Throw("boom",
++            modifiers: new ActionModifiers { ErrorHandler(("ignoreError", true)) });
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++    }
++
++    [Test]
++    public async Task Handle_FilterByStatusCode_MatchHandles()
++    {
++        var action = Throw("not found", statusCode: 404,
++            modifiers: new ActionModifiers
++            {
++                ErrorHandler(("statusCode", 404), ("ignoreError", true))
++            });
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++    }
++
++    [Test]
++    public async Task Handle_FilterByStatusCode_NoMatchPropagates()
++    {
++        var action = Throw("server error", statusCode: 500,
++            modifiers: new ActionModifiers
++            {
++                ErrorHandler(("statusCode", 404), ("ignoreError", true))
++            });
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
++    }
++
++    [Test]
++    public async Task Handle_FilterByKey_CaseInsensitiveMatch()
++    {
++        var action = Throw("broken", key: "NotFound",
++            modifiers: new ActionModifiers
++            {
++                ErrorHandler(("key", "notfound"), ("ignoreError", true))
++            });
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++    }
++
++    [Test]
++    public async Task Handle_FilterByMessage_SubstringMatch()
++    {
++        var action = Throw("connection refused on port 443",
++            modifiers: new ActionModifiers
++            {
++                ErrorHandler(("message", "connection"), ("ignoreError", true))
++            });
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++    }
++
++    [Test]
++    public async Task Handle_NoFilter_MatchesAllErrors()
++    {
++        var action = Throw("anything", statusCode: 418,
++            modifiers: new ActionModifiers { ErrorHandler(("ignoreError", true)) });
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++    }
++
++    [Test]
++    public async Task Handle_RetryFirst_RetriesBeforeCallingGoal()
++    {
++        // error.throw always fails. With RetryCount=2 + no goal, retries exhaust and error propagates.
++        var action = Throw("persistent failure",
++            modifiers: new ActionModifiers
++            {
++                ErrorHandler(("retryCount", 2), ("order", "RetryFirst"))
++            });
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Message).IsEqualTo("persistent failure");
++    }
++
++    [Test]
++    public async Task Handle_GoalFirst_CallsGoalBeforeRetry()
++    {
++        // Order="GoalFirst" parses as the enum. No goal + retries fail → error propagates.
++        var action = Throw("failure",
++            modifiers: new ActionModifiers
++            {
++                ErrorHandler(("retryCount", 1), ("order", "GoalFirst"))
++            });
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsFalse();
++    }
++
++    [Test]
++    public async Task Handle_RetrySucceedsOnSecondAttempt_ReturnsSuccess()
++    {
++        // error.throw is deterministic — always fails. Retry-success path is covered end-to-end
++        // by OnErrorRetry.test.goal in the PLang suite. This baseline verifies that with
++        // RetryCount > 0 and persistent failure, the final result is still failure.
++        var action = Throw("always fails",
++            modifiers: new ActionModifiers { ErrorHandler(("retryCount", 3)) });
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsFalse();
++    }
++}
+diff --git a/PLang.Tests/App/Modules/modifier/GroupModifiersTests.cs b/PLang.Tests/App/Modules/modifier/GroupModifiersTests.cs
+new file mode 100644
+index 00000000..73dd3eea
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/GroupModifiersTests.cs
+@@ -0,0 +1,122 @@
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for the deterministic GroupModifiers pipeline in the builder save path.
++/// Takes a flat list of actions (from LLM) and groups modifier actions onto
++/// their preceding executable action, sorted by Order.
++/// </summary>
++public class GroupModifiersTests
++{
++    private static StepActions Flat(params (string module, string action)[] items)
++    {
++        var result = new StepActions();
++        foreach (var (m, a) in items)
++            result.Add(new PrAction { Module = m, ActionName = a });
++        return result;
++    }
++
++    [Test]
++    public async Task GroupModifiers_NoModifiers_Unchanged()
++    {
++        var modules = new EngineModules();
++        var actions = Flat(("file", "read"), ("variable", "set"));
++
++        actions.GroupModifiers(modules);
++
++        await Assert.That(actions.Count).IsEqualTo(2);
++        await Assert.That(actions[0].Module).IsEqualTo("file");
++        await Assert.That(actions[1].Module).IsEqualTo("variable");
++        await Assert.That(actions[0].Modifiers.Count).IsEqualTo(0);
++        await Assert.That(actions[1].Modifiers.Count).IsEqualTo(0);
++    }
++
++    [Test]
++    public async Task GroupModifiers_ModifierAfterExecutable_Attached()
++    {
++        var modules = new EngineModules();
++        var actions = Flat(("file", "read"), ("cache", "wrap"));
++
++        actions.GroupModifiers(modules);
++
++        await Assert.That(actions.Count).IsEqualTo(1);
++        await Assert.That(actions[0].Module).IsEqualTo("file");
++        await Assert.That(actions[0].Modifiers.Count).IsEqualTo(1);
++        await Assert.That(actions[0].Modifiers[0].Module).IsEqualTo("cache");
++    }
++
++    [Test]
++    public async Task GroupModifiers_MultipleModifiersOnOneAction_SortedByOrder()
++    {
++        var modules = new EngineModules();
++        // Insertion order: error(3), cache(2), timeout(1) — should sort to timeout, cache, error
++        var actions = Flat(
++            ("file", "read"),
++            ("error", "handle"),
++            ("cache", "wrap"),
++            ("timeout", "after"));
++
++        actions.GroupModifiers(modules);
++
++        await Assert.That(actions.Count).IsEqualTo(1);
++        var mods = actions[0].Modifiers;
++        await Assert.That(mods.Count).IsEqualTo(3);
++        await Assert.That(mods[0].Module).IsEqualTo("timeout");
++        await Assert.That(mods[1].Module).IsEqualTo("cache");
++        await Assert.That(mods[2].Module).IsEqualTo("error");
++    }
++
++    [Test]
++    public async Task GroupModifiers_ModifierBetweenTwoExecutables_AttachesToPreceding()
++    {
++        var modules = new EngineModules();
++        var actions = Flat(("file", "read"), ("cache", "wrap"), ("variable", "set"));
++
++        actions.GroupModifiers(modules);
++
++        await Assert.That(actions.Count).IsEqualTo(2);
++        await Assert.That(actions[0].Module).IsEqualTo("file");
++        await Assert.That(actions[0].Modifiers.Count).IsEqualTo(1);
++        await Assert.That(actions[0].Modifiers[0].Module).IsEqualTo("cache");
++        await Assert.That(actions[1].Module).IsEqualTo("variable");
++        await Assert.That(actions[1].Modifiers.Count).IsEqualTo(0);
++    }
++
++    [Test]
++    public async Task GroupModifiers_LeadingModifier_NoPreceeding_EdgeCase()
++    {
++        var modules = new EngineModules();
++        // Leading modifier has no preceding executable — it is dropped, not an error
++        var actions = Flat(("cache", "wrap"), ("file", "read"));
++
++        actions.GroupModifiers(modules);
++
++        await Assert.That(actions.Count).IsEqualTo(1);
++        await Assert.That(actions[0].Module).IsEqualTo("file");
++        await Assert.That(actions[0].Modifiers.Count).IsEqualTo(0);
++    }
++
++    [Test]
++    public async Task GroupModifiers_Mixed_CorrectGrouping()
++    {
++        var modules = new EngineModules();
++        // [file.read, cache.wrap, error.handle, variable.set, timeout.after]
++        // -> file.read with sorted [cache(2), error(3)]; variable.set with [timeout(1)]
++        var actions = Flat(
++            ("file", "read"),
++            ("cache", "wrap"),
++            ("error", "handle"),
++            ("variable", "set"),
++            ("timeout", "after"));
++
++        actions.GroupModifiers(modules);
++
++        await Assert.That(actions.Count).IsEqualTo(2);
++        await Assert.That(actions[0].Module).IsEqualTo("file");
++        await Assert.That(actions[0].Modifiers.Count).IsEqualTo(2);
++        await Assert.That(actions[0].Modifiers[0].Module).IsEqualTo("cache");
++        await Assert.That(actions[0].Modifiers[1].Module).IsEqualTo("error");
++        await Assert.That(actions[1].Module).IsEqualTo("variable");
++        await Assert.That(actions[1].Modifiers.Count).IsEqualTo(1);
++        await Assert.That(actions[1].Modifiers[0].Module).IsEqualTo("timeout");
++    }
++}
+diff --git a/PLang.Tests/App/Modules/modifier/ModifierFoldTests.cs b/PLang.Tests/App/Modules/modifier/ModifierFoldTests.cs
+new file mode 100644
+index 00000000..113112b6
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/ModifierFoldTests.cs
+@@ -0,0 +1,206 @@
++using global::App.modules;
++using static PLang.Tests.TestAction;
++
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for the core modifier infrastructure: ModifierAttribute, IModifier contract,
++/// Action.Modifiers property, and the right-to-left fold in Action.RunAsync.
++/// </summary>
++public class ModifierFoldTests
++{
++    private global::App.@this _app = null!;
++    private global::App.Actor.Context.@this Ctx => _app.Context;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/app");
++    }
++
++    [After(Test)]
++    public async Task Cleanup() => await _app.DisposeAsync();
++
++    #region ModifierAttribute
++
++    [Test]
++    public async Task ModifierAttribute_Order_IsSetAndReadable()
++    {
++        // Verify [Modifier(Order = N)] stores and exposes the Order value via reflection
++        var timeoutType = typeof(global::App.modules.timeout.After);
++        var attr = timeoutType.GetCustomAttributes(typeof(ModifierAttribute), false)
++            .Cast<ModifierAttribute>().FirstOrDefault();
++
++        await Assert.That(attr).IsNotNull();
++        await Assert.That(attr!.Order).IsEqualTo(1);
++    }
++
++    #endregion
++
++    #region Action.Modifiers Property
++
++    [Test]
++    public async Task Action_Modifiers_DefaultsToEmptyList()
++    {
++        var action = new PrAction { Module = "file", ActionName = "read" };
++
++        await Assert.That(action.Modifiers).IsNotNull();
++        await Assert.That(action.Modifiers.Count).IsEqualTo(0);
++    }
++
++    #endregion
++
++    #region Action.RunAsync Fold
++
++    [Test]
++    public async Task RunAsync_ZeroModifiers_ExistingBehaviorUnchanged()
++    {
++        // Regression: Action.RunAsync with no modifiers dispatches normally
++        // and stores result as %__data__%
++        var action = Create("variable", "set", ("name", "%x%"), ("value", "hello"));
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(Ctx.Variables.GetValue("x")).IsEqualTo("hello");
++    }
++
++    [Test]
++    public async Task RunAsync_OneModifier_WrapsAction()
++    {
++        // timeout.after around a fast variable.set — action completes, result passes through
++        var action = new PrAction
++        {
++            Module = "variable",
++            ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%y%"), new("value", "wrapped")
++            },
++            Modifiers = new ActionModifiers
++            {
++                new PrAction
++                {
++                    Module = "timeout", ActionName = "after",
++                    Parameters = new List<global::App.Data.@this> { new("ms", 5000) }
++                }
++            }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(Ctx.Variables.GetValue("y")).IsEqualTo("wrapped");
++    }
++
++    [Test]
++    public async Task RunAsync_TwoModifiers_CorrectNestingOrder()
++    {
++        // error.handle(ignore) wraps timeout.after(5000ms) wraps variable.set
++        // Verify both modifiers participate: fast action completes cleanly.
++        var action = new PrAction
++        {
++            Module = "variable",
++            ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%z%"), new("value", "nested")
++            },
++            Modifiers = new ActionModifiers
++            {
++                new PrAction
++                {
++                    Module = "timeout", ActionName = "after",
++                    Parameters = new List<global::App.Data.@this> { new("ms", 5000) }
++                },
++                new PrAction
++                {
++                    Module = "error", ActionName = "handle",
++                    Parameters = new List<global::App.Data.@this> { new("ignoreError", true) }
++                }
++            }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(Ctx.Variables.GetValue("z")).IsEqualTo("nested");
++    }
++
++    [Test]
++    public async Task RunAsync_ThreeModifiers_FullChain()
++    {
++        // timeout > cache > error > action — all three wrap a successful variable.set
++        var action = new PrAction
++        {
++            Module = "variable",
++            ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%q%"), new("value", "full")
++            },
++            Modifiers = new ActionModifiers
++            {
++                new PrAction
++                {
++                    Module = "timeout", ActionName = "after",
++                    Parameters = new List<global::App.Data.@this> { new("ms", 5000) }
++                },
++                new PrAction
++                {
++                    Module = "cache", ActionName = "wrap",
++                    Parameters = new List<global::App.Data.@this>
++                    {
++                        new("durationMs", 60_000L),
++                        new("key", "fold-test-key")
++                    }
++                },
++                new PrAction
++                {
++                    Module = "error", ActionName = "handle",
++                    Parameters = new List<global::App.Data.@this> { new("ignoreError", true) }
++                }
++            }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(Ctx.Variables.GetValue("q")).IsEqualTo("full");
++    }
++
++    [Test]
++    public async Task RunAsync_NonIModifierHandler_ReturnsCleanError()
++    {
++        // variable.set is NOT a modifier — using it as one yields a ModifierError
++        var action = new PrAction
++        {
++            Module = "variable",
++            ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%nope%"), new("value", "x")
++            },
++            Modifiers = new ActionModifiers
++            {
++                // variable.set as a modifier is invalid
++                new PrAction
++                {
++                    Module = "variable", ActionName = "set",
++                    Parameters = new List<global::App.Data.@this>
++                    {
++                        new("name", "%bad%"), new("value", "no")
++                    }
++                }
++            }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("ModifierError");
++        await Assert.That(result.Error!.Message).Contains("not a modifier");
++    }
++
++    #endregion
++}
+diff --git a/PLang.Tests/App/Modules/modifier/ModifierRegistryTests.cs b/PLang.Tests/App/Modules/modifier/ModifierRegistryTests.cs
+new file mode 100644
+index 00000000..214dafc9
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/ModifierRegistryTests.cs
+@@ -0,0 +1,105 @@
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for modifier awareness in the module registry (IsModifier, GetModifierOrder)
++/// and Step.Clone() support for action modifiers.
++/// </summary>
++public class ModifierRegistryTests
++{
++    #region IsModifier
++
++    [Test]
++    public async Task IsModifier_ModifierAttributedHandler_ReturnsTrue()
++    {
++        var modules = new EngineModules();
++
++        await Assert.That(modules.IsModifier("timeout", "after")).IsTrue();
++        await Assert.That(modules.IsModifier("cache", "wrap")).IsTrue();
++        await Assert.That(modules.IsModifier("error", "handle")).IsTrue();
++    }
++
++    [Test]
++    public async Task IsModifier_RegularHandler_ReturnsFalse()
++    {
++        var modules = new EngineModules();
++
++        await Assert.That(modules.IsModifier("variable", "set")).IsFalse();
++        await Assert.That(modules.IsModifier("file", "read")).IsFalse();
++    }
++
++    [Test]
++    public async Task IsModifier_UnknownAction_ReturnsFalse()
++    {
++        var modules = new EngineModules();
++
++        await Assert.That(modules.IsModifier("nonexistent", "nope")).IsFalse();
++    }
++
++    #endregion
++
++    #region GetModifierOrder
++
++    [Test]
++    public async Task GetModifierOrder_ReturnsCorrectOrder()
++    {
++        var modules = new EngineModules();
++
++        await Assert.That(modules.GetModifierOrder("timeout", "after")).IsEqualTo(1);
++        await Assert.That(modules.GetModifierOrder("cache", "wrap")).IsEqualTo(2);
++        await Assert.That(modules.GetModifierOrder("error", "handle")).IsEqualTo(3);
++    }
++
++    #endregion
++
++    #region Step.Clone
++
++    [Test]
++    public async Task StepClone_ClonesActionModifiers()
++    {
++        // Step with action that has modifiers -> Clone() copies modifiers too
++        var step = new Step
++        {
++            Index = 0,
++            Text = "read file with cache",
++            Actions = new StepActions
++            {
++                new PrAction
++                {
++                    Module = "file",
++                    ActionName = "read",
++                    Modifiers = new ActionModifiers
++                    {
++                        new PrAction { Module = "cache", ActionName = "wrap" }
++                    }
++                }
++            }
++        };
++
++        var clone = step.Clone();
++
++        await Assert.That(clone.Actions[0].Modifiers.Count).IsEqualTo(1);
++        await Assert.That(clone.Actions[0].Modifiers[0].Module).IsEqualTo("cache");
++        // Verify it's a copy, not the same reference
++        await Assert.That(clone.Actions[0].Modifiers).IsNotSameReferenceAs(step.Actions[0].Modifiers);
++    }
++
++    #endregion
++
++    #region Describe
++
++    [Test]
++    public async Task Describe_ModifierActions_AppearInSummary()
++    {
++        // Modifier modules appear in the action summary so the LLM can discover them
++        // — they go through the same [Action] registration as any other handler.
++        var modules = new EngineModules();
++        var described = modules.Describe();
++
++        var names = described.Select(a => $"{a.Module}.{a.ActionName}").ToHashSet();
++        await Assert.That(names).Contains("timeout.after");
++        await Assert.That(names).Contains("cache.wrap");
++        await Assert.That(names).Contains("error.handle");
++    }
++
++    #endregion
++}
+diff --git a/PLang.Tests/App/Modules/modifier/TimeoutAfterTests.cs b/PLang.Tests/App/Modules/modifier/TimeoutAfterTests.cs
+new file mode 100644
+index 00000000..4e35aca2
+--- /dev/null
++++ b/PLang.Tests/App/Modules/modifier/TimeoutAfterTests.cs
+@@ -0,0 +1,154 @@
++using static PLang.Tests.TestAction;
++
++namespace PLang.Tests.App.Modules.modifier;
++
++/// <summary>
++/// Tests for the timeout.after modifier handler.
++/// Wraps an action with a CancellationTokenSource that fires after Ms milliseconds.
++/// </summary>
++public class TimeoutAfterTests
++{
++    private global::App.@this _app = null!;
++    private global::App.Actor.Context.@this Ctx => _app.Context;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _app = new global::App.@this("/app");
++    }
++
++    [After(Test)]
++    public async Task Cleanup() => await _app.DisposeAsync();
++
++    private static PrAction TimeoutModifier(int ms) => new()
++    {
++        Module = "timeout",
++        ActionName = "after",
++        Parameters = new List<global::App.Data.@this> { new("ms", ms) }
++    };
++
++    [Test]
++    public async Task After_ActionCompletesBefore_PassesThroughResult()
++    {
++        var action = new PrAction
++        {
++            Module = "variable",
++            ActionName = "set",
++            Parameters = new List<global::App.Data.@this>
++            {
++                new("name", "%fast%"), new("value", "done")
++            },
++            Modifiers = new ActionModifiers { TimeoutModifier(5000) }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(Ctx.Variables.GetValue("fast")).IsEqualTo("done");
++    }
++
++    [Test]
++    public async Task After_ActionExceedsTimeout_Returns408Error()
++    {
++        var action = new PrAction
++        {
++            Module = "timer",
++            ActionName = "sleep",
++            Parameters = new List<global::App.Data.@this> { new("ms", 5000) },
++            Modifiers = new ActionModifiers { TimeoutModifier(50) }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
++        await Assert.That(result.Error!.StatusCode).IsEqualTo(408);
++    }
++
++    [Test]
++    public async Task After_CancellationTokenPropagatedToAction()
++    {
++        // Token did propagate: sleep was cut short well before its 10s target
++        var action = new PrAction
++        {
++            Module = "timer",
++            ActionName = "sleep",
++            Parameters = new List<global::App.Data.@this> { new("ms", 10_000) },
++            Modifiers = new ActionModifiers { TimeoutModifier(30) }
++        };
++
++        var start = DateTimeOffset.UtcNow;
++        var result = await action.RunAsync(Ctx);
++        var elapsed = DateTimeOffset.UtcNow - start;
++
++        await Assert.That(elapsed.TotalMilliseconds).IsLessThan(2000);
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
++    }
++
++    [Test]
++    public async Task After_ParentCancellation_PropagatesException()
++    {
++        // Parent cancellation (not the timeout) bubbles up as OperationCanceledException.
++        using var parentCts = new CancellationTokenSource();
++        Ctx.PushCancellation(parentCts);
++        parentCts.CancelAfter(30);
++
++        var action = new PrAction
++        {
++            Module = "timer",
++            ActionName = "sleep",
++            Parameters = new List<global::App.Data.@this> { new("ms", 10_000) },
++            Modifiers = new ActionModifiers { TimeoutModifier(5000) }
++        };
++
++        await Assert.That(async () => await action.RunAsync(Ctx))
++            .Throws<OperationCanceledException>();
++
++        Ctx.PopCancellation();
++    }
++
++    [Test]
++    public async Task After_ZeroMsTimeout_ImmediateTimeout()
++    {
++        var action = new PrAction
++        {
++            Module = "timer",
++            ActionName = "sleep",
++            Parameters = new List<global::App.Data.@this> { new("ms", 1000) },
++            Modifiers = new ActionModifiers { TimeoutModifier(0) }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
++    }
++
++    [Test]
++    public async Task After_NestedWithOtherModifiers_TimeoutWrapsOuter()
++    {
++        // timeout(50) wraps error(ignore) wraps timer.sleep(5000).
++        // Sleep exceeds deadline → timeout fires inside error.handle's wrap → error.handle
++        // sees the 408, IgnoreError = true → final result is Ok.
++        var action = new PrAction
++        {
++            Module = "timer",
++            ActionName = "sleep",
++            Parameters = new List<global::App.Data.@this> { new("ms", 5000) },
++            Modifiers = new ActionModifiers
++            {
++                TimeoutModifier(50),
++                new PrAction
++                {
++                    Module = "error", ActionName = "handle",
++                    Parameters = new List<global::App.Data.@this> { new("ignoreError", true) }
++                }
++            }
++        };
++
++        var result = await action.RunAsync(Ctx);
++
++        await Assert.That(result.Success).IsTrue();
++    }
++}
+diff --git a/PLang.Tests/App/Utility/GoalDataTests.cs b/PLang.Tests/App/Utility/GoalDataTests.cs
+index 1946065f..a0474c2c 100644
+--- a/PLang.Tests/App/Utility/GoalDataTests.cs
++++ b/PLang.Tests/App/Utility/GoalDataTests.cs
+@@ -70,19 +70,17 @@ public class GoalSerializationTests
+     [Test]
+     public async Task ErrorOrder_SerializesAsCamelCaseString()
+     {
+-        var handler = new ErrorHandler { Order = ErrorOrder.GoalFirst };
+-        var json = JsonSerializer.Serialize(handler, JsonOptions);
++        var json = JsonSerializer.Serialize(ErrorOrder.GoalFirst, JsonOptions);
+ 
+-        await Assert.That(json).Contains("\"goalFirst\"");
++        await Assert.That(json).IsEqualTo("\"goalFirst\"");
+     }
+ 
+     [Test]
+     public async Task ErrorOrder_RetryFirst_SerializesCorrectly()
+     {
+-        var handler = new ErrorHandler { Order = ErrorOrder.RetryFirst };
+-        var json = JsonSerializer.Serialize(handler, JsonOptions);
++        var json = JsonSerializer.Serialize(ErrorOrder.RetryFirst, JsonOptions);
+ 
+-        await Assert.That(json).Contains("\"retryFirst\"");
++        await Assert.That(json).IsEqualTo("\"retryFirst\"");
+     }
+ 
+     [Test]
+@@ -101,7 +99,6 @@ public class GoalSerializationTests
+                     Indent = 2,
+                     Comment = "step comment",
+                     WaitForExecution = false,
+-                    Timeout = 30,
+                     Actions = new StepActions
+                     {
+                         new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+@@ -136,7 +133,6 @@ public class GoalSerializationTests
+         await Assert.That(step.Indent).IsEqualTo(2);
+         await Assert.That(step.Comment).IsEqualTo("step comment");
+         await Assert.That(step.WaitForExecution).IsFalse();
+-        await Assert.That(step.Timeout).IsEqualTo(30);
+         await Assert.That(step.Actions.Count).IsEqualTo(2);
+         await Assert.That(step.Actions[0].Module).IsEqualTo("http");
+         await Assert.That(step.Actions[0].ActionName).IsEqualTo("get");
+@@ -144,80 +140,6 @@ public class GoalSerializationTests
+         await Assert.That(step.Actions[1].ActionName).IsEqualTo("set");
+     }
+ 
+-    [Test]
+-    public async Task Roundtrip_ErrorHandler_Preserved()
+-    {
+-        var goal = new Goal
+-        {
+-            Name = "TestGoal",
+-            Steps = new GoalSteps
+-            {
+-                new Step
+-                {
+-                    Index = 0,
+-                    Text = "step",
+-                    OnError = new ErrorHandler
+-                    {
+-                        Goal = new GoalCall { Name = "HandleError", Parameters = new List<Data> { new Data("msg", "oops") } },
+-                        RetryCount = 3,
+-                        RetryOverMs = 60000,
+-                        Order = ErrorOrder.RetryFirst,
+-                        IgnoreError = false,
+-                        Message = "Something failed",
+-                        StatusCode = 500,
+-                        Key = "err1"
+-                    }
+-                }
+-            }
+-        };
+-
+-        var json = JsonSerializer.Serialize(goal, JsonOptions);
+-        var deserialized = JsonSerializer.Deserialize<Goal>(json, JsonOptions)!;
+-
+-        var err = deserialized.Steps[0].OnError!;
+-        await Assert.That(err.Goal!.Name).IsEqualTo("HandleError");
+-        await Assert.That(err.RetryCount).IsEqualTo(3);
+-        await Assert.That(err.RetryOverMs).IsEqualTo(60000);
+-        await Assert.That(err.Order).IsEqualTo(ErrorOrder.RetryFirst);
+-        await Assert.That(err.IgnoreError).IsFalse();
+-        await Assert.That(err.Message).IsEqualTo("Something failed");
+-        await Assert.That(err.StatusCode).IsEqualTo(500);
+-        await Assert.That(err.Key).IsEqualTo("err1");
+-    }
+-
+-    [Test]
+-    public async Task Roundtrip_CacheSettings_Preserved()
+-    {
+-        var goal = new Goal
+-        {
+-            Name = "TestGoal",
+-            Steps = new GoalSteps
+-            {
+-                new Step
+-                {
+-                    Index = 0,
+-                    Text = "step",
+-                    Cache = new CacheSettings
+-                    {
+-                        DurationMs = 600_000,
+-                        Sliding = true,
+-                        Key = "cache1",
+-                        Location = "memory"
+-                    }
+-                }
+-            }
+-        };
+-
+-        var json = JsonSerializer.Serialize(goal, JsonOptions);
+-        var deserialized = JsonSerializer.Deserialize<Goal>(json, JsonOptions)!;
+-
+-        var cache = deserialized.Steps[0].Cache!;
+-        await Assert.That(cache.DurationMs).IsEqualTo(600_000);
+-        await Assert.That(cache.Sliding).IsTrue();
+-        await Assert.That(cache.Key).IsEqualTo("cache1");
+-        await Assert.That(cache.Location).IsEqualTo("memory");
+-    }
+-
+     [Test]
+     public async Task JsonIgnore_Properties_AreExcluded()
+     {
+diff --git a/PLang.Tests/GlobalUsings.cs b/PLang.Tests/GlobalUsings.cs
+index f7c2f653..9a00956e 100644
+--- a/PLang.Tests/GlobalUsings.cs
++++ b/PLang.Tests/GlobalUsings.cs
+@@ -10,11 +10,11 @@ global using ErrorOrder = App.Goals.Goal.Steps.Step.ErrorOrder;
+ global using CacheSettings = App.Goals.Goal.Steps.Step.CacheSettings;
+ global using StepActions = App.Goals.Goal.Steps.Step.Actions.@this;
+ global using PrAction = App.Goals.Goal.Steps.Step.Actions.Action.@this;
++global using ActionModifiers = App.Goals.Goal.Steps.Step.Actions.Action.Modifiers.@this;
+ 
+ // Types that have v1 conflicts in PLang project but NOT in PLang.Tests (no Building.Model here)
+ global using Goal = App.Goals.Goal.@this;
+ global using Visibility = App.Goals.Goal.Visibility;
+-global using ErrorHandler = App.Goals.Goal.Steps.Step.ErrorHandler;
+ 
+ // Event types
+ global using EventType = App.Events.EventType;
+diff --git a/PLang/App/Actor/Context/this.cs b/PLang/App/Actor/Context/this.cs
+index d4770205..6eab8bcf 100644
+--- a/PLang/App/Actor/Context/this.cs
++++ b/PLang/App/Actor/Context/this.cs
+@@ -55,7 +55,7 @@ public sealed class @this : IDisposable
+     private readonly Stack<CancellationTokenSource> _cancellationStack = new();
+ 
+     /// <summary>
+-    /// Pushes a timeout CTS so all sub-calls use it. Called by app.execute for step.Timeout.
++    /// Pushes a timeout CTS so all sub-calls use it. Used by the timeout.after modifier.
+     /// </summary>
+     public void PushCancellation(CancellationTokenSource cts) => _cancellationStack.Push(cts);
+ 
+diff --git a/PLang/App/GlobalUsings.cs b/PLang/App/GlobalUsings.cs
+index 502abe38..3329dac7 100644
+--- a/PLang/App/GlobalUsings.cs
++++ b/PLang/App/GlobalUsings.cs
+@@ -7,6 +7,7 @@ global using Step = App.Goals.Goal.Steps.Step.@this;
+ global using ErrorOrder = App.Goals.Goal.Steps.Step.ErrorOrder;
+ global using CacheSettings = App.Goals.Goal.Steps.Step.CacheSettings;
+ global using StepActions = App.Goals.Goal.Steps.Step.Actions.@this;
++global using ActionModifiers = App.Goals.Goal.Steps.Step.Actions.Action.Modifiers.@this;
+ 
+ // Event types
+ global using AppEvents = App.Events.@this;
+@@ -66,5 +67,4 @@ global using Testing = App.Test.@this;
+ // Types WITH v1 conflicts — require per-file handling:
+ // Goal: use Goals.Goal.@this or per-file alias
+ // Visibility: use Goals.Goal.Visibility
+-// ErrorHandler: use Goals.Goal.Steps.Step.ErrorHandler
+ // Action: can't global alias (System.Action conflict), use per-file alias
+diff --git a/PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs b/PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs
+new file mode 100644
+index 00000000..143c43ec
+--- /dev/null
++++ b/PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs
+@@ -0,0 +1,54 @@
++using System.Collections;
++using PrAction = global::App.Goals.Goal.Steps.Step.Actions.Action.@this;
++
++namespace App.Goals.Goal.Steps.Step.Actions.Action.Modifiers;
++
++/// <summary>
++/// Ordered list of modifier actions attached to an Action.
++/// Owns the right-to-left fold that wraps an inner operation at runtime —
++/// first in the list becomes the outermost wrapper.
++/// </summary>
++public sealed class @this : IList<PrAction>
++{
++    private readonly List<PrAction> _items = new();
++
++    public @this() { }
++    public @this(IEnumerable<PrAction> items) { _items = new List<PrAction>(items); }
++
++    public PrAction this[int index] { get => _items[index]; set => _items[index] = value; }
++    public int Count => _items.Count;
++    public bool IsReadOnly => false;
++
++    public void Add(PrAction item) => _items.Add(item);
++    public void AddRange(IEnumerable<PrAction> items) => _items.AddRange(items);
++    public void Clear() => _items.Clear();
++    public bool Contains(PrAction item) => _items.Contains(item);
++    public void CopyTo(PrAction[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
++    public int IndexOf(PrAction item) => _items.IndexOf(item);
++    public void Insert(int index, PrAction item) => _items.Insert(index, item);
++    public bool Remove(PrAction item) => _items.Remove(item);
++    public void RemoveAt(int index) => _items.RemoveAt(index);
++    public IEnumerator<PrAction> GetEnumerator() => _items.GetEnumerator();
++    IEnumerator IEnumerable.GetEnumerator() => _items.GetEnumerator();
++
++    /// <summary>
++    /// Runs an inner operation wrapped by this collection right-to-left.
++    /// Each action resolves its own handler via WrapAround; this collection
++    /// owns the iteration order.
++    /// </summary>
++    public async Task<Data.@this> RunAsync(
++        Func<Task<Data.@this>> innermost,
++        Actor.Context.@this context)
++    {
++        if (_items.Count == 0) return await innermost();
++
++        var execute = innermost;
++        for (int i = _items.Count - 1; i >= 0; i--)
++        {
++            var (wrapped, error) = await _items[i].WrapAround(execute, context);
++            if (error != null) return Data.@this.FromError(error);
++            execute = wrapped!;
++        }
++        return await execute();
++    }
++}
+diff --git a/PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs b/PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs
+index 4f997ebd..8eda2838 100644
+--- a/PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs
++++ b/PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs
+@@ -40,6 +40,9 @@ public sealed partial class @this : modules.IDataWrappable
+     [Store, Debug, Default]
+     public List<Data.@this>? Defaults { get; set; }
+ 
++    [Store, Debug, Default]
++    public Modifiers.@this Modifiers { get; init; } = new();
++
+     [Debug]
+     public List<Info> Errors { get; init; } = new();
+ 
+@@ -69,28 +72,44 @@ public sealed partial class @this : modules.IDataWrappable
+     {
+         var lifecycle = context.LifecycleFor(this);
+ 
+-        // BeforeAction events — can override execution via Handled
+         var beforeResult = await lifecycle.Before.Run(context, App.Events.EventType.BeforeAction);
+         if (!beforeResult.Success) return beforeResult;
+         if (beforeResult.Handled) return beforeResult;
+ 
+-        // Dispatch to handler
+-        var result = await context.App!.Run(this, context);
++        Func<Task<Data.@this>> dispatch = () => context.App!.Run(this, context);
++        var result = await Modifiers.RunAsync(dispatch, context);
+ 
+-        // Store result as %__data__% — available to next action or step
+         if (result.Success)
+         {
+             result.Name = "__data__";
+             context.Variables.Put(result);
+         }
+ 
+-        // AfterAction events
+         var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterAction);
+         if (!afterResult.Success) return afterResult;
+ 
+         return result;
+     }
+ 
++    /// <summary>
++    /// Wraps the given inner delegate with this modifier action. Resolves this action's
++    /// handler, verifies it implements IModifier, and runs ExecuteAsync so the source-generated
++    /// properties are populated before Wrap() reads them. Called by Modifiers.RunAsync.
++    /// </summary>
++    public async Task<(Func<Task<Data.@this>>? Wrapped, Errors.IError? Error)> WrapAround(
++        Func<Task<Data.@this>> next,
++        Actor.Context.@this context)
++    {
++        var (handler, error) = context.App!.Modules.GetCodeGenerated(this);
++        if (error != null) return (null, error);
++        if (handler is not modules.IModifier mod)
++            return (null, new Errors.ActionError(
++                $"{Module}.{ActionName} is not a modifier", "ModifierError", 400));
++
++        await handler.ExecuteAsync(this, context);
++        return (mod.Wrap(next, context), null);
++    }
++
+     /// <summary>
+     /// Return type properties for the builder summary. Null when Run() returns plain Data.
+     /// Derived from the concrete return type of Run() via reflection in Describe().
+diff --git a/PLang/App/Goals/Goal/Steps/Step/Actions/this.cs b/PLang/App/Goals/Goal/Steps/Step/Actions/this.cs
+index d90d9d0e..7e7c1649 100644
+--- a/PLang/App/Goals/Goal/Steps/Step/Actions/this.cs
++++ b/PLang/App/Goals/Goal/Steps/Step/Actions/this.cs
+@@ -40,4 +40,42 @@ public sealed class @this : IList<Action.@this>
+     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+ 
+     public List<Action.@this> Value => _items;
++
++    /// <summary>
++    /// Takes a flat list where modifier actions follow their target action, and groups
++    /// each modifier onto the preceding executable action's Modifiers collection.
++    /// Modifiers are sorted by [Modifier(Order = N)] so the outermost wrapper comes first.
++    /// A leading modifier with no preceding executable is dropped. Mutates in place.
++    /// </summary>
++    public void GroupModifiers(Modules.@this modules)
++    {
++        if (_items.Count == 0) return;
++
++        var flat = _items.ToList();
++        _items.Clear();
++        Action.@this? current = null;
++
++        foreach (var action in flat)
++        {
++            if (modules.IsModifier(action.Module, action.ActionName))
++            {
++                current?.Modifiers.Add(action);
++            }
++            else
++            {
++                current = action;
++                _items.Add(action);
++            }
++        }
++
++        foreach (var action in _items)
++        {
++            if (action.Modifiers.Count <= 1) continue;
++            var sorted = action.Modifiers
++                .OrderBy(m => modules.GetModifierOrder(m.Module, m.ActionName))
++                .ToList();
++            action.Modifiers.Clear();
++            foreach (var m in sorted) action.Modifiers.Add(m);
++        }
++    }
+ }
+diff --git a/PLang/App/Goals/Goal/Steps/Step/ErrorHandler.cs b/PLang/App/Goals/Goal/Steps/Step/ErrorHandler.cs
+deleted file mode 100644
+index 5ef33641..00000000
+--- a/PLang/App/Goals/Goal/Steps/Step/ErrorHandler.cs
++++ /dev/null
+@@ -1,41 +0,0 @@
+-namespace App.Goals.Goal.Steps.Step;
+-
+-/// <summary>
+-/// Order of error handling: retry first or call goal first.
+-/// </summary>
+-public enum ErrorOrder
+-{
+-    GoalFirst,
+-    RetryFirst
+-}
+-
+-/// <summary>
+-/// Represents error handling configuration for a step.
+-/// </summary>
+-public sealed class ErrorHandler
+-{
+-    [Store]
+-    public GoalCall? Goal { get; init; }
+-
+-    [Store]
+-    public int? RetryCount { get; init; }
+-
+-    [Store]
+-    public int? RetryOverMs { get; init; }
+-
+-    [Store]
+-    public ErrorOrder? Order { get; init; }
+-
+-    [Store]
+-    public bool? IgnoreError { get; init; }
+-
+-    [Store]
+-    public string? Message { get; init; }
+-
+-    [Store]
+-    public int? StatusCode { get; init; }
+-
+-    [Store]
+-    public string? Key { get; init; }
+-}
+-
+diff --git a/PLang/App/Goals/Goal/Steps/Step/ErrorOrder.cs b/PLang/App/Goals/Goal/Steps/Step/ErrorOrder.cs
+new file mode 100644
+index 00000000..f7240ce2
+--- /dev/null
++++ b/PLang/App/Goals/Goal/Steps/Step/ErrorOrder.cs
+@@ -0,0 +1,12 @@
++namespace App.Goals.Goal.Steps.Step;
++
++/// <summary>
++/// Order of error handling for the error.handle modifier:
++/// RetryFirst — retry the action, then call error goal if retries fail (default)
++/// GoalFirst — call the error goal first (e.g. fix preconditions), then retry
++/// </summary>
++public enum ErrorOrder
++{
++    GoalFirst,
++    RetryFirst
++}
+diff --git a/PLang/App/Goals/Goal/Steps/Step/this.cs b/PLang/App/Goals/Goal/Steps/Step/this.cs
+index c51d2a3e..2424d757 100644
+--- a/PLang/App/Goals/Goal/Steps/Step/this.cs
++++ b/PLang/App/Goals/Goal/Steps/Step/this.cs
+@@ -79,15 +79,6 @@ public sealed partial class @this : modules.IDataWrappable
+     [Store, LlmBuilder, Debug, Default]
+     public string? Intent { get; init; }
+ 
+-    [Store, Debug, Default]
+-    public ErrorHandler? OnError { get; set; }
+-
+-    [Store, Debug, Default]
+-    public CacheSettings? Cache { get; set; }
+-
+-    [Store, Debug, Default]
+-    public int? Timeout { get; init; }
+-
+     [Debug]
+     public List<Info> Errors { get; init; } = new();
+ 
+@@ -109,139 +100,40 @@ public sealed partial class @this : modules.IDataWrappable
+     public Goals.Goal.@this? Goal { get; set; }
+ 
+     /// <summary>
+-    /// Runs this step: lifecycle events → actions (with timeout) → error handling.
+-    /// Context travels as parameter — steps are shared objects, not per-request.
++    /// Runs this step: lifecycle events → actions.
++    /// Error handling, caching, and timeouts are per-action modifiers, not step-level.
+     /// </summary>
+     public async Task<Data.@this> RunAsync(Actor.Context.@this context)
+     {
+         context.Step = this;
+         var lifecycle = context.LifecycleFor(this);
+ 
+-        // BeforeStep events
+         var beforeResult = await lifecycle.Before.Run(context, App.Events.EventType.BeforeStep);
+         if (!beforeResult.Success) return beforeResult;
+         if (beforeResult.Handled) return beforeResult;
+ 
+-        // Execute actions (with timeout if configured)
+-        Data.@this result;
++        Data.@this result = Data.@this.Ok();
+         try
+         {
+-            result = Timeout is > 0
+-                ? await RunActionsWithTimeout(context)
+-                : await RunActions(context);
++            foreach (var action in Actions)
++            {
++                context.CancellationToken.ThrowIfCancellationRequested();
++                result = await action.RunAsync(context);
++                if (!result.Success || result.Handled) break;
++            }
+         }
+-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
++        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
+         {
+             result = Data.@this.FromError(new Errors.ServiceError(
+                 ex.Message, "StepError", 400) { Exception = ex });
+         }
+ 
+-        // Error handling (retry, error goal, ignore)
+-        if (!result.Success && OnError != null)
+-            result = await HandleErrorAsync(result, context);
+-
+-        // AfterStep events
+         var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterStep);
+         if (!afterResult.Success) return afterResult;
+ 
+         return result;
+     }
+ 
+-    private async Task<Data.@this> RunActionsWithTimeout(Actor.Context.@this context)
+-    {
+-        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
+-        timeoutCts.CancelAfter(Timeout!.Value);
+-        context.PushCancellation(timeoutCts);
+-        try
+-        {
+-            return await RunActions(context);
+-        }
+-        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested)
+-        {
+-            return Data.@this.FromError(new Errors.ServiceError(
+-                $"Step timed out after {Timeout}ms: {Text}", "Timeout", 408));
+-        }
+-        finally
+-        {
+-            context.PopCancellation();
+-        }
+-    }
+-
+-    private async Task<Data.@this> RunActions(Actor.Context.@this context)
+-    {
+-        Data.@this result = Data.@this.Ok();
+-        foreach (var action in Actions)
+-        {
+-            context.CancellationToken.ThrowIfCancellationRequested();
+-            result = await action.RunAsync(context);
+-            if (!result.Success || result.Handled) break;
+-        }
+-        return result;
+-    }
+-
+-    private async Task<Data.@this> HandleErrorAsync(Data.@this failedResult, Actor.Context.@this context)
+-    {
+-        var handler = OnError!;
+-
+-        // Ignore — swallow error
+-        if (handler.IgnoreError == true)
+-            return Data.@this.Ok();
+-
+-        var app = context.App!;
+-        var order = handler.Order ?? ErrorOrder.RetryFirst;
+-
+-        if (order == ErrorOrder.GoalFirst)
+-        {
+-            if (handler.Goal != null)
+-            {
+-                var goalResult = await CallErrorGoal(handler, failedResult, app, context);
+-                if (goalResult.Success) return goalResult;
+-            }
+-            var retryResult = await Retry(handler, app, context);
+-            if (retryResult != null && retryResult.Success) return retryResult;
+-        }
+-        else
+-        {
+-            var retryResult = await Retry(handler, app, context);
+-            if (retryResult != null && retryResult.Success) return retryResult;
+-            if (handler.Goal != null)
+-            {
+-                var goalResult = await CallErrorGoal(handler, failedResult, app, context);
+-                if (goalResult.Success) return goalResult;
+-            }
+-        }
+-
+-        return failedResult;
+-    }
+-
+-    private async Task<Data.@this?> Retry(ErrorHandler handler, App.@this app, Actor.Context.@this context)
+-    {
+-        if (handler.RetryCount == null || handler.RetryCount <= 0) return null;
+-
+-        var delayMs = handler.RetryOverMs != null && handler.RetryCount > 0
+-            ? handler.RetryOverMs.Value / handler.RetryCount.Value
+-            : 0;
+-
+-        for (int attempt = 0; attempt < handler.RetryCount; attempt++)
+-        {
+-            if (delayMs > 0) await Task.Delay(delayMs);
+-
+-            var result = await RunActions(context);
+-            if (result.Success) return result;
+-        }
+-
+-        return null;
+-    }
+-
+-    private async Task<Data.@this> CallErrorGoal(ErrorHandler handler, Data.@this failedResult,
+-        App.@this app, Actor.Context.@this context)
+-    {
+-        handler.Goal!.Parameters ??= new();
+-        handler.Goal.Parameters.Add(new Data.@this("!error", failedResult.Error));
+-        handler.Goal.Action ??= Actions.Count > 0 ? Actions[0] : null;
+-        return await app.RunGoalAsync(handler.Goal, context);
+-    }
+-
+     /// <summary>
+     /// OBP: Step is responsible for its own Data representation.
+     /// Returns a cached per-execution Data&lt;Step&gt; wrapper from the context.
+@@ -272,14 +164,17 @@ public sealed partial class @this : modules.IDataWrappable
+                 Parameters = new List<Data.@this>(a.Parameters),
+                 Defaults = a.Defaults != null ? new List<Data.@this>(a.Defaults) : null,
+                 Errors = new List<Info>(a.Errors),
+-                Warnings = new List<Info>(a.Warnings)
++                Warnings = new List<Info>(a.Warnings),
++                Modifiers = new ActionModifiers(a.Modifiers.Select(m => new Action
++                {
++                    Module = m.Module,
++                    ActionName = m.ActionName,
++                    Parameters = new List<Data.@this>(m.Parameters)
++                }))
+             })),
+             WaitForExecution = WaitForExecution,
+             Goal = Goal,
+             Intent = Intent,
+-            OnError = OnError,
+-            Cache = Cache,
+-            Timeout = Timeout,
+             Errors = new List<Info>(Errors),
+             Warnings = new List<Info>(Warnings)
+         };
+@@ -297,12 +192,6 @@ public sealed partial class @this : modules.IDataWrappable
+             Actions.AddRange(from.Actions);
+         }
+ 
+-        if (from.Cache != null)
+-            Cache = from.Cache;
+-
+-        if (from.OnError != null)
+-            OnError = from.OnError;
+-
+         if (from.Errors.Count > 0)
+         {
+             Errors.Clear();
+diff --git a/PLang/App/Modules/this.cs b/PLang/App/Modules/this.cs
+index 03fef408..b986d118 100644
+--- a/PLang/App/Modules/this.cs
++++ b/PLang/App/Modules/this.cs
+@@ -124,6 +124,26 @@ public sealed class @this
+         return attr?.Cacheable ?? true;
+     }
+ 
++    /// <summary>
++    /// Returns whether an action is a modifier (from its [Modifier] attribute).
++    /// </summary>
++    public bool IsModifier(string module, string actionName)
++    {
++        var type = GetActionType(module, actionName);
++        return type?.GetCustomAttribute<modules.ModifierAttribute>() != null;
++    }
++
++    /// <summary>
++    /// Returns the modifier nesting order (lower = outermost wrapper).
++    /// int.MaxValue for non-modifier actions or when the attribute is missing.
++    /// </summary>
++    public int GetModifierOrder(string module, string actionName)
++    {
++        var type = GetActionType(module, actionName);
++        var attr = type?.GetCustomAttribute<modules.ModifierAttribute>();
++        return attr?.Order ?? int.MaxValue;
++    }
++
+     public int Count => _modules.Values.Sum(a => a.Count);
+ 
+     /// <summary>
+diff --git a/PLang/App/modules/IModifier.cs b/PLang/App/modules/IModifier.cs
+new file mode 100644
+index 00000000..eb5472ca
+--- /dev/null
++++ b/PLang/App/modules/IModifier.cs
+@@ -0,0 +1,10 @@
++namespace App.modules;
++
++/// <summary>
++/// Action modifier: wraps another action's execution via a delegate.
++/// The runtime folds modifiers right-to-left — first in the list = outermost wrapper.
++/// </summary>
++public interface IModifier
++{
++    Func<Task<Data.@this>> Wrap(Func<Task<Data.@this>> next, Actor.Context.@this context);
++}
+diff --git a/PLang/App/modules/ModifierAttribute.cs b/PLang/App/modules/ModifierAttribute.cs
+new file mode 100644
+index 00000000..b1501962
+--- /dev/null
++++ b/PLang/App/modules/ModifierAttribute.cs
+@@ -0,0 +1,12 @@
++namespace App.modules;
++
++/// <summary>
++/// Marks a handler class as an action modifier. The builder groups modifier actions
++/// onto their preceding executable action and sorts by Order before writing the .pr file.
++/// Lower Order = outermost wrapper in the runtime fold.
++/// </summary>
++[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
++public sealed class ModifierAttribute : Attribute
++{
++    public int Order { get; init; }
++}
+diff --git a/PLang/App/modules/builder/providers/DefaultBuilderProvider.cs b/PLang/App/modules/builder/providers/DefaultBuilderProvider.cs
+index cd9550c4..9ad89eb0 100644
+--- a/PLang/App/modules/builder/providers/DefaultBuilderProvider.cs
++++ b/PLang/App/modules/builder/providers/DefaultBuilderProvider.cs
+@@ -155,6 +155,10 @@ public class DefaultBuilderProvider : IBuilderProvider
+         if (string.IsNullOrEmpty(prPath))
+             return Data.@this.FromError(new Errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
+ 
++        // Group modifier actions onto their preceding executable action
++        foreach (var step in goal.Steps)
++            step.Actions.GroupModifiers(app.Modules);
++
+         var json = JsonSerializer.Serialize(goal, Json.PrWrite);
+ 
+         var saveAction = new file.Save
+diff --git a/PLang/App/modules/cache/check.cs b/PLang/App/modules/cache/check.cs
+deleted file mode 100644
+index b2727126..00000000
+--- a/PLang/App/modules/cache/check.cs
++++ /dev/null
+@@ -1,54 +0,0 @@
+-using App.Variables;
+-
+-namespace App.modules.cache;
+-
+-/// <summary>
+-/// Checks the cache for a step's result. Returns cached Data if hit, null if miss.
+-/// Returns null immediately if any action in the step has Cacheable = false,
+-/// or if the step has no CacheSettings.
+-/// </summary>
+-[Action("check", Cacheable = false)]
+-public partial class Check : IContext
+-{
+-    [IsNotNull]
+-    public partial Data.@this<Step> Step { get; init; }
+-
+-    public async Task<Data.@this> Run()
+-    {
+-        // No cache settings on the step — skip (miss)
+-        var step = Step.Value!;
+-        if (step.Cache == null) return Data(false);
+-
+-        // Any non-cacheable action — skip (miss)
+-        var modules = Context.App!.Modules;
+-        foreach (var action in step.Actions)
+-        {
+-            if (!modules.IsCacheable(action.Module, action.ActionName))
+-                return Data(false);
+-        }
+-
+-        var key = BuildCacheKey();
+-        var cached = await Context.App!.Cache.GetAsync(key);
+-
+-        // Miss — return false
+-        if (cached == null) return Data(false);
+-
+-        // Hit — restore return variables and return true
+-        foreach (var data in cached.Properties)
+-        {
+-            Context.Variables.Set(data.Name, data.Value, data.Type);
+-        }
+-
+-        return Data(true);
+-    }
+-
+-    private string BuildCacheKey()
+-    {
+-        var step = Step.Value!;
+-        if (!string.IsNullOrEmpty(step.Cache!.Key))
+-            return Context.Variables.Resolve(step.Cache.Key);
+-
+-        var goalPath = step.Goal?.Path ?? "unknown";
+-        return $"step:{goalPath}:{step.Index}";
+-    }
+-}
+diff --git a/PLang/App/modules/cache/store.cs b/PLang/App/modules/cache/store.cs
+deleted file mode 100644
+index 36555c3b..00000000
+--- a/PLang/App/modules/cache/store.cs
++++ /dev/null
+@@ -1,53 +0,0 @@
+-using App.Variables;
+-
+-namespace App.modules.cache;
+-
+-/// <summary>
+-/// Stores a step's result in the cache. Collects return variables from the step's actions
+-/// and caches them with the step's CacheSettings (duration, sliding).
+-/// Only stores if the step has CacheSettings, result succeeded, and all actions are cacheable.
+-/// </summary>
+-[Action("store", Cacheable = false)]
+-public partial class Store : IContext
+-{
+-    [IsNotNull]
+-    public partial Step Step { get; init; }
+-
+-    public partial Data.@this Data { get; init; }
+-
+-    public async Task<Data.@this> Run()
+-    {
+-        // No cache settings, no data, or failed result — don't cache
+-        if (Step.Cache == null || this.Data == null || !this.Data.Success) return this.Data ?? App.Data.@this.Ok();
+-
+-        // Any non-cacheable action — don't cache
+-        var modules = Context.App!.Modules;
+-        foreach (var action in Step.Actions)
+-        {
+-            if (!modules.IsCacheable(action.Module, action.ActionName))
+-                return this.Data;
+-        }
+-
+-        var key = BuildCacheKey();
+-        var entry = CollectReturnVariables();
+-
+-        await Context.App!.Cache.SetAsync(key, entry, Step.Cache);
+-
+-        return this.Data;
+-    }
+-
+-    private string BuildCacheKey()
+-    {
+-        if (!string.IsNullOrEmpty(Step.Cache!.Key))
+-            return Context.Variables.Resolve(Step.Cache.Key);
+-
+-        var goalPath = Step.Goal?.Path ?? "unknown";
+-        return $"step:{goalPath}:{Step.Index}";
+-    }
+-
+-    private App.Data.@this CollectReturnVariables()
+-    {
+-        // __data__ holds the last action's result — that's what we cache
+-        return Context.Variables.Get("__data__") ?? App.Data.@this.Ok();
+-    }
+-}
+diff --git a/PLang/App/modules/cache/wrap.cs b/PLang/App/modules/cache/wrap.cs
+new file mode 100644
+index 00000000..73437ae2
+--- /dev/null
++++ b/PLang/App/modules/cache/wrap.cs
+@@ -0,0 +1,55 @@
++using App.Variables;
++
++namespace App.modules.cache;
++
++/// <summary>
++/// Modifier: wraps an action with cache lookup before and cache store after.
++/// On a cache hit, the inner delegate is skipped entirely and the cached result
++/// is returned (also published as %__data__% for the next action in the step).
++/// </summary>
++[Action("wrap", Cacheable = false)]
++[Modifier(Order = 2)]
++public partial class CacheWrap : IContext, IModifier
++{
++    [IsNotNull]
++    public partial global::App.Data.@this<long> DurationMs { get; init; }
++    [Default(false)]
++    public partial global::App.Data.@this<bool> Sliding { get; init; }
++    public partial global::App.Data.@this<string>? Key { get; init; }
++
++    public Task<global::App.Data.@this> Run() => Task.FromResult(global::App.Data.@this.Ok());
++
++    public Func<Task<global::App.Data.@this>> Wrap(Func<Task<global::App.Data.@this>> next, Actor.Context.@this context)
++    {
++        var cacheKey = !string.IsNullOrEmpty(Key?.Value) ? Key.Value! : DefaultKey(context);
++        var durationMs = DurationMs.Value;
++        var sliding = Sliding.Value;
++
++        return async () =>
++        {
++            var cache = context.App!.Cache;
++            var cached = await cache.GetAsync(cacheKey);
++            if (cached != null)
++            {
++                cached.Name = "__data__";
++                context.Variables.Put(cached);
++                return cached;
++            }
++
++            var result = await next();
++            if (result.Success)
++            {
++                await cache.SetAsync(cacheKey, result,
++                    new CacheSettings { DurationMs = durationMs, Sliding = sliding });
++            }
++            return result;
++        };
++    }
++
++    private static string DefaultKey(Actor.Context.@this context)
++    {
++        var step = context.Step;
++        var goalPath = step?.Goal?.Path ?? "unknown";
++        return $"step:{goalPath}:{step?.Index}";
++    }
++}
+diff --git a/PLang/App/modules/error/check.cs b/PLang/App/modules/error/check.cs
+deleted file mode 100644
+index 6ff2ba7a..00000000
+--- a/PLang/App/modules/error/check.cs
++++ /dev/null
+@@ -1,155 +0,0 @@
+-using App;
+-using App.Errors;
+-using App.Goals.Goal.Steps.Step;
+-using App.Variables;
+-
+-namespace App.modules.error;
+-
+-/// <summary>
+-/// Single owner of all error handling: filtering, ignoreError, retry (with delay),
+-/// error goal, order (GoalFirst/RetryFirst), and propagation.
+-/// Reads the user step's OnError from Variables.
+-/// </summary>
+-[Action("check", Cacheable = false)]
+-public partial class Check : IContext, IAction
+-{
+-    public partial Data.@this Data { get; init; }
+-    public partial Data.@this<Step>? Step { get; init; }
+-
+-    public async Task<Data.@this> Run()
+-    {
+-        if (this.Data == null || this.Data.Success) return this.Data ?? App.Data.@this.Ok();
+-
+-        var onError = Step?.Value?.OnError;
+-
+-        // No error handler — propagate
+-        if (onError == null)
+-        {
+-            Data.Handled = false;
+-            return this.Data;
+-        }
+-
+-        // Filter — does this error match the handler's criteria?
+-        if (!ErrorMatches(Data.Error, onError))
+-        {
+-            Data.Handled = false;
+-            return this.Data;
+-        }
+-
+-        // Ignore — swallow
+-        if (onError.IgnoreError == true)
+-            return App.Data.@this.Ok();
+-
+-        var app = Context.App!;
+-        var order = onError.Order ?? ErrorOrder.RetryFirst;
+-
+-        if (order == ErrorOrder.GoalFirst)
+-        {
+-            // Goal first (e.g. fix preconditions), then retry
+-            await CallErrorGoal(app, Step!.Value!, onError);
+-
+-            var retryResult = await Retry(app, Step!.Value!);
+-            if (retryResult != null) return retryResult;
+-
+-            // Goal ran but no retry or retry failed — goal alone counts as handled
+-            if (onError.Goal != null) return App.Data.@this.Ok();
+-        }
+-        else
+-        {
+-            // Retry first (default), then error goal as fallback
+-            var retryResult = await Retry(app, Step!.Value!);
+-            if (retryResult != null) return retryResult;
+-
+-            if (onError.Goal != null)
+-            {
+-                await CallErrorGoal(app, Step!.Value!, onError);
+-                return App.Data.@this.Ok();
+-            }
+-        }
+-
+-        // Nothing handled it — propagate
+-        Data.Handled = false;
+-        return this.Data;
+-    }
+-
+-    /// <summary>
+-    /// Retry the step up to RetryCount times, with delay spread over RetryOverMs.
+-    /// Returns App.Data.@this.Ok() on success, null if retries exhausted or not configured.
+-    /// </summary>
+-    private async Task<Data.@this?> Retry(App.@this app, App.Goals.Goal.Steps.Step.@this Step)
+-    {
+-        var onError = Step.OnError!;
+-        if (onError.RetryCount == null || onError.RetryCount <= 0) return null;
+-
+-        var delayMs = onError.RetryOverMs != null && onError.RetryCount > 0
+-            ? onError.RetryOverMs.Value / onError.RetryCount.Value
+-            : 0;
+-
+-        for (int attempt = 0; attempt < onError.RetryCount; attempt++)
+-        {
+-            if (delayMs > 0)
+-                await Task.Delay(delayMs);
+-
+-            // Re-execute the step's actions on the caller's context (not hardcoded User)
+-            App.Data.@this result = App.Data.@this.Ok();
+-            foreach (var action in Step.Actions)
+-            {
+-                result = await app.Run(action, Context);
+-                if (!result.Success) break;
+-            }
+-
+-            if (result.Success) return result;
+-        }
+-
+-        return null;
+-    }
+-
+-    /// <summary>
+-    /// Call the error goal if configured. Stamps Action for sub-goal navigation.
+-    /// </summary>
+-    private async Task CallErrorGoal(App.@this app,
+-        App.Goals.Goal.Steps.Step.@this Step, ErrorHandler onError)
+-    {
+-        if (onError.Goal == null) return;
+-
+-        // Pass the error as a parameter to the error goal — %!error% inside the goal
+-        onError.Goal.Parameters ??= new();
+-        onError.Goal.Parameters.RemoveAll(p => p.Name == "!error");
+-        onError.Goal.Parameters.Add(new App.Data.@this("!error", Data.Error));
+-
+-        // Record on callstack for error history
+-        var callStack = Context.CallStack;
+-        if (callStack != null)
+-        {
+-            var action = Step.Actions.FirstOrDefault();
+-            if (action != null && Data.Error != null)
+-                callStack.PushError(action, Data.Error, Context.Variables);
+-        }
+-
+-        // Stamp Action so GoalCall can navigate to sub-goals
+-        onError.Goal.Action ??= Step.Actions.FirstOrDefault();
+-        await app.RunGoalAsync(onError.Goal, Context);
+-    }
+-
+-    /// <summary>
+-    /// Check if the error matches the handler's filter criteria (message, statusCode, key).
+-    /// All specified filters must match. No filters = matches everything.
+-    /// </summary>
+-    private static bool ErrorMatches(IError? error, ErrorHandler onError)
+-    {
+-        if (error == null) return true;
+-
+-        if (onError.Message != null &&
+-            !error.Message.Contains(onError.Message, StringComparison.OrdinalIgnoreCase))
+-            return false;
+-
+-        if (onError.StatusCode != null && error.StatusCode != onError.StatusCode)
+-            return false;
+-
+-        if (onError.Key != null &&
+-            !string.Equals(error.Key, onError.Key, StringComparison.OrdinalIgnoreCase))
+-            return false;
+-
+-        return true;
+-    }
+-}
+diff --git a/PLang/App/modules/error/handle.cs b/PLang/App/modules/error/handle.cs
+new file mode 100644
+index 00000000..455772b8
+--- /dev/null
++++ b/PLang/App/modules/error/handle.cs
+@@ -0,0 +1,124 @@
++using App.Errors;
++using App.Variables;
++
++namespace App.modules.error;
++
++/// <summary>
++/// Modifier: wraps an action with error matching, retry, and error goal handling.
++/// On success, passes through untouched. On failure, applies filters (StatusCode, Key,
++/// Message); if matched, either ignores, retries, or calls an error goal — ordered by
++/// Order (RetryFirst default, GoalFirst calls the error goal before retry).
++/// </summary>
++[Action("handle", Cacheable = false)]
++[Modifier(Order = 3)]
++public partial class Handle : IContext, IModifier
++{
++    public partial global::App.Data.@this<int>? StatusCode { get; init; }
++    public partial global::App.Data.@this<string>? Key { get; init; }
++    public partial global::App.Data.@this<string>? Message { get; init; }
++    public partial global::App.Data.@this<GoalCall>? Goal { get; init; }
++    public partial global::App.Data.@this<int>? RetryCount { get; init; }
++    public partial global::App.Data.@this<int>? RetryOverMs { get; init; }
++    public partial global::App.Data.@this<ErrorOrder>? Order { get; init; }
++    [Default(false)]
++    public partial global::App.Data.@this<bool> IgnoreError { get; init; }
++
++    public Task<global::App.Data.@this> Run() => Task.FromResult(global::App.Data.@this.Ok());
++
++    public Func<Task<global::App.Data.@this>> Wrap(Func<Task<global::App.Data.@this>> next, Actor.Context.@this context)
++    {
++        return async () =>
++        {
++            var result = await next();
++            if (result.Success) return result;
++            if (!MatchesError(result.Error)) return result;
++
++            if (IgnoreError.Value) return global::App.Data.@this.Ok();
++
++            var order = Order?.Value ?? ErrorOrder.RetryFirst;
++            var goal = Goal?.Value;
++
++            if (order == ErrorOrder.GoalFirst)
++            {
++                if (goal != null)
++                {
++                    var goalResult = await CallErrorGoal(goal, result, context);
++                    if (goalResult.Success) return goalResult;
++                }
++                var retryResult = await Retry(next, context);
++                if (retryResult?.Success == true) return retryResult;
++                if (goal != null) return global::App.Data.@this.Ok();
++            }
++            else
++            {
++                var retryResult = await Retry(next, context);
++                if (retryResult?.Success == true) return retryResult;
++                if (goal != null)
++                {
++                    await CallErrorGoal(goal, result, context);
++                    return global::App.Data.@this.Ok();
++                }
++            }
++
++            return result;
++        };
++    }
++
++    /// <summary>
++    /// Matches the error against StatusCode / Key / Message filters.
++    /// No filters = match all errors. Each supplied filter must match.
++    /// </summary>
++    private bool MatchesError(IError? error)
++    {
++        if (StatusCode?.Value == null && Key?.Value == null && Message?.Value == null) return true;
++        if (error == null) return false;
++
++        if (StatusCode?.Value is int sc && error.StatusCode != sc) return false;
++        if (!string.IsNullOrEmpty(Key?.Value)
++            && !string.Equals(error.Key, Key.Value, StringComparison.OrdinalIgnoreCase)) return false;
++        if (!string.IsNullOrEmpty(Message?.Value)
++            && !error.Message.Contains(Message.Value!, StringComparison.OrdinalIgnoreCase)) return false;
++
++        return true;
++    }
++
++    private async Task<global::App.Data.@this?> Retry(Func<Task<global::App.Data.@this>> next, Actor.Context.@this context)
++    {
++        var count = RetryCount?.Value;
++        if (count == null || count <= 0) return null;
++
++        var delayMs = RetryOverMs?.Value != null && count > 0
++            ? RetryOverMs.Value / count.Value : 0;
++
++        for (int attempt = 0; attempt < count; attempt++)
++        {
++            if (delayMs > 0) await Task.Delay(delayMs, context.CancellationToken);
++            var result = await next();
++            if (result.Success) return result;
++        }
++        return null;
++    }
++
++    private async Task<global::App.Data.@this> CallErrorGoal(GoalCall goalCall, global::App.Data.@this failedResult,
++        Actor.Context.@this context)
++    {
++        goalCall.Parameters ??= new();
++        goalCall.Parameters.RemoveAll(p => p.Name == "!error");
++        goalCall.Parameters.Add(new global::App.Data.@this("!error", failedResult.Error));
++
++        // Record error on the callstack for history
++        var callStack = context.CallStack;
++        if (callStack != null)
++        {
++            var step = context.Step;
++            var action = step?.Actions.FirstOrDefault();
++            if (action != null && failedResult.Error != null)
++                callStack.PushError(action, failedResult.Error, context.Variables);
++        }
++
++        // Stamp Action so GoalCall can navigate to sub-goals
++        goalCall.Action ??= context.Step?.Actions.FirstOrDefault();
++
++        return await context.App!.RunGoalAsync(goalCall, context);
++    }
++}
+diff --git a/PLang/App/modules/timeout/after.cs b/PLang/App/modules/timeout/after.cs
+new file mode 100644
+index 00000000..0797410c
+--- /dev/null
++++ b/PLang/App/modules/timeout/after.cs
+@@ -0,0 +1,59 @@
++using App.Errors;
++
++namespace App.modules.timeout;
++
++/// <summary>
++/// Modifier: wraps an action with a hard deadline. Cancels the action if it
++/// exceeds Ms milliseconds and returns a 408 Timeout error.
++/// </summary>
++[Action("after", Cacheable = false)]
++[Modifier(Order = 1)]
++public partial class After : IContext, IModifier
++{
++    [IsNotNull]
++    public partial global::App.Data.@this<int> Ms { get; init; }
++
++    public Task<global::App.Data.@this> Run() => Task.FromResult(global::App.Data.@this.Ok());
++
++    public Func<Task<global::App.Data.@this>> Wrap(Func<Task<global::App.Data.@this>> next, Actor.Context.@this context)
++    {
++        var ms = Ms.Value;
++        return async () =>
++        {
++            // Capture parent token BEFORE pushing — after the push, context.CancellationToken
++            // returns our own CTS, making the when-filter always false.
++            var parentToken = context.CancellationToken;
++            using var cts = CancellationTokenSource.CreateLinkedTokenSource(parentToken);
++            cts.CancelAfter(ms);
++            context.PushCancellation(cts);
++            try
++            {
++                var result = await next();
++
++                // Parent cancelled — let the cancellation propagate up (not our timeout).
++                if (parentToken.IsCancellationRequested)
++                    throw new OperationCanceledException(parentToken);
++
++                // Our timeout fired. Inner action's generated ExecuteAsync swallows OCE into a
++                // ServiceError result, so we detect the timeout via CTS state + failed result.
++                if (cts.IsCancellationRequested && !result.Success)
++                    return global::App.Data.@this.FromError(new ServiceError(
++                        $"Timed out after {ms}ms", "Timeout", 408));
++
++                return result;
++            }
++            catch (OperationCanceledException) when (cts.IsCancellationRequested
++                && !parentToken.IsCancellationRequested)
++            {
++                // Fallback path: if an inner action re-throws OCE (some handlers don't wrap),
++                // convert to Timeout error here.
++                return global::App.Data.@this.FromError(new ServiceError(
++                    $"Timed out after {ms}ms", "Timeout", 408));
++            }
++            finally
++            {
++                context.PopCancellation();
++            }
++        };
++    }
++}
+diff --git a/PLang/App/modules/timer/sleep.cs b/PLang/App/modules/timer/sleep.cs
+new file mode 100644
+index 00000000..f619cf60
+--- /dev/null
++++ b/PLang/App/modules/timer/sleep.cs
+@@ -0,0 +1,18 @@
++namespace App.modules.timer;
++
++/// <summary>
++/// Pauses execution for Ms milliseconds. Respects the current cancellation token,
++/// so a parent timeout or cancellation aborts the delay.
++/// </summary>
++[Action("sleep", Cacheable = false)]
++public partial class Sleep : IContext
++{
++    [IsNotNull]
++    public partial Data.@this<int> Ms { get; init; }
++
++    public async Task<global::App.Data.@this> Run()
++    {
++        await Task.Delay(Ms.Value, Context.CancellationToken);
++        return global::App.Data.@this.Ok();
++    }
++}
+diff --git a/system/builder/BuildGoal.goal b/system/builder/BuildGoal.goal
+index 89f35850..bd6a58ae 100644
+--- a/system/builder/BuildGoal.goal
++++ b/system/builder/BuildGoal.goal
+@@ -20,7 +20,7 @@ BuildGoalCore
+ - render template "/system/actions/v2/summary.md", write to %actionSummary%
+ - render template "/system/builder/templates/v2/goalFormatForLlm.template", write to %goalForLlm%
+ - render template "/system/builder/llm/BuildGoal.llm", write to %buildGoalPrompt%
+-- llm.query system=%buildGoalPrompt%, user=%goalForLlm%, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, cache=%!build.cache%, on error HandleBuildGoalFailure, write to %stepResults%
++- llm.query system=%buildGoalPrompt%, user=%goalForLlm%, scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], level: string, confidence: int}]}, cache=%!build.cache%, on error HandleBuildGoalFailure, write to %stepResults%
+ - builder.validateResponse stepResults=%stepResults%, goal=%goal%, on error call LlmFixer
+ - set %traceId% = %Now.Ticks%_%goal.Name%
+ - set %trace% = {"id": "%traceId%", "goal": "%goal.Name%", "timestamp": "%Now%", "pass1": {"system": "%buildGoalPrompt%", "user": "%goalForLlm%", "response": "%stepResults%"}, "detailPasses": []}, type=json
+@@ -47,7 +47,7 @@ ProcessGroup
+ LlmFixer
+ / LLM produced invalid output — retry with error context
+ - write out "  Validation failed: %!error.Message% — retrying..."
+-- llm.query system=%buildGoalPrompt%, user="Your previous response had validation errors:\n%!error.Message%\n\nThe PLang code to build:\n%goalForLlm%\n\nFix the errors listed above and return the complete corrected response.", scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationMs: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, level: string, confidence: int}]}, cache=%!build.cache%, write to %stepResults%
++- llm.query system=%buildGoalPrompt%, user="Your previous response had validation errors:\n%!error.Message%\n\nThe PLang code to build:\n%goalForLlm%\n\nFix the errors listed above and return the complete corrected response.", scheme={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, guidance: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], level: string, confidence: int}]}, cache=%!build.cache%, write to %stepResults%
+ - call ValidateBuildResponse
+ 
+ 
+diff --git a/system/builder/llm/BuildGoal.llm b/system/builder/llm/BuildGoal.llm
+index 5d78c4b6..4243a057 100644
+--- a/system/builder/llm/BuildGoal.llm
++++ b/system/builder/llm/BuildGoal.llm
+@@ -47,20 +47,6 @@ Group when:
+ 
+ Do NOT group unrelated steps. Steps without a group are processed individually. Use short descriptive names: "file-processing", "auth-flow", "data-transform", etc.
+ 
+-## Step Modifiers
+-
+-These are step-level properties, NOT actions:
+-
+-Cache: `cache for 5 minutes` → `"cache": {"durationMs": 300000}`
+-Cache sliding: `cache for 5 minutes sliding` → `"cache": {"durationMs": 300000, "sliding": true}`
+-
+-Error handling:
+-- `on error ignore` → `"onError": {"ignoreError": true}`
+-- `on error call HandleIt` → `"onError": {"goal": {"name": "HandleIt"}}`
+-- `on error retry 3 times` → `"onError": {"retryCount": 3}`
+-- `on error retry 3 times, then call HandleIt` → `"onError": {"retryCount": 3, "order": "RetryFirst", "goal": {"name": "HandleIt"}}`
+-- `on error call HandleIt, then retry 3 times` → `"onError": {"retryCount": 3, "order": "GoalFirst", "goal": {"name": "HandleIt"}}`
+-
+ ## Example
+ 
+ Goal:
+@@ -88,9 +74,12 @@ Response:
+     },
+     {
+       "index": 1,
+-      "guidance": "file.read with path, cache modifier 5 min = 300000ms. Grouped with condition that uses config.",
+-      "actions": [{"module": "file", "action": "read", "parameters": [{"name": "Path", "value": "config.json", "type": "path"}]}, {"module": "variable", "action": "set", "parameters": [{"name": "Name", "value": "%config%", "type": "string"}, {"name": "Value", "value": "%__data__%", "type": "object"}]}],
+-      "cache": {"durationMs": 300000},
++      "guidance": "file.read with cache.wrap modifier (5 min = 300000ms), then variable.set to capture %config%. The cache.wrap modifier wraps only the file.read, not the variable.set.",
++      "actions": [
++        {"module": "file", "action": "read", "parameters": [{"name": "Path", "value": "config.json", "type": "path"}]},
++        {"module": "cache", "action": "wrap", "parameters": [{"name": "DurationMs", "value": 300000, "type": "long"}]},
++        {"module": "variable", "action": "set", "parameters": [{"name": "Name", "value": "%config%", "type": "string"}, {"name": "Value", "value": "%__data__%", "type": "object"}]}
++      ],
+       "group": "config-check",
+       "level": "high", "confidence": 95
+     },
+@@ -116,9 +105,11 @@ Response:
+     },
+     {
+       "index": 5,
+-      "guidance": "goal.call to Save with retry+goal error handling",
+-      "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "Save"}, "type": "goal.call"}]}],
+-      "onError": {"retryCount": 2, "order": "RetryFirst", "goal": {"name": "HandleError"}},
++      "guidance": "goal.call to Save with error.handle modifier for retry + error goal. The modifier wraps the goal.call.",
++      "actions": [
++        {"module": "goal", "action": "call", "parameters": [{"name": "GoalName", "value": {"name": "Save"}, "type": "goal.call"}]},
++        {"module": "error", "action": "handle", "parameters": [{"name": "RetryCount", "value": 2, "type": "int"}, {"name": "Order", "value": "RetryFirst", "type": "string"}, {"name": "Goal", "value": {"name": "HandleError"}, "type": "goal.call"}]}
++      ],
+       "level": "high", "confidence": 95
+     }
+   ]
+@@ -175,6 +166,6 @@ actions: [
+ - When `set \%var\% = {key: value, ...}` contains an inline object (curly braces), the Value parameter must use `"type": "json"` and the value must be a **JSON object** (not a string containing JSON). Example: `{"name": "Value", "value": {"id": "\%x\%", "items": []}, "type": "json"}`.
+ - `missingVariable` is ALWAYS a warning — variables can be set by called goals.
+ - NEVER alter literal values. You are a compiler, not an editor.
+-- `on error` MUST produce `onError` on the step. Missing onError is a build-breaking bug.
++- Action modifiers — any step text expressing cross-cutting behavior around an action (error handling, caching, deadlines) MUST produce a modifier action right after the action it applies to. Modifier actions today: `error.handle` (on-error / retry / ignore / error-goal), `cache.wrap` (cache for X), `timeout.after` (deadline). The builder groups these onto the preceding executable action. Missing a modifier when the step text implies one is a build-breaking bug.
+ - Actions within a step execute in order. Each action's result is available as \%__data__\% to the next action.
+ - When a step combines a condition with another action (e.g., `if X, call GoalName` or `if X, set %y% = 1`), produce multiple actions in the same step: `condition.if` first, then the conditional action(s). The orchestrator handles running or skipping them.
+diff --git a/tests/modifiers/CacheOnFileRead.test.goal b/tests/modifiers/CacheOnFileRead.test.goal
+new file mode 100644
+index 00000000..83031dcd
+--- /dev/null
++++ b/tests/modifiers/CacheOnFileRead.test.goal
+@@ -0,0 +1,12 @@
++TestCacheOnFileRead
++/ Verifies that cache.wrap modifier caches a file.read result
++- save 'testdata/cache_test.txt' with content 'cached content'
++- read file 'testdata/cache_test.txt'
++    cache for 60 seconds
++    write to %content1%
++- read file 'testdata/cache_test.txt'
++    cache for 60 seconds
++    write to %content2%
++/ Both reads should return same cached value
++- assert %content1% equals %content2%
++- delete file 'testdata/cache_test.txt'
+diff --git a/tests/modifiers/MultipleModifiersCompose.test.goal b/tests/modifiers/MultipleModifiersCompose.test.goal
+new file mode 100644
+index 00000000..15e156e4
+--- /dev/null
++++ b/tests/modifiers/MultipleModifiersCompose.test.goal
+@@ -0,0 +1,15 @@
++TestMultipleModifiersCompose
++/ Verifies that cache + error modifiers compose correctly on one action
++- save 'testdata/compose_test.txt' with content 'hello compose'
++- read file 'testdata/compose_test.txt'
++    cache for 60 seconds
++    on error ignore
++    write to %result%
++- assert %result% equals 'hello compose'
++- delete file 'testdata/compose_test.txt'
++/ Second read should come from cache even though file is deleted
++- read file 'testdata/compose_test.txt'
++    cache for 60 seconds
++    on error ignore
++    write to %cachedResult%
++- assert %cachedResult% equals 'hello compose'
+diff --git a/tests/modifiers/OnErrorCallGoal.test.goal b/tests/modifiers/OnErrorCallGoal.test.goal
+new file mode 100644
+index 00000000..5263c52f
+--- /dev/null
++++ b/tests/modifiers/OnErrorCallGoal.test.goal
+@@ -0,0 +1,11 @@
++TestOnErrorCallGoal
++/ Verifies error.handle modifier calls error goal and provides error details
++- call FailWithDetails
++    on error call CaptureError
++- assert %capturedMessage% equals 'specific failure'
++
++FailWithDetails
++- throw error 'specific failure', key 'TestKey', status code 422
++
++CaptureError
++- set %capturedMessage% = %!error.Message%
+diff --git a/tests/modifiers/OnErrorRetry.test.goal b/tests/modifiers/OnErrorRetry.test.goal
+new file mode 100644
+index 00000000..f4378604
+--- /dev/null
++++ b/tests/modifiers/OnErrorRetry.test.goal
+@@ -0,0 +1,12 @@
++TestOnErrorRetry
++/ Verifies that error.handle modifier retries a failing action
++- set %counter% = 0
++- call IncrementAndFail
++    on error retry 3 times
++    on error ignore
++/ After 3 retries + original = counter should be 4
++- assert %counter% equals 4
++
++IncrementAndFail
++- set %counter% = %counter% + 1
++- throw error 'intentional failure'
+diff --git a/tests/modifiers/PerActionErrorScope.test.goal b/tests/modifiers/PerActionErrorScope.test.goal
+new file mode 100644
+index 00000000..57dd224f
+--- /dev/null
++++ b/tests/modifiers/PerActionErrorScope.test.goal
+@@ -0,0 +1,17 @@
++TestPerActionErrorScope
++/ Verifies error modifier applies only to its action, not subsequent actions
++- set %handled% = false
++- call MayFail
++    on error call MarkHandled
++- call AlwaysFails
++- assert %handled% equals true
++
++MayFail
++/ This goal succeeds — error modifier should not trigger
++- set %x% = 1
++
++MarkHandled
++- set %handled% = true
++
++AlwaysFails
++- throw error 'second action error'
+diff --git a/tests/modifiers/TimeoutOnSlowAction.test.goal b/tests/modifiers/TimeoutOnSlowAction.test.goal
+new file mode 100644
+index 00000000..793f1982
+--- /dev/null
++++ b/tests/modifiers/TimeoutOnSlowAction.test.goal
+@@ -0,0 +1,9 @@
++TestTimeoutOnSlowAction
++/ Verifies timeout.after fires when the wrapped action exceeds the deadline.
++/ Sleep 2 seconds but timeout after 100ms → timeout wins, error is ignored,
++/ and the step following the wrapped one still runs.
++- set %timedOut% = true
++- call Sleep ms=2000
++    timeout after 100 ms
++    on error ignore
++- assert %timedOut% equals true

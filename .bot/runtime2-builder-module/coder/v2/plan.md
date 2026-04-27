@@ -31,7 +31,7 @@ This requires the actions to be `async` and have access to `Context` (which they
 
 ### 6. Shared JsonSerializerOptions
 **Problem**: `new JsonSerializerOptions { ... }` duplicated across files.
-**Fix**: Create a static class `PLang.Runtime2.modules.builder.JsonOptions` with:
+**Fix**: Create a static class `App.modules.builder.JsonOptions` with:
 - `static readonly JsonSerializerOptions CamelCase` — camelCase naming
 - `static readonly JsonSerializerOptions CaseInsensitive` — case-insensitive reads
 - `static readonly JsonSerializerOptions PrFile` — camelCase, include nulls, indented (for .pr output)

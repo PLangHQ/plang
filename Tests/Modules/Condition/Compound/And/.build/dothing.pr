@@ -1,0 +1,47 @@
+{
+  "name": "DoThing",
+  "description": "Sets %result% to the string \u0022both-true\u0022 (the \u0022\u003C= null\u0022 part is ignored by the compiler since it is not a supported action modifier/parameter).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022both-true\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "both-true",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/DoThing.goal",
+  "prPath": "/.build/dothing.pr",
+  "hash": "c9ef2a4feef41411dca98e9dfc8891e7c57d1b2cd95a3e7d46290e11d80adbac",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

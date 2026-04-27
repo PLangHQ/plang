@@ -2,7 +2,7 @@
 
 ## What this is
 
-PLang Runtime2 had 31 existing PLang integration tests but major gaps in engine-level behavior coverage: error handling flows, event lifecycle, caching, goal call patterns, variable scoping, compound conditions, and type conversion edge cases. This work adds 33 new test suites (64 total) and fixes 3 runtime bugs discovered during testing.
+PLang App had 31 existing PLang integration tests but major gaps in engine-level behavior coverage: error handling flows, event lifecycle, caching, goal call patterns, variable scoping, compound conditions, and type conversion edge cases. This work adds 33 new test suites (64 total) and fixes 3 runtime bugs discovered during testing.
 
 ## What was done
 
@@ -18,13 +18,13 @@ PLang Runtime2 had 31 existing PLang integration tests but major gaps in engine-
 
 ### Runtime Bugs Found & Fixed (3 files)
 
-1. **Test runner root directory** (`PLang/Runtime2/Engine/Test/this.cs`): Changed engine root from `rootDir` (Tests/Runtime2/) to `dir` (test's own directory) so helper goal .pr files resolve correctly via GetAsync.
+1. **Test runner root directory** (`PLang/App/Test/this.cs`): Changed engine root from `rootDir` (Tests/App/) to `dir` (test's own directory) so helper goal .pr files resolve correctly via GetAsync.
 
-2. **Test runner setup goals** (`PLang/Runtime2/Engine/Test/this.cs`): Added setup goal discovery and execution before each test, enabling tests that use Setup.goal.
+2. **Test runner setup goals** (`PLang/App/Test/this.cs`): Added setup goal discovery and execution before each test, enabling tests that use Setup.goal.
 
-3. **Condition handler type mismatch** (`PLang/Runtime2/modules/condition/if.cs`): Changed `Condition` property from `bool` to `string` because the builder sends expression strings like `"42 > 5"`. Added `EvaluateCondition()` method for numeric/string comparisons.
+3. **Condition handler type mismatch** (`PLang/App/modules/condition/if.cs`): Changed `Condition` property from `bool` to `string` because the builder sends expression strings like `"42 > 5"`. Added `EvaluateCondition()` method for numeric/string comparisons.
 
-4. **Goal call return value** (`PLang/Runtime2/modules/goal/call.cs`): Added `__stepResult` fallback when goal returns `Data.Ok()` with null Value, enabling return value mapping from goal calls.
+4. **Goal call return value** (`PLang/App/modules/goal/call.cs`): Added `__stepResult` fallback when goal returns `Data.Ok()` with null Value, enabling return value mapping from goal calls.
 
 ### Key Findings
 
@@ -37,7 +37,7 @@ PLang Runtime2 had 31 existing PLang integration tests but major gaps in engine-
 
 Test runner fix — root directory change:
 ```csharp
-// Before: engine rooted at Tests/Runtime2/ (helpers not found)
+// Before: engine rooted at Tests/App/ (helpers not found)
 var testFs = new SafeFileSystem.PLangFileSystem(rootDir, "");
 
 // After: engine rooted at test's own directory (helpers resolve)
@@ -61,9 +61,9 @@ ErrorInHandler/
 ## Files modified
 
 ### Runtime code (3 files)
-- `PLang/Runtime2/Engine/Test/this.cs` — Test runner: root dir fix + setup goal execution
-- `PLang/Runtime2/modules/condition/if.cs` — Changed Condition to string + expression evaluation
-- `PLang/Runtime2/modules/goal/call.cs` — Added __stepResult fallback for return values
+- `PLang/App/Test/this.cs` — Test runner: root dir fix + setup goal execution
+- `PLang/App/modules/condition/if.cs` — Changed Condition to string + expression evaluation
+- `PLang/App/modules/goal/call.cs` — Added __stepResult fallback for return values
 
-### Test suites (33 new directories in Tests/Runtime2/)
+### Test suites (33 new directories in Tests/App/)
 Each with `.test.goal`, helper `.goal` files, and `.build/*.pr` files.

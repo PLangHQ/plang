@@ -1,3 +1,0 @@
-Start
-/ Test that builder.validateActions returns error for unknown module.action pairs
-- throw "not implemented — requires constructing StepActions with bad action name, deferred to C# tests"

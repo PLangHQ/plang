@@ -1,6 +1,6 @@
 # Piece 7: LLM Module (v2 — full C#)
 
-> **Note for coder**: The pseudocode in this plan illustrates intent and flow, not exact API usage. Names like `PersistentCache`, `engine.RunAction(...)`, etc. are conceptual — they may not map 1:1 to actual Runtime2 classes or methods. You must understand the Runtime2 architecture (providers, Data, engine navigation, context, memory stack, etc.) before implementing. Read the OBP doc and existing modules (file, http) as reference. If unsure how something should be wired, ask Ingi.
+> **Note for coder**: The pseudocode in this plan illustrates intent and flow, not exact API usage. Names like `PersistentCache`, `engine.RunAction(...)`, etc. are conceptual — they may not map 1:1 to actual App classes or methods. You must understand the App architecture (providers, Data, engine navigation, context, memory stack, etc.) before implementing. Read the OBP doc and existing modules (file, http) as reference. If unsure how something should be wired, ask Ingi.
 
 ## Decision Log
 
@@ -194,7 +194,7 @@ Provider switching uses the standard `provider.set` action — same as all other
 
 ## Pseudocode
 
-> **Coder note**: This pseudocode shows the logical flow. Names like `PersistentCache`, `engine.RunAction(...)`, `context.Set(...)` are conceptual placeholders. Map them to the actual Runtime2 APIs. If you're unsure how something maps, ask Ingi.
+> **Coder note**: This pseudocode shows the logical flow. Names like `PersistentCache`, `engine.RunAction(...)`, `context.Set(...)` are conceptual placeholders. Map them to the actual App APIs. If you're unsure how something maps, ask Ingi.
 
 ```
 OpenAiProvider.Query(action):
@@ -650,7 +650,7 @@ With format:
 ### File Structure
 
 ```
-PLang/Runtime2/modules/llm/
+PLang/App/modules/llm/
 ├── query.cs                     — action record, delegates to ILlmProvider
 ├── LlmMessage.cs                — message type (Role, Text, Image, ToolCallId, ToolCalls)
 ├── ToolCall.cs                  — tool call carrier (Id, Name, Arguments)
@@ -740,18 +740,18 @@ PLang/Runtime2/modules/llm/
 
 | File | Purpose |
 |------|---------|
-| `PLang/Runtime2/modules/llm/query.cs` | Action record, delegates to provider |
-| `PLang/Runtime2/modules/llm/LlmMessage.cs` | Message type with tool metadata |
-| `PLang/Runtime2/modules/llm/ToolCall.cs` | Tool call carrier type |
-| `PLang/Runtime2/modules/llm/providers/ILlmProvider.cs` | Provider interface |
-| `PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs` | OpenAI implementation |
+| `PLang/App/modules/llm/query.cs` | Action record, delegates to provider |
+| `PLang/App/modules/llm/LlmMessage.cs` | Message type with tool metadata |
+| `PLang/App/modules/llm/ToolCall.cs` | Tool call carrier type |
+| `PLang/App/modules/llm/providers/ILlmProvider.cs` | Provider interface |
+| `PLang/App/modules/llm/providers/OpenAiProvider.cs` | OpenAI implementation |
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs` | Add `Description` and `Parallel` properties |
-| `PLang/Runtime2/Engine/Providers/this.cs` | Register ILlmProvider in ResolveType + RegisterDefaults |
+| `PLang/App/Goals/Goal/GoalCall.cs` | Add `Description` and `Parallel` properties |
+| `PLang/App/Providers/this.cs` | Register ILlmProvider in ResolveType + RegisterDefaults |
 
 ## Definition of Done
 

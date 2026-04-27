@@ -31,5 +31,5 @@ Test that Steps.RunAsync returns the last step's result, not a fresh Data.Ok().
 - Finding #8: acceptable tradeoff, no code change needed
 
 ## Files to modify
-- `PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs` — fix 3 tests, add new tests
-- `PLang.Tests/Runtime2/Goals/GoalsTests.cs` — new file for PrPath keying tests (or add to SetupTests)
+- `PLang.Tests/App/Goals/Setup/SetupTests.cs` — fix 3 tests, add new tests
+- `PLang.Tests/App/Goals/GoalsTests.cs` — new file for PrPath keying tests (or add to SetupTests)

@@ -1,0 +1,76 @@
+{
+  "name": "FailsVar",
+  "description": "Sets %score% to 42, then asserts that %score% equals 99 (intentionally failing).",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %score% = 42",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Sets %score%=42 and asserts %score%=99 \u2014 AssertSnapshot attaches the\nVariables map to AssertionError. The Report test then verifies that\ntest.report\u0027s JSON output carries the %score% snapshot.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%score%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 42,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %score% equals 99",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 99,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%score%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/_fixtures_fail/failsvar.fixture.goal",
+  "prPath": "/_fixtures_fail/.build/failsvar.fixture.pr",
+  "hash": "6e25b0b9ea78d3cae7db9ebca5d34f0d47946fd71f04616153de8314869b4a27",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

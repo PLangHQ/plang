@@ -5,19 +5,19 @@
 Analyze all code changes on `runtime2-builder-module` vs `origin/runtime2-builder-v2`:
 
 **New production files (builder module):**
-- `PLang/Runtime2/modules/builder/providers/DefaultBuilderProvider.cs` (344 lines — core logic)
-- `PLang/Runtime2/modules/builder/providers/IBuilderProvider.cs` (23 lines)
-- `PLang/Runtime2/modules/builder/actions.cs`, `app.cs`, `appSave.cs`, `goals.cs`, `goalsSave.cs`, `merge.cs`, `validate.cs`, `types.cs` (all thin action handlers)
-- `PLang/Runtime2/modules/builder/BuilderTypeInfo.cs` (3 lines)
+- `PLang/App/modules/builder/providers/DefaultBuilderProvider.cs` (344 lines — core logic)
+- `PLang/App/modules/builder/providers/IBuilderProvider.cs` (23 lines)
+- `PLang/App/modules/builder/actions.cs`, `app.cs`, `appSave.cs`, `goals.cs`, `goalsSave.cs`, `merge.cs`, `validate.cs`, `types.cs` (all thin action handlers)
+- `PLang/App/modules/builder/BuilderTypeInfo.cs` (3 lines)
 
 **Modified engine files:**
-- `PLang/Runtime2/Engine/Goals/Goal/this.cs` — `Parse()`, `MergeFrom()`, `ToText()` added
-- `PLang/Runtime2/Engine/Goals/Goal/Methods.cs` — `FormatForLlm()` added
-- `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs` — `Merge()`, `Clone()` added
-- `PLang/Runtime2/Engine/Modules/this.cs` — `Describe()`, `GetDefaults()` added
-- `PLang/Runtime2/Engine/Utility/Json.cs` — new centralized JSON options
-- `PLang/Runtime2/Engine/Utility/TypeMapping.cs` — `ConvertTo<T>`, `GetBuilderTypeNames()`, `GetComplexTypeSchemas()` added
-- `PLang/Runtime2/Engine/Providers/this.cs` — builder provider registered
+- `PLang/App/Goals/Goal/this.cs` — `Parse()`, `MergeFrom()`, `ToText()` added
+- `PLang/App/Goals/Goal/Methods.cs` — `FormatForLlm()` added
+- `PLang/App/Goals/Goal/Steps/Step/this.cs` — `Merge()`, `Clone()` added
+- `PLang/App/Modules/this.cs` — `Describe()`, `GetDefaults()` added
+- `PLang/App/Utility/Json.cs` — new centralized JSON options
+- `PLang/App/Utility/TypeMapping.cs` — `ConvertTo<T>`, `GetBuilderTypeNames()`, `GetComplexTypeSchemas()` added
+- `PLang/App/Providers/this.cs` — builder provider registered
 
 **Test files:** 10 test classes, all read.
 

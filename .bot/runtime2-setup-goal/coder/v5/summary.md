@@ -10,7 +10,7 @@ The auditor found that setup goals (IsSetup=true) could "leak" into regular goal
 
 Added `if (loaded is { IsSetup: true }) return null;` at all disk-load return paths:
 
-**`PLang/Runtime2/Engine/Goals/this.cs`**:
+**`PLang/App/Goals/this.cs`**:
 - `GetAsync` relative path (line ~120): filter after loading from relative .pr file
 - `GetAsync` root path (line ~138): filter after loading from root-relative .pr file
 - `GetByPrPathAsync` cache check (line ~221): changed from `&& !cached.IsSetup` (which fell through to disk load) to `return cached.IsSetup ? null : cached;` (returns null immediately)
@@ -28,7 +28,7 @@ The test for `GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal` exposed a real bu
 
 ### Tests added
 
-5 new tests in `PLang.Tests/Runtime2/Core/GoalsTests.cs`:
+5 new tests in `PLang.Tests/App/Core/GoalsTests.cs`:
 - `Get_ExcludesSetupGoals` — Get() returns null for cached setup goals
 - `GetAsync_ReturnsNull_ForSetupGoalLoadedFromDisk` — creates .pr on disk with IsSetup=true, verifies null returned
 - `GetAsync_ReturnsGoal_ForNonSetupGoalLoadedFromDisk` — positive control, non-setup .pr returns goal
@@ -68,6 +68,6 @@ if (_byPath.TryGetValue(prPath, out var cached))
 ```
 
 ## Files modified
-- `PLang/Runtime2/Engine/Goals/this.cs` — IsSetup filters in GetAsync, GetByPrPathAsync
+- `PLang/App/Goals/this.cs` — IsSetup filters in GetAsync, GetByPrPathAsync
 - `PLang/Executor.cs` — goal loading order, conditional setup interception
-- `PLang.Tests/Runtime2/Core/GoalsTests.cs` — 5 new tests
+- `PLang.Tests/App/Core/GoalsTests.cs` — 5 new tests
