@@ -59,9 +59,9 @@
         }
       ],
       "intent": null,
-      "guidance": "When %stepResult.keep% is true, call ApplyKeptStep. This is a conditional branch step; the body is a single goal.call. Use condition.if with Left as bool, Operator ==, Right true.",
+      "guidance": "condition.if checks %stepResult.keep% == true, then calls ApplyKeptStep. The @known mapping indicates this step is unchanged and should be kept as-is.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -121,9 +121,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Second conditional branch: when stepResult.keep is not true, call ApplyBuiltStep. This is the else-case for keep=true, so it should be a condition.if with Negate=true and then a goal.call to ApplyBuiltStep.",
+      "guidance": "condition.if checks %stepResult.keep% == true with Negate=true (i.e., keep is not true), then calls ApplyBuiltStep. The @known mapping indicates this step is unchanged and should be kept as-is.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -366,7 +366,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Conditional refinement: if the built step\u0027s level is not \u0027high\u0027, call BuildStep. The @known mapping indicates the exact prior structure, so we keep it.",
+          "guidance": "If the built step\u0027s level is not \u0027high\u0027, call BuildStep. This is a conditional branch with a goal.call in the then-branch.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -453,9 +453,9 @@
             }
           ],
           "intent": null,
-          "guidance": "set the step\u0027s validationError variable to the current error object. This is a variable.set with Name referencing the indexed goal step path and Value set to %!error%.",
+          "guidance": "Store the validation error into the goal step\u0027s validationError variable using variable.set. The value is the runtime error object %!error%.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -487,9 +487,9 @@
             }
           ],
           "intent": null,
-          "guidance": "call BuildStep as a goal invocation; @known confirms the exact goal.call shape and prPath, so we keep it canonical.",
+          "guidance": "Call the BuildStep goal. parallel is false per @known; prPath is metadata for the builder and not represented in engine call parameters.",
           "level": "high",
-          "confidence": 92,
+          "confidence": 90,
           "formal": null,
           "source": null,
           "waitForExecution": true

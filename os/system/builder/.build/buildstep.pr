@@ -642,7 +642,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Use condition.if to check whether %result.errors% is empty; Negate=true means run the body when errors is NOT empty. Then call ThrowBuildStepErrors as the conditional action.",
+          "guidance": "If %result.errors% is not empty, branch and call ThrowBuildStepErrors. The @known mapping indicates the condition is compiled as: isempty with Negate=true (i.e., errors is not empty).",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -699,9 +699,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Iterate over %result.actions% and for each item call ValidateActionErrors with item=%action%.",
-          "level": "medium",
-          "confidence": 55,
+          "guidance": "Iterate over %result.actions% and validate action-level errors for each item by calling ValidateActionErrors with item=%action%. The @known mapping also sets Actor([actor] %action%).",
+          "level": "high",
+          "confidence": 90,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -826,7 +826,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Use condition.if to test whether %action.errors% is empty, with Negate=true so the branch runs when it is NOT empty. Then call the goal ThrowActionErrors. The @known mapping indicates the step is keep:true, but the previous response had validation errors due to an incorrect goal.call payload shape; we correct it here.",
+          "guidance": "Use condition.if to branch on whether %action.errors% is empty. The @known mapping indicates the condition is compiled as: if isempty(%action.errors%) is true, negate it (Negate=true) so the body runs when errors is not empty. Then call goal ThrowActionErrors (non-parallel).",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -959,7 +959,7 @@
             }
           ],
           "intent": null,
-          "guidance": "throw the provided error object as a structured error. Map %!error% to the thrown error\u0027s Message/StatusCode/Key using the available fields from the step text.",
+          "guidance": "throw the provided error object from the step using error.throw, mapping Message/StatusCode/Key from the error fields referenced in the step text.",
           "level": "high",
           "confidence": 92,
           "formal": null,

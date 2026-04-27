@@ -25,7 +25,7 @@
         }
       ],
       "intent": null,
-      "guidance": "write out a translatable message using output.write. The step text is explicitly marked @known with the exact action mapping.",
+      "guidance": "Write a translatable message to output using tstring, matching the @known mapping.",
       "level": "high",
       "confidence": 99,
       "formal": null,
@@ -70,7 +70,7 @@
         }
       ],
       "intent": null,
-      "guidance": "set %buildStart% to %Now.Ticks% as a string. Uses variable.set with explicit Type([string] string) per @known.",
+      "guidance": "Set build start ticks from %Now.Ticks% into %buildStart% as a string (per @known).",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -123,7 +123,7 @@
         }
       ],
       "intent": null,
-      "guidance": "initialize %trace% as a JSON object with fields from runtime variables. Because it uses inline object syntax and type=json, emit variable.set with Value type json.",
+      "guidance": "Create the trace object as JSON and store it in %trace% with type=json (per @known).",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -194,7 +194,7 @@
         }
       ],
       "intent": null,
-      "guidance": "call BuildGoalCore and on error run HandleBuildGoalFailure. The @known mapping shows goal.call with error.handle Actions list containing a goal.call to HandleBuildGoalFailure.",
+      "guidance": "Call BuildGoalCore and on error run HandleBuildGoalFailure via error.handle with retry-first semantics (per @known).",
       "level": "high",
       "confidence": 85,
       "formal": null,
@@ -234,9 +234,9 @@
         }
       ],
       "intent": null,
-      "guidance": "set %trace.pass1% to %currentPass% (object). Uses variable.set per @known.",
+      "guidance": "Store current pass into trace.pass1.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -274,9 +274,9 @@
         }
       ],
       "intent": null,
-      "guidance": "set %goal.BuilderVersion% to literal \u00220.2.2\u0022 as string. Uses variable.set per @known.",
-      "level": "medium",
-      "confidence": 70,
+      "guidance": "Set builder version on the goal context.",
+      "level": "high",
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -314,9 +314,9 @@
         }
       ],
       "intent": null,
-      "guidance": "set %parentGoal% to %goal% (object). Uses variable.set per @known.",
+      "guidance": "Capture parent goal object into %parentGoal%.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -362,7 +362,7 @@
             },
             {
               "name": "Actor",
-              "value": null,
+              "value": "",
               "type": "actor"
             }
           ],
@@ -371,9 +371,9 @@
         }
       ],
       "intent": null,
-      "guidance": "foreach over %parentGoal.Goals% and call BuildSubGoal for each item, passing item=%subGoal%. The @known mapping indicates loop.foreach with Collection type list and ItemName subGoal, then goal.call BuildSubGoal with parallel false and parameters null/prPath null, plus item binding.",
-      "level": "low",
-      "confidence": 35,
+      "guidance": "Iterate over parentGoal.Goals and call BuildSubGoal for each subGoal item.",
+      "level": "medium",
+      "confidence": 60,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -411,9 +411,9 @@
         }
       ],
       "intent": null,
-      "guidance": "set %goal% to %parentGoal% (object). Uses variable.set per @known.",
+      "guidance": "Restore %goal% to %parentGoal% after sub-goal processing.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -469,9 +469,9 @@
         }
       ],
       "intent": null,
-      "guidance": "compute elapsed ticks = %Now.Ticks% - %buildStart% using math.subtract, then store to %elapsedTicks%.",
+      "guidance": "Compute elapsed ticks = Now.Ticks - buildStart and store in %elapsedTicks%.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -527,9 +527,9 @@
         }
       ],
       "intent": null,
-      "guidance": "compute elapsedMs = elapsedTicks / 10000 using math.divide, then store to %elapsedMs%.",
+      "guidance": "Convert elapsed ticks to milliseconds by dividing by 10000 and store in %elapsedMs%.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -567,9 +567,9 @@
         }
       ],
       "intent": null,
-      "guidance": "set %trace.durationMs% to %elapsedMs% (object). Uses variable.set per @known.",
+      "guidance": "Store computed durationMs into trace.durationMs.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -601,9 +601,9 @@
         }
       ],
       "intent": null,
-      "guidance": "save %trace% to a file path under /.build/traces/%!trace.id%/%trace.goal.name%.json using file.save.",
+      "guidance": "Save the trace JSON to the build traces directory using file.save.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -640,9 +640,9 @@
         }
       ],
       "intent": null,
-      "guidance": "append %goal.Name% to %traceGoals% list using list.add per @known.",
+      "guidance": "Append the current goal name to %traceGoals% list.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -659,9 +659,14 @@
           "action": "goalsSave",
           "parameters": [
             {
-              "name": "Goal",
-              "value": "%goal%",
-              "type": "goal"
+              "name": "GoalName",
+              "value": {
+                "name": "%goal%",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null,
@@ -669,9 +674,9 @@
         }
       ],
       "intent": null,
-      "guidance": "call builder.goalsSave to persist the built goal artifact for %goal%. Uses builder.goalsSave per @known.",
-      "level": "high",
-      "confidence": 98,
+      "guidance": "Persist the built goal artifact by calling builder.goalsSave with the current %goal%.",
+      "level": "medium",
+      "confidence": 55,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -1254,9 +1259,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Validate the LLM response. On error, handle by calling goal LlmFixer. Fix: error.handle Actions must be a list\u003Caction\u003E with goal.call action object; also ensure correct parameter names for builder.validateResponse: StepResults and Goal.",
+          "guidance": "builder.validateResponse with on error call LlmFixer. Known mapping indicates validateResponse then error.handle with a recovery action chain calling goal LlmFixer.",
           "level": "high",
-          "confidence": 85,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -1752,7 +1757,7 @@
                 {
                   "name": "Collection",
                   "value": "%groupedSteps%",
-                  "type": "string"
+                  "type": "list"
                 },
                 {
                   "name": "ItemName",
@@ -1788,7 +1793,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Iterate over %groupedSteps% and call ProcessGroup for each item. Fix: loop.foreach signature is Collection([object]) and ItemName([string?]) and KeyName([string?]); the step text says \u0027goal.call ProcessGroup item=%group%\u0027. We compile as loop.foreach over %groupedSteps% with ItemName=group, then goal.call ProcessGroup with parameter item=%group%. Also Actor([actor] this) is not a parameter of goal.call; app.run supports Actor, but goal.call does not. So we omit Actor and only pass parameters.",
+          "guidance": "loop.foreach over grouped steps, calling ProcessGroup for each group. The known mapping shows a goal.call with parallel=false and passes item=%group%.",
           "level": "medium",
           "confidence": 55,
           "formal": null,
@@ -1846,7 +1851,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the runtime variable %goal% to %subGoal%. This is a variable assignment; use variable.set with Name and Value. The @known indicates the exact mapping should be reused.",
+          "guidance": "Assign the incoming %subGoal% into the local %goal% variable so subsequent steps can reference %goal.Name%.",
           "level": "high",
           "confidence": 95,
           "formal": null,
@@ -1875,7 +1880,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Write a trace line to output. The string is translatable (tstring) and includes %goal.Name% interpolation.",
+          "guidance": "Write a translatable progress line to output, using %goal.Name% at runtime.",
           "level": "high",
           "confidence": 98,
           "formal": null,
@@ -1950,9 +1955,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Call BuildGoalCore on the current actor (this?). On error, run HandleBuildGoalFailure via error.handle Actions chain. The goal.call payload must use {\u0022name\u0022:\u0022...\u0022} and parameters must be a list of {name,value,type}. The @known mapping indicates the prior exact structure; corrected to match the engine schema by using name-only payload for BuildGoalCore and HandleBuildGoalFailure.",
+          "guidance": "Call BuildGoalCore to build the sub-goal. On error, run HandleBuildGoalFailure as the recovery action chain. Actor is the current actor (this?).",
           "level": "high",
-          "confidence": 72,
+          "confidence": 90,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -1990,9 +1995,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Append the current pass (%currentPass%) into the parent\u0027s trace list variable (%trace.subGoals%) using list.add.",
+          "guidance": "Append the current pass data (%currentPass%) to the parent\u0027s trace list %trace.subGoals%.",
           "level": "high",
-          "confidence": 96,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2218,7 +2223,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Write a user-facing retry message including the runtime error message placeholder. This is an output action with a translatable string (tstring) per the step text.",
+          "guidance": "Write a user-facing retry message to output, including the runtime error message placeholder.",
           "level": "high",
           "confidence": 98,
           "formal": null,
@@ -2267,9 +2272,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %fixerMessages% to a JSON array containing system/user messages. Because the value is an inline JSON array, use variable.set with type=json.",
+          "guidance": "Set %fixerMessages% to a JSON array of llm messages (system \u002B user) that includes the validation error context and the PLang code to fix.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2419,7 +2424,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Re-query the LLM using the fixer messages as Messages, provide a structured JSON Schema for the expected response, apply caching based on %!build.cache%, and write the LLM result to %stepResults% via variable.set.",
+          "guidance": "Query the LLM using the fixer messages, enforce the expected schema, apply caching, and write the LLM response into %stepResults%.",
           "level": "high",
           "confidence": 70,
           "formal": null,
@@ -2443,7 +2448,7 @@
                     "name": "ValidateBuildResponse",
                     "parallel": false,
                     "parameters": null,
-                    "prPath": "/system/builder/.build/validatebuildresponse.pr"
+                    "prPath": "/.build/validatebuildresponse.pr"
                   },
                   "type": "goal.call"
                 }
@@ -2453,9 +2458,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Call the goal ValidateBuildResponse to validate the corrected LLM output stored in %stepResults%.",
+          "guidance": "Call the goal ValidateBuildResponse to validate the corrected LLM output.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 60,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2500,9 +2505,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Write a formatted build error message to output. Uses tstring because the step text is a translation candidate.",
+          "guidance": "Write a build error line to output. Uses tstring because the step text is a translatable string with runtime placeholders.",
           "level": "high",
-          "confidence": 96,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2532,6 +2537,11 @@
                     "details": "%!error.Details%"
                   },
                   "type": "list\u003Ckeyvaluepair\u003E"
+                },
+                {
+                  "name": "Type",
+                  "value": "json",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -2545,7 +2555,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the failing pass\u0027s buildError object (key/message/statusCode/details) into %currentPass.buildError% as json.",
+          "guidance": "Set the failing pass buildError object on %currentPass.buildError% as json, using fields from the error object.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -2577,6 +2587,11 @@
                     "details": "%!error.Details%"
                   },
                   "type": "list\u003Ckeyvaluepair\u003E"
+                },
+                {
+                  "name": "Type",
+                  "value": "json",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -2590,7 +2605,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the parent trace\u0027s buildError object (key/message/statusCode/details) into %trace.buildError% as json.",
+          "guidance": "Set the parent trace buildError object on %trace.buildError% as json, using fields from the error object.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -2658,7 +2673,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If trace.pass1 is null, set it to the current pass.",
+          "guidance": "If %trace.pass1% is null, set it to %currentPass%. Condition uses == null check.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -2725,7 +2740,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If trace.pass1 is not null, append the current pass to trace.subGoals.",
+          "guidance": "If %trace.pass1% is not null, append %currentPass% to %trace.subGoals%.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -2795,7 +2810,7 @@
           "intent": null,
           "guidance": "Throw the captured error message with status code 500 (as specified in the step).",
           "level": "high",
-          "confidence": 95,
+          "confidence": 96,
           "formal": null,
           "source": null,
           "waitForExecution": true

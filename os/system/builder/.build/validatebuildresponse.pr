@@ -117,9 +117,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Iterate over %stepResults.steps% and call the goal ValidateStep for each item. The goal.call payload must include only {name, parameters} (no extra fields like parallel/prPath).",
+      "guidance": "Iterate over %stepResults.steps% and call ValidateStep for each item, passing the current step as parameter item=%step%. The @known mapping indicates the loop body is a goal.call with parallel=false.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -187,9 +187,9 @@
             }
           ],
           "intent": null,
-          "guidance": "The step text says: if %step.keep% is true, call ValidateKeptStep. This compiles to condition.if followed by goal.call to ValidateKeptStep. The @known mapping indicates the exact prior action chain is authoritative.",
+          "guidance": "Branch: if %step.keep% == true, validate the kept step by calling ValidateKeptStep. This step is a conditional with an inline goal call.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 96,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -250,9 +250,9 @@
             }
           ],
           "intent": null,
-          "guidance": "The step text says: if %step.keep% is not true, call ValidateBuiltStep. This compiles to condition.elseif followed by goal.call to ValidateBuiltStep. The @known mapping indicates the exact prior action chain is authoritative.",
+          "guidance": "Else-if branch: if %step.keep% is not true, validate the built step by calling ValidateBuiltStep. This is the second conditional branch with an inline goal call.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 96,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -332,9 +332,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Guard rail: if the current step has non-empty actions while also marked keep:true, throw an error. This compiles to a condition.if followed by error.throw in the same step.",
+          "guidance": "Use condition.if to check the keep:true guard: if %step.actions% is not empty, throw an error. This matches the @known mapping exactly.",
           "level": "high",
-          "confidence": 96,
+          "confidence": 98,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -396,9 +396,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Guard rail: if the prior .pr step actions count is 0, throw an error because keep:true requires a prior mapping that was offered as @known. Compile to condition.if then error.throw.",
+          "guidance": "Use condition.if to check that the prior .pr had actions: if %goal.Steps[step.index].Actions.Count% == 0, throw an error. This matches the @known mapping exactly.",
           "level": "high",
-          "confidence": 96,
+          "confidence": 98,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -507,9 +507,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Validate the provided %step.actions% list against the registered action catalog and parameter schemas. This is a direct builder validation call.",
+          "guidance": "Run builder.validate against the provided step.actions to ensure modules/actions and parameter schemas are valid.",
           "level": "high",
-          "confidence": 98,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true

@@ -287,9 +287,11 @@ public static class TypeConverter
             {
                 var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
                 // Runtime guard: a CLR type FullName has no business being a goal name.
-                // This is a known leak vector (Fluid template rendering an object as
-                // ToString()). Crash loudly so the bootstrap rebuild trips at the source
-                // rather than committing a broken .pr that fails opaquely later.
+                // Tripwire for a known leak vector (Fluid template rendering an object as
+                // ToString()) — left here defensively even though the rebuild that fixed
+                // buildstep.pr did not retrigger it. Remove once we've gone several
+                // bootstrap cycles without it firing and the original leak path is
+                // identified or proven extinct.
                 if (PlangTypeIndex.IsClrTypeName(name))
                     throw new InvalidOperationException(
                         $"GoalCall.Name was set to a CLR type name '{name}'. " +
