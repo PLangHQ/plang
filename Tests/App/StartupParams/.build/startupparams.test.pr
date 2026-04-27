@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name% and %greeting% variables, then asserts they contain/equal expected values to verify variable assignment and runtime interpolation.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,11 +25,22 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set runtime variable %name% to literal \u0022TestUser\u0022. This is the first executable clause and the @known mapping indicates the exact variable.set action and parameter values.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,6 +70,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that %name% equals \u0022TestUser\u0022. Uses @known mapping for exact assert.equals parameterization.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -83,11 +99,22 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Set runtime variable %greeting% to literal \u0022Hello %name%\u0022 (no runtime interpolation at compile time). The @known mapping specifies the exact stored value as \u0022Hello %name%\u0022.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -117,6 +144,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that %greeting% contains \u0022TestUser\u0022. Uses @known mapping for exact assert.contains parameterization.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -125,7 +157,7 @@
   "path": "/StartupParams.test.goal",
   "prPath": "/.build/startupparams.test.pr",
   "hash": "ed30f6b09a8d3799b77316af181bc24671d3f3cb2df0c1bd2ac3df3f6b7479cb",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

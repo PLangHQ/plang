@@ -1,6 +1,6 @@
 {
   "name": "Inner",
-  "description": "Two output.write steps for inner depth and call stack value; both are annotated @known so the engine should keep prior mappings.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,6 +25,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -54,6 +59,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -62,7 +72,7 @@
   "path": "/Inner.goal",
   "prPath": "/.build/inner.pr",
   "hash": "c452e9306f2b1fc2b587335d46ab29010b24c9087bf1daf508a2d12d129960ed",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

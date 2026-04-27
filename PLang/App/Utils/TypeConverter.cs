@@ -261,7 +261,13 @@ public static class TypeConverter
         if (targetType == typeof(App.Goals.Goal.GoalCall))
         {
             if (value is string goalName)
+            {
+                if (PlangTypeIndex.IsClrTypeName(goalName))
+                    throw new InvalidOperationException(
+                        $"GoalCall.Name was set to a CLR type name '{goalName}' from a string source. " +
+                        $"Build pipeline leaked a typed object's ToString() into a goal-name slot.");
                 return (new App.Goals.Goal.GoalCall { Name = goalName }, null);
+            }
             if (value is System.Text.Json.JsonElement je)
             {
                 try
@@ -280,6 +286,16 @@ public static class TypeConverter
             if (value is IDictionary<string, object?> dict)
             {
                 var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
+                // Runtime guard: a CLR type FullName has no business being a goal name.
+                // This is a known leak vector (Fluid template rendering an object as
+                // ToString()). Crash loudly so the bootstrap rebuild trips at the source
+                // rather than committing a broken .pr that fails opaquely later.
+                if (PlangTypeIndex.IsClrTypeName(name))
+                    throw new InvalidOperationException(
+                        $"GoalCall.Name was set to a CLR type name '{name}'. " +
+                        $"This indicates a leak in the build pipeline (likely a Fluid template rendering " +
+                        $"an object via ToString() instead of navigating to .Name). " +
+                        $"Caller stack identifies the source.");
                 var prPath = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
                 List<Data.@this>? parameters = null;
                 if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)

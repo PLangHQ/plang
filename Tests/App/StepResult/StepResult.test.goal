@@ -1,4 +1,4 @@
 Start
-/ stepResult available after step
+/ __data__ available after step
 - set %x% = "hello"
-- assert %__stepResult%  is not null
+- assert %__data__% is not null

@@ -1,5 +1,5 @@
 Start
 / Test that builder.getGoals parses a .goal file and returns Runtime2 Goal objects
 - save "TestGoal\n- step one\n- step two" to file 'parse_test/Test.goal'
-- get goals from 'parse_test/', write to %goals%
+- builder.goals from 'parse_test/', write to %goals%
 - assert %goals% is not empty, "getGoals should return parsed goals from .goal file"

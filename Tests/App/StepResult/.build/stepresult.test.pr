@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %x% to \u0022hello\u0022 and then asserts that %__stepResult% is not null.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -8,7 +8,7 @@
       "text": "set %x% = \u0022hello\u0022",
       "lineNumber": 3,
       "indent": 0,
-      "comment": "stepResult available after step",
+      "comment": "__data__ available after step",
       "actions": [
         {
           "module": "variable",
@@ -25,16 +25,27 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "variable.set assigns literal \u0027hello\u0027 to %x%. This produces %__data__ for the step.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "assert %__stepResult%  is not null",
+      "text": "assert %__data__% is not null",
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
@@ -45,7 +56,7 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "%__stepResult%",
+              "value": "%__data__%",
               "type": "object"
             }
           ],
@@ -54,6 +65,11 @@
         }
       ],
       "intent": null,
+      "guidance": "assert.isNotNull checks the step-produced %__data__ is not null. Since %__data__ is available after step 0, this is a post-condition invariant.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -61,8 +77,8 @@
   "visibility": 1,
   "path": "/StepResult.test.goal",
   "prPath": "/.build/stepresult.test.pr",
-  "hash": "b71f60b0189a659c5e43ef9ecd9485a0a5080816955af1c03f29c1fe7810af59",
-  "builderVersion": null,
+  "hash": "f7dfec175c44133c3b0882bdb97eaf0a449dd3bb2af1e00d14609c25d68da125",
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

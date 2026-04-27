@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Gets all registered module actions via builder.getActions, stores them in %actions%, then asserts the result is not null.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -32,11 +32,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Use builder.actions to retrieve the registered action catalog; write its result into %actions% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -58,7 +69,7 @@
             {
               "name": "Message",
               "value": "getActions should return registered module actions",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -66,6 +77,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %actions% is truthy/non-empty; use assert.isNotNull to ensure it is not null/empty-like per engine semantics.",
+      "level": "medium",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -74,7 +90,7 @@
   "path": "/BuilderGetActions.test.goal",
   "prPath": "/.build/buildergetactions.test.pr",
   "hash": "e869f3b74ac66066a95d87bdd8ca6509fd6644f16c306f1b781c7c751cb86109",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets a nested JSON object into %deep%, writes a deep property, sets a JSON list into %list%, then writes two indexed nested values from the list.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -40,6 +40,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -69,6 +74,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -116,6 +126,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -145,6 +160,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -174,6 +194,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -182,7 +207,7 @@
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
   "hash": "1644ef9b76a8754de5c93c9e0d607d7c1810d5f5fd2c3048f58495fb0c2a560b",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Initialize recursion depth, call Recurse with error handling that invokes HandleRecursionError on failure, then assert the recursion error was caught.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -46,18 +51,12 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "Recurse",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/recurse.pr"
+                "name": "Recurse",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/recurse.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "user",
-              "type": "actor"
             }
           ],
           "defaults": null,
@@ -76,7 +75,9 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "HandleRecursionError"
+                            "name": "HandleRecursionError",
+                            "parameters": [],
+                            "parallel": false
                           },
                           "type": "goal.call"
                         }
@@ -85,7 +86,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": [
@@ -101,6 +102,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Call the goal Recurse as the user actor, and on error run a recovery chain that calls HandleRecursionError. This matches the provided @known mapping, so we keep it.",
+      "level": "high",
+      "confidence": 60,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -130,6 +136,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -138,7 +149,7 @@
   "path": "/RecursionDepthLimit.test.goal",
   "prPath": "/.build/recursiondepthlimit.test.pr",
   "hash": "58ad7438d7c3f2c48a399f77ebbf2a7b737b05f1f9e5752cc883e9cac9f41253",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

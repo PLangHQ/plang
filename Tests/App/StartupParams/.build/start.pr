@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Writes a greeting message to the output channel, preserving the %name% placeholder as a runtime variable reference within the tstring.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
   "hash": "aacff354d1fcef3035502fef26a844697748decbd25f505dd164c70a8f1bccb6",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

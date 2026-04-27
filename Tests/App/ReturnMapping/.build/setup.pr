@@ -1,6 +1,6 @@
 {
   "name": "Setup",
-  "description": "Saves testfile.txt with the provided content using file.save.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/Setup.goal",
   "prPath": "/.build/setup.pr",
   "hash": "2c022edab6fb626a0fb9f0b1b49add805a4ec157f31803644cdb9e8b665e23c6",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": true,
   "isEvent": false,
   "isSystem": false,

@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "read \u0027data.txt\u0027, on error key 404, write out \u0022primary missing\u0022, read \u0027fallback.txt\u0027, write to %content%",
+      "text": "read \u0027data.txt\u0027, on error 404, write out \u0022primary missing\u0022, read \u0027fallback.txt\u0027, write to %content%",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -33,9 +33,9 @@
               "action": "handle",
               "parameters": [
                 {
-                  "name": "Key",
-                  "value": "404",
-                  "type": "string"
+                  "name": "StatusCode",
+                  "value": 404,
+                  "type": "int"
                 },
                 {
                   "name": "Actions",
@@ -43,41 +43,33 @@
                     {
                       "module": "output",
                       "action": "write",
-                      "Parameters": [
+                      "parameters": [
                         {
                           "name": "Data",
                           "value": "primary missing",
                           "type": "string"
                         }
                       ],
-                      "Defaults": null,
-                      "Modifiers": [],
-                      "Errors": [],
-                      "Warnings": [],
-                      "Examples": [],
-                      "ReturnType": null
+                      "defaults": null,
+                      "modifiers": []
                     },
                     {
                       "module": "file",
                       "action": "read",
-                      "Parameters": [
+                      "parameters": [
                         {
                           "name": "Path",
                           "value": "fallback.txt",
                           "type": "path"
                         }
                       ],
-                      "Defaults": null,
-                      "Modifiers": [],
-                      "Errors": [],
-                      "Warnings": [],
-                      "Examples": [],
-                      "ReturnType": null
+                      "defaults": null,
+                      "modifiers": []
                     },
                     {
                       "module": "variable",
                       "action": "set",
-                      "Parameters": [
+                      "parameters": [
                         {
                           "name": "Name",
                           "value": "%content%",
@@ -89,12 +81,8 @@
                           "type": "object"
                         }
                       ],
-                      "Defaults": null,
-                      "Modifiers": [],
-                      "Errors": [],
-                      "Warnings": [],
-                      "Examples": [],
-                      "ReturnType": null
+                      "defaults": null,
+                      "modifiers": []
                     }
                   ],
                   "type": "list\u003Caction\u003E"
@@ -113,9 +101,9 @@
         }
       ],
       "intent": null,
-      "guidance": "file.read data.txt is the primary action. The step specifies an on-error handler for key 404 that writes out a message and then reads fallback.txt, storing its content into %content%.",
+      "guidance": "file.read data.txt produces content; on error 404 run recovery chain: output.write \u0027primary missing\u0027, then file.read fallback.txt, then variable.set %content% to the recovered %__data__%.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 78,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -125,8 +113,8 @@
   "visibility": 1,
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
-  "hash": "72acb1471c5421abea83649c06b98d2e359e4deb8dee20e693ccbda0d8196592",
-  "builderVersion": null,
+  "hash": "34b267ecdc4a4dc9f4c80b04c51a05e610fea0e93e7336e76379b0687d66518c",
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

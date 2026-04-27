@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "read \u0027data.txt\u0027, on error key 404, write out \u0022missing\u0022",
+      "text": "read \u0027data.txt\u0027, on error 404, write out \u0022missing\u0022",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -33,9 +33,9 @@
               "action": "handle",
               "parameters": [
                 {
-                  "name": "Key",
-                  "value": "404",
-                  "type": "string"
+                  "name": "StatusCode",
+                  "value": 404,
+                  "type": "int"
                 },
                 {
                   "name": "Actions",
@@ -43,19 +43,15 @@
                     {
                       "module": "output",
                       "action": "write",
-                      "Parameters": [
+                      "parameters": [
                         {
                           "name": "Data",
                           "value": "missing",
                           "type": "string"
                         }
                       ],
-                      "Defaults": null,
-                      "Modifiers": [],
-                      "Errors": [],
-                      "Warnings": [],
-                      "Examples": [],
-                      "ReturnType": null
+                      "defaults": null,
+                      "modifiers": []
                     }
                   ],
                   "type": "list\u003Caction\u003E"
@@ -74,7 +70,7 @@
         }
       ],
       "intent": null,
-      "guidance": "file.read produces the file content; the step specifies an on-error handler for key 404 that writes a fallback message to output. Use error.handle with an Actions chain containing output.write.",
+      "guidance": "file.read data.txt produces file content; on error 404, run a recovery chain that writes \u0027missing\u0027 to output. The on-error clause is a modifier-style wrapper, so we emit file.read plus a separate error.handle action with Actions containing output.write.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -86,8 +82,8 @@
   "visibility": 1,
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
-  "hash": "dcb20aa88cbbb6eb830a76a9c4867a72c5067db9f65339c09b73377da756245b",
-  "builderVersion": null,
+  "hash": "893ce2cffae7eba108189abf534c4c1ea1fae9abe64f32ead904ccc8aabaef6c",
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

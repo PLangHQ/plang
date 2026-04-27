@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Reads testfile.txt into %content%, asserts its value, calls ComputeValue and writes its return into %result%, then asserts %result% is not null.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -43,6 +43,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -72,6 +77,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -117,6 +127,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -141,6 +156,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -149,7 +169,7 @@
   "path": "/ReturnMapping.test.goal",
   "prPath": "/.build/returnmapping.test.pr",
   "hash": "68157ee64ac6cb646c5a5fdcfa4ab9f400a26f4379808e75ca70a1776d2ae8e1",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

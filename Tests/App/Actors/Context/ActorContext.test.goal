@@ -1,5 +1,4 @@
 Start
-/ context variables available
-- assert %!engine% is not null
-- assert %!context% is not null
-- assert %!memoryStack% is not null
+/ system variables available
+- assert %!app% is not null
+- assert %!callStack% is not null

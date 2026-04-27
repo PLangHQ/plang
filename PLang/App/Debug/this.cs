@@ -117,7 +117,23 @@ public sealed class @this
         IsEnabled = true;
 
         if (debugValue is IDictionary<string, object?> dict)
+        {
+            // String shorthand for variables: ["foo","bar"] → [{name:"foo"},{name:"bar"}].
+            // Populate's generic list converter can't bind a bare string to DebugVariable.
+            if (dict.TryGetValue("variables", out var rawVars) && rawVars is System.Collections.IList list)
+            {
+                var normalized = new List<object?>(list.Count);
+                foreach (var item in list)
+                {
+                    if (item is string s)
+                        normalized.Add(new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["name"] = s });
+                    else
+                        normalized.Add(item);
+                }
+                dict["variables"] = normalized;
+            }
             App.Utils.TypeMapping.Populate(this, dict);
+        }
 
         // Strip % from variable names
         if (Variables != null)

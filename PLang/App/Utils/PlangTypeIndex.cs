@@ -33,6 +33,42 @@ public static class PlangTypeIndex
     /// <summary>Assemblies to scan. Defaults to the App assembly; callers can extend.</summary>
     public static List<Assembly> Assemblies { get; } = new() { typeof(PlangTypeIndex).Assembly };
 
+    private static readonly HashSet<string> _clrTypeFullNames = new(StringComparer.Ordinal);
+    private static bool _clrTypeFullNamesInitialized;
+    private static readonly object _clrTypeFullNamesLock = new();
+
+    /// <summary>
+    /// True if <paramref name="name"/> matches the FullName of any type in any loaded assembly.
+    /// Used to defend goal-name slots against CLR-type-name leaks (a known builder bug:
+    /// e.g. `App.Goals.Goal.GoalCall` getting written as a goal Name during prompt rendering).
+    /// A goal Name is a user-authored identifier — it can never legitimately equal a CLR type name.
+    /// </summary>
+    public static bool IsClrTypeName(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return false;
+        // Cheap pre-filter: must contain a dot and look like a namespaced type.
+        if (!name.Contains('.')) return false;
+        EnsureClrTypeFullNamesInitialized();
+        return _clrTypeFullNames.Contains(name);
+    }
+
+    private static void EnsureClrTypeFullNamesInitialized()
+    {
+        if (_clrTypeFullNamesInitialized) return;
+        lock (_clrTypeFullNamesLock)
+        {
+            if (_clrTypeFullNamesInitialized) return;
+            foreach (var asm in System.AppDomain.CurrentDomain.GetAssemblies())
+            {
+                foreach (var t in SafeGetTypes(asm))
+                {
+                    if (t.FullName != null) _clrTypeFullNames.Add(t.FullName);
+                }
+            }
+            _clrTypeFullNamesInitialized = true;
+        }
+    }
+
     /// <summary>
     /// Returns the canonical PLang name for a domain type, or null if the type
     /// is not named (no [PlangType], not an @this class, not registered at runtime).

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Maps two tests: (1) retry exhaustion with ignore continues execution, (2) retry exhaustion triggers an error-goal call that sets %retryErrorHandled% for the final assertion.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -8,7 +8,7 @@
       "text": "set %beforeRetry% = true",
       "lineNumber": 3,
       "indent": 0,
-      "comment": "Test 1: retry exhaustion + ignore continues execution",
+      "comment": "Test 1: retry exhaustion \u002B ignore continues execution",
       "actions": [
         {
           "module": "variable",
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -59,11 +64,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "throw error \"temporary failure\", on error retry 2 times, ignore",
+      "text": "throw error \u0022temporary failure\u0022, on error retry 2 times, ignore",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -92,7 +102,7 @@
                 {
                   "name": "RetryCount",
                   "value": 2,
-                  "type": "int?"
+                  "type": "int"
                 },
                 {
                   "name": "IgnoreError",
@@ -107,6 +117,11 @@
         }
       ],
       "intent": null,
+      "guidance": "throw error with message and status code, then apply error.handle modifier to retry 2 times and ignore so execution continues.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -136,11 +151,16 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "assert %afterRetryIgnore% is true, \"execution should continue after retry exhaustion + ignore\"",
+      "text": "assert %afterRetryIgnore% is true, \u0022execution should continue after retry exhaustion \u002B ignore\u0022",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -156,7 +176,7 @@
             },
             {
               "name": "Message",
-              "value": "execution should continue after retry exhaustion + ignore",
+              "value": "execution should continue after retry exhaustion \u002B ignore",
               "type": "string"
             }
           ],
@@ -165,14 +185,19 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 5,
-      "text": "throw error \"retry then goal\", on error retry 1 times, then call HandleRetryError",
+      "text": "throw error \u0022retry then goal\u0022, on error retry 1 times, then call HandleRetryError",
       "lineNumber": 9,
       "indent": 0,
-      "comment": "Test 2: retry + error goal captures error info",
+      "comment": "Test 2: retry \u002B error goal captures error info",
       "actions": [
         {
           "module": "error",
@@ -198,7 +223,7 @@
                 {
                   "name": "RetryCount",
                   "value": 1,
-                  "type": "int?"
+                  "type": "int"
                 },
                 {
                   "name": "Actions",
@@ -210,7 +235,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "HandleRetryError"
+                            "name": "HandleRetryError"
                           },
                           "type": "goal.call"
                         }
@@ -219,21 +244,32 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ]
         }
       ],
       "intent": null,
+      "guidance": "throw error, then on error retry 1 time and finally call the error-handling goal HandleRetryError via error.handle Actions chain.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 6,
-      "text": "assert %retryErrorHandled% is true, \"error goal should have been called after retry exhausted\"",
+      "text": "assert %retryErrorHandled% is true, \u0022error goal should have been called after retry exhausted\u0022",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -245,7 +281,7 @@
             {
               "name": "Value",
               "value": "%retryErrorHandled%",
-              "type": "object"
+              "type": "object?"
             },
             {
               "name": "Message",
@@ -258,6 +294,11 @@
         }
       ],
       "intent": null,
+      "guidance": "post-condition assertion that the error goal was called and set %retryErrorHandled% to true.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -266,7 +307,7 @@
   "path": "/Retry.test.goal",
   "prPath": "/.build/retry.test.pr",
   "hash": "daa61c8cd8de798605b131e658ccad57e85fe7626e33908e4a8bdd2502745ce8",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets depthBefore from callStack.Depth, asserts it is available, calls InnerTest, captures depthAfter, and asserts depth returns to the same value after the call.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -36,6 +36,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -65,6 +70,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -95,6 +105,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -130,6 +145,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Set %depthAfter% to the current call stack depth after InnerTest. This is a variable assignment from %!callStack.Depth%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -156,7 +176,7 @@
             {
               "name": "Message",
               "value": "depth should return to same level after call",
-              "type": "string?"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -164,6 +184,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that depthAfter equals depthBefore to ensure call stack depth returns to the same level after the goal call.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -172,7 +197,7 @@
   "path": "/CallStack.test.goal",
   "prPath": "/.build/callstack.test.pr",
   "hash": "a38a015b01986ce423ca82b84a1f0e17d86acfd654bc5dddc0c0ab0142026759",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

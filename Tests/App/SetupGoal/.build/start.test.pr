@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Asserts that %setupDone% is true before continuing.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -38,7 +43,7 @@
   "path": "/Start.test.goal",
   "prPath": "/.build/start.test.pr",
   "hash": "fa49b68d53b55f33ebb24be2f988c37237b82090570fa53a6ff4a13711001f40",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

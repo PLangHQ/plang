@@ -15,19 +15,10 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     private static readonly Stopwatch _buildTimer = new();
 
-    private static Data.@this? BuildingGuard(IContext action)
-    {
-        if (!action.Context.App.Building.IsEnabled)
-            return Data.@this.FromError(new Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
-        return null;
-    }
-
     // --- Actions ---
 
     public Task<Data.@this> Actions(GetActions action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return Task.FromResult(guard);
 
         return Task.FromResult(Data.@this.Ok(action.Context.App.Modules.Describe()));
     }
@@ -36,8 +27,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public Data.@this Types(types action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         // The catalog is a structured object now — Build assembles primitives and
         // discovered record/enum entries. It pre-renders TypeNames/TypeSchemas for
@@ -50,8 +39,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public async Task<Data.@this> Goals(goals action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         var app = action.Context.App;
         var context = action.Context;
@@ -157,8 +144,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public async Task<Data.@this> GoalsSave(goalsSave action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         var app = action.Context.App;
         var context = action.Context;
@@ -241,8 +226,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public async Task<Data.@this> Validate(validate action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         var app = action.Context.App;
         var context = action.Context;
@@ -304,7 +287,12 @@ public class DefaultBuilderProvider : IBuilderProvider
                     var goalCall = ToGoalCall(p.Value);
                     if (goalCall == null || string.IsNullOrEmpty(goalCall.Name)) continue;
                     if (goalCall.Name.Contains('%')) continue;  // %var% resolves at runtime
-                    if (goalCall.Name.Contains('.'))
+                    // Hard reject CLR type names — these are the known leak vector
+                    // (Fluid template rendering a typed object via ToString()). A goal
+                    // Name can never legitimately match a loaded CLR type's FullName.
+                    if (Utils.PlangTypeIndex.IsClrTypeName(goalCall.Name))
+                        validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' is a CLR type name. This is a build pipeline leak (likely a template rendering an object via ToString() instead of .Name). Use the actual goal name from the step text.");
+                    else if (goalCall.Name.Contains('.'))
                         validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
                 }
             }
@@ -375,8 +363,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public Data.@this Merge(merge action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         // Diagnostic — gated by app.Debug.IsEnabled, drops on the floor in production.
         // The merge handoff was the spot a Boolean-vs-Step type mismatch surfaced during
@@ -395,8 +381,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public Data.@this EnrichResponse(enrichResponse action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         var response = action.StepResults.Value;
         var goal = action.Goal.Value;
@@ -489,8 +473,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public async Task<Data.@this> App(app action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         var app = action.Context.App;
         // App loads its identity from app.pr at Start() — just return it
@@ -499,8 +481,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public async Task<Data.@this> AppSave(appSave action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         return await action.Context.App.Save();
     }
@@ -509,8 +489,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public Data.@this PromoteGroups(promoteGroups action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         var steps = ToStepList(action.Steps.Value);
         if (steps == null || steps.Count == 0)

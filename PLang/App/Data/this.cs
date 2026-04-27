@@ -218,7 +218,8 @@ public partial class @this
                 _valueFactory = null;
             }
             if (NeedsResolution && !_resolved && _value != null && _context?.Variables != null
-                && (_value is System.Collections.IList || _value is System.Collections.IDictionary))
+                && (_value is System.Collections.IList || _value is System.Collections.IDictionary)
+                && !IsDeferredActionTemplate(_type))
             {
                 // Resolve once. The returned container is a resolved copy (ResolveDeep clones
                 // lists/dicts), stable across future accesses. Subsequent in-place mutations
@@ -511,6 +512,19 @@ public partial class @this
 
     public override string ToString() =>
         Success ? _value?.ToString() ?? "(null)" : $"Error: {Error?.Message}";
+
+    /// Action templates (e.g. error.handle's Actions list, modifier sub-actions) hold raw
+    /// "%var%" references in their parameter values that must resolve when each nested action
+    /// runs, with the variable scope available at that point. Eager ResolveDeep would walk the
+    /// template now — before those vars exist — and replace each "%content%" with null,
+    /// destroying the deferred resolution. Recognized via the parameter's PLang type.
+    private static bool IsDeferredActionTemplate(Type? type)
+    {
+        var name = type?.Value;
+        if (string.IsNullOrEmpty(name)) return false;
+        return name.Equals("action", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("list<action>", StringComparison.OrdinalIgnoreCase);
+    }
 
     private const int MaxJsonDepth = 128;
 

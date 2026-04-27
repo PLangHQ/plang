@@ -491,7 +491,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "App.Goals.Goal.GoalCall",
+                "name": "ValidateBuildStepResult",
                 "parallel": false,
                 "parameters": null,
                 "prPath": null

@@ -1,5 +1,5 @@
 Start
 / Minimum case: one action, one modifier, one nested recovery action.
-/ Exercises the file.read Path([path] ...) | error.handle Key + Actions=[output.write ...] shape.
+/ Exercises the file.read Path([path] ...) | error.handle StatusCode + Actions=[output.write ...] shape.
 
-- read 'data.txt', on error key 404, write out "missing"
+- read 'data.txt', on error 404, write out "missing"

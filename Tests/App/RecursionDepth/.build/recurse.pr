@@ -1,6 +1,6 @@
 {
   "name": "Recurse",
-  "description": "Increments %depth% by 1 using math.add, stores the result back into %depth%, then recursively calls Recurse.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -48,6 +48,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -75,6 +80,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -83,7 +93,7 @@
   "path": "/Recurse.goal",
   "prPath": "/.build/recurse.pr",
   "hash": "9993ac121b4808d70e7147d15ee25fec95747d73b9ec9e5e5769d4216ef382df",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -25,6 +25,13 @@ public class Error : IError
     /// rich context without the provider having to extend the error class.
     /// </summary>
     public Dictionary<string, object?>? Details { get; set; }
+    /// <summary>
+    /// Snapshot of the parameters as they arrived at the failing handler — the .pr
+    /// raw value/type and the resolved final value for each. Populated by the
+    /// source-generated ExecuteAsync whenever a handler returns an error. Lets you
+    /// see "this is what the handler saw" without re-running with a debug flag.
+    /// </summary>
+    public List<ParamSnapshot>? Params { get; set; }
     public List<IError> ErrorChain { get; } = new();
     public Step? Step { get; set; }
     public Goal? Goal { get; set; }
@@ -188,6 +195,35 @@ public class Error : IError
                 var fGoal = fStep?.Goal;
                 var stepInfo = fStep != null ? $":{fStep.LineNumber}" : "";
                 sb.AppendLine($"{indent}    {fGoal?.Name ?? frame.Action.Module} - {fGoal?.Path}{stepInfo}");
+            }
+        }
+
+        // Per-parameter snapshot — what the handler actually saw at dispatch.
+        // The source-generated ExecuteAsync captures this on every error path so the
+        // reader doesn't have to re-run with a debug flag to find out which param
+        // was wrong and how. Showing PrValue and FinalValue side-by-side reveals
+        // resolution failures at a glance (PrValue="%messages%", FinalValue=null
+        // → variable lookup returned nothing).
+        if (error is Error errWithParams && errWithParams.Params is { Count: > 0 } parms)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"{indent}📥 Parameters at dispatch:");
+            foreach (var p in parms)
+            {
+                var declared = p.DeclaredType != null ? $" ({p.DeclaredType})" : "";
+                sb.AppendLine($"{indent}    {p.Name}{declared}");
+                var pr = FormatVerboseValue(p.PrValue);
+                var prType = p.PrType != null ? $" [{p.PrType}]" : "";
+                sb.AppendLine($"{indent}        .pr value:  {pr}{prType}");
+                if (p.WasAccessed)
+                {
+                    var final = FormatVerboseValue(p.FinalValue);
+                    sb.AppendLine($"{indent}        final:      {final}");
+                }
+                else
+                {
+                    sb.AppendLine($"{indent}        final:      (not accessed)");
+                }
             }
         }
 

@@ -19,20 +19,39 @@ public partial class Handle : IContext, IModifier
 {
     public static App.Catalog.ExampleSpec[] ExamplesForLlm() => new[]
     {
+        // Numeric error codes go to StatusCode (an int), regardless of whether
+        // the source uses "on error 404" or "on error key 404" — `404` is
+        // always a status code, not a string identifier.
         Example(
-            "read %path%, on error key 404, write out \"missing\", read fallback.txt, write to %content%",
+            "read %path%, on error 404, write out \"missing\", read fallback.txt, write to %content%",
             Action("file.read", new() { ["Path"] = "%path%" },
                 modifiers: new[]
                 {
                     Action("error.handle", new()
                     {
-                        ["Key"] = "404",
+                        ["StatusCode"] = 404,
                         ["Actions"] = new[]
                         {
                             Action("output.write", new() { ["Data"] = "missing" }),
                             Action("file.read",    new() { ["Path"] = "fallback.txt" }),
                             Action("variable.set", new() { ["Name"]  = "%content%",
                                                             ["Value"] = "%__data__%" }),
+                        }
+                    })
+                })
+        ),
+        // Named error keys (non-numeric identifiers) go to Key.
+        Example(
+            "save %doc%, on error key Conflict, write out \"already exists\"",
+            Action("file.write", new() { ["Path"] = "%doc%" },
+                modifiers: new[]
+                {
+                    Action("error.handle", new()
+                    {
+                        ["Key"] = "Conflict",
+                        ["Actions"] = new[]
+                        {
+                            Action("output.write", new() { ["Data"] = "already exists" }),
                         }
                     })
                 })

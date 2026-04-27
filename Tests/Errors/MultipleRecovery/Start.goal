@@ -4,4 +4,4 @@ Start
 /   output.write, file.read (with [path] type), variable.set.
 / This is the shape last session's LLM kept mangling.
 
-- read 'data.txt', on error key 404, write out "primary missing", read 'fallback.txt', write to %content%
+- read 'data.txt', on error 404, write out "primary missing", read 'fallback.txt', write to %content%
