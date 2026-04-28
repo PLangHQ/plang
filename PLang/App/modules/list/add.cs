@@ -68,9 +68,11 @@ public partial class Add : IContext
                 var cloned = System.Text.Json.JsonSerializer.Deserialize<object?>(json, jsonOpts);
                 snapshot = new Data.@this(Value.Name, cloned, Value.Type) { Context = Context };
             }
-            catch
+            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)
             {
                 // Last resort — alias. Risk of mutation, but better than crashing.
+                // Surface the failure so the alias-mode regression stays debuggable.
+                _ = Context?.App?.Debug?.Write($"[list.add] snapshot-clone failed for '{Value.Name}': {ex.GetType().Name}: {ex.Message} — proceeding with alias (mutation risk)");
                 snapshot = Value;
             }
         }

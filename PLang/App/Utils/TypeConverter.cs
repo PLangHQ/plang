@@ -314,12 +314,15 @@ public static class TypeConverter
             }
         }
 
-        // Primitives via Convert.ChangeType
+        // Primitives via Convert.ChangeType. InvariantCulture so JSON-shaped
+        // numbers ("3.14", "1000") parse identically regardless of the user's
+        // locale — without this, "3.14" → double FormatExceptions on it-IT,
+        // de-DE, etc. that expect "3,14".
         if (TypeMapping.IsPrimitive(targetType))
         {
             try
             {
-                return (System.Convert.ChangeType(value, targetType), null);
+                return (System.Convert.ChangeType(value, targetType, System.Globalization.CultureInfo.InvariantCulture), null);
             }
             catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
             {

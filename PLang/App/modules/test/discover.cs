@@ -45,9 +45,10 @@ public partial class discover : IContext
 
         string absRoot;
         try { absRoot = fs.ValidatePath(Path.Value); }
-        catch
+        catch (UnauthorizedAccessException)
         {
             // Traversal outside the app root → return empty list, don't throw.
+            // Other ValidatePath failures (empty path, fs not initialized) propagate.
             return Task.FromResult(empty);
         }
 

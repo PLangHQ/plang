@@ -235,9 +235,9 @@ public class DefaultBuilderProvider : IBuilderProvider
         }
 
         await ResolveGoalCallPaths(actions, app, context);
-        NormalizeParameterTypes(actions, modules, context);
+        var normalizationErrors = NormalizeParameterTypes(actions, modules, context);
 
-        var validationErrors = new List<string>();
+        var validationErrors = new List<string>(normalizationErrors);
         foreach (var a in actions)
         {
             var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -437,7 +437,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (v is IConvertible) return v.ToString() ?? "";
         // Structured values (dicts, lists, POCOs like GoalCall) → JSON.
         try { return System.Text.Json.JsonSerializer.Serialize(v); }
-        catch { return v.ToString() ?? ""; }
+        catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { return v.ToString() ?? ""; }
     }
 
     // --- App ---
@@ -496,7 +496,11 @@ public class DefaultBuilderProvider : IBuilderProvider
             var currentLevel = GetString(step, "level") ?? "high";
             if (string.Equals(currentLevel, "high", StringComparison.OrdinalIgnoreCase))
             {
-                SetValue(step, "level", groupLevel);
+                if (!SetValue(step, "level", groupLevel))
+                    return Data.@this.FromError(new Errors.ActionError(
+                        $"PromoteGroups received a step as JsonElement (immutable) — expected IDictionary. " +
+                        $"Step type: {step.GetType().FullName}. Group: '{group}'.",
+                        "PromoteGroupsImmutableStep", 500));
                 promoted++;
             }
         }
@@ -541,23 +545,33 @@ public class DefaultBuilderProvider : IBuilderProvider
         return null;
     }
 
-    private static void SetValue(object step, string key, string value)
+    /// <summary>
+    /// Returns false if the step can't be mutated (e.g. immutable JsonElement),
+    /// so the caller can surface a structured error instead of silently skipping.
+    /// </summary>
+    private static bool SetValue(object step, string key, string value)
     {
         if (step is IDictionary<string, object?> dict)
+        {
             dict[key] = value;
-        // JsonElement is immutable — log a warning since the value can't be set
-        else if (step is JsonElement)
-            Console.Error.WriteLine($"  Warning: Cannot set '{key}' on JsonElement step — expected IDictionary");
+            return true;
+        }
+        // JsonElement is immutable — caller decides how to surface this.
+        return false;
     }
 
     /// <summary>
     /// Normalizes parameter values to match their declared type.
     /// LLMs are non-deterministic — they may produce "false" (string) instead of false (bool).
     /// This runs at build time so the .pr file has correct types.
+    /// Returns conversion errors so the caller can fold them into validationErrors —
+    /// without this, an LLM-emitted value that can't convert to the declared type
+    /// would silently keep the wrong-typed value and the runtime would fail later.
     /// </summary>
-    private static void NormalizeParameterTypes(Actions actions, App.Modules.@this modules,
+    private static List<string> NormalizeParameterTypes(Actions actions, App.Modules.@this modules,
         Actor.Context.@this context)
     {
+        var errors = new List<string>();
         foreach (var a in actions)
         {
             if (a.Parameters == null) continue;
@@ -604,11 +618,14 @@ public class DefaultBuilderProvider : IBuilderProvider
                 // Convert in either direction: string → bool/int/double/etc., or
                 // numeric/bool → string when the parameter is declared string. The LLM
                 // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
-                var (converted, _) = TypeMapping.TryConvertTo(p.Value, targetType, context);
+                var (converted, error) = TypeMapping.TryConvertTo(p.Value, targetType, context);
                 if (converted != null)
                     p.Value = converted;
+                else if (error != null)
+                    errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {error.Message}");
             }
         }
+        return errors;
     }
 
     /// <summary>

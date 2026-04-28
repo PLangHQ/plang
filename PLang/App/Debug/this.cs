@@ -77,6 +77,7 @@ public sealed class @this
 
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
+    private bool _applied;
 
     /// <summary>
     /// Path of the file the *current* LLM call's blocks land in. Set by
@@ -114,6 +115,10 @@ public sealed class @this
 
     public void Apply(object debugValue)
     {
+        // Idempotent: subscribing twice would double every event handler and
+        // duplicate every diagnostic line. One Apply per Debug instance.
+        if (_applied) return;
+        _applied = true;
         IsEnabled = true;
 
         if (debugValue is IDictionary<string, object?> dict)
@@ -215,7 +220,7 @@ public sealed class @this
         if (!string.IsNullOrEmpty(Grep))
         {
             try { _grepRegex = new Regex(Grep, RegexOptions.IgnoreCase); }
-            catch { _grepRegex = new Regex(Regex.Escape(Grep), RegexOptions.IgnoreCase); }
+            catch (ArgumentException) { _grepRegex = new Regex(Regex.Escape(Grep), RegexOptions.IgnoreCase); }
         }
 
         var events = _engine.Context.Events;
@@ -611,7 +616,7 @@ public sealed class @this
                            : $" ({count} items)";
                 return json + suffix;
             }
-            catch { /* fall through to preview */ }
+            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { /* fall through to preview */ }
         }
         if (value is System.Collections.IEnumerable enumerable and not string)
         {
@@ -669,7 +674,7 @@ public sealed class @this
                 .Select(p =>
                 {
                     try { return $"{p.Name}={TruncateToString(p.GetValue(value), 40)}"; }
-                    catch { return $"{p.Name}=?"; }
+                    catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException)) { return $"{p.Name}=?"; }
                 });
             var propStr = string.Join(", ", props);
             if (!string.IsNullOrEmpty(propStr))
