@@ -124,6 +124,12 @@ public class ValidateResponseTests
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+        // Pin which validation fired — multiple ValidationError variants exist
+        // (null inputs, step-count mismatch, gap in indexes, Keep-without-prior).
+        // The empty Data<T>() ctor produces an initialized-but-null wrapper, so
+        // both branches of the null-input message report each parameter.
+        await Assert.That(result.Error!.Message).Contains("StepResults.Value is null");
+        await Assert.That(result.Error!.Message).Contains("Goal.Value is null");
     }
 
     [Test]

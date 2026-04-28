@@ -187,45 +187,69 @@ public class ErrorHandleTests
     [Test]
     public async Task Handle_RetryFirst_NoGoal_ExhaustsRetriesAndFails()
     {
-        // error.throw always fails. With RetryCount=2 + no goal, retries exhaust and error propagates.
-        var action = Throw("persistent failure",
-            modifiers: new ActionModifiers
-            {
-                ErrorHandler(("retryCount", 2), ("order", "RetryFirst"))
-            });
+        // RetryCount=2, no goal, persistent failure → retries exhaust, error propagates.
+        // Stateful lambda counts calls so a regression in the retry loop fails this test.
+        int callCount = 0;
+        Func<Task<global::App.Data.@this>> persistentlyFailing = () =>
+        {
+            callCount++;
+            return Task.FromResult(global::App.Data.@this.FromError(
+                new global::App.Errors.ServiceError("persistent failure", "TransientError", 503)));
+        };
 
-        var result = await action.RunAsync(Ctx);
+        var modifiers = new ActionModifiers
+        {
+            ErrorHandler(("retryCount", 2), ("order", "RetryFirst"))
+        };
+
+        var result = await modifiers.RunAsync(persistentlyFailing, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).IsEqualTo("persistent failure");
+        await Assert.That(callCount).IsEqualTo(3); // 1 initial + 2 retries
     }
 
     [Test]
     public async Task Handle_GoalFirst_NoGoal_ExhaustsRetriesAndFails()
     {
-        // Order="GoalFirst" parses as the enum. No goal + retries fail → error propagates.
-        var action = Throw("failure",
-            modifiers: new ActionModifiers
-            {
-                ErrorHandler(("retryCount", 1), ("order", "GoalFirst"))
-            });
+        // Order=GoalFirst, no goal + retryCount=1, persistent failure → 1 initial + 1 retry.
+        int callCount = 0;
+        Func<Task<global::App.Data.@this>> persistentlyFailing = () =>
+        {
+            callCount++;
+            return Task.FromResult(global::App.Data.@this.FromError(
+                new global::App.Errors.ServiceError("failure", "TransientError", 503)));
+        };
 
-        var result = await action.RunAsync(Ctx);
+        var modifiers = new ActionModifiers
+        {
+            ErrorHandler(("retryCount", 1), ("order", "GoalFirst"))
+        };
+
+        var result = await modifiers.RunAsync(persistentlyFailing, Ctx);
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(callCount).IsEqualTo(2); // 1 initial + 1 retry
     }
 
     [Test]
     public async Task Handle_RetryFirst_PersistentFailure_AllRetriesFail()
     {
-        // error.throw is deterministic — always fails. This verifies that with
-        // RetryCount > 0 and persistent failure, the final result is still failure.
-        var action = Throw("always fails",
-            modifiers: new ActionModifiers { ErrorHandler(("retryCount", 3)) });
+        // RetryCount=3, persistent failure → 1 initial + 3 retries = 4 calls total.
+        int callCount = 0;
+        Func<Task<global::App.Data.@this>> persistentlyFailing = () =>
+        {
+            callCount++;
+            return Task.FromResult(global::App.Data.@this.FromError(
+                new global::App.Errors.ServiceError("always fails", "TransientError", 503)));
+        };
 
-        var result = await action.RunAsync(Ctx);
+        var modifiers = new ActionModifiers { ErrorHandler(("retryCount", 3)) };
+
+        var result = await modifiers.RunAsync(persistentlyFailing, Ctx);
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(callCount).IsEqualTo(4); // 1 initial + 3 retries
     }
 
     [Test]

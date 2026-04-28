@@ -69,9 +69,12 @@ public class IfErrorOrchestrationTests : IDisposable
 
         // The 404 must surface. Handled=true on condition.if's result is a
         // control-flow signal to Step.RunAsync (don't re-iterate siblings),
-        // not a license to swallow the error.
+        // not a license to swallow the error. Pin the error identity so an
+        // unrelated error path leaking through wouldn't pass.
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 
     [Test]

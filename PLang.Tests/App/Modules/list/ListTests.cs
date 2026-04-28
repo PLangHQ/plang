@@ -121,6 +121,8 @@ public class ListTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+        await Assert.That(result.Error!.Message).Contains("out of range");
     }
 
     // --- Count ---
