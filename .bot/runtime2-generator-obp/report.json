@@ -30,6 +30,29 @@
         "health": "no code touched, no risk introduced, regression contract (byte-for-byte golden diff) defined upfront",
         "notes": "Architect role ends here. Ingi approved committing golden snapshot to .bot/. Recommended next bot: coder directly (test-designer optional — golden diff is the test). changes.patch empty since architect-only session."
       }
+    },
+    {
+      "id": "7e7e2677-7588-47af-bb1a-a01b63bd28a3",
+      "bot": "architect",
+      "timestamp_start": "2026-04-28T16:35:47Z",
+      "intent": "Fresh-eyes review of v1; combine structural OBP refactor with contract simplification (helpers move to ActionBase, runtime kind-switch, thin generated ExecuteAsync) so the property hierarchy is built once in its final shape. Replaces v1 byte-for-byte golden harness with a runtime test matrix as the regression contract.",
+      "before": {
+        "assumptions": "Directory-as-API is a project-wide convention (Ingi confirmed) — internal generator structure follows it consistently. C# partial classes union base declarations, so generator can declare ActionBase as base while user partial declares interfaces. No existing action handler under App/modules/ inherits from a non-interface base (verified via grep).",
+        "risk": "Bigger PR than v1; byte-for-byte safety is gone in favor of a runtime test matrix that must comprehensively cover ParamKind × {nullability, default, type-class}. Phase 0 matrix design is the load-bearing risk control."
+      },
+      "plan": ".bot/runtime2-generator-obp/architect/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/architect/v2/v1_review_summary.md",
+            ".bot/runtime2-generator-obp/architect/v2/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 supersedes v1. Fresh-eyes review surfaced three concerns: (1) thirteen @this folders looked cosmetic in a non-navigated project — resolved when Ingi confirmed directory-as-API is a project-wide commitment for LLM maintenance; (2) v1 was the second-most-impactful work because round 2's contract simplification would partially dismantle round 1's structure; (3) per-property logic splits across 5+ iteration sites in GenerateActionCode, not 3 as v1 implied. Concerns 2 and 3 argued for combining the rounds. v2 builds the property hierarchy in its final small shape (records carrying IsMatch + BuildResolveCall + optional emission slots), moves all helpers to App/modules/ActionBase/this.cs, introduces ParamKind enum to drive runtime dispatch, and shrinks per-class generated code from ~200 to ~50 lines. Regression contract: runtime test matrix (15–20 minimal action handlers covering every ParamKind × variant), not byte-for-byte golden files."
+        }
+      ]
     }
   ]
 }
