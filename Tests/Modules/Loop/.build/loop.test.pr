@@ -63,14 +63,20 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Set %count% to 0 using variable.set with int type.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true

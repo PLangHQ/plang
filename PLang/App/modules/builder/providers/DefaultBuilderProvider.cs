@@ -255,6 +255,12 @@ public class DefaultBuilderProvider : IBuilderProvider
                 foreach (var p in a.Parameters)
                 {
                     if (!string.Equals(p.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase)) continue;
+                    // Catalog descriptions (e.g. "goal.call", "goal.call?") aren't real values —
+                    // they're schema metadata from Modules.Describe(). Same skip as in
+                    // NormalizeParameterTypes; without it, ToGoalCall parses "goal.call" as a
+                    // dotted name and the type-name guard below false-positives on every
+                    // goal.call slot in the catalog.
+                    if (p.Value is string desc && IsCatalogDescription(desc, p.Type!.Value)) continue;
                     var goalCall = ToGoalCall(p.Value);
                     if (goalCall == null || string.IsNullOrEmpty(goalCall.Name)) continue;
                     if (goalCall.Name.Contains('%')) continue;  // %var% resolves at runtime
@@ -603,6 +609,12 @@ public class DefaultBuilderProvider : IBuilderProvider
                 if (p.Value is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue; // variable reference
                 if (p.Type == null) continue;
 
+                // Catalog descriptions ("int = 1", "%var% string", "list<int>?") are schema
+                // metadata produced by Modules.Describe(), not values to normalize. They
+                // surface when the catalog is fed back through validate (BuilderValidateValid
+                // smoke test). Skip — coercing a description string to its declared type fails.
+                if (p.Value is string desc && IsCatalogDescription(desc, p.Type.Value)) continue;
+
                 var targetType = TypeMapping.GetType(p.Type.Value);
                 if (targetType == null) continue;
 
@@ -628,6 +640,27 @@ public class DefaultBuilderProvider : IBuilderProvider
             }
         }
         return errors;
+    }
+
+    /// <summary>
+    /// Recognizes catalog description strings produced by <see cref="App.Modules.@this.Describe"/>:
+    /// the four forms <c>"X"</c>, <c>"X?"</c>, <c>"X = default"</c>, <c>"%var% X"</c> (and
+    /// combinations). When the catalog itself is fed back through validate, every parameter's
+    /// Value is one of these — coercing them through TypeMapping fails because they're
+    /// metadata, not data. The match is anchored on <paramref name="typeName"/> (already
+    /// stamped from the schema) so an LLM-emitted real value can't accidentally trip it.
+    /// </summary>
+    private static bool IsCatalogDescription(string value, string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName)) return false;
+        var v = value.AsSpan().Trim();
+        if (v.StartsWith("%var% ")) v = v[6..];
+        if (!v.StartsWith(typeName)) return false;
+        var rest = v[typeName.Length..];
+        if (rest.Length == 0) return true;
+        if (rest[0] == '?') rest = rest[1..];
+        if (rest.Length == 0) return true;
+        return rest.StartsWith(" = ");
     }
 
     /// <summary>
