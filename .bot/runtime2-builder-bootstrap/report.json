@@ -139,6 +139,68 @@
         "health": "CLEAN — all 8 v1 priority fixes verified at code level + traced behaviorally. No regressions introduced. Two items (#9 three-renderer consolidation, #10 culture-sensitive ToString) explicitly deferred and acceptable. Four lower-priority sub-findings carryover (silent first-element-of-array, null→0 default, fall-through error loss, debug-only logging) — not regressions, not on priority list.",
         "notes": "Recommend tester next. Behavioral changes that warrant coverage: error.handle.Wrap RetryFirst recovery-value flow (todo logged in Documentation/Runtime2/todos.md); IsDeferredActionTemplate broadening (now catches Actions.@this collections in addition to List<Action.@this>)."
       }
+    },
+    {
+      "id": "e0bd049b-8fd1-4682-a7fe-48319b099c94",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-28T00:45:24Z",
+      "timestamp_end": "2026-04-28T00:55:16Z",
+      "intent": "v3 — fresh-eyes review of the whole branch, not just the coder's response. Half A: pattern sweeps across all 167 changed C# files. Half B: deep reads on what v1 deferred (Debug/this.cs, TypeMapping full, builder modules, test infra, root objects).",
+      "before": {
+        "assumptions": "v1 only deeply analyzed ~22 of 167 changed files; large surface area was never opened. v2 was only the coder's fix commit. Bias risk: 'I already passed this branch' — must set aside v1/v2 conclusions and look freshly.",
+        "risk": "60-90 min of work. Could miss systemic issues if I per-file rather than pattern-sweep. Must report and stop if Half A surfaces a systemic finding rather than power through Half B."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v3 plan: Half A (pattern sweeps across all 167 changed files) + Half B (deep reads on what v1 deferred). User approved with 'start'."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/test/discover.cs",
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/Utils/TypeMapping.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/builder/validateResponse.cs",
+            "PLang/App/Catalog/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Data/this.cs",
+            "PLang/App/Goals/Goal/this.cs",
+            "PLang/App/modules/test/run.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Half A: grep sweeps for bare-catch (found 5 new sites), throws-from-Try (Data.UnwrapJsonElement and Data.Envelope - safety guards, OK), System.IO violations (none in app code), Convert.ChangeType (locale-sensitive bug), generic casts (none new), mutable static state (only PlangTypeIndex.Assemblies, already flagged), OBP outside-iteration (mostly DTO contexts, acceptable), Clone-family (Step.@this missing 7 props, Data.@this missing _rawValue). Half B: deep-read Debug/this.cs (3 bare catches + non-idempotent Apply + OpenAiProvider hardcoding), TypeMapping (no new findings), DefaultBuilderProvider in full (FormatValue bare catch, NormalizeParameterTypes silent error discard, PromoteGroups stderr-only on JsonElement), test/discover (bare catch on ValidatePath), test/run (CLEAN — model for the rest of the diff)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/result.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/verdict.json",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/changes.patch",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote per-finding result with 8-item priority list for the coder, narrative summary, structured verdict (NEEDS WORK / fail), patch dump, and updated bot-root summary with v3 entry. v3 verdict: NEEDS WORK — 5 bare catches + Step.Clone broken + Convert.ChangeType locale + 2 silent-failure paths + Debug.Apply idempotency."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "NEEDS WORK — fresh-eyes pass surfaced what v1's triaged review didn't open. 5 bare catches still in the diff (test/discover, list/add, Debug ×3, DefaultBuilderProvider FormatValue). Step.@this.Clone() missing 7 of 18 properties — recommend deletion (zero production callers). TypeConverter Convert.ChangeType locale-sensitive — JSON-shaped numbers break on European locales. DefaultBuilderProvider has 2 silent-failure paths (NormalizeParameterTypes discards conversion errors; PromoteGroups stderr-only on JsonElement). Debug.Apply() not idempotent. Debug LLM tracing hardcoded to OpenAiProvider.",
+        "notes": "Send back to coder. Priority list in v3/result.md. Most fixes are mechanical (bare catches use the same shape v2 already applied). Architecture is solid — these are the same anti-patterns v1 flagged, just at sites v1 didn't open. After coder's response, recommend tester (locale fix needs Spanish/Italian-culture coverage)."
+      }
     }
   ]
 }

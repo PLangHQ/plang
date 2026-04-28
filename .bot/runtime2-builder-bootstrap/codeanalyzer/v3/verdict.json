@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Fresh-eyes review surfaced 5 bare catches v1 missed, Step.Clone() missing 7 properties, Convert.ChangeType locale bug, 2 silent-failure paths in DefaultBuilderProvider, and Debug.Apply() idempotency hazard." }
