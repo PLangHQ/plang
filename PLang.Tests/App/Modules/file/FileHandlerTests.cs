@@ -95,6 +95,67 @@ public class FileHandlerTests : IDisposable
         await Assert.That(result.Success).IsFalse();
     }
 
+    // --- Read with ResolveVariables (Gap 2 from coder handover) ---
+
+    [Test]
+    public async Task Read_ResolveVariablesTrue_ResolvesVariableInContent()
+    {
+        _fs.File.WriteAllText(TempPath("template.txt"), "Hello %name%, welcome");
+        _app.Context.Variables.Set("name", "Ingi");
+
+        var action = new Read
+        {
+            Context = _app.Context,
+            Path = MakePath("template.txt"),
+            ResolveVariables = new global::App.Data.@this<bool>("ResolveVariables", true)
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("Hello Ingi, welcome");
+    }
+
+    [Test]
+    public async Task Read_ResolveVariablesFalse_LeavesVariableLiteral()
+    {
+        // Default value of ResolveVariables is false (per [Default(false)]). Even
+        // when %var% is set, the literal must come back unresolved.
+        _fs.File.WriteAllText(TempPath("literal.txt"), "Hello %name%, welcome");
+        _app.Context.Variables.Set("name", "Ingi");
+
+        var action = new Read
+        {
+            Context = _app.Context,
+            Path = MakePath("literal.txt"),
+            ResolveVariables = new global::App.Data.@this<bool>("ResolveVariables", false)
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("Hello %name%, welcome");
+    }
+
+    [Test]
+    public async Task Read_ResolveVariablesTrue_BlocksInfrastructureVariables()
+    {
+        // skipInfrastructure: file content is untrusted — %!app%, %!fileSystem%
+        // etc. must not resolve even when ResolveVariables=true. Without this
+        // guard, a malicious file could leak runtime internals through %!app.Id%.
+        _fs.File.WriteAllText(TempPath("untrusted.txt"), "id is %!app.Id%");
+
+        var action = new Read
+        {
+            Context = _app.Context,
+            Path = MakePath("untrusted.txt"),
+            ResolveVariables = new global::App.Data.@this<bool>("ResolveVariables", true)
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // The literal stays — infrastructure variable was not resolved.
+        await Assert.That(result.Value).IsEqualTo("id is %!app.Id%");
+    }
+
     // --- Copy ---
 
     [Test]

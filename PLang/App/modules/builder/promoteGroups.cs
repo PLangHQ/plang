@@ -3,6 +3,13 @@ using App.modules.builder.providers;
 
 namespace App.modules.builder;
 
+/// <summary>
+/// Build-time only handler. Invoked by os/system/builder/ApplyStep.goal during
+/// `plang build`. Not exercised by `--test`; the honest signal for regressions
+/// is the next bootstrap cycle (rebuild of system/builder/), where a broken
+/// promotion fails the build immediately and visibly. Tester: 0% line coverage
+/// here is intentional — do not flag.
+/// </summary>
 [System.ComponentModel.Description("Promote grouped sub-steps into top-level steps for correct inline step handling")]
 [Action("promoteGroups")]
 public partial class promoteGroups : IContext
