@@ -1,5 +1,0 @@
-Start
-/ v7 demo — builder smoke test after silent-error fix
-- set %city% = 'Reykjavík'
-- set %message% = 'v7 builder is alive in %city%'
-- write out %message%

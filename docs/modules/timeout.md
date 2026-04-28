@@ -50,4 +50,4 @@ TestTimeoutOnSlowAction
 - assert %timedOut% equals true
 ```
 
-The sleep would run for 2 seconds but the 100 ms timeout fires first; `on error ignore` absorbs the Timeout error so the assertion still runs. See `tests/modifiers/TimeoutOnSlowAction.test.goal`.
+The sleep would run for 2 seconds but the 100 ms timeout fires first; `on error ignore` absorbs the Timeout error so the assertion still runs. See `Tests/Modules/Modifiers/TimeoutOnSlowAction.test.goal`.

@@ -1282,7 +1282,7 @@ function renderFileHeader(file, entry) {
     : `<span class="stat-chip"><strong>${goalCount}</strong> goal${goalCount === 1 ? '' : 's'}</span>`;
 
   // The full path users usually want on their clipboard is bucket + path —
-  // e.g. "tests/simple/Start.goal" — so you can jump to the source directly.
+  // e.g. "Tests/Simple/Start.goal" — so you can jump to the source directly.
   const fullPath = [file.bucket || '', file.path || ''].filter(Boolean).join('').replace(/\/+/g, '/');
   return `
     <div class="file-header">
