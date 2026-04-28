@@ -650,7 +650,9 @@ public class DefaultBuilderProvider : IBuilderProvider
     /// metadata, not data. The match is anchored on <paramref name="typeName"/> (already
     /// stamped from the schema) so an LLM-emitted real value can't accidentally trip it.
     /// </summary>
-    private static bool IsCatalogDescription(string value, string typeName)
+    // internal-static for unit tests — the helper has 4 distinct match shapes and the
+    // production callers only exercise the match-true path through integration tests.
+    internal static bool IsCatalogDescription(string value, string typeName)
     {
         if (string.IsNullOrEmpty(typeName)) return false;
         var v = value.AsSpan().Trim();
