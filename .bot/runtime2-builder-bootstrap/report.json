@@ -201,6 +201,67 @@
         "health": "NEEDS WORK — fresh-eyes pass surfaced what v1's triaged review didn't open. 5 bare catches still in the diff (test/discover, list/add, Debug ×3, DefaultBuilderProvider FormatValue). Step.@this.Clone() missing 7 of 18 properties — recommend deletion (zero production callers). TypeConverter Convert.ChangeType locale-sensitive — JSON-shaped numbers break on European locales. DefaultBuilderProvider has 2 silent-failure paths (NormalizeParameterTypes discards conversion errors; PromoteGroups stderr-only on JsonElement). Debug.Apply() not idempotent. Debug LLM tracing hardcoded to OpenAiProvider.",
         "notes": "Send back to coder. Priority list in v3/result.md. Most fixes are mechanical (bare catches use the same shape v2 already applied). Architecture is solid — these are the same anti-patterns v1 flagged, just at sites v1 didn't open. After coder's response, recommend tester (locale fix needs Spanish/Italian-culture coverage)."
       }
+    },
+    {
+      "id": "a79b4eac-5b20-4ccb-ba40-26129e878ff7",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-28T11:09:20Z",
+      "timestamp_end": "2026-04-28T11:25:25Z",
+      "intent": "v4 — verify coder's response (commit 65555d3e) to v3's 8 findings. 5 fixed, 3 explicitly deferred. Pass 4 behavioral reasoning on the new code itself.",
+      "before": {
+        "assumptions": "Coder closed 5 of 8 v3 findings; #1 (Step.Clone deletion), #7 (Data.Clone _rawValue), #8 (Debug LLM tracing decoupling) explicitly deferred. Diff is small (5 files, +45/-17). Each fix is itself new code that needs review — bare-catch filters could over- or under-catch; idempotency guard could miss subscriptions; surfaced silent failures need to plumb to the right call site.",
+        "risk": "Catch filters look right but may not match the actual exception type the framework throws (e.g., reflection wraps in TargetInvocationException). Surfacing PromoteGroups error must reach LlmFixer to be useful. Locale fix to Convert.ChangeType has to be the only entry point or there are still uncovered call sites."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/v3_review_summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v3 review summary and v4 plan: pass 1 (verify each closure), pass 2 (fresh-eyes on the 5 changed files), pass 3 (carryover sub-findings). User approved with 'approve'."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/test/discover.cs",
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "os/system/builder/ApplyStep.goal",
+            "os/system/builder/llm/BuildGoal.llm",
+            "PLang/App/FileSystem/Default/PLangFileSystem.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/modules/builder/promoteGroups.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified each of the 5 closures: bare-catch filters narrowed correctly (UnauthorizedAccessException at test/discover, JsonException‖NotSupportedException at list/add + Debug:619 + DefaultBuilderProvider:440, ArgumentException at Debug:223, not(NRE‖OOM‖SOE) at Debug:677); InvariantCulture passed at TypeConverter:325; NormalizeParameterTypes errors traced end-to-end into LlmFixer via ApplyStep.goal HandleValidationError flow; PromoteGroups SetValue returns bool with structured ActionError; Debug.Apply has _applied guard. Pass 2 found one second-order issue: format-side InvariantCulture asymmetry (escalated carryover from v1 #10 — partial fix actually worse than no fix on European locales because @known round-trip via BuildGoal.llm:91-110 propagates current-culture formals back to the LLM). Pass 3: PromoteGroups action is unreachable from any goal (sub-finding, no current coverage)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/result.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/verdict.json",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/changes.patch",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote per-fix verification (result.md), narrative (summary.md), structured verdict (CLEAN/pass), patch dump, and updated bot-root summary with v4 entry. v4 verdict: CLEAN. Next-round priority: format-side InvariantCulture at FormatValue ×2 + ExampleRenderer (preferably via consolidated helper that closes v1 #9 + #10)."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "CLEAN — all 5 v3 priority closures verified at code level + traced behaviorally. Surfacing for #4 reaches LlmFixer through ApplyStep.goal's HandleValidationError flow. Surfacing for #5 produces structured ActionError. Catch filters are narrow and correct. Idempotency guard is correct. The 3 deferrals are defensible. One escalated carryover (format-side InvariantCulture asymmetry) and one sub-finding (promoteGroups unreachable from any goal) — neither blocks this round.",
+        "notes": "Recommend tester next. Locale fix needs Italian/German/Spanish-culture coverage. Send the next-round priority list (format-side InvariantCulture, decide promoteGroups fate) to the coder when the team is ready for another round, but this commit is mergeable."
+      }
     }
   ]
 }

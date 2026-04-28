@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "All 5 prioritized v3 closures verified at code level + traced behaviorally. 3 deferrals defensible. Carryover: locale fix is asymmetric on European locales (parse Invariant, format Current) — not a regression but should be next priority."
+}
