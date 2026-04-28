@@ -434,7 +434,9 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (v == null) return "null";
         if (v is string s) return s.Contains(' ') || s.Contains(',') ? $"\"{s}\"" : s;
         if (v is bool b) return b ? "true" : "false";
-        if (v is IConvertible) return v.ToString() ?? "";
+        // InvariantCulture so locale-sensitive numeric output stays symmetric with
+        // TypeConverter's InvariantCulture parse — see ExampleRenderer.cs for context.
+        if (v is IConvertible conv) return System.Convert.ToString(conv, System.Globalization.CultureInfo.InvariantCulture) ?? "";
         // Structured values (dicts, lists, POCOs like GoalCall) → JSON.
         try { return System.Text.Json.JsonSerializer.Serialize(v); }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { return v.ToString() ?? ""; }

@@ -137,7 +137,10 @@ public class FluidProvider : ITemplateProvider
         }
         if (v is bool b) return b ? "true" : "false";
         // Scalars (numbers, enums, any primitive-like IConvertible) use their literal form.
-        if (v is IConvertible) return v.ToString() ?? "";
+        // InvariantCulture so the formatted text round-trips with TypeConverter's
+        // InvariantCulture parse — without this, it-IT/de-DE writes "3,14" and the
+        // parse FormatExceptions on the comma.
+        if (v is IConvertible conv) return System.Convert.ToString(conv, System.Globalization.CultureInfo.InvariantCulture) ?? "";
         // Everything else — dicts, lists, POCOs — render as JSON.
         try { return System.Text.Json.JsonSerializer.Serialize(v); }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { return v.ToString() ?? ""; }

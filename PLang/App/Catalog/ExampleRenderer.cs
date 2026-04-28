@@ -100,7 +100,12 @@ public static class ExampleRenderer
             // Other lists fall through to JSON below.
         }
 
-        if (value is System.IConvertible) { sb.Append(value); return; }
+        // InvariantCulture so JSON-shaped numbers ("3.14") format identically
+        // regardless of the user's locale — without this, an it-IT/de-DE user
+        // would write "3,14" to .pr files and TypeConverter.Convert.ChangeType
+        // (which uses InvariantCulture on the parse side) would FormatException
+        // on the comma. Round-trip must be symmetric.
+        if (value is System.IConvertible conv) { sb.Append(System.Convert.ToString(conv, System.Globalization.CultureInfo.InvariantCulture)); return; }
 
         sb.Append(JsonSerializer.Serialize(value));
     }
