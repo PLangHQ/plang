@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "10/12 v1 findings closed cleanly (with 2 minor caveats); F2/F3/F4 PLang test clusters (BuilderValidateValid @known unwrap, Loop string-concat, Signing routing) still red — 25 PLang reds + 1 lowercase suite red are real production bugs the coder did not address. C# suite is 100% green."
+}

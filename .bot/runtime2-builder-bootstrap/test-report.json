@@ -1,153 +1,114 @@
 {
   "tester": "tester",
   "branch": "runtime2-builder-bootstrap",
-  "timestamp": "2026-04-28T13:00:00Z",
-  "tested_version": "v1",
+  "timestamp": "2026-04-28T15:55:00Z",
+  "tested_version": "v2",
+  "tested_commits": "d8eb2958..bbf982d4",
   "test_run": {
-    "csharp": { "total": 2289, "passed": 2281, "failed": 8, "skipped": 0 },
-    "plang_tests_uppercase": { "total": 161, "passed": 132, "failed": 25, "stale": 4, "skipped": 0 },
-    "plang_tests_lowercase": { "total": 9, "passed": 8, "failed": 1, "skipped": 0 }
+    "csharp": { "total": 2288, "passed": 2288, "failed": 0, "skipped": 0, "delta_v1": "+7 new, -8 BuildingGuardTests; net 2289→2288, fail 8→0" },
+    "plang_tests_uppercase": { "total": 161, "passed": 132, "failed": 25, "stale": 4, "skipped": 0, "delta_v1": "unchanged" },
+    "plang_tests_lowercase": { "total": 9, "passed": 8, "failed": 1, "skipped": 0, "delta_v1": "unchanged" }
   },
   "coverage": {
-    "global_line_pct": 36.5,
-    "global_branch_pct": 21.0,
-    "data_file": ".bot/runtime2-builder-bootstrap/tester/v1/coverage.json",
-    "raw_xml_dropped_size_mb": 11,
-    "raw_xml_dropped_reason": "Cobertura XML was 11 MB. Per-file summary in coverage.json is enough; raw XML can be regenerated with 'dotnet run --project PLang.Tests --no-build -- --coverage --coverage-output-format cobertura'.",
-    "files_with_zero_coverage": [
-      "PLang/App/modules/builder/promoteGroups.cs",
-      "PLang/App/modules/builder/enrichResponse.cs"
+    "data_file": ".bot/runtime2-builder-bootstrap/tester/v2/coverage.json",
+    "raw_xml": "/tmp/cov_v2.xml (10 MB, regenerable)",
+    "scope_note": "v2 numbers are PLang/ scope only (76.7% global). v1 reported global 36.5% but included other assemblies; not directly comparable.",
+    "changed_files": {
+      "PLang/App/modules/file/read.cs": { "v1": 62.5, "v2": 100.0, "note": "Gap 2 tests landed" },
+      "PLang/App/Utils/TypeConverter.cs": { "v1": 50.4, "v2": 54.9, "note": "auto-wrap branch covered; many other paths still untested" },
+      "PLang/App/modules/builder/promoteGroups.cs": { "v1": 0, "v2": 0, "note": "intentional-by-design (XML doc claim verified)" },
+      "PLang/App/modules/builder/enrichResponse.cs": { "v1": 0, "v2": 0, "note": "intentional-by-design (XML doc claim verified)" },
+      "PLang/App/modules/builder/validateResponse.cs": { "v2": 98.3 },
+      "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs": { "v1": 63.6, "v2": 60.8, "note": "FormatValue InvariantCulture branch added but no non-Invariant test exercises it" },
+      "PLang/App/Catalog/ExampleRenderer.cs": { "v2": 85.2 },
+      "PLang/App/modules/ui/providers/FluidProvider.cs": { "v2": 73.4 },
+      "PLang/App/modules/error/handle.cs": { "v2": 99.2 },
+      "PLang/App/modules/condition/if.cs": { "v2": 92.0 },
+      "PLang/App/modules/list/get.cs": { "v2": 100.0 },
+      "PLang/App/modules/loop/foreach.cs": { "v2": 97.5 }
+    }
+  },
+  "v1_findings_resolution": {
+    "closed_strong": [
+      { "id": 1, "title": "BuildingGuardTests", "how": "Tests deleted; per-action guard intentionally not restored. 4 enforcement layers verified to still gate: Variables.Resolve, DefaultFileProvider .pr-write, Actor setup, App shutdown." },
+      { "id": 7, "title": "Gap 2 file.read ResolveVariables", "how": "3 tests in FileHandlerTests, deletion-test verified — skipInfrastructure guard exercises real %!app.Id% DynamicData resolution path. Coverage 62.5% → 100%." },
+      { "id": 9, "title": "ErrorHandle retry weak", "how": "Stateful-lambda + callCount==1+retryCount pin. Replacing retry loop with no-op fails test." },
+      { "id": 10, "title": "If 404 identity", "how": "Pinned StatusCode=404 + Key=NotFound (matches GoalError.NotFound at GoalError.cs:29)." },
+      { "id": 11, "title": "ValidateResponse Null", "how": "Pinned exact production strings 'StepResults.Value is null' + 'Goal.Value is null' (validateResponse.cs:45,55)." },
+      { "id": 12, "title": "List/Foreach Success.IsFalse", "how": "Pinned StatusCode/Key/message at all sites." }
     ],
-    "low_coverage_changed_files": [
-      { "file": "PLang/App/Utils/TypeConverter.cs", "pct": 50.4 },
-      { "file": "PLang/App/modules/list/add.cs", "pct": 50.0 },
-      { "file": "PLang/App/Errors/Error.cs", "pct": 58.6 },
-      { "file": "PLang/App/Utils/MimeTypes.cs", "pct": 58.7 },
-      { "file": "PLang/App/modules/file/read.cs", "pct": 62.5 },
-      { "file": "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs", "pct": 63.6 },
-      { "file": "PLang/App/Debug/this.cs", "pct": 40.3 }
+    "closed_with_caveats": [
+      { "id": 5, "title": "Locale format", "caveat": "Production fix correct at 3 sites, but no test sets Thread.CurrentCulture=non-Invariant and asserts round-trip. Phase05_CultureInfo_DefaultsToInvariant only verifies the default. Regression risk low but real." },
+      { "id": 6, "title": "promoteGroups + enrichResponse 0%", "caveat": "XML-doc declaration of 'build-time only' is honest for enrichResponse (called from os/system/builder/BuildGoal.goal:35). promoteGroups is referenced in ZERO .goal files anywhere — not even bootstrap. Either delete or wire in." },
+      { "id": 8, "title": "Gap 3 single→list", "caveat": "3 of 4 new tests exercise the wrap branch correctly. ListOfStringToListOfString_PassesThrough is mislabeled — its input goes through the list-conversion branch at TypeConverter:126, not the auto-wrap at line 156. Deleting the wrap branch would NOT fail it. Cosmetic only." }
+    ],
+    "untouched": [
+      { "id": 2, "title": "BuilderValidateValid @known unwrap", "status": "still red", "impact": "~80 'Cannot convert int = 1 (String) to Int32' errors. @known annotation strings reach Convert.ChangeType. Affects every action's parameter coercion path." },
+      { "id": 3, "title": "Loop string-concat", "status": "still red", "impact": "Loop test expects 3 (arithmetic sum), gets '0 + 1 + 1 + 1' (string concat). Real runtime bug." },
+      { "id": 4, "title": "Signing cluster + others", "status": "still red", "impact": "9 signing tests; timeout.after.after routing bug (extra .after segment); Identity, UI render, ContextVars, ConditionCompound, ForeachDictionary, Event, Goal/Relative, Test/Discover, Crypto, ErrorTypes, App/SetupGoal also still red." }
     ]
   },
   "findings": [
     {
       "id": 1,
-      "severity": "critical",
-      "type": "regression",
-      "test_file": "PLang.Tests/App/Modules/builder/BuildingGuardTests.cs",
-      "code_file": "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
-      "issue": "All 8 BuildingGuard tests fail. Tests assert Building.IsEnabled guard returns 'Building is not enabled' error. The guard existed in runtime2 baseline (BuildingGuard helper + 8 call sites) and was deleted by the v2 builder squash 50351d8b. The test file is byte-identical to runtime2; the production code lost the implementation.",
-      "impact": "Builder actions (goals, GetActions, validate, goalsSave, app, appSave, merge, types) execute regardless of Building flag. Mode safety is gone. Codeanalyzer's 4 rounds never ran the tests, so this slipped through.",
-      "suggestion": "Restore BuildingGuard helper in DefaultBuilderProvider and call from each action method, OR delete the tests with explicit justification (e.g. guard moved). I found no replacement layer."
+      "severity": "major",
+      "type": "carryover",
+      "test_file": "Tests/Modules/Builder/ValidateValid/BuilderValidateValid.test.goal",
+      "code_file": "(unknown — @known unwrap path)",
+      "issue": "Untouched from v1 #2. ~80 'Cannot convert int = 1 (String) to Int32' errors. @known annotation strings ('int = 1', 'bool = false', 'String', 'Dictionary`2') still flow through Convert.ChangeType.",
+      "impact": "Build-time validation cannot validate parameter shapes when @known annotations are present.",
+      "suggestion": "Find the @known unwrap path and trace why it doesn't fire before parameter coercion."
     },
     {
       "id": 2,
       "severity": "major",
-      "type": "test-failure-cluster",
-      "test_file": "Tests/Modules/Builder/ValidateValid/BuilderValidateValid.test.goal",
-      "code_file": "PLang/App/Utils/TypeConverter.cs",
-      "issue": "Test fails with ~80+ conversion errors of the form: 'Cannot convert int = 1 (String) to Int32'. The @known annotation strings (literal 'int = 1', 'bool = false', 'String', 'Dictionary`2') are flowing through Convert.ChangeType instead of being unwrapped first. Affects almost every action's parameter coercion path.",
-      "impact": "Build-time validation cannot validate parameter shapes when @known annotations are present. The unwrap step that should turn 'int = 1' into 1 is missing or skipped.",
-      "suggestion": "Find the @known unwrap path; trace why the annotation strings reach Convert.ChangeType. Likely interacts with the locale fix at TypeConverter:325 (both code paths share the same conversion entry)."
+      "type": "carryover",
+      "test_file": "Tests/Modules/Loop/Loop.test.goal",
+      "code_file": "PLang/App/modules/loop/foreach.cs (and friends)",
+      "issue": "Untouched from v1 #3. Test expects 3 (arithmetic sum), gets '0 + 1 + 1 + 1' (string concat).",
+      "impact": "Foreach with numeric accumulator does not produce numeric sum. Real runtime bug."
     },
     {
       "id": 3,
       "severity": "major",
-      "type": "test-failure-cluster",
-      "test_file": "Tests/Modules/Loop/Loop.test.goal",
-      "code_file": "PLang/App/modules/loop/foreach.cs (and friends)",
-      "issue": "Loop test expects sum=3, gets concatenation '0 + 1 + 1 + 1'. The arithmetic add operation is being treated as string concatenation. Multiple Loop / Foreach / Condition tests fail.",
-      "impact": "Foreach with numeric accumulator does not produce the intended numeric sum. Real production regression."
+      "type": "carryover",
+      "test_file": "Tests/Modules/Signing/* (9 reds), App/SetupGoal/Start, Identity/{Unarchive,ArchiveDefault}, Ui/Render{CallGoal,WithParams}, Variable/ContextVars, Loop/Foreach/Dictionary, Condition/Compound/Mixed, Event/{Remove,Override,Priority}, Goal/Relative, Test/Discover, Crypto/HashBcryptVerify, Error/Types",
+      "code_file": "(various)",
+      "issue": "Untouched from v1 #4. 25 PLang test reds + 1 lowercase suite red. Real production failures introduced by the v2 builder squash 50351d8b.",
+      "impact": "Modules across Signing/Identity/UI/Loop/Event are broken end-to-end.",
+      "suggestion": "Send back to coder. Triage each cluster: are these LLM-build-output drift from non-deterministic builder, or real handler regressions?"
     },
     {
       "id": 4,
-      "severity": "major",
-      "type": "test-failure-cluster",
-      "test_file": "Tests/Modules/Signing/*",
-      "code_file": "PLang/App/modules/signing/, PLang/App/modules/timeout/after.cs",
-      "issue": "9 signing tests fail with mixed errors: 'Contract mismatch', 'File not found: .build/sign.pr', 'Action timeout.after.after not found'. The last is at minimum a module/action routing bug — extra '.after' segment.",
-      "impact": "Signing pipeline is broken end-to-end across multiple invariants."
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "(none)",
+      "code_file": "PLang/App/Catalog/ExampleRenderer.cs:108, PLang/App/modules/ui/providers/FluidProvider.cs:143, PLang/App/modules/builder/providers/DefaultBuilderProvider.cs:439",
+      "issue": "F5 production fix is correct (all three sites pass CultureInfo.InvariantCulture). But no test sets Thread.CurrentCulture=non-Invariant and asserts numeric output is '3.14' not '3,14'. Phase05_CultureInfo_DefaultsToInvariant only checks the App.Culture default.",
+      "impact": "A regression that flipped any of the three sites back to conv.ToString() would slip through silently.",
+      "suggestion": "Add a unit test using a Setup that sets Thread.CurrentCulture to it-IT, calls FormatValue/FormatFormalValue/ExampleRenderer.Render with 3.14, and asserts the result is '3.14'."
     },
     {
       "id": 5,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "(none)",
-      "code_file": "PLang/App/Catalog/ExampleRenderer.cs:103, PLang/App/modules/ui/providers/FluidProvider.cs:140, PLang/App/modules/builder/providers/DefaultBuilderProvider.cs (FormatValue)",
-      "issue": "v4 carryover. TypeConverter.cs:325 parses with InvariantCulture, but the three FORMAT sites use Thread.CurrentCulture. No test sets a non-Invariant culture and asserts numeric round-trip. App.Culture property defaults to Invariant but is never read by any production code (verified by grep across PLang/App).",
-      "impact": "European-locale users (it-IT, es-ES, de-DE, etc.) building goals with numeric @known values produce '3,14' formals the parser cannot read back. The fix is asymmetric — worse than no fix on those locales because before the fix both ends used current culture and round-tripped consistently.",
-      "suggestion": "Wire App.Culture into the three format sites OR pass CultureInfo.InvariantCulture directly. Add a test that sets Thread.CurrentCulture to it-IT, calls FormatFormalValue(3.14), and asserts the result is '3.14'."
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Utility/TypeMappingTests.cs:752 (TryConvertTo_ListOfStringToListOfString_PassesThrough)",
+      "code_file": "PLang/App/Utils/TypeConverter.cs:126,156",
+      "issue": "Test comment claims 'sanity guard that auto-wrap doesn't engage on already-list inputs,' but the List<string> input is consumed by the list-conversion branch at line 126 (`value is IList sourceList`), not the auto-wrap branch at line 156. Deleting lines 156-168 would NOT fail this test.",
+      "impact": "Cosmetic — the test exercises a real and useful path (list-conversion), just not the path the comment claims.",
+      "suggestion": "Either re-comment to describe what the test actually does, or add a separate test that explicitly forces the auto-wrap-skip path (hard, given the IList check fires first)."
     },
     {
       "id": 6,
-      "severity": "major",
-      "type": "missing-coverage",
+      "severity": "minor",
+      "type": "design-claim-unsupported",
       "test_file": "(none)",
-      "code_file": "PLang/App/modules/builder/promoteGroups.cs, PLang/App/modules/builder/enrichResponse.cs",
-      "issue": "v4 carryover. Both files have 0% line coverage. promoteGroups is registered as an Action but no goal calls it. enrichResponse is referenced by os/system/builder/ApplyStep.goal but only at build time — the test suite never exercises that path. The new ActionError('PromoteGroupsImmutableStep') has zero verification.",
-      "impact": "Both code paths can regress silently. enrichResponse is on the hot path of every build but no test covers its current behavior, so any regression to the build output goes uncaught.",
-      "suggestion": "Add a unit test or a PLang .test.goal that hits each at least once. Or delete promoteGroups (unreachable from any current goal)."
-    },
-    {
-      "id": 7,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "(none)",
-      "code_file": "PLang/App/modules/file/read.cs",
-      "issue": "Coder Gap 2 (file.read ResolveVariables) — handover listed 3 test cases. Zero tests written. Grep across PLang.Tests, Tests, tests, os: no occurrences of 'ResolveVariables' or 'load vars' in any .cs or .goal test. file/read.cs coverage is 62.5%; the uncovered range is exactly the resolve-vars branch.",
-      "impact": "The new feature ships untested. Any regression to Variables.Resolve(content) goes uncaught.",
-      "suggestion": "Add three test cases: (a) ResolveVariables=false returns raw content with unresolved %var%, (b) ResolveVariables=true with %name% in content returns resolved value, (c) ResolveVariables=true with no variables returns content unchanged."
-    },
-    {
-      "id": 8,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "(none)",
-      "code_file": "PLang/App/Utils/TypeConverter.cs:156-168",
-      "issue": "Coder Gap 3 (TypeMapping single→list auto-wrap). Implementation lives at TypeConverter.cs:156-168 (the listElementType.IsAssignableFrom branch and the convert-then-wrap fallback). TypeMappingTests.cs has six TryConvertTo tests; none exercise List<T> targets. Coverage on TypeConverter.cs is 50.4%.",
-      "impact": "Regression to the wrap logic ships silent. Originally motivated by goalsSave taking List<Goal>; coder later changed it to single Goal, so the production trigger is reduced — but other callers (LLM-emitted lists with 1 element vs scalar) still depend on this path.",
-      "suggestion": "Add tests for: (a) single Goal → List<Goal>, (b) existing list → no double-wrap, (c) string → List<string>, (d) JsonElement-array → List<T> (production code at TypeConverter:114-124 is also untested)."
-    },
-    {
-      "id": 9,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs",
-      "code_file": "PLang/App/modules/error/handle.cs",
-      "issue": "Handle_RetryFirst_PersistentFailure_AllRetriesFail and Handle_GoalFirst_NoGoal_ExhaustsRetriesAndFails check only Success.IsFalse() (no retry-count verification). Deletion test: if the retry loop body were 'for (int i = 0; i < 0; i++)' (never retried), error.throw still fails on first attempt and the assertion still passes.",
-      "impact": "A silent regression that disables retries entirely would not fail these tests.",
-      "suggestion": "Use a counter-based action (variable.add on each retry) and assert the counter equals retryCount + 1, OR inspect Error.ErrorChain length to count retry attempts."
-    },
-    {
-      "id": 10,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/Modules/condition/IfErrorOrchestrationTests.cs",
-      "code_file": "PLang/App/modules/condition/if.cs",
-      "issue": "If_OrchestratedBranchAction_ReturnsError_PropagatesThroughStep checks Error.IsNotNull but not the identity. The intent is 'goal.call 404 must surface'. Any unrelated error of the chosen branch would still pass the assertion.",
-      "impact": "A regression that swapped the surfaced error for a misleading one (e.g. 'condition evaluated false' from condition.if's own validation) would not fail the test.",
-      "suggestion": "Add Error.StatusCode == 404 (or Error.Key == 'NotFound')."
-    },
-    {
-      "id": 11,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/Modules/builder/ValidateResponseTests.cs",
-      "code_file": "PLang/App/modules/builder/validateResponse.cs",
-      "issue": "NullInputs_ReturnsError checks Error.Key == 'ValidationError' but no Message. validateResponse emits multiple distinct ValidationError variants (null inputs, step-count, gap, Keep-without-prior). All share the same Key, so Key alone cannot distinguish them.",
-      "impact": "A regression that surfaces a different ValidationError from this code path would not fail the test.",
-      "suggestion": "Assert on a discriminating substring of Message — e.g. 'StepResults' or 'is null'."
-    },
-    {
-      "id": 12,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/Modules/list/ListTests.cs, QueryCallbackTests.cs, ForeachErrorPropagationTests.cs, ValidateActionsTests.cs",
-      "code_file": "(various)",
-      "issue": "Six call sites use Assert.That(result.Success).IsFalse() with no following Error.Key check. Each is a missed opportunity to pin the failure mode.",
-      "impact": "Lower than F5/F6 but the same pattern. A regression that swaps the error type ships silent.",
-      "suggestion": "Treat 'Success.IsFalse without Error.Key' as a code-review gate going forward."
+      "code_file": "PLang/App/modules/builder/promoteGroups.cs",
+      "issue": "Carryover from codeanalyzer v4. XML doc claims 'exercised by bootstrap cycle' but `grep -rn 'promoteGroups' os/ Tests/ tests/ --include=*.goal` returns zero matches. The action is unreachable from any goal anywhere — even bootstrap doesn't invoke it. The 'next bootstrap fails immediately' claim is not supported.",
+      "impact": "The new ActionError('PromoteGroupsImmutableStep') has zero verification path. Any regression to PromoteGroups produces no observable signal.",
+      "suggestion": "Either delete `promoteGroups` (action + module registration), or wire it into the build pipeline (`os/system/builder/ApplyStep.goal` or similar)."
     }
   ],
   "verdict": "needs-fixes",
-  "summary": "The test suite is doing its job. 34 honest red tests surface a production regression (BuildingGuard, missed by 4 codeanalyzer rounds), a builder type-conversion bug ('int = 1' strings reaching Convert.ChangeType), and clusters in Loop/Signing/Identity. Both v4 carryovers confirmed: locale-format asymmetry has zero coverage, promoteGroups + enrichResponse have 0% coverage. Three coder-handover gaps (AsDefault, ResolveVariables, list auto-wrap) ship with under-tested or missing direct unit tests. Recommend sending back to coder."
+  "summary": "10 of 12 v1 findings closed cleanly with strong tests and verified deletion-test catchers. C# suite is 100% green (2288/2288). But F2/F3/F4 (25 PLang reds + 1 in lowercase suite) remain untouched — these are real production failures introduced by the v2 builder squash, not pre-existing baseline. Two minor follow-ups: locale-format coverage missing, ListOfStringToListOfString test mislabeled. PromoteGroups is unreachable from any goal anywhere — XML 'build-time only' claim is honest but the 'bootstrap fail-fast signal' claim is not."
 }
