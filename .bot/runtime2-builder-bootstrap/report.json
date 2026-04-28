@@ -262,6 +262,139 @@
         "health": "CLEAN — all 5 v3 priority closures verified at code level + traced behaviorally. Surfacing for #4 reaches LlmFixer through ApplyStep.goal's HandleValidationError flow. Surfacing for #5 produces structured ActionError. Catch filters are narrow and correct. Idempotency guard is correct. The 3 deferrals are defensible. One escalated carryover (format-side InvariantCulture asymmetry) and one sub-finding (promoteGroups unreachable from any goal) — neither blocks this round.",
         "notes": "Recommend tester next. Locale fix needs Italian/German/Spanish-culture coverage. Send the next-round priority list (format-side InvariantCulture, decide promoteGroups fate) to the coder when the team is ready for another round, but this commit is mergeable."
       }
+    },
+    {
+      "id": "1ec2eb5c-9d7f-4df2-9dad-3a7e4cee2b66",
+      "bot": "tester",
+      "timestamp_start": "2026-04-28T12:30:00Z",
+      "timestamp_end": null,
+      "intent": "Test-quality analysis of runtime2-builder-bootstrap. Run full C#/PLang suites + coverage, hunt false greens on the v2 builder bootstrap surfaces, and verify the two v4 carryovers (locale-format asymmetry, promoteGroups zero coverage) are reflected in test outcomes.",
+      "before": {
+        "assumptions": "Coder report described 3 small gaps; the actual branch is the full v2 self-rebuild + diagnostics + type system (~2300 files, ~30k inserts). Codeanalyzer ran four rounds; v4 is CLEAN with two carryovers escalated to me. 28 test files were added or modified in PLang.Tests/. PLang test surface for new builder modules is unknown — need to enumerate.",
+        "risk": "Branch is too large to read every test file line-by-line — must triage by risk and pattern-grep for weak-assertion shapes. Build may fail after the squash; that's a coder finding, not a tester one. New surfaces (Catalog, PlangType, TypeConverter, validateResponse) are highest false-green risk because they were added as part of one commit. v4 carryovers (locale fix asymmetry, promoteGroups unreachable) almost certainly have zero coverage."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote plan: run C# + PLang tests, run coverage, hunt false greens with focus on the v4 carryovers (locale-format asymmetry, promoteGroups zero coverage) and the three coder-handover gaps. User approved with 'ok'."
+        },
+        {
+          "paths": [
+            "PLang.Tests/PLang.Tests.csproj",
+            "PlangConsole/PLangConsole.csproj"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Built both projects (dotnet build). 874 warnings, 0 errors. Created os symlink at PlangConsole/bin/Debug/net10.0/os → /workspace/plang/os so plang --test could resolve SystemDirectory."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/builder/BuildingGuardTests.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/builder/goals.cs",
+            "PLang/App/Build/this.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran C# tests (2289 total, 8 failed). All 8 fails are in BuildingGuardTests. Diff'd current DefaultBuilderProvider against runtime2 baseline — confirmed BuildingGuard helper + 8 call sites existed in runtime2 and were removed by the v2 builder squash 50351d8b. The test file is byte-identical to runtime2. This is a real production regression, not a test-quality issue. Codeanalyzer's 4 rounds reviewed code-only and never ran tests."
+        },
+        {
+          "paths": [
+            "Tests/Modules/Builder/ValidateValid/BuilderValidateValid.test.goal",
+            "Tests/Modules/Loop/Loop.test.goal",
+            "Tests/Modules/Signing/",
+            "Tests/Modules/Identity/Unarchive/IdentityUnarchive.test.goal",
+            "Tests/Modules/Test/Discover/TestDiscoverReportsStaleWhenPrMissing.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran PLang tests: /Tests/ 161 total, 25 fail + 4 stale; /tests/ 9 total, 1 fail. Categorised failures: BuilderValidateValid floods Convert.ChangeType with @known annotation strings ('int = 1', 'bool = false') unwrapped; Loop returns string concat '0 + 1 + 1 + 1' instead of arithmetic 3; Signing cluster has 9 fails including a 'timeout.after.after' routing bug; IdentityUnarchive leaves literal '%__data__' unresolved."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v1/coverage.json",
+            ".bot/runtime2-builder-bootstrap/tester/v1/coverage.cobertura.xml"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran coverage via TUnit --coverage. 36.5% global line / 21% branch. Extracted per-changed-file summary to coverage.json. Confirmed both v4 carryovers: promoteGroups.cs and enrichResponse.cs at 0%, TypeConverter.cs at 50.4%. Did not commit the 11 MB cobertura.xml — only the 5 KB coverage.json."
+        },
+        {
+          "paths": [
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/this.cs",
+            "PLang.Tests/App/Phase0Proof.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified v4 carryover #1: ExampleRenderer:103 sb.Append(value) and FluidProvider:140 v.ToString() use Thread.CurrentCulture for IConvertible. App.Culture defaults to InvariantCulture but is never read by any production code — vestigial property. No test in PLang.Tests sets a non-Invariant culture and asserts numeric round-trip."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/promoteGroups.cs",
+            "PLang/App/modules/builder/enrichResponse.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified v4 carryover #2: promoteGroups and enrichResponse both at 0% line coverage. No .cs test or .goal test references either. enrichResponse is referenced by os/system/builder/ApplyStep.goal but only on the build path; --test never exercises it. The new ActionError('PromoteGroupsImmutableStep') has zero verification."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/variable/settests.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/modules/file/read.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang.Tests/App/Utility/TypeMappingTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Reviewed three coder-handover gaps: (1) AsDefault — tests are reasonable, deletion test passes both edges, set.cs at 96.6% coverage. (2) ResolveVariables — zero tests anywhere across PLang.Tests/Tests/tests/os, file/read.cs at 62.5% with the resolve-vars branch uncovered. (3) Single→list auto-wrap — implementation at TypeConverter:156-168 has zero tests in TypeMappingTests.cs (six TryConvertTo tests, none target List<T>); TypeConverter at 50.4% coverage."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs",
+            "PLang.Tests/App/Modules/condition/IfErrorOrchestrationTests.cs",
+            "PLang.Tests/App/Modules/builder/ValidateResponseTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Weak-assertion sweep: 8 changed test files have Success.IsFalse() without follow-up Error.Key/StatusCode checks. Highest-impact: Handle_RetryFirst_PersistentFailure_AllRetriesFail (would still pass with retries=0), If_OrchestratedBranchAction_ReturnsError_PropagatesThroughStep (doesn't pin 404 identity), ValidateResponseTests.NullInputs_ReturnsError (4 distinct ValidationError variants share the Key)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v1/result.md",
+            ".bot/runtime2-builder-bootstrap/tester/v1/verdict.json",
+            ".bot/runtime2-builder-bootstrap/tester/v1/summary.md",
+            ".bot/runtime2-builder-bootstrap/tester/summary.md",
+            ".bot/runtime2-builder-bootstrap/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote 12-finding result.md (1 critical, 7 major, 4 minor), structured verdict.json (status=fail), narrative v1/summary.md, light bot-root summary.md, and the branch-shared test-report.json. Verdict: needs-fixes."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "needs-fixes — 34 honest red tests + 4 stale across C# and PLang suites. The CRITICAL finding is a BuildingGuard regression (8 tests) that 4 codeanalyzer rounds missed because they only reviewed code. Both v4 carryovers confirmed: locale-format asymmetry has zero test coverage and App.Culture is vestigial; promoteGroups + enrichResponse both at 0% line coverage. Three coder-handover gaps: AsDefault is OK, but ResolveVariables and single→list auto-wrap ship with zero direct unit tests. PLang test failures surface real production regressions (Loop returns string concat, BuilderValidateValid floods Convert.ChangeType with @known annotation strings, Signing cluster). Most tests are honest; the response should be to treat these reds as findings.",
+        "notes": "Send back to coder. Priority order: (1) restore BuildingGuard helper + 8 call sites, (2) diagnose @known unwrap in BuilderValidateValid path, (3) Loop/Signing/Identity production fixes, (4) wire App.Culture into FormatValue/FormatFormalValue/ExampleRenderer, (5) decide promoteGroups/enrichResponse fate. After coder fix, recommend re-running tester before security/auditor."
+      },
+      "timestamp_end": "2026-04-28T13:15:00Z"
     }
   ]
 }
