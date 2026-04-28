@@ -34,7 +34,7 @@ public static class PlangTypeIndex
     public static List<Assembly> Assemblies { get; } = new() { typeof(PlangTypeIndex).Assembly };
 
     private static readonly HashSet<string> _clrTypeFullNames = new(StringComparer.Ordinal);
-    private static bool _clrTypeFullNamesInitialized;
+    private static volatile bool _clrTypeFullNamesInitialized;
     private static readonly object _clrTypeFullNamesLock = new();
 
     /// <summary>
@@ -111,17 +111,6 @@ public static class PlangTypeIndex
         if (string.IsNullOrWhiteSpace(name) || type == null) return;
         _runtimeNameToType[name] = type;
         _typeToName.TryAdd(type, name);
-    }
-
-    /// <summary>Forces the assembly scan to re-run on next access. Tests use this.</summary>
-    public static void Reset()
-    {
-        lock (_initLock)
-        {
-            _initialized = false;
-            _nameToType.Clear();
-            _typeToName.Clear();
-        }
     }
 
     private static void EnsureInitialized()

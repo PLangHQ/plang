@@ -517,13 +517,15 @@ public partial class @this
     /// "%var%" references in their parameter values that must resolve when each nested action
     /// runs, with the variable scope available at that point. Eager ResolveDeep would walk the
     /// template now — before those vars exist — and replace each "%content%" with null,
-    /// destroying the deferred resolution. Recognized via the parameter's PLang type.
+    /// destroying the deferred resolution. Recognized via CLR type identity (not the PLang
+    /// type-name string) so a user [PlangType("action")] alias can't collide.
     private static bool IsDeferredActionTemplate(Type? type)
     {
-        var name = type?.Value;
-        if (string.IsNullOrEmpty(name)) return false;
-        return name.Equals("action", StringComparison.OrdinalIgnoreCase)
-            || name.Equals("list<action>", StringComparison.OrdinalIgnoreCase);
+        var clr = type?.ClrType;
+        if (clr == null) return false;
+        var actionType = typeof(App.Goals.Goal.Steps.Step.Actions.Action.@this);
+        if (clr == actionType) return true;
+        return typeof(IEnumerable<App.Goals.Goal.Steps.Step.Actions.Action.@this>).IsAssignableFrom(clr);
     }
 
     private const int MaxJsonDepth = 128;

@@ -168,35 +168,6 @@ public class DefaultBuilderProvider : IBuilderProvider
         // modifiers and fail at runtime (a modifier's no-op Run wipes %__data__%).
         goal.GroupModifiersRecursive(app.Modules);
 
-        // Probe — for every GoalName param, log value runtime type, dict keys, and
-        // BOTH a direct JsonSerializer.Serialize(value, PrWrite) AND a serialize-of-
-        // the-Data wrapper. Compare the two paths to find where PascalCase appears.
-        void DiagGoal(App.Goals.Goal.@this g)
-        {
-            foreach (var step in g.Steps)
-                foreach (var act in step.Actions)
-                    foreach (var p in act.Parameters)
-                        if (p.Name == "GoalName")
-                        {
-                            var v = p.Value;
-                            string keys = "";
-                            if (v is System.Collections.IDictionary d) {
-                                var kk = new List<string>();
-                                foreach (var k in d.Keys) kk.Add(k?.ToString() ?? "");
-                                keys = string.Join(",", kk);
-                            }
-                            string directJson = "<n/a>";
-                            try { directJson = JsonSerializer.Serialize(v, Json.PrWrite); } catch (Exception ex) { directJson = "<err: "+ex.Message+">"; }
-                            string dataJson = "<n/a>";
-                            try { dataJson = JsonSerializer.Serialize(p, Json.PrWrite); } catch (Exception ex) { dataJson = "<err: "+ex.Message+">"; }
-                            _ = context.App.Debug.Write($"[DIAG] {g.Name}.s{step.Index}.{act.Module}.{act.ActionName}: value-type={v?.GetType().Name} dict-keys=[{keys}]");
-                            _ = context.App.Debug.Write($"[DIAG] direct(value)={directJson}");
-                            _ = context.App.Debug.Write($"[DIAG] direct(Data param)={dataJson}");
-                        }
-            foreach (var sub in g.Goals) DiagGoal(sub);
-        }
-        DiagGoal(goal);
-
         // Final safety net before persisting. Re-runs structural validation against the
         // goal's current Steps — catches any mismatch (step count, missing actions on
         // non-keep steps) that slipped past the in-pipeline validateResponse and

@@ -140,7 +140,7 @@ public class FluidProvider : ITemplateProvider
         if (v is IConvertible) return v.ToString() ?? "";
         // Everything else — dicts, lists, POCOs — render as JSON.
         try { return System.Text.Json.JsonSerializer.Serialize(v); }
-        catch { return v.ToString() ?? ""; }
+        catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { return v.ToString() ?? ""; }
     }
 
     /// <summary>

@@ -106,7 +106,7 @@ public partial class Handle : IContext, IModifier
                 if (hasRecovery)
                 {
                     var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
-                    if (recoveryResult.Success) return global::App.Data.@this.Ok();
+                    if (recoveryResult.Success) return recoveryResult;
                     result.Error!.ErrorChain.Add(recoveryResult.Error!);
                 }
             }

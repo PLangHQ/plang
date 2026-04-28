@@ -289,7 +289,7 @@ public class Error : IError
                 var json = System.Text.Json.JsonSerializer.Serialize(value);
                 return json.Length > 300 ? json[..300] + $"... ({json.Length} chars)" : json;
             }
-            catch { return value.ToString() ?? "?"; }
+            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { return value.ToString() ?? "?"; }
         }
         var str = value.ToString() ?? "?";
         return str.Length > 200 ? $"{str[..200]}... ({str.Length} chars)" : str;

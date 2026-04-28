@@ -539,7 +539,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("                __runErr.Params = __SnapshotParams();");
         sb.AppendLine("            return __runResult;");
         sb.AppendLine("        }");
-        sb.AppendLine("        catch (System.Exception ex)");
+        sb.AppendLine("        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))");
         sb.AppendLine("        {");
         sb.AppendLine("            var __exErr = new App.Errors.ServiceError(");
         sb.AppendLine("                ex.Message, __step, __callFrames, \"ServiceError\", 400) { Exception = ex };");

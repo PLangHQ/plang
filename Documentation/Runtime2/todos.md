@@ -39,3 +39,21 @@ Proper fix:
 
 Probably surfaces other bugs (Push/Pop balancing in async paths, frame
 disposal, snapshot handling) — budget time accordingly.
+
+## 2026-04-27 — PLang tests for error.handle recovery-value path
+
+Context: codeanalyzer v1 flagged that `error.handle.Wrap` line 109 (RetryFirst
+path with recovery) returned `Ok()` while line 96 (GoalFirst) returned
+`recoveryResult`. Asymmetric. Now aligned to both return `recoveryResult`.
+
+Need PLang tests to lock in:
+1. `ErrorOrder=GoalFirst` + a recovery action that produces a value → assert
+   `%step.Result%` (or whatever the next step reads) equals the recovery's value,
+   not `null`.
+2. Same shape for `ErrorOrder=RetryFirst` (after retry exhausts, recovery value
+   should now flow through too). This is the case the symmetry fix unblocks.
+3. Recovery with multiple actions where the LAST action is the value-producer —
+   confirm the chain's final `last` is what `Wrap` returns.
+
+Without these tests, the asymmetry could re-regress the next time someone
+"simplifies" Wrap. Nothing today forces the value path.

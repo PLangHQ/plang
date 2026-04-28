@@ -159,10 +159,12 @@ public class @this
                 var json = System.Text.Json.JsonSerializer.Serialize(rawValue, jsonOpts);
                 rawValue = System.Text.Json.JsonSerializer.Deserialize<object?>(json, jsonOpts);
             }
-            catch
+            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)
             {
                 // If serialize fails, fall back to direct value — alias risk but
-                // better than throwing.
+                // better than throwing. Surface the failure so the alias-bug repro
+                // path stays debuggable instead of silently reverting to it.
+                _ = _context?.App?.Debug?.Write($"[Variables.Set] snapshot-clone failed for '{name}': {ex.GetType().Name}: {ex.Message} — proceeding with alias (mutation risk)");
             }
         }
         var target = parent.Value;

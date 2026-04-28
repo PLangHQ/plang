@@ -85,7 +85,7 @@ public static class TypeConverter
                 var jsonResult = System.Text.Json.JsonSerializer.Deserialize(jsonStr, targetType, Json.CaseInsensitiveRead);
                 if (jsonResult != null) return (jsonResult, null);
             }
-            catch
+            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException || ex is ArgumentException)
             {
                 // If target is a single object but JSON is an array, try deserializing as List<T> and take first
                 if (jsonStr.TrimStart().StartsWith('['))
@@ -98,7 +98,7 @@ public static class TypeConverter
                         if (listResult != null && listResult.Count > 0)
                             return (listResult[0], null);
                     }
-                    catch (System.Text.Json.JsonException) { }
+                    catch (System.Exception inner) when (inner is System.Text.Json.JsonException || inner is NotSupportedException || inner is ArgumentException) { }
                 }
             }
         }
@@ -187,7 +187,7 @@ public static class TypeConverter
             {
                 return (ctor.Invoke([strVal]), null);
             }
-            catch (System.Exception ex)
+            catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
             {
                 var inner = ex.InnerException ?? ex;
                 var validValues = TypeMapping.GetValidValues(targetType);
@@ -263,9 +263,10 @@ public static class TypeConverter
             if (value is string goalName)
             {
                 if (PlangTypeIndex.IsClrTypeName(goalName))
-                    throw new InvalidOperationException(
-                        $"GoalCall.Name was set to a CLR type name '{goalName}' from a string source. " +
-                        $"Build pipeline leaked a typed object's ToString() into a goal-name slot.");
+                    return (null, new Errors.Error(
+                        $"GoalCall.Name was set to a CLR type name '{goalName}' from a string source.",
+                        "ClrTypeNameInGoalSlot", 500)
+                        { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot." });
                 return (new App.Goals.Goal.GoalCall { Name = goalName }, null);
             }
             if (value is System.Text.Json.JsonElement je)
@@ -293,11 +294,11 @@ public static class TypeConverter
                 // bootstrap cycles without it firing and the original leak path is
                 // identified or proven extinct.
                 if (PlangTypeIndex.IsClrTypeName(name))
-                    throw new InvalidOperationException(
-                        $"GoalCall.Name was set to a CLR type name '{name}'. " +
-                        $"This indicates a leak in the build pipeline (likely a Fluid template rendering " +
-                        $"an object via ToString() instead of navigating to .Name). " +
-                        $"Caller stack identifies the source.");
+                    return (null, new Errors.Error(
+                        $"GoalCall.Name was set to a CLR type name '{name}'.",
+                        "ClrTypeNameInGoalSlot", 500)
+                        { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
+                            "(likely a Fluid template rendering an object via ToString() instead of navigating to .Name)." });
                 var prPath = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
                 List<Data.@this>? parameters = null;
                 if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)

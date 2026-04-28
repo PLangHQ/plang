@@ -259,6 +259,10 @@ public sealed class @this : IDisposable
 
     /// <summary>
     /// Creates a child context for nested execution.
+    /// Test fixture — production creates contexts only via the ctor in Actor.this.cs.
+    /// One Context propagates through the entire goal-call tree of an Actor; child
+    /// contexts are unit-test scaffolding for inheritance scenarios (ConfigScope,
+    /// Variables, Parent linkage).
     /// </summary>
     public @this CreateChild(Variables.@this? variables = null)
     {
@@ -267,6 +271,9 @@ public sealed class @this : IDisposable
 
     /// <summary>
     /// Clones this context with a new Variables.
+    /// Test fixture — see CreateChild. Not used by production code; the property
+    /// propagation here (IsAsync, Setup, ConfigScope, _data) reflects what existing
+    /// tests need, not a Clone/Copy contract for the runtime.
     /// </summary>
     public @this Clone(Variables.@this? variables = null)
     {
