@@ -79,6 +79,66 @@
         "health": "NEEDS WORK — 3 MAJOR / 4 MEDIUM / 3 MINOR. Core architecture (Catalog, PlangType, Trace, ParamSnapshot, BuildResponse) is solid; the issues are bug-hardening: bare-catch silent swallows, throws from Try* methods, a live diagnostic probe deletable as-is, and a key-name heuristic.",
         "notes": "Top-priority handovers to the coder: (1) delete DefaultBuilderProvider.DiagGoal block (lines 171–198), (2) convert TypeConverter throws at lines 266 + 295 into structured Error returns, (3) sweep 5 bare-catch sites for specific exception filters. Debug/this.cs (282 lines changed) deferred — recommend its own focused review pass."
       }
+    },
+    {
+      "id": "a3469ae5-eadf-4cda-89b8-6193478cdb07",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-28T00:19:10Z",
+      "timestamp_end": "2026-04-28T00:31:33Z",
+      "intent": "v2 — re-review the coder's response (commit 80200746) to v1's 10 findings. Pass 4 behavioral reasoning on the fixes themselves.",
+      "before": {
+        "assumptions": "Coder closed 8 of 10 v1 findings; #9 and #10 explicitly deferred. Diff is ~12 files, all small (53 ins / 63 del). Each fix is itself new code that needs review.",
+        "risk": "Catch filters that look filtered may still over-catch (e.g., ArgumentException too broad). CLR-identity check for deferred templates may be wider than needed and break legitimate Action collections. Volatile fix on PlangTypeIndex must reflect actual .NET memory model semantics — easy to wave hands."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/v1_review_summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the v1-response summary and v2 plan. Plan scoped to 11 touched files; user approved with 'go'."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang.Generators/LazyParamsGenerator.cs",
+            "PLang/App/Data/this.cs",
+            "PLang/App/Actor/Context/this.cs",
+            "PLang/App/Utils/PlangTypeIndex.cs",
+            "PLang/App/modules/error/handle.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Re-read every file the coder touched. For each fix: confirmed v1 closure, then ran Pass 4 (caller trace for TryConvertTo throw→Error; over-broadness check on IsDeferredActionTemplate; .NET memory model semantics for volatile DCL; production-caller grep for Context Clone/CreateChild). Confirmed all 8 priority closures + identified 4 carryover sub-findings that were never on the v1 priority list."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/result.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/verdict.json",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/changes.patch",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote per-fix verification (result.md), narrative (summary.md), structured verdict (CLEAN/pass), patch dump, and updated the bot-root summary with the v2 entry."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "CLEAN — all 8 v1 priority fixes verified at code level + traced behaviorally. No regressions introduced. Two items (#9 three-renderer consolidation, #10 culture-sensitive ToString) explicitly deferred and acceptable. Four lower-priority sub-findings carryover (silent first-element-of-array, null→0 default, fall-through error loss, debug-only logging) — not regressions, not on priority list.",
+        "notes": "Recommend tester next. Behavioral changes that warrant coverage: error.handle.Wrap RetryFirst recovery-value flow (todo logged in Documentation/Runtime2/todos.md); IsDeferredActionTemplate broadening (now catches Actions.@this collections in addition to List<Action.@this>)."
+      }
     }
   ]
 }
