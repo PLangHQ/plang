@@ -477,13 +477,13 @@ public class @this
 
         // Typed objects: resolve %var% in string properties.
         // Clone first to avoid mutating the original (which may be shared .pr template data).
-        // BUT: when the app is in builder mode (App.Building.IsEnabled), typed
+        // BUT: when the app is in builder mode (App.Build.IsEnabled), typed
         // objects like Step/Goal/Action carry SOURCE code in their string
         // properties. Resolving %var% in source code would turn `%!error.Message%`
         // in a step text into the current runtime error, sent to the LLM as
         // literal text — which breaks the build. At build time, keep source
         // strings literal; top-level string vars still resolve normally above.
-        if (_context?.App?.Building?.IsEnabled == true) return value;
+        if (_context?.App?.Build?.IsEnabled == true) return value;
         var type = value.GetType();
         if (!type.IsPrimitive && type != typeof(decimal) && type != typeof(DateTime)
             && type != typeof(DateTimeOffset) && type != typeof(Guid) && !type.IsEnum)

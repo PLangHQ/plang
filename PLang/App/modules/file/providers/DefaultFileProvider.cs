@@ -18,9 +18,9 @@ public class DefaultFileProvider : IFileProvider
         var fs = action.Context.App.FileSystem;
         var path = action.Path.Value!;
         // During build: use snapshotted .pr content to avoid reading overwritten files
-        if (action.Context.App.Building.IsEnabled && path.Extension == ".pr")
+        if (action.Context.App.Build.IsEnabled && path.Extension == ".pr")
         {
-            var snapshot = action.Context.App.Building.GetPrSnapshot(path.Absolute);
+            var snapshot = action.Context.App.Build.GetPrSnapshot(path.Absolute);
             if (snapshot != null)
             {
                 var snapshotType = Data.Type.FromMime(TypeMapping.GetMimeType(path.Extension));
@@ -53,8 +53,8 @@ public class DefaultFileProvider : IFileProvider
                 var text = fs.File.ReadAllText(path.Absolute);
 
                 // During build: snapshot .pr file content on first read
-                if (action.Context.App.Building.IsEnabled && path.Extension == ".pr")
-                    action.Context.App.Building.SnapshotPrFile(path.Absolute, text);
+                if (action.Context.App.Build.IsEnabled && path.Extension == ".pr")
+                    action.Context.App.Build.SnapshotPrFile(path.Absolute, text);
 
                 var clr = type.ClrType;
                 // If the type has a CLR mapping (not just string), deserialize

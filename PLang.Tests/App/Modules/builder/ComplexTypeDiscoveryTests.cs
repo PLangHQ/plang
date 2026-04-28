@@ -21,7 +21,7 @@ public class ComplexTypeDiscoveryTests
             "plang_test_typediscovery_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new PLangEngine(_tempDir);
-        _app.Building.IsEnabled = true;
+        _app.Build.IsEnabled = true;
     }
 
     private static string RenderEntry(global::App.Catalog.TypeEntry e) => e.Kind switch

@@ -21,7 +21,7 @@ public class GetTypeInfoTests
             "plang_test_builder_typeinfo_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new PLangEngine(_tempDir);
-        _app.Building.IsEnabled = true;
+        _app.Build.IsEnabled = true;
     }
 
     [After(Test)]

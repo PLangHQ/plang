@@ -18,7 +18,7 @@ public class CatalogTests
     public void Setup()
     {
         _app = new PLangEngine("/test");
-        _app.Building.IsEnabled = true;
+        _app.Build.IsEnabled = true;
     }
 
     [After(Test)]

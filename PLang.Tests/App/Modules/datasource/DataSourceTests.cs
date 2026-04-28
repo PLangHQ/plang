@@ -380,7 +380,7 @@ public class DataSourceTests
     public async Task Actor_UsesInMemory_WhenBuildingEnabled()
     {
         await using var engine = new PLangEngine(_tempDir);
-        engine.Building.IsEnabled = true;
+        engine.Build.IsEnabled = true;
 
         var ds = engine.User.SettingsStore;
         var setResult = await ds.Set("build_table", "k", new Data("k", "v"));

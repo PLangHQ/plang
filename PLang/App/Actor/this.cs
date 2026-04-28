@@ -117,7 +117,7 @@ public sealed class @this : IAsyncDisposable
 
         // Building: User/Service in-memory (isolation); System on-disk so the LLM cache
         // and other persistent system data survive across build invocations.
-        if (App.Building.IsEnabled && this != App.System)
+        if (App.Build.IsEnabled && this != App.System)
             return SqliteSettingsStore.InMemory($"{Name.ToLowerInvariant()}-{App.Id}");
 
         var dbDir = App.FileSystem.Path.Combine(App.AbsolutePath, ".db");

@@ -177,7 +177,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// <summary>
     /// Builder mode controller. When enabled, actors use in-memory datasources.
     /// </summary>
-    public Build.@this Building { get; }
+    public global::App.Build.@this Build { get; }
 
     /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
@@ -284,7 +284,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         Events = new AppEvents();
         Debug = new Debugging(this);
         Testing = new Testing(this);
-        Building = new Build.@this(this);
+        Build = new global::App.Build.@this(this);
         Types = new Types.@this();
         Config = new Config.@this();
         SettingsVariable = new SettingsVariable(this);
@@ -393,8 +393,8 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         context ??= System.Context;
         CurrentActor = System;
 
-        // Building → PLang builder (runs as User — user is building their code)
-        if (Building.IsEnabled)
+        // Build → PLang builder (runs as User — user is building their code)
+        if (Build.IsEnabled)
         {
             // Safety check: confirm new app creation if no app.pr exists.
             // --app={"create":true} skips the prompt. Headless/CI defaults to "no".

@@ -27,14 +27,14 @@ public class ActorSettingsStoreTests
         // First engine — write to System settings store
         await using (var engine = new global::App.@this(_testDir))
         {
-            engine.Building.IsEnabled = true;
+            engine.Build.IsEnabled = true;
             await engine.System.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
         }
 
         // Second engine — System should still have the data (on-disk)
         await using (var engine2 = new global::App.@this(_testDir))
         {
-            engine2.Building.IsEnabled = true;
+            engine2.Build.IsEnabled = true;
             var result = await engine2.System.SettingsStore.Get("LlmCache", "testkey");
             await Assert.That(result.Value).IsNotNull();
             await Assert.That(result.Value!.ToString()).IsEqualTo("cached_response");
@@ -47,14 +47,14 @@ public class ActorSettingsStoreTests
         // First engine — write to User settings store
         await using (var engine = new global::App.@this(_testDir))
         {
-            engine.Building.IsEnabled = true;
+            engine.Build.IsEnabled = true;
             await engine.User.SettingsStore.Set("TestTable", "key1", Data.Ok("temporary"));
         }
 
         // Second engine — User data should be gone (in-memory)
         await using (var engine2 = new global::App.@this(_testDir))
         {
-            engine2.Building.IsEnabled = true;
+            engine2.Build.IsEnabled = true;
             var result = await engine2.User.SettingsStore.Get("TestTable", "key1");
             await Assert.That(result.Value).IsNull();
         }
