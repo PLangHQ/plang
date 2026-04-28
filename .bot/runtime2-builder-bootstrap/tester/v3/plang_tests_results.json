@@ -1,0 +1,2883 @@
+{
+  "summary": {
+    "Ready": 0,
+    "Pass": 142,
+    "Fail": 24,
+    "Timeout": 0,
+    "Stale": 4,
+    "Skipped": 0
+  },
+  "builderVersion": null,
+  "runs": [
+    {
+      "path": "Builder/ValidateActionsOnly.test.goal",
+      "entryGoal": "TestValidateActionsOnly",
+      "status": "Pass",
+      "durationMs": 13.5143,
+      "goalHash": "70a76bb47608662ec2e4a94d6d720ef2428b6ae353bff173acbee50c27659690",
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Builder/MockLlmSmoke.test.goal",
+      "entryGoal": "TestMockLlmSmoke",
+      "status": "Pass",
+      "durationMs": 43.7393,
+      "goalHash": "997ecdb08f6a74211d64a55694c9fe24f618fa348b39e20122fd82a4e85446b2",
+      "builderVersion": null,
+      "tags": [
+        "llm"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Builder/ForeachCallsGoalPerItem.test.goal",
+      "entryGoal": "TestForeachCallsGoalPerItem",
+      "status": "Fail",
+      "durationMs": 35.6816,
+      "goalHash": "043dc09284500a85c7ec567e51ac62c737ef6dacd4b36b7033e154060c89f1de",
+      "builderVersion": null,
+      "tags": [],
+      "error": "Expected: 3, Actual: 2",
+      "expected": 3,
+      "actual": 2,
+      "variables": {
+        "items": "abc",
+        "processed": [
+          "",
+          {
+            "name": "Value",
+            "value": "x",
+            "type": "string"
+          }
+        ],
+        "x": "abc",
+        "__data__": {
+          "itemCount": 1,
+          "completed": true
+        }
+      }
+    },
+    {
+      "path": "App/SetupGoal/Start.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 0.3767,
+      "goalHash": "fa49b68d53b55f33ebb24be2f988c37237b82090570fa53a6ff4a13711001f40",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Expected: True, Actual: (null)",
+      "expected": true,
+      "actual": null,
+      "variables": {}
+    },
+    {
+      "path": "App/CallStack/CallStack.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 4.691,
+      "goalHash": "a38a015b01986ce423ca82b84a1f0e17d86acfd654bc5dddc0c0ab0142026759",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "App/StepResult/StepResult.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.2377,
+      "goalHash": "f7dfec175c44133c3b0882bdb97eaf0a449dd3bb2af1e00d14609c25d68da125",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "App/DeepNavigation/DeepNavigation.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.0033,
+      "goalHash": "d382568b069b94aa56dc3dee866fdbd6d6d532899b5b9c65d23a5a95d8821844",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "App/StartupParams/StartupParams.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3.0419,
+      "goalHash": "ed30f6b09a8d3799b77316af181bc24671d3f3cb2df0c1bd2ac3df3f6b7479cb",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "App/RecursionDepth/RecursionDepthLimit.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 398.7893,
+      "goalHash": "58ad7438d7c3f2c48a399f77ebbf2a7b737b05f1f9e5752cc883e9cac9f41253",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "App/ReturnMapping/ReturnMapping.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3.797,
+      "goalHash": "68157ee64ac6cb646c5a5fdcfa4ab9f400a26f4379808e75ca70a1776d2ae8e1",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "App/Retry/Retry.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 7.8063,
+      "goalHash": "daa61c8cd8de798605b131e658ccad57e85fe7626e33908e4a8bdd2502745ce8",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/List/ListOps2.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 9.6317,
+      "goalHash": "effabce62b55fc0d7aae9e54cfa0577166483ccd7be748d8cdbbc52071ab10a2",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/List/ListOps.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 36.3986,
+      "goalHash": "0a2b147ff098cb5191b32dd87445311e6626f78f3349a3dab5c2cada908e879a",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Output/Output.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.9265,
+      "goalHash": "18b6852d54587bc07be5307e88af74ed1405ad84976b03543e81be4beca216bc",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Loop/Loop.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.7115,
+      "goalHash": "35f7fcc5b47fdb1e00c1f822dca60c16144d944fb172c65ec24bc411662875f3",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/File/File.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 30.2386,
+      "goalHash": "10dc1d6f914c66e6f522885478af03e53d89874069e7d0eebe8434a8c04aefcc",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Modifiers/PerActionErrorScope.test.goal",
+      "entryGoal": "TestPerActionErrorScope",
+      "status": "Pass",
+      "durationMs": 140.4713,
+      "goalHash": "cc043a389e82b3340b46edf8123428e5f0772316c084f2d4ee021a23ba09cecc",
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Modifiers/CacheOnFileRead.test.goal",
+      "entryGoal": "TestCacheOnFileRead",
+      "status": "Pass",
+      "durationMs": 13.4038,
+      "goalHash": "4bbceaabf52d00174effbfa7c53ac8a7081b85764198865ca67ccab0e9e6f800",
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Modifiers/OnErrorRetry.test.goal",
+      "entryGoal": "TestOnErrorRetry",
+      "status": "Pass",
+      "durationMs": 1.2117,
+      "goalHash": "5c59aecc444d0dbbe20e33c352c18988325a42cf33da38dca73a28d20a62bdca",
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Modifiers/OnErrorCallGoal.test.goal",
+      "entryGoal": "TestOnErrorCallGoal",
+      "status": "Pass",
+      "durationMs": 1.6905,
+      "goalHash": "854dd6d3bbba46634f5b170e4c7480fcc20f76e5f7fcc2c122089308448ea03e",
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Modifiers/MultipleModifiersCompose.test.goal",
+      "entryGoal": "TestMultipleModifiersCompose",
+      "status": "Pass",
+      "durationMs": 3.3382,
+      "goalHash": "ca90bdd35ccec90c5625b62137043dd4504f4eaeb19fbd222e23c3c28173f865",
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Assert/AssertComplete.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.6013,
+      "goalHash": "bea6710c86a16db718f96799ed865f72f4cf8de601602b18f56a499ca0251670",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Assert/Assert.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 6.2565,
+      "goalHash": "1815c780867821a77fd6445aa08ecd27f6d5d34e0c875d967718c63ab3d7e4b6",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Math/Math2.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.6498,
+      "goalHash": "fa123a37c45747945d534f0a00a80b415559cc9573b17c86afbfdea054107e04",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Math/Math.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 24.8896,
+      "goalHash": "2d30d897efc6ade166fdc152dfb9b20a8fe0ab7aa0b94fa7815bc406dc3c77ac",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Mock/Mock.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 5.5857,
+      "goalHash": "f1cf4d4b7f07539b7158e8373bae9c4eb7a2e4f483e6c13cc31ab3407db8c7f3",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "App/Actors/Switch/ActorSwitch.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.5779,
+      "goalHash": "341e120d2c886661e3602c2062ceabe2dd64c7e228984740b5b4e1689d1588fd",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "App/Actors/Context/ActorContext.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.4441,
+      "goalHash": "64d8150128d9d49909ce0aaea22f0e11b04668d793ac3d31311383d2bb355f61",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "App/Actors/Datasource/ActorDatasource.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 29.069,
+      "goalHash": "78ce3381fba78c88c270d338def8fc7a4e522fb2d779f45ce9c8b28c29d8592b",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Error/Multilingual/OnErrorMultilingual.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 12.1927,
+      "goalHash": "48d8307d0169dee45cba2008e65a433ffb654403b5852a5c70533bb382d7d543",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Error/Mixed/ErrorMixed.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3.3148,
+      "goalHash": "404b2ab9c62aee50f67d3994779bbabd80df12a865ea0d74496c9b522caf622c",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Error/Props/ErrorProps.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.4652,
+      "goalHash": "24caa6948f23774e4754f2c176f0c61f3b842b279bc512ccff461edfb54c66ee",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Error/Ordering/ErrorOrdering.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.8995,
+      "goalHash": "38ca5305ba8097ecc606cd908d65fc442a1a0650aee0c20e2cc4526b22a82f8c",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Error/Call/ErrorCall.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.7342,
+      "goalHash": "8c21fb451d36f668ff578e8d092ed6e203cfced3aa3ec24de873a6fafb88d34d",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Error/Types/ErrorTypes.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 4.7424,
+      "goalHash": "795a83975d59d5634a207d8f3ff7e47d24f549850fe91a0107e5f4123e5a6510",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Expected: \u0022TestKey\u0022, Actual: (null)",
+      "expected": "TestKey",
+      "actual": null,
+      "variables": {
+        "__data__": null,
+        "throwKey": null
+      }
+    },
+    {
+      "path": "Modules/Error/Handling/ErrorHandling.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.1085,
+      "goalHash": "3938eb9898b665be96567a7b91672ba3b3c2138e5e05336b8afa3cfc1d653daf",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Error/Nested/ErrorNested.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3.0565,
+      "goalHash": "adcb692a108f261a6aea742541701c3d10cb50bd659dc60f7e7a5677d184505a",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Error/InHandler/ErrorInHandler.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3.2926,
+      "goalHash": "ac84eb8f196a13e591d4c452ae6710b5c53c7d96d635bf06dba62927d1efa8da",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Error/RetryOnly/ErrorRetryOnly.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 510.7884,
+      "goalHash": "96a26b749f43cc186e430e26b98692236ef09efc220d4930e9241da1aa50525d",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Error/Chain/ErrorChain.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.402,
+      "goalHash": "fe394c1e28a212a2da3fad3d2b54cf60555891dbbec803be12826c75c4875960",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Error/GoalFirst/ErrorGoalFirst.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3.0402,
+      "goalHash": "e7fff35aa8b251b0726e792f79f6f003fbed9f55b66ef9d316cfb0b40b541245",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Variable/Basic/Variables.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.284,
+      "goalHash": "fa5dc90cf015b4e555f6d5a9f2e1d66dfe94672727b153d4b17b263293f5e394",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Variable/Ops/VariableOps.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 7.6413,
+      "goalHash": "1fa4acdf118f518cd49f40a0bc11e4b11c864683d64b08d621ea4234acdd2dbc",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Variable/Scoping/VariableScoping.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.9662,
+      "goalHash": "c32737166653604c22d4d239baed09929cbc95e64c135139ad51b1e6a77288a5",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Variable/Indexing/VariableIndexing.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.4465,
+      "goalHash": "df6a35c2c73a17ab3d107574ff2e64ce3a95146ae40b43751ec3ce71ea830483",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/Expired/SigningExpired.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 119.9627,
+      "goalHash": "591ebadbc139923b807bd95182cb82c57c4f7953f95524214e0762af5608e7d4",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/DotNavigation/SigningDotNavigation.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 6.2778,
+      "goalHash": "6dbb1c5e18774987285f6d2743ed655f4001e37fe71e9d40cf80427196afa971",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "algorithm should be ed25519 \u2014 Expected: \u0022ed25519\u0022, Actual: (null)",
+      "expected": "ed25519",
+      "actual": null,
+      "variables": {
+        "__data__": {
+          "payload": "nav"
+        },
+        "data": {
+          "payload": "nav"
+        }
+      }
+    },
+    {
+      "path": "Modules/Signing/ContractMismatch/SigningContractMismatch.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 9.5526,
+      "goalHash": "3325faee58ffe24790ef7f130503f8686ecddfd687e6ad126101c530a8ac6d70",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/EmptyData/SigningEmptyData.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 3.9993,
+      "goalHash": "33ef93ba488d8e07892aff6515c98fe60f15a4a982802063ab676b551932d252",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Contract mismatch",
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/HeaderMismatch/SigningHeaderMismatch.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 5.8589,
+      "goalHash": "ca2988229674c2ef237cfe215b1ea2279eb19ec83ba354a6ae4ab5493842011d",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/CustomContracts/SigningCustomContracts.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 8.2087,
+      "goalHash": "101bf6af9ada83955301485d3735405d1c5b454422f1b27e656a79d4e98d48b0",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/CorruptedSignature/SigningCorruptedSignature.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3.8493,
+      "goalHash": "7d053c94ed66d5724020a7c14963e1222e05b6cf4f7bcc08f5c83ecfcd79d0ab",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/VerifyUnsigned/SigningVerifyUnsigned.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 5.2786,
+      "goalHash": "ff337cd6a33b420d9649fef0fec77910e00acbd9ee5037fe17efb1b750aa106d",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/ProviderSwap/SigningProviderSwap.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 5.0633,
+      "goalHash": "bcfb9243cdc097162bdc6894f938511585c0f1fb51fcdb9ad8e4de2bdd9b4d5d",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "default provider should be ed25519 \u2014 Expected: \u0022ed25519\u0022, Actual: (null)",
+      "expected": "ed25519",
+      "actual": null,
+      "variables": {
+        "data1": {
+          "payload": "default"
+        },
+        "__data__": {
+          "payload": "default"
+        }
+      }
+    },
+    {
+      "path": "Modules/Signing/NonceReplay/SigningNonceReplay.test.goal",
+      "entryGoal": "",
+      "status": "Stale",
+      "durationMs": 0.1044,
+      "goalHash": null,
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/Roundtrip/SigningRoundtrip.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 6.3958,
+      "goalHash": "94f05c75792f560c2ef8c029b3472270819e94560e27d9ee253b0b34c3271cfe",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Contract mismatch",
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/NoIdentity/SigningNoIdentity.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 3.6722,
+      "goalHash": "75ae4cb14e476c542ca21c5a53af118b078854e7561b17caf91d6b3c05f3b80f",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "sign without identity should fail \u2014 Expected: True, Actual: (null)",
+      "expected": true,
+      "actual": null,
+      "variables": {
+        "__data__": {
+          "payload": "unsigned"
+        },
+        "data": {
+          "payload": "unsigned"
+        }
+      }
+    },
+    {
+      "path": "Modules/Signing/TamperedData/SigningTamperedData.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 5.8913,
+      "goalHash": "28daf25df7bcaaf921a61b8f8498d9cfe549af1bb05b6e009a0d0e74168ece99",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "File not found: .build/sign.pr",
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/WithHeaders/SigningWithHeaders.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 4.2207,
+      "goalHash": "50db935291681ff124a0177cc3b0b04b35178ca76197ee3ecca9afe30c3c620f",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Contract mismatch",
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Signing/TimedOut/SigningTimedOut.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 13.236,
+      "goalHash": "b5caa9d5e8e99346073de3e01bee8e7bef3106cdf4ad8f654d870bc4250b4832",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Action \u0027timeout.after.after\u0027 not found",
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Event/Wildcard/EventWildcard.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.9749,
+      "goalHash": "5c9a82daceaf72be93a9ca2181c59f24b0084f0323e5ea1361fc1d4ed05db036",
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Event/AfterStep/EventAfterStep.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.0217,
+      "goalHash": "3539e45c2d574207fd135c411c007376e343d558d9548e18408da02f8fa1dc3b",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Event/Remove/EventRemove.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 7.5193,
+      "goalHash": "c1aab1a156ef3b1154f5aa41533b3d21f86b54d517cced7f67aee12e06b04fc5",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Expected: 1, Actual: 0",
+      "expected": 1,
+      "actual": 0,
+      "variables": {
+        "writeCount": 0,
+        "__data__": null
+      }
+    },
+    {
+      "path": "Modules/Event/BeforeStep/EventBeforeStep.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.3265,
+      "goalHash": "f7979e6fe8bbab5ed06f5d99fc9b24ca57c52fd14f8fbd6d2521a75d765bede8",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Event/Basic/Events.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3.9739,
+      "goalHash": "28b75e66abe7f115aa995f1a144d108e9888e39b9c7bafb87994f48bb6d1e056",
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Event/Priority/EventPriority.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 137.6219,
+      "goalHash": "e81d8beb20be948a4cdcb99054aeba99d520f48c1877e2c0c0bfc5f24c32416c",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Expected: \u0022high,low\u0022, Actual: \u0022\u0022",
+      "expected": "high,low",
+      "actual": "",
+      "variables": {
+        "__data__": null,
+        "order": ""
+      }
+    },
+    {
+      "path": "Modules/Event/Override/EventOverride.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 1.2792,
+      "goalHash": "5fb494d281fae6874ed5e09c9eb5f8c0ac761a1230456967b2d5a63287c6c811",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "File not found: nonexistent.json",
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Event/AfterAction/EventAfterAction.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.027,
+      "goalHash": "318f15a4a1a1834bc5ac96a70ab0c1bacd7c13c7e815934b8aa612fe13535290",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Event/Multiple/EventMultiple.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.5044,
+      "goalHash": "f3a3f71fd38fe36b01abc8f0cea55fd758d7d86630f1325642df123175142de9",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Goal/Basic/GoalCall.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.2675,
+      "goalHash": "c887b7562c22131bfe3944e7d52a5e852586bc05c82451610fecbe4f8c0717c3",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Goal/Missing/GoalCallMissing.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.2752,
+      "goalHash": "42ff00589e01e37c2a08137308ad6fc27dc45b3a0b3cd118fb5496c7fc4978f7",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Goal/Relative/GoalCallRelative.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 0.5346,
+      "goalHash": "cb01eef210fee7de682ba2b2518a19d73b1aea2dc6f39fb6b7de168b0414c8b0",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "File not found: .build/sub/subgoal.pr",
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Goal/Dynamic/GoalCallDynamic.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.9617,
+      "goalHash": "be5fdfa8098f28bad9b07b1562a74bea782e882575a057eeae821965441a287a",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Goal/Return/GoalCallReturn.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.8644,
+      "goalHash": "94a30b6d4f5165265be44710715f8d0ca7ff094e2f4ab1d33abd61d10bc2bb8b",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 9.7993,
+      "goalHash": "a77d1e5bda9da96cdb0552988db174a880b44a971dde6f8a784826ac06f79b56",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Builder/ParseGoal/BuilderParseGoal.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 7.4457,
+      "goalHash": "ef77b8fde4b53eee3626c8953cb1e619e392aa6c784d5cabb2fa55bf5a549a22",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Builder/GetActions/BuilderGetActions.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 24.6072,
+      "goalHash": "e869f3b74ac66066a95d87bdd8ca6509fd6644f16c306f1b781c7c751cb86109",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Builder/ValidateValid/BuilderValidateValid.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 23.7695,
+      "goalHash": "ce63c740d54d9af74adf99f55377f49dc88b361efb2167eebf94262fbac93bf7",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Identity/Create/IdentityCreate.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 8.9296,
+      "goalHash": "f4b23be9d46a834bb9d5b94a9d36fb833a23078dd48badfdab3c999b0de9ac75",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Identity/ArchiveNonDefault/IdentityArchiveNonDefault.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 6.1056,
+      "goalHash": "f6d88eca3e736a50bda37421822e158daa419d631c08afd7a5448ac284fc83f9",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Identity/DotNavigation/IdentityDotNavigation.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 12.4825,
+      "goalHash": "547f9ad6d1e97746936a490ed53285414c13889b2f923a1226f3ac93382ca33e",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Identity/Unarchive/IdentityUnarchive.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 8.7914,
+      "goalHash": "84d16ababb61a7104f187a7b237f7b00e862e98c41461c39325220cde65b0d4a",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Expected null \u2014 Expected: (null), Actual: \u0022%__data__\u0022",
+      "expected": null,
+      "actual": "%__data__",
+      "variables": {
+        "__data__": "%__data__",
+        "result": "%__data__"
+      }
+    },
+    {
+      "path": "Modules/Identity/Rename/IdentityRename.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 10.3722,
+      "goalHash": "66c4243ac1f1cba0369638c94312b07722ff908760c88e9afe0c19363a53e9c1",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Identity/SwitchDefault/IdentitySwitchDefault.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 18.291,
+      "goalHash": "1eaecb5ae8da6ca43025d48fe7d6293e88f02c3cf44315f4bd39675cad6ea31e",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Identity/Export/IdentityExport.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 9.111,
+      "goalHash": "3771ce1ad11b8481a981e672b30e3fd6f5a52a2f007f4a1845d640674c9a2636",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Identity/AutoCreate/IdentityAutoCreate.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3.8721,
+      "goalHash": "153fa75d2609153132a67b1d80f090a0b6f9ced940f1a62e514bf3835b590fe1",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Identity/ArchiveDefault/IdentityArchiveDefault.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 5.2924,
+      "goalHash": "91c9577a8c7146adf144062ddf8b9d4689833f3dd62d979f74efc429b485bc62",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Expected non-null value \u2014 Expected: \u0022(not null)\u0022, Actual: (null)",
+      "expected": "(not null)",
+      "actual": null,
+      "variables": {
+        "__data__": {
+          "name": "TestArchiveDefault",
+          "publicKey": "\u002Be5XP/XbNHcS8ci0wQTvTCfpYq8tlP37kmuajCDtSl8=",
+          "privateKey": "******",
+          "isDefault": true,
+          "isArchived": true,
+          "created": "2026-04-28T16:26:21.3781574+00:00"
+        },
+        "result": {
+          "name": "TestArchiveDefault",
+          "publicKey": "\u002Be5XP/XbNHcS8ci0wQTvTCfpYq8tlP37kmuajCDtSl8=",
+          "privateKey": "******",
+          "isDefault": true,
+          "isArchived": true,
+          "created": "2026-04-28T16:26:21.3781574+00:00"
+        }
+      }
+    },
+    {
+      "path": "Modules/Identity/GetByName/IdentityGetByName.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 4.7747,
+      "goalHash": "3a52cacb10b52640c3baf3853e282e78aa53f36096be52879bb8e1c267de6a45",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Cache/DynamicKey/CacheDynamicKey.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3.0748,
+      "goalHash": "13f312f74552bfeb9448e45b2104ffac76a37407485677b97967d9971d05669f",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Cache/Basic/Cache.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.7451,
+      "goalHash": "7fabc2e1527462b1fec7568c496fe745b6de786b0d5eab208a8ffa3d7ab22f16",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Cache/Sliding/CacheSliding.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 4.701,
+      "goalHash": "5746e3ed1dfeb8d5dc758b25c0986c2556f4c15eda96239852399d32274fdf50",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Cache/Key/CacheKey.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.1641,
+      "goalHash": "29051c83e2d6c1d9f6649583b042eb2df72980ba61eb723cc4eeb10572326286",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Http/DownloadFile/DownloadFile.test.goal",
+      "entryGoal": "",
+      "status": "Stale",
+      "durationMs": 0.0004,
+      "goalHash": null,
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Llm/LlmContinue.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1745.7512,
+      "goalHash": "37b7d06e17c11310edbcf0336bb934cc32b507e0f2f8677603fa4f1f3dbf0202",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "llm"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Llm/LlmCache.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1823.4546,
+      "goalHash": "c6cd977022448f7eee0b74dd55759c005e87f335a40599b886bb96a81cc7bc4b",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "llm"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Modifiers/TimeoutOnSlowAction.test.goal",
+      "entryGoal": "TestTimeoutOnSlowAction",
+      "status": "Pass",
+      "durationMs": 2005.8972,
+      "goalHash": "aeb45dfc87a3de24d1483eb30cc10155c663e1063b3e959b81e3175d72dce21d",
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Llm/LlmFormat.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2089.2921,
+      "goalHash": "a572581de9026488973df4f3364f5d6ea4b68fd7482a223ed3b438130aad6304",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "llm"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Llm/LlmProperties.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2138.6764,
+      "goalHash": "140e13322004adb05add061a579030e7ac8b0670b68cea3a8299456dd857c237",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "llm"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Http/DownloadSkip/DownloadSkip.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 544.227,
+      "goalHash": "2d89ef5b3ef512867d5fc30a7d644804f499d4a3accbfa8de1e9c5c187211799",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "network"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 468.4039,
+      "goalHash": "01dc137ea19f5d3c1b5db93b973fbe773de24f7bea80089d8d558bf792d295d9",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "network"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Http/StreamCallback/StreamCallback.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 610.8999,
+      "goalHash": "5c4c5a3d5158ab94c5bf346b7099b09600511a1d3781802d465ec12193d9a0f8",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "network"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Http/UnsignedRequest/UnsignedRequest.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 466.3112,
+      "goalHash": "93d478c76da1827002e3bf624afce0f87d3f47ac47759ec7ca8de40d20cdac33",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "network"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Integration/TestSystemTestGoalDoesNotUseForeach.test.goal",
+      "entryGoal": "TestSystemTestGoalDoesNotUseForeach",
+      "status": "Pass",
+      "durationMs": 4.2024,
+      "goalHash": "3ae85387f722c2d4a7810b5e7de8373fc5a9c3cfc5425c83411342148b2510ec",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Http/ConfigHeaders/ConfigHeaders.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 475.3013,
+      "goalHash": "29e2997537ad66df7ec3cd4beb455913b7a6be87f3b2955e8024beda9cffaa69",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "network"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Integration/TestSystemTestGoalReportsTimeout.test.goal",
+      "entryGoal": "TestSystemTestGoalReportsTimeout",
+      "status": "Pass",
+      "durationMs": 0.3798,
+      "goalHash": "d1905c13646e503d4ccf4c74cda722305a98010c52ef6b86eb76a3f3324ef0de",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Integration/TestSystemTestGoalRespectsTagFilter.test.goal",
+      "entryGoal": "TestSystemTestGoalRespectsTagFilter",
+      "status": "Pass",
+      "durationMs": 0.4443,
+      "goalHash": "d9a0f8c2ad206cd89d5c8998479251d58329d66fde01b3e8dadb485cb6ffd084",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Integration/TestSystemTestGoalIncludesAllThreePhases.test.goal",
+      "entryGoal": "TestSystemTestGoalIncludesAllThreePhases",
+      "status": "Pass",
+      "durationMs": 0.5152,
+      "goalHash": "82a745b237dd3a8828685ba2701af4a77b9d89e85f6dc797633ddb97243024da",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Condition/TestConditionIfRecordsBranchIndexTrueBranch.test.goal",
+      "entryGoal": "TestConditionIfRecordsBranchIndexTrueBranch",
+      "status": "Pass",
+      "durationMs": 3.5201,
+      "goalHash": "9d4523e3679c588e21f9c071669f9cf1869b9566ffcfa22af62d83df4aeeb71a",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Tag/TestTagAccumulatesUserTagsOnRun.test.goal",
+      "entryGoal": "TestTagAccumulatesUserTagsOnRun",
+      "status": "Pass",
+      "durationMs": 4.0199,
+      "goalHash": "8c1946d4479b68d6874fc61ef7d2cefbfb715158b2da482fc531cdd1ec4bb1fe",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "http",
+        "fast",
+        "slow"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal",
+      "entryGoal": "TestConditionIfRecordsBranchIndexElseBranch",
+      "status": "Pass",
+      "durationMs": 5.0429,
+      "goalHash": "8c811da5c5241ac00a53ca66d71b3b03a2f48c2fd075acb31312f47cf0c59d49",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Condition/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal",
+      "entryGoal": "TestConditionElseIfMatchesRecordsBranchIndex1",
+      "status": "Pass",
+      "durationMs": 3.5671,
+      "goalHash": "7c7911ff749550d35cadc0bb803035101ce5ffe57232d33e12db07c43107db9d",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Run/TestRunReportsAssertionFailure.test.goal",
+      "entryGoal": "TestRunReportsAssertionFailure",
+      "status": "Pass",
+      "durationMs": 13.0596,
+      "goalHash": "5d80694d511162c5034997665a75b5101994906e80d0362ef0137d6c7fc753cd",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal",
+      "entryGoal": "TestRunIsolatesMemoryStackBetweenTests",
+      "status": "Pass",
+      "durationMs": 13.2989,
+      "goalHash": "4a9ec2134e51a51c2587b3148d38511306e201d7b0f12b272af72cfbbf1d5292",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Assert/TestAssertFailureSnapshotsVariables.test.goal",
+      "entryGoal": "TestAssertFailureSnapshotsVariables",
+      "status": "Pass",
+      "durationMs": 6.3821,
+      "goalHash": "3582cc34c81065674a9645a1d8de2904b59298fbe57628ffd5e288c5c1b12116",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Http/UploadFile/UploadFile.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 483.0964,
+      "goalHash": "296a21da8725826befc0761f8b8d175e1122aceea3e22c7e3717225ef9afa0d2",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "network"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Report/TestReportWritesJunitXml.test.goal",
+      "entryGoal": "TestReportWritesJunitXml",
+      "status": "Pass",
+      "durationMs": 22.7975,
+      "goalHash": "ebbd2c30032f7282dbbd208efd557578ab21b33141284d8b06d8527140e5f0b6",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Report/TestReportMasksSensitiveVariablesJunit.test.goal",
+      "entryGoal": "TestReportMasksSensitiveVariablesJunit",
+      "status": "Pass",
+      "durationMs": 46.1413,
+      "goalHash": "26f282c2eed41a2eceeb5b3d05ba1bbbe8a9648aee1425cb7ad316f828bc8f7b",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Report/TestReportIncludesCoverageTables.test.goal",
+      "entryGoal": "TestReportIncludesCoverageTables",
+      "status": "Pass",
+      "durationMs": 16.1334,
+      "goalHash": "87128b082985dc6a0b01437b05b745a604d4d5c9a6ccba0268851162c7792b4e",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Report/TestReportRendersFailureWithVariables.test.goal",
+      "entryGoal": "TestReportRendersFailureWithVariables",
+      "status": "Pass",
+      "durationMs": 17.6815,
+      "goalHash": "48239745160930279840396bf6ddb529a74a9e8b353384c264638664ffdf1ab0",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Discover/TestDiscoverReportsStaleWhenPrMissing.test.goal",
+      "entryGoal": "TestDiscoverReportsStaleWhenPrMissing",
+      "status": "Fail",
+      "durationMs": 2.8778,
+      "goalHash": "76a013f30b15b8349391e068290c7cae81021945dc0d84cbc51c1a364b0e6ebf",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Expected truthy value \u2014 Expected: True, Actual: False",
+      "expected": true,
+      "actual": false,
+      "variables": {
+        "hasMissingPr": false,
+        "__data__": false,
+        "count": 2,
+        "tests": [
+          {
+            "path": "_stale/ready.fixture.goal",
+            "prPath": ".build/ready.fixture.pr",
+            "entryGoalName": "Ready",
+            "status": 0,
+            "directory": "/workspace/plang/Tests/Modules/Test/Discover/_stale",
+            "goal": {
+              "name": "Ready",
+              "description": null,
+              "comment": null,
+              "steps": [
+                {
+                  "index": 0,
+                  "text": "write out \u0027ready\u0027",
+                  "lineNumber": 2,
+                  "indent": 0,
+                  "comment": null,
+                  "actions": [
+                    {
+                      "module": "output",
+                      "action": "write",
+                      "parameters": [
+                        {
+                          "name": "Data",
+                          "value": "ready",
+                          "type": "tstring"
+                        },
+                        {
+                          "name": "Channels",
+                          "value": "this",
+                          "type": "string"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": [],
+                      "errors": [],
+                      "warnings": [],
+                      "examples": [],
+                      "returnType": null
+                    }
+                  ],
+                  "intent": null,
+                  "guidance": null,
+                  "level": null,
+                  "confidence": null,
+                  "formal": null,
+                  "source": null,
+                  "keep": false,
+                  "errors": [],
+                  "warnings": [],
+                  "waitForExecution": true
+                }
+              ],
+              "goals": [],
+              "visibility": 1,
+              "path": "/_stale/ready.fixture.goal",
+              "prPath": "/_stale/.build/ready.fixture.pr",
+              "hash": "e99c6d969613ed83fba17b84f0abaf758f0667da106ae98d5767fba0f8127b2c",
+              "builderVersion": "0.2.2",
+              "isSetup": false,
+              "isEvent": false,
+              "isSystem": false,
+              "isTest": false,
+              "inputParameters": null,
+              "errors": [],
+              "warnings": [],
+              "fullPath": "Ready"
+            },
+            "goalHash": "e99c6d969613ed83fba17b84f0abaf758f0667da106ae98d5767fba0f8127b2c",
+            "builderVersion": "0.2.2",
+            "tags": [],
+            "statusReason": null
+          },
+          {
+            "path": "_stale/unbuilt.fixture.goal",
+            "prPath": ".build/unbuilt.fixture.pr",
+            "entryGoalName": "Unbuilt",
+            "status": 0,
+            "directory": "/workspace/plang/Tests/Modules/Test/Discover/_stale",
+            "goal": {
+              "name": "Unbuilt",
+              "description": null,
+              "comment": null,
+              "steps": [
+                {
+                  "index": 0,
+                  "text": "write out \u0027unbuilt\u0027",
+                  "lineNumber": 2,
+                  "indent": 0,
+                  "comment": null,
+                  "actions": [
+                    {
+                      "module": "output",
+                      "action": "write",
+                      "parameters": [
+                        {
+                          "name": "Data",
+                          "value": "unbuilt",
+                          "type": "tstring"
+                        },
+                        {
+                          "name": "Channels",
+                          "value": "this",
+                          "type": "string"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": [],
+                      "errors": [],
+                      "warnings": [],
+                      "examples": [],
+                      "returnType": null
+                    }
+                  ],
+                  "intent": null,
+                  "guidance": null,
+                  "level": null,
+                  "confidence": null,
+                  "formal": null,
+                  "source": null,
+                  "keep": false,
+                  "errors": [],
+                  "warnings": [],
+                  "waitForExecution": true
+                }
+              ],
+              "goals": [],
+              "visibility": 1,
+              "path": "/_stale/unbuilt.fixture.goal",
+              "prPath": "/_stale/.build/unbuilt.fixture.pr",
+              "hash": "de64118d119b8e89ffc44a28d82f1f226d47fc0d19c2ccce2a889a799c6bf435",
+              "builderVersion": "0.2.2",
+              "isSetup": false,
+              "isEvent": false,
+              "isSystem": false,
+              "isTest": false,
+              "inputParameters": null,
+              "errors": [],
+              "warnings": [],
+              "fullPath": "Unbuilt"
+            },
+            "goalHash": "de64118d119b8e89ffc44a28d82f1f226d47fc0d19c2ccce2a889a799c6bf435",
+            "builderVersion": "0.2.2",
+            "tags": [],
+            "statusReason": null
+          }
+        ]
+      }
+    },
+    {
+      "path": "Modules/Test/Discover/TestDiscoverFindsTestGoals.test.goal",
+      "entryGoal": "TestDiscoverFindsTestGoals",
+      "status": "Pass",
+      "durationMs": 2.942,
+      "goalHash": "36adcc0116140de0e0f2970372e46d643dfc3d7b93bd971c3815396a3a736fdb",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Report/TestReportMasksSensitiveVariables.test.goal",
+      "entryGoal": "TestReportMasksSensitiveVariables",
+      "status": "Pass",
+      "durationMs": 17.7055,
+      "goalHash": "98bb738f1744ae140dc4797544b72723f8c3c4f6ab90d007b050758552c9b244",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal",
+      "entryGoal": "TestDiscoverHandlesIcelandicGoalNames",
+      "status": "Pass",
+      "durationMs": 3.1638,
+      "goalHash": "4eb9339dcc4e580542741bb08757300a5d7caba273b5c183dfa668153e3e1efe",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Crypto/HashDefault/HashDefault.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.1356,
+      "goalHash": "88e9c5eef8970c8e3db91c82c916d642254d5fb0f21b9f61e6d9ab99ef30eaf6",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Crypto/HashBcryptVerify/HashBcryptVerify.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 2.1544,
+      "goalHash": "ea4ef9d721512fe5c8172833d5ef04ae86edbd498b5aef2b2c081c9a9464c146",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Algorithm \u0027bcrypt\u0027 is not supported",
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Crypto/HashSHA256/HashSHA256.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.6545,
+      "goalHash": "e83eb8a0c38286de08c91dcc6f3dfc3f86bfa97079e4fcec5880969447188917",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Crypto/HashObject/HashObject.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.973,
+      "goalHash": "b5a9e3b23c5def12f12f8b8e7337e4b70f9ec04aad833d1092d8b38f09c15e75",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Crypto/VerifyWrongHash/VerifyWrongHash.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.0611,
+      "goalHash": "96d7ed3fe69c9eb8a31781ed6b3e60e781419fffacc3cdffb1ec2f9fd60256f6",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Crypto/ProviderSwap/ProviderSwap.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3.8159,
+      "goalHash": "3586b93a2dde055a6691c33a055afa80aacbeaf0f4cb64ba010449c6c1671770",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Http/SignedRequest/SignedRequest.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 469.501,
+      "goalHash": "c616554ac67fad8477f13b1a065394cf31a6a95d3fb9d94fab8083f8e575088d",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "network"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Settings/SettingsCrud/Start.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 6.654,
+      "goalHash": "b1b13f160e7dc9e4284b0988418d73bfa908b2cfd342f0e147e9b9cf5a41b1bd",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Settings/SetMaxGzipSize/Start.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 9.9249,
+      "goalHash": "ec751a865962456ca94721ed138f68c2f3b6ca44ff11e1e7b784ace01ee33796",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Http/PostRequest/PostRequest.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 462.3793,
+      "goalHash": "298d57e541ec98d2f01de92eb72a3556d3f89683fa40cc83d6232a37786ff99b",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "network"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Http/GetRequest/GetRequest.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 574.1666,
+      "goalHash": "bd80ccafae6164da0d48e695d55f2be1e6b1ba6efc1a1673b0403e0a4638e542",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "network"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Llm/LlmQuery.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2919.3191,
+      "goalHash": "f11c540d089de04a68ed7e629c194f6d38f0885fc58e6044eca4d6ccb258f64b",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "llm"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Ui/RenderInline/RenderInline.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 158.9913,
+      "goalHash": "7972161a6d5fa7ca9f24db193bba0b27b0ba42e02d48402f58c503c2bc0aad36",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Ui/RenderFile/RenderFile.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 49.013,
+      "goalHash": "0fc14d1a392d5187223f8d6e4e82cb96a2d1a4752ae6c5fe88759c290e98f2d3",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Ui/RenderCallGoal/RenderCallGoal.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 157.6209,
+      "goalHash": "59103672d31071799eaf8404345ad2c389b1ca7b32019366e4f2029e89e8c560",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Container does not contain value \u2014 Expected: \u0022\u0022Error\u0022\u0022, Actual: \u0022Result: {}\u0022",
+      "expected": "\u0022Error\u0022",
+      "actual": "Result: {}",
+      "variables": {
+        "__data__": "Result: {}",
+        "template": "Result: {}",
+        "result": "Result: {}"
+      }
+    },
+    {
+      "path": "Modules/Ui/RenderWithParams/RenderWithParams.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 153.6013,
+      "goalHash": "fd5f4292a59df89e78557a09e4d3b9eb657498f8eff94f7a748741cf33b9ec27",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Container does not contain value \u2014 Expected: \u0022\u0022Title: My Page, Author: \u0022\u0022, Actual: \u0022Author: Ingi\u0022",
+      "expected": "\u0022Title: My Page, Author: \u0022",
+      "actual": "Author: Ingi",
+      "variables": {
+        "__data__": true,
+        "result": "Title: My Page, Author: ",
+        "title": "My Page"
+      }
+    },
+    {
+      "path": "Modules/Variable/ContextVars/Basic/ContextVars.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 0.428,
+      "goalHash": "ca47ce4d3665204a26fbccee465d9e04c75fe96e1ecd2049930b79ceade0d054",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "engine name should be set \u2014 Expected: \u0022(not null)\u0022, Actual: (null)",
+      "expected": "(not null)",
+      "actual": null,
+      "variables": {}
+    },
+    {
+      "path": "Modules/Ui/RenderInclude/RenderInclude.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 78.412,
+      "goalHash": "f5a069c0614dc3f898da793a4ec9531776bcedcffe6f9dede75a085ab6878f43",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Variable/ContextVars/System/SystemVariables.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.1887,
+      "goalHash": "24b27bcc5826d580f34b269f17f170324a036737587c6549a941ee8126030f50",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Variable/ContextVars/Advanced/ContextVars2.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.5926,
+      "goalHash": "85619f863448eb43ec701fc1850de420df2fea3a522ce131303290d8f6ae53de",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Loop/Foreach/Dictionary/ForeachDictionary.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 2.2851,
+      "goalHash": "cf123b6ee6e7081ddcc9f9a8ec17c9365cd2456f385ee106b354554c1e3ae863",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Expected: 3, Actual: 1",
+      "expected": 3,
+      "actual": 1,
+      "variables": {
+        "dict": "{\u0022name\u0022: \u0022Alice\u0022, \u0022age\u0022: \u002230\u0022, \u0022city\u0022: \u0022Reykjavik\u0022}",
+        "item": "{\u0022name\u0022: \u0022Alice\u0022, \u0022age\u0022: \u002230\u0022, \u0022city\u0022: \u0022Reykjavik\u0022}",
+        "key": 0,
+        "count": 1,
+        "__data__": {
+          "itemCount": 1,
+          "completed": true
+        },
+        "entry": "{\u0022name\u0022: \u0022Alice\u0022, \u0022age\u0022: \u002230\u0022, \u0022city\u0022: \u0022Reykjavik\u0022}",
+        "json": "{\u0022name\u0022: \u0022Alice\u0022, \u0022age\u0022: \u002230\u0022, \u0022city\u0022: \u0022Reykjavik\u0022}"
+      }
+    },
+    {
+      "path": "Modules/Loop/Foreach/Empty/ForeachEmpty.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.6186,
+      "goalHash": "d6a256ddd85de9e00b39467590ee6a4b7798440e444abb7629b43524512f08f9",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/NotEquals/ConditionNotEquals.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.908,
+      "goalHash": "ad76488613c6199f810beebffe95d913d476903f632a43cdb8832c2219815027",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/Falsy/ConditionFalsy.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 4.1882,
+      "goalHash": "dc5a504602162b53b08ccae42a594e1cb8bcac00e9b7b91321f6229bf1868c4e",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/LTE/ConditionLTE.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.1715,
+      "goalHash": "1b6398a4e6e7df9232d3cc7d2161d3ee6f274993dda7cfb44143e32f547f9879",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/Contains/ConditionContains.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.7764,
+      "goalHash": "9ffdba833592c772bb37f764984e7b08eccddd6431e756d5aaa861b9befcb91c",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/Equals/ConditionEquals.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.4297,
+      "goalHash": "d07f25e0cc5c2de3e3f762de7a372d5b7787bd72a0e29c9b75b4a7bf230c5aca",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/EndsWith/ConditionEndsWith.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 4.033,
+      "goalHash": "33ea9e6482f1d8b3dac0f1b66fc0c2e67ba920fb203421a09a2dbb54ebc73d68",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/Truthy/ConditionTruthy.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.793,
+      "goalHash": "7c148bf8428f1b535a357771e74061460e768a153f269c0620f8b165fe03f340",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/GTE/ConditionGTE.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.3119,
+      "goalHash": "234f3042235ab436cebb469be11e44b3dd2ee4f16b68113748704c09f29c7810",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Files/FileNotExists/ConditionFileNotExists.test.goal",
+      "entryGoal": "",
+      "status": "Stale",
+      "durationMs": 0.0006,
+      "goalHash": null,
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Files/FileExists/ConditionFileExists.test.goal",
+      "entryGoal": "",
+      "status": "Stale",
+      "durationMs": 0.0001,
+      "goalHash": null,
+      "builderVersion": null,
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/GreaterThan/ConditionGreaterThan.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.2767,
+      "goalHash": "df77bfacc5403b8a9d116844f19337ab0324690151f0dc72e84a3196e7406ea3",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/Not/ConditionNot.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.2311,
+      "goalHash": "a7710ec1237c989fb1f6596ef87bf1e0552553ce70930fc5fa07832bf42e060a",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/StartsWith/ConditionStartsWith.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 11.2871,
+      "goalHash": "9eab1ffa0ef05bb7e8e7db4591b6dea6797252c0dd395f5a1171047c13377dd2",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Operators/LessThan/ConditionLessThan.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 11.2065,
+      "goalHash": "b4b4a4c64a60145503c6c66e5743d1be6e41e579c8b2f9bd02c39a39f16bd75c",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Files/FileExistsSubSteps/ConditionFileExistsSubSteps.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.3186,
+      "goalHash": "d420210fbe207ea104aa6663b47743ef3fd803669e8b75f2f608316b10da4d95",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Compound/Or/ConditionCompoundOr.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.4108,
+      "goalHash": "6c6289984cfa2e19a7b7e38b91b7484f35053cc39a507882b9ee29cd5163698c",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Compound/Mixed/ConditionCompound.test.goal",
+      "entryGoal": "Start",
+      "status": "Fail",
+      "durationMs": 4.0048,
+      "goalHash": "9b189b9e28d5b45c9a83ddf05681b7b878ce40779e9bde3e606bf33dccdd647e",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": "Expected: \u0022yes\u0022, Actual: (null)",
+      "expected": "yes",
+      "actual": null,
+      "variables": {
+        "__data__": false,
+        "z": 5,
+        "y": 3,
+        "x": 10,
+        "greaterResult": "yes",
+        "lessResult": "yes"
+      }
+    },
+    {
+      "path": "Modules/Condition/If/SubStepsFalse/ConditionSubStepsFalse.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.6629,
+      "goalHash": "aba9fc62f9d3e416c4db1f905ff96240e82c5cf5dcb2427bde91772360352467",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/Compound/And/ConditionCompoundAnd.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.581,
+      "goalHash": "1b2c7e71ed1ee4211f422eeead71eb38e7c7849066e50b810718f63ada6ea335",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/If/ElseBranch/ConditionElseBranch.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.3069,
+      "goalHash": "1e47a3ea8ece27ced425e78c62abeb15ec688a4e4e4b3cef98ab293a43b3efa7",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/If/Basic/Condition.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 2.6511,
+      "goalHash": "afeace710baab1e7e08bdde31918fa94ca3f912ba6b7e051437914824fdf6640",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/If/Nested/ConditionNested.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 1.3408,
+      "goalHash": "fa1b29070a16b3c7970d353c4240aa79f32eb16faa7ed137f08e0c200504cbb0",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Condition/If/SubStepsTrue/ConditionSubStepsTrue.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 0.8455,
+      "goalHash": "eea24c21cb5c72743bd936eef55669c6a34a956ccc23930f100498a728220900",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Llm/LlmSchema.test.goal",
+      "entryGoal": "Start",
+      "status": "Pass",
+      "durationMs": 3633.4218,
+      "goalHash": "57b6e9dc25ee4a37ebd54ad85cf6fb41fd0ae25e07784ca813a0088d059a06c4",
+      "builderVersion": "0.2.2",
+      "tags": [
+        "llm"
+      ],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    },
+    {
+      "path": "Modules/Test/Run/TestRunEnforcesTimeout.test.goal",
+      "entryGoal": "TestRunEnforcesTimeout",
+      "status": "Pass",
+      "durationMs": 1013.9186,
+      "goalHash": "81ad25af43e071c5d7705ec329d54652a0e0bd6dcb4cacc615ada7477b68527b",
+      "builderVersion": "0.2.2",
+      "tags": [],
+      "error": null,
+      "expected": null,
+      "actual": null,
+      "variables": null
+    }
+  ],
+  "branchCoverage": {
+    "/ConditionContains.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionNested.test.goal:5": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "false"
+      ]
+    },
+    "/ConfigBaseUrl.test.goal:4": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/ConditionTruthy.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionCompound.test.goal:7": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionNested.test.goal:4": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/ConditionCompound.test.goal:13": {
+      "declared": [
+        "if"
+      ],
+      "observed": []
+    },
+    "/ConditionCompound.test.goal:4": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionCompoundAnd.test.goal:2": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionFileExistsSubSteps.test.goal:2": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/UploadFile.test.goal:4": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/GetRequest.test.goal:3": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/ConditionCompound.test.goal:16": {
+      "declared": [
+        "if",
+        "else"
+      ],
+      "observed": []
+    },
+    "/GetRequest.test.goal:1": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/ConditionEndsWith.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/PostRequest.test.goal:2": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/ConditionStartsWith.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/DownloadSkip.test.goal:3": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/ConditionFalsy.test.goal:1": {
+      "declared": [
+        "if",
+        "if"
+      ],
+      "observed": [
+        "true",
+        "elseif[1]"
+      ]
+    },
+    "/TestConditionIfRecordsBranchIndexTrueBranch.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionCompound.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionNot.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/TestConditionIfRecordsBranchIndexElseBranch.test.goal:1": {
+      "declared": [
+        "if",
+        "elseif[1]",
+        "else"
+      ],
+      "observed": [
+        "else"
+      ]
+    },
+    "/ConditionElseBranch.test.goal:1": {
+      "declared": [
+        "if",
+        "else"
+      ],
+      "observed": [
+        "else"
+      ]
+    },
+    "/ConditionGTE.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionSubStepsTrue.test.goal:2": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/ConditionSubStepsFalse.test.goal:2": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "false"
+      ]
+    },
+    "/Condition.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionCompoundOr.test.goal:2": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/WhenLess.goal:0": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConfigBaseUrl.test.goal:2": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "false"
+      ]
+    },
+    "/ConditionNotEquals.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionGreaterThan.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionLTE.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConfigHeaders.test.goal:2": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/WhenLTE.goal:0": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionLessThan.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionEquals.test.goal:1": {
+      "declared": [
+        "if"
+      ],
+      "observed": [
+        "if"
+      ]
+    },
+    "/ConditionCompound.test.goal:10": {
+      "declared": [
+        "if"
+      ],
+      "observed": []
+    },
+    "/UploadFile.test.goal:2": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal:1": {
+      "declared": [
+        "if",
+        "elseif[1]",
+        "else"
+      ],
+      "observed": [
+        "elseif[1]"
+      ]
+    },
+    "/SignedRequest.test.goal:1": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/UnsignedRequest.test.goal:1": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    },
+    "/Condition.test.goal:4": {
+      "declared": [
+        "if",
+        "else"
+      ],
+      "observed": [
+        "else"
+      ]
+    },
+    "/PostRequest.test.goal:4": {
+      "declared": [
+        "true",
+        "false"
+      ],
+      "observed": [
+        "true"
+      ]
+    }
+  }
+}
