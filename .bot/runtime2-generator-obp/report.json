@@ -1,0 +1,35 @@
+{
+  "branch": "runtime2-generator-obp",
+  "sessions": [
+    {
+      "id": "a73a4797-8a82-450b-a731-3cb42445536f",
+      "bot": "architect",
+      "timestamp_start": "2026-04-28T00:10:20Z",
+      "timestamp_end": "2026-04-28T00:12:27Z",
+      "intent": "Restructure LazyParamsGenerator into OBP shape — extract per-property emission into a polymorphic ActionProperty hierarchy without changing emitted output.",
+      "before": {
+        "assumptions": "Source generator stays (no reflection, no runtime compilation). Round 1 targets the 11-way per-property if/else only; markers, ExecuteAsync, helpers stay procedural. LangVersion=latest is already set, so records-with-inheritance work.",
+        "risk": "Byte-for-byte output drift if branch priority or AppendLine ordering changes. Roslyn incremental caching could break if record equality is sloppy. Both mitigated by Phase 0 regression harness (pin .g.cs output before refactor, diff after)."
+      },
+      "plan": ".bot/runtime2-generator-obp/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/architect/v1/plan.md",
+            ".bot/runtime2-generator-obp/architect/v1/summary.md",
+            ".bot/runtime2-generator-obp/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Design plan for round 1 of LazyParamsGenerator OBP refactor. Discriminated three alternatives (pre-generated files on disk, runtime Roslyn compilation, reflection-based ActionInvoker) and ruled them all out per Ingi's direction. Settled on extracting per-property emission only, with markers and ExecuteAsync kept procedural. Verified LangVersion=latest on PLang.Generators.csproj before committing to records-with-inheritance."
+        }
+      ],
+      "after": {
+        "status": "design complete, plan approved, awaiting coder handoff",
+        "health": "no code touched, no risk introduced, regression contract (byte-for-byte golden diff) defined upfront",
+        "notes": "Architect role ends here. Ingi approved committing golden snapshot to .bot/. Recommended next bot: coder directly (test-designer optional — golden diff is the test). changes.patch empty since architect-only session."
+      }
+    }
+  ]
+}
