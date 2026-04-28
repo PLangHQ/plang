@@ -1,92 +1,78 @@
 {
   "tester": "tester",
   "branch": "runtime2-builder-bootstrap",
-  "timestamp": "2026-04-28T16:30:00Z",
-  "tested_version": "v3",
-  "tested_commits": "bbf982d4..5c917ac5",
+  "timestamp": "2026-04-28T17:25:00Z",
+  "tested_version": "v4",
+  "tested_commit": "6fd35065",
   "test_run": {
-    "csharp": { "total": 2288, "passed": 2288, "failed": 0, "skipped": 0 },
-    "plang": { "total": 170, "passed": 142, "failed": 24, "stale": 4, "skipped": 0 }
+    "csharp": { "total": 2309, "passed": 2309, "failed": 0, "skipped": 0 },
+    "plang": { "total": 170, "passed": 142, "failed": 24, "skipped": 0, "stale": 4 }
   },
   "coverage": {
-    "tool": "Microsoft.Testing.Platform built-in coverage (TUnit)",
-    "format": "cobertura",
-    "snapshot_path": ".bot/runtime2-builder-bootstrap/tester/v3/coverage.cobertura.xml",
-    "summary_path": ".bot/runtime2-builder-bootstrap/tester/v3/coverage.json",
-    "highlights": {
-      "math/add.cs": "100%",
-      "math/subtract.cs": "100%",
-      "math/multiply.cs": "100%",
-      "math/divide.cs": "100% (incl. div-by-zero branch)",
-      "math/power.cs": "100%",
-      "DefaultBuilderProvider.cs": "60.8% (unchanged from v2; new IsCatalogDescription helper match-true path uncovered by C# tests)",
-      "Catalog/ExampleRenderer.cs": "85.2% (no test asserts math.add ExampleSpec rendered output)",
-      "promoteGroups.cs": "0% (still unreachable — carryover)",
-      "enrichResponse.cs": "0% (build-time-only by design — carryover)"
-    }
+    "is_catalog_description_helper_lines_657_to_665": "all hit (was 0 hits on lines 659-665 in v3)",
+    "example_renderer_render_method": "all 33 body lines hit",
+    "math_examples_for_llm_all_5_ops": "all bodies hit",
+    "uncovered_files_for_v4_diff": []
   },
+  "mutation_tests": [
+    {
+      "mutation": "Drop variable.set from Add.ExamplesForLlm() natural form",
+      "target_file": "PLang/App/modules/math/add.cs",
+      "outcome": "caught",
+      "tests_that_bit": ["Add_NaturalForm_RendersAddThenSet", "AllArithmeticActions_HaveTwoExamples_NaturalAndRhs"]
+    },
+    {
+      "mutation": "Swap chain order — variable.set first, math.add second",
+      "target_file": "PLang/App/modules/math/add.cs",
+      "outcome": "caught",
+      "tests_that_bit": ["AllArithmeticActions_HaveTwoExamples_NaturalAndRhs"],
+      "note": "Per-op render tests use Contains-only assertions and would NOT catch this — relies entirely on the spec-level cross-action test for chain integrity."
+    },
+    {
+      "mutation": "Change A=5 to A=99 in natural form",
+      "target_file": "PLang/App/modules/math/add.cs",
+      "outcome": "caught",
+      "tests_that_bit": ["Add_NaturalForm_RendersAddThenSet"]
+    },
+    {
+      "mutation": "Flip line 664 of IsCatalogDescription: return true -> return false",
+      "target_file": "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+      "outcome": "caught",
+      "tests_that_bit": ["Nullable_Suffix_Matches", "Generic_TypeName_Nullable_Matches"]
+    }
+  ],
   "findings": [
     {
       "id": 1,
       "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "(none — should be PLang.Tests/App/Modules/builder/DefaultBuilderProviderTests.cs)",
-      "code_file": "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
-      "issue": "IsCatalogDescription helper (lines 653-664) has 4 distinct match shapes ('X', 'X?', 'X = default', '%var% X') and zero C# unit tests. Coverage report shows lines 659-663 (the match-true path) are never executed by any C# test — every C# call falls through the early-return at line 658. The match-true path is exercised exclusively by Tests/Modules/Builder/ValidateValid/BuilderValidateValid.test.goal.",
-      "impact": "A regression that flipped IsCatalogDescription to always-return-false (or broke any of the 4 shape cases) would leave the C# suite 100% green and surface only when someone happens to rebuild BuilderValidateValid.test.goal. Same false-green class as v1's BuildingGuard regression: code reviews + green C# suite both miss it.",
-      "suggestion": "Add 4 unit tests, one per match shape: bare typeName ('int'), nullable ('int?'), with default ('int = 1'), %var% prefix ('%var% string'). Plus 2 negative cases proving the typeName anchor: real value that doesn't start with type ('hello' vs 'string'), real value that LOOKS like description but mismatches type ('int = 5' for a string-typed slot — should NOT skip). Helper is private static; expose as internal-static or test through the Validate() public surface."
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/math/MathExamplesForLlmTests.cs",
+      "code_file": "PLang/App/Catalog/ExampleRenderer.cs",
+      "issue": "Per-op render tests (Subtract_BothForms_RenderChain / Multiply / Divide / Power) use Contains() assertions only and do not assert that 'variable.set' appears in the rendered RHS-form output (only Add_RhsForm asserts both). A renderer regression specific to non-Add ops in the RHS path would lean on the spec-level AllArithmeticActions test alone.",
+      "impact": "Acceptable — the cross-action test pins Chain[1].Module=='variable' and Name=='set' for all 5 ops. Mutation 2 confirmed this catches chain swap.",
+      "suggestion": "Optional: add Contains(\"variable.set\") to the rhs render assertions in Subtract/Multiply/Divide/Power tests for redundant coverage."
     },
     {
       "id": 2,
       "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "(none — should be PLang.Tests/App/Catalog/MathExamplesTests.cs or similar)",
-      "code_file": "PLang/App/modules/math/{add,subtract,multiply,divide,power}.cs",
-      "issue": "ExamplesForLlm() static methods on the 5 math actions declare ExampleSpec[] payloads but no C# test asserts the rendered output (after ExampleRenderer.Render()) contains the expected math.add + variable.set chain. Loop.test.goal is the only signal — and it's a non-deterministic LLM-integration test.",
-      "impact": "A regression in ExampleRenderer.Render() (e.g. dropping the second action in a chain, or breaking the %__data__% chaining) would silently corrupt the LLM prompt. The math examples render into something the LLM doesn't recognize, the LLM falls back to mapping 'set %x% = %x% + 1' to a single literal variable.set, and Loop.test.goal goes red on the next rebuild. The C# suite stays green throughout.",
-      "suggestion": "Add MathExamplesTests.cs asserting that math.add.ExamplesForLlm()[1] (the RHS form) renders through ExampleRenderer.Render(spec, modules) into a string containing 'math.add' AND 'variable.set' AND '%__data__%'. Repeat for the other 4 math actions. Cheap (~30 lines), catches renderer regressions deterministically without depending on a live LLM."
+      "type": "edge-case",
+      "test_file": "PLang.Tests/App/Modules/math/MathExamplesForLlmTests.cs",
+      "code_file": "PLang/App/modules/math/add.cs",
+      "issue": "Add_NaturalForm_RendersAddThenSet asserts Contains(\"A([object] 5)\"). The [object] tag is brittle to a Data.@this refactor (e.g., changing Add.A from Data.@this to Data.@this<int> would change [object] to [int]).",
+      "impact": "Intentional pin on the current type-mapping contract; flagged so future refactors know which test to update.",
+      "suggestion": "None — keep as-is; the brittleness is the feature."
     },
     {
       "id": 3,
       "severity": "major",
       "type": "missing-coverage",
-      "test_file": "(multiple — see clusters below)",
-      "code_file": "(multiple production modules)",
-      "issue": "F4 cluster — 23 PLang test failures in Tests/ (plus 1 lowercase-relocated test) introduced by the v2 builder squash 50351d8b. Spans Signing (9 fails), Identity (2), UI (2), Event (3), Goal-call (1), ContextVars (1), Crypto (1), Test/Discover (1), ErrorTypes (1), App/SetupGoal (1), ConditionCompound (1), ForeachDictionary (1), ForeachCallsGoalPerItem (1).",
-      "impact": "Real production runtime regressions, not test problems. Several show systemic patterns: 'Contract mismatch' errors in Signing suggest a contract-metadata path is broken; 'Action timeout.after.after not found' is a module/action routing bug (extra .after segment); foreach producing Actual:1 or Actual:2 instead of 3 suggests iteration-counter or shared-state bugs; UI render swallowing %title% but rendering %author% suggests parameter-resolution divergence. Each cluster needs its own diagnosis.",
-      "suggestion": "Coder explicitly scoped this commit to F2+F3. Send back for F4 unless the project decides to defer F4 to a separate branch. If deferred, document the scope decision in the commit message of the next commit so the verdict can be downgraded."
-    },
-    {
-      "id": 4,
-      "severity": "minor",
-      "type": "missing-coverage",
       "test_file": "(none)",
-      "code_file": "PLang/App/Catalog/ExampleRenderer.cs:108, modules/ui/providers/FluidProvider.cs:143, modules/builder/providers/DefaultBuilderProvider.cs:439",
-      "issue": "Carryover from v1/v2 — F5 locale-format coverage gap. Format-side InvariantCulture fix is correct at 3 sites, but no test sets Thread.CurrentCulture to it-IT or de-DE and asserts numeric round-trip produces '3.14' not '3,14'.",
-      "impact": "A regression that flipped any of the 3 sites back to conv.ToString() (without InvariantCulture) would silently break the @known annotation round-trip on European locales. CI runners are typically en-US so the bug never surfaces in test runs.",
-      "suggestion": "Add Phase05_NonInvariantCulture_FormatStaysInvariant test: set Thread.CurrentCulture=it-IT temporarily, exercise FormatValue / FormatFormalValue / ExampleRenderer with a double value, assert output is '3.14' not '3,14', restore culture in finally."
-    },
-    {
-      "id": 5,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "(none)",
-      "code_file": "PLang/App/modules/builder/promoteGroups.cs",
-      "issue": "Carryover from v1/v2/v3 — promoteGroups action is not referenced in any .goal file under Tests/, tests/, or os/. 0% coverage. XML-doc claims 'exercised by bootstrap cycle' but the bootstrap cycle does not invoke it. The PromoteGroupsImmutableStep ActionError code path is unreachable from any goal.",
-      "impact": "If the action regresses, no test catches it. If the action is dead, it should be deleted. Either way, current state is dishonest signal.",
-      "suggestion": "Either delete the action (if dead) or wire it into BuildGoal.goal explicitly. Document the choice in good_to_know.md."
-    },
-    {
-      "id": 6,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/Modules/Utils/TypeMappingTests.cs:ListOfStringToListOfString_PassesThrough",
-      "code_file": "PLang/App/Utils/TypeConverter.cs:126, 156",
-      "issue": "Carryover from v2 — test comment claims it's a 'sanity guard that auto-wrap doesn't engage on already-list inputs' but the input List<string> is consumed by the list-conversion branch at line 126, not the auto-wrap at line 156. Deleting the auto-wrap branch (lines 156-168) would NOT fail this test. It still validates a real path (list-conversion) so it's not a false green — but it doesn't test what its comment claims.",
-      "impact": "Cosmetic. Future readers will misunderstand the test's coverage claim.",
-      "suggestion": "Rename to reflect the list-conversion branch it actually tests, and update comment. The auto-wrap branch is already covered by the 3 other Gap 3 tests."
+      "code_file": "(F4 cluster — 23 PLang test goals)",
+      "issue": "F4 cluster untouched: 23 PLang test failures across Signing (9), Identity (2), UI (2), Event (3), Goal-call (1), ContextVars (1), Crypto (1), Test/Discover (1), ErrorTypes (1), App/SetupGoal (1), ConditionCompound (1), ForeachDictionary (1) + ForeachCallsGoalPerItem.",
+      "impact": "Real production runtime regressions from the v2 builder squash 50351d8b, accepted as separate-branch work by the coder (coder v1 explicit scope).",
+      "suggestion": "Carryover — track but do not block this branch. F4 should be addressed in a follow-up branch."
     }
   ],
-  "verdict": "needs-fixes",
-  "summary": "F2 (catalog skip via IsCatalogDescription) and F3 (math examples for LLM) close cleanly at integration level — BuilderValidateValid PASS, Loop.test.goal PASS, .pr inspection confirms math.add chain. F4 cluster (23 PLang reds across Signing/Identity/UI/Event/etc.) untouched per coder's explicit scope. Both new closures lack direct C# unit tests — match-true path of IsCatalogDescription and ExamplesForLlm rendered output are exercised only by integration tests; same false-green class as v1's BuildingGuard regression. Recommend back to coder for F4 + small unit-test follow-ups; or downgrade to approved-with-followups if F4 is officially deferred to a separate branch."
+  "verdict": "approved",
+  "summary": "approved — V3-1 (IsCatalogDescription helper, 14 unit tests) and V3-2 (math ExamplesForLlm renders, 7 unit tests) closed cleanly with strong unit tests. C# 2288 -> 2309 (+21). Coverage on the helper match-true path went 0/9 -> 9/9. Mutation tested 4 representative regressions — all 4 caught. F4 cluster (23 reds) remains as explicit carryover. Recommend hand to security analyst."
 }

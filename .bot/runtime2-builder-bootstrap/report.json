@@ -549,6 +549,108 @@
         "notes": "Send back to coder for F4 (23 reds) \u2014 or downgrade to approved-with-followups if F4 deferred to separate branch. Optional unit-test follow-ups: 4 IsCatalogDescription tests + 5 ExamplesForLlm renderer assertions."
       },
       "timestamp_end": "2026-04-28T16:37:25Z"
+    },
+    {
+      "id": "ee7b40d0-9112-460a-80dd-3066875427c4",
+      "bot": "tester",
+      "timestamp_start": "2026-04-28T17:02:27Z",
+      "timestamp_end": "2026-04-28T17:25:00Z",
+      "intent": "Verify coder's V3-1/V3-2 unit tests close the gaps from tester v3 \u2014 IsCatalogDescription helper + math ExamplesForLlm renders. Re-run full suites, hunt false greens in the new unit tests themselves, track F4 carryover.",
+      "before": {
+        "assumptions": "Coder pushed 6fd35065 adding IsCatalogDescriptionTests (14 cases) and MathExamplesForLlmTests (7 cases). Made IsCatalogDescription internal-static. Claims 2288 -> 2309 (+21), all green. F4 (23 PLang reds) untouched and explicitly out-of-scope.",
+        "risk": "Unit tests written quickly to close a coverage finding are themselves prone to being false greens \u2014 assertions may be loose enough to pass even with broken behavior. The math tests use Contains() rather than exact match \u2014 could miss substring-overlap regressions. The Setup spins a real PLangEngine \u2014 must verify it actually exercises the renderer, not a stub. Need deletion test on the helper to confirm unit tests bite."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/tester/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v4/plan.md",
+            ".bot/runtime2-builder-bootstrap/tester/v4/v3_review_summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v4 plan: verify coder's V3-1/V3-2 unit tests via mutation testing on the helper + math examples; track F4 carryover. User approved with 'ok'."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/builder/IsCatalogDescriptionTests.cs",
+            "PLang.Tests/App/Modules/math/MathExamplesForLlmTests.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Read the 21 new C# tests + the visibility flip. Confirmed InternalsVisibleTo wired at PLang/PLang.csproj:44. Inspected ExampleRenderer.Render and Modules.GetActionType to verify the math test setup drives real reflection (not stubs). Per-line deletion analysis on the 9-line helper: every line has at least one test that fails on deletion."
+        },
+        {
+          "paths": [
+            "PLang.Tests/bin/Debug/net10.0/PLang.Tests.dll"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# TUnit run: 2309/2309/0 (was 2288 in v3, +21 = 14 helper + 7 math, matches coder claim)."
+        },
+        {
+          "paths": [
+            "Tests/.test/results.json",
+            ".bot/runtime2-builder-bootstrap/tester/v4/plang_tests_results.json"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "PLang /Tests/ run from Tests/ cwd (with os/ symlinked into PlangConsole/bin/Debug/net10.0/): 142 pass / 24 fail / 4 stale / 170 total. Bit-identical to v3. F2 (BuilderValidateValid) PASS in 25.8ms; F3 (Loop) PASS in 2.5ms; F4 cluster (23 reds + 1 stale) untouched."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/math/add.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "/tmp/add.cs.orig",
+            "/tmp/DefaultBuilderProvider.cs.orig"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation testing \u2014 temporarily mutated production files, rebuilt, observed which tests caught each break, then restored byte-identical originals. 4 mutations: drop variable.set / swap chain order / change A=5 to A=99 / flip helper line 664 return true to return false. All 4 caught. Notably, swap-chain-order is caught only by AllArithmeticActions_HaveTwoExamples_NaturalAndRhs (spec-level), not by per-op render tests \u2014 minor finding M1, acceptable because spec test pins all 5 ops."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v4/coverage.cobertura.xml",
+            ".bot/runtime2-builder-bootstrap/tester/v4/coverage.json"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Coverage on V3-1/V3-2 surfaces: IsCatalogDescription lines 657-665 went 0->1 hits each (match-true path was unhit in v3, now exercised). ExampleRenderer.Render() body fully covered. All 5 math ExamplesForLlm bodies hit."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v4/result.md",
+            ".bot/runtime2-builder-bootstrap/tester/v4/summary.md",
+            ".bot/runtime2-builder-bootstrap/tester/v4/verdict.json",
+            ".bot/runtime2-builder-bootstrap/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v4 result.md (detailed findings + mutation-test outputs), summary.md (3-pass review structure), verdict.json (pass), and updated the bot-root summary with v4 entry."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/test-report.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Overwrote shared test-report.json with v4 results: verdict approved, 3 findings (M1 weak-assertion minor, M2 edge-case minor, F4 carryover major), 4 mutation tests all caught, recommendation to hand to security analyst."
+        }
+      ],
+      "after": {
+        "status": "approved",
+        "health": "C# 2309/2309 green; PLang 142/24/4-stale unchanged from v3; V3-1 + V3-2 closed at unit-test level with mutation tests biting on all 4 representative regressions.",
+        "notes": "F4 cluster (23 reds) remains as explicit-scope carryover per coder v1 plan. Two minor follow-ups documented (M1 chain order pinned only at spec level for non-Add ops; M2 [object] tag brittle to Data refactor \u2014 both acceptable). Recommend hand to security."
+      }
     }
   ]
 }
