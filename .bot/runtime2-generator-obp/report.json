@@ -203,7 +203,126 @@
         "assumptions": "Branch up to date with origin. Test suite (139 methods) all Assert.Fail. PLang.Generators not wired to PLang.Tests.csproj. Migration sweep is small (22 [VariableName] string properties; 250+ already Data<T>). Generator is single 779-line file with 11-arm property dispatch.",
         "risk": "Phase 2 is the contract change — code that reads .Value expecting resolution will break. Architect's gate: pause if >10 sites need fixing. ResolveDeep deletion may break OnResolveTrace subscribers (need to grep). Phase 3 scaffolding move from generated ExecuteAsync to App.Run requires interface tweak for __SnapshotParams handoff."
       },
-      "plan": ".bot/runtime2-generator-obp/coder/v1/plan.md"
+      "plan": ".bot/runtime2-generator-obp/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/PLang.Tests.csproj",
+            "PLang.Generators/LazyParamsGenerator.cs",
+            "PLang.Tests/Generator/Matrix/Plain/Handlers.cs",
+            "PLang.Tests/Generator/Matrix/Nullable/Handlers.cs",
+            "PLang.Tests/Generator/Matrix/WithDefault/Handlers.cs",
+            "PLang.Tests/Generator/Matrix/DataPlain/Handlers.cs",
+            "PLang.Tests/Generator/Matrix/DataWrapped/Handlers.cs",
+            "PLang.Tests/Generator/Matrix/Provider/Handlers.cs",
+            "PLang.Tests/Generator/Matrix/IsNotNull/Handlers.cs",
+            "PLang.Tests/Generator/Matrix/Markers/Handlers.cs",
+            "PLang.Tests/Generator/Matrix/Resolution/Handlers.cs",
+            "PLang.Tests/Generator/Matrix/Modifier/Handlers.cs",
+            "PLang.Tests/Generator/Matrix/Snapshot/Handlers.cs",
+            "PLang.Tests/App/Fixtures/MatrixRunner.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 0 — wired generator into PLang.Tests via Analyzer reference. ~28 matrix handler stubs in App.modules.matrix.* (parent App namespace resolves cleanly; not auto-discovered by Modules.Discover which walks PLang.dll only). MatrixRunner fixture registers handlers on demand and dispatches via App.Run. Generator emissions prefixed with global::App.* so they resolve in any consumer namespace (PLang.Tests's `global using App = App.@this` was shadowing the App namespace at sub-scope)."
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang.Tests/App/GetParameterTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 1 — Action.GetParameter(name, context) added. Pure lookup walking Parameters → Defaults → Data.NotFound. OrdinalIgnoreCase to match existing __Resolve patterns. 6 tests filled."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/modules/ICodeGenerated.cs",
+            "PLang.Tests/App/DataTests/DataValueRawTests.cs",
+            "PLang.Tests/App/DataTests/DataAsTResolutionTests.cs",
+            "PLang.Tests/App/DataTests/DataResolutionTests.cs",
+            "PLang.Tests/Generator/Matrix/Resolution/ResolutionTests.cs",
+            "PLang.Tests/App/VariablesTests/VariablesTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 2 — the contract change. Rewrote Data.As<T>(context) as resolution entry point with substitution-before-fast-paths so T=object doesn't short-circuit. Action-destination carve-out preserves raw %var% in sub-action templates. Data.Value becomes raw read-only; deleted _resolved, _rawValue, NeedsResolution, ResetResolution(), IsDeferredActionTemplate. Variables.ResolveDeep + state + OnResolveTrace deleted. Generator stops emitting data.ResetResolution(). Plain Data.@this resolves via .As<object>(Context) so non-typed Data behaves like Data<object>. ZERO real prod breakage from contract change. 31 contract tests + 15 matrix Resolution tests filled."
+        },
+        {
+          "paths": [
+            "PLang/App/this.cs",
+            "PLang.Generators/LazyParamsGenerator.cs",
+            "PLang.Tests/App/AppRunScaffoldingTests.cs",
+            "PLang.Tests/App/Core/EngineTests.cs",
+            "PLang.Tests/Generator/Matrix/Plain/PlainTests.cs",
+            "PLang.Tests/Generator/Matrix/Nullable/NullableTests.cs",
+            "PLang.Tests/Generator/Matrix/WithDefault/WithDefaultTests.cs",
+            "PLang.Tests/Generator/Matrix/DataPlain/DataPlainTests.cs",
+            "PLang.Tests/Generator/Matrix/DataWrapped/DataWrappedTests.cs",
+            "PLang.Tests/Generator/Matrix/Provider/ProviderTests.cs",
+            "PLang.Tests/Generator/Matrix/IsNotNull/IsNotNullTests.cs",
+            "PLang.Tests/Generator/Matrix/Markers/MarkersTests.cs",
+            "PLang.Tests/Generator/Matrix/Modifier/ModifierTests.cs",
+            "PLang.Tests/Generator/Matrix/Snapshot/SnapshotTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 3 — scaffolding (callstack push/pop, save/restore Step/Goal/Event, try/catch/finally with ServiceError translation, frame.SnapshotVariables) moved from generated ExecuteAsync into App.Run. ICodeGenerated gains SnapshotParams() so App.Run's catch can attach per-property diagnostics. Generated ExecuteAsync is now thin: marker init, eager Provider, backing reset, validation, return Run(). Generator stamps __<Name>_set in Data<T> getters so WasAccessed reads correctly. EngineTests.StepRunAsync_ExceptionInHandler updated: handler-exception now translates to ServiceError at App.Run, not StepError at Step. 8 scaffolding tests + 60 matrix tests filled."
+        },
+        {
+          "paths": [
+            "PLang.Generators/this.cs",
+            "PLang.Generators/IsExternalInit.cs",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/Emission/Property/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Property/Provider/this.cs",
+            "PLang.Generators/Emission/Property/Legacy/this.cs",
+            "PLang.Tests/Generator/GeneratorValidationTests.cs",
+            "PLang.Tests/Generator/SnapshotParamsTests.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 4 — collapsed generator from 711-line LazyParamsGenerator.cs into Discovery/ + Emission/{Action,Property/{Data,Provider,Legacy}} hierarchy. ActionProperty abstract record exposes EmitProperty + EmitSnapshotEntry. Records use string/bool only — no IPropertySymbol leaks (Roslyn incremental safe). Discovery factory dispatches per-property (Provider/Data/Legacy). Snapshot emission moves to per-property. PLang.Tests.csproj enables EmitCompilerGeneratedFiles so structural tests can read .g.cs from disk. 13 GeneratorValidationTests + 8 SnapshotParamsTests filled."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/this.cs",
+            ".bot/runtime2-generator-obp/claude-md-proposals.md"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 5 — PLNG001 build-time diagnostic. Discovery emits a Roslyn diagnostic (DiagnosticSeverity.Error) when a partial action property is not Data<T>/plain Data, [Provider], or [VariableName] string. DiagnosticInfo flows through the IIncrementalGenerator pipeline as value-equal record. Manual smoke test confirmed PLNG001 fires on raw scalars. DEFERRED from architect plan: full [VariableName] deletion. Reason: variable.set/list.* handlers need the variable's NAME (not value) — As<T>(Context) flattens variable name into parameter property name. [VariableName] remains the cleanest expression of 'I want the name, not the value.' Logged in claude-md-proposals.md."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            ".bot/runtime2-generator-obp/coder/v1/summary.md",
+            ".bot/runtime2-generator-obp/coder/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Phase 6 — audit + final wrap. Verified no leftover references to deleted APIs (ResolveDeep, ResetResolution, NeedsResolution, IsDeferredActionTemplate, _resolved, _rawValue, OnResolveTrace) anywhere in PLang/ or PlangConsole/. Cleaned up stale RawValue comment. PlangConsole builds. Wrote v1/summary.md and bot-root summary.md."
+        }
+      ],
+      "timestamp_end": "2026-04-30T00:30:00Z",
+      "after": {
+        "status": "All 6 phases of architect v4 landed; [VariableName] removal deferred (documented). 2427/2427 tests passing.",
+        "health": "Generator restructured into a clean hierarchy. Build green, full test suite green. PLNG001 diagnostic enforces v4 contract going forward. No real production breakage from the Data.Value contract change.",
+        "notes": "Recommended next bot: codeanalyzer (review OBP/quality on Discovery + Emission), then auditor. Full [VariableName] removal is its own design pass — needs a way to preserve variable name through As<T>(Context) for variable.set/list.* handlers."
+      }
     }
   ]
 }

@@ -361,7 +361,11 @@ public partial class @this
     public bool IsEmpty => !IsInitialized || _value == null ||
         (_value is string s && string.IsNullOrEmpty(s));
 
-    /// <summary>Returns the raw stored value without triggering NeedsResolution or factory.</summary>
+    /// <summary>
+    /// Returns the raw stored value without triggering the lazy factory. Under v4,
+    /// .Value is also raw (no %var% substitution) — RawValue's distinction is just
+    /// "skip the factory."
+    /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public object? RawValue => _value;
 
