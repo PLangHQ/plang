@@ -6,7 +6,7 @@
       "bot": "architect",
       "timestamp_start": "2026-04-28T00:10:20Z",
       "timestamp_end": "2026-04-28T00:12:27Z",
-      "intent": "Restructure LazyParamsGenerator into OBP shape — extract per-property emission into a polymorphic ActionProperty hierarchy without changing emitted output.",
+      "intent": "Restructure LazyParamsGenerator into OBP shape \u2014 extract per-property emission into a polymorphic ActionProperty hierarchy without changing emitted output.",
       "before": {
         "assumptions": "Source generator stays (no reflection, no runtime compilation). Round 1 targets the 11-way per-property if/else only; markers, ExecuteAsync, helpers stay procedural. LangVersion=latest is already set, so records-with-inheritance work.",
         "risk": "Byte-for-byte output drift if branch priority or AppendLine ordering changes. Roslyn incremental caching could break if record equality is sloppy. Both mitigated by Phase 0 regression harness (pin .g.cs output before refactor, diff after)."
@@ -28,7 +28,7 @@
       "after": {
         "status": "design complete, plan approved, awaiting coder handoff",
         "health": "no code touched, no risk introduced, regression contract (byte-for-byte golden diff) defined upfront",
-        "notes": "Architect role ends here. Ingi approved committing golden snapshot to .bot/. Recommended next bot: coder directly (test-designer optional — golden diff is the test). changes.patch empty since architect-only session."
+        "notes": "Architect role ends here. Ingi approved committing golden snapshot to .bot/. Recommended next bot: coder directly (test-designer optional \u2014 golden diff is the test). changes.patch empty since architect-only session."
       }
     },
     {
@@ -37,8 +37,8 @@
       "timestamp_start": "2026-04-28T16:35:47Z",
       "intent": "Fresh-eyes review of v1; combine structural OBP refactor with contract simplification (helpers move to ActionBase, runtime kind-switch, thin generated ExecuteAsync) so the property hierarchy is built once in its final shape. Replaces v1 byte-for-byte golden harness with a runtime test matrix as the regression contract.",
       "before": {
-        "assumptions": "Directory-as-API is a project-wide convention (Ingi confirmed) — internal generator structure follows it consistently. C# partial classes union base declarations, so generator can declare ActionBase as base while user partial declares interfaces. No existing action handler under App/modules/ inherits from a non-interface base (verified via grep).",
-        "risk": "Bigger PR than v1; byte-for-byte safety is gone in favor of a runtime test matrix that must comprehensively cover ParamKind × {nullability, default, type-class}. Phase 0 matrix design is the load-bearing risk control."
+        "assumptions": "Directory-as-API is a project-wide convention (Ingi confirmed) \u2014 internal generator structure follows it consistently. C# partial classes union base declarations, so generator can declare ActionBase as base while user partial declares interfaces. No existing action handler under App/modules/ inherits from a non-interface base (verified via grep).",
+        "risk": "Bigger PR than v1; byte-for-byte safety is gone in favor of a runtime test matrix that must comprehensively cover ParamKind \u00d7 {nullability, default, type-class}. Phase 0 matrix design is the load-bearing risk control."
       },
       "plan": ".bot/runtime2-generator-obp/architect/v2/plan.md",
       "actions": [
@@ -50,7 +50,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "v2 supersedes v1. Fresh-eyes review surfaced three concerns: (1) thirteen @this folders looked cosmetic in a non-navigated project — resolved when Ingi confirmed directory-as-API is a project-wide commitment for LLM maintenance; (2) v1 was the second-most-impactful work because round 2's contract simplification would partially dismantle round 1's structure; (3) per-property logic splits across 5+ iteration sites in GenerateActionCode, not 3 as v1 implied. Concerns 2 and 3 argued for combining the rounds. v2 builds the property hierarchy in its final small shape (records carrying IsMatch + BuildResolveCall + optional emission slots), moves all helpers to App/modules/ActionBase/this.cs, introduces ParamKind enum to drive runtime dispatch, and shrinks per-class generated code from ~200 to ~50 lines. Regression contract: runtime test matrix (15–20 minimal action handlers covering every ParamKind × variant), not byte-for-byte golden files."
+          "context": "v2 supersedes v1. Fresh-eyes review surfaced three concerns: (1) thirteen @this folders looked cosmetic in a non-navigated project \u2014 resolved when Ingi confirmed directory-as-API is a project-wide commitment for LLM maintenance; (2) v1 was the second-most-impactful work because round 2's contract simplification would partially dismantle round 1's structure; (3) per-property logic splits across 5+ iteration sites in GenerateActionCode, not 3 as v1 implied. Concerns 2 and 3 argued for combining the rounds. v2 builds the property hierarchy in its final small shape (records carrying IsMatch + BuildResolveCall + optional emission slots), moves all helpers to App/modules/ActionBase/this.cs, introduces ParamKind enum to drive runtime dispatch, and shrinks per-class generated code from ~200 to ~50 lines. Regression contract: runtime test matrix (15\u201320 minimal action handlers covering every ParamKind \u00d7 variant), not byte-for-byte golden files."
         }
       ]
     },
@@ -60,8 +60,8 @@
       "timestamp_start": "2026-04-29T00:00:00Z",
       "intent": "Re-review v2 in conversation; supersede with v3 that drops ActionBase, drops ParamKind dispatch, moves resolution onto Data, puts lookup/scaffolding on Action.@this, collapses property hierarchy to two leaves, enforces Data<T>-only handler properties at build time.",
       "before": {
-        "assumptions": "Action.Parameters is List<Data> (verified). Data<T> inherits Data; Data is essentially Data<object> for routing. Data.As<T>(Context) already exists as the typed-view primitive (line 389 of App/Data/this.cs). NeedsResolution flag exists on Data. Variables.ResolveDeep does the recursive walk today, with a discarded-return-value bug on the typed-list branch. llm.query handler uses Data<List<LlmMessage>> with %var% nested inside Content — verified the deep-resolution case is real.",
-        "risk": "Bigger contract change than v2 (which still kept ParamKind). Behavior shift in Data.Value getter (now does work lazily) could affect debugger/audit paths that read .Value for inspection. Cycle risk: Data.Value → Variables.Get → returns Data → reads its Value (mitigated by NeedsResolution=false on already-resolved Variable Data). Migration: any handler with non-Data<T> property must convert (likely small scope based on read.cs and llm/query.cs samples)."
+        "assumptions": "Action.Parameters is List<Data> (verified). Data<T> inherits Data; Data is essentially Data<object> for routing. Data.As<T>(Context) already exists as the typed-view primitive (line 389 of App/Data/this.cs). NeedsResolution flag exists on Data. Variables.ResolveDeep does the recursive walk today, with a discarded-return-value bug on the typed-list branch. llm.query handler uses Data<List<LlmMessage>> with %var% nested inside Content \u2014 verified the deep-resolution case is real.",
+        "risk": "Bigger contract change than v2 (which still kept ParamKind). Behavior shift in Data.Value getter (now does work lazily) could affect debugger/audit paths that read .Value for inspection. Cycle risk: Data.Value \u2192 Variables.Get \u2192 returns Data \u2192 reads its Value (mitigated by NeedsResolution=false on already-resolved Variable Data). Migration: any handler with non-Data<T> property must convert (likely small scope based on read.cs and llm/query.cs samples)."
       },
       "plan": ".bot/runtime2-generator-obp/architect/v3/plan.md",
       "actions": [
@@ -73,7 +73,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "v3 supersedes v2 after substantive design conversation. Three architectural shifts: (1) ActionBase dropped — helpers belong on Action.@this (the data owner); handlers stay flat with no synthetic base class. (2) Resolution moves to Data.@this — Data.Value lazy getter does the variable lookup and recursive %var% substitution; Variables.ResolveDeep evaporates. (3) Property dispatch dissolves entirely — every Data<T> property emits one uniform line: __action.GetParameter(name, Context).As<T>(Context). Hierarchy collapses from 10 leaves to 2 (DataProperty, ProviderProperty). Build-time validation enforces Data<T>-only properties; runtime trusts the .pr. Regression contract stays: runtime test matrix (~22-25 handlers covering kind × type-shape × resolution combinations). Plan walks llm.query end-to-end as the grounding example — including deep-nested %var% inside List<LlmMessage>."
+          "context": "v3 supersedes v2 after substantive design conversation. Three architectural shifts: (1) ActionBase dropped \u2014 helpers belong on Action.@this (the data owner); handlers stay flat with no synthetic base class. (2) Resolution moves to Data.@this \u2014 Data.Value lazy getter does the variable lookup and recursive %var% substitution; Variables.ResolveDeep evaporates. (3) Property dispatch dissolves entirely \u2014 every Data<T> property emits one uniform line: __action.GetParameter(name, Context).As<T>(Context). Hierarchy collapses from 10 leaves to 2 (DataProperty, ProviderProperty). Build-time validation enforces Data<T>-only properties; runtime trusts the .pr. Regression contract stays: runtime test matrix (~22-25 handlers covering kind \u00d7 type-shape \u00d7 resolution combinations). Plan walks llm.query end-to-end as the grounding example \u2014 including deep-nested %var% inside List<LlmMessage>."
         }
       ]
     },
@@ -82,10 +82,10 @@
       "bot": "architect",
       "timestamp_start": "2026-04-29T17:00:00Z",
       "timestamp_end": "2026-04-29T17:45:00Z",
-      "intent": "Pull runtime2 (Builder V2 + ~50 commits since branch split), assess v3 plan against the new state, and revise. Outcome: v4 supersedes v3 with one architectural sharpening — resolution moves from Data.Value getter to Data.As<T>(context); Data becomes stateless w.r.t. resolution.",
+      "intent": "Pull runtime2 (Builder V2 + ~50 commits since branch split), assess v3 plan against the new state, and revise. Outcome: v4 supersedes v3 with one architectural sharpening \u2014 resolution moves from Data.Value getter to Data.As<T>(context); Data becomes stateless w.r.t. resolution.",
       "before": {
-        "assumptions": "v3 plan structurally approved but not yet implemented. runtime2 had moved forward substantially during the gap — Builder V2 merged plus heavy iteration on Data caching (_resolved flag, _rawValue, ResetResolution, IsDeferredActionTemplate carve-out) and on the generator (per-action callstack/save-restore scaffolding, __SnapshotParams, ParamSnapshot diagnostic).",
-        "risk": "Initial pull surfaced a build break on origin/runtime2 (duplicate finally in generator emission, duplicate Goal.RunAsync/AsData) — Ingi pushed a fix commit (00fd25e3) before I revised. Real risk: v3's choice to put resolution on Data.Value's getter is the same architectural decision the runtime2 patches were plastering over (commit chain f9008255 → 4c22c895 → b0014c91 → fedd44e6). v3 would inherit the same wound."
+        "assumptions": "v3 plan structurally approved but not yet implemented. runtime2 had moved forward substantially during the gap \u2014 Builder V2 merged plus heavy iteration on Data caching (_resolved flag, _rawValue, ResetResolution, IsDeferredActionTemplate carve-out) and on the generator (per-action callstack/save-restore scaffolding, __SnapshotParams, ParamSnapshot diagnostic).",
+        "risk": "Initial pull surfaced a build break on origin/runtime2 (duplicate finally in generator emission, duplicate Goal.RunAsync/AsData) \u2014 Ingi pushed a fix commit (00fd25e3) before I revised. Real risk: v3's choice to put resolution on Data.Value's getter is the same architectural decision the runtime2 patches were plastering over (commit chain f9008255 \u2192 4c22c895 \u2192 b0014c91 \u2192 fedd44e6). v3 would inherit the same wound."
       },
       "plan": ".bot/runtime2-generator-obp/architect/v4/plan.md",
       "actions": [
@@ -97,7 +97,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "v4 supersedes v3 after pulling runtime2's accumulated work. Walked the recent runtime2 patches around resolution (Data._resolved, _rawValue, ResetResolution, IsDeferredActionTemplate, generator-emitted data.ResetResolution() at every dispatch) and recognized them as a four-step retreat around one bad decision: putting resolution as a side effect on Data.Value's getter. v3 was about to repeat the same decision in different clothes (Phase 2: 'move ResolveDeep into Data.Value lazy getter'). The sharpening: resolution lives in Data.As<T>(context) — fresh walk + substitute + convert per call, returning Data<T>. The handler's __backing field caches the result for the call; ExecuteAsync resets backing fields per call. Data is stateless w.r.t. resolution. This dissolves the entire caching cluster on Data. On the open question (callers that read .Value on parameter Data expecting resolved form), Ingi's stance: 'if it is, then it's not valid implementation. Let it break and find out.' v4 plan: same structural skeleton as v3 (Action.GetParameter, App.Run scaffolding, generator hierarchy) but Phase 2 simplifies dramatically (write As<T>, delete plaster), Phase 3 emits no ResetResolution, Phase 4 grows by EmitSnapshotEntry on ActionProperty, Phase 6 confirms-deletion instead of slim-As<T>. Risks section shrinks (Data.Value side-effect risk and cycle risk are designed out). Matrix grows by 3 cases: DataWrappedActionList (verifies As<T> doesn't walk into Action), ConcurrentHandlers (verifies stateless Data), ReResolveAcrossCalls (verifies backing-field reset gets fresh resolution)."
+          "context": "v4 supersedes v3 after pulling runtime2's accumulated work. Walked the recent runtime2 patches around resolution (Data._resolved, _rawValue, ResetResolution, IsDeferredActionTemplate, generator-emitted data.ResetResolution() at every dispatch) and recognized them as a four-step retreat around one bad decision: putting resolution as a side effect on Data.Value's getter. v3 was about to repeat the same decision in different clothes (Phase 2: 'move ResolveDeep into Data.Value lazy getter'). The sharpening: resolution lives in Data.As<T>(context) \u2014 fresh walk + substitute + convert per call, returning Data<T>. The handler's __backing field caches the result for the call; ExecuteAsync resets backing fields per call. Data is stateless w.r.t. resolution. This dissolves the entire caching cluster on Data. On the open question (callers that read .Value on parameter Data expecting resolved form), Ingi's stance: 'if it is, then it's not valid implementation. Let it break and find out.' v4 plan: same structural skeleton as v3 (Action.GetParameter, App.Run scaffolding, generator hierarchy) but Phase 2 simplifies dramatically (write As<T>, delete plaster), Phase 3 emits no ResetResolution, Phase 4 grows by EmitSnapshotEntry on ActionProperty, Phase 6 confirms-deletion instead of slim-As<T>. Risks section shrinks (Data.Value side-effect risk and cycle risk are designed out). Matrix grows by 3 cases: DataWrappedActionList (verifies As<T> doesn't walk into Action), ConcurrentHandlers (verifies stateless Data), ReResolveAcrossCalls (verifies backing-field reset gets fresh resolution)."
         },
         {
           "paths": [],
@@ -117,10 +117,10 @@
       "id": "c4e9a7b2-1d83-4f6e-a512-7b9c8e4d3f02",
       "bot": "test-designer",
       "timestamp_start": "2026-04-29T20:32:02Z",
-      "intent": "Translate v4 plan into a comprehensive C# test suite — matrix handlers under PLang.Tests/Generator/Matrix/ plus contract tests for As<T> resolution, Data.Value raw contract, Action.GetParameter, App.Run scaffolding, generator validation, and __SnapshotParams.",
+      "intent": "Translate v4 plan into a comprehensive C# test suite \u2014 matrix handlers under PLang.Tests/Generator/Matrix/ plus contract tests for As<T> resolution, Data.Value raw contract, Action.GetParameter, App.Run scaffolding, generator validation, and __SnapshotParams.",
       "before": {
-        "assumptions": "Per Ingi: no PLang .goal tests (existing PLang tests already exercise variable resolution end-to-end); coder builds the fixture/test helpers; tests encode v4's contract (some will fail before Phase 2 lands — intentional). Existing DataResolutionTests.cs encodes the OPPOSITE contract (snapshot-once .Value semantics) and will be rewritten as part of this plan.",
-        "risk": "Matrix must cover every property kind × type-shape combination — gaps mean undetected drift through the refactor. The architect's enumeration is the starting point; my job is to expand it where the contract demands more coverage (e.g., concurrency, re-resolve across calls, snapshot-on-error)."
+        "assumptions": "Per Ingi: no PLang .goal tests (existing PLang tests already exercise variable resolution end-to-end); coder builds the fixture/test helpers; tests encode v4's contract (some will fail before Phase 2 lands \u2014 intentional). Existing DataResolutionTests.cs encodes the OPPOSITE contract (snapshot-once .Value semantics) and will be rewritten as part of this plan.",
+        "risk": "Matrix must cover every property kind \u00d7 type-shape combination \u2014 gaps mean undetected drift through the refactor. The architect's enumeration is the starting point; my job is to expand it where the contract demands more coverage (e.g., concurrency, re-resolve across calls, snapshot-on-error)."
       },
       "plan": ".bot/runtime2-generator-obp/test-designer/v1/plan.md",
       "actions": [
@@ -141,7 +141,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Matrix test classes — one per group, covering every property kind × type-shape combination from the architect's v4 Phase 0 enumeration. Each [Test] body is Assert.Fail('Not implemented'); intent comments above each method ARE the spec. Total ~73 matrix tests across 11 files. The corresponding handler stubs (StringPlain.cs etc.) are NOT created here — they need the source generator to run on PLang.Tests, and the analyzer reference is missing on PLang.Tests.csproj. Coder wires that up + builds handlers + fixture."
+          "context": "Matrix test classes \u2014 one per group, covering every property kind \u00d7 type-shape combination from the architect's v4 Phase 0 enumeration. Each [Test] body is Assert.Fail('Not implemented'); intent comments above each method ARE the spec. Total ~73 matrix tests across 11 files. The corresponding handler stubs (StringPlain.cs etc.) are NOT created here \u2014 they need the source generator to run on PLang.Tests, and the analyzer reference is missing on PLang.Tests.csproj. Coder wires that up + builds handlers + fixture."
         },
         {
           "paths": [
@@ -151,7 +151,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Generator-level contract tests asserting v4's source generator simplification: build-time enforcement that every action property is Data<T> or [Provider]; uniform property-emission shape (one shape per parameter property — collapses today's 11-arm dispatch); thin generated ExecuteAsync (no try/catch/finally — that lives in App.Run); per-property __SnapshotParams via ActionProperty.EmitSnapshotEntry. Directly maps to Ingi's mid-stream guidance: 'make source gen simpler.'"
+          "context": "Generator-level contract tests asserting v4's source generator simplification: build-time enforcement that every action property is Data<T> or [Provider]; uniform property-emission shape (one shape per parameter property \u2014 collapses today's 11-arm dispatch); thin generated ExecuteAsync (no try/catch/finally \u2014 that lives in App.Run); per-property __SnapshotParams via ActionProperty.EmitSnapshotEntry. Directly maps to Ingi's mid-stream guidance: 'make source gen simpler.'"
         },
         {
           "paths": [
@@ -163,7 +163,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "App-side contract tests for the v4 architectural pieces: Action.GetParameter (Phase 1), Data.As<T> as resolution entry point (Phase 2), Data.Value as raw read-only (Phase 2 negative-space contract), App.Run scaffolding wrapper (Phase 3). DataValueRawTests directly probes Ingi's big-picture frame: '.Value never does work; Data flows through unchanged; no _resolved/ResetResolution/IsDeferredActionTemplate.' GetParameterTests was originally placed under deep namespace PLang.Tests.App.Goals.Goal.Steps.Step.Actions.Action — caused namespace clash with global using Goal alias (broke SetupTests.cs build). Moved to flat PLang.Tests.App namespace; build green again."
+          "context": "App-side contract tests for the v4 architectural pieces: Action.GetParameter (Phase 1), Data.As<T> as resolution entry point (Phase 2), Data.Value as raw read-only (Phase 2 negative-space contract), App.Run scaffolding wrapper (Phase 3). DataValueRawTests directly probes Ingi's big-picture frame: '.Value never does work; Data flows through unchanged; no _resolved/ResetResolution/IsDeferredActionTemplate.' GetParameterTests was originally placed under deep namespace PLang.Tests.App.Goals.Goal.Steps.Step.Actions.Action \u2014 caused namespace clash with global using Goal alias (broke SetupTests.cs build). Moved to flat PLang.Tests.App namespace; build green again."
         },
         {
           "paths": [
@@ -172,7 +172,7 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Rewrote in place. The previous 276 lines encoded the OPPOSITE contract (snapshot-once .Value semantics — list/dict snapshots cached on first read, identity preserved across reads, NeedsResolution gating). Phase 2 of v4 deletes _resolved/ResetResolution/IsDeferredActionTemplate, so those tests would all fail. Replacement encodes v4's 'Data flows through, As<T> is fresh per call' integration scenarios: shared parameter Data across action executions, loop iteration freshness, sub-goal isolation, concurrent As<T> safety. 7 test methods (vs. previous ~14) — quality over quantity, each maps to a v4 contract assertion."
+          "context": "Rewrote in place. The previous 276 lines encoded the OPPOSITE contract (snapshot-once .Value semantics \u2014 list/dict snapshots cached on first read, identity preserved across reads, NeedsResolution gating). Phase 2 of v4 deletes _resolved/ResetResolution/IsDeferredActionTemplate, so those tests would all fail. Replacement encodes v4's 'Data flows through, As<T> is fresh per call' integration scenarios: shared parameter Data across action executions, loop iteration freshness, sub-goal isolation, concurrent As<T> safety. 7 test methods (vs. previous ~14) \u2014 quality over quantity, each maps to a v4 contract assertion."
         },
         {
           "paths": [
@@ -189,9 +189,9 @@
       ],
       "timestamp_end": "2026-04-29T21:10:00Z",
       "after": {
-        "status": "Test suite complete — 139 test methods across 18 files (17 new + 1 rewritten in place). Build green.",
-        "health": "All test bodies are Assert.Fail('Not implemented'); coder fills bodies as v4 phases land. Tests are designed to flip from failing → passing in phase order (Phase 1 flips GetParameterTests; Phase 2 flips DataValueRawTests + DataAsTResolutionTests + matrix Resolution/*; Phase 3 flips AppRunScaffoldingTests + matrix shape; etc.).",
-        "notes": "Did NOT write matrix handler stubs (need PLang.Generators analyzer reference on PLang.Tests.csproj — coder wires it). Did NOT write fixture/test helpers (architect's plan defers to coder). Mid-stream message from Ingi reframed the goal as 'Data flows through, no unwrapping, source gen simpler' — incorporated into DataValueRawTests, DataAsTResolutionTests fast paths, GeneratorValidationTests uniform-shape assertions. Recommended next bot: coder for Phase 1 (Action.GetParameter) then Phase 2."
+        "status": "Test suite complete \u2014 139 test methods across 18 files (17 new + 1 rewritten in place). Build green.",
+        "health": "All test bodies are Assert.Fail('Not implemented'); coder fills bodies as v4 phases land. Tests are designed to flip from failing \u2192 passing in phase order (Phase 1 flips GetParameterTests; Phase 2 flips DataValueRawTests + DataAsTResolutionTests + matrix Resolution/*; Phase 3 flips AppRunScaffoldingTests + matrix shape; etc.).",
+        "notes": "Did NOT write matrix handler stubs (need PLang.Generators analyzer reference on PLang.Tests.csproj \u2014 coder wires it). Did NOT write fixture/test helpers (architect's plan defers to coder). Mid-stream message from Ingi reframed the goal as 'Data flows through, no unwrapping, source gen simpler' \u2014 incorporated into DataValueRawTests, DataAsTResolutionTests fast paths, GeneratorValidationTests uniform-shape assertions. Recommended next bot: coder for Phase 1 (Action.GetParameter) then Phase 2."
       }
     },
     {
@@ -201,7 +201,7 @@
       "intent": "Execute architect's v4 plan + fill in test-designer's 139 stub tests. Sequence: Phase 0 matrix handlers + fixture, Phase 1 Action.GetParameter, Phase 2 Data.As<T> + delete _resolved/ResetResolution cluster + ResolveDeep, Phase 3 App.Run scaffolding + new generator shape, Phase 4 generator hierarchy collapse, Phase 5 [VariableName] sweep + build-time validation, Phase 6 cleanup audit.",
       "before": {
         "assumptions": "Branch up to date with origin. Test suite (139 methods) all Assert.Fail. PLang.Generators not wired to PLang.Tests.csproj. Migration sweep is small (22 [VariableName] string properties; 250+ already Data<T>). Generator is single 779-line file with 11-arm property dispatch.",
-        "risk": "Phase 2 is the contract change — code that reads .Value expecting resolution will break. Architect's gate: pause if >10 sites need fixing. ResolveDeep deletion may break OnResolveTrace subscribers (need to grep). Phase 3 scaffolding move from generated ExecuteAsync to App.Run requires interface tweak for __SnapshotParams handoff."
+        "risk": "Phase 2 is the contract change \u2014 code that reads .Value expecting resolution will break. Architect's gate: pause if >10 sites need fixing. ResolveDeep deletion may break OnResolveTrace subscribers (need to grep). Phase 3 scaffolding move from generated ExecuteAsync to App.Run requires interface tweak for __SnapshotParams handoff."
       },
       "plan": ".bot/runtime2-generator-obp/coder/v1/plan.md",
       "actions": [
@@ -225,7 +225,7 @@
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 0 — wired generator into PLang.Tests via Analyzer reference. ~28 matrix handler stubs in App.modules.matrix.* (parent App namespace resolves cleanly; not auto-discovered by Modules.Discover which walks PLang.dll only). MatrixRunner fixture registers handlers on demand and dispatches via App.Run. Generator emissions prefixed with global::App.* so they resolve in any consumer namespace (PLang.Tests's `global using App = App.@this` was shadowing the App namespace at sub-scope)."
+          "context": "Phase 0 \u2014 wired generator into PLang.Tests via Analyzer reference. ~28 matrix handler stubs in App.modules.matrix.* (parent App namespace resolves cleanly; not auto-discovered by Modules.Discover which walks PLang.dll only). MatrixRunner fixture registers handlers on demand and dispatches via App.Run. Generator emissions prefixed with global::App.* so they resolve in any consumer namespace (PLang.Tests's `global using App = App.@this` was shadowing the App namespace at sub-scope)."
         },
         {
           "paths": [
@@ -235,7 +235,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 1 — Action.GetParameter(name, context) added. Pure lookup walking Parameters → Defaults → Data.NotFound. OrdinalIgnoreCase to match existing __Resolve patterns. 6 tests filled."
+          "context": "Phase 1 \u2014 Action.GetParameter(name, context) added. Pure lookup walking Parameters \u2192 Defaults \u2192 Data.NotFound. OrdinalIgnoreCase to match existing __Resolve patterns. 6 tests filled."
         },
         {
           "paths": [
@@ -252,7 +252,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 2 — the contract change. Rewrote Data.As<T>(context) as resolution entry point with substitution-before-fast-paths so T=object doesn't short-circuit. Action-destination carve-out preserves raw %var% in sub-action templates. Data.Value becomes raw read-only; deleted _resolved, _rawValue, NeedsResolution, ResetResolution(), IsDeferredActionTemplate. Variables.ResolveDeep + state + OnResolveTrace deleted. Generator stops emitting data.ResetResolution(). Plain Data.@this resolves via .As<object>(Context) so non-typed Data behaves like Data<object>. ZERO real prod breakage from contract change. 31 contract tests + 15 matrix Resolution tests filled."
+          "context": "Phase 2 \u2014 the contract change. Rewrote Data.As<T>(context) as resolution entry point with substitution-before-fast-paths so T=object doesn't short-circuit. Action-destination carve-out preserves raw %var% in sub-action templates. Data.Value becomes raw read-only; deleted _resolved, _rawValue, NeedsResolution, ResetResolution(), IsDeferredActionTemplate. Variables.ResolveDeep + state + OnResolveTrace deleted. Generator stops emitting data.ResetResolution(). Plain Data.@this resolves via .As<object>(Context) so non-typed Data behaves like Data<object>. ZERO real prod breakage from contract change. 31 contract tests + 15 matrix Resolution tests filled."
         },
         {
           "paths": [
@@ -274,7 +274,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 3 — scaffolding (callstack push/pop, save/restore Step/Goal/Event, try/catch/finally with ServiceError translation, frame.SnapshotVariables) moved from generated ExecuteAsync into App.Run. ICodeGenerated gains SnapshotParams() so App.Run's catch can attach per-property diagnostics. Generated ExecuteAsync is now thin: marker init, eager Provider, backing reset, validation, return Run(). Generator stamps __<Name>_set in Data<T> getters so WasAccessed reads correctly. EngineTests.StepRunAsync_ExceptionInHandler updated: handler-exception now translates to ServiceError at App.Run, not StepError at Step. 8 scaffolding tests + 60 matrix tests filled."
+          "context": "Phase 3 \u2014 scaffolding (callstack push/pop, save/restore Step/Goal/Event, try/catch/finally with ServiceError translation, frame.SnapshotVariables) moved from generated ExecuteAsync into App.Run. ICodeGenerated gains SnapshotParams() so App.Run's catch can attach per-property diagnostics. Generated ExecuteAsync is now thin: marker init, eager Provider, backing reset, validation, return Run(). Generator stamps __<Name>_set in Data<T> getters so WasAccessed reads correctly. EngineTests.StepRunAsync_ExceptionInHandler updated: handler-exception now translates to ServiceError at App.Run, not StepError at Step. 8 scaffolding tests + 60 matrix tests filled."
         },
         {
           "paths": [
@@ -292,7 +292,7 @@
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 4 — collapsed generator from 711-line LazyParamsGenerator.cs into Discovery/ + Emission/{Action,Property/{Data,Provider,Legacy}} hierarchy. ActionProperty abstract record exposes EmitProperty + EmitSnapshotEntry. Records use string/bool only — no IPropertySymbol leaks (Roslyn incremental safe). Discovery factory dispatches per-property (Provider/Data/Legacy). Snapshot emission moves to per-property. PLang.Tests.csproj enables EmitCompilerGeneratedFiles so structural tests can read .g.cs from disk. 13 GeneratorValidationTests + 8 SnapshotParamsTests filled."
+          "context": "Phase 4 \u2014 collapsed generator from 711-line LazyParamsGenerator.cs into Discovery/ + Emission/{Action,Property/{Data,Provider,Legacy}} hierarchy. ActionProperty abstract record exposes EmitProperty + EmitSnapshotEntry. Records use string/bool only \u2014 no IPropertySymbol leaks (Roslyn incremental safe). Discovery factory dispatches per-property (Provider/Data/Legacy). Snapshot emission moves to per-property. PLang.Tests.csproj enables EmitCompilerGeneratedFiles so structural tests can read .g.cs from disk. 13 GeneratorValidationTests + 8 SnapshotParamsTests filled."
         },
         {
           "paths": [
@@ -303,7 +303,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 5 — PLNG001 build-time diagnostic. Discovery emits a Roslyn diagnostic (DiagnosticSeverity.Error) when a partial action property is not Data<T>/plain Data, [Provider], or [VariableName] string. DiagnosticInfo flows through the IIncrementalGenerator pipeline as value-equal record. Manual smoke test confirmed PLNG001 fires on raw scalars. DEFERRED from architect plan: full [VariableName] deletion. Reason: variable.set/list.* handlers need the variable's NAME (not value) — As<T>(Context) flattens variable name into parameter property name. [VariableName] remains the cleanest expression of 'I want the name, not the value.' Logged in claude-md-proposals.md."
+          "context": "Phase 5 \u2014 PLNG001 build-time diagnostic. Discovery emits a Roslyn diagnostic (DiagnosticSeverity.Error) when a partial action property is not Data<T>/plain Data, [Provider], or [VariableName] string. DiagnosticInfo flows through the IIncrementalGenerator pipeline as value-equal record. Manual smoke test confirmed PLNG001 fires on raw scalars. DEFERRED from architect plan: full [VariableName] deletion. Reason: variable.set/list.* handlers need the variable's NAME (not value) \u2014 As<T>(Context) flattens variable name into parameter property name. [VariableName] remains the cleanest expression of 'I want the name, not the value.' Logged in claude-md-proposals.md."
         },
         {
           "paths": [
@@ -314,14 +314,75 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Phase 6 — audit + final wrap. Verified no leftover references to deleted APIs (ResolveDeep, ResetResolution, NeedsResolution, IsDeferredActionTemplate, _resolved, _rawValue, OnResolveTrace) anywhere in PLang/ or PlangConsole/. Cleaned up stale RawValue comment. PlangConsole builds. Wrote v1/summary.md and bot-root summary.md."
+          "context": "Phase 6 \u2014 audit + final wrap. Verified no leftover references to deleted APIs (ResolveDeep, ResetResolution, NeedsResolution, IsDeferredActionTemplate, _resolved, _rawValue, OnResolveTrace) anywhere in PLang/ or PlangConsole/. Cleaned up stale RawValue comment. PlangConsole builds. Wrote v1/summary.md and bot-root summary.md."
         }
       ],
       "timestamp_end": "2026-04-30T00:30:00Z",
       "after": {
         "status": "All 6 phases of architect v4 landed; [VariableName] removal deferred (documented). 2427/2427 tests passing.",
         "health": "Generator restructured into a clean hierarchy. Build green, full test suite green. PLNG001 diagnostic enforces v4 contract going forward. No real production breakage from the Data.Value contract change.",
-        "notes": "Recommended next bot: codeanalyzer (review OBP/quality on Discovery + Emission), then auditor. Full [VariableName] removal is its own design pass — needs a way to preserve variable name through As<T>(Context) for variable.set/list.* handlers."
+        "notes": "Recommended next bot: codeanalyzer (review OBP/quality on Discovery + Emission), then auditor. Full [VariableName] removal is its own design pass \u2014 needs a way to preserve variable name through As<T>(Context) for variable.set/list.* handlers."
+      }
+    },
+    {
+      "id": "60a75f36-4f8d-437f-b97a-c1d100b0fddc",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-29T23:30:00Z",
+      "timestamp_end": "2026-04-29T23:59:00Z",
+      "intent": "Review v4 implementation for OBP compliance, simplifications, readability, behavioral fragility, and dead code.",
+      "before": {
+        "assumptions": "Coder reports build green and 2427/2427 tests passing. Architect v4 plan delivered except for [VariableName] deletion (deferred). Generator restructured into Discovery+Emission. Resolution moved from Data.Value getter to Data.As<T>(context). App.Run owns scaffolding.",
+        "risk": "Behavioral regressions in As<T> resolution (action-destination carve-out, partial-match fallthrough, IList<object?> vs non-generic IList). Dead emission slots (legacy helpers always emitted). Possible cache-poisoning in IIncrementalGenerator if records leak Roslyn symbols."
+      },
+      "plan": ".bot/runtime2-generator-obp/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/codeanalyzer/v1/plan.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/v1/result.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/v1/summary.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/v1/verdict.json",
+            ".bot/runtime2-generator-obp/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "5-pass review output: plan.md (approach), result.md (38 findings with file:line), summary.md (this version), verdict.json (fail), root summary.md (cross-version index)."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/Emission/Property/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Property/Provider/this.cs",
+            "PLang.Generators/Emission/Property/Legacy/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Generator hierarchy review. ActionClassInfo not a record (incremental cache contract broken). Two dead emission slots: __variables, __paramData/ParamData(). __resolutionError dead for v4-shape handlers (transitional). __OriginalDefinition.Name == \"@this\" branch dead. Synthetic Location.Create instead of using IPropertySymbol.Locations[0]."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang/App/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/modules/ICodeGenerated.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Debug/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Runtime review. Data.As<T> recursion lacks cycle detection. WalkList/WalkDict only match generic typed shapes (non-generic IList/IDictionary silently pass). As<T> ignores _type.Convert. App.Run catch deliberately catches OCE (load-bearing for timeout.after, undocumented). SubstitutePrimitive hardcodes Action.@this knowledge into Data \u2014 couples Data downward (Rule 1)."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "NEEDS WORK \u2014 design is sound, but 10 MAJOR findings need cleanup before merge or in immediate follow-up.",
+        "notes": "Top three to fix: (1) ActionClassInfo class\u2192record + List<T>\u2192EquatableArray<T>; (2) delete __variables; (3) delete __paramData and ParamData() accessor. Top three behavioral concerns: (1) cycle detection in AsT_Impl; (2) document SubstitutePrimitive shape contract; (3) comment App.Run OCE-catch dependency. Suggest sending back to coder."
       }
     }
   ]
