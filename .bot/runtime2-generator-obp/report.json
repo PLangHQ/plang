@@ -112,6 +112,87 @@
         "health": "no code touched beyond the merge of origin/runtime2 (no conflicts, build green); design-only session",
         "notes": "Architect role ends here. Recommended next bot: test-designer to flesh out the matrix (~25-28 handlers with the three new cases), then coder for Phase 1 onwards. Phase 0 review point still recommended after matrix lands."
       }
+    },
+    {
+      "id": "c4e9a7b2-1d83-4f6e-a512-7b9c8e4d3f02",
+      "bot": "test-designer",
+      "timestamp_start": "2026-04-29T20:32:02Z",
+      "intent": "Translate v4 plan into a comprehensive C# test suite — matrix handlers under PLang.Tests/Generator/Matrix/ plus contract tests for As<T> resolution, Data.Value raw contract, Action.GetParameter, App.Run scaffolding, generator validation, and __SnapshotParams.",
+      "before": {
+        "assumptions": "Per Ingi: no PLang .goal tests (existing PLang tests already exercise variable resolution end-to-end); coder builds the fixture/test helpers; tests encode v4's contract (some will fail before Phase 2 lands — intentional). Existing DataResolutionTests.cs encodes the OPPOSITE contract (snapshot-once .Value semantics) and will be rewritten as part of this plan.",
+        "risk": "Matrix must cover every property kind × type-shape combination — gaps mean undetected drift through the refactor. The architect's enumeration is the starting point; my job is to expand it where the contract demands more coverage (e.g., concurrency, re-resolve across calls, snapshot-on-error)."
+      },
+      "plan": ".bot/runtime2-generator-obp/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Generator/Matrix/Plain/PlainTests.cs",
+            "PLang.Tests/Generator/Matrix/Nullable/NullableTests.cs",
+            "PLang.Tests/Generator/Matrix/WithDefault/WithDefaultTests.cs",
+            "PLang.Tests/Generator/Matrix/DataPlain/DataPlainTests.cs",
+            "PLang.Tests/Generator/Matrix/DataWrapped/DataWrappedTests.cs",
+            "PLang.Tests/Generator/Matrix/Provider/ProviderTests.cs",
+            "PLang.Tests/Generator/Matrix/IsNotNull/IsNotNullTests.cs",
+            "PLang.Tests/Generator/Matrix/Markers/MarkersTests.cs",
+            "PLang.Tests/Generator/Matrix/Resolution/ResolutionTests.cs",
+            "PLang.Tests/Generator/Matrix/Modifier/ModifierTests.cs",
+            "PLang.Tests/Generator/Matrix/Snapshot/SnapshotTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Matrix test classes — one per group, covering every property kind × type-shape combination from the architect's v4 Phase 0 enumeration. Each [Test] body is Assert.Fail('Not implemented'); intent comments above each method ARE the spec. Total ~73 matrix tests across 11 files. The corresponding handler stubs (StringPlain.cs etc.) are NOT created here — they need the source generator to run on PLang.Tests, and the analyzer reference is missing on PLang.Tests.csproj. Coder wires that up + builds handlers + fixture."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/GeneratorValidationTests.cs",
+            "PLang.Tests/Generator/SnapshotParamsTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Generator-level contract tests asserting v4's source generator simplification: build-time enforcement that every action property is Data<T> or [Provider]; uniform property-emission shape (one shape per parameter property — collapses today's 11-arm dispatch); thin generated ExecuteAsync (no try/catch/finally — that lives in App.Run); per-property __SnapshotParams via ActionProperty.EmitSnapshotEntry. Directly maps to Ingi's mid-stream guidance: 'make source gen simpler.'"
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/GetParameterTests.cs",
+            "PLang.Tests/App/AppRunScaffoldingTests.cs",
+            "PLang.Tests/App/Memory/DataAsTResolutionTests.cs",
+            "PLang.Tests/App/Memory/DataValueRawTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "App-side contract tests for the v4 architectural pieces: Action.GetParameter (Phase 1), Data.As<T> as resolution entry point (Phase 2), Data.Value as raw read-only (Phase 2 negative-space contract), App.Run scaffolding wrapper (Phase 3). DataValueRawTests directly probes Ingi's big-picture frame: '.Value never does work; Data flows through unchanged; no _resolved/ResetResolution/IsDeferredActionTemplate.' GetParameterTests was originally placed under deep namespace PLang.Tests.App.Goals.Goal.Steps.Step.Actions.Action — caused namespace clash with global using Goal alias (broke SetupTests.cs build). Moved to flat PLang.Tests.App namespace; build green again."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Memory/DataResolutionTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Rewrote in place. The previous 276 lines encoded the OPPOSITE contract (snapshot-once .Value semantics — list/dict snapshots cached on first read, identity preserved across reads, NeedsResolution gating). Phase 2 of v4 deletes _resolved/ResetResolution/IsDeferredActionTemplate, so those tests would all fail. Replacement encodes v4's 'Data flows through, As<T> is fresh per call' integration scenarios: shared parameter Data across action executions, loop iteration freshness, sub-goal isolation, concurrent As<T> safety. 7 test methods (vs. previous ~14) — quality over quantity, each maps to a v4 contract assertion."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/test-designer/v1/plan.md",
+            ".bot/runtime2-generator-obp/test-designer/v1/summary.md",
+            ".bot/runtime2-generator-obp/test-designer/v1/verdict.json",
+            ".bot/runtime2-generator-obp/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot output: plan.md (with mid-stream amendment for Ingi's 'Data flows through' big-picture clarification), v1 summary, bot-root summary, verdict pass."
+        }
+      ],
+      "timestamp_end": "2026-04-29T21:10:00Z",
+      "after": {
+        "status": "Test suite complete — 139 test methods across 18 files (17 new + 1 rewritten in place). Build green.",
+        "health": "All test bodies are Assert.Fail('Not implemented'); coder fills bodies as v4 phases land. Tests are designed to flip from failing → passing in phase order (Phase 1 flips GetParameterTests; Phase 2 flips DataValueRawTests + DataAsTResolutionTests + matrix Resolution/*; Phase 3 flips AppRunScaffoldingTests + matrix shape; etc.).",
+        "notes": "Did NOT write matrix handler stubs (need PLang.Generators analyzer reference on PLang.Tests.csproj — coder wires it). Did NOT write fixture/test helpers (architect's plan defers to coder). Mid-stream message from Ingi reframed the goal as 'Data flows through, no unwrapping, source gen simpler' — incorporated into DataValueRawTests, DataAsTResolutionTests fast paths, GeneratorValidationTests uniform-shape assertions. Recommended next bot: coder for Phase 1 (Action.GetParameter) then Phase 2."
+      }
     }
   ]
 }
