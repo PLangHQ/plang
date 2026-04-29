@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "No critical/high open findings. 2 medium info-disclosure (ParamSnapshot + standing Snapshot/GetAll) and 4 low tripwires worth a coder pass." }

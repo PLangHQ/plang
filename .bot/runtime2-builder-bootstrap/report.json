@@ -651,6 +651,69 @@
         "health": "C# 2309/2309 green; PLang 142/24/4-stale unchanged from v3; V3-1 + V3-2 closed at unit-test level with mutation tests biting on all 4 representative regressions.",
         "notes": "F4 cluster (23 reds) remains as explicit-scope carryover per coder v1 plan. Two minor follow-ups documented (M1 chain order pinned only at spec level for non-Add ops; M2 [object] tag brittle to Data refactor \u2014 both acceptable). Recommend hand to security."
       }
+    },
+    {
+      "id": "9b5e2f44-7c81-4d9a-b3e2-1a8f6c0d4e91",
+      "bot": "security",
+      "timestamp_start": "2026-04-29T09:00:00Z",
+      "timestamp_end": "",
+      "intent": "Phase 1 + Phase 2 security audit of the runtime2-builder-bootstrap branch — trust-boundary leaks, deserialization, type confusion, and standing-finding regression check.",
+      "before": {
+        "assumptions": "Branch is huge (~2500 files, ~200 C# changed). Coder handover and codeanalyzer v2 were CLEAN. Standing findings: Variables.Snapshot()/GetAll() don't honor [Sensitive]. New surfaces: ParamSnapshot, TypeConverter, Catalog, granular LLM debug.",
+        "risk": "Scope too large to deeply analyze every file — triaging by trust-boundary relevance. Risk of missing systemic issues in handlers I don't open."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/security/v1/plan.md",
+      "timestamp_end": "2026-04-29T09:35:00Z",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-bootstrap/security/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan: triaged 200-file branch into Tier 1 (deep dive on ParamSnapshot+LazyParamsGenerator, Variables, BuilderProvider, TypeConverter, Error.cs) and Tier 2 (Catalog, FluidProvider, Debug, OpenAiProvider, Modules.Describe). Out-of-scope: .goal/.pr/docs."
+        },
+        {
+          "paths": [
+            "PLang.Generators/LazyParamsGenerator.cs",
+            "PLang/App/Errors/ParamSnapshot.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/modules/assert/AssertSnapshot.cs",
+            "PLang/App/modules/test/report.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/Utils/Json.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/Catalog/this.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/App/FileSystem/Path.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read changed surfaces vs runtime2 base. Traced ParamSnapshot generator output through Error.cs FormatVerboseValue render path — confirmed no [Sensitive] mask. Verified standing Variables.Snapshot/GetAll finding still present. Cross-checked Json.DiagnosticOutput's mask scope (typed properties only, not dict entries). Confirmed STJ defaults block polymorphic deserialization. Checked Debug.ResolveLlmFilePath for path-component sanitization."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/security-report.json",
+            ".bot/runtime2-builder-bootstrap/security/v1/verdict.json",
+            ".bot/runtime2-builder-bootstrap/security/v1/summary.md",
+            ".bot/runtime2-builder-bootstrap/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote attack-surface map, 6 findings (2 medium info-disclosure, 4 low tripwires), pass verdict, v1 summary, and bot-root cross-session summary."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "PASS — no critical/high. F1 (ParamSnapshot bypasses [Sensitive], NEW) and F2 (standing Variables.Snapshot/GetAll finding confirmed) are medium info-disclosure issues worth a coder follow-up but not blocking. F3-F6 are low tripwires.",
+        "notes": "F1 root fix is in LazyParamsGenerator: detect [Sensitive] on the property and emit PrValue/FinalValue as the literal '******' (or null + a flag). F2 is the same shape as the standing finding — extend Data.@this with a Sensitive flag honored by every snapshot path. F6 (BuildingGuard removal) is intentional per commit 4633674c — flagged for architect awareness about runtime-callable .pr-mutating actions."
+      }
     }
   ]
 }
