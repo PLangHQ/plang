@@ -20,25 +20,49 @@ public class ValidateResponseTests
         return goal;
     }
 
+    private Goal MakeGoalWithPriorActions(int stepCount)
+    {
+        var goal = new Goal { Name = "TestGoal", Path = "/Test.goal" };
+        for (int i = 0; i < stepCount; i++)
+        {
+            var step = new Step { Index = i, Text = $"step {i}" };
+            step.Actions.Add(new PrAction { Module = "output", ActionName = "write" });
+            goal.Steps.Add(step);
+        }
+        return goal;
+    }
+
+    private static Step BuildStep(int index, params (string module, string action)[] actions)
+    {
+        var s = new Step { Index = index };
+        foreach (var (m, a) in actions)
+            s.Actions.Add(new PrAction { Module = m, ActionName = a });
+        return s;
+    }
+
+    private static validateResponse Make(BuildResponse response, Goal goal,
+        global::App.@this app)
+    {
+        return new validateResponse
+        {
+            Context = app.Context,
+            StepResults = new global::App.Data.@this<BuildResponse>("", response),
+            Goal = new global::App.Data.@this<Goal>("", goal)
+        };
+    }
+
     [Test]
     public async Task ValidResponse_TwoSteps_ReturnsOk()
     {
-        var steps = new Dictionary<string, object?>
+        var response = new BuildResponse
         {
-            ["steps"] = new List<object>
+            Steps = new()
             {
-                new Dictionary<string, object?> { ["index"] = 0, ["actions"] = new List<object> { new Dictionary<string, object?> { ["module"] = "output", ["action"] = "write" } } },
-                new Dictionary<string, object?> { ["index"] = 1, ["actions"] = new List<object> { new Dictionary<string, object?> { ["module"] = "variable", ["action"] = "set" } } }
+                BuildStep(0, ("output", "write")),
+                BuildStep(1, ("variable", "set")),
             }
         };
-
-        var action = new validateResponse
-        {
-            Context = _app.Context,
-            StepResults = new Data("", steps),
-            Goal = new Data("", MakeGoal(2))
-        };
-        var result = await action.Run();
+        var result = await Make(response, MakeGoal(2), _app).Run();
 
         await Assert.That(result.Success).IsTrue();
     }
@@ -46,21 +70,11 @@ public class ValidateResponseTests
     [Test]
     public async Task WrongStepCount_ReturnsError()
     {
-        var steps = new Dictionary<string, object?>
+        var response = new BuildResponse
         {
-            ["steps"] = new List<object>
-            {
-                new Dictionary<string, object?> { ["index"] = 0, ["actions"] = new List<object> { new Dictionary<string, object?> { ["module"] = "output", ["action"] = "write" } } }
-            }
+            Steps = new() { BuildStep(0, ("output", "write")) }
         };
-
-        var action = new validateResponse
-        {
-            Context = _app.Context,
-            StepResults = new Data("", steps),
-            Goal = new Data("", MakeGoal(3))
-        };
-        var result = await action.Run();
+        var result = await Make(response, MakeGoal(3), _app).Run();
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Step count");
@@ -68,61 +82,13 @@ public class ValidateResponseTests
     }
 
     [Test]
-    public async Task MissingSteps_ReturnsError()
-    {
-        var action = new validateResponse
-        {
-            Context = _app.Context,
-            StepResults = new Data("", new Dictionary<string, object?> { ["noSteps"] = true }),
-            Goal = new Data("", MakeGoal(1))
-        };
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Message).Contains("Could not find 'steps'");
-    }
-
-    [Test]
-    public async Task MissingIndex_ReturnsError()
-    {
-        var steps = new Dictionary<string, object?>
-        {
-            ["steps"] = new List<object>
-            {
-                new Dictionary<string, object?> { ["actions"] = new List<object> { new Dictionary<string, object?> { ["module"] = "x" } } }
-            }
-        };
-
-        var action = new validateResponse
-        {
-            Context = _app.Context,
-            StepResults = new Data("", steps),
-            Goal = new Data("", MakeGoal(1))
-        };
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Message).Contains("missing 'index'");
-    }
-
-    [Test]
     public async Task NoActions_ReturnsError()
     {
-        var steps = new Dictionary<string, object?>
+        var response = new BuildResponse
         {
-            ["steps"] = new List<object>
-            {
-                new Dictionary<string, object?> { ["index"] = 0, ["actions"] = new List<object>() }
-            }
+            Steps = new() { new Step { Index = 0 } }
         };
-
-        var action = new validateResponse
-        {
-            Context = _app.Context,
-            StepResults = new Data("", steps),
-            Goal = new Data("", MakeGoal(1))
-        };
-        var result = await action.Run();
+        var result = await Make(response, MakeGoal(1), _app).Run();
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("no actions");
@@ -131,22 +97,15 @@ public class ValidateResponseTests
     [Test]
     public async Task GapInIndexes_ReturnsError()
     {
-        var steps = new Dictionary<string, object?>
+        var response = new BuildResponse
         {
-            ["steps"] = new List<object>
+            Steps = new()
             {
-                new Dictionary<string, object?> { ["index"] = 0, ["actions"] = new List<object> { new Dictionary<string, object?> { ["module"] = "x" } } },
-                new Dictionary<string, object?> { ["index"] = 2, ["actions"] = new List<object> { new Dictionary<string, object?> { ["module"] = "x" } } }
+                BuildStep(0, ("output", "write")),
+                BuildStep(2, ("output", "write")),
             }
         };
-
-        var action = new validateResponse
-        {
-            Context = _app.Context,
-            StepResults = new Data("", steps),
-            Goal = new Data("", MakeGoal(2))
-        };
-        var result = await action.Run();
+        var result = await Make(response, MakeGoal(2), _app).Run();
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("indexes must be 0..1");
@@ -158,39 +117,121 @@ public class ValidateResponseTests
         var action = new validateResponse
         {
             Context = _app.Context,
-            StepResults = new Data(""),
-            Goal = new Data("")
+            StepResults = new global::App.Data.@this<BuildResponse>(),
+            Goal = new global::App.Data.@this<Goal>(),
         };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+        // Pin which validation fired — multiple ValidationError variants exist
+        // (null inputs, step-count mismatch, gap in indexes, Keep-without-prior).
+        // The empty Data<T>() ctor produces an initialized-but-null wrapper, so
+        // both branches of the null-input message report each parameter.
+        await Assert.That(result.Error!.Message).Contains("StepResults.Value is null");
+        await Assert.That(result.Error!.Message).Contains("Goal.Value is null");
     }
 
     [Test]
-    public async Task MultipleErrors_CollectsAll()
+    public async Task KeepTrue_NoActionsEmitted_PriorHasActions_ReturnsOk()
     {
-        // Wrong count + missing index + no actions = multiple errors
-        var steps = new Dictionary<string, object?>
+        var response = new BuildResponse
         {
-            ["steps"] = new List<object>
-            {
-                new Dictionary<string, object?> { /* no index, no actions */ }
-            }
+            Steps = new() { new Step { Index = 0, Keep = true } }
         };
+        var result = await Make(response, MakeGoalWithPriorActions(1), _app).Run();
 
-        var action = new validateResponse
+        await Assert.That(result.Success).IsTrue();
+    }
+
+    [Test]
+    public async Task KeepTrue_PriorHasNoActions_ReturnsError()
+    {
+        var response = new BuildResponse
         {
-            Context = _app.Context,
-            StepResults = new Data("", steps),
-            Goal = new Data("", MakeGoal(3))
+            Steps = new() { new Step { Index = 0, Keep = true } }
         };
-        var result = await action.Run();
+        var result = await Make(response, MakeGoal(1), _app).Run();
 
         await Assert.That(result.Success).IsFalse();
-        // Should contain step count error AND missing index AND no actions
-        await Assert.That(result.Error!.Message).Contains("Step count");
-        await Assert.That(result.Error!.Message).Contains("missing 'index'");
-        await Assert.That(result.Error!.Message).Contains("no actions");
+        await Assert.That(result.Error!.Message).Contains("keep:true but the prior .pr has no actions");
+    }
+
+    // --- Scalar PlangType shape check ---
+    // tstring/path are Scalar PlangTypes — wire form is bare string.
+    // The LLM sometimes wraps tstring values as `{value, key}`; this catches that
+    // so LlmFixer retries with the error feedback.
+
+    [Test]
+    public async Task TstringParam_StringValue_ReturnsOk()
+    {
+        var step = new Step { Index = 0 };
+        var act = new PrAction { Module = "output", ActionName = "write" };
+        act.Parameters.Add(new Data("Data", "Hello %name%", new global::App.Data.Type("tstring")));
+        step.Actions.Add(act);
+
+        var response = new BuildResponse { Steps = new() { step } };
+        var result = await Make(response, MakeGoal(1), _app).Run();
+
+        await Assert.That(result.Success).IsTrue();
+    }
+
+    [Test]
+    public async Task TstringParam_RecordValue_ReturnsError()
+    {
+        var step = new Step { Index = 0 };
+        var act = new PrAction { Module = "output", ActionName = "write" };
+        var record = new Dictionary<string, object?>
+        {
+            ["value"] = "Hello %name%",
+            ["key"] = null,
+        };
+        act.Parameters.Add(new Data("Data", record, new global::App.Data.Type("tstring")));
+        step.Actions.Add(act);
+
+        var response = new BuildResponse { Steps = new() { step } };
+        var result = await Make(response, MakeGoal(1), _app).Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Message).Contains("type 'tstring' but value is not a plain string");
+        await Assert.That(result.Error!.Message).Contains("bare string values");
+    }
+
+    [Test]
+    public async Task PathParam_RecordValue_ReturnsError()
+    {
+        var step = new Step { Index = 0 };
+        var act = new PrAction { Module = "file", ActionName = "read" };
+        var record = new Dictionary<string, object?>
+        {
+            ["raw"] = "/tmp/x.txt",
+            ["absolute"] = "/tmp/x.txt",
+        };
+        act.Parameters.Add(new Data("Path", record, new global::App.Data.Type("path")));
+        step.Actions.Add(act);
+
+        var response = new BuildResponse { Steps = new() { step } };
+        var result = await Make(response, MakeGoal(1), _app).Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Message).Contains("type 'path' but value is not a plain string");
+    }
+
+    [Test]
+    public async Task ScalarShape_KeepTrueStep_Skipped()
+    {
+        // keep:true reuses prior; the inbound bad shape is irrelevant — enrichResponse
+        // will overwrite from prior. Don't double-error.
+        var step = new Step { Index = 0, Keep = true };
+        var act = new PrAction { Module = "output", ActionName = "write" };
+        act.Parameters.Add(new Data("Data",
+            new Dictionary<string, object?> { ["value"] = "x" },
+            new global::App.Data.Type("tstring")));
+        step.Actions.Add(act);
+
+        var response = new BuildResponse { Steps = new() { step } };
+        var result = await Make(response, MakeGoalWithPriorActions(1), _app).Run();
+
+        await Assert.That(result.Success).IsTrue();
     }
 }

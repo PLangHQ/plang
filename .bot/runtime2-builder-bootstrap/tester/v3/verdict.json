@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "needs-fixes — F2 (catalog skip) + F3 (math examples) close cleanly at integration level; F4 cluster (23 PLang reds) untouched; closures lack C# unit tests (IsCatalogDescription match-true path + ExamplesForLlm rendered output)."
+}

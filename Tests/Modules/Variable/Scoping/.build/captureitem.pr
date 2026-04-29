@@ -1,0 +1,52 @@
+{
+  "name": "CaptureItem",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %captured% = \u0022%captured%,%item%\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%captured%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%captured%,%item%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/CaptureItem.goal",
+  "prPath": "/.build/captureitem.pr",
+  "hash": "51b9279b30e920ef717ea10f7f9f2c21ea4d5604e161a72cd24f8983e791f068",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

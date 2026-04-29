@@ -3,8 +3,7 @@ using App.Variables;
 
 namespace App.modules.error;
 
-[Example("throw 'User not found'", "Message=User not found")]
-[Example("throw 'Access denied', status code 403, key 'Forbidden'", "Message=Access denied, StatusCode=403, Key=Forbidden")]
+[System.ComponentModel.Description("Immediately fail the step with a structured error message, status code, and optional key")]
 [Action("throw", Cacheable = false)]
 public partial class Throw : IContext
 {

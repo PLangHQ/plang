@@ -3,8 +3,7 @@ using App.modules.assert.providers;
 
 namespace App.modules.assert;
 
-[Example("assert %result% is null", "Value=%result%")]
-[Example("assert %deletedUser% is null, 'User should be deleted'", "Value=%deletedUser%, Message=User should be deleted")]
+[System.ComponentModel.Description("Assert that Value is null or unset; fails with an error if it has a value")]
 [Action("isNull")]
 public partial class IsNull : IContext
 {

@@ -9,9 +9,10 @@ namespace App.modules.loop;
 /// Supports dictionaries (key/value), lists (index/value), and any IEnumerable.
 /// Respects goal.return (Returned flag) and cancellation.
 /// </summary>
-[Example("foreach %items%, call ProcessItem item=%item%", "Collection=%items%, ItemName=item (+ goal.call action)")]
-[Example("foreach %files%, read file %file%, write to %content%", "Collection=%files%, ItemName=file (+ file.read + variable.set actions)")]
-[Example("foreach %users%, write out %user.name%", "Collection=%users%, ItemName=user (+ output.write action)")]
+[ModuleDescription("Iterate over a collection, executing the remaining step actions once per item")]
+[System.ComponentModel.Description("Iterate over Collection, binding each item to ItemName and executing the remaining step actions")]
+[Example("foreach %items%, call ProcessItem item=%item%",
+    "loop.foreach Collection([object] %items%), ItemName([string] item) | goal.call GoalName([goal.call] ProcessItem)")]
 [Action("foreach")]
 public partial class Foreach : IContext, IStep
 {
@@ -38,19 +39,15 @@ public partial class Foreach : IContext, IStep
             if (Context.CancellationToken.IsCancellationRequested)
                 return Data(new types.loop { itemCount = count, completed = false });
 
-            item.Name = variableName;
-            Context.Variables.Put(item);
+            Context.Variables.Set(variableName, item);
             if (KeyName != null)
-            {
-                key.Name = KeyName;
-                Context.Variables.Put(key);
-            }
+                Context.Variables.Set(KeyName, key);
 
             foreach (var action in bodyActions)
             {
                 var result = await action.RunAsync(Context);
                 if (result.Returned) return result;
-                if (!result.Success && !result.Handled) return result;
+                if (!result.Success) return result;
             }
             count++;
         }

@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "NEEDS WORK — 10 actionable findings led by a deletable diagnostic probe in DefaultBuilderProvider, 5 bare-catch silent-swallow sites, two Try* methods that throw, and a key-name heuristic in Data.@this. Architecture is solid; bug-hardening work needed."
+}

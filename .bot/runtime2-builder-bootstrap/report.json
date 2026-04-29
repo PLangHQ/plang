@@ -1,0 +1,913 @@
+{
+  "branch": "runtime2-builder-bootstrap",
+  "sessions": [
+    {
+      "id": "637e3a9e-a983-4fb9-9a91-51eb55329bc6",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-27T22:44:26Z",
+      "timestamp_end": "2026-04-27T23:01:13Z",
+      "intent": "Code-quality analysis of the runtime2-builder-bootstrap branch \u2014 OBP/simplicity/readability + behavioral reasoning + deletion test on the new and most-changed C# files.",
+      "before": {
+        "assumptions": "Branch is huge (2347 files, ~69k insertions). Coder report described 3 small gap fixes; actual branch contains the full v2 self-rebuild pipeline + diagnostics + module sweep. Will scope analysis to the highest-risk new/changed C# files in PLang/.",
+        "risk": "Scope is too large to deeply analyze every file; have to triage. Risk of missing systemic issues in modules I don't open. Builder is non-deterministic so I avoid asserting anything about .pr files."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the v1 plan with Tier 1 (deep dive on ~10 files) and Tier 2 (lighter scan on ~12 files), explicitly scoping out .goal/.pr files and tests. User approved with 'good, go'."
+        },
+        {
+          "paths": [
+            "PLang/App/Utils/PlangTypeIndex.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/Utils/TypeMapping.cs",
+            "PLang/App/Utils/MimeTypes.cs",
+            "PLang/App/Catalog/this.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/Catalog/ActionSpec.cs",
+            "PLang/App/Catalog/ExampleSpec.cs",
+            "PLang/App/Catalog/TypeEntry.cs",
+            "PLang/App/Catalog/ExampleHelpers.cs",
+            "PLang/App/modules/builder/validateResponse.cs",
+            "PLang/App/modules/builder/BuildResponse.cs",
+            "PLang/App/modules/builder/enrichResponse.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/Actor/Context/Trace/this.cs",
+            "PLang/App/Actor/Context/this.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang/App/Errors/ParamSnapshot.cs",
+            "PLang/App/Attributes/PlangTypeAttribute.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/Goals/Goal/Steps/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/Goals/Goal/this.cs",
+            "PLang/App/FileSystem/Path.cs",
+            "PLang/App/Data/this.cs",
+            "PLang.Generators/LazyParamsGenerator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read all Tier 1 files in full and Tier 2 files via diff. Cross-referenced commit messages (50351d8b builder-bootstrap squash, ada1901a CLR-type guard, 711c2107 rebuild-clean) and the coder/v1/report.md handover. Ran 5 analysis passes: OBP / Simplification / Readability / Behavioral reasoning / Deletion test."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v1/result.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v1/verdict.json",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v1/summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the per-file findings (result.md), the structured verdict (verdict.json: status=fail, NEEDS WORK), the v1 narrative (summary.md), and the cross-session bot summary. 10 prioritized actionable findings."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "NEEDS WORK \u2014 3 MAJOR / 4 MEDIUM / 3 MINOR. Core architecture (Catalog, PlangType, Trace, ParamSnapshot, BuildResponse) is solid; the issues are bug-hardening: bare-catch silent swallows, throws from Try* methods, a live diagnostic probe deletable as-is, and a key-name heuristic.",
+        "notes": "Top-priority handovers to the coder: (1) delete DefaultBuilderProvider.DiagGoal block (lines 171\u2013198), (2) convert TypeConverter throws at lines 266 + 295 into structured Error returns, (3) sweep 5 bare-catch sites for specific exception filters. Debug/this.cs (282 lines changed) deferred \u2014 recommend its own focused review pass."
+      }
+    },
+    {
+      "id": "a3469ae5-eadf-4cda-89b8-6193478cdb07",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-28T00:19:10Z",
+      "timestamp_end": "2026-04-28T00:31:33Z",
+      "intent": "v2 \u2014 re-review the coder's response (commit 80200746) to v1's 10 findings. Pass 4 behavioral reasoning on the fixes themselves.",
+      "before": {
+        "assumptions": "Coder closed 8 of 10 v1 findings; #9 and #10 explicitly deferred. Diff is ~12 files, all small (53 ins / 63 del). Each fix is itself new code that needs review.",
+        "risk": "Catch filters that look filtered may still over-catch (e.g., ArgumentException too broad). CLR-identity check for deferred templates may be wider than needed and break legitimate Action collections. Volatile fix on PlangTypeIndex must reflect actual .NET memory model semantics \u2014 easy to wave hands."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/v1_review_summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the v1-response summary and v2 plan. Plan scoped to 11 touched files; user approved with 'go'."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang.Generators/LazyParamsGenerator.cs",
+            "PLang/App/Data/this.cs",
+            "PLang/App/Actor/Context/this.cs",
+            "PLang/App/Utils/PlangTypeIndex.cs",
+            "PLang/App/modules/error/handle.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Re-read every file the coder touched. For each fix: confirmed v1 closure, then ran Pass 4 (caller trace for TryConvertTo throw\u2192Error; over-broadness check on IsDeferredActionTemplate; .NET memory model semantics for volatile DCL; production-caller grep for Context Clone/CreateChild). Confirmed all 8 priority closures + identified 4 carryover sub-findings that were never on the v1 priority list."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/result.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/verdict.json",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v2/changes.patch",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote per-fix verification (result.md), narrative (summary.md), structured verdict (CLEAN/pass), patch dump, and updated the bot-root summary with the v2 entry."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "CLEAN \u2014 all 8 v1 priority fixes verified at code level + traced behaviorally. No regressions introduced. Two items (#9 three-renderer consolidation, #10 culture-sensitive ToString) explicitly deferred and acceptable. Four lower-priority sub-findings carryover (silent first-element-of-array, null\u21920 default, fall-through error loss, debug-only logging) \u2014 not regressions, not on priority list.",
+        "notes": "Recommend tester next. Behavioral changes that warrant coverage: error.handle.Wrap RetryFirst recovery-value flow (todo logged in Documentation/Runtime2/todos.md); IsDeferredActionTemplate broadening (now catches Actions.@this collections in addition to List<Action.@this>)."
+      }
+    },
+    {
+      "id": "e0bd049b-8fd1-4682-a7fe-48319b099c94",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-28T00:45:24Z",
+      "timestamp_end": "2026-04-28T00:55:16Z",
+      "intent": "v3 \u2014 fresh-eyes review of the whole branch, not just the coder's response. Half A: pattern sweeps across all 167 changed C# files. Half B: deep reads on what v1 deferred (Debug/this.cs, TypeMapping full, builder modules, test infra, root objects).",
+      "before": {
+        "assumptions": "v1 only deeply analyzed ~22 of 167 changed files; large surface area was never opened. v2 was only the coder's fix commit. Bias risk: 'I already passed this branch' \u2014 must set aside v1/v2 conclusions and look freshly.",
+        "risk": "60-90 min of work. Could miss systemic issues if I per-file rather than pattern-sweep. Must report and stop if Half A surfaces a systemic finding rather than power through Half B."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v3 plan: Half A (pattern sweeps across all 167 changed files) + Half B (deep reads on what v1 deferred). User approved with 'start'."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/test/discover.cs",
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/Utils/TypeMapping.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/builder/validateResponse.cs",
+            "PLang/App/Catalog/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Data/this.cs",
+            "PLang/App/Goals/Goal/this.cs",
+            "PLang/App/modules/test/run.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Half A: grep sweeps for bare-catch (found 5 new sites), throws-from-Try (Data.UnwrapJsonElement and Data.Envelope - safety guards, OK), System.IO violations (none in app code), Convert.ChangeType (locale-sensitive bug), generic casts (none new), mutable static state (only PlangTypeIndex.Assemblies, already flagged), OBP outside-iteration (mostly DTO contexts, acceptable), Clone-family (Step.@this missing 7 props, Data.@this missing _rawValue). Half B: deep-read Debug/this.cs (3 bare catches + non-idempotent Apply + OpenAiProvider hardcoding), TypeMapping (no new findings), DefaultBuilderProvider in full (FormatValue bare catch, NormalizeParameterTypes silent error discard, PromoteGroups stderr-only on JsonElement), test/discover (bare catch on ValidatePath), test/run (CLEAN \u2014 model for the rest of the diff)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/result.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/verdict.json",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/changes.patch",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote per-finding result with 8-item priority list for the coder, narrative summary, structured verdict (NEEDS WORK / fail), patch dump, and updated bot-root summary with v3 entry. v3 verdict: NEEDS WORK \u2014 5 bare catches + Step.Clone broken + Convert.ChangeType locale + 2 silent-failure paths + Debug.Apply idempotency."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "NEEDS WORK \u2014 fresh-eyes pass surfaced what v1's triaged review didn't open. 5 bare catches still in the diff (test/discover, list/add, Debug \u00d73, DefaultBuilderProvider FormatValue). Step.@this.Clone() missing 7 of 18 properties \u2014 recommend deletion (zero production callers). TypeConverter Convert.ChangeType locale-sensitive \u2014 JSON-shaped numbers break on European locales. DefaultBuilderProvider has 2 silent-failure paths (NormalizeParameterTypes discards conversion errors; PromoteGroups stderr-only on JsonElement). Debug.Apply() not idempotent. Debug LLM tracing hardcoded to OpenAiProvider.",
+        "notes": "Send back to coder. Priority list in v3/result.md. Most fixes are mechanical (bare catches use the same shape v2 already applied). Architecture is solid \u2014 these are the same anti-patterns v1 flagged, just at sites v1 didn't open. After coder's response, recommend tester (locale fix needs Spanish/Italian-culture coverage)."
+      }
+    },
+    {
+      "id": "a79b4eac-5b20-4ccb-ba40-26129e878ff7",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-28T11:09:20Z",
+      "timestamp_end": "2026-04-28T11:25:25Z",
+      "intent": "v4 \u2014 verify coder's response (commit 65555d3e) to v3's 8 findings. 5 fixed, 3 explicitly deferred. Pass 4 behavioral reasoning on the new code itself.",
+      "before": {
+        "assumptions": "Coder closed 5 of 8 v3 findings; #1 (Step.Clone deletion), #7 (Data.Clone _rawValue), #8 (Debug LLM tracing decoupling) explicitly deferred. Diff is small (5 files, +45/-17). Each fix is itself new code that needs review \u2014 bare-catch filters could over- or under-catch; idempotency guard could miss subscriptions; surfaced silent failures need to plumb to the right call site.",
+        "risk": "Catch filters look right but may not match the actual exception type the framework throws (e.g., reflection wraps in TargetInvocationException). Surfacing PromoteGroups error must reach LlmFixer to be useful. Locale fix to Convert.ChangeType has to be the only entry point or there are still uncovered call sites."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/v3_review_summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v3 review summary and v4 plan: pass 1 (verify each closure), pass 2 (fresh-eyes on the 5 changed files), pass 3 (carryover sub-findings). User approved with 'approve'."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/test/discover.cs",
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "os/system/builder/ApplyStep.goal",
+            "os/system/builder/llm/BuildGoal.llm",
+            "PLang/App/FileSystem/Default/PLangFileSystem.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/modules/builder/promoteGroups.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified each of the 5 closures: bare-catch filters narrowed correctly (UnauthorizedAccessException at test/discover, JsonException\u2016NotSupportedException at list/add + Debug:619 + DefaultBuilderProvider:440, ArgumentException at Debug:223, not(NRE\u2016OOM\u2016SOE) at Debug:677); InvariantCulture passed at TypeConverter:325; NormalizeParameterTypes errors traced end-to-end into LlmFixer via ApplyStep.goal HandleValidationError flow; PromoteGroups SetValue returns bool with structured ActionError; Debug.Apply has _applied guard. Pass 2 found one second-order issue: format-side InvariantCulture asymmetry (escalated carryover from v1 #10 \u2014 partial fix actually worse than no fix on European locales because @known round-trip via BuildGoal.llm:91-110 propagates current-culture formals back to the LLM). Pass 3: PromoteGroups action is unreachable from any goal (sub-finding, no current coverage)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/result.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/verdict.json",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/changes.patch",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote per-fix verification (result.md), narrative (summary.md), structured verdict (CLEAN/pass), patch dump, and updated bot-root summary with v4 entry. v4 verdict: CLEAN. Next-round priority: format-side InvariantCulture at FormatValue \u00d72 + ExampleRenderer (preferably via consolidated helper that closes v1 #9 + #10)."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "CLEAN \u2014 all 5 v3 priority closures verified at code level + traced behaviorally. Surfacing for #4 reaches LlmFixer through ApplyStep.goal's HandleValidationError flow. Surfacing for #5 produces structured ActionError. Catch filters are narrow and correct. Idempotency guard is correct. The 3 deferrals are defensible. One escalated carryover (format-side InvariantCulture asymmetry) and one sub-finding (promoteGroups unreachable from any goal) \u2014 neither blocks this round.",
+        "notes": "Recommend tester next. Locale fix needs Italian/German/Spanish-culture coverage. Send the next-round priority list (format-side InvariantCulture, decide promoteGroups fate) to the coder when the team is ready for another round, but this commit is mergeable."
+      }
+    },
+    {
+      "id": "1ec2eb5c-9d7f-4df2-9dad-3a7e4cee2b66",
+      "bot": "tester",
+      "timestamp_start": "2026-04-28T12:30:00Z",
+      "timestamp_end": "2026-04-28T13:15:00Z",
+      "intent": "Test-quality analysis of runtime2-builder-bootstrap. Run full C#/PLang suites + coverage, hunt false greens on the v2 builder bootstrap surfaces, and verify the two v4 carryovers (locale-format asymmetry, promoteGroups zero coverage) are reflected in test outcomes.",
+      "before": {
+        "assumptions": "Coder report described 3 small gaps; the actual branch is the full v2 self-rebuild + diagnostics + type system (~2300 files, ~30k inserts). Codeanalyzer ran four rounds; v4 is CLEAN with two carryovers escalated to me. 28 test files were added or modified in PLang.Tests/. PLang test surface for new builder modules is unknown \u2014 need to enumerate.",
+        "risk": "Branch is too large to read every test file line-by-line \u2014 must triage by risk and pattern-grep for weak-assertion shapes. Build may fail after the squash; that's a coder finding, not a tester one. New surfaces (Catalog, PlangType, TypeConverter, validateResponse) are highest false-green risk because they were added as part of one commit. v4 carryovers (locale fix asymmetry, promoteGroups unreachable) almost certainly have zero coverage."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote plan: run C# + PLang tests, run coverage, hunt false greens with focus on the v4 carryovers (locale-format asymmetry, promoteGroups zero coverage) and the three coder-handover gaps. User approved with 'ok'."
+        },
+        {
+          "paths": [
+            "PLang.Tests/PLang.Tests.csproj",
+            "PlangConsole/PLangConsole.csproj"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Built both projects (dotnet build). 874 warnings, 0 errors. Created os symlink at PlangConsole/bin/Debug/net10.0/os \u2192 /workspace/plang/os so plang --test could resolve SystemDirectory."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/builder/BuildingGuardTests.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/builder/goals.cs",
+            "PLang/App/Build/this.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran C# tests (2289 total, 8 failed). All 8 fails are in BuildingGuardTests. Diff'd current DefaultBuilderProvider against runtime2 baseline \u2014 confirmed BuildingGuard helper + 8 call sites existed in runtime2 and were removed by the v2 builder squash 50351d8b. The test file is byte-identical to runtime2. This is a real production regression, not a test-quality issue. Codeanalyzer's 4 rounds reviewed code-only and never ran tests."
+        },
+        {
+          "paths": [
+            "Tests/Modules/Builder/ValidateValid/BuilderValidateValid.test.goal",
+            "Tests/Modules/Loop/Loop.test.goal",
+            "Tests/Modules/Signing/",
+            "Tests/Modules/Identity/Unarchive/IdentityUnarchive.test.goal",
+            "Tests/Modules/Test/Discover/TestDiscoverReportsStaleWhenPrMissing.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran PLang tests: /Tests/ 161 total, 25 fail + 4 stale; /tests/ 9 total, 1 fail. Categorised failures: BuilderValidateValid floods Convert.ChangeType with @known annotation strings ('int = 1', 'bool = false') unwrapped; Loop returns string concat '0 + 1 + 1 + 1' instead of arithmetic 3; Signing cluster has 9 fails including a 'timeout.after.after' routing bug; IdentityUnarchive leaves literal '%__data__' unresolved."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v1/coverage.json",
+            ".bot/runtime2-builder-bootstrap/tester/v1/coverage.cobertura.xml"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran coverage via TUnit --coverage. 36.5% global line / 21% branch. Extracted per-changed-file summary to coverage.json. Confirmed both v4 carryovers: promoteGroups.cs and enrichResponse.cs at 0%, TypeConverter.cs at 50.4%. Did not commit the 11 MB cobertura.xml \u2014 only the 5 KB coverage.json."
+        },
+        {
+          "paths": [
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/this.cs",
+            "PLang.Tests/App/Phase0Proof.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified v4 carryover #1: ExampleRenderer:103 sb.Append(value) and FluidProvider:140 v.ToString() use Thread.CurrentCulture for IConvertible. App.Culture defaults to InvariantCulture but is never read by any production code \u2014 vestigial property. No test in PLang.Tests sets a non-Invariant culture and asserts numeric round-trip."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/promoteGroups.cs",
+            "PLang/App/modules/builder/enrichResponse.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified v4 carryover #2: promoteGroups and enrichResponse both at 0% line coverage. No .cs test or .goal test references either. enrichResponse is referenced by os/system/builder/ApplyStep.goal but only on the build path; --test never exercises it. The new ActionError('PromoteGroupsImmutableStep') has zero verification."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/variable/settests.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/modules/file/read.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang.Tests/App/Utility/TypeMappingTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Reviewed three coder-handover gaps: (1) AsDefault \u2014 tests are reasonable, deletion test passes both edges, set.cs at 96.6% coverage. (2) ResolveVariables \u2014 zero tests anywhere across PLang.Tests/Tests/tests/os, file/read.cs at 62.5% with the resolve-vars branch uncovered. (3) Single\u2192list auto-wrap \u2014 implementation at TypeConverter:156-168 has zero tests in TypeMappingTests.cs (six TryConvertTo tests, none target List<T>); TypeConverter at 50.4% coverage."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs",
+            "PLang.Tests/App/Modules/condition/IfErrorOrchestrationTests.cs",
+            "PLang.Tests/App/Modules/builder/ValidateResponseTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Weak-assertion sweep: 8 changed test files have Success.IsFalse() without follow-up Error.Key/StatusCode checks. Highest-impact: Handle_RetryFirst_PersistentFailure_AllRetriesFail (would still pass with retries=0), If_OrchestratedBranchAction_ReturnsError_PropagatesThroughStep (doesn't pin 404 identity), ValidateResponseTests.NullInputs_ReturnsError (4 distinct ValidationError variants share the Key)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v1/result.md",
+            ".bot/runtime2-builder-bootstrap/tester/v1/verdict.json",
+            ".bot/runtime2-builder-bootstrap/tester/v1/summary.md",
+            ".bot/runtime2-builder-bootstrap/tester/summary.md",
+            ".bot/runtime2-builder-bootstrap/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote 12-finding result.md (1 critical, 7 major, 4 minor), structured verdict.json (status=fail), narrative v1/summary.md, light bot-root summary.md, and the branch-shared test-report.json. Verdict: needs-fixes."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "needs-fixes \u2014 34 honest red tests + 4 stale across C# and PLang suites. The CRITICAL finding is a BuildingGuard regression (8 tests) that 4 codeanalyzer rounds missed because they only reviewed code. Both v4 carryovers confirmed: locale-format asymmetry has zero test coverage and App.Culture is vestigial; promoteGroups + enrichResponse both at 0% line coverage. Three coder-handover gaps: AsDefault is OK, but ResolveVariables and single\u2192list auto-wrap ship with zero direct unit tests. PLang test failures surface real production regressions (Loop returns string concat, BuilderValidateValid floods Convert.ChangeType with @known annotation strings, Signing cluster). Most tests are honest; the response should be to treat these reds as findings.",
+        "notes": "Send back to coder. Priority order: (1) restore BuildingGuard helper + 8 call sites, (2) diagnose @known unwrap in BuilderValidateValid path, (3) Loop/Signing/Identity production fixes, (4) wire App.Culture into FormatValue/FormatFormalValue/ExampleRenderer, (5) decide promoteGroups/enrichResponse fate. After coder fix, recommend re-running tester before security/auditor."
+      }
+    },
+    {
+      "id": "f1c4d2e8-7b3a-4d92-9e6f-2a8c5d1b3f4e",
+      "bot": "tester",
+      "timestamp_start": "2026-04-28T15:30:00Z",
+      "timestamp_end": "2026-04-28T15:55:00Z",
+      "intent": "v2 \u2014 verify coder's response to v1's 12 findings (5 commits d8eb2958..bbf982d4). Pass 1: closure verification + deletion-test on every new test. Pass 2: re-run suites and decide whether F2/F3/F4 PLang reds (untouched) are real bugs or pre-existing breakage. Pass 3: coverage spot-check on touched files.",
+      "before": {
+        "assumptions": "Coder closed 10 of 12 v1 findings; F2/F3/F4 PLang test-failure clusters untouched. F1 closed by deletion (design call). F6 closed via 'intentional 0%' XML doc. F7/F8 closed with new C# tests in FileHandlerTests + TypeMappingTests. F5 (locale format) closed by passing InvariantCulture at three sites \u2014 likely no test asserts the round-trip. F9-F12 tightened with Error.Key/StatusCode/message pins.",
+        "risk": "Risk that the new tests pass for the wrong reason (especially the skipInfrastructure ResolveVariables test and the ListOfStringToListOfString_PassesThrough sanity guard \u2014 could be a tautology if upstream branch handles it). F1 deletion may be premature if other layers don't actually enforce. F2/F3/F4 may be untouched because they're real builder bugs the coder couldn't fix in this round."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/tester/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v2/v1_review_summary.md",
+            ".bot/runtime2-builder-bootstrap/tester/v2/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v1 review summary and v2 plan. User approved with 'yes'."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/file/FileHandlerTests.cs",
+            "PLang.Tests/App/Utility/TypeMappingTests.cs",
+            "PLang.Tests/App/Modules/modifier/ErrorHandleTests.cs",
+            "PLang.Tests/App/Modules/condition/IfErrorOrchestrationTests.cs",
+            "PLang.Tests/App/Modules/builder/ValidateResponseTests.cs",
+            "PLang.Tests/App/Modules/list/ListTests.cs",
+            "PLang.Tests/App/Modules/loop/ForeachErrorPropagationTests.cs",
+            "PLang/App/modules/file/read.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/builder/promoteGroups.cs",
+            "PLang/App/modules/builder/enrichResponse.cs",
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/modules/list/get.cs",
+            "PLang/App/modules/builder/validateResponse.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Pass 1 closure verification: traced production code for each of 10 closures and applied deletion test. F1 (BuildingGuard) verified justification (4 enforcement layers still gate). F7 (Read.skipInfrastructure) verified by tracing %!app% \u2192 DynamicData at Actor/Context/this.cs:172 \u2192 resolves to App.Id GUID without the guard. F8 ListOfStringToListOfString flagged as mislabeled \u2014 input goes through line 126 list-conversion branch, not line 156 auto-wrap. F11 (ValidateResponse) verified production strings at validateResponse.cs:45,55. F12 (List/Foreach) verified GoalError.NotFound StatusCode=404 + ValidationError 'out of range'."
+        },
+        {
+          "paths": [
+            "/tmp/plang_test_v2.log",
+            "/tmp/plang_tests_lowercase.log",
+            "/tmp/cov_v2.xml",
+            ".bot/runtime2-builder-bootstrap/tester/v2/coverage.json"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Pass 2 + Pass 3: Re-ran C# (2288/2288 pass \u2014 fully green from v1's 2281/8 fail), PLang /Tests/ (132/161, 25 fail, 4 stale \u2014 unchanged), PLang /tests/ (8/9, 1 fail \u2014 unchanged). Ran cobertura coverage; aggregated per-file. file/read.cs 62.5%\u2192100%, TypeConverter 50.4%\u219254.9%, promoteGroups+enrichResponse stay at 0%. Verified F6 XML-doc claim by grep \u2014 promoteGroups referenced in zero .goal files anywhere; enrichResponse referenced only in os/system/builder/BuildGoal.goal:35 (build pipeline). Verified F5 production fix at three sites passes CultureInfo.InvariantCulture explicitly."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v2/result.md",
+            ".bot/runtime2-builder-bootstrap/tester/v2/summary.md",
+            ".bot/runtime2-builder-bootstrap/tester/v2/verdict.json",
+            ".bot/runtime2-builder-bootstrap/tester/summary.md",
+            ".bot/runtime2-builder-bootstrap/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v2/result.md (10 closures + 6 findings: 3 major carryover + 3 minor), v2/verdict.json (status=fail), v2/summary.md (narrative), updated bot-root summary.md and branch-shared test-report.json. Verdict: needs-fixes \u2014 F2/F3/F4 (25 PLang reds + 1 lowercase) untouched. C# suite is 100% green. 10 closures solid with 2 small caveats."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "needs-fixes \u2014 but mild. C# suite is 100% green (2288/2288, was 2281/8 fail). 10 of 12 v1 findings closed cleanly with deletion-test verification: F1 BuildingGuard (justification verified), F7 ResolveVariables (skipInfrastructure exercised), F9 retry stateful-lambda, F10 If 404 + NotFound pin, F11 ValidateResponse exact-string pin, F12 List/Foreach pins, F5 locale fix correct. Two caveats: F8 ListOfStringToListOfString mislabeled (cosmetic), F5 has no non-Invariant culture test (carryover). F6 promoteGroups/enrichResponse 0% declared intentional via XML doc \u2014 honest for enrichResponse, but promoteGroups is unreachable from any goal anywhere (carryover from codeanalyzer v4). F2/F3/F4 untouched: 25 PLang reds (BuilderValidateValid @known unwrap, Loop string-concat, Signing routing + Identity + UI render + ContextVars + others) + 1 lowercase suite red.",
+        "notes": "Send back to coder. Priority: (1) F2 BuilderValidateValid @known unwrap, (2) F3 Loop arithmetic vs concat, (3) F4 Signing cluster + others, (4) decide promoteGroups fate (delete or wire in), (5) add non-Invariant culture test for F5. After coder fix, re-run tester before security/auditor."
+      }
+    },
+    {
+      "id": "5598f9ba-d9bd-4d55-abec-9105c29edfd7",
+      "bot": "tester",
+      "timestamp_start": "2026-04-28T16:20:50Z",
+      "intent": "v3 \u2014 verify coder commits 6740ebba+5c917ac5 close F2 (catalog skip) + F3 (math examples for LLM); confirm F4 still red; fresh-eyes on IsCatalogDescription false-positive risk.",
+      "before": {
+        "assumptions": "Coder added ExamplesForLlm to 5 math actions + IsCatalogDescription helper in DefaultBuilderProvider (skip guards in 2 places). F4 Signing cluster explicitly not touched. Math.test.goal already exists and exercises math.add through math.power via runtime; that is the strongest F3 signal we have.",
+        "risk": "IsCatalogDescription anchors on LLM-controlled typeName \u2014 if LLM emits Type=\"String\" Value=\"String\", a real value is silently skipped. Loop.test.goal .pr files were rebuilt; need to read them, not just trust the green. Math.test.goal does not test the RHS form (set %count% = %count% + 1) \u2014 F3 closure relies on that LLM mapping; deterministic verification limited."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/tester/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v3/plan.md",
+            ".bot/runtime2-builder-bootstrap/tester/v3/v2_review_summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v3 plan and v2-response summary. User approved with \"go\"."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/math/add.cs",
+            "PLang/App/modules/math/subtract.cs",
+            "PLang/App/modules/math/multiply.cs",
+            "PLang/App/modules/math/divide.cs",
+            "PLang/App/modules/math/power.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/Catalog/ExampleHelpers.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang.Tests/App/Modules/math/MathTests.cs",
+            "PLang.Tests/App/Catalog/CatalogTests.cs",
+            "Tests/Modules/Loop/.build/countitem.pr",
+            "Tests/Modules/Builder/ValidateValid/BuilderValidateValid.test.goal"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Closure verification + fresh-eyes false-green hunt. Read IsCatalogDescription helper (4 match shapes, typeName-anchored). Read all 5 math ExamplesForLlm() methods. Verified countitem.pr now compiles set %count% = %count% + 1 to math.add + variable.set chain. Confirmed no C# unit test for IsCatalogDescription or ExamplesForLlm rendered output (grep: zero matches in PLang.Tests)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v3/coverage.cobertura.xml",
+            ".bot/runtime2-builder-bootstrap/tester/v3/coverage.json",
+            ".bot/runtime2-builder-bootstrap/tester/v3/plang_tests_results.json"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran C# suite (2288/2288 pass). Ran PLang Tests/ via plang --test --app=create (142/24 fail/4 stale, 170 total). Exported cobertura coverage. Per-file extracted: math actions all 100%, DefaultBuilderProvider 60.8% but IsCatalogDescription lines 659-663 (match-true path) hits=0 \u2014 confirms helper match-true path never executed by any C# test."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v3/result.md",
+            ".bot/runtime2-builder-bootstrap/tester/v3/summary.md",
+            ".bot/runtime2-builder-bootstrap/tester/v3/verdict.json",
+            ".bot/runtime2-builder-bootstrap/tester/v3/changes.patch.note",
+            ".bot/runtime2-builder-bootstrap/test-report.json",
+            ".bot/runtime2-builder-bootstrap/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote per-finding result.md (6 findings: 1 major-carryover F4, 5 minor), narrative summary, verdict (needs-fixes), and updated branch-shared test-report.json + tester bot-summary. changes.patch dropped \u2014 391MB, same as v1/v2."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "NEEDS-FIXES \u2014 F2 + F3 close cleanly at integration level (BuilderValidateValid PASS, Loop.test.goal PASS, .pr inspection confirms math.add chain). F4 cluster (23 PLang reds) untouched per coder scope. C# 2288/2288 unchanged. Two minor findings on new code: IsCatalogDescription match-true path uncovered by C# tests (only BuilderValidateValid integration test exercises it), ExamplesForLlm rendered output untested in C# \u2014 same false-green class as v1 BuildingGuard regression.",
+        "notes": "Send back to coder for F4 (23 reds) \u2014 or downgrade to approved-with-followups if F4 deferred to separate branch. Optional unit-test follow-ups: 4 IsCatalogDescription tests + 5 ExamplesForLlm renderer assertions."
+      },
+      "timestamp_end": "2026-04-28T16:37:25Z"
+    },
+    {
+      "id": "ee7b40d0-9112-460a-80dd-3066875427c4",
+      "bot": "tester",
+      "timestamp_start": "2026-04-28T17:02:27Z",
+      "timestamp_end": "2026-04-28T17:25:00Z",
+      "intent": "Verify coder's V3-1/V3-2 unit tests close the gaps from tester v3 \u2014 IsCatalogDescription helper + math ExamplesForLlm renders. Re-run full suites, hunt false greens in the new unit tests themselves, track F4 carryover.",
+      "before": {
+        "assumptions": "Coder pushed 6fd35065 adding IsCatalogDescriptionTests (14 cases) and MathExamplesForLlmTests (7 cases). Made IsCatalogDescription internal-static. Claims 2288 -> 2309 (+21), all green. F4 (23 PLang reds) untouched and explicitly out-of-scope.",
+        "risk": "Unit tests written quickly to close a coverage finding are themselves prone to being false greens \u2014 assertions may be loose enough to pass even with broken behavior. The math tests use Contains() rather than exact match \u2014 could miss substring-overlap regressions. The Setup spins a real PLangEngine \u2014 must verify it actually exercises the renderer, not a stub. Need deletion test on the helper to confirm unit tests bite."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/tester/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v4/plan.md",
+            ".bot/runtime2-builder-bootstrap/tester/v4/v3_review_summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v4 plan: verify coder's V3-1/V3-2 unit tests via mutation testing on the helper + math examples; track F4 carryover. User approved with 'ok'."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/builder/IsCatalogDescriptionTests.cs",
+            "PLang.Tests/App/Modules/math/MathExamplesForLlmTests.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Read the 21 new C# tests + the visibility flip. Confirmed InternalsVisibleTo wired at PLang/PLang.csproj:44. Inspected ExampleRenderer.Render and Modules.GetActionType to verify the math test setup drives real reflection (not stubs). Per-line deletion analysis on the 9-line helper: every line has at least one test that fails on deletion."
+        },
+        {
+          "paths": [
+            "PLang.Tests/bin/Debug/net10.0/PLang.Tests.dll"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# TUnit run: 2309/2309/0 (was 2288 in v3, +21 = 14 helper + 7 math, matches coder claim)."
+        },
+        {
+          "paths": [
+            "Tests/.test/results.json",
+            ".bot/runtime2-builder-bootstrap/tester/v4/plang_tests_results.json"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "PLang /Tests/ run from Tests/ cwd (with os/ symlinked into PlangConsole/bin/Debug/net10.0/): 142 pass / 24 fail / 4 stale / 170 total. Bit-identical to v3. F2 (BuilderValidateValid) PASS in 25.8ms; F3 (Loop) PASS in 2.5ms; F4 cluster (23 reds + 1 stale) untouched."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/math/add.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "/tmp/add.cs.orig",
+            "/tmp/DefaultBuilderProvider.cs.orig"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation testing \u2014 temporarily mutated production files, rebuilt, observed which tests caught each break, then restored byte-identical originals. 4 mutations: drop variable.set / swap chain order / change A=5 to A=99 / flip helper line 664 return true to return false. All 4 caught. Notably, swap-chain-order is caught only by AllArithmeticActions_HaveTwoExamples_NaturalAndRhs (spec-level), not by per-op render tests \u2014 minor finding M1, acceptable because spec test pins all 5 ops."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v4/coverage.cobertura.xml",
+            ".bot/runtime2-builder-bootstrap/tester/v4/coverage.json"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Coverage on V3-1/V3-2 surfaces: IsCatalogDescription lines 657-665 went 0->1 hits each (match-true path was unhit in v3, now exercised). ExampleRenderer.Render() body fully covered. All 5 math ExamplesForLlm bodies hit."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v4/result.md",
+            ".bot/runtime2-builder-bootstrap/tester/v4/summary.md",
+            ".bot/runtime2-builder-bootstrap/tester/v4/verdict.json",
+            ".bot/runtime2-builder-bootstrap/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v4 result.md (detailed findings + mutation-test outputs), summary.md (3-pass review structure), verdict.json (pass), and updated the bot-root summary with v4 entry."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/test-report.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Overwrote shared test-report.json with v4 results: verdict approved, 3 findings (M1 weak-assertion minor, M2 edge-case minor, F4 carryover major), 4 mutation tests all caught, recommendation to hand to security analyst."
+        }
+      ],
+      "after": {
+        "status": "approved",
+        "health": "C# 2309/2309 green; PLang 142/24/4-stale unchanged from v3; V3-1 + V3-2 closed at unit-test level with mutation tests biting on all 4 representative regressions.",
+        "notes": "F4 cluster (23 reds) remains as explicit-scope carryover per coder v1 plan. Two minor follow-ups documented (M1 chain order pinned only at spec level for non-Add ops; M2 [object] tag brittle to Data refactor \u2014 both acceptable). Recommend hand to security."
+      }
+    },
+    {
+      "id": "9b5e2f44-7c81-4d9a-b3e2-1a8f6c0d4e91",
+      "bot": "security",
+      "timestamp_start": "2026-04-29T09:00:00Z",
+      "timestamp_end": "2026-04-29T09:35:00Z",
+      "intent": "Phase 1 + Phase 2 security audit of the runtime2-builder-bootstrap branch \u2014 trust-boundary leaks, deserialization, type confusion, and standing-finding regression check.",
+      "before": {
+        "assumptions": "Branch is huge (~2500 files, ~200 C# changed). Coder handover and codeanalyzer v2 were CLEAN. Standing findings: Variables.Snapshot()/GetAll() don't honor [Sensitive]. New surfaces: ParamSnapshot, TypeConverter, Catalog, granular LLM debug.",
+        "risk": "Scope too large to deeply analyze every file \u2014 triaging by trust-boundary relevance. Risk of missing systemic issues in handlers I don't open."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/security/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan: triaged 200-file branch into Tier 1 (deep dive on ParamSnapshot+LazyParamsGenerator, Variables, BuilderProvider, TypeConverter, Error.cs) and Tier 2 (Catalog, FluidProvider, Debug, OpenAiProvider, Modules.Describe). Out-of-scope: .goal/.pr/docs."
+        },
+        {
+          "paths": [
+            "PLang.Generators/LazyParamsGenerator.cs",
+            "PLang/App/Errors/ParamSnapshot.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/modules/assert/AssertSnapshot.cs",
+            "PLang/App/modules/test/report.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/Utils/Json.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/Catalog/this.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/App/FileSystem/Path.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read changed surfaces vs runtime2 base. Traced ParamSnapshot generator output through Error.cs FormatVerboseValue render path \u2014 confirmed no [Sensitive] mask. Verified standing Variables.Snapshot/GetAll finding still present. Cross-checked Json.DiagnosticOutput's mask scope (typed properties only, not dict entries). Confirmed STJ defaults block polymorphic deserialization. Checked Debug.ResolveLlmFilePath for path-component sanitization."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/security-report.json",
+            ".bot/runtime2-builder-bootstrap/security/v1/verdict.json",
+            ".bot/runtime2-builder-bootstrap/security/v1/summary.md",
+            ".bot/runtime2-builder-bootstrap/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote attack-surface map, 6 findings (2 medium info-disclosure, 4 low tripwires), pass verdict, v1 summary, and bot-root cross-session summary."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "PASS \u2014 no critical/high. F1 (ParamSnapshot bypasses [Sensitive], NEW) and F2 (standing Variables.Snapshot/GetAll finding confirmed) are medium info-disclosure issues worth a coder follow-up but not blocking. F3-F6 are low tripwires.",
+        "notes": "F1 root fix is in LazyParamsGenerator: detect [Sensitive] on the property and emit PrValue/FinalValue as the literal '******' (or null + a flag). F2 is the same shape as the standing finding \u2014 extend Data.@this with a Sensitive flag honored by every snapshot path. F6 (BuildingGuard removal) is intentional per commit 4633674c \u2014 flagged for architect awareness about runtime-callable .pr-mutating actions."
+      }
+    },
+    {
+      "id": "db5033cd-eba5-4b37-a5e2-761b2b54de2d",
+      "bot": "auditor",
+      "timestamp_start": "2026-04-29T11:27:25Z",
+      "timestamp_end": "2026-04-29T11:42:50Z",
+      "intent": "Cross-cutting integrity audit of runtime2-builder-bootstrap \u2014 challenge codeanalyzer/tester/security verdicts, look at gaps between reviewers, foundation ripple, architectural fit.",
+      "before": {
+        "assumptions": "Three reviewers said pass. Codeanalyzer v4 CLEAN, tester v4 approved, security v1 PASS. Auditor's job is to find what's between the seams. F4 cluster (23 PLang reds) is acknowledged as scope-out \u2014 need to assess whether auditor should still flag it. Security carryover: standing Variables.Snapshot finding + new ParamSnapshot bypass.",
+        "risk": "Scope is huge (167 changed C# files). Risk: rubber-stamp; risk: re-do work the others already did; risk: miss the actual cross-file gap. Plan: focus on (a) cross-file contracts not covered by file-level reviewers, (b) foundation files like Data/Engine/MemoryStack/GoalMapper, (c) test coverage gaps for new code paths, (d) F4 cluster \u2014 should it block?"
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/auditor/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/auditor/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v1 plan with 6 audit areas (cross-file contracts, foundation ripple, test coverage gaps, F4 cluster categorization, architectural fit, scope-creep evaluation). User approved with 'go'."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v1/result.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v3/result.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/result.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/v4/summary.md",
+            ".bot/runtime2-builder-bootstrap/codeanalyzer/summary.md",
+            ".bot/runtime2-builder-bootstrap/tester/v4/result.md",
+            ".bot/runtime2-builder-bootstrap/tester/v4/plang_tests_results.json",
+            ".bot/runtime2-builder-bootstrap/tester/summary.md",
+            ".bot/runtime2-builder-bootstrap/security/v1/summary.md",
+            ".bot/runtime2-builder-bootstrap/security-report.json",
+            ".bot/runtime2-builder-bootstrap/test-report.json",
+            ".bot/runtime2-builder-bootstrap/coder/v1/report.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read all prior bot reports to understand what each reviewer covered. Codeanalyzer v1+v3 found 18 file-level findings; v2/v4 verified 13 of 14 closures behaviorally and escalated 1 carryover (locale format-side asymmetry). Tester v4 mutation-tested 4 representative regressions. Security v1 enumerated 6 findings (2 medium info-disclosure, 4 low tripwires)."
+        },
+        {
+          "paths": [
+            "PLang/App/Errors/ParamSnapshot.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang.Generators/LazyParamsGenerator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified security F1 (ParamSnapshot bypasses [Sensitive]) is real. Confirmed FormatVerboseValue at Error.cs:215,220 has no [Sensitive] mask, and LazyParamsGenerator.cs:701-703 emits PrValue/FinalValue with no attribute check. The ActionPropertyInfo class does not even capture whether the property has [Sensitive] \u2014 needs structural change in the generator to fix."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/file/providers/DefaultFileProvider.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/modules/file/read.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Cross-file contract trace. (1) Verified codeanalyzer v4 escalated locale carryover is CLOSED \u2014 commit cc8e638d made FormatValue:445, FluidProvider:143, ExampleRenderer:108 all use CultureInfo.InvariantCulture. (2) Found BuildingGuard removal commit message references a file-provider write guard that does not exist \u2014 DefaultFileProvider.Save has no Build.IsEnabled gate, only Read does. (3) Confirmed Step.Clone still missing 7 properties; sole test asserts only modifier behavior. (4) Confirmed Variables.GetAll leak path FluidProvider:94 was not enumerated by security F2. (5) Verified original 3 coder gaps implemented + tested with skipInfrastructure security improvement on file.read.ResolveVariables."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/tester/v4/plang_tests_results.json"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Categorized F4 cluster (24 fails + 4 stale = 28 reds). ~6 foundation-shaped: ForeachCallsGoalPerItem, ForeachDictionary, ConditionCompound, ContextVars, SetupGoal/Start, ErrorTypes (iteration/condition/context regressions). ~17 module-domain: Signing 8, Identity 2, Crypto 1, Ui 2, Event 3, Test/Discover 1 (mostly missing-rebuild artifacts). Tester carried as single bucket; auditor recommends split for follow-up prioritization."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/auditor-report.json",
+            ".bot/runtime2-builder-bootstrap/auditor/v1/verdict.json",
+            ".bot/runtime2-builder-bootstrap/auditor/v1/result.md",
+            ".bot/runtime2-builder-bootstrap/auditor/v1/summary.md",
+            ".bot/runtime2-builder-bootstrap/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote auditor report. Verdict: PASS (3 minor + 2 nit, no critical/major). Findings: F1 BuildingGuard rationale inaccurate (architectural, minor), F2 Step.Clone test inadequacy (review-gap, minor), F3 F4 cluster categorization (review-gap, minor), F4 Variables.GetAll Fluid leak (review-gap, nit), F5 Debug.Apply guard test coverage (contract, nit). Recommend docs bot next."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "Branch is solid. Three reviewers each made the right call on their slice; auditor contribution is finding the gaps between \u2014 codeanalyzer v4 locale carryover already closed, BuildingGuard rationale documentation accuracy, F4 cluster categorization, security F2 enumeration completeness, Debug.Apply test coverage. Original 3 coder gaps all implemented and tested.",
+        "notes": "5 findings (3 minor + 2 nits). None tip the verdict. F1 was the closest call \u2014 considered major because it concerns a documented security boundary, but downgraded to minor because the actual code posture matches what security accepted (low). Documentation accuracy in version-control history, not a new bug. Recommend docs bot next."
+      }
+    },
+    {
+      "id": "0d8a2f1c-4e7b-4a9d-8f6c-3b1e9d2a5c7e",
+      "bot": "docs",
+      "timestamp_start": "2026-04-29T12:30:00Z",
+      "intent": "Pre-merge documentation gate \u2014 audit gaps after auditor PASS, fill user-facing + stale references for the runtime2-builder-bootstrap branch.",
+      "before": {
+        "assumptions": "Auditor v1 PASS (3 minor + 2 nit), security PASS, tester APPROVED, codeanalyzer v4 CLEAN. Coder's stated 3 small gaps; actual branch is the full v2 self-rebuild with Catalog, Trace, ParamSnapshot, granular LLM debug, BuildingGuard removal, new builder actions. Strong dev-facing docs already shipped (action-catalog.md, trace.md, debug.md additions). Surveyed all new public surfaces.",
+        "risk": "Risk of missing a stale reference. Risk of over-documenting build-pipeline-only actions in user-facing docs. Risk of authoring architecture position the team hasn't agreed on."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/docs/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote plan with 6 gaps (G1\u2013G6): G1 variable.set AsDefault missing in user docs, G2 file.read ResolveVariables missing, G3 builder.md stale BuildingGuard + new actions missing, G4 good_to_know.md stale BuildingGuard line 424, G5 Catalog/Trace not cross-referenced from architecture, G6 merge.cs XML doc summary missing. Read all bot reports + key new code surfaces."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/merge.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "G6 \u2014 added /// class summary describing build-time scope and what is preserved vs overwritten, plus per-property summaries on Step (target) and StepFromLlm (source). Brings merge.cs into line with peer builder actions (validateResponse, enrichResponse, promoteGroups all already had summaries). Verified PLang.csproj still compiles 0 errors."
+        },
+        {
+          "paths": [
+            "docs/modules/variable.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "G1 \u2014 added AsDefault parameter row to set table, added 'set default' natural-form example, added a sub-section explaining goal-parameter fallback pattern. AsDefault was previously invisible to PLang users."
+        },
+        {
+          "paths": [
+            "docs/modules/file.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "G2 \u2014 added ResolveVariables parameter row, 'load vars' natural-form example, worked example sub-section, and a Security paragraph documenting that infrastructure variables (%!app% / %!fileSystem% / %!callStack% / %!trace%) are deliberately blocked when resolving variables in file content (the skipInfrastructure improvement)."
+        },
+        {
+          "paths": [
+            "docs/modules/builder.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "G3 \u2014 replaced stale BuildingGuard section with 'Build mode and runtime mode' that describes current posture (no per-action guard, trust boundary is the goal signature). Added entries for validateResponse, enrichResponse, promoteGroups, merge (step-level). Rewrote pipeline ordering to the current 11-step flow. Updated types action description to point at action-catalog.md."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "G4 \u2014 rewrote stale BuildingGuard paragraph in IBuilderProvider section (line 424). Names removal commit (4633674c), current App.Build.IsEnabled check at DefaultFileProvider read path, and that no write-path guard exists. Cross-references docs/modules/builder.md."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/architecture.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "G5 \u2014 added Trace to Context shape diagram with pointer to trace.md; added paragraph in Modules section pointing at action-catalog.md for the attribute model and ExamplesForLlm rules. Closes discoverability gap for both new architectural surfaces shipped on this branch."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/docs-report.json",
+            ".bot/runtime2-builder-bootstrap/docs/v1/verdict.json",
+            ".bot/runtime2-builder-bootstrap/docs/v1/summary.md",
+            ".bot/runtime2-builder-bootstrap/docs/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote docs-report.json (6 changes, 7 findings all resolved=filled), v1 verdict (pass), v1 narrative summary, and bot-root cross-session summary."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "All 6 gaps filled. Branch ready to merge. Strong dev-facing docs already shipped on the branch (action-catalog.md, trace.md, debug.md additions) \u2014 v1 work was closing user-facing teaching for AsDefault/ResolveVariables, the new builder actions, removing stale BuildingGuard references, adding cross-references, and bringing merge.cs XML doc in line with peers.",
+        "notes": "No code changes outside the merge.cs XML summary (per character file: docs writes docs, routes code/test concerns elsewhere). No PLang .goal examples written (tester's job). No CHANGELOG entry created \u2014 repo has no CHANGELOG.md and creating one for a single branch is over-scope. Build verified with dotnet build PLang.csproj after the XML doc edit (0 errors)."
+      },
+      "timestamp_end": "2026-04-29T13:25:00Z"
+    }
+  ]
+}

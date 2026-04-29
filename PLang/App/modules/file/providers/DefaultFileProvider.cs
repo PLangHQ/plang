@@ -18,9 +18,9 @@ public class DefaultFileProvider : IFileProvider
         var fs = action.Context.App.FileSystem;
         var path = action.Path.Value!;
         // During build: use snapshotted .pr content to avoid reading overwritten files
-        if (action.Context.App.Building.IsEnabled && path.Extension == ".pr")
+        if (action.Context.App.Build.IsEnabled && path.Extension == ".pr")
         {
-            var snapshot = action.Context.App.Building.GetPrSnapshot(path.Absolute);
+            var snapshot = action.Context.App.Build.GetPrSnapshot(path.Absolute);
             if (snapshot != null)
             {
                 var snapshotType = Data.Type.FromMime(TypeMapping.GetMimeType(path.Extension));
@@ -53,8 +53,8 @@ public class DefaultFileProvider : IFileProvider
                 var text = fs.File.ReadAllText(path.Absolute);
 
                 // During build: snapshot .pr file content on first read
-                if (action.Context.App.Building.IsEnabled && path.Extension == ".pr")
-                    action.Context.App.Building.SnapshotPrFile(path.Absolute, text);
+                if (action.Context.App.Build.IsEnabled && path.Extension == ".pr")
+                    action.Context.App.Build.SnapshotPrFile(path.Absolute, text);
 
                 var clr = type.ClrType;
                 // If the type has a CLR mapping (not just string), deserialize
@@ -98,7 +98,7 @@ public class DefaultFileProvider : IFileProvider
                     { Stream = stream, Data = value, Extension = path.Extension });
             }
 
-            var resultPath = new FileSystem.Path(path.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(path.Absolute, action.Context);
             return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -130,7 +130,7 @@ public class DefaultFileProvider : IFileProvider
             else if (!action.IgnoreIfNotFound.Value)
                 return App.Data.@this.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
 
-            var resultPath = new FileSystem.Path(path.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(path.Absolute, action.Context);
             return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -157,7 +157,7 @@ public class DefaultFileProvider : IFileProvider
             else
                 CopyDirectory(fs, source.Absolute, destPath, action.Overwrite.Value, action.IncludeSubfolders.Value);
 
-            var resultPath = new FileSystem.Path(destPath, source: source.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(destPath, action.Context, source: source.Absolute);
             return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -189,7 +189,7 @@ public class DefaultFileProvider : IFileProvider
                 fs.Directory.Move(source.Absolute, destPath);
             }
 
-            var resultPath = new FileSystem.Path(destPath, source: source.Absolute) { Context = action.Context };
+            var resultPath = new FileSystem.Path(destPath, action.Context, source: source.Absolute);
             return Data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -209,7 +209,7 @@ public class DefaultFileProvider : IFileProvider
         {
             var option = action.Recursive.Value ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             var files = fs.Directory.GetFiles(path.Absolute, action.Pattern.Value!, option)
-                .Select(f => new FileSystem.Path(f) { Context = action.Context })
+                .Select(f => new FileSystem.Path(f, action.Context))
                 .ToArray();
             return App.Data.@this.Ok(files);
         }
@@ -222,7 +222,7 @@ public class DefaultFileProvider : IFileProvider
     public Data.@this Exists(Exists action)
     {
         var path = action.Path.Value!;
-        var result = new FileSystem.Path(path.Absolute) { Context = action.Context };
+        var result = new FileSystem.Path(path.Absolute, action.Context);
         return Data.@this<FileSystem.Path>.Ok(result);
     }
 

@@ -1,0 +1,42 @@
+{
+  "name": "OnVarSet",
+  "description": "Writes a message indicating a variable set event fired.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Variable set event fired\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Variable set event fired",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Modules/Event/Basic/OnVarSet.goal",
+  "prPath": "/Tests/Modules/Event/Basic/.build/onvarset.pr",
+  "hash": "e9c1424776fed3cdb7b488dfc0049fee3947aab5b236818c90ca3969358a5367",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

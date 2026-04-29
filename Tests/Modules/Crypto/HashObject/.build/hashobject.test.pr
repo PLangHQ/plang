@@ -1,0 +1,211 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %obj% = { \u0022name\u0022: \u0022Alice\u0022, \u0022age\u0022: 30 }",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: hash a JSON object, verify consistency on re-hash",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%obj%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "name": "Alice",
+                "age": 30
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "hash %obj%, write to %hash1%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "crypto",
+          "action": "hash",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%obj%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "algorithm",
+              "value": "keccak256",
+              "type": "string"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%hash1%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Hash %obj% using default algorithm (crypto.hash default keccak256) and write the resulting digest to %hash1% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "hash %obj%, write to %hash2%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "crypto",
+          "action": "hash",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%obj%",
+              "type": "object"
+            },
+            {
+              "name": "Algorithm",
+              "value": "keccak256",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%hash2%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Hash %obj% again but explicitly specify Algorithm=keccak256, then write digest to %hash2%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %hash1% equals %hash2%, \u0022hashing same object twice should produce identical hash\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%hash2%",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%hash1%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "hashing same object twice should produce identical hash",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/HashObject.test.goal",
+  "prPath": "/.build/hashobject.test.pr",
+  "hash": "b5a9e3b23c5def12f12f8b8e7337e4b70f9ec04aad833d1092d8b38f09c15e75",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

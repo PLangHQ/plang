@@ -45,6 +45,9 @@ public class SetTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(context.Variables.GetValue("testVar")).IsEqualTo("testValue");
+        // F3-1: handler must return the stored value, not an empty Data.Ok().
+        // Powers %__data__% capture in goal.call → ReturnMapping / GoalCallReturn PLang tests.
+        await Assert.That(result.Value).IsEqualTo("testValue");
     }
 
     [Test]
@@ -73,6 +76,9 @@ public class SetTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(context.Variables.GetValue("x")).IsEqualTo("original");
+        // F3-1: when AsDefault hits an existing var, handler returns the existing Data,
+        // not an empty Data.Ok(). Reverting that branch would surface here.
+        await Assert.That(result.Value).IsEqualTo("original");
     }
 
     [Test]
@@ -84,6 +90,38 @@ public class SetTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(context.Variables.GetValue("y")).IsEqualTo("default");
+    }
+
+    [Test]
+    public async Task ActionRunAsync_AliasesResultUnderData_DoesNotMutateName()
+    {
+        // F3-2: Action.RunAsync must alias the handler's result under %__data__%
+        // WITHOUT mutating result.Name. Old code did `result.Name = "__data__";
+        // Variables.Put(result);` — that corrupted any producer Data shared between
+        // %__data__% and its source variable entry.
+        //
+        // Invariant: after RunAsync, %__data__% and the handler's own stored entry
+        // must be the SAME reference, and the Data's Name must be whatever the
+        // handler set it to — never overwritten to "__data__".
+        var context = _app.Context;
+        var action = TestAction.Create("variable", "set",
+            ("name", "%myVar%"), ("value", "hello"));
+
+        var result = await action.RunAsync(context);
+
+        await Assert.That(result.Success).IsTrue();
+
+        var dataVar = context.Variables.Get("__data__");
+        var myVar = context.Variables.Get("myVar");
+
+        // Aliasing: same Data reachable under both keys.
+        await Assert.That(ReferenceEquals(dataVar, result)).IsTrue();
+        await Assert.That(ReferenceEquals(myVar, result)).IsTrue();
+
+        // No rename: the `value` parameter Data flows through unchanged — Name
+        // stays "value" (its parameter name). If RunAsync mutated to "__data__",
+        // this fires.
+        await Assert.That(result.Name).IsNotEqualTo("__data__");
     }
 
     // --- ValidateBuild tests ---

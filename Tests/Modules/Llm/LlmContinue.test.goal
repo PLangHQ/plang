@@ -1,0 +1,11 @@
+Start
+/ Two queries — second uses continuePreviousConversation, verify LLM remembers context
+- [llm] system: 'You are a helpful assistant'
+    user: 'My favorite color is blue. Remember that.'
+    write to %first%
+- [llm] system: 'You are a helpful assistant'
+    user: 'What is my favorite color?'
+    continuePreviousConversation: true
+    write to %second%
+- assert %first% is not null
+- assert %second% is not null

@@ -1,0 +1,6 @@
+TestSystemTestGoalReportsTimeout
+/ Structural guard: timeout enforcement lives in test.run. A system runner
+/ that skips test.run or reimplements the loop would bypass timeout handling
+/ entirely. Assert the system runner routes through test.run.
+- read file '/system/test.goal', write to %goalText%
+- assert %goalText% contains 'test.run'

@@ -3,8 +3,7 @@ using App.modules.assert.providers;
 
 namespace App.modules.assert;
 
-[Example("assert %count% greater than 0", "A=%count%, B=0")]
-[Example("assert %score% greater than 50, 'Score too low'", "A=%score%, B=50, Message=Score too low")]
+[System.ComponentModel.Description("Assert that A is greater than B; fails with an error if not")]
 [Action("greaterThan")]
 public partial class GreaterThan : IContext
 {

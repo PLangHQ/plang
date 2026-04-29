@@ -24,15 +24,31 @@ Store a value in a variable.
 
 / With explicit type
 - set %count% = '42', type 'int'
+
+/ Set only when unset — useful for goal parameters with a fallback default
+- set default %path% = '.'
 ```
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | yes | Variable name |
-| Value | object | no | Value to store |
-| Type | string | no | Type hint (int, string, bool, etc.) |
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| Name | string | yes | — | Variable name |
+| Value | object | no | — | Value to store |
+| Type | string | no | — | Type hint (int, string, bool, etc.) |
+| AsDefault | bool | no | false | When true, only sets if the variable doesn't already exist; existing value wins |
+
+#### `set default`
+
+`set default` is the natural form for "use this value, but only if the caller hasn't already provided one." It's the typical pattern for goal-parameter fallbacks:
+
+```plang
+ProcessFolder
+- set default %path% = '.'
+- list files in %path%, write to %files%
+```
+
+A caller passing `path=/data` overrides the default; a caller passing nothing falls through to `'.'`. Internally this maps to `variable.set` with `AsDefault=true` — the action checks the variable's `IsInitialized` state before writing.
 
 ### get
 

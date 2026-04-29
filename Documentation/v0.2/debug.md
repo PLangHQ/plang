@@ -44,7 +44,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["%actions%"],"maxLength
 | `maxLength` | int | 500 | Max characters per line before truncation. |
 | `grep` | string | null | Regex pattern to filter output lines (case-insensitive). |
 | `level` | string | "step" | Detail level: `"step"` (per step) or `"action"` (per action within steps). |
-| `llmTrace` | bool | false | Log resolved LLM messages before each API call. |
+| `llm` | object | null | Granular LLM tracing — see [LLM Message Tracing](#llm-message-tracing). |
 | `resolveTrace` | bool | false | Log every `%variable%` resolution with resolved type and depth. |
 
 ## Detail Levels
@@ -185,32 +185,78 @@ Only fires for mutations like `null → Dictionary`, `Dictionary → String`, no
 
 ## LLM Message Tracing
 
-See the actual resolved messages sent to the LLM API — not the raw `%var%` references but the final content.
+The `llm` option is a record with one bool per slice of the API exchange. Set only the parts you want — each enabled flag emits its own labeled block to stderr.
+
+| Sub-flag | What it dumps |
+|----------|----------------|
+| `system` | All system messages from the resolved request |
+| `user` | All user messages from the resolved request |
+| `schema` | The JSON Schema string passed via the format instruction |
+| `response` | The raw response string returned by the LLM API |
+
+Why granular: a full trace is too noisy when you're hunting a specific question. Asking "did the LLM emit X?" wants only `response`. Asking "is the catalog rendering correctly?" wants only `system`. Asking "is the schema permissive enough?" wants only `schema`.
 
 ```bash
-plang build '--build={"files":"myfile.goal","cache":false}' \
-  '--debug={"llmTrace":true,"maxLength":500}'
+# Just the response — most common when chasing "what did the LLM produce?"
+plang build '--build={"cache":false}' '--debug={"llm":{"response":true}}'
+
+# System prompt only — verify catalog/types render correctly. Bump maxLength.
+plang build '--build={"cache":false}' '--debug={"llm":{"system":true},"maxLength":50000}'
+
+# Schema only — when chasing type-fidelity bugs (e.g. permissive value?: object)
+plang build '--build={"cache":false}' '--debug={"llm":{"schema":true}}'
+
+# Combine flags freely
+plang build '--build={"cache":false}' '--debug={"llm":{"system":true,"response":true},"maxLength":50000}'
 ```
 
-Output:
+Output (each block fires only when its flag is on):
 ```
-=== LLM REQUEST ===
-  [system] # Goal Builder
+=== LLM SYSTEM ===
+# Goal Builder
 
 You are the PLang compiler. Map each step in a goal to engine actions...
-  [user] Start
-- read file 'test.txt', write to %content%  <= null
-=== END LLM REQUEST ===
+=== END LLM SYSTEM ===
+
+=== LLM RESPONSE ===
+{"description":"...","steps":[{"index":0,"actions":[{"module":"file","action":"read","parameters":[{"name":"Path","value":"test.txt","type":"path"}]}],...}]}
+=== END LLM RESPONSE ===
 ```
 
-Combine with `grep` to filter:
+Combine with `grep` to filter further:
 ```bash
-# Show only user messages
-plang build '--debug={"llmTrace":true,"grep":"user","maxLength":300}'
-
-# Show only null content (catch broken messages)
-plang build '--debug={"llmTrace":true,"grep":"null"}'
+# Only response lines mentioning a specific module
+plang build '--debug={"llm":{"response":true},"grep":"file.read"}'
 ```
+
+**Important — what `pass1.response` in trace files is NOT.** The `.build/traces/*.json` files capture an LLM call's `pass1.response` field *after* `builder.validateResponse` and `builder.enrichResponse` run, which means parameter values may have been normalized (e.g. a string `"data.txt"` for a `path`-typed parameter gets converted into a `Path` object whose every public property is then serialized into the .pr). Always use `llm.response` to see the actual API payload — don't infer LLM behaviour from the post-pipeline trace.
+
+## Writing C# Diagnostic Lines (`context.App.Debug.Write`)
+
+When you need a runtime diagnostic from inside C# (handlers, providers, data classes, builder pipeline), use the `Debug.Write` channel. **Never** use `System.IO.File.AppendAllText`, `Console.WriteLine`, or `Console.Error.WriteLine` for this — those bypass the `IsEnabled` gate, the `[Sensitive]` filter, and channel redirection.
+
+```csharp
+_ = context.App.Debug.Write($"merge: step.Index={step?.Index} step.Actions={step?.Actions.Count}");
+```
+
+Or `await` it at an async call site. Fire-and-forget (`_ =`) is fine when the diagnostic is best-effort.
+
+**How it's wired:**
+- `app.Debug.IsEnabled` is the gate. When `--debug` is off, `Write` returns immediately at zero cost. **Leave the calls in source** — they're free in production.
+- When enabled, forwards to the `"debug"` channel — pre-registered to stderr; users can override by re-registering. Goes through the same serializer pipeline as other channel writes, so `[Sensitive]` properties are masked.
+
+**Filter with `--debug={"grep":"..."}`:**
+```bash
+plang build '--debug={"grep":"merge:|goal.call"}'
+```
+Picks out only the diagnostic lines you care about, hiding the rest of the per-step BEFORE/AFTER blocks.
+
+**What to write:**
+- ✅ Type/shape at a boundary: `"value type={x.GetType().Name}, declared={schemaProp.PropertyType.Name}"`
+- ✅ Count/key fields surviving a transform: `"after merge: actions={n}, modifiers={m}"`
+- ❌ Stack traces (use `--debug={"verbose":true}` for that)
+- ❌ Full payload dumps (use `--debug={"llm":{"response":true}}` for LLM data, or `--debug={"variables":[...]}` for vars)
+- ❌ "I'm here" markers without context
 
 ## Resolve Tracing
 

@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "Coder v1 Waves 1-4: zero regressions, +18 wins, but W3 has 3 major C# test gaps (return value, no-mutation, aliasing-without-clone) + W4c prompt rules are dormant. Hand back to coder."
+}

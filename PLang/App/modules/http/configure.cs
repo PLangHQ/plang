@@ -8,6 +8,8 @@ namespace App.modules.http;
 /// Non-null properties are written to the current scope; null properties are left unchanged.
 /// Use Default=true to write to the app-wide default scope.
 /// </summary>
+[ModuleDescription("HTTP client: send requests, upload/download files, and configure defaults like base URL and headers")]
+[System.ComponentModel.Description("Set HTTP module defaults (base URL, timeout, headers, content type) for the current scope")]
 [Action("configure", Cacheable = false)]
 public partial class configure : IContext, IConfigure<Config>
 {

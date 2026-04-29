@@ -1,0 +1,78 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-builder-bootstrap",
+  "timestamp": "2026-04-28T17:25:00Z",
+  "tested_version": "v4",
+  "tested_commit": "6fd35065",
+  "test_run": {
+    "csharp": { "total": 2309, "passed": 2309, "failed": 0, "skipped": 0 },
+    "plang": { "total": 170, "passed": 142, "failed": 24, "skipped": 0, "stale": 4 }
+  },
+  "coverage": {
+    "is_catalog_description_helper_lines_657_to_665": "all hit (was 0 hits on lines 659-665 in v3)",
+    "example_renderer_render_method": "all 33 body lines hit",
+    "math_examples_for_llm_all_5_ops": "all bodies hit",
+    "uncovered_files_for_v4_diff": []
+  },
+  "mutation_tests": [
+    {
+      "mutation": "Drop variable.set from Add.ExamplesForLlm() natural form",
+      "target_file": "PLang/App/modules/math/add.cs",
+      "outcome": "caught",
+      "tests_that_bit": ["Add_NaturalForm_RendersAddThenSet", "AllArithmeticActions_HaveTwoExamples_NaturalAndRhs"]
+    },
+    {
+      "mutation": "Swap chain order — variable.set first, math.add second",
+      "target_file": "PLang/App/modules/math/add.cs",
+      "outcome": "caught",
+      "tests_that_bit": ["AllArithmeticActions_HaveTwoExamples_NaturalAndRhs"],
+      "note": "Per-op render tests use Contains-only assertions and would NOT catch this — relies entirely on the spec-level cross-action test for chain integrity."
+    },
+    {
+      "mutation": "Change A=5 to A=99 in natural form",
+      "target_file": "PLang/App/modules/math/add.cs",
+      "outcome": "caught",
+      "tests_that_bit": ["Add_NaturalForm_RendersAddThenSet"]
+    },
+    {
+      "mutation": "Flip line 664 of IsCatalogDescription: return true -> return false",
+      "target_file": "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+      "outcome": "caught",
+      "tests_that_bit": ["Nullable_Suffix_Matches", "Generic_TypeName_Nullable_Matches"]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/math/MathExamplesForLlmTests.cs",
+      "code_file": "PLang/App/Catalog/ExampleRenderer.cs",
+      "issue": "Per-op render tests (Subtract_BothForms_RenderChain / Multiply / Divide / Power) use Contains() assertions only and do not assert that 'variable.set' appears in the rendered RHS-form output (only Add_RhsForm asserts both). A renderer regression specific to non-Add ops in the RHS path would lean on the spec-level AllArithmeticActions test alone.",
+      "impact": "Acceptable — the cross-action test pins Chain[1].Module=='variable' and Name=='set' for all 5 ops. Mutation 2 confirmed this catches chain swap.",
+      "suggestion": "Optional: add Contains(\"variable.set\") to the rhs render assertions in Subtract/Multiply/Divide/Power tests for redundant coverage."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/App/Modules/math/MathExamplesForLlmTests.cs",
+      "code_file": "PLang/App/modules/math/add.cs",
+      "issue": "Add_NaturalForm_RendersAddThenSet asserts Contains(\"A([object] 5)\"). The [object] tag is brittle to a Data.@this refactor (e.g., changing Add.A from Data.@this to Data.@this<int> would change [object] to [int]).",
+      "impact": "Intentional pin on the current type-mapping contract; flagged so future refactors know which test to update.",
+      "suggestion": "None — keep as-is; the brittleness is the feature."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "(none)",
+      "code_file": "(F4 cluster — 23 PLang test goals)",
+      "issue": "F4 cluster untouched: 23 PLang test failures across Signing (9), Identity (2), UI (2), Event (3), Goal-call (1), ContextVars (1), Crypto (1), Test/Discover (1), ErrorTypes (1), App/SetupGoal (1), ConditionCompound (1), ForeachDictionary (1) + ForeachCallsGoalPerItem.",
+      "impact": "Real production runtime regressions from the v2 builder squash 50351d8b, accepted as separate-branch work by the coder (coder v1 explicit scope).",
+      "suggestion": "Carryover — track but do not block this branch. F4 should be addressed in a follow-up branch."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "approved — V3-1 (IsCatalogDescription helper, 14 unit tests) and V3-2 (math ExamplesForLlm renders, 7 unit tests) closed cleanly with strong unit tests. C# 2288 -> 2309 (+21). Coverage on the helper match-true path went 0/9 -> 9/9. Mutation tested 4 representative regressions — all 4 caught. F4 cluster (23 reds) remains as explicit carryover. Recommend hand to security analyst."
+}

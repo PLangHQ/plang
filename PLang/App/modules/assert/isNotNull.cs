@@ -3,8 +3,7 @@ using App.modules.assert.providers;
 
 namespace App.modules.assert;
 
-[Example("assert %user% is not null", "Value=%user%")]
-[Example("assert %response% is not null, 'API should return data'", "Value=%response%, Message=API should return data")]
+[System.ComponentModel.Description("Assert that Value is not null or empty; fails with an error if null")]
 [Action("isNotNull")]
 public partial class IsNotNull : IContext
 {

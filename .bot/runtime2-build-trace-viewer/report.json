@@ -1,0 +1,286 @@
+{
+  "branch": "runtime2-build-trace-viewer",
+  "sessions": [
+    {
+      "id": "c8d3492e-b52f-494a-962a-d8eee8d47abe",
+      "bot": "coder",
+      "timestamp_start": "2026-04-21T19:26:00Z",
+      "timestamp_end": "2026-04-21T19:42:44Z",
+      "intent": "Group trace viewer sidebar by .goal file path; add build datetime; nest public/private goals with full history.",
+      "before": {
+        "assumptions": "Flat trace list in sidebar; no file grouping; no build datetime; traces carry {id, goal, timestamp, pass1, detailPasses} with no path or visibility.",
+        "risk": "Rebuilding system/builder/BuildGoal.goal to add path/visibility may hit LLM drift on the builder itself."
+      },
+      "plan": "Three surgical changes: (1) BuildGoal.goal: add %goal.Path% and %goal.Visibility% to the %trace% JSON. (2) server.py: cap /api/traces at 20 newest, filter tick-prefixed filenames. (3) index.html: replace flat #goal-list with file -> goal -> trace tree; public first, private second; selection per trace, expansion state persisted across 3s polls.",
+      "actions": [
+        {
+          "paths": [
+            "system/builder/BuildGoal.goal",
+            "system/builder/.build/buildgoal.pr"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added path and visibility fields to the %trace% JSON object. Rebuilding the builder itself drifted other steps (description rewritten, throw parameter shape changed); reverted the .pr and per Ingi hand-edited only the one set-trace step to match the new .goal."
+        },
+        {
+          "paths": [
+            "system/builder/web/server.py"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Filter to tick-prefixed filenames (skip legacy Start.json, Nuget.json), reverse-sort (tick prefix is chronological), cap at 20. Disk storage untouched."
+        },
+        {
+          "paths": [
+            "system/builder/web/index.html"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Flat list -> file/goal/trace tree. New CSS for tree rows. buildFileTree() groups entries by path then by goal name, splits public/private, sorts traces newest-first per goal, sinks unknown path to bottom. Selection state is per trace, expansion state preserved across polls."
+        },
+        {
+          "paths": [
+            "Start.goal",
+            ".build/traces/"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Two-goal smoke case (Start public + Hello2 private) to verify path/visibility flow through the trace pipeline. Trace files accumulate on disk as Ingi requested."
+        }
+      ],
+      "after": {
+        "status": "ready for Ingi to pull and continue with BuildGoal.llm edits.",
+        "health": "Viewer tree renders. Start.goal builds cleanly and produces two traces with path=/Start.goal, visibility=public/private.",
+        "notes": "Hand-edited buildgoal.pr is a known deviation; replacing it requires a clean builder rebuild without LLM drift. That is a BuildGoal.llm prompt issue, not a runtime issue."
+      }
+    },
+    {
+      "id": "f9a2c4b1-3e7d-4f8a-b2c5-9d1e6a7f0c3b",
+      "bot": "coder",
+      "timestamp_start": "2026-04-21T20:30:00Z",
+      "timestamp_end": null,
+      "intent": "Restructure action catalog summary.md: fix type names, add descriptions, prune examples, group by module.",
+      "before": {
+        "assumptions": "Baseline: 427 lines, 28487 bytes, 76 e.g. lines, 2 leaked concurrentdictionary occurrences. Modules: 24+, actions: 117.",
+        "risk": "Phase 4 (summary.md template) depends on Scriban/DotLiquid capabilities \u2014 may need fallback if templating doesn't support grouping."
+      },
+      "plan": "Phase 1: TypeMapping.cs type fixes. Phase 2: Add descriptions to attributes/action/modules. Phase 3: Prune/rewrite examples. Phase 4: Rewrite summary.md template. Phase 5: Measure.",
+      "actions": []
+    },
+    {
+      "id": "a7b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "coder",
+      "timestamp_start": "2026-04-21T21:00:00Z",
+      "timestamp_end": null,
+      "intent": "Deliver all catalog phases: TypeMapping normalization, module/action descriptions, example pruning+rewrite to formal syntax, template verification.",
+      "before": {
+        "assumptions": "Phases 1, 2a-2e already done. Phase 3 (example pruning/rewrite to formal pipe syntax) is the remaining work. Fluid IgnoreCasing=true means PascalCase properties work in template.",
+        "risk": "36 examples across multiple modules need individual evaluation \u2014 some drop, some rewrite to formal syntax."
+      },
+      "plan": "Phase 3 is the remaining work. Audit: Phases 1, 2a-2e, 4 already implemented. Phase 3: evaluate all 36 examples; drop 18 that restate the signature; keep/rewrite 18 to formal pipe syntax (module.action Param([type] value) | variable.set Name([string] %var%), Value([object] %__data__%)).",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/assert/contains.cs",
+            "PLang/App/modules/assert/equals.cs",
+            "PLang/App/modules/assert/greaterThan.cs",
+            "PLang/App/modules/assert/isFalse.cs",
+            "PLang/App/modules/assert/isNotNull.cs",
+            "PLang/App/modules/assert/isNull.cs",
+            "PLang/App/modules/assert/isTrue.cs",
+            "PLang/App/modules/assert/lessThan.cs",
+            "PLang/App/modules/assert/notContains.cs",
+            "PLang/App/modules/assert/notEquals.cs",
+            "PLang/App/modules/condition/compare.cs",
+            "PLang/App/modules/condition/else.cs",
+            "PLang/App/modules/condition/elseif.cs",
+            "PLang/App/modules/condition/if.cs",
+            "PLang/App/modules/crypto/hash.cs",
+            "PLang/App/modules/crypto/verify.cs",
+            "PLang/App/modules/error/throw.cs",
+            "PLang/App/modules/event/on.cs",
+            "PLang/App/modules/event/remove.cs",
+            "PLang/App/modules/event/skipAction.cs",
+            "PLang/App/modules/file/copy.cs",
+            "PLang/App/modules/file/delete.cs",
+            "PLang/App/modules/file/exists.cs",
+            "PLang/App/modules/file/list.cs",
+            "PLang/App/modules/file/move.cs",
+            "PLang/App/modules/file/read.cs",
+            "PLang/App/modules/file/save.cs",
+            "PLang/App/modules/llm/query.cs",
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/modules/output/write.cs",
+            "PLang/App/modules/test/discover.cs",
+            "PLang/App/modules/test/report.cs",
+            "PLang/App/modules/test/run.cs",
+            "PLang/App/modules/test/tag.cs",
+            "PLang/App/modules/ui/render.cs",
+            "PLang/App/modules/variable/set.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 3: drop 18 examples that restate signature (assert.*, condition.else, error.throw, event.remove, file.copy/delete/move/save, output.write); rewrite 18 keepers to formal pipe syntax. Build stayed green."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "0 errors, build green. 36 examples \u2192 18, all keepers in formal module.action pipe syntax.",
+        "notes": "Phases 1+2 were pre-committed. Phase 3 commit: 7c0beeec. Phase 4 requires no code change (Fluid IgnoreCasing=true)."
+      }
+    },
+    {
+      "id": "d8e4f2a6-3b71-4c58-9aef-1d2e3f4a5b6c",
+      "bot": "coder",
+      "timestamp_start": "2026-04-22T12:00:00Z",
+      "timestamp_end": null,
+      "intent": "Three-state prior-build hints (@known / @hint / none) + keep:true LLM response shortcut + trace source tag + viewer chips. Stop the LLM from hallucinating '<= null' operator semantics and from re-emitting mappings on every rebuild.",
+      "before": {
+        "assumptions": "Template appends `<= null` on fresh steps and `<= actions` on rebuilds. Goal.MergeFrom matches steps by exact text only \u2014 drift breaks carry-over. Scheme requires guidance/formal/actions. Viewer has no provenance indicator.",
+        "risk": "Builder's own .pr files reference the llm.query scheme; tightening scheme requires hand-edits to BuildGoal.pr and ApplyStep.pr to survive the migration."
+      },
+      "plan": "1) C# Step.PriorText (transient) + two-pass Goal.MergeFrom (exact then positional). 2) Template emits @known / @hint / bare based on PriorText vs Text. 3) BuildGoal.llm teaches the three markers + keep:true shortcut. 4) Scheme in BuildGoal.goal loosens guidance/formal/level/confidence, adds keep?:bool; ApplyStep skips merge when keep; validator guards keep:true against missing prior or conflicting actions. 5) New builder.enrichResponse action: backfill formal/actions for keep:true steps from prior .pr, tag each step with source:new|known|hint. 6) Hand-edit builder .pr where scheme/apply changed, rebuild. 7) Viewer adds per-step chip new/known/hint + kept overlay. Full plan at .bot/runtime2-build-trace-viewer/coder/v5/plan.md.",
+      "actions": []
+    },
+    {
+      "id": "890c43cd-19df-4bf9-8dc4-3e69c356cf87",
+      "bot": "coder",
+      "timestamp_start": "2026-04-24T10:48:55Z",
+      "timestamp_end": "2026-04-24T11:03:16Z",
+      "intent": "Fix condition.if + loop.foreach error swallowing (silent Handled suppression) and simplify formal/FormatValue to scalar-or-JSON so Fluid wrapper class-names stop leaking into prompts.",
+      "before": {
+        "assumptions": "v5 left builder unable to self-rebuild ApplyStep.goal. Fluid wrapper string 'Fluid.Values.ObjectDictionaryFluidIndexable`1[System.Object]' lands in goal.call.Name. Previous handoff blamed list<action> merge (disproved), then Fluid rendering. 3-whys: rendering bug in formal filter is immediate cause; condition.if + loop.foreach swallow the 404 GoalNotFound error so the bug never surfaced loudly.",
+        "risk": "Error-propagation fix may surface previously-silent bugs in other goals/tests. Acceptable per Ingi's direction \u2014 fix root cause, don't mask."
+      },
+      "plan": "# v6 \u2014 Plan: Fix silent-error swallowing + formal rendering of complex values\n\n## Background\n\nv5 left the builder unable to self-rebuild `/builder/ApplyStep.goal`. Symptom:\nApplyBuiltStep step 0 saved with 0 actions. The original handoff blamed a\nlist<action> merge bug, then corrected to \"Fluid-wrapper type-string\nends up in goal.call.Name\". Both are symptoms.\n\nThe 3-whys trace (this session):\n\n1. **Why does step 0 stay empty?** Apply chain never runs \u2014 `goal.call` has\n   garbage `Name` \u2192 goal lookup fails.\n2. **Why is `goal.call.Name` garbage?** LLM echoed it back from the prompt's\n   `@known:` section. On save, `TypeMapping` line 533 accepts any string as a\n   goal name.\n3. **Why does the prompt contain garbage?** `FormatFormalValue` in\n   `FluidProvider.cs` calls `input.ToObjectValue()` on a `Fluid.Values.DictionaryValue`\n   \u2014 which returns an `ObjectDictionaryFluidIndexable<object>` wrapper, **not**\n   the underlying dict. Verified empirically: the wrapper is not `IDictionary`,\n   falls through to `v.ToString()` \u2192 Fluid class-name leaks into the prompt.\n\n**But why didn't this scream the first time?** Because when the garbage\ngoal.call executes, `GoalCall.GetGoalAsync` DOES return a proper 404\n`GoalNotFound` error. The error gets **swallowed** by `loop/foreach.cs:50`:\n\n```csharp\nif (!result.Success && !result.Handled) return result;\n```\n\n`condition.if` correctly stamps `Handled=true` on its orchestrated result\n(this is needed so `Step.RunAsync` doesn't re-iterate the branch actions\nit already ran). But `loop.foreach` conflates `Handled` with \"error is fine\"\nand silently continues. Every `foreach, call ApplyStep` run loops through\nall items reporting success while every inner call errored.\n\nThis is the priority. Fixing it means any future version of this class of\nbug gets caught on the first build.\n\n## Scope\n\nThree fixes, in order:\n\n### 1. Propagate errors from `loop.foreach` body\n\n`PLang/App/modules/loop/foreach.cs:50`\n\n```csharp\n- if (!result.Success && !result.Handled) return result;\n+ if (!result.Success) return result;\n```\n\n`Handled` stays for its real purpose (telling `Step.RunAsync` \"don't iterate\nremaining step actions\") but never suppresses error propagation.\n\n### 2. Simplify `formal` filter + `FormatValue` \u2014 scalar-or-JSON\n\nBoth `FluidProvider.FormatFormalValue` (`PLang/App/modules/ui/providers/FluidProvider.cs:128`)\nand `DefaultBuilderProvider.FormatValue` (`PLang/App/modules/builder/providers/DefaultBuilderProvider.cs:414`)\nshare the same bug pattern: they fall through to `v.ToString()` for anything\nnot string/bool/IDict/IList.\n\nNew rule, both places:\n\n```\nnull                  \u2192 \"null\"\nstring starts with %  \u2192 bare\nstring with space/,   \u2192 \"quoted\"\nstring                \u2192 bare\nbool                  \u2192 true/false\nIConvertible (numbers, enums with ToString)\n                      \u2192 v.ToString()\nanything else         \u2192 JsonSerializer.Serialize(v)\n```\n\nThe key change: the final fallback becomes JSON serialize, not `v.ToString()`.\nNo Fluid wrappers, no POCO type-names, no surprises. Goal.call values,\ndict-typed params, any nested structure \u2014 all render as JSON.\n\nFor the `formal` filter specifically: continue to call `input.ToObjectValue()`\n(Fluid's unwrapping API), but the scalar-vs-JSON rule above handles the\ncase where ToObjectValue returns a wrapper rather than the raw dict.\n\n### 3. Clear the poisoned .pr and rebuild\n\n`system/builder/.build/applystep.pr` has `Fluid.Values...` strings in its\n`goal.call` params. With #1 and #2 in place, the next rebuild will:\n- Render `p.Value | formal` correctly (JSON \u2192 `{\"name\":\"ApplyKeptStep\",\"parameters\":[]}`)\n- LLM sees correct goal name in `@known`, echoes it back\n- TypeMapping creates `GoalCall { Name = \"ApplyKeptStep\" }`\n- Self-rebuild works\n\nBut the stored .pr is already poisoned \u2014 the first rebuild still sends\n`Fluid.Values...` via `@known:` unless the .pr is fixed first. Manually\nedit `applystep.pr` to replace the two bad `value: {...}` blobs with\n`value: \"ApplyKeptStep\"` / `value: \"ApplyBuiltStep\"`. Then rebuild.\n\n## Unit tests\n\n### New: `PLang.Tests/App/Modules/loop/ForeachErrorPropagationTests.cs`\n\nThree tests for the regression \u2014 all hit the real path, no mocks:\n\n1. **`Foreach_BodyActionReturnsError_PropagatesError`** \u2014 foreach over 3 items,\n   body is `goal.call NonExistentGoal`. Assert the overall result is `!Success`,\n   `Error.Key == \"GoalNotFound\"`, and only the first iteration ran (not 3).\n2. **`Foreach_BodyActionReturnsErrorWithHandled_StillPropagates`** \u2014 the exact\n   scenario from this bug: body is a `condition.if + goal.call NonExistentGoal`\n   chain. condition.if stamps `Handled=true` on the error. Assert error still\n   propagates from the outer foreach.\n3. **`Foreach_BodyActionSucceeds_CompletesAllIterations`** \u2014 sanity check that\n   the fix didn't break the happy path.\n\n### New: `PLang.Tests/App/Modules/condition/IfErrorOrchestrationTests.cs`\n\nTwo tests:\n\n1. **`If_OrchestratedBranchActionErrors_ReturnsError`** \u2014 step with\n   `[condition.if (true), goal.call NonExistentGoal]`. Call `step.RunAsync()`.\n   Assert `!Success`, `Error.Key == \"GoalNotFound\"`.\n2. **`If_OrchestratedResult_IsMarkedHandled_OnSuccess`** \u2014 happy path: assert\n   successful orchestration sets `Handled=true` (so Step.RunAsync breaks).\n   This pins the existing correct behavior so it doesn't regress.\n\n### PLang-level test: `tests/v0.2/loop/ForeachErrorPropagation.test.goal`\n\nEnd-to-end check with a real goal file \u2014 foreach over items, inner call\nto a missing goal. Assert the build terminates with the 404 error, not\na silent success. This catches any future regression in the\nbuilder\u2192LLM\u2192.pr\u2192runtime chain that re-introduces silent swallowing.\n\n## Why not just `return await Orchestrate(...)` in condition.if?\n\nAnswered: because `Step.RunAsync` iterates `Step.Actions` one-by-one\n(`Step/this.cs:127-132`). `Orchestrate` already runs all branch actions.\nWithout `Handled=true`, `Step.RunAsync` continues to the next sibling and\nre-executes everything `Orchestrate` already ran. The `Handled` flag is\ncondition.if's signal to Step: \"I consumed the siblings, don't iterate\nthem again.\"\n\n`loop.foreach.cs:57` sets the same flag for the same reason (its body is\n\"remaining step actions\"). Both writes are correct. The **read** in\n`loop.foreach.cs:50` is the only misuse.\n\n## All Handled sites audited\n\n**Writes (3, all legitimate):**\n- `condition/if.cs:54` \u2014 orchestrated branch consumed siblings\n- `loop/foreach.cs:57` \u2014 foreach body consumed siblings\n- `Events/Lifecycle/Bindings/Binding/this.cs:60` \u2014 event override replacing action\n\n**Reads (4 correct, 1 buggy):**\n- `Step/this.cs:122, 131` \u2014 correct: break step loop\n- `Goal/this.cs:280` \u2014 correct: event override short-circuits goal\n- `Bindings/this.cs:39` \u2014 correct: stop running more bindings\n- `loop/foreach.cs:50` \u2014 **BUG** (conflates Handled with \"error is fine\")\n\n## Out of scope\n\n- `keep:true` integrity check (`GoalCall.Name` validation). Once errors\n  propagate correctly (fix #1), a bad Name causes a 404 on the very next\n  rebuild. No additional validation layer needed \u2014 the runtime is enforcing\n  \"goal exists\" already. Drop the earlier #5 suggestion.\n- Any further builder/prompt cleanup. One fix at a time.\n- The `tests/simple/.build/traces/` and `os/.build/traces/` dirty files in\n  the working tree \u2014 unrelated to this bug, leave alone.\n\n## Order of execution\n\n1. Write both C# test files \u2014 they should FAIL against current code, proving\n   the bug exists.\n2. Apply fix #1 (foreach one-liner). Re-run tests \u2014 should pass.\n3. Apply fix #2 (formal filter + FormatValue scalar-or-JSON).\n4. Fix the poisoned applystep.pr manually (fix #3).\n5. Full rebuild from `/workspace/plang/system`. Verify ApplyBuiltStep step 0\n   now has 2 actions and builder self-rebuild is idempotent.\n6. Write v6/summary.md, commit (including .bot/), generate changes.patch,\n   push.\n\n## Risks\n\n- Fix #1 (foreach error propagation) might surface existing \"silently passing\"\n  tests/builds that were relying on the bug. Run the full test suite\n  (`dotnet run --project PLang.Tests`) and `plang build` from `/workspace/plang`\n  before and after; compare. Any test that breaks probably had a real bug\n  masked \u2014 investigate, don't paper over.\n- Fix #2's JSON fallback means some existing prompts that rendered\n  POCOs-via-ToString will switch to JSON. Acceptable \u2014 JSON is richer and\n  more useful for the LLM.\n- Manual .pr edit (fix #3) is a one-shot migration. After rebuild, the\n  correct value sticks.\n",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/loop/ForeachErrorPropagationTests.cs",
+            "PLang.Tests/App/Modules/condition/IfErrorOrchestrationTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "5 regression tests. ForeachErrorPropagation#2 reproduces the exact bug (body action returns Handled=true with Success=false; outer foreach must propagate, not swallow). Verified red against unfixed code, green after fix. IfErrorOrchestration pins Step-level error-propagation contract + Handled=true-on-success invariant so future refactors can't silently drop them."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/loop/foreach.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "One-line fix at line 50: drop `&& !result.Handled` from body-iteration error check. Errors always propagate; Handled keeps its step-control meaning (informing Step.RunAsync to stop iterating remaining step actions). Full audit of 7 Handled sites confirmed this was the only misuse. All other reads (Step/this.cs, Goal/this.cs, Bindings/this.cs) correctly use Handled for control flow only; all three writes (condition/if, loop/foreach, event bindings) legitimately signal 'siblings consumed'."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Scalar-or-JSON rule for both formal value renderers. FluidProvider adds UnwrapFluid helper that recursively walks IFluidIndexable.Keys + TryGetValue back to plain CLR dicts/lists (empirically verified \u2014 Fluid.DictionaryValue.ToObjectValue returns ObjectDictionaryFluidIndexable wrapper, not the raw dict, so naive IDictionary check misses). DefaultBuilderProvider sees raw CLR objects (no Fluid wrapping) so just needed the IConvertible-or-JSON rule. Eliminates the v.ToString() fallback that leaked class names."
+        },
+        {
+          "paths": [
+            "system/builder/.build/applystep.pr"
+          ],
+          "type": "modify",
+          "category": "config",
+          "confidence": "medium",
+          "context": "Hand-edited two goal.call params that had Name='Fluid.Values.ObjectDictionaryFluidIndexable`1[System.Object]' stuck from prior poisoned rebuilds. After edit, running plang build with fixes applied re-serializes cleanly. Verified both prior-state (silent 'success') and post-fix (loud ValidationErrors) by stashing code and rebuilding."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-build-trace-viewer/coder/v6/plan.md",
+            ".bot/runtime2-build-trace-viewer/coder/v6/summary.md",
+            ".bot/runtime2-build-trace-viewer/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v6 plan doc with full 3-whys trace + scope. v6 summary covers what changed + verification + the downstream LLM-drift issue left for v7. Updated bot-root summary with one-paragraph v6 hook."
+        }
+      ],
+      "after": {
+        "status": "completed",
+        "health": "tests green (2282/2284; 2 pre-existing failures unrelated). All 5 new tests pass. The downstream LLM-drift issue (keep:true + actions in response) is now LOUDLY surfaced \u2014 v7 investigation. ApplyStep.goal self-rebuild is partially unblocked: Apply chain runs correctly; secondary LLM-drift blocks full build success.",
+        "notes": "Fix was simpler than the v5 handoff implied. Silent error was load-bearing \u2014 once fixed, the real LLM bug surfaces and becomes tractable."
+      }
+    },
+    {
+      "id": "25cb9a3b-22f9-4ce6-8b88-4b8da42f9694",
+      "bot": "coder",
+      "timestamp_start": "2026-04-24T11:10:28Z",
+      "timestamp_end": "2026-04-24T11:16:39Z",
+      "intent": "Unblock ApplyStep self-rebuild by making validateResponse permissive for keep:true+actions (enrichResponse already overwrites) + tighten BuildGoal prompt to reduce LLM drift.",
+      "before": {
+        "assumptions": "v6 fixed error-propagation and Fluid rendering. Apply chain runs, surfaces real downstream bug: LLM emits keep:true + actions:[...] simultaneously, validateResponse.cs:88-89 rejects it. But enrichResponse overwrites actions from prior anyway when keep:true \u2014 so the check is redundant guardrail blocking valid builds.",
+        "risk": "Dropping a validation check could mask real prompt issues. Mitigated by: (1) keeping the remaining check (keep:true + empty prior) which is a real pipeline break, (2) tightening the prompt so drift happens less often, (3) new tests pin both accepted and rejected cases."
+      },
+      "plan": "Plan was given inline in the chat (not as plan.md). Summary: Fix 1: delete validateResponse.cs lines 88-89 (keep+actions error). Keep 90-92 (keep+empty-prior). Fix 2: add explicit prompt rule in system/builder/llm/BuildGoal.llm \u2014 when keep:true, omit actions key. Tests: 2 cases in ValidateResponseTests (permissive accept, still-error for empty prior). Verify: rebuild /builder/ApplyStep.goal twice for idempotency.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/builder/ValidateResponseTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added 3 tests for the keep:true matrix: happy path (keep+no-actions+prior-has-actions), v7 fix pin (keep+actions+prior-has-actions = accepted), remaining guardrail (keep+empty-prior = error). v7 fix pin fails red before, passes green after."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/validateResponse.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Dropped lines 88-89 (keep:true + actions error). Kept empty-prior check. enrichResponse already overwrites actions from prior when keep:true, so the validation was redundant guardrail blocking LLM drift from being silently corrected."
+        },
+        {
+          "paths": [
+            "system/builder/llm/BuildGoal.llm"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Restructured @known response contract into FOR/EMIT/OMIT/DO-NOT pseudo-code block. Prose rules were being skimmed by the LLM. Defense-in-depth \u2014 runtime now permissive, prompt tighter."
+        },
+        {
+          "paths": [
+            "system/builder/.build/applystep.pr",
+            "system/builder/.build/buildgoal.pr",
+            "system/.build/app.pr"
+          ],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Regenerated by successful rebuild. applystep.pr now has correct structure \u2014 ApplyBuiltStep step 0 has 1 action (was 0 in v5 \u2014 the original chase target is resolved)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-build-trace-viewer/coder/v7/summary.md",
+            ".bot/runtime2-build-trace-viewer/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v7 summary with verification, code example, known-caveat section on the separate LLM step-count drift. Bot-root summary updated with one paragraph."
+        }
+      ],
+      "after": {
+        "status": "completed",
+        "health": "All 3 new v7 tests green. Full suite 2285/2287 (2 same pre-existing unrelated failures). ApplyStep.goal self-rebuild now succeeds. v5 origin bug (ApplyBuiltStep step 0 with 0 actions) resolved end-to-end.",
+        "notes": "Pattern recurred: when two systems (validator + enricher) disagreed about the same data, the clean answer was to have the validator defer. enrichResponse is authoritative for keep:true actions; the validator was second-guessing."
+      }
+    }
+  ]
+}

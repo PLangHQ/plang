@@ -5,3 +5,5 @@
 **v2**: Crypto module added as piece 2 (signing needs hashing). 9 pieces total. Identity revised to become opaque key vault — key generation moves to signing provider. Signing provider is swappable per-call → actor → engine default → Ed25519. Verification dispatches by message type, not settings. Contracts are pass-through consent strings. See [v2/plan.md](v2/plan.md).
 
 **Status (2026-03-23)**: Pieces 1-3 (identity, crypto, signing) are DONE — fully implemented, audited (security + OBP), and documented. Piece 4 (HTTP) is next.
+
+**Status (2026-04-29)**: All 10 pieces DONE. Piece 10 (builder v2 integration) merged from `runtime2-builder-bootstrap` — full v2 self-rebuild with Catalog, Trace, ParamSnapshot, granular LLM debug, BuildingGuard removal, and four new builder actions. Auditor PASS, security PASS, tester APPROVED, codeanalyzer v4 CLEAN, docs v1 PASS.

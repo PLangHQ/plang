@@ -1,0 +1,52 @@
+{
+  "name": "TrivialPass",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0027hello\u0027",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Exercises one action path (output.write) so test.run records something\ninto the Coverage and Results the Report tests can inspect.",
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hello",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/_fixtures_pass/trivial.fixture.goal",
+  "prPath": "/_fixtures_pass/.build/trivial.fixture.pr",
+  "hash": "7e264f66ac65acf2ab3b347633f2679b5b0a1fd1b7194c5ab5a531aae132ab39",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -15,19 +15,10 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     private static readonly Stopwatch _buildTimer = new();
 
-    private static Data.@this? BuildingGuard(IContext action)
-    {
-        if (!action.Context.App.Building.IsEnabled)
-            return Data.@this.FromError(new Errors.ActionError("Building is not enabled", "BuildingDisabled", 400));
-        return null;
-    }
-
     // --- Actions ---
 
     public Task<Data.@this> Actions(GetActions action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return Task.FromResult(guard);
 
         return Task.FromResult(Data.@this.Ok(action.Context.App.Modules.Describe()));
     }
@@ -36,24 +27,18 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public Data.@this Types(types action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
-        var names = TypeMapping.GetBuilderTypeNames();
-        var schemas = TypeMapping.GetComplexTypeSchemas(action.Context.App.Modules);
-        var schemaLines = schemas.Select(kvp => $"  {kvp.Key}: {kvp.Value}");
-
-        return Data.@this.Ok(new BuilderTypeInfo(
-            string.Join(", ", names),
-            string.Join("\n", schemaLines)));
+        // The catalog is a structured object now — Build assembles primitives and
+        // discovered record/enum entries. It pre-renders TypeNames/TypeSchemas for
+        // the Liquid template, and keeps Types/PrimitiveNames for introspection
+        // (JSON, UI, trace viewer).
+        return Data.@this.Ok(global::App.Catalog.@this.Build(action.Context.App.Modules));
     }
 
     // --- Goals ---
 
     public async Task<Data.@this> Goals(goals action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         var app = action.Context.App;
         var context = action.Context;
@@ -74,19 +59,44 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (files == null || files.Length == 0)
             return Data.@this.Ok(new List<Goal>());
 
-        // Filter by app.Building.Files if set (--build={"files":"test.goal"})
-        var buildFiles = app.Building.Files;
+        // Filter by app.Build.Files if set (--build={"files":[...]})
+        // Honor the user's specified order — building has bootstrapping concerns
+        // (e.g., system/builder rebuilding itself: BuildGoal must come LAST so
+        // earlier iterations use the previous in-memory build pipeline).
+        var buildFiles = app.Build.Files;
         if (buildFiles.Count > 0)
         {
             // Ensure filter paths have Context so FileName/Relative work
             foreach (var bf in buildFiles)
                 bf.Context ??= context;
 
-            files = files.Where(f =>
-                buildFiles.Any(bf => f.FileName.Equals(bf.FileName, StringComparison.OrdinalIgnoreCase)
-                    || f.Relative.EndsWith(bf.Relative, StringComparison.OrdinalIgnoreCase)
-                    || f.Relative.StartsWith(bf.Relative, StringComparison.OrdinalIgnoreCase)))
-                .ToArray();
+            bool MatchesPattern(FileSystem.Path f, FileSystem.Path bf)
+            {
+                // Use bf.Relative as the source of truth — bf.Raw is only set when a
+                // Path is built via Path.Resolve, but TypeConverter constructs paths
+                // via `new Path(string)` for JSON-derived filters, leaving Raw="".
+                // Falling through to a bare-filename match in that case incorrectly
+                // matched basenames across folders (e.g. "Errors/SimpleGoalCall/Start.goal"
+                // would match every Start.goal in the tree).
+                var bfRel = bf.Relative;
+                var pathQualified = bfRel.Contains('/') || bfRel.Contains('\\');
+                if (pathQualified)
+                    return f.Relative.EndsWith(bfRel, StringComparison.OrdinalIgnoreCase)
+                        || f.Relative.StartsWith(bfRel, StringComparison.OrdinalIgnoreCase);
+                return f.FileName.Equals(bf.FileName, StringComparison.OrdinalIgnoreCase);
+            }
+
+            var ordered = new List<FileSystem.Path>();
+            var seen = new HashSet<string>();
+            foreach (var bf in buildFiles)
+            {
+                foreach (var f in files)
+                {
+                    if (!MatchesPattern(f, bf)) continue;
+                    if (seen.Add(f.Absolute)) ordered.Add(f);
+                }
+            }
+            files = ordered.ToArray();
             if (files.Length == 0)
                 return Data.@this.Ok(new List<Goal>());
         }
@@ -134,8 +144,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public async Task<Data.@this> GoalsSave(goalsSave action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         var app = action.Context.App;
         var context = action.Context;
@@ -155,9 +163,18 @@ public class DefaultBuilderProvider : IBuilderProvider
         if (string.IsNullOrEmpty(prPath))
             return Data.@this.FromError(new Errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
 
-        // Group modifier actions onto their preceding executable action
-        foreach (var step in goal.Steps)
-            step.Actions.GroupModifiers(app.Modules);
+        // Group modifier actions onto their preceding executable action — recursive so
+        // sub-goals are grouped too. Without this, sub-goal steps serialize with flat
+        // modifiers and fail at runtime (a modifier's no-op Run wipes %__data__%).
+        goal.GroupModifiersRecursive(app.Modules);
+
+        // Final safety net before persisting. Re-runs structural validation against the
+        // goal's current Steps — catches any mismatch (step count, missing actions on
+        // non-keep steps) that slipped past the in-pipeline validateResponse and
+        // ApplyStep stages. Refusing to write the .pr is preferable to saving a half-
+        // built artifact that the runtime can't execute.
+        var validation = validateResponse.ValidateGoalState(goal);
+        if (!validation.Success) return validation;
 
         var json = JsonSerializer.Serialize(goal, Json.PrWrite);
 
@@ -180,8 +197,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public async Task<Data.@this> Validate(validate action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         var app = action.Context.App;
         var context = action.Context;
@@ -220,15 +235,81 @@ public class DefaultBuilderProvider : IBuilderProvider
         }
 
         await ResolveGoalCallPaths(actions, app, context);
-        NormalizeParameterTypes(actions, modules);
+        var normalizationErrors = NormalizeParameterTypes(actions, modules, context);
 
-        var validationErrors = new List<string>();
+        var validationErrors = new List<string>(normalizationErrors);
         foreach (var a in actions)
         {
             var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (a.Parameters != null)
                 foreach (var p in a.Parameters) paramNames.Add(p.Name);
             a.Defaults = modules.GetDefaults(a.Module, a.ActionName, paramNames);
+
+            // goal.call sanity — goal names are simple identifiers (BuildGoalCore,
+            // HandleValidationError) or slash-paths (Setup/Init). They never contain
+            // dots. The LLM occasionally hallucinates a CLR type name into the slot
+            // (Fluid.Values.ObjectDictionaryFluidIndexable, App.Goals.Goal.GoalCall);
+            // catch those here so LlmFixer retries instead of writing a dead .pr.
+            if (a.Parameters != null)
+            {
+                foreach (var p in a.Parameters)
+                {
+                    if (!string.Equals(p.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase)) continue;
+                    // Catalog descriptions (e.g. "goal.call", "goal.call?") aren't real values —
+                    // they're schema metadata from Modules.Describe(). Same skip as in
+                    // NormalizeParameterTypes; without it, ToGoalCall parses "goal.call" as a
+                    // dotted name and the type-name guard below false-positives on every
+                    // goal.call slot in the catalog.
+                    if (p.Value is string desc && IsCatalogDescription(desc, p.Type!.Value)) continue;
+                    var goalCall = ToGoalCall(p.Value);
+                    if (goalCall == null || string.IsNullOrEmpty(goalCall.Name)) continue;
+                    if (goalCall.Name.Contains('%')) continue;  // %var% resolves at runtime
+                    // Hard reject CLR type names — these are the known leak vector
+                    // (Fluid template rendering a typed object via ToString()). A goal
+                    // Name can never legitimately match a loaded CLR type's FullName.
+                    if (Utils.PlangTypeIndex.IsClrTypeName(goalCall.Name))
+                        validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' is a CLR type name. This is a build pipeline leak (likely a template rendering an object via ToString() instead of .Name). Use the actual goal name from the step text.");
+                    else if (goalCall.Name.Contains('.'))
+                        validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
+                }
+            }
+
+            // Required-parameter check. A property is required when:
+            //   - non-nullable type (Data<T>, not Data<T>?, not <T?>)
+            //   - has no [Default] attribute
+            //   - is not a [Provider], capability interface, or framework slot
+            // The LLM omitting a required param is a build-breaking mistake — without
+            // the param, the runtime can't construct the action's parameter record.
+            // Catch it at build time so LlmFixer / HandleValidationError can re-prompt.
+            {
+                var actType = modules.GetActionType(a.Module, a.ActionName);
+                if (actType != null)
+                {
+                    var emitted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    if (a.Parameters != null)
+                        foreach (var p in a.Parameters) emitted.Add(p.Name);
+
+                    var nullCtx = new System.Reflection.NullabilityInfoContext();
+                    foreach (var prop in actType.GetProperties(
+                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                    {
+                        if (prop.Name == "EqualityContract") continue;
+                        if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<modules.ProviderAttribute>(prop) != null) continue;
+                        if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<modules.DefaultAttribute>(prop) != null) continue;
+                        if (CapabilityPropName(prop)) continue;
+
+                        var nullable = System.Nullable.GetUnderlyingType(prop.PropertyType) != null
+                            || (!prop.PropertyType.IsValueType
+                                && nullCtx.Create(prop).WriteState == System.Reflection.NullabilityState.Nullable);
+                        if (nullable) continue;
+
+                        if (!emitted.Contains(prop.Name))
+                            validationErrors.Add(
+                                $"{a.Module}.{a.ActionName}: required parameter '{prop.Name}' is missing. " +
+                                $"Every action must emit all non-nullable, non-default parameters.");
+                    }
+                }
+            }
 
             // Action-level build validation
             var actionType = modules.GetActionType(a.Module, a.ActionName);
@@ -259,19 +340,118 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public Data.@this Merge(merge action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
+
+        // Diagnostic — gated by app.Debug.IsEnabled, drops on the floor in production.
+        // The merge handoff was the spot a Boolean-vs-Step type mismatch surfaced during
+        // the builder rebuild; leaving the line in earns its keep next time it drifts.
+        var step = action.Step.Value;
+        var from = action.StepFromLlm.Value;
+        _ = action.Context.App.Debug.Write(
+            $"builder.merge: step.Index={step?.Index} step.Actions={step?.Actions.Count} " +
+            $"from.Index={from?.Index} from.Keep={from?.Keep} from.Actions={from?.Actions.Count}");
 
         action.Step.Value!.Merge(action.StepFromLlm.Value!);
         return Data.@this.Ok(action.Step.Value);
+    }
+
+    // --- Enrich Response ---
+
+    public Data.@this EnrichResponse(enrichResponse action)
+    {
+
+        var response = action.StepResults.Value;
+        var goal = action.Goal.Value;
+        if (response == null || goal == null)
+            return Data.@this.Ok(response);
+
+        foreach (var step in response.Steps)
+        {
+            if (step.Index < 0 || step.Index >= goal.Steps.Count) continue;
+            var prior = goal.Steps[step.Index];
+
+            // LLM metadata backfill — for keep:true the LLM omits these to save
+            // tokens; pull them off the prior so the trace viewer doesn't show
+            // every cached step as 0% / level=null / no guidance.
+            if (step.Guidance == null) step.Guidance = prior.Guidance;
+            if (step.Level == null) step.Level = prior.Level;
+            if (step.Confidence == null) step.Confidence = prior.Confidence;
+
+            if (step.Keep)
+            {
+                // Copy the prior's actions onto the response step so the
+                // downstream merge sees a fully populated Step.
+                step.Actions.Clear();
+                foreach (var a in prior.Actions) step.Actions.Add(a);
+                if (string.IsNullOrEmpty(step.Formal))
+                    step.Formal = RenderFormal(prior.Actions);
+                step.Source = "known";
+            }
+            else if (prior.Actions.Count == 0)
+            {
+                step.Source = "new";
+            }
+            else if (prior.PriorText == prior.Text)
+            {
+                step.Source = "known";
+            }
+            else
+            {
+                step.Source = "hint";
+            }
+        }
+
+        return Data.@this.Ok(response);
+    }
+
+    private static string RenderFormal(Actions actions)
+    {
+        var segments = new List<string>();
+        foreach (var a in actions)
+        {
+            segments.Add(RenderActionFormal(a));
+            foreach (var mod in a.Modifiers)
+                segments.Add(RenderActionFormal(mod));
+        }
+        return string.Join(" | ", segments);
+    }
+
+    private static string RenderActionFormal(Goals.Goal.Steps.Step.Actions.Action.@this a)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append(a.Module).Append('.').Append(a.ActionName);
+        if (a.Parameters.Count > 0)
+        {
+            sb.Append(' ');
+            for (int i = 0; i < a.Parameters.Count; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                var p = a.Parameters[i];
+                sb.Append(p.Name).Append('(');
+                if (p.Type != null) sb.Append('[').Append(p.Type.Value).Append("] ");
+                sb.Append(FormatValue(p.Value));
+                sb.Append(')');
+            }
+        }
+        return sb.ToString();
+    }
+
+    private static string FormatValue(object? v)
+    {
+        if (v == null) return "null";
+        if (v is string s) return s.Contains(' ') || s.Contains(',') ? $"\"{s}\"" : s;
+        if (v is bool b) return b ? "true" : "false";
+        // InvariantCulture so locale-sensitive numeric output stays symmetric with
+        // TypeConverter's InvariantCulture parse — see ExampleRenderer.cs for context.
+        if (v is IConvertible conv) return System.Convert.ToString(conv, System.Globalization.CultureInfo.InvariantCulture) ?? "";
+        // Structured values (dicts, lists, POCOs like GoalCall) → JSON.
+        try { return System.Text.Json.JsonSerializer.Serialize(v); }
+        catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { return v.ToString() ?? ""; }
     }
 
     // --- App ---
 
     public async Task<Data.@this> App(app action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         var app = action.Context.App;
         // App loads its identity from app.pr at Start() — just return it
@@ -280,8 +460,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public async Task<Data.@this> AppSave(appSave action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         return await action.Context.App.Save();
     }
@@ -290,8 +468,6 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     public Data.@this PromoteGroups(promoteGroups action)
     {
-        var guard = BuildingGuard(action);
-        if (guard != null) return guard;
 
         var steps = ToStepList(action.Steps.Value);
         if (steps == null || steps.Count == 0)
@@ -328,7 +504,11 @@ public class DefaultBuilderProvider : IBuilderProvider
             var currentLevel = GetString(step, "level") ?? "high";
             if (string.Equals(currentLevel, "high", StringComparison.OrdinalIgnoreCase))
             {
-                SetValue(step, "level", groupLevel);
+                if (!SetValue(step, "level", groupLevel))
+                    return Data.@this.FromError(new Errors.ActionError(
+                        $"PromoteGroups received a step as JsonElement (immutable) — expected IDictionary. " +
+                        $"Step type: {step.GetType().FullName}. Group: '{group}'.",
+                        "PromoteGroupsImmutableStep", 500));
                 promoted++;
             }
         }
@@ -373,34 +553,47 @@ public class DefaultBuilderProvider : IBuilderProvider
         return null;
     }
 
-    private static void SetValue(object step, string key, string value)
+    /// <summary>
+    /// Returns false if the step can't be mutated (e.g. immutable JsonElement),
+    /// so the caller can surface a structured error instead of silently skipping.
+    /// </summary>
+    private static bool SetValue(object step, string key, string value)
     {
         if (step is IDictionary<string, object?> dict)
+        {
             dict[key] = value;
-        // JsonElement is immutable — log a warning since the value can't be set
-        else if (step is JsonElement)
-            Console.Error.WriteLine($"  Warning: Cannot set '{key}' on JsonElement step — expected IDictionary");
+            return true;
+        }
+        // JsonElement is immutable — caller decides how to surface this.
+        return false;
     }
 
     /// <summary>
     /// Normalizes parameter values to match their declared type.
     /// LLMs are non-deterministic — they may produce "false" (string) instead of false (bool).
     /// This runs at build time so the .pr file has correct types.
+    /// Returns conversion errors so the caller can fold them into validationErrors —
+    /// without this, an LLM-emitted value that can't convert to the declared type
+    /// would silently keep the wrong-typed value and the runtime would fail later.
     /// </summary>
-    private static void NormalizeParameterTypes(Actions actions, App.Modules.@this modules)
+    private static List<string> NormalizeParameterTypes(Actions actions, App.Modules.@this modules,
+        Actor.Context.@this context)
     {
+        var errors = new List<string>();
         foreach (var a in actions)
         {
             if (a.Parameters == null) continue;
 
-            // Stamp missing types from the action schema
+            // Stamp types from the action schema, OVERRIDING any LLM-emitted type that
+            // disagrees. The LLM tags the value's content shape (404 → "int"); the schema
+            // tags the parameter's declared CLR type (Key → "string"). The schema wins —
+            // it's the contract, not the LLM's view of the value.
             var actionType = modules.GetActionType(a.Module, a.ActionName);
             if (actionType != null)
             {
                 var props = actionType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
                 foreach (var p in a.Parameters)
                 {
-                    if (p.Type != null) continue;
                     var schemaProp = props.FirstOrDefault(sp =>
                         string.Equals(sp.Name, p.Name, StringComparison.OrdinalIgnoreCase));
                     if (schemaProp == null) continue;
@@ -412,19 +605,90 @@ public class DefaultBuilderProvider : IBuilderProvider
 
             foreach (var p in a.Parameters)
             {
-                if (p.Value is not string strValue) continue;
-                if (strValue.StartsWith('%') && strValue.EndsWith('%')) continue; // variable reference
+                if (p.Value is null) continue;
+                if (p.Value is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue; // variable reference
                 if (p.Type == null) continue;
 
-                var targetType = TypeMapping.GetType(p.Type.Value);
-                if (targetType == null || targetType == typeof(string)) continue;
+                // Catalog descriptions ("int = 1", "%var% string", "list<int>?") are schema
+                // metadata produced by Modules.Describe(), not values to normalize. They
+                // surface when the catalog is fed back through validate (BuilderValidateValid
+                // smoke test). Skip — coercing a description string to its declared type fails.
+                if (p.Value is string desc && IsCatalogDescription(desc, p.Type.Value)) continue;
 
-                var (converted, _) = TypeMapping.TryConvertTo(strValue, targetType);
+                var targetType = TypeMapping.GetType(p.Type.Value);
+                if (targetType == null) continue;
+
+                // Scalar PlangType domain types (Path, etc.) carry their wire representation
+                // AS the primitive — `Resolve(rawInput, context)` is the runtime constructor.
+                // If we eagerly convert here, the saved .pr inflates the primitive into a
+                // fully reflected record (Raw, Absolute, FileName, ...) that round-trips
+                // poorly. Leave the primitive in the .pr; runtime auto-wraps via the source
+                // generator's Resolve convention when the action actually executes.
+                if (TypeMapping.IsScalarPlangType(targetType)) continue;
+
+                // Already correctly typed? Skip (e.g. value is bool, target is bool).
+                if (targetType.IsInstanceOfType(p.Value)) continue;
+
+                // Convert in either direction: string → bool/int/double/etc., or
+                // numeric/bool → string when the parameter is declared string. The LLM
+                // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
+                var (converted, error) = TypeMapping.TryConvertTo(p.Value, targetType, context);
                 if (converted != null)
                     p.Value = converted;
+                else if (error != null)
+                    errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {error.Message}");
             }
         }
+        return errors;
     }
+
+    /// <summary>
+    /// Recognizes catalog description strings produced by <see cref="App.Modules.@this.Describe"/>:
+    /// the four forms <c>"X"</c>, <c>"X?"</c>, <c>"X = default"</c>, <c>"%var% X"</c> (and
+    /// combinations). When the catalog itself is fed back through validate, every parameter's
+    /// Value is one of these — coercing them through TypeMapping fails because they're
+    /// metadata, not data. The match is anchored on <paramref name="typeName"/> (already
+    /// stamped from the schema) so an LLM-emitted real value can't accidentally trip it.
+    /// </summary>
+    // internal-static for unit tests — the helper has 4 distinct match shapes and the
+    // production callers only exercise the match-true path through integration tests.
+    internal static bool IsCatalogDescription(string value, string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName)) return false;
+        var v = value.AsSpan().Trim();
+        if (v.StartsWith("%var% ")) v = v[6..];
+        if (!v.StartsWith(typeName)) return false;
+        var rest = v[typeName.Length..];
+        if (rest.Length == 0) return true;
+        if (rest[0] == '?') rest = rest[1..];
+        if (rest.Length == 0) return true;
+        return rest.StartsWith(" = ");
+    }
+
+    /// <summary>
+    /// Capability-interface properties (Context, Step, Channels, Event, Static) are
+    /// wired by the source generator from the execution context — they're not
+    /// user-supplied parameters and the LLM never emits them. Skip them when
+    /// computing the required-parameter set. Mirrors the filter in <c>Modules.Describe()</c>.
+    /// </summary>
+    private static bool CapabilityPropName(System.Reflection.PropertyInfo prop)
+    {
+        var declaring = prop.DeclaringType;
+        if (declaring == null) return false;
+
+        System.Type[] capabilityIfaces =
+        [
+            typeof(modules.IContext),
+            typeof(modules.IStep),
+            typeof(modules.IChannel),
+            typeof(modules.IEvent),
+            typeof(modules.IStatic),
+        ];
+
+        return capabilityIfaces.Any(iface =>
+            iface.GetProperty(prop.Name) != null && iface.IsAssignableFrom(declaring));
+    }
+
 
     // --- Private helpers ---
 

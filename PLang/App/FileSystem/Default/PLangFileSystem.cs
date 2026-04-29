@@ -26,7 +26,10 @@ namespace App.FileSystem.Default
 		{
 			get
 			{
-				return System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "system"));
+				// system/ moved under os/ — the global registry. PLang resolves /system/X
+				// paths relative to this directory; the os symlink at the binary dir maps
+				// to /workspace/plang/os in dev, /<install>/os in prod.
+				return System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "os", "system"));
 			}
 		}
 		public string OsDirectory

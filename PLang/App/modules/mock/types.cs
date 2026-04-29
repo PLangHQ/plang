@@ -1,13 +1,16 @@
+using App.Attributes;
+
 namespace App.modules.mock.types;
 
+[PlangType("mockhandle")]
 public class MockHandle
 {
-    public string Id { get; init; } = "";
-    public string ActionPattern { get; init; } = "";
-    public int CallCount => Calls.Count;
+    [LlmBuilder] public string Id { get; init; } = "";
+    [LlmBuilder] public string ActionPattern { get; init; } = "";
+    [LlmBuilder] public int CallCount => Calls.Count;
+    [LlmBuilder] public bool IsSpy { get; init; }
     public List<MockCall> Calls { get; } = new();
     public string EventBindingId { get; set; } = "";
-    public bool IsSpy { get; init; }
 
     public void RecordCall(Dictionary<string, object?> parameters)
     {

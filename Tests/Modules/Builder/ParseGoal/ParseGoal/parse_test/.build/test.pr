@@ -1,0 +1,17 @@
+{
+  "name": "null",
+  "description": null,
+  "comment": null,
+  "steps": [],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ParseGoal/parse_test/Test.goal",
+  "prPath": "/ParseGoal/parse_test/.build/test.pr",
+  "hash": null,
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

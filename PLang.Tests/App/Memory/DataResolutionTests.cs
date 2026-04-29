@@ -20,10 +20,14 @@ public class DataResolutionTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    #region NeedsResolution — re-resolution on each access
+    #region NeedsResolution — snapshot-once semantics
 
+    // Resolution happens once on first access, then the resolved container is
+    // cached. This keeps list.add / dict writes stable — container identity is
+    // preserved across repeated .Value reads. Subsequent changes to referenced
+    // variables do NOT re-propagate; the snapshot was taken at first read.
     [Test]
-    public async Task Value_List_ReResolvesWhenVariableChanges()
+    public async Task Value_List_SnapshotsOnFirstAccess()
     {
         Ctx.Variables.Set("myVar", "first");
 
@@ -36,11 +40,12 @@ public class DataResolutionTests
         Ctx.Variables.Set("myVar", "second");
 
         var result2 = data.Value as List<object?>;
-        await Assert.That(result2![0]).IsEqualTo("second");
+        await Assert.That(result2![0]).IsEqualTo("first");           // still the snapshot
+        await Assert.That(object.ReferenceEquals(result1, result2)).IsTrue(); // same list ref
     }
 
     [Test]
-    public async Task Value_Dict_ReResolvesWhenVariableChanges()
+    public async Task Value_Dict_SnapshotsOnFirstAccess()
     {
         Ctx.Variables.Set("host", "localhost");
 
@@ -53,11 +58,12 @@ public class DataResolutionTests
         Ctx.Variables.Set("host", "production.example.com");
 
         var result2 = data.Value as Dictionary<string, object?>;
-        await Assert.That(result2!["url"]).IsEqualTo("http://production.example.com/api");
+        await Assert.That(result2!["url"]).IsEqualTo("http://localhost/api");   // snapshot
+        await Assert.That(object.ReferenceEquals(result1, result2)).IsTrue();
     }
 
     [Test]
-    public async Task Value_NestedListDict_ReResolvesDeep()
+    public async Task Value_NestedListDict_SnapshotsDeep()
     {
         Ctx.Variables.Set("content", "hello world");
 
@@ -73,7 +79,7 @@ public class DataResolutionTests
         Ctx.Variables.Set("content", "goodbye world");
 
         var msg2 = (data.Value as List<object?>)![0] as Dictionary<string, object?>;
-        await Assert.That(msg2!["Content"]).IsEqualTo("goodbye world");
+        await Assert.That(msg2!["Content"]).IsEqualTo("hello world");   // snapshot
     }
 
     #endregion

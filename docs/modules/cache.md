@@ -68,4 +68,4 @@ TestCacheOnFileRead
 - assert %content1% equals %content2%
 ```
 
-See `tests/modifiers/CacheOnFileRead.test.goal` for the runnable test.
+See `Tests/Modules/Modifiers/CacheOnFileRead.test.goal` for the runnable test.

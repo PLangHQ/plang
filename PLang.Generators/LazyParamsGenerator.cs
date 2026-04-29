@@ -534,12 +534,25 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
         sb.AppendLine("        try");
         sb.AppendLine("        {");
-        sb.AppendLine("            return await Run();");
+        sb.AppendLine("            var __runResult = await Run();");
+        sb.AppendLine("            if (!__runResult.Success && __runResult.Error is App.Errors.Error __runErr && __runErr.Params == null)");
+        sb.AppendLine("                __runErr.Params = __SnapshotParams();");
+        sb.AppendLine("            return __runResult;");
         sb.AppendLine("        }");
-        sb.AppendLine("        catch (System.Exception ex)");
+        sb.AppendLine("        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))");
         sb.AppendLine("        {");
-        sb.AppendLine("            return App.Data.@this.FromError(new App.Errors.ServiceError(");
-        sb.AppendLine("                ex.Message, __step, __callFrames, \"ServiceError\", 400) { Exception = ex });");
+        sb.AppendLine("            var __exErr = new App.Errors.ServiceError(");
+        sb.AppendLine("                ex.Message, __step, __callFrames, \"ServiceError\", 400) { Exception = ex };");
+        sb.AppendLine("            __exErr.Params = __SnapshotParams();");
+        sb.AppendLine("            return App.Data.@this.FromError(__exErr);");
+        sb.AppendLine("        }");
+        sb.AppendLine("        finally");
+        sb.AppendLine("        {");
+        sb.AppendLine("            __frame?.SnapshotVariables(context.Variables);");
+        sb.AppendLine("            if (context.CallStack != null) context.CallStack.PopAsync().GetAwaiter().GetResult();");
+        sb.AppendLine("            context.Step = __previousStep;");
+        sb.AppendLine("            context.Goal = __previousGoal;");
+        sb.AppendLine("            context.Event = __previousEvent;");
         sb.AppendLine("        }");
         sb.AppendLine("        finally");
         sb.AppendLine("        {");
@@ -617,6 +630,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine("        data.Context = Context;");
         sb.AppendLine("        data.NeedsResolution = true;");
+        // The pr's Parameter Data is shared across action executions. Its
+        // resolution cache (set on first .Value access) must be cleared each
+        // call so %var% references re-resolve against the current variables.
+        // Without this, e.g. llm.query's Messages[content=\"%goalForLlm%\"]
+        // kept the first resolution forever — sub-goal builds got the parent's
+        // rendered prompt.
+        sb.AppendLine("        data.ResetResolution();");
         sb.AppendLine("        return data;");
         sb.AppendLine("    }");
         sb.AppendLine();
@@ -663,6 +683,37 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        if (data?.Value is string str)");
         sb.AppendLine("            return str.Trim('%');");
         sb.AppendLine("        return data?.Value?.ToString();");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+
+        // __SnapshotParams: per-property snapshot of pr-side and final-resolved values.
+        // Called from ExecuteAsync's error paths so the resulting Error carries enough
+        // context to diagnose "param X arrived as Y" without re-running with a flag.
+        sb.AppendLine("    private System.Collections.Generic.List<App.Errors.ParamSnapshot> __SnapshotParams()");
+        sb.AppendLine("    {");
+        sb.AppendLine("        var __list = new System.Collections.Generic.List<App.Errors.ParamSnapshot>();");
+        foreach (var prop in info.Properties)
+        {
+            if (prop.IsProvider) continue;
+            var paramName = prop.Name.ToLowerInvariant();
+            var backingField = $"__{prop.Name}_backing";
+            var setFlag = $"__{prop.Name}_set";
+            // TypeName comes from the type system — never contains quotes or backslashes
+            var declaredType = prop.TypeName.Replace("global::", "");
+            sb.AppendLine($"        {{");
+            sb.AppendLine($"            var __pr = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{prop.Name}\", System.StringComparison.OrdinalIgnoreCase));");
+            sb.AppendLine($"            __pr ??= __action?.Defaults?.FirstOrDefault(p => string.Equals(p.Name, \"{prop.Name}\", System.StringComparison.OrdinalIgnoreCase));");
+            sb.AppendLine($"            __list.Add(new App.Errors.ParamSnapshot {{");
+            sb.AppendLine($"                Name = \"{prop.Name}\",");
+            sb.AppendLine($"                DeclaredType = \"{declaredType}\",");
+            sb.AppendLine($"                PrValue = __pr?.Value,");
+            sb.AppendLine($"                PrType = __pr?.Type?.Value,");
+            sb.AppendLine($"                FinalValue = {setFlag} ? (object?){backingField} : null,");
+            sb.AppendLine($"                WasAccessed = {setFlag}");
+            sb.AppendLine($"            }});");
+            sb.AppendLine($"        }}");
+        }
+        sb.AppendLine("        return __list;");
         sb.AppendLine("    }");
         sb.AppendLine();
         sb.AppendLine("}");

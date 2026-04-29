@@ -1,0 +1,8 @@
+Branch diff is ~62 MB, over GitHub's 50 MB push limit (same as v1).
+To regenerate locally:
+
+    git diff runtime2..HEAD -- ':(exclude).bot' > /tmp/changes.patch
+
+For a focused diff of just the coder's response to v1 (the 5 commits I verified):
+
+    git diff d8eb2958..bbf982d4 -- ':(exclude).bot'

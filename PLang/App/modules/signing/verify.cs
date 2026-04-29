@@ -6,6 +6,7 @@ namespace App.modules.signing;
 /// <summary>
 /// Verifies a signed data envelope.
 /// </summary>
+[System.ComponentModel.Description("Verify a signed envelope against expected contracts and headers")]
 [Action("verify", Cacheable = false)]
 public partial class verify : IContext
 {

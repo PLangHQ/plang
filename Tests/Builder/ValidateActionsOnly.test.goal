@@ -1,0 +1,10 @@
+TestValidateActionsOnly
+/ Isolated sanity check: does the LLM map `builder.validate actions=%x%, on error …`
+/ with the correct Actions parameter (a list<action> variable reference), now that
+/ the catalog names the type `actions` instead of the bare `this?` it showed before?
+- set %x% = []
+- builder.validate actions=%x%, on error call HandleErr
+
+
+HandleErr
+- write out %!error.Message%

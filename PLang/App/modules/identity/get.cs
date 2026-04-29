@@ -8,6 +8,7 @@ namespace App.modules.identity;
 /// Auto-creates a default if none exist.
 /// PLang: get identity 'alice', write to %identity%
 /// </summary>
+[System.ComponentModel.Description("Retrieve an identity by name, or the current default identity if Name is omitted")]
 [Action("get")]
 public partial class Get : IContext
 {

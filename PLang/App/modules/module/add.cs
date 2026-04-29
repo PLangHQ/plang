@@ -3,6 +3,8 @@ using App.Variables;
 
 namespace App.modules.module;
 
+[ModuleDescription("Load and unload external module DLLs at runtime to extend the available action catalog")]
+[System.ComponentModel.Description("Load a module DLL from Path and register its actions into the current app's action catalog")]
 [Action("add", Cacheable = false)]
 public partial class Add : IContext
 {

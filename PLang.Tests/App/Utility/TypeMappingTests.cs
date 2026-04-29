@@ -703,4 +703,64 @@ public class TypeMappingTests
         await Assert.That(values).IsNotNull();
         await Assert.That(values!.Length).IsGreaterThan(0);
     }
+
+    // --- Single → List<T> auto-wrap (Gap 3 from coder handover) ---
+    // TypeConverter.cs:156-168: when the LLM emits a scalar but the parameter
+    // declares List<T>, wrap into a one-element list rather than failing.
+
+    [Test]
+    public async Task TryConvertTo_StringToListOfString_WrapsAsSingleElementList()
+    {
+        var (result, error) = TypeConverter.TryConvertTo("hello", typeof(List<string>));
+
+        await Assert.That(error).IsNull();
+        await Assert.That(result).IsNotNull();
+        var list = result as List<string>;
+        await Assert.That(list).IsNotNull();
+        await Assert.That(list!.Count).IsEqualTo(1);
+        await Assert.That(list[0]).IsEqualTo("hello");
+    }
+
+    [Test]
+    public async Task TryConvertTo_IntToListOfInt_WrapsAsSingleElementList()
+    {
+        var (result, error) = TypeConverter.TryConvertTo(42, typeof(List<int>));
+
+        await Assert.That(error).IsNull();
+        var list = result as List<int>;
+        await Assert.That(list).IsNotNull();
+        await Assert.That(list!.Count).IsEqualTo(1);
+        await Assert.That(list[0]).IsEqualTo(42);
+    }
+
+    [Test]
+    public async Task TryConvertTo_StringToListOfInt_ConvertsThenWrapsAsList()
+    {
+        // The convert-then-wrap fallback at TypeConverter:162-168 — source type
+        // doesn't match listElementType, but TryConvertTo succeeds on the
+        // element type, then wraps the converted value.
+        var (result, error) = TypeConverter.TryConvertTo("7", typeof(List<int>));
+
+        await Assert.That(error).IsNull();
+        var list = result as List<int>;
+        await Assert.That(list).IsNotNull();
+        await Assert.That(list!.Count).IsEqualTo(1);
+        await Assert.That(list[0]).IsEqualTo(7);
+    }
+
+    [Test]
+    public async Task TryConvertTo_ListOfStringToListOfString_PassesThrough()
+    {
+        // Sanity guard — the auto-wrap branch must NOT engage when source is
+        // already a list. The list-conversion branch upstream handles this.
+        var input = new List<string> { "a", "b", "c" };
+        var (result, error) = TypeConverter.TryConvertTo(input, typeof(List<string>));
+
+        await Assert.That(error).IsNull();
+        var list = result as List<string>;
+        await Assert.That(list).IsNotNull();
+        await Assert.That(list!.Count).IsEqualTo(3);
+        await Assert.That(list[0]).IsEqualTo("a");
+        await Assert.That(list[2]).IsEqualTo("c");
+    }
 }

@@ -1,7 +1,10 @@
+using App.Attributes;
+
 namespace App;
 
+[PlangType("info")]
 public sealed class Info
 {
-    public string Key { get; init; } = "";
-    public string Message { get; init; } = "";
+    [LlmBuilder] public string Key { get; init; } = "";
+    [LlmBuilder] public string Message { get; init; } = "";
 }

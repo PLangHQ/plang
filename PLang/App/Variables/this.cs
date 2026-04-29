@@ -29,24 +29,29 @@ public class @this
     public @this()
     {
         // Register system variables
-        Put(new Data.DynamicData("Now", () => DateTimeOffset.Now, Data.Type.DateTime));
-        Put(new Data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, Data.Type.DateTime));
-        Put(new Data.DynamicData("GUID", () => Guid.NewGuid(), Data.Type.FromName("guid")));
+        Set("Now", new Data.DynamicData("Now", () => DateTimeOffset.Now, Data.Type.DateTime));
+        Set("NowUtc", new Data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, Data.Type.DateTime));
+        Set("GUID", new Data.DynamicData("GUID", () => Guid.NewGuid(), Data.Type.FromName("guid")));
     }
 
     /// <summary>
-    /// Stores or updates a variable.
+    /// Stores a Data under its own Data.Name.
+    /// Convenience wrapper — the name comes from value.Name.
     /// </summary>
-    public void Put(Data.@this value)
-    {
-        value.Context = _context;
-        _variables[value.Name] = value;
-    }
+    public Data.@this Set(Data.@this value) => Set(value.Name, value);
 
     /// <summary>
-    /// Stores a value with the given name.
+    /// Stores a value under the given name and returns the stored Data.
+    /// Semantics by `value` type:
+    ///  - `Data.@this` → aliased under `name` as-is (no clone, no rename). The dictionary
+    ///    key is the source of truth for lookups; `Data.Name` stays advisory — whatever the
+    ///    producing handler set it to. Same object is reachable under both keys.
+    ///  - non-Data → wrapped in a new `Data` named `name`. Existing entry, if any, is updated
+    ///    in-place so readers holding the previous reference see the new value.
+    /// For dot/bracket paths (e.g. "user.name"), the root Data is returned.
+    /// Returns NotFound when the dot-path parent is absent or null.
     /// </summary>
-    public void Set(string name, object? value, Data.Type? type = null)
+    public Data.@this Set(string name, object? value, Data.Type? type = null)
     {
         name = CleanName(name);
 
@@ -59,28 +64,24 @@ public class @this
         // Simple case: no dot/bracket path — set the root variable directly
         if (rootName == name)
         {
-            // Store Data values directly — clone if name differs to avoid mutating shared parameter Data
+            // Data value: alias as-is under the given key. No clone, no rename.
             if (value is Data.@this dv)
             {
-                var stored = dv;
-                if (!string.Equals(dv.Name, name, StringComparison.OrdinalIgnoreCase))
-                    stored = dv.ShallowClone();
-                stored.Name = name;
-                if (type != null) stored.Type = type;
-                stored.Context = _context;
+                dv.Context = _context;
+                if (type != null) dv.Type = type;
 
-                if (_variables.TryGetValue(name, out var prev))
+                if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
                 {
-                    prev.FireOnChange(stored);
-                    stored.CopyEventsFrom(prev);
+                    prev.FireOnChange(dv);
+                    dv.CopyEventsFrom(prev);
                 }
-                else
+                else if (prev == null)
                 {
-                    stored.FireOnCreate();
+                    dv.FireOnCreate();
                 }
 
-                _variables[name] = stored;
-                return;
+                _variables[name] = dv;
+                return dv;
             }
 
             if (_variables.TryGetValue(name, out var existing))
@@ -88,6 +89,7 @@ public class @this
                 existing.Value = value;
                 if (type != null)
                     existing.Type = type;
+                return existing;
             }
             else
             {
@@ -95,8 +97,8 @@ public class @this
                 data.Context = _context;
                 data.FireOnCreate();
                 _variables[name] = data;
+                return data;
             }
-            return;
         }
 
         // Dot/bracket path: navigate to the parent object, set the property with raw value
@@ -129,18 +131,48 @@ public class @this
             propertyName = remaining;
         }
 
-        if (!parent.IsInitialized && parent.Value == null) return;
+        if (!parent.IsInitialized && parent.Value == null)
+            return Data.@this.NotFound(name);
 
         // Lazy convert if parent is a typed string (e.g., json) — must happen before navigation
         parent.ConvertValue();
 
-        // For dot-path, extract raw value from Data — we're setting a property on a C# object
+        // For dot-path, extract raw value from Data — we're setting a property on a C# object.
+        // Dict/list values are snapshot-cloned so the target doesn't alias the source's
+        // mutable container — without the clone, later `set %source.x% = ...` would
+        // silently mutate the target too (this bit the builder trace: trace.pass1
+        // aliased %currentPass%._value and got overwritten by every sub-goal build).
+        // JSON roundtrip honors [JsonIgnore] so cyclic runtime types (Goal↔Step↔Action)
+        // don't deadlock the deep-clone pass.
         var rawValue = value is Data.@this dv2 ? dv2.Value : value;
+        if (rawValue is System.Collections.IDictionary || (rawValue is System.Collections.IList && rawValue is not string))
+        {
+            try
+            {
+                // CamelCase keys so the cloned dict matches the rest of the
+                // pipeline — .pr serialization, traces, and viewer all expect
+                // camelCase. Default options would PascalCase typed POCO sources.
+                var jsonOpts = new System.Text.Json.JsonSerializerOptions {
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                    PropertyNameCaseInsensitive = true,
+                };
+                var json = System.Text.Json.JsonSerializer.Serialize(rawValue, jsonOpts);
+                rawValue = System.Text.Json.JsonSerializer.Deserialize<object?>(json, jsonOpts);
+            }
+            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)
+            {
+                // If serialize fails, fall back to direct value — alias risk but
+                // better than throwing. Surface the failure so the alias-bug repro
+                // path stays debuggable instead of silently reverting to it.
+                _ = _context?.App?.Debug?.Write($"[Variables.Set] snapshot-clone failed for '{name}': {ex.GetType().Name}: {ex.Message} — proceeding with alias (mutation risk)");
+            }
+        }
         var target = parent.Value;
-        if (target == null) return;
+        if (target == null) return Data.@this.NotFound(name);
         var result = SetValueOnObject(target, propertyName, rawValue);
         if (!ReferenceEquals(result, target))
             parent.Value = result;
+        return root;
     }
 
     /// <summary>
@@ -234,6 +266,7 @@ public class @this
 
     private static Dictionary<string, object?> ConvertToDictionary(object obj)
     {
+
         var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         var props = obj.GetType().GetProperties(
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
@@ -444,6 +477,13 @@ public class @this
 
         // Typed objects: resolve %var% in string properties.
         // Clone first to avoid mutating the original (which may be shared .pr template data).
+        // BUT: when the app is in builder mode (App.Build.IsEnabled), typed
+        // objects like Step/Goal/Action carry SOURCE code in their string
+        // properties. Resolving %var% in source code would turn `%!error.Message%`
+        // in a step text into the current runtime error, sent to the LLM as
+        // literal text — which breaks the build. At build time, keep source
+        // strings literal; top-level string vars still resolve normally above.
+        if (_context?.App?.Build?.IsEnabled == true) return value;
         var type = value.GetType();
         if (!type.IsPrimitive && type != typeof(decimal) && type != typeof(DateTime)
             && type != typeof(DateTimeOffset) && type != typeof(Guid) && !type.IsEnum)
@@ -496,11 +536,11 @@ public class @this
     /// <summary>
     /// Gets all variables ordered by last update.
     /// </summary>
-    public IEnumerable<Data.@this> GetAll()
+    public IEnumerable<KeyValuePair<string, Data.@this>> GetAll()
     {
-        return _variables.Values
-            .Where(v => !v.Name.StartsWith("!"))
-            .OrderByDescending(v => v.Updated);
+        return _variables
+            .Where(kvp => !kvp.Key.StartsWith("!"))
+            .OrderByDescending(kvp => kvp.Value.Updated);
     }
 
     /// <summary>

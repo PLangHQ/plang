@@ -1,5 +1,6 @@
 namespace App.modules.list;
 
+[System.ComponentModel.Description("Concatenate all list items into a single string, separated by Separator (default comma)")]
 [Action("join")]
 public partial class Join : IContext
 {

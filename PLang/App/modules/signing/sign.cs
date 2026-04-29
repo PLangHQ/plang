@@ -6,6 +6,8 @@ namespace App.modules.signing;
 /// <summary>
 /// Signs data using the configured signing provider.
 /// </summary>
+[ModuleDescription("Sign and verify data payloads using pluggable cryptographic providers")]
+[System.ComponentModel.Description("Sign a data payload and return a signed envelope via the configured signing provider")]
 [Action("sign", Cacheable = false)]
 public partial class sign : IContext
 {

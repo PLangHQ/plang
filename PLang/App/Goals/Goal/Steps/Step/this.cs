@@ -51,6 +51,15 @@ public sealed partial class @this : modules.IDataWrappable
     [Store, LlmBuilder, Debug, Default]
     public string Text { get; init; } = "";
 
+    /// <summary>
+    /// Text of the prior-build step that produced this step's Actions. Set by
+    /// Goal.MergeFrom when actions are carried over from an existing .pr. Used
+    /// by the builder prompt to decide between @known (PriorText == Text) and
+    /// @hint (PriorText != Text). Transient — not serialized to .pr.
+    /// </summary>
+    [JsonIgnore]
+    public string? PriorText { get; set; }
+
     [Store, Debug, Default]
     public int LineNumber { get; init; }
 
@@ -78,6 +87,29 @@ public sealed partial class @this : modules.IDataWrappable
 
     [Store, LlmBuilder, Debug, Default]
     public string? Intent { get; init; }
+
+    /// <summary>LLM's natural-language explanation of this step. Set by the builder.</summary>
+    [Store, Debug, Default]
+    public string? Guidance { get; set; }
+
+    /// <summary>LLM confidence level: "high" | "medium" | "low". Set by the builder.</summary>
+    [Store, Debug, Default]
+    public string? Level { get; set; }
+
+    /// <summary>LLM confidence percent (0-100). Set by the builder.</summary>
+    [Store, Debug, Default]
+    public int? Confidence { get; set; }
+
+    /// <summary>LLM's formalized rendering of this step (action.module Param=value | …). Stored for traces.</summary>
+    [Store, Debug, Default]
+    public string? Formal { get; set; }
+
+    /// <summary>Tag set by enrichResponse: "known" (prior text matched), "hint" (text changed, prior available), or "new".</summary>
+    [Store, Debug, Default]
+    public string? Source { get; set; }
+
+    /// <summary>Build-time only: LLM signal to reuse prior actions. Not stored in .pr (no [Store]).</summary>
+    public bool Keep { get; set; }
 
     [Debug]
     public List<Info> Errors { get; init; } = new();
@@ -206,6 +238,12 @@ public sealed partial class @this : modules.IDataWrappable
             Warnings.Clear();
             Warnings.AddRange(from.Warnings);
         }
+
+        // LLM metadata — only overwrite when the incoming step has a value,
+        // so keep:true cases (where the LLM omits these) preserve prior values.
+        if (from.Guidance != null) Guidance = from.Guidance;
+        if (from.Level != null) Level = from.Level;
+        if (from.Confidence != null) Confidence = from.Confidence;
     }
 
     public override string ToString() => $"[{Index}] {Text}";

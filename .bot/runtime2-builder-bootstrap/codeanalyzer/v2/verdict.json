@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "All 8 v1 priority fixes verified at code level + traced through callers / memory model / behavioral edge cases; #9 and #10 explicitly deferred." }

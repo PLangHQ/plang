@@ -528,9 +528,11 @@ public class EngineTypesTests
     // --- Finding #3: Name() backtick fix for generics ---
 
     [Test]
-    public async Task Name_HashSetOfString_ReturnsHashsetWithoutBacktick()
+    public async Task Name_HashSetOfString_RendersAsListT()
     {
-        await Assert.That(_types.Name(typeof(HashSet<string>))).IsEqualTo("hashset");
+        // Set/HashSet/IEnumerable all normalize to list<T> per catalog conventions
+        // (commit 197729d "Catalog: normalize collection type names").
+        await Assert.That(_types.Name(typeof(HashSet<string>))).IsEqualTo("list<string>");
     }
 
     [Test]

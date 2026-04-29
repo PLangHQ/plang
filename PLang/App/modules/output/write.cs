@@ -6,8 +6,8 @@ namespace App.modules.output;
 /// Writes data to the actor's output channel.
 /// Channel selection is handled by the IChannel interface — default is the actor's primary channel.
 /// </summary>
-[Example("write out 'hello'", "Data=hello")]
-[Example("write trace 'debug info'", "Data=debug info, Properties={channel: trace}")]
+[ModuleDescription("Send text or data to an output channel (console, trace, UI, etc.)")]
+[System.ComponentModel.Description("Write Data to the actor's current output channel (default: console or configured channel)")]
 [Action("write", Cacheable = false)]
 public partial class Write : IContext, IChannel
 {

@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Restructure clean (+13 passes, no regressions); 48 fails remain — architect Phase 4 to classify, coder to fix. Builder-prompt bugs surfaced." }

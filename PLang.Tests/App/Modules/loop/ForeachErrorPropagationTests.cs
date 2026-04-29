@@ -1,0 +1,172 @@
+using global::App.Actor.Context;
+using App;
+using global::App.Variables;
+using Action = global::App.Goals.Goal.Steps.Step.Actions.Action.@this;
+
+namespace PLang.Tests.App.actions.loop;
+
+/// <summary>
+/// Regression tests for loop.foreach swallowing errors when a body action returns
+/// an error-result with Handled=true. The scenario came from the builder's
+/// ApplyStep chain: foreach over groups, body calls ApplyStep which uses
+/// condition.if orchestration. condition.if stamps Handled=true on its
+/// orchestrated result (correctly — tells Step.RunAsync "siblings consumed").
+/// But loop.foreach used to treat Handled as "error is fine" and silently
+/// continue. Fix: errors always propagate regardless of Handled.
+/// </summary>
+public class ForeachErrorPropagationTests
+{
+    private global::App.@this _app = null!;
+
+    [Before(Test)]
+    public void Setup()
+    {
+        _app = new global::App.@this("/app");
+    }
+
+    /// <summary>
+    /// Direct error case — body is a goal.call to a missing goal, no Handled stamp.
+    /// Sanity check: foreach already propagated these correctly before the fix.
+    /// </summary>
+    [Test]
+    public async Task Foreach_BodyGoalCallFails_PropagatesError()
+    {
+        var context = _app.Context;
+        context.Variables.Set("items", new List<object?> { "a", "b", "c" });
+
+        var foreachAction = TestAction.Create("loop", "foreach",
+            ("collection", "%items%"), ("itemname", "%item%"));
+        var goalCallAction = TestAction.Create("goal", "call",
+            ("goalname", new Dictionary<string, object?> { ["name"] = "NonExistentGoal" }));
+
+        var step = new Step
+        {
+            Index = 0,
+            Text = "foreach %items%, call NonExistentGoal item=%item%",
+            Actions = new StepActions { foreachAction, goalCallAction }
+        };
+        foreachAction.Step = step;
+        goalCallAction.Step = step;
+
+        var result = await step.RunAsync(context);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        // Loop must stop on first failure — item stays on first element, not last.
+        await Assert.That(context.Variables.GetValue("item")).IsEqualTo("a");
+    }
+
+    /// <summary>
+    /// The exact bug: foreach body is a goal.call to an Inner goal that uses
+    /// condition.if + goal.call to a missing goal. The inner condition.if
+    /// orchestration fails and stamps Handled=true. goal.call propagates the
+    /// Handled result out. Before the fix, foreach ignored the error because of
+    /// Handled=true and silently iterated all items. After the fix, error
+    /// propagates on iteration 1.
+    /// </summary>
+    [Test]
+    public async Task Foreach_BodyInnerGoalFailsInsideConditionIf_PropagatesError()
+    {
+        var context = _app.Context;
+        context.Variables.Set("items", new List<object?> { "a", "b", "c" });
+
+        // Inner goal with a single step: [condition.if(true), goal.call Missing]
+        var innerCondAction = new Action
+        {
+            Module = "condition", ActionName = "if",
+            Parameters = new List<Data>
+            {
+                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
+            }
+        };
+        var innerGoalCall = new Action
+        {
+            Module = "goal", ActionName = "call",
+            Parameters = new List<Data>
+            {
+                new Data("goalname", new Dictionary<string, object?> { ["name"] = "MissingGoal" })
+            }
+        };
+        var innerStep = new Step
+        {
+            Index = 0,
+            Text = "if true, call MissingGoal",
+            Actions = new StepActions { innerCondAction, innerGoalCall }
+        };
+        innerCondAction.Step = innerStep;
+        innerGoalCall.Step = innerStep;
+
+        var innerGoal = new Goal
+        {
+            Name = "Inner",
+            Path = "/Inner.goal",
+            Steps = new GoalSteps { innerStep }
+        };
+        innerStep.Goal = innerGoal;
+        _app.Goals.Add(innerGoal);
+
+        // Outer step: foreach over items, body is goal.call Inner
+        var foreachAction = TestAction.Create("loop", "foreach",
+            ("collection", "%items%"), ("itemname", "%item%"));
+        var outerGoalCall = TestAction.Create("goal", "call",
+            ("goalname", new Dictionary<string, object?> { ["name"] = "Inner" }));
+
+        var outerStep = new Step
+        {
+            Index = 0,
+            Text = "foreach %items%, call Inner item=%item%",
+            Actions = new StepActions { foreachAction, outerGoalCall }
+        };
+        foreachAction.Step = outerStep;
+        outerGoalCall.Step = outerStep;
+
+        var result = await outerStep.RunAsync(context);
+
+        // The 404 from MissingGoal must propagate all the way up — not be
+        // swallowed by condition.if's Handled flag.
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        // First iteration failed → item variable stays on first element.
+        await Assert.That(context.Variables.GetValue("item")).IsEqualTo("a");
+    }
+
+    /// <summary>
+    /// Happy path: body succeeds, foreach completes all iterations.
+    /// Ensures the fix doesn't break the common case.
+    /// </summary>
+    [Test]
+    public async Task Foreach_BodySucceeds_CompletesAllIterations()
+    {
+        var context = _app.Context;
+        context.Variables.Set("items", new List<object?> { "a", "b", "c" });
+
+        var noop = new Goal
+        {
+            Name = "Noop",
+            Path = "/Noop.goal",
+            Steps = new GoalSteps()
+        };
+        _app.Goals.Add(noop);
+
+        var foreachAction = TestAction.Create("loop", "foreach",
+            ("collection", "%items%"), ("itemname", "%item%"));
+        var goalCallAction = TestAction.Create("goal", "call",
+            ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" }));
+
+        var step = new Step
+        {
+            Index = 0,
+            Text = "foreach %items%, call Noop item=%item%",
+            Actions = new StepActions { foreachAction, goalCallAction }
+        };
+        foreachAction.Step = step;
+        goalCallAction.Step = step;
+
+        var result = await step.RunAsync(context);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(context.Variables.GetValue("item")).IsEqualTo("c");
+    }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Setup",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "save \u0027testfile.txt\u0027 with content \u0027hello from file\u0027",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "testfile.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "hello from file",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Setup.goal",
+  "prPath": "/.build/setup.pr",
+  "hash": "2c022edab6fb626a0fb9f0b1b49add805a4ec157f31803644cdb9e8b665e23c6",
+  "builderVersion": "0.2.2",
+  "isSetup": true,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

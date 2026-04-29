@@ -190,7 +190,6 @@ public class LlmIntegrationTests
             new GoalCall
             {
                 Name = "GetWeather",
-                Description = "Gets the current weather for a city",
                 Parameters = new List<Data>
                 {
                     new Data("city", null, global::App.Data.Type.String)

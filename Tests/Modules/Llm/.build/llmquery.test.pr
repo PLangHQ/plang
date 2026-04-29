@@ -1,0 +1,105 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "[llm] system: \u0027You are a helpful assistant\u0027\nuser: \u0027What is 2\u002B2? Reply with just the number\u0027\nwrite to %result%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Simple system\u002Buser query \u2014 verify we get a non-null response from the LLM",
+      "actions": [
+        {
+          "module": "llm",
+          "action": "query",
+          "parameters": [
+            {
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "You are a helpful assistant",
+                  "images": []
+                },
+                {
+                  "role": "user",
+                  "content": "What is 2\u002B2? Reply with just the number",
+                  "images": []
+                }
+              ],
+              "type": "list\u003Cllmmessage\u003E"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %result% is not null",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%result%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion: ensure %result% is not null. This compiles to assert.isNotNull.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/LlmQuery.test.goal",
+  "prPath": "/.build/llmquery.test.pr",
+  "hash": "f11c540d089de04a68ed7e629c194f6d38f0885fc58e6044eca4d6ccb258f64b",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

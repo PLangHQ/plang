@@ -163,6 +163,6 @@ IncrementAndFail
 ```
 
 See also:
-- `tests/modifiers/OnErrorCallGoal.test.goal`
-- `tests/modifiers/OnErrorRetry.test.goal`
-- `tests/modifiers/PerActionErrorScope.test.goal`
+- `Tests/Modules/Modifiers/OnErrorCallGoal.test.goal`
+- `Tests/Modules/Modifiers/OnErrorRetry.test.goal`
+- `Tests/Modules/Modifiers/PerActionErrorScope.test.goal`

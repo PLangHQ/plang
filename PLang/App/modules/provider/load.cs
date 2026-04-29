@@ -9,6 +9,7 @@ namespace App.modules.provider;
 /// Loads a provider from a DLL or registers a provider instance.
 /// PLang: load provider 'my-crypto.dll' as 'custom-crypto'
 /// </summary>
+[System.ComponentModel.Description("Load a provider from a DLL path and register it in the app's provider registry")]
 [Action("load", Cacheable = false)]
 public partial class load : IContext
 {

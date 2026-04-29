@@ -3,6 +3,7 @@ using App.modules.builder.providers;
 
 namespace App.modules.builder;
 
+[System.ComponentModel.Description("Return the list of registered PLang type names available to the builder")]
 [Action("types")]
 public partial class types : IContext
 {

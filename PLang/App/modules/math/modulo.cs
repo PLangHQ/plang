@@ -2,6 +2,7 @@ using App.Variables;
 
 namespace App.modules.math;
 
+[System.ComponentModel.Description("Return the remainder of A divided by B")]
 [Action("modulo")]
 public partial class Modulo : IContext
 {

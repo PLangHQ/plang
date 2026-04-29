@@ -2,7 +2,7 @@ using App;
 
 namespace App.modules.condition;
 
-[Example("if %x% > 5 write 'big', else write 'small'", "no parameters")]
+[System.ComponentModel.Description("Fallback branch that executes when all preceding if/elseif conditions are false")]
 [Action("else")]
 public partial class Else : IContext, IStep
 {

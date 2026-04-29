@@ -11,6 +11,7 @@ namespace App.modules.http;
 /// Supports JSON, XML, text, binary, and application/plang responses.
 /// When signing is enabled (default), attaches X-Signature header and verifies signed responses.
 /// </summary>
+[System.ComponentModel.Description("Send an HTTP request (GET/POST/PUT/DELETE etc.) and return the parsed response body")]
 [Action("request")]
 [RequiresCapability("network")]
 public partial class request : IContext

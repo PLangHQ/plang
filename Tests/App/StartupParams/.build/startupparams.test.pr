@@ -1,0 +1,166 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %name% = \u0022TestUser\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "StartupParams tests that variables can be set and used\n(CLI param injection is tested via manual run: plang p Start.goal name=World)",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "TestUser",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set runtime variable %name% to literal \u0022TestUser\u0022. This is the first executable clause and the @known mapping indicates the exact variable.set action and parameter values.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %name% equals \u0022TestUser\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "TestUser",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%name%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Assert that %name% equals \u0022TestUser\u0022. Uses @known mapping for exact assert.equals parameterization.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %greeting% = \u0022Hello %name%\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%greeting%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "Hello %name%",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set runtime variable %greeting% to literal \u0022Hello %name%\u0022 (no runtime interpolation at compile time). The @known mapping specifies the exact stored value as \u0022Hello %name%\u0022.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %greeting% contains \u0022TestUser\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "TestUser",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "%greeting%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Assert that %greeting% contains \u0022TestUser\u0022. Uses @known mapping for exact assert.contains parameterization.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/StartupParams.test.goal",
+  "prPath": "/.build/startupparams.test.pr",
+  "hash": "ed30f6b09a8d3799b77316af181bc24671d3f3cb2df0c1bd2ac3df3f6b7479cb",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

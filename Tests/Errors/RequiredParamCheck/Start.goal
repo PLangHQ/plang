@@ -1,0 +1,4 @@
+Start
+/ Goal designed to potentially trip required-param check.
+/ file.read requires Path; if the LLM forgets it, the new validator should reject.
+- read

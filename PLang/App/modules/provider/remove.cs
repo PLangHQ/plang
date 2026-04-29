@@ -6,6 +6,7 @@ namespace App.modules.provider;
 /// Removes a named provider from the registry.
 /// PLang: remove provider 'custom-crypto' from signing
 /// </summary>
+[System.ComponentModel.Description("Remove a named provider from the registry, optionally filtering by provider type")]
 [Action("remove", Cacheable = false)]
 public partial class remove : IContext
 {

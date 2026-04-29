@@ -18,6 +18,20 @@ public class Error : IError
     public string? HelpfulLinks { get; init; }
     public DateTime CreatedUtc { get; }
     public Exception? Exception { get; init; }
+    /// <summary>
+    /// Arbitrary structured context about the failure. Providers attach things
+    /// like raw LLM responses, HTTP status bodies, parse positions, etc. Exposed
+    /// to PLang goals via %!error.Details.KEY% so error handlers can report
+    /// rich context without the provider having to extend the error class.
+    /// </summary>
+    public Dictionary<string, object?>? Details { get; set; }
+    /// <summary>
+    /// Snapshot of the parameters as they arrived at the failing handler — the .pr
+    /// raw value/type and the resolved final value for each. Populated by the
+    /// source-generated ExecuteAsync whenever a handler returns an error. Lets you
+    /// see "this is what the handler saw" without re-running with a debug flag.
+    /// </summary>
+    public List<ParamSnapshot>? Params { get; set; }
     public List<IError> ErrorChain { get; } = new();
     public Step? Step { get; set; }
     public Goal? Goal { get; set; }
@@ -184,6 +198,35 @@ public class Error : IError
             }
         }
 
+        // Per-parameter snapshot — what the handler actually saw at dispatch.
+        // The source-generated ExecuteAsync captures this on every error path so the
+        // reader doesn't have to re-run with a debug flag to find out which param
+        // was wrong and how. Showing PrValue and FinalValue side-by-side reveals
+        // resolution failures at a glance (PrValue="%messages%", FinalValue=null
+        // → variable lookup returned nothing).
+        if (error is Error errWithParams && errWithParams.Params is { Count: > 0 } parms)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"{indent}📥 Parameters at dispatch:");
+            foreach (var p in parms)
+            {
+                var declared = p.DeclaredType != null ? $" ({p.DeclaredType})" : "";
+                sb.AppendLine($"{indent}    {p.Name}{declared}");
+                var pr = FormatVerboseValue(p.PrValue);
+                var prType = p.PrType != null ? $" [{p.PrType}]" : "";
+                sb.AppendLine($"{indent}        .pr value:  {pr}{prType}");
+                if (p.WasAccessed)
+                {
+                    var final = FormatVerboseValue(p.FinalValue);
+                    sb.AppendLine($"{indent}        final:      {final}");
+                }
+                else
+                {
+                    sb.AppendLine($"{indent}        final:      (not accessed)");
+                }
+            }
+        }
+
         // Verbose variable dump — shows all variables in scope at point of failure
         var app = error.Goal?.App ?? error.Step?.Goal?.App;
         if (app?.Debug?.Verbose == true)
@@ -198,10 +241,10 @@ public class Error : IError
                 var ctxSource = errorContext != null ? "error context" : "app context (error context not captured)";
                 sb.AppendLine();
                 sb.AppendLine($"{indent}📋 Variables in scope ({ctxSource}, id={ctxId}):");
-                foreach (var v in allVars)
+                foreach (var kvp in allVars)
                 {
-                    var val = FormatVerboseValue(v.Value);
-                    sb.AppendLine($"{indent}    %{v.Name}% = {val} ({v.Type?.Value ?? "?"})");
+                    var val = FormatVerboseValue(kvp.Value.Value);
+                    sb.AppendLine($"{indent}    %{kvp.Key}% = {val} ({kvp.Value.Type?.Value ?? "?"})");
                 }
             }
         }
@@ -246,7 +289,7 @@ public class Error : IError
                 var json = System.Text.Json.JsonSerializer.Serialize(value);
                 return json.Length > 300 ? json[..300] + $"... ({json.Length} chars)" : json;
             }
-            catch { return value.ToString() ?? "?"; }
+            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { return value.ToString() ?? "?"; }
         }
         var str = value.ToString() ?? "?";
         return str.Length > 200 ? $"{str[..200]}... ({str.Length} chars)" : str;

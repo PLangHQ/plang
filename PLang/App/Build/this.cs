@@ -17,7 +17,7 @@ public sealed class @this
     public bool IsEnabled { get; set; }
 
     /// <summary>
-    /// Optional file filter. When set, only these files are built.
+    /// Optional file filter. When set, only these files are built — IN ORDER.
     /// Set via --build={"files":"test.goal"} or --build={"files":["test.goal","run.goal"]}
     /// </summary>
     public List<FileSystem.Path> Files { get; set; } = new();

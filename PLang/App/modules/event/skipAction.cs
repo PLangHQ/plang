@@ -7,8 +7,9 @@ namespace App.modules.@event;
 /// Use inside a beforeAction event handler to prevent the real action from running.
 /// Sets context.EventOverride so the action runner returns this value.
 /// </summary>
-[Example("skip action, value = %mockResponse%", "Value=%mockResponse%")]
-[Example("skip action, value = {\"status\": 200}", "Value={\"status\": 200}")]
+[System.ComponentModel.Description("Skip the intercepted action and return a custom value from inside a beforeAction event handler")]
+[Example("skip action, value = %mockResponse%",
+    "event.skipAction Value([object] %mockResponse%)")]
 [Action("skipAction", Cacheable = false)]
 public partial class SkipAction : IContext
 {

@@ -70,6 +70,14 @@ public class FluidProvider : ITemplateProvider
         options.MemberAccessStrategy.IgnoreCasing = true;
         options.MemberAccessStrategy.MemberNameStrategy = MemberNameStrategies.Default;
 
+        // `formal` filter: renders any value the way the action catalog writes it —
+        // strings with spaces/commas become quoted, %variables% stay bare, dicts/lists
+        // become compact JSON, scalars use their literal form. Used by templates that
+        // serialize action parameters into the formal "module.action Name([type] value)"
+        // shape the builder LLM is trained on.
+        options.Filters.AddFilter("formal", (input, args, ctx) =>
+            new StringValue(FormatFormalValue(input.ToObjectValue())));
+
         // Configure file provider for {% include %} / {% render %} tags
         var fs2 = action.Context.App.FileSystem;
         var basePath = GetTemplateBaseDir(action);
@@ -81,10 +89,11 @@ public class FluidProvider : ITemplateProvider
         fluidContext.AmbientValues["app"] = action.Context.App;
         fluidContext.AmbientValues["context"] = action.Context;
 
-        // Load Variables (GetAll already excludes !-prefixed)
-        foreach (var data in action.Context.Variables.GetAll())
+        // Load Variables (GetAll already excludes !-prefixed). Use dictionary key as
+        // the Fluid variable name — Data.Name is advisory and may differ.
+        foreach (var kvp in action.Context.Variables.GetAll())
         {
-            fluidContext.SetValue(data.Name, FluidValue.Create(data.Value, options));
+            fluidContext.SetValue(kvp.Key, FluidValue.Create(kvp.Value.Value, options));
         }
 
         // Override with explicit parameters
@@ -109,6 +118,60 @@ public class FluidProvider : ITemplateProvider
             return App.Data.@this.FromError(new ServiceError(
                 $"Template render error{location}: {ex.Message}", "RenderError", 500));
         }
+    }
+
+    /// <summary>
+    /// Render a value in the catalog's formal syntax. Mirrors the rules used by
+    /// DefaultBuilderProvider.FormatValue for the trace-backfill path, so the
+    /// builder's rebuild prompt and the viewer's formal string stay consistent.
+    /// </summary>
+    private static string FormatFormalValue(object? v)
+    {
+        v = UnwrapFluid(v);
+        if (v == null) return "null";
+        if (v is string s)
+        {
+            if (s.StartsWith('%')) return s;
+            if (s.Contains(' ') || s.Contains(',')) return $"\"{s}\"";
+            return s;
+        }
+        if (v is bool b) return b ? "true" : "false";
+        // Scalars (numbers, enums, any primitive-like IConvertible) use their literal form.
+        // InvariantCulture so the formatted text round-trips with TypeConverter's
+        // InvariantCulture parse — without this, it-IT/de-DE writes "3,14" and the
+        // parse FormatExceptions on the comma.
+        if (v is IConvertible conv) return System.Convert.ToString(conv, System.Globalization.CultureInfo.InvariantCulture) ?? "";
+        // Everything else — dicts, lists, POCOs — render as JSON.
+        try { return System.Text.Json.JsonSerializer.Serialize(v); }
+        catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { return v.ToString() ?? ""; }
+    }
+
+    /// <summary>
+    /// Fluid's <c>FluidValue.Create</c> wraps .NET dictionaries in
+    /// <c>ObjectDictionaryFluidIndexable&lt;T&gt;</c>. <c>ToObjectValue()</c>
+    /// returns the wrapper, not the underlying dict — so JSON-serializing it
+    /// emits the wrapper's surface (Count, Keys), not the contents. Unwrap
+    /// recursively so the filter can render structured values as real JSON.
+    /// </summary>
+    private static object? UnwrapFluid(object? v)
+    {
+        if (v is IFluidIndexable indexable)
+        {
+            var dict = new Dictionary<string, object?>();
+            foreach (var key in indexable.Keys)
+            {
+                indexable.TryGetValue(key, out var inner);
+                dict[key] = UnwrapFluid(inner?.ToObjectValue());
+            }
+            return dict;
+        }
+        if (v is System.Collections.IEnumerable e && v is not string and not System.Collections.IDictionary)
+        {
+            var list = new List<object?>();
+            foreach (var item in e) list.Add(UnwrapFluid(item));
+            return list;
+        }
+        return v;
     }
 
     /// <summary>

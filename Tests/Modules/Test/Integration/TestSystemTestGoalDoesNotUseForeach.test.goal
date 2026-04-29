@@ -1,0 +1,7 @@
+TestSystemTestGoalDoesNotUseForeach
+/ Structural guard against the silent-skip regression that motivated this
+/ rewrite: the foreach-based runner skipped tests when one errored. The
+/ replacement uses test.run (a C# loop). Assert system/test.goal contains
+/ no 'foreach' — a regression that reverted to the foreach loop would fail.
+- read file '/system/test.goal', write to %goalText%
+- assert %goalText% does not contain 'foreach'

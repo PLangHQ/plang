@@ -5,6 +5,8 @@ using App.Events;
 using Goal = App.Goals.Goal.@this;
 using Action = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 using Setup = App.Goals.Setup.@this;
+using TraceContext = App.Actor.Context.Trace.@this;
+using App.Errors;
 namespace App.Actor.Context;
 
 /// <summary>
@@ -20,6 +22,13 @@ public sealed class @this : IDisposable
     /// Unique identifier for this execution context.
     /// </summary>
     public string Id { get; }
+
+    /// <summary>
+    /// Per-context trace identity. Born with the Context. Used to group diagnostic
+    /// output (trace JSON, LLM debug files) under a single id for one execution.
+    /// Accessible from PLang as <c>%!trace.id%</c>.
+    /// </summary>
+    public TraceContext Trace { get; } = new();
 
     /// <summary>
     /// Reference to the app.
@@ -91,6 +100,15 @@ public sealed class @this : IDisposable
     public Step? Step { get; set; }
 
     /// <summary>
+    /// The error currently in scope for recovery handlers. Set by error.handle.Wrap
+    /// just before running its recovery actions, restored after — so nested recovery
+    /// scopes see their own error. Accessible from PLang as <c>%!error%</c> /
+    /// <c>%!error.Message%</c> etc. via the DynamicData registered in
+    /// RegisterContextVariables.
+    /// </summary>
+    public IError? Error { get; set; }
+
+    /// <summary>
     /// Set by event.skipAction to override the current action's result.
     /// Cleared by EventBinding.Run after reading.
     /// </summary>
@@ -151,20 +169,23 @@ public sealed class @this : IDisposable
         var vars = Variables;
 
         // All context variables are lazy — context has app, fetch at request time
-        vars.Put(new Data.DynamicData("!app", () => App));
-        vars.Put(new Data.DynamicData("!context", () => this));
-        vars.Put(new Data.DynamicData("!variables", () => Variables));
-        vars.Put(new Data.DynamicData("!fileSystem", () => App.FileSystem));
-        vars.Put(new Data.DynamicData("!callStack", () => CallStack));
-        vars.Put(new Data.DynamicData("!channels", () => App.Channels));
-        vars.Put(new Data.DynamicData("!serializers", () => App.Channels.Serializers));
-        vars.Put(new Data.DynamicData("!goal", () => Goal));
-        vars.Put(new Data.DynamicData("!step", () => Step));
-        // %!error% is not registered here — it's passed as a parameter to the error goal
-        // via onError.Goal.Parameters. See error.check.
-        vars.Put(new Data.DynamicData("!data", () => App.System.Context.Variables.GetValue("data")));
-        vars.Put(new Data.DynamicData("!event", () => Event ?? App.System?.Context?.Event));
-        vars.Put(new Data.DynamicData("!test", () => Test));
+        vars.Set(new Data.DynamicData("!app", () => App));
+        vars.Set(new Data.DynamicData("!context", () => this));
+        vars.Set(new Data.DynamicData("!variables", () => Variables));
+        vars.Set(new Data.DynamicData("!fileSystem", () => App.FileSystem));
+        vars.Set(new Data.DynamicData("!callStack", () => CallStack));
+        vars.Set(new Data.DynamicData("!trace", () => Trace));
+        vars.Set(new Data.DynamicData("!channels", () => App.Channels));
+        vars.Set(new Data.DynamicData("!serializers", () => App.Channels.Serializers));
+        vars.Set(new Data.DynamicData("!goal", () => Goal));
+        vars.Set(new Data.DynamicData("!step", () => Step));
+        // %!error% is set by error.handle.Wrap around recovery actions (try/finally).
+        // Null when no recovery is active; populated with the caught IError during
+        // recovery so handlers can read %!error.Message%, %!error.Key%, etc.
+        vars.Set(new Data.DynamicData("!error", () => Error));
+        vars.Set(new Data.DynamicData("!data", () => App.System.Context.Variables.GetValue("data")));
+        vars.Set(new Data.DynamicData("!event", () => Event ?? App.System?.Context?.Event));
+        vars.Set(new Data.DynamicData("!test", () => Test));
     }
 
     /// <summary>
@@ -238,6 +259,10 @@ public sealed class @this : IDisposable
 
     /// <summary>
     /// Creates a child context for nested execution.
+    /// Test fixture — production creates contexts only via the ctor in Actor.this.cs.
+    /// One Context propagates through the entire goal-call tree of an Actor; child
+    /// contexts are unit-test scaffolding for inheritance scenarios (ConfigScope,
+    /// Variables, Parent linkage).
     /// </summary>
     public @this CreateChild(Variables.@this? variables = null)
     {
@@ -246,6 +271,9 @@ public sealed class @this : IDisposable
 
     /// <summary>
     /// Clones this context with a new Variables.
+    /// Test fixture — see CreateChild. Not used by production code; the property
+    /// propagation here (IsAsync, Setup, ConfigScope, _data) reflects what existing
+    /// tests need, not a Clone/Copy contract for the runtime.
     /// </summary>
     public @this Clone(Variables.@this? variables = null)
     {

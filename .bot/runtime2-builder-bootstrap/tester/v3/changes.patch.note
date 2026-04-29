@@ -1,0 +1,6 @@
+# changes.patch dropped — git diff runtime2..HEAD against this branch is 391 MB,
+# far over GitHub's 50 MB push limit. Same situation as v1/v2 hit.
+# Regenerate locally with: git diff runtime2..HEAD -- ':(exclude).bot'
+#
+# v3-specific code changes (vs v2 baseline bbf982d4) are 2 commits, +197/-146.
+# Regenerate the v3 delta with: git diff bbf982d4..5c917ac5 -- ':(exclude).bot'

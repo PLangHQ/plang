@@ -1,0 +1,133 @@
+{
+  "branch": "runtime2-builder-bootstrap",
+  "tested_version": "v3",
+  "tested_commits": "bbf982d4..5c917ac5",
+  "tool": "Microsoft.Testing.Platform built-in coverage (TUnit)",
+  "format": "cobertura",
+  "snapshot": "v3/coverage.cobertura.xml (199043 lines)",
+  "tests": {
+    "csharp": {
+      "total": 2288,
+      "passed": 2288,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 11525
+    }
+  },
+  "changed_files": {
+    "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs": {
+      "covered": 615,
+      "total": 1012,
+      "pct": 60.8,
+      "branches_covered": 332,
+      "branches_total": 724,
+      "branches_pct": 45.9,
+      "delta_from_v2": "0pp (was 60.8%)",
+      "notes": "33 new lines added (IsCatalogDescription + 2 skip-guards); helper match-true path uncovered by C# tests"
+    },
+    "PLang/App/modules/math/add.cs": {
+      "covered": 34,
+      "total": 34,
+      "pct": 100.0,
+      "branches_covered": 0,
+      "branches_total": 0,
+      "notes": "ExamplesForLlm not directly tested; Run() path covered by MathTests.cs"
+    },
+    "PLang/App/modules/math/subtract.cs": {
+      "covered": 34,
+      "total": 34,
+      "pct": 100.0,
+      "notes": "ExamplesForLlm not directly tested"
+    },
+    "PLang/App/modules/math/multiply.cs": {
+      "covered": 34,
+      "total": 34,
+      "pct": 100.0,
+      "notes": "ExamplesForLlm not directly tested"
+    },
+    "PLang/App/modules/math/divide.cs": {
+      "covered": 42,
+      "total": 42,
+      "pct": 100.0,
+      "branches_covered": 4,
+      "branches_total": 4,
+      "branches_pct": 100.0,
+      "notes": "Divide-by-zero branch covered; ExamplesForLlm not directly tested"
+    },
+    "PLang/App/modules/math/power.cs": {
+      "covered": 34,
+      "total": 34,
+      "pct": 100.0,
+      "notes": "ExamplesForLlm not directly tested"
+    },
+    "PLang/App/Catalog/ExampleHelpers.cs": {
+      "covered": 20,
+      "total": 26,
+      "pct": 76.9,
+      "branches_pct": 50.0,
+      "notes": "no test exercises the dot-validation throw path"
+    },
+    "PLang/App/Catalog/ExampleRenderer.cs": {
+      "covered": 196,
+      "total": 230,
+      "pct": 85.2,
+      "branches_pct": 67.6,
+      "notes": "Render path is exercised but no test asserts the rendered shape for math.add ExampleSpec"
+    },
+    "PLang/App/Modules/this.cs": {
+      "covered": 489,
+      "total": 509,
+      "pct": 96.1
+    },
+    "PLang/App/Utils/TypeMapping.cs": {
+      "covered": 670,
+      "total": 678,
+      "pct": 98.8
+    },
+    "PLang/App/Utils/TypeConverter.cs": {
+      "covered": 294,
+      "total": 536,
+      "pct": 54.9
+    },
+    "PLang/App/modules/file/read.cs": {
+      "covered": 16,
+      "total": 16,
+      "pct": 100.0
+    },
+    "PLang/App/modules/builder/validateResponse.cs": {
+      "covered": 226,
+      "total": 230,
+      "pct": 98.3
+    },
+    "PLang/App/modules/builder/promoteGroups.cs": {
+      "covered": 0,
+      "total": 2,
+      "pct": 0.0,
+      "notes": "still unreachable from any goal anywhere — carryover from v2 (declared build-time-only by XML doc)"
+    },
+    "PLang/App/modules/builder/enrichResponse.cs": {
+      "covered": 0,
+      "total": 2,
+      "pct": 0.0,
+      "notes": "still 0% — carryover from v2 (declared build-time-only by XML doc)"
+    }
+  },
+  "is_catalog_description_lines": {
+    "line_654_method_open": "hits=1",
+    "line_655_isnullorempty_check": "hits=1, branch 50% (1/2)",
+    "line_656_trim": "hits=1",
+    "line_657_var_prefix_strip": "hits=1, branch 50% (1/2)",
+    "line_658_startswith_typename": "hits=1, branch 50% (1/2)",
+    "line_659_var_rest": "hits=0",
+    "line_660_rest_empty_return_true": "hits=0, branch 0/2",
+    "line_661_question_mark_strip": "hits=0, branch 0/2",
+    "line_662_rest_empty_return_true_2": "hits=0, branch 0/2",
+    "line_663_equals_default_check": "hits=0",
+    "line_664_method_close": "hits=1",
+    "interpretation": "C# tests only exercise IsCatalogDescription on inputs where v.StartsWith(typeName) is FALSE (early return at 658). The match-true path that closes F2 (lines 659-663) is exercised exclusively by the BuilderValidateValid.test.goal integration test."
+  },
+  "skip_guard_call_sites": {
+    "line_263_goal_call_guard": "hits=1, branch 50% (2/4) — only one truthy combination of (is-string, is-catalog-desc) exercised",
+    "line_616_normalize_guard": "hits=1, branch 75% (3/4) — three truthy combinations exercised; the (string-true, catalog-desc-true) path is the missing one"
+  }
+}

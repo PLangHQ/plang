@@ -1,0 +1,253 @@
+{
+  "name": "TestMockLlmSmoke",
+  "description": "Smoke test that mock.intercept can replace an llm.query call with a canned JSON value, then verify the mocked result and mock call count.",
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "mock.intercept \u0022llm.query\u0022, returnValue={\u0022hello\u0022: \u0022from mock\u0022}, write to %mockHandle%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Smoke test: can mock.intercept replace an llm.query call with a canned value?",
+      "actions": [
+        {
+          "module": "mock",
+          "action": "intercept",
+          "parameters": [
+            {
+              "name": "ActionPattern",
+              "value": "llm.query",
+              "type": "string"
+            },
+            {
+              "name": "ReturnValue",
+              "value": {
+                "hello": "from mock"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%mockHandle%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "json"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "llm.query system=\u0022ignored\u0022, user=\u0022ignored\u0022, write to %result%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "llm",
+          "action": "query",
+          "parameters": [
+            {
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "ignored"
+                },
+                {
+                  "role": "user",
+                  "content": "ignored"
+                }
+              ],
+              "type": "list\u003Cllmmessage\u003E"
+            },
+            {
+              "name": "ContinuePreviousConversation",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Temperature",
+              "value": 0,
+              "type": "double"
+            },
+            {
+              "name": "MaxTokens",
+              "value": 16000,
+              "type": "int"
+            },
+            {
+              "name": "MaxToolCalls",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "Cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "maxvalidationretries",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out \u0022mock handle: %mockHandle.CallCount%\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "mock handle: %mockHandle.CallCount%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Write the mock call count to output. The step text uses %mockHandle.CallCount%, so we pass that literal variable reference as the Data string.",
+      "level": "high",
+      "confidence": 95,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "write out \u0022result: %result%\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "result: %result%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Write the mocked llm.query result to output. The step text uses %result% directly in the string.",
+      "level": "high",
+      "confidence": 95,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %result.hello% equals \u0022from mock\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "from mock",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%result.hello%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/MockLlmSmoke.test.goal",
+  "prPath": "/.build/mockllmsmoke.test.pr",
+  "hash": "997ecdb08f6a74211d64a55694c9fe24f618fa348b39e20122fd82a4e85446b2",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

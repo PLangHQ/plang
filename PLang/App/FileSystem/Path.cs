@@ -1,4 +1,5 @@
 using App.Utils;
+using App.Attributes;
 
 namespace App.FileSystem;
 
@@ -7,6 +8,8 @@ namespace App.FileSystem;
 /// NOT a Data subclass — wrapped in Data&lt;Path&gt; by handlers.
 /// Implements IContext for runtime graph access (FileSystem, etc.).
 /// </summary>
+[PlangType("path",
+    Example = "/some/file.json")]
 public class Path : modules.IContext
 {
     private readonly string _absolutePath;
@@ -20,24 +23,37 @@ public class Path : modules.IContext
 
     /// <summary>
     /// Lazy FileSystem access — resolved from Context.App.FileSystem.
+    /// Context can be supplied via constructor, or set later through the IContext
+    /// interface (Data&lt;Path&gt;.Context propagation). Properties that need the
+    /// filesystem (Relative, Extension, FileName, etc.) throw if accessed before
+    /// Context is wired — by that point in any real flow Context is always
+    /// available; only CLI-parse-time and direct test construction skip it.
     /// </summary>
     private IPLangFileSystem Fs => Context?.App?.FileSystem
-        ?? throw new InvalidOperationException("Path requires Context with App.FileSystem");
+        ?? throw new InvalidOperationException(
+            "Path requires Context with App.FileSystem — wire it before accessing filesystem-dependent properties");
 
     /// <summary>
-    /// Creates a Path from an absolute path with optional content.
+    /// Creates a Path. Context is optional at construction so utilities that
+    /// build Paths before runtime is up (CLI parser, source generators) can
+    /// construct them; Context arrives via the IContext setter when the Path
+    /// is wrapped in Data&lt;Path&gt; or set on a runtime object.
     /// </summary>
-    public Path(string absolutePath, object? content = null, string? source = null)
+    public Path(string absolutePath, Actor.Context.@this? context = null, object? content = null, string? source = null)
     {
         _absolutePath = absolutePath;
+        Context = context;
         Content = content;
         Source = source;
     }
 
     /// <summary>
-    /// Context for runtime access. Set via IContext interface.
-    /// Data propagates this automatically when Path is inside Data&lt;Path&gt;.
+    /// Context for runtime access. Settable through IContext (Data propagates
+    /// it automatically when Path is inside Data&lt;Path&gt;).
+    /// JsonIgnore — Context references the runtime graph (App, Culture, parents)
+    /// which contains cycles; serializing it blows up trace files.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public Actor.Context.@this? Context { get; set; }
 
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
@@ -74,7 +90,7 @@ public class Path : modules.IContext
             }
         }
 
-        var path = new Path(fs.ValidatePath(resolved)) { Raw = rawPath, Context = context };
+        var path = new Path(fs.ValidatePath(resolved), context) { Raw = rawPath };
         return path;
     }
 
@@ -104,15 +120,15 @@ public class Path : modules.IContext
         }
     }
 
-    public string Extension => _extension ??= Fs.Path.GetExtension(_absolutePath);
-    public string FileName => _fileName ??= Fs.Path.GetFileName(_absolutePath);
-    public string FileNameWithoutExtension
+    [LlmBuilder] public string Extension => _extension ??= Fs.Path.GetExtension(_absolutePath);
+    [LlmBuilder] public string FileName => _fileName ??= Fs.Path.GetFileName(_absolutePath);
+    [LlmBuilder] public string FileNameWithoutExtension
         => _fileNameWithoutExtension ??= Fs.Path.GetFileNameWithoutExtension(_absolutePath);
-    public string Directory => _directory ??= Fs.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
-    public string MimeType => TypeMapping.GetMimeType(Extension);
+    [LlmBuilder] public string Directory => _directory ??= Fs.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
+    [LlmBuilder] public string MimeType => TypeMapping.GetMimeType(Extension);
 
-    public bool IsFile => !string.IsNullOrEmpty(Extension);
-    public bool IsDirectory => string.IsNullOrEmpty(Extension);
+    [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);
+    [LlmBuilder] public bool IsDirectory => string.IsNullOrEmpty(Extension);
 
     /// <summary>
     /// Converts this path to a GoalCall. Derives PrPath from the .goal file path.
@@ -132,9 +148,9 @@ public class Path : modules.IContext
 
     // --- Live filesystem properties ---
 
-    public bool Exists => Fs.File.Exists(_absolutePath) || Fs.Directory.Exists(_absolutePath);
+    [LlmBuilder] public bool Exists => Fs.File.Exists(_absolutePath) || Fs.Directory.Exists(_absolutePath);
 
-    public long Size
+    [LlmBuilder] public long Size
     {
         get
         {

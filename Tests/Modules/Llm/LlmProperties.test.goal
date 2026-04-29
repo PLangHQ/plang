@@ -1,0 +1,8 @@
+Start
+/ Verify response properties accessible via %result!TotalTokens%, %result!Model%, etc.
+- [llm] system: 'You are a helpful assistant'
+    user: 'Say hello'
+    temperature: 0.5
+    maxTokens: 50
+    write to %result%
+- assert %result% is not null

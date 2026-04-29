@@ -228,30 +228,94 @@ public sealed partial class @this : modules.IDataWrappable
 
     /// <summary>
     /// Merges LLM-derived fields from an existing built goal onto this freshly-parsed goal.
-    /// Matches steps by Text, delegates to Step.Merge for each match.
+    /// Delegates to Steps.MergeFrom for this goal's steps, then recurses into sub-goals
+    /// matched by Name so every sub-goal's steps also get their prior Actions + PriorText
+    /// back. Without the recursion, @known / keep:true only fire for the top-level goal
+    /// of a multi-goal .goal file.
     /// </summary>
     public void MergeFrom(@this? existing)
     {
         if (existing == null) return;
+        Steps.MergeFrom(existing.Steps);
 
-        if (existing.Steps.Count > 0)
+        if (existing.Goals.Count == 0) return;
+        foreach (var subGoal in Goals)
         {
-            var consumed = new HashSet<int>();
-            foreach (var step in Steps)
-            {
-                for (int i = 0; i < existing.Steps.Count; i++)
-                {
-                    if (consumed.Contains(i)) continue;
-                    if (existing.Steps[i].Text == step.Text)
-                    {
-                        step.Merge(existing.Steps[i]);
-                        consumed.Add(i);
-                        break;
-                    }
-                }
-            }
+            var priorSub = existing.Goals.FirstOrDefault(g =>
+                string.Equals(g.Name, subGoal.Name, StringComparison.OrdinalIgnoreCase));
+            if (priorSub != null) subGoal.MergeFrom(priorSub);
         }
 
+    }
+
+    /// <summary>
+    /// Runs this goal: lifecycle events → Steps.RunAsync → return handling.
+    /// Context travels as parameter — goals may be cached/shared.
+    /// </summary>
+    public async Task<Data.@this> RunAsync(Actor.Context.@this context)
+    {
+        var previousGoal = context.Goal;
+        context.Goal = this;
+
+        if (context.CancellationToken.IsCancellationRequested)
+            return Data.@this.FromError(new Errors.Error("Operation was cancelled", "Cancelled", 499));
+
+        var lifecycle = context.LifecycleFor(this);
+
+        // BeforeGoal events
+        var beforeResult = await lifecycle.Before.Run(context, EventType.BeforeGoal);
+        if (!beforeResult.Success) { context.Goal = previousGoal; return beforeResult; }
+        if (beforeResult.Handled) { context.Goal = previousGoal; return beforeResult; }
+
+        try
+        {
+            var result = await Steps.RunAsync(context);
+
+            // Handle return depth
+            if (result.Returned)
+            {
+                result.ReturnDepth--;
+                if (result.ReturnDepth <= 0)
+                    result.Returned = false;
+            }
+
+            // AfterGoal events
+            var afterResult = await lifecycle.After.Run(context, EventType.AfterGoal);
+            if (!afterResult.Success) return afterResult;
+
+            return result;
+        }
+        finally
+        {
+            context.Goal = previousGoal;
+        }
+    }
+
+    /// <summary>
+    /// OBP: Goal is responsible for its own Data representation.
+    /// Returns a cached per-execution Data&lt;Goal&gt; wrapper from the context.
+    /// </summary>
+    public Data.@this AsData(Actor.Context.@this context)
+    {
+        return context.GetOrCreate(this, () =>
+        {
+            var data = new Data.@this<@this>("", this);
+            data.Context = context;
+            return data;
+        });
+    }
+
+    /// <summary>
+    /// Groups modifier actions onto their preceding executable action for this goal's
+    /// steps and every sub-goal recursively. Called before .pr serialization so saved
+    /// files have modifiers correctly nested. Without recursion sub-goal steps keep
+    /// modifiers flat and fail at runtime (flat modifiers' no-op Run wipes %__data__%).
+    /// </summary>
+    public void GroupModifiersRecursive(App.Modules.@this modules)
+    {
+        Steps.GroupAllModifiers(modules);
+        foreach (var subGoal in Goals)
+            subGoal.GroupModifiersRecursive(modules);
     }
 
     /// <summary>

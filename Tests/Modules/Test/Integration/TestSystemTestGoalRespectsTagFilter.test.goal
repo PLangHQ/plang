@@ -1,0 +1,6 @@
+TestSystemTestGoalRespectsTagFilter
+/ Structural guard: the tag filter lives on Testing.Include / Testing.Exclude
+/ and is applied inside test.discover. A system runner that respects
+/ include/exclude must route through test.discover — verify it does.
+- read file '/system/test.goal', write to %goalText%
+- assert %goalText% contains 'test.discover'

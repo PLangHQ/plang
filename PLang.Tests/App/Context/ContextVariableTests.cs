@@ -148,7 +148,7 @@ public class ContextVariableTests
         vars.Set("regularVar", "hello");
 
         var all = vars.GetAll().ToList();
-        var names = all.Select(d => d.Name).ToList();
+        var names = all.Select(kvp => kvp.Key).ToList();
 
         await Assert.That(names).Contains("regularVar");
         await Assert.That(names).DoesNotContain("!app");

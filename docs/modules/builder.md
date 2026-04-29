@@ -20,7 +20,7 @@ Returns metadata for all registered actions — module names, action names, para
 
 ### types
 
-Returns PLang type names and JSON schemas for complex types. Used alongside `actions` to build the LLM prompt.
+Returns the structured action catalog — primitive type names, discovered record/enum entries, and pre-rendered `TypeNames` / `TypeSchemas` strings ready for the Liquid template. The catalog is what teaches the LLM the shape of every type a parameter can hold. See [Action Catalog](../../Documentation/v0.2/action-catalog.md) for the attribute model and rendering rules.
 
 ```plang
 - get type info, write to %typeInfo%
@@ -28,7 +28,7 @@ Returns PLang type names and JSON schemas for complex types. Used alongside `act
 
 **Parameters:** None
 
-**Returns:** `BuilderTypeInfo` with `TypeNames` (comma-separated) and `TypeSchemas` (newline-separated complex type definitions).
+**Returns:** `Catalog` with `TypeNames` (comma-separated), `TypeSchemas` (newline-separated complex type definitions), and `Types` / `PrimitiveNames` for introspection.
 
 ### goals
 
@@ -128,18 +128,47 @@ Saves application metadata to `.build/app.pr`.
 
 **Returns:** The saved `AppData`.
 
+### validateResponse
+
+Validates the structural integrity of an LLM build response — step count matches the goal, indexes form `0..N-1` with no gaps, every step has at least one action, scalar-typed parameters carry plain string values rather than records. Errors are collected and returned together so the LLM-fixer pass can show them all to the LLM in one round trip.
+
+**Parameters:** `StepResults` (the LLM's `BuildResponse`), `Goal` (the in-progress goal).
+
+**Returns:** `Ok(true)` if structurally valid, `ValidationErrors` action error otherwise.
+
+### enrichResponse
+
+Backfills actions for `keep:true` steps from the prior `.pr` and tags each step with its source (`new` / `known` / `hint`). Run immediately after `validateResponse` succeeds, so the response carried into `merge` and `goals.save` has a full action graph.
+
+**Parameters:** `StepResults`, `Goal`. **Returns:** the enriched `BuildResponse`.
+
+### promoteGroups
+
+Promotes grouped sub-steps into top-level steps so inline step handling renders correctly. Build-pipeline-only.
+
+**Parameters:** `Steps`. **Returns:** the promoted step list.
+
+### merge (step-level)
+
+Build-pipeline counterpart to `steps.merge`. Folds an LLM-generated step result back onto the parser's step shape: copies `Actions` (with their `Modifiers`), `Errors`, and `Warnings` from the source step onto the target while preserving the target's structural fields (Text, Index, Indent, LineNumber).
+
+**Parameters:** `Step` (target, from parser), `StepFromLlm` (source, from the LLM). **Returns:** the merged step.
+
 ## How the Build Pipeline Uses These Actions
 
-The builder goals in `system/builder/` orchestrate these actions:
+The builder goals in `system/builder/` orchestrate these actions roughly in order:
 
 1. `builder.app` — load or create app metadata
 2. `builder.goals` — parse `.goal` files, merge existing `.pr` data
 3. `builder.actions` + `builder.types` — generate LLM context
-4. LLM builds step actions
-5. `builder.actions.validate` — verify actions exist, resolve paths, fill defaults
-6. `builder.steps.merge` — merge LLM results into parsed steps
-7. `builder.goals.save` — write `.pr` files
-8. `builder.app.save` — update app metadata
+4. LLM builds step actions, returning a `BuildResponse`
+5. `builder.validateResponse` — structural integrity check on the response
+6. `builder.enrichResponse` — backfill `keep:true` steps and tag step source
+7. `builder.actions.validate` — verify actions exist, resolve paths, fill defaults
+8. `builder.promoteGroups` — promote grouped sub-steps into top-level steps
+9. `builder.merge` / `builder.steps.merge` — fold LLM results back onto parsed steps
+10. `builder.goals.save` — write `.pr` files (re-runs `validateResponse.ValidateGoalState` as a final safety net before persisting)
+11. `builder.app.save` — update app metadata
 
 ## Key Concepts
 
@@ -174,6 +203,8 @@ When rebuilding, the builder preserves LLM work from previous builds:
 - **Step-level**: `Step.Merge()` copies Actions, Errors, and Warnings from the source step. Each action's `Modifiers` (cache/timeout/error) travel inside Actions.
 - Unmatched steps (new or changed text) keep empty Actions for the LLM to fill
 
-### BuildingGuard
+### Build mode and runtime mode
 
-All builder actions check `engine.Building.IsEnabled` before executing. If building is not enabled, they return an error. This prevents accidental use of builder actions at runtime.
+Builder actions are **callable at runtime**, not just during `plang build`. There is no per-action `Build.IsEnabled` guard; the file-provider read path consults `App.Build.IsEnabled` for snapshot logic, but the builder actions themselves run whenever a signed `.pr` calls them. In other words: the trust boundary is the goal signature, not a build/runtime mode flag. A signed third-party goal can invoke `builder.goals.save` at runtime and rewrite sibling `.pr` files; this is intentional (the user authorised the goal by trusting its signature) and consistent with PLang's user-sovereign threat model.
+
+If you are reviewing or extending the builder pipeline, treat each builder action as a normal callable handler — there is no out-of-band gate above it.

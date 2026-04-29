@@ -417,7 +417,7 @@ public class IfHandlerTests : IDisposable
         // With the buggy code (Variables-based guard), the inner condition sees it
         // and skips orchestration — actions run sequentially instead of branched.
         var context = _app.Context;
-        context.Variables.Put(new Data("__condition_orchestrating__", true));
+        context.Variables.Set(new Data("__condition_orchestrating__", true));
 
         // Run the inner step (which shares the same context as the outer)
         var result = await innerStep.RunAsync(context);

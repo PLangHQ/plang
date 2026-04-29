@@ -10,6 +10,7 @@ namespace App.modules.http;
 /// Uploads content to a URL. Supports file upload, base64, form data, and text.
 /// Content type is auto-detected from the Content value or explicitly set via As.
 /// </summary>
+[System.ComponentModel.Description("Upload content (file, form data, JSON, or bytes) to a URL via multipart or body POST")]
 [Action("upload", Cacheable = false)]
 [RequiresCapability("network")]
 public partial class upload : IContext

@@ -1,8 +1,0 @@
-{% for sa in step.Actions %}{% for a in actions %}{% if a.Module == sa.Module and a.ActionName == sa.ActionName %}
-## {{ a.Module }}.{{ a.ActionName }}{% unless a.Cacheable %} [no-cache]{% endunless %}
-
-Parameters:
-{% if a.Parameters.size > 0 %}{% for p in a.Parameters %}  - {{ p.Name }}: {{ p.Value }}
-{% endfor %}{% else %}  (no parameters)
-{% endif %}
-{% endif %}{% endfor %}{% endfor %}

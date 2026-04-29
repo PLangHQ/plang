@@ -1,0 +1,231 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %order% = \u0022\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "higher priority fires first",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%order%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "before action output.write call LowPriority priority=1",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "event",
+          "action": "on",
+          "parameters": [
+            {
+              "name": "Type",
+              "value": "before",
+              "type": "string"
+            },
+            {
+              "name": "GoalToCall",
+              "value": {
+                "Name": "goal.call",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            },
+            {
+              "name": "Priority",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "actor"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "isregex",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "before action output.write call HighPriority priority=10",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "event",
+          "action": "on",
+          "parameters": [
+            {
+              "name": "Type",
+              "value": "before",
+              "type": "string"
+            },
+            {
+              "name": "GoalToCall",
+              "value": {
+                "Name": "goal.call",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            },
+            {
+              "name": "Priority",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "IsRegex",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "write out \u0022trigger\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "trigger",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Write the literal text \u0027trigger\u0027 to the current output channel. Step text indicates output.write with a translatable string.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %order% equals \u0022high,low\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "high,low",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%order%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %order% equals the expected string \u0027high,low\u0027.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/EventPriority.test.goal",
+  "prPath": "/.build/eventpriority.test.pr",
+  "hash": "e81d8beb20be948a4cdcb99054aeba99d520f48c1877e2c0c0bfc5f24c32416c",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}
