@@ -1,0 +1,122 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-builder-bootstrap",
+  "timestamp": "2026-04-29T13:15:00Z",
+  "reviewed_version": "v1",
+  "summary": "Pre-merge docs gate after auditor PASS, security PASS, tester APPROVED, codeanalyzer v4 CLEAN. Branch already shipped strong dev-facing docs (action-catalog.md, trace.md, debug.md additions, good_to_know.md test-module + ExamplesForLlm rules). Six gaps filled: three user-facing (variable.set AsDefault, file.read ResolveVariables + skipInfrastructure security note, builder.md stale BuildingGuard + missing new actions), three dev-facing (good_to_know.md stale BuildingGuard line, architecture.md missing cross-references to action-catalog.md and trace.md, merge.cs missing XML class summary). Verdict: pass — branch ready to merge.",
+  "stats": {
+    "gaps_found": 6,
+    "gaps_filled": 6,
+    "docs_updated": 5,
+    "docs_created": 0
+  },
+  "changes": [
+    {
+      "id": 1,
+      "type": "xml-doc",
+      "action": "updated",
+      "file": "PLang/App/modules/builder/merge.cs",
+      "description": "Added /// summary on the merge class and on Step / StepFromLlm properties — describes build-time scope, what is preserved, what is overwritten. Brings merge.cs into line with every other new builder action class on this branch (validateResponse, enrichResponse, promoteGroups all already had summaries)."
+    },
+    {
+      "id": 2,
+      "type": "example",
+      "action": "updated",
+      "file": "docs/modules/variable.md",
+      "description": "Added AsDefault parameter row to the set table (with default), added 'set default' natural-form example to the code block, added a `set default` sub-section explaining the goal-parameter fallback pattern."
+    },
+    {
+      "id": 3,
+      "type": "example",
+      "action": "updated",
+      "file": "docs/modules/file.md",
+      "description": "Added ResolveVariables parameter row to the read table, added 'load vars' natural-form example to the code block, added a 'Resolving variables in file content' sub-section with a worked example, and a Security paragraph stating that infrastructure %!app% / %!fileSystem% / %!callStack% / %!trace% variables are deliberately blocked when reading file content."
+    },
+    {
+      "id": 4,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "docs/modules/builder.md",
+      "description": "Replaced stale BuildingGuard section with a 'Build mode and runtime mode' section explaining current posture: builder actions are callable at runtime, no per-action guard, trust boundary is the goal signature. Added entries for new actions validateResponse, enrichResponse, promoteGroups, merge (step-level). Updated 'How the Build Pipeline Uses These Actions' ordering to include all 11 steps in the current pipeline. Updated types action description to point at action-catalog.md."
+    },
+    {
+      "id": 5,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "description": "Rewrote the BuildingGuard paragraph in the IBuilderProvider section. Now states the static guard was removed (commit 4633674c), names the actual current check (App.Build.IsEnabled at DefaultFileProvider read path, no write-path guard), and cross-references docs/modules/builder.md."
+    },
+    {
+      "id": 6,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/architecture.md",
+      "description": "Added Trace property to the Context shape diagram with a one-paragraph pointer to trace.md. Added a paragraph at the top of the Modules section pointing readers at action-catalog.md for the attribute model and ExamplesForLlm() rules. Closes the discoverability gap for both new architectural surfaces."
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "stale-doc",
+      "file": "docs/modules/builder.md",
+      "issue": "BuildingGuard section (lines 177-180 before edit) said all builder actions check engine.Building.IsEnabled before executing. Guard was removed in commit 4633674c; statement no longer reflects reality.",
+      "resolution": "filled",
+      "detail": "Replaced with 'Build mode and runtime mode' section describing current posture and trust model. Mirrors the language the auditor F1 finding settled on."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "issue": "Line 424 described BuildingGuard(IContext) static method as the gate called first in every provider method, on App.Building.IsEnabled. Both the property name (App.Build, not App.Building) and the existence of the method are wrong.",
+      "resolution": "filled",
+      "detail": "Rewrote paragraph naming the actual check (App.Build.IsEnabled at DefaultFileProvider read path), the commit that removed the per-action guard (4633674c), and pointing at docs/modules/builder.md for the user-facing summary."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "category": "missing-doc",
+      "file": "docs/modules/variable.md",
+      "issue": "AsDefault parameter on variable.set is invisible to PLang users — the parameter table only listed Name/Value/Type. The natural form `set default %x% = ...` (a common pattern for goal-parameter fallback) had no teaching.",
+      "resolution": "filled",
+      "detail": "Added parameter row, code-block example, and a sub-section explaining the goal-parameter fallback use case."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "category": "missing-doc",
+      "file": "docs/modules/file.md",
+      "issue": "ResolveVariables parameter on file.read is invisible to users — table only listed Path. The natural form `load vars` and the security restriction on infrastructure variables (%!app% / %!fileSystem% / %!callStack% / %!trace% blocked) had no teaching.",
+      "resolution": "filled",
+      "detail": "Added parameter row, code-block example, sub-section with a worked example, and a Security paragraph documenting the skipInfrastructure restriction."
+    },
+    {
+      "id": 5,
+      "severity": "major",
+      "category": "missing-doc",
+      "file": "docs/modules/builder.md",
+      "issue": "Four new builder actions added on this branch had no entries in the user-facing builder doc: validateResponse, enrichResponse, promoteGroups, merge (step-level). Pipeline ordering section listed only 8 steps; current pipeline has 11.",
+      "resolution": "filled",
+      "detail": "Added entry for each new action with parameters/returns. Rewrote the pipeline-ordering numbered list to reflect the actual 11-step flow including validateResponse, enrichResponse, promoteGroups, and the safety net re-validation in goals.save."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "category": "missing-doc",
+      "file": "Documentation/v0.2/architecture.md",
+      "issue": "Two new architectural surfaces (App.Catalog and Context.Trace) shipped with their own dedicated docs (action-catalog.md, trace.md) but no cross-references from the canonical architecture overview. A new contributor reading architecture.md would not know either doc exists.",
+      "resolution": "filled",
+      "detail": "Added Trace to Context shape diagram with pointer to trace.md. Added paragraph in Modules section pointing at action-catalog.md."
+    },
+    {
+      "id": 7,
+      "severity": "minor",
+      "category": "missing-doc",
+      "file": "PLang/App/modules/builder/merge.cs",
+      "issue": "merge.cs class and properties had only a [Description] attribute — no /// summary, unlike every other new builder action class (validateResponse, enrichResponse, promoteGroups all have summaries). Inconsistent with the surrounding code.",
+      "resolution": "filled",
+      "detail": "Added class summary describing build-time scope, what is preserved, what is overwritten. Added per-property summaries on Step (target) and StepFromLlm (source)."
+    }
+  ]
+}

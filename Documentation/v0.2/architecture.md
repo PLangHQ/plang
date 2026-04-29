@@ -107,7 +107,10 @@ Context
   .Setup                during setup execution (run-once semantics)
   .Test                 test context when --test flag active
   .Event                current event context (in event handlers)
+  .Trace                per-execution diagnostic identity (see trace.md)
 ```
+
+`Trace` — created in the Context constructor and carried for the lifetime of the execution. Sub-goal calls share the parent's Trace; forking a new Context creates a new one. Used by builder pipeline + LLM debug to correlate diagnostic files. See [trace.md](trace.md).
 
 ### Context variables (lazy)
 
@@ -214,6 +217,8 @@ Collections own their loops (OBP rule 5). Steps iterates its own steps, Actions 
 ## Modules (Action Registry)
 
 Flat `module.action` registry. No hierarchy, no inheritance.
+
+The catalog rendered into the LLM builder's system prompt — module/action names, parameter type tags, examples — is derived from these registered handlers via `App.Modules.Describe()` plus `App.Catalog.@this.Build()`. See [action-catalog.md](action-catalog.md) for the attribute model (`[Action]`, `[ModuleDescription]`, `[Example]`, `[VariableName]`, `[Default]`, etc.) and the rules for writing structured `ExamplesForLlm()` static methods.
 
 ### Discovery
 

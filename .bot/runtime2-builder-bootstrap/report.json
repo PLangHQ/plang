@@ -814,6 +814,100 @@
         "health": "Branch is solid. Three reviewers each made the right call on their slice; auditor contribution is finding the gaps between \u2014 codeanalyzer v4 locale carryover already closed, BuildingGuard rationale documentation accuracy, F4 cluster categorization, security F2 enumeration completeness, Debug.Apply test coverage. Original 3 coder gaps all implemented and tested.",
         "notes": "5 findings (3 minor + 2 nits). None tip the verdict. F1 was the closest call \u2014 considered major because it concerns a documented security boundary, but downgraded to minor because the actual code posture matches what security accepted (low). Documentation accuracy in version-control history, not a new bug. Recommend docs bot next."
       }
+    },
+    {
+      "id": "0d8a2f1c-4e7b-4a9d-8f6c-3b1e9d2a5c7e",
+      "bot": "docs",
+      "timestamp_start": "2026-04-29T12:30:00Z",
+      "intent": "Pre-merge documentation gate \u2014 audit gaps after auditor PASS, fill user-facing + stale references for the runtime2-builder-bootstrap branch.",
+      "before": {
+        "assumptions": "Auditor v1 PASS (3 minor + 2 nit), security PASS, tester APPROVED, codeanalyzer v4 CLEAN. Coder's stated 3 small gaps; actual branch is the full v2 self-rebuild with Catalog, Trace, ParamSnapshot, granular LLM debug, BuildingGuard removal, new builder actions. Strong dev-facing docs already shipped (action-catalog.md, trace.md, debug.md additions). Surveyed all new public surfaces.",
+        "risk": "Risk of missing a stale reference. Risk of over-documenting build-pipeline-only actions in user-facing docs. Risk of authoring architecture position the team hasn't agreed on."
+      },
+      "plan": ".bot/runtime2-builder-bootstrap/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/docs/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote plan with 6 gaps (G1\u2013G6): G1 variable.set AsDefault missing in user docs, G2 file.read ResolveVariables missing, G3 builder.md stale BuildingGuard + new actions missing, G4 good_to_know.md stale BuildingGuard line 424, G5 Catalog/Trace not cross-referenced from architecture, G6 merge.cs XML doc summary missing. Read all bot reports + key new code surfaces."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/merge.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "G6 \u2014 added /// class summary describing build-time scope and what is preserved vs overwritten, plus per-property summaries on Step (target) and StepFromLlm (source). Brings merge.cs into line with peer builder actions (validateResponse, enrichResponse, promoteGroups all already had summaries). Verified PLang.csproj still compiles 0 errors."
+        },
+        {
+          "paths": [
+            "docs/modules/variable.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "G1 \u2014 added AsDefault parameter row to set table, added 'set default' natural-form example, added a sub-section explaining goal-parameter fallback pattern. AsDefault was previously invisible to PLang users."
+        },
+        {
+          "paths": [
+            "docs/modules/file.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "G2 \u2014 added ResolveVariables parameter row, 'load vars' natural-form example, worked example sub-section, and a Security paragraph documenting that infrastructure variables (%!app% / %!fileSystem% / %!callStack% / %!trace%) are deliberately blocked when resolving variables in file content (the skipInfrastructure improvement)."
+        },
+        {
+          "paths": [
+            "docs/modules/builder.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "G3 \u2014 replaced stale BuildingGuard section with 'Build mode and runtime mode' that describes current posture (no per-action guard, trust boundary is the goal signature). Added entries for validateResponse, enrichResponse, promoteGroups, merge (step-level). Rewrote pipeline ordering to the current 11-step flow. Updated types action description to point at action-catalog.md."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "G4 \u2014 rewrote stale BuildingGuard paragraph in IBuilderProvider section (line 424). Names removal commit (4633674c), current App.Build.IsEnabled check at DefaultFileProvider read path, and that no write-path guard exists. Cross-references docs/modules/builder.md."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/architecture.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "G5 \u2014 added Trace to Context shape diagram with pointer to trace.md; added paragraph in Modules section pointing at action-catalog.md for the attribute model and ExamplesForLlm rules. Closes discoverability gap for both new architectural surfaces shipped on this branch."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-bootstrap/docs-report.json",
+            ".bot/runtime2-builder-bootstrap/docs/v1/verdict.json",
+            ".bot/runtime2-builder-bootstrap/docs/v1/summary.md",
+            ".bot/runtime2-builder-bootstrap/docs/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote docs-report.json (6 changes, 7 findings all resolved=filled), v1 verdict (pass), v1 narrative summary, and bot-root cross-session summary."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "All 6 gaps filled. Branch ready to merge. Strong dev-facing docs already shipped on the branch (action-catalog.md, trace.md, debug.md additions) \u2014 v1 work was closing user-facing teaching for AsDefault/ResolveVariables, the new builder actions, removing stale BuildingGuard references, adding cross-references, and bringing merge.cs XML doc in line with peers.",
+        "notes": "No code changes outside the merge.cs XML summary (per character file: docs writes docs, routes code/test concerns elsewhere). No PLang .goal examples written (tester's job). No CHANGELOG entry created \u2014 repo has no CHANGELOG.md and creating one for a single branch is over-scope. Build verified with dotnet build PLang.csproj after the XML doc edit (0 errors)."
+      },
+      "timestamp_end": "2026-04-29T13:25:00Z"
     }
   ]
 }
