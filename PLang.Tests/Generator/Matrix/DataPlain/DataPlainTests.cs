@@ -1,22 +1,58 @@
-namespace PLang.Tests.Generator.Matrix.DataPlain;
+using PLang.Tests.App.Fixtures;
+using App.modules.matrix.dataplain;
 
-// Matrix entry for plain Data (== Data<object>) — universal type, no T constraint.
-// v4 contract: As<object> walks %var% references and substitutes them, but does no further typed conversion.
+namespace PLang.Tests.Generator.Matrix.DataPlain;
 
 public class DataPlainTests
 {
-    // Data property accepts a string Value and surfaces it as object (no conversion).
-    [Test] public async Task DataPlain_StringValue_PassesThrough() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataPlain_StringValue_PassesThrough()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<global::App.modules.matrix.dataplain.DataPlain>(app,
+            parameters: new[] { ("payload", (object?)"hello") });
+        await Assert.That(result.Data.Value).IsEqualTo("hello");
+    }
 
-    // Data property accepts an int Value and surfaces it as object (boxed).
-    [Test] public async Task DataPlain_IntValue_PassesThrough() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataPlain_IntValue_PassesThrough()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<global::App.modules.matrix.dataplain.DataPlain>(app,
+            parameters: new[] { ("payload", (object?)42) });
+        await Assert.That(result.Data.Value).IsEqualTo(42);
+    }
 
-    // Data property accepts a list Value and surfaces it as object (still List<object?> shape).
-    [Test] public async Task DataPlain_ListValue_PassesThrough() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataPlain_ListValue_PassesThrough()
+    {
+        await using var app = new global::App.@this("/app");
+        var raw = new List<object?> { 1, 2, 3 };
+        var result = await MatrixRunner.RunAsync<global::App.modules.matrix.dataplain.DataPlain>(app,
+            parameters: new[] { ("payload", (object?)raw) });
+        await Assert.That(result.Data.Value).IsTypeOf<List<object?>>();
+        var list = result.Data.Value as List<object?>;
+        await Assert.That(list).IsNotNull();
+        await Assert.That(list!.Count).IsEqualTo(3);
+    }
 
-    // Data property accepts a dict Value and surfaces it as object (still Dictionary shape).
-    [Test] public async Task DataPlain_DictValue_PassesThrough() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataPlain_DictValue_PassesThrough()
+    {
+        await using var app = new global::App.@this("/app");
+        var raw = new Dictionary<string, object?> { ["a"] = 1, ["b"] = 2 };
+        var result = await MatrixRunner.RunAsync<global::App.modules.matrix.dataplain.DataPlain>(app,
+            parameters: new[] { ("payload", (object?)raw) });
+        await Assert.That(result.Data.Value).IsTypeOf<Dictionary<string, object?>>();
+    }
 
-    // %var% in Data property resolves through As<object> — substitution happens, returns the variable's Value.
-    [Test] public async Task DataPlain_VarReference_ResolvesAsObject() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataPlain_VarReference_ResolvesAsObject()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<global::App.modules.matrix.dataplain.DataPlain>(app,
+            parameters: new[] { ("payload", (object?)"%name%") },
+            variables: new Dictionary<string, object?> { ["name"] = "world" });
+        await Assert.That(result.Data.Value).IsEqualTo("world");
+    }
 }

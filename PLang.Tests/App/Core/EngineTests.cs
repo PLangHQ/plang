@@ -412,11 +412,13 @@ public class EngineTests
         var step = MakeStep("throwing", "fail");
         var context = engine.Context;
 
-        // Step.RunAsync catches exceptions and wraps in Data.FromError
+        // v4: App.Run owns try/catch around handler dispatch — exceptions from a handler
+        // are translated to ServiceError there, not at the Step level. Step.RunAsync's
+        // catch still exists for non-handler failures (event handlers, iteration logic).
         var steps = new GoalSteps { step };
         var result = await steps.RunAsync(context);
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("StepError");
+        await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
     }
 
     [Test]

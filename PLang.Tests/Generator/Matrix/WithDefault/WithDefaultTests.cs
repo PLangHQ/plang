@@ -1,41 +1,92 @@
-namespace PLang.Tests.Generator.Matrix.WithDefault;
+using PLang.Tests.App.Fixtures;
+using App.modules.matrix.withdefault;
 
-// Matrix entries for [Default(...)] Data<T> properties.
-// v4 contract: missing parameter → Action.GetParameter falls back to Defaults list,
-//   returning the [Default]-attribute-driven Data; As<T> wraps/converts as usual.
+namespace PLang.Tests.Generator.Matrix.WithDefault;
 
 public class StringWithDefaultTests
 {
-    // Parameter missing → property reads as Data<string> with the [Default("hello")] value.
-    [Test] public async Task StringWithDefault_Missing_UsesDefault() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task StringWithDefault_Missing_UsesDefault()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<StringWithDefault>(app);
+        var typed = result.Data as global::App.Data.@this<string>;
+        await Assert.That(typed!.Value).IsEqualTo("hello");
+    }
 
-    // Parameter present → wins over default; default ignored.
-    [Test] public async Task StringWithDefault_Present_OverridesDefault() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task StringWithDefault_Present_OverridesDefault()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<StringWithDefault>(app,
+            parameters: new[] { ("greeting", (object?)"world") });
+        var typed = result.Data as global::App.Data.@this<string>;
+        await Assert.That(typed!.Value).IsEqualTo("world");
+    }
 }
 
 public class IntWithDefaultTests
 {
-    // Numeric default 42 surfaces when parameter missing.
-    [Test] public async Task IntWithDefault_Missing_Returns42() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task IntWithDefault_Missing_Returns42()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<IntWithDefault>(app);
+        var typed = result.Data as global::App.Data.@this<int>;
+        await Assert.That(typed!.Value).IsEqualTo(42);
+    }
 
-    // String parameter "7" → converts via TypeMapping; default not used.
-    [Test] public async Task IntWithDefault_Present_OverridesAndConverts() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task IntWithDefault_Present_OverridesAndConverts()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<IntWithDefault>(app,
+            parameters: new[] { ("count", (object?)"7") });
+        var typed = result.Data as global::App.Data.@this<int>;
+        await Assert.That(typed!.Value).IsEqualTo(7);
+    }
 }
 
 public class EnumWithDefaultTests
 {
-    // [Default(MyEnum.A)] surfaces when parameter missing — typed enum, not boxed int.
-    [Test] public async Task EnumWithDefault_Missing_ReturnsDefaultMember() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task EnumWithDefault_Missing_ReturnsDefaultMember()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<EnumWithDefault>(app);
+        var typed = result.Data as global::App.Data.@this<MatrixEnum>;
+        await Assert.That(typed!.Value).IsEqualTo(MatrixEnum.A);
+    }
 
-    // String parameter "B" naming a member → converts via TypeMapping to MyEnum.B.
-    [Test] public async Task EnumWithDefault_StringValue_ConvertsToMember() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task EnumWithDefault_StringValue_ConvertsToMember()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<EnumWithDefault>(app,
+            parameters: new[] { ("choice", (object?)"B") });
+        var typed = result.Data as global::App.Data.@this<MatrixEnum>;
+        await Assert.That(typed!.Value).IsEqualTo(MatrixEnum.B);
+    }
 }
 
 public class BoolWithDefaultTests
 {
-    // [Default(false)] surfaces when parameter missing.
-    [Test] public async Task BoolWithDefault_Missing_ReturnsFalse() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task BoolWithDefault_Missing_ReturnsFalse()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<BoolWithDefault>(app);
+        var typed = result.Data as global::App.Data.@this<bool>;
+        await Assert.That(typed!.Value).IsFalse();
+    }
 
-    // Parameter "true" overrides default; conversion via TypeMapping.
-    [Test] public async Task BoolWithDefault_StringTrue_OverridesDefault() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task BoolWithDefault_StringTrue_OverridesDefault()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<BoolWithDefault>(app,
+            parameters: new[] { ("flag", (object?)"true") });
+        var typed = result.Data as global::App.Data.@this<bool>;
+        await Assert.That(typed!.Value).IsTrue();
+    }
 }

@@ -1,23 +1,69 @@
-namespace PLang.Tests.Generator.Matrix.Snapshot;
+using PLang.Tests.App.Fixtures;
+using App.modules.matrix.snapshot;
+using App.modules.matrix.plain;
 
-// Matrix entry for __SnapshotParams diagnostic.
-// v4 contract: each property contributes one snapshot entry — PrValue (raw, via .Value), FinalValue (post-As<T>, via backing field).
-// Snapshot is attached to errors via ParamSnapshot/Error.Params.
+namespace PLang.Tests.Generator.Matrix.Snapshot;
 
 public class SnapshotOnErrorTests
 {
-    // Handler errors mid-Run() → Error.Params contains every parameter property's PrValue (raw) and FinalValue (if accessed).
-    [Test] public async Task SnapshotOnError_ErrorMidRun_AttachesParamsToError() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task SnapshotOnError_ErrorMidRun_AttachesParamsToError()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
+            parameters: new[] { ("first", (object?)"a"), ("second", (object?)42) });
 
-    // Property that was accessed before the error → its FinalValue is the resolved Data<T>.Value.
-    [Test] public async Task SnapshotOnError_AccessedProperty_FinalValuePresent() => Assert.Fail("Not implemented");
+        await Assert.That(result.Data.Success).IsFalse();
+        await Assert.That(result.Snapshot).IsNotNull();
+        await Assert.That(result.Snapshot!.Count).IsEqualTo(2);
+    }
 
-    // Property that was NOT accessed → still appears in snapshot with PrValue, but FinalValue is null.
-    [Test] public async Task SnapshotOnError_UnaccessedProperty_FinalValueNull() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task SnapshotOnError_AccessedProperty_FinalValuePresent()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
+            parameters: new[] { ("first", (object?)"hello"), ("second", (object?)42) });
 
-    // PrValue is the raw Parameter Data.Value (no resolution) — verifies v4's "trivially clean" snapshot impl.
-    [Test] public async Task SnapshotOnError_PrValueIsRaw_NoResolution() => Assert.Fail("Not implemented");
+        var firstEntry = result.Snapshot!.FirstOrDefault(p => p.Name == "First");
+        await Assert.That(firstEntry).IsNotNull();
+        await Assert.That(firstEntry!.WasAccessed).IsTrue();
+    }
 
-    // No error path → no snapshot attached (snapshot is error-time-only diagnostic).
-    [Test] public async Task SnapshotOnError_HandlerSucceeds_NoSnapshotAttached() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task SnapshotOnError_UnaccessedProperty_FinalValueNull()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
+            parameters: new[] { ("first", (object?)"hello"), ("second", (object?)42) });
+
+        // Second is never read by Run() — snapshot has PrValue but FinalValue=null.
+        var secondEntry = result.Snapshot!.FirstOrDefault(p => p.Name == "Second");
+        await Assert.That(secondEntry).IsNotNull();
+        await Assert.That(secondEntry!.WasAccessed).IsFalse();
+        await Assert.That(secondEntry.FinalValue).IsNull();
+    }
+
+    [Test]
+    public async Task SnapshotOnError_PrValueIsRaw_NoResolution()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
+            parameters: new[] { ("first", (object?)"hello-raw"), ("second", (object?)42) });
+
+        var firstEntry = result.Snapshot!.FirstOrDefault(p => p.Name == "First");
+        // PrValue is raw — exactly what we passed.
+        await Assert.That(firstEntry!.PrValue).IsEqualTo("hello-raw");
+    }
+
+    [Test]
+    public async Task SnapshotOnError_HandlerSucceeds_NoSnapshotAttached()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<StringPlain>(app,
+            parameters: new[] { ("path", (object?)"hello") });
+        await Assert.That(result.Data.Success).IsTrue();
+        // Snapshot is null on success.
+        await Assert.That(result.Snapshot).IsNull();
+    }
 }

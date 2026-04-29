@@ -300,12 +300,12 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 else if (prop.DefaultValue != null)
                 {
                     // Non-nullable Data<T> with [Default] — use default when not found
-                    sb.AppendLine($"        get {{ if ({backingField} == null) {{ var __d = __ResolveData(\"{paramName}\"); {backingField} = __d.IsEmpty ? new global::App.Data.@this<{innerType}>(\"{paramName}\", ({innerType}){prop.DefaultValue}) : __d.As<{innerType}>(Context); }} return {backingField}!; }}");
+                    sb.AppendLine($"        get {{ if ({backingField} == null) {{ var __d = __ResolveData(\"{paramName}\"); {backingField} = __d.IsEmpty ? new global::App.Data.@this<{innerType}>(\"{paramName}\", ({innerType}){prop.DefaultValue}) : __d.As<{innerType}>(Context); {setFlag} = true; }} return {backingField}!; }}");
                 }
                 else
                 {
                     resolveExpr = $"__ResolveData(\"{paramName}\").As<{innerType}>(Context)";
-                    sb.AppendLine($"        get {{ if ({backingField} == null) {{ {backingField} = {resolveExpr}; }} return {backingField}!; }}");
+                    sb.AppendLine($"        get {{ if ({backingField} == null) {{ {backingField} = {resolveExpr}; {setFlag} = true; }} return {backingField}!; }}");
                 }
                 sb.AppendLine($"        init {{ {backingField} = value; {setFlag} = true; }}");
                 sb.AppendLine("    }");
@@ -393,8 +393,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
         sb.AppendLine();
 
-        // ExecuteAsync
-        // __action is set by App.Run (from ICodeGenerated), __action removed
+        // ExecuteAsync — thin form (v4 Phase 3).
+        // App.Run owns scaffolding (callstack push/pop, save/restore Context.Step/Goal/Event,
+        // try/catch/finally with ServiceError translation, frame.SnapshotVariables in finally).
+        // The handler body here only handles per-class concerns: marker init, eager Provider
+        // resolution, backing-field reset, validation, then Run().
         sb.AppendLine();
         sb.AppendLine("    public async System.Threading.Tasks.Task<global::App.Data.@this> ExecuteAsync(");
         sb.AppendLine("        global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.Actor.Context.@this context)");
@@ -428,35 +431,21 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
         if (info.ImplementsIAction)
         {
-            sb.AppendLine("        Action = __action;");
+            sb.AppendLine("        Action = __action!;");
         }
         if (info.ImplementsIStep)
         {
-            sb.AppendLine("        Step = __action?.Step;");
+            sb.AppendLine("        Step = __action?.Step!;");
         }
         if (info.ImplementsIStatic)
         {
-            // Module namespace: e.g., "App.modules.timer" → "timer"
             var moduleNs = info.Namespace;
             var prefix = "App.modules.";
             var moduleName = moduleNs.StartsWith(prefix) ? moduleNs.Substring(prefix.Length).Split('.')[0] : moduleNs;
             sb.AppendLine($"        Static = context.GetModuleStatic(\"{moduleName}\");");
         }
 
-        // Push callstack frame for this action (only when dispatched from .pr)
-        sb.AppendLine("        var __frame = __action != null ? context.CallStack?.Push(__action) : null;");
-        sb.AppendLine();
-
-        // Save and set context.Step/Goal/Event — restored in finally after Run()
-        sb.AppendLine("        var __previousStep = context.Step;");
-        sb.AppendLine("        var __previousGoal = context.Goal;");
-        sb.AppendLine("        var __previousEvent = context.Event;");
-        sb.AppendLine("        context.Step = __action?.Step;");
-        sb.AppendLine("        if (context.Step != null) context.Step.Context = context;");
-        sb.AppendLine("        context.Goal = __action?.Step?.Goal;");
-        sb.AppendLine();
-
-        // Resolve [Provider] properties from app.Providers
+        // Resolve [Provider] properties from app.Providers — eager, must run before validation
         foreach (var prop in info.Properties)
         {
             if (!prop.IsProvider) continue;
@@ -464,28 +453,24 @@ public class LazyParamsGenerator : IIncrementalGenerator
             sb.AppendLine($"        var __{prop.Name}_result = app.Providers.Get<{prop.TypeName}>();");
             sb.AppendLine($"        if (!__{prop.Name}_result.Success) return __{prop.Name}_result;");
             sb.AppendLine($"        {backingField} = __{prop.Name}_result.Value!;");
-            sb.AppendLine();
         }
+        sb.AppendLine();
 
-        // Check for IEvent on resolved properties — set context.Event if present
-        // The object tells us at runtime if it carries event context
+        // IEvent surface — touch typed property to set context.Event if present
         foreach (var prop in info.Properties)
         {
             if (prop.IsProvider || prop.IsVariableName || prop.IsValueType) continue;
             if (prop.TypeName is "string" or "global::System.String") continue;
-            // Only emit for types that implement IEvent (compile-time safe)
             if (!prop.ImplementsIEvent) continue;
             sb.AppendLine($"        if ({prop.Name}?.Event != null)");
             sb.AppendLine($"            context.Event = {prop.Name}.Event;");
         }
-        sb.AppendLine();
 
-        // Validate non-nullable, non-defaulted properties
+        // Validate non-nullable, non-defaulted raw-scalar properties (Data<T> validation handled elsewhere)
         foreach (var prop in info.Properties)
         {
             if (prop.IsNullable || prop.DefaultValue != null || prop.IsAppResolvable || prop.IsProvider || prop.IsDataWrapped)
                 continue;
-            // Plain Data.@this properties can wrap null values — only [IsNotNull] should reject that
             if (prop.TypeName.Contains("App.Data.@this"))
                 continue;
 
@@ -500,7 +485,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     sb.AppendLine($"        if ({prop.Name} == null)");
                 }
                 sb.AppendLine("            {");
-                sb.AppendLine($"                if (__resolutionError != null) {{ context.Step = __previousStep; context.Goal = __previousGoal; return __resolutionError; }}");
+                sb.AppendLine($"                if (__resolutionError != null) return __resolutionError;");
                 sb.AppendLine($"                var __prValue = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{prop.Name}\", System.StringComparison.OrdinalIgnoreCase))?.Value?.ToString() ?? \"(unknown)\";");
                 sb.AppendLine($"                var __stepText = __step?.Text ?? \"(unknown step)\";");
                 sb.AppendLine($"                if (__stepText.Length > 80) __stepText = __stepText[..80] + \"...\";");
@@ -512,8 +497,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
             }
         }
 
-        // Validate [IsNotNull] — check the Data parameter's .Value directly
-        // Only when dispatched from .pr (__action?.Parameters set). For C# composition, properties are set via init.
+        // Validate [IsNotNull]
         if (info.Properties.Any(p => p.IsNotNull && !p.IsValueType))
         {
             sb.AppendLine("        if (__action?.Parameters != null)");
@@ -531,32 +515,15 @@ public class LazyParamsGenerator : IIncrementalGenerator
             sb.AppendLine("        }");
         }
 
-        sb.AppendLine("        if (__resolutionError != null) { context.Step = __previousStep; context.Goal = __previousGoal; return __resolutionError; }");
+        sb.AppendLine("        if (__resolutionError != null) return __resolutionError;");
+        sb.AppendLine();
+        sb.AppendLine("        return await Run();");
+        sb.AppendLine("    }");
         sb.AppendLine();
 
-        sb.AppendLine("        try");
-        sb.AppendLine("        {");
-        sb.AppendLine("            var __runResult = await Run();");
-        sb.AppendLine("            if (!__runResult.Success && __runResult.Error is global::App.Errors.Error __runErr && __runErr.Params == null)");
-        sb.AppendLine("                __runErr.Params = __SnapshotParams();");
-        sb.AppendLine("            return __runResult;");
-        sb.AppendLine("        }");
-        sb.AppendLine("        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))");
-        sb.AppendLine("        {");
-        sb.AppendLine("            var __exErr = new global::App.Errors.ServiceError(");
-        sb.AppendLine("                ex.Message, __step, __callFrames, \"ServiceError\", 400) { Exception = ex };");
-        sb.AppendLine("            __exErr.Params = __SnapshotParams();");
-        sb.AppendLine("            return global::App.Data.@this.FromError(__exErr);");
-        sb.AppendLine("        }");
-        sb.AppendLine("        finally");
-        sb.AppendLine("        {");
-        sb.AppendLine("            __frame?.SnapshotVariables(context.Variables);");
-        sb.AppendLine("            if (context.CallStack != null) context.CallStack.PopAsync().GetAwaiter().GetResult();");
-        sb.AppendLine("            context.Step = __previousStep;");
-        sb.AppendLine("            context.Goal = __previousGoal;");
-        sb.AppendLine("            context.Event = __previousEvent;");
-        sb.AppendLine("        }");
-        sb.AppendLine("    }");
+        // Public SnapshotParams() — App.Run reads this from the catch block via ICodeGenerated.
+        sb.AppendLine("    public System.Collections.Generic.List<global::App.Errors.ParamSnapshot> SnapshotParams()");
+        sb.AppendLine("        => __SnapshotParams();");
         sb.AppendLine();
 
         // __Resolve<T> — raw-scalar resolution helper. Delegates to data.As<T>(Context),

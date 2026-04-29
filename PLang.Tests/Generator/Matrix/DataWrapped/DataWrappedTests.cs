@@ -1,44 +1,134 @@
-namespace PLang.Tests.Generator.Matrix.DataWrapped;
+using PLang.Tests.App.Fixtures;
+using App.modules.matrix.datawrapped;
 
-// Matrix entries for Data<T> properties whose Parameter Value contains %var% references
-// (the "wrapped" shapes from .pr deserialization: scalar with %var%, list with nested %var%, dict with nested %var%).
-//
-// v4 contract: As<T> walks _value, substitutes %var% via Context.Variables.Get/Resolve, converts to T via TypeMapping.
-// As<T> does NOT walk into Action.@this elements (sub-actions retain raw %var% — replaces today's IsDeferredActionTemplate carve-out).
+namespace PLang.Tests.Generator.Matrix.DataWrapped;
 
 public class DataWrappedStringTests
 {
-    // Parameter Value "%greeting%" (full %var% match) → As<string> calls Variables.Get("greeting").Value → typed Data<string>.
-    [Test] public async Task DataWrappedString_FullVarMatch_ResolvesToVariableValue() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataWrappedString_FullVarMatch_ResolvesToVariableValue()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<DataWrappedString>(app,
+            parameters: new[] { ("body", (object?)"%greeting%") },
+            variables: new Dictionary<string, object?> { ["greeting"] = "hello" });
+        var typed = result.Data as global::App.Data.@this<string>;
+        await Assert.That(typed!.Value).IsEqualTo("hello");
+    }
 
-    // Parameter Value "Hello %name%" (interpolation) → As<string> calls Variables.Resolve(str, ctx) → typed Data<string>.
-    [Test] public async Task DataWrappedString_Interpolation_ResolvesViaResolve() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataWrappedString_Interpolation_ResolvesViaResolve()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<DataWrappedString>(app,
+            parameters: new[] { ("body", (object?)"Hello %name%!") },
+            variables: new Dictionary<string, object?> { ["name"] = "world" });
+        var typed = result.Data as global::App.Data.@this<string>;
+        await Assert.That(typed!.Value).IsEqualTo("Hello world!");
+    }
 
-    // Variable referenced is missing → As<string> returns Data.FromError (or empty per Resolve semantics).
-    [Test] public async Task DataWrappedString_MissingVariable_HandlesGracefully() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataWrappedString_MissingVariable_HandlesGracefully()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<DataWrappedString>(app,
+            parameters: new[] { ("body", (object?)"%not_set%") });
+        // Either FromError or null Value — both are valid; just don't crash.
+        await Assert.That(result.Data).IsNotNull();
+    }
 }
 
 public class DataWrappedListTests
 {
-    // Parameter Value List<object?> { Dict { Content = "%comment%" } } → As<List<LlmMessage>> walks list, substitutes %comment% in inner dict, converts to typed list.
-    [Test] public async Task DataWrappedList_NestedVarInDict_DeepResolvesAndTypes() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataWrappedList_NestedVarInDict_DeepResolvesAndTypes()
+    {
+        await using var app = new global::App.@this("/app");
+        var raw = new List<object?>
+        {
+            new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%comment%" }
+        };
+        var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
+            parameters: new[] { ("messages", (object?)raw) },
+            variables: new Dictionary<string, object?> { ["comment"] = "you are a compiler" });
+        var typed = result.Data as global::App.Data.@this<List<global::App.modules.llm.LlmMessage>>;
+        await Assert.That(typed!.Value).IsNotNull();
+        await Assert.That(typed.Value![0].Content).IsEqualTo("you are a compiler");
+    }
 
-    // Empty list parameter → As<List<LlmMessage>> returns empty typed list, no error.
-    [Test] public async Task DataWrappedList_EmptyList_ReturnsEmptyTyped() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataWrappedList_EmptyList_ReturnsEmptyTyped()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
+            parameters: new[] { ("messages", (object?)new List<object?>()) });
+        var typed = result.Data as global::App.Data.@this<List<global::App.modules.llm.LlmMessage>>;
+        await Assert.That(typed!.Value!.Count).IsEqualTo(0);
+    }
 }
 
 public class DataWrappedDictTests
 {
-    // Parameter Value Dictionary { "Inner" = "%x%" } → As<Dictionary<string,object>> walks, substitutes, returns typed dict.
-    [Test] public async Task DataWrappedDict_NestedVar_DeepResolves() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataWrappedDict_NestedVar_DeepResolves()
+    {
+        await using var app = new global::App.@this("/app");
+        var raw = new Dictionary<string, object?> { ["inner"] = "%x%", ["other"] = "literal" };
+        var result = await MatrixRunner.RunAsync<DataWrappedDict>(app,
+            parameters: new[] { ("headers", (object?)raw) },
+            variables: new Dictionary<string, object?> { ["x"] = "substituted" });
+        var typed = result.Data as global::App.Data.@this<Dictionary<string, object?>>;
+        await Assert.That(typed!.Value!["inner"]).IsEqualTo("substituted");
+        await Assert.That(typed.Value["other"]).IsEqualTo("literal");
+    }
 }
 
 public class DataWrappedActionListTests
 {
-    // Parameter Value List<Action.@this> (sub-actions for a deferred call) → As<List<Action>> does NOT walk into Action elements.
-    // Verifies replacement of the IsDeferredActionTemplate carve-out: Action.@this items pass through with their raw %var% intact.
-    [Test] public async Task DataWrappedActionList_DoesNotRecurseIntoActions() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task DataWrappedActionList_DoesNotRecurseIntoActions()
+    {
+        await using var app = new global::App.@this("/app");
+        var raw = new List<object?>
+        {
+            new Dictionary<string, object?>
+            {
+                ["module"] = "variable",
+                ["action"] = "set",
+                ["parameters"] = new List<Data> { new Data("v", "%comment%") }
+            }
+        };
+        var result = await MatrixRunner.RunAsync<DataWrappedActionList>(app,
+            parameters: new[] { ("actions", (object?)raw) },
+            variables: new Dictionary<string, object?> { ["comment"] = "should-not-resolve" });
 
-    // Sub-actions retain their own Parameters with raw %var% Values → no premature resolution.
-    [Test] public async Task DataWrappedActionList_SubActionParametersRemainRaw() => Assert.Fail("Not implemented");
+        var typed = result.Data as global::App.Data.@this<List<PrAction>>;
+        await Assert.That(typed!.Value).IsNotNull();
+        // The sub-action's parameter Value is still raw "%comment%" — not resolved.
+        var subParam = typed.Value![0].Parameters?.FirstOrDefault(p => p.Name == "v");
+        await Assert.That(subParam!.Value).IsEqualTo("%comment%");
+    }
+
+    [Test]
+    public async Task DataWrappedActionList_SubActionParametersRemainRaw()
+    {
+        // Same scenario as above, asserting raw value preservation more explicitly.
+        await using var app = new global::App.@this("/app");
+        var raw = new List<object?>
+        {
+            new Dictionary<string, object?>
+            {
+                ["module"] = "variable",
+                ["action"] = "set",
+                ["parameters"] = new List<Data> { new Data("a", "%x%") }
+            }
+        };
+        var result = await MatrixRunner.RunAsync<DataWrappedActionList>(app,
+            parameters: new[] { ("actions", (object?)raw) },
+            variables: new Dictionary<string, object?> { ["x"] = "premature-resolution-would-be-bad" });
+
+        var typed = result.Data as global::App.Data.@this<List<PrAction>>;
+        var subParam = typed!.Value![0].Parameters?.FirstOrDefault(p => p.Name == "a");
+        await Assert.That(subParam!.Value).IsEqualTo("%x%");
+    }
 }

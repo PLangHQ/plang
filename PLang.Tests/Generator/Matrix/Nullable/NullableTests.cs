@@ -1,26 +1,56 @@
-namespace PLang.Tests.Generator.Matrix.Nullable;
+using PLang.Tests.App.Fixtures;
+using App.modules.matrix.nullables;
 
-// Matrix entries for nullable Data<T>? properties — parameter may be missing.
-// v4 contract: missing parameter → Action.GetParameter returns Data.NotFound;
-//   As<T> on NotFound short-circuits to a Data<T>? with null Value (no error).
+namespace PLang.Tests.Generator.Matrix.Nullable;
 
 public class StringNullableTests
 {
-    // Parameter not in Parameters list → property reads as Data<string>? with null Value (NotFound semantics).
-    [Test] public async Task StringNullable_Missing_ReadsAsNullData() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task StringNullable_Missing_ReadsAsNullData()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<StringNullable>(app);
+        await Assert.That(result.Data.Success).IsTrue();
+        await Assert.That(result.Data.Value).IsNull();
+    }
 
-    // Parameter present with literal → typed Data<string>? with the value.
-    [Test] public async Task StringNullable_Present_ResolvesToValue() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task StringNullable_Present_ResolvesToValue()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<StringNullable>(app,
+            parameters: new[] { ("tag", (object?)"hello") });
+        var typed = result.Data as global::App.Data.@this<string>;
+        await Assert.That(typed!.Value).IsEqualTo("hello");
+    }
 
-    // Parameter present but Value is explicit null → typed Data<string>? with null Value, IsInitialized=true.
-    [Test] public async Task StringNullable_PresentWithNullValue_ReadsAsNullInitialized() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task StringNullable_PresentWithNullValue_ReadsAsNullInitialized()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<StringNullable>(app,
+            parameters: new[] { ("tag", (object?)null) });
+        await Assert.That(result.Data.Value).IsNull();
+    }
 }
 
 public class IntNullableTests
 {
-    // Missing parameter → null Data; no exception, no validation failure.
-    [Test] public async Task IntNullable_Missing_ReadsAsNull() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task IntNullable_Missing_ReadsAsNull()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<IntNullable>(app);
+        await Assert.That(result.Data.Value).IsNull();
+    }
 
-    // Present integer parameter → typed Data<int>?.
-    [Test] public async Task IntNullable_Present_ResolvesToInt() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task IntNullable_Present_ResolvesToInt()
+    {
+        await using var app = new global::App.@this("/app");
+        var result = await MatrixRunner.RunAsync<IntNullable>(app,
+            parameters: new[] { ("maybe", (object?)42) });
+        var typed = result.Data as global::App.Data.@this<int>;
+        await Assert.That(typed!.Value).IsEqualTo(42);
+    }
 }
