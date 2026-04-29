@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives two identities, creates them (setting TestSwitchA as default), switches default to TestSwitchB, verifies %MyIdentity.Name% reflects the new default, then archives both identities.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": "archive identity \u0027TestSwitchA\u0027 with Force=true. Step includes \u0027on error ignore\u0027, so wrap with error.handle IgnoreError=true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -87,6 +92,11 @@
         }
       ],
       "intent": null,
+      "guidance": "archive identity \u0027TestSwitchB\u0027 with Force=true. Step includes \u0027on error ignore\u0027, so wrap with error.handle IgnoreError=true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -116,6 +126,11 @@
         }
       ],
       "intent": null,
+      "guidance": "create identity \u0027TestSwitchA\u0027 and set it as default (SetAsDefault=true).",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -145,6 +160,11 @@
         }
       ],
       "intent": null,
+      "guidance": "create identity \u0027TestSwitchB\u0027 without setting it as default (SetAsDefault=false).",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -169,6 +189,11 @@
         }
       ],
       "intent": null,
+      "guidance": "set default identity to \u0027TestSwitchB\u0027.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -198,6 +223,11 @@
         }
       ],
       "intent": null,
+      "guidance": "assert that %MyIdentity.Name% equals \u0027TestSwitchB\u0027.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -227,6 +257,11 @@
         }
       ],
       "intent": null,
+      "guidance": "archive identity \u0027TestSwitchA\u0027 with Force=true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -256,15 +291,20 @@
         }
       ],
       "intent": null,
+      "guidance": "archive identity \u0027TestSwitchB\u0027 with Force=true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/IdentitySwitchDefault.test.goal",
-  "prPath": "/.build/identityswitchdefault.test.pr",
+  "path": "/Identity/SwitchDefault/IdentitySwitchDefault.test.goal",
+  "prPath": "/Identity/SwitchDefault/.build/identityswitchdefault.test.pr",
   "hash": "1eaecb5ae8da6ca43025d48fe7d6293e88f02c3cf44315f4bd39675cad6ea31e",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

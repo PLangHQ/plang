@@ -64,14 +64,20 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Set %flag% to false with explicit bool type so the following assertion can validate it.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -132,14 +138,20 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Set %nothing% to null with explicit object type so the following assertion can validate it.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -244,8 +256,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Assert.test.goal",
-  "prPath": "/.build/assert.test.pr",
+  "path": "/Modules/Assert/Assert.test.goal",
+  "prPath": "/Modules/Assert/.build/assert.test.pr",
   "hash": "1815c780867821a77fd6445aa08ecd27f6d5d34e0c875d967718c63ab3d7e4b6",
   "builderVersion": "0.2.2",
   "isSetup": false,

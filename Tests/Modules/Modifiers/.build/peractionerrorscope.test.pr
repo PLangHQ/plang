@@ -1,6 +1,6 @@
 {
   "name": "TestPerActionErrorScope",
-  "description": "AlwaysFails goal step throws an error with the provided message.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -8,7 +8,7 @@
       "text": "set %handled% = false",
       "lineNumber": 5,
       "indent": 0,
-      "comment": "Verifies error modifier applies only to its action, not subsequent actions.\nStep 1's handler (MarkHandled) fires because MayFail throws.\nStep 2's handler (ignore) is independent \u2014 doesn't use step 1's handler.",
+      "comment": "Verifies error modifier applies only to its action, not subsequent actions.\nStep 1\u0027s handler (MarkHandled) fires because MayFail throws.\nStep 2\u0027s handler (ignore) is independent \u2014 doesn\u0027t use step 1\u0027s handler.",
       "actions": [
         {
           "module": "variable",
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -46,14 +51,12 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "MayFail"
+                "name": "MayFail",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this",
-              "type": "actor(user|service|system)"
             }
           ],
           "defaults": null,
@@ -72,7 +75,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "MarkHandled"
+                            "name": "MarkHandled"
                           },
                           "type": "goal.call"
                         }
@@ -81,16 +84,27 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ]
         }
       ],
       "intent": null,
+      "guidance": "Call MayFail, then apply an on-error handler that calls MarkHandled. The error.handle modifier must wrap only this call (not later steps).",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -107,14 +121,12 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "AlwaysFails"
+                "name": "AlwaysFails",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this",
-              "type": "actor(user|service|system)"
             }
           ],
           "defaults": null,
@@ -136,6 +148,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Call AlwaysFails with an independent on-error ignore handler. This should not affect the previous step\u0027s handler scope.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -165,6 +182,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %handled% was set to true by MarkHandled.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -176,7 +198,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "throw error 'first action error'",
+          "text": "throw error \u0027first action error\u0027",
           "lineNumber": 14,
           "indent": 0,
           "comment": "This goal fails \u2014 error modifier on step 1 should catch it",
@@ -201,13 +223,18 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/PerActionErrorScope.test.goal",
-      "prPath": "/.build/peractionerrorscope.test.pr",
+      "path": "/Modules/Modifiers/PerActionErrorScope.test.goal",
+      "prPath": "/Modules/Modifiers/.build/peractionerrorscope.test.pr",
       "hash": "3aca7f8b236fe56bb47670b055fee8b3d090c02c5510d69e2397c2bfe084eee4",
       "builderVersion": null,
       "isSetup": false,
@@ -248,13 +275,18 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/PerActionErrorScope.test.goal",
-      "prPath": "/.build/peractionerrorscope.test.pr",
+      "path": "/Modules/Modifiers/PerActionErrorScope.test.goal",
+      "prPath": "/Modules/Modifiers/.build/peractionerrorscope.test.pr",
       "hash": "887442f80df8da224087a0de877e337a27841e9fed6cb526b404e1a13e827602",
       "builderVersion": null,
       "isSetup": false,
@@ -270,7 +302,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "throw error 'second action error'",
+          "text": "throw error \u0027second action error\u0027",
           "lineNumber": 20,
           "indent": 0,
           "comment": null,
@@ -295,13 +327,18 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/PerActionErrorScope.test.goal",
-      "prPath": "/.build/peractionerrorscope.test.pr",
+      "path": "/Modules/Modifiers/PerActionErrorScope.test.goal",
+      "prPath": "/Modules/Modifiers/.build/peractionerrorscope.test.pr",
       "hash": "213b64539a2953341a6dd411ef0ebb77a0c41c390078fb9586d6cd807f105948",
       "builderVersion": null,
       "isSetup": false,
@@ -312,10 +349,10 @@
     }
   ],
   "visibility": 1,
-  "path": "/PerActionErrorScope.test.goal",
-  "prPath": "/.build/peractionerrorscope.test.pr",
+  "path": "/Modules/Modifiers/PerActionErrorScope.test.goal",
+  "prPath": "/Modules/Modifiers/.build/peractionerrorscope.test.pr",
   "hash": "cc043a389e82b3340b46edf8123428e5f0772316c084f2d4ee021a23ba09cecc",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

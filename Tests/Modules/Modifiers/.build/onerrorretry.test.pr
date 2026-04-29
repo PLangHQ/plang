@@ -1,6 +1,6 @@
 {
   "name": "TestOnErrorRetry",
-  "description": "Increments %counter% by 1, then throws an error with message \u0027intentional failure\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -46,7 +51,10 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "IncrementAndFail"
+                "name": "IncrementAndFail",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
               },
               "type": "goal.call"
             }
@@ -75,6 +83,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Call IncrementAndFail. The step text says \u0027on error retry 3 times\u0027 and \u0027on error ignore\u0027 with a known mapping. The known mapping indicates the error.handle modifier should be applied to the goal.call, with RetryCount=3 and IgnoreError=true.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -104,6 +117,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition: after 3 retries plus the original attempt, counter should equal 4. Use assert.equals with Expected=4 and Actual=%counter%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -158,6 +176,11 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         },
         {
@@ -177,18 +200,29 @@
                   "type": "string"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "statuscode",
+                  "value": 500,
+                  "type": "int"
+                }
+              ],
               "modifiers": []
             }
           ],
           "intent": null,
+          "guidance": "throw error \u0027intentional failure\u0027 maps directly to error.throw with Message set to the literal string.",
+          "level": "high",
+          "confidence": 98,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/OnErrorRetry.test.goal",
-      "prPath": "/.build/onerrorretry.test.pr",
+      "path": "/Modules/Modifiers/OnErrorRetry.test.goal",
+      "prPath": "/Modules/Modifiers/.build/onerrorretry.test.pr",
       "hash": "5148b794547cf8b65b6eaecbae7b11250f888e2111e8dd8ae9a718756dfacbf1",
       "builderVersion": null,
       "isSetup": false,
@@ -199,10 +233,10 @@
     }
   ],
   "visibility": 1,
-  "path": "/OnErrorRetry.test.goal",
-  "prPath": "/.build/onerrorretry.test.pr",
+  "path": "/Modules/Modifiers/OnErrorRetry.test.goal",
+  "prPath": "/Modules/Modifiers/.build/onerrorretry.test.pr",
   "hash": "5c59aecc444d0dbbe20e33c352c18988325a42cf33da38dca73a28d20a62bdca",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

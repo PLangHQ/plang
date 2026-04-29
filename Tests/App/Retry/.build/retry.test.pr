@@ -117,9 +117,9 @@
         }
       ],
       "intent": null,
-      "guidance": "throw error with message and status code, then apply error.handle modifier to retry 2 times and ignore so execution continues.",
+      "guidance": "throw error with message and status code, then apply error.handle modifier to retry 2 times and ignore errors so execution continues.",
       "level": "high",
-      "confidence": 96,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -260,9 +260,9 @@
         }
       ],
       "intent": null,
-      "guidance": "throw error, then on error retry 1 time and finally call the error-handling goal HandleRetryError via error.handle Actions chain.",
+      "guidance": "throw error with message and status code, then apply error.handle to retry once and then run a recovery action chain that calls HandleRetryError.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -304,8 +304,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Retry.test.goal",
-  "prPath": "/.build/retry.test.pr",
+  "path": "/App/Retry/Retry.test.goal",
+  "prPath": "/App/Retry/.build/retry.test.pr",
   "hash": "daa61c8cd8de798605b131e658ccad57e85fe7626e33908e4a8bdd2502745ce8",
   "builderVersion": "0.2.2",
   "isSetup": false,

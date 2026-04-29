@@ -1,6 +1,6 @@
 {
   "name": "TestCacheOnFileRead",
-  "description": "Saves a test file, reads it twice with cache.wrap for 60 seconds into %content1% and %content2%, asserts both cached results are equal, then deletes the file.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -49,7 +54,13 @@
               "type": "path"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": [
             {
               "module": "cache",
@@ -61,7 +72,13 @@
                   "type": "long"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "sliding",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ]
@@ -81,11 +98,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Read the file and cache the file.read result for 60 seconds using cache.wrap, then store the cached output into %content1%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -105,7 +133,13 @@
               "type": "path"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": [
             {
               "module": "cache",
@@ -117,7 +151,13 @@
                   "type": "long"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "sliding",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ]
@@ -137,11 +177,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Read the same file again, cache the file.read result for 60 seconds, and store into %content2%. This should hit the cache from the previous read.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -171,6 +222,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -195,15 +251,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/CacheOnFileRead.test.goal",
-  "prPath": "/.build/cacheonfileread.test.pr",
+  "path": "/Modules/Modifiers/CacheOnFileRead.test.goal",
+  "prPath": "/Modules/Modifiers/.build/cacheonfileread.test.pr",
   "hash": "4bbceaabf52d00174effbfa7c53ac8a7081b85764198865ca67ccab0e9e6f800",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

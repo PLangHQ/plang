@@ -1,6 +1,6 @@
 {
   "name": "TestMultipleModifiersCompose",
-  "description": "Builds a goal that saves a file, reads it with composed cache\u002Berror modifiers and writes to %result%, asserts content, deletes the file, then reads again with the same cache key and writes to %cachedResult% to assert cached content despite deletion.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -109,11 +114,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Read the file, wrap the read with cache for 60s using explicit key \u0027compose-key\u0027 so subsequent reads can hit cache. Ignore errors on the cached read, then store the read result into %result%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -143,6 +159,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -177,6 +198,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -256,11 +282,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Second read uses the same explicit cache key \u0027compose-key\u0027 and same cache duration. Errors are ignored; store the (cached) result into %cachedResult%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -290,15 +327,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/MultipleModifiersCompose.test.goal",
-  "prPath": "/.build/multiplemodifierscompose.test.pr",
+  "path": "/Modules/Modifiers/MultipleModifiersCompose.test.goal",
+  "prPath": "/Modules/Modifiers/.build/multiplemodifierscompose.test.pr",
   "hash": "ca90bdd35ccec90c5625b62137043dd4504f4eaeb19fbd222e23c3c28173f865",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

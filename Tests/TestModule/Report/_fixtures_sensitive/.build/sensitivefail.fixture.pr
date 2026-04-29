@@ -1,6 +1,6 @@
 {
   "name": "SensitiveFail",
-  "description": "Runs an equality assertion comparing %MyIdentity% (Actual) to the literal string \u0027will-not-match\u0027 (Expected). This is expected to fail and surface %MyIdentity% in assertion outputs, which should be masked by the test reporting layer.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,15 +30,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Report/_fixtures_sensitive/sensitivefail.fixture.goal",
-  "prPath": "/Report/_fixtures_sensitive/.build/sensitivefail.fixture.pr",
+  "path": "/TestModule/Report/_fixtures_sensitive/sensitivefail.fixture.goal",
+  "prPath": "/TestModule/Report/_fixtures_sensitive/.build/sensitivefail.fixture.pr",
   "hash": "486a2f266226d16f78281757d2d40fed559a23edf1ac4bdf3a1783581b78d4da",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

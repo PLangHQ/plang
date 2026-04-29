@@ -1,11 +1,11 @@
 {
-  "name": "Pr\u00F3f",
+  "name": "Unbuilt",
   "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "write out \u0027\u00EDslenska prufa\u0027",
+      "text": "write out \u0027unbuilt\u0027",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
@@ -16,12 +16,7 @@
           "parameters": [
             {
               "name": "Data",
-              "value": "\u00EDslenska prufa",
-              "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
+              "value": "unbuilt",
               "type": "string"
             }
           ],
@@ -30,9 +25,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Use output.write to emit the provided literal string.",
+      "level": "high",
+      "confidence": 99,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -40,9 +35,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/EdgeCase/_fixtures/Pr\u00F3f.fixture.goal",
-  "prPath": "/TestModule/EdgeCase/_fixtures/.build/pr\u00F3f.fixture.pr",
-  "hash": "08016fab4c0b2199257802e215c4f218c1621064823f3e14b8bc1618dce4d99e",
+  "path": "/TestModule/Discover/_stale/unbuilt.fixture.goal",
+  "prPath": "/TestModule/Discover/_stale/.build/unbuilt.fixture.pr",
+  "hash": "de64118d119b8e89ffc44a28d82f1f226d47fc0d19c2ccce2a889a799c6bf435",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

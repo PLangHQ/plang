@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Runs an llm.query with system/user messages and specified temperature/maxTokens, writes the response to %result%, then asserts %result% is not null.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -64,6 +64,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -88,15 +93,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition check: assert that %result% is not null. This is an unconditional invariant after step 0 produced %result%.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/LlmProperties.test.goal",
-  "prPath": "/.build/llmproperties.test.pr",
+  "path": "/Llm/LlmProperties.test.goal",
+  "prPath": "/Llm/.build/llmproperties.test.pr",
   "hash": "140e13322004adb05add061a579030e7ac8b0670b68cea3a8299456dd857c237",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

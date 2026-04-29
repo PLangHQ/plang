@@ -37,7 +37,7 @@ namespace PLang
 			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
 			var engine = new App.@this(fileSystem);
-			engine.SystemDirectory = fileSystem.SystemDirectory;
+			engine.OsDirectory = fileSystem.OsDirectory;
 
 			var userVars = engine.User.Context.Variables;
 

@@ -1,6 +1,6 @@
 {
   "name": "TestOnErrorCallGoal",
-  "description": "Sets %capturedMessage% to the current error message (from %!error.Message%), allowing null.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -17,7 +17,10 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "FailWithDetails"
+                "name": "FailWithDetails",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
               },
               "type": "goal.call"
             }
@@ -47,21 +50,32 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ]
         }
       ],
       "intent": null,
+      "guidance": "call FailWithDetails, then on error call CaptureError via error.handle recovery chain. The @known mapping indicates the prior .pr is authoritative; emit keep:true only.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "assert %capturedMessage% equals 'specific failure'",
+      "text": "assert %capturedMessage% equals \u0027specific failure\u0027",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -83,7 +97,7 @@
             {
               "name": "Message",
               "value": null,
-              "type": "string?"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -91,6 +105,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that the captured message equals the expected string \u0027specific failure\u0027.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -102,7 +121,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "throw error 'specific failure', key 'TestKey', status code 422",
+          "text": "throw error \u0027specific failure\u0027, key \u0027TestKey\u0027, status code 422",
           "lineNumber": 8,
           "indent": 0,
           "comment": null,
@@ -132,13 +151,18 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/OnErrorCallGoal.test.goal",
-      "prPath": "/.build/onerrorcallgoal.test.pr",
+      "path": "/Modules/Modifiers/OnErrorCallGoal.test.goal",
+      "prPath": "/Modules/Modifiers/.build/onerrorcallgoal.test.pr",
       "hash": "338001a9c075dc285801b3fa0a015902e8dab94b32ae00ecb3f4ca06251cafb8",
       "builderVersion": null,
       "isSetup": false,
@@ -184,13 +208,18 @@
             }
           ],
           "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/OnErrorCallGoal.test.goal",
-      "prPath": "/.build/onerrorcallgoal.test.pr",
+      "path": "/Modules/Modifiers/OnErrorCallGoal.test.goal",
+      "prPath": "/Modules/Modifiers/.build/onerrorcallgoal.test.pr",
       "hash": "3f1120ef6abe6d0531dfe996721d7da38b4074802b546af1f6d3b069b46f650d",
       "builderVersion": null,
       "isSetup": false,
@@ -201,10 +230,10 @@
     }
   ],
   "visibility": 1,
-  "path": "/OnErrorCallGoal.test.goal",
-  "prPath": "/.build/onerrorcallgoal.test.pr",
+  "path": "/Modules/Modifiers/OnErrorCallGoal.test.goal",
+  "prPath": "/Modules/Modifiers/.build/onerrorcallgoal.test.pr",
   "hash": "854dd6d3bbba46634f5b170e4c7480fcc20f76e5f7fcc2c122089308448ea03e",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -256,36 +256,36 @@ public class RunActionTests
         await Assert.That(observed.Any(x => x == ("variable", "set"))).IsTrue();
     }
 
-    // Child App.SystemDirectory is set from context.App.SystemDirectory so shared
-    // system/ goals (e.g. setup helpers) resolve identically in every test.
-    // Uses the ChildAppCreated hook to snapshot the child's SystemDirectory.
+    // Child App.OsDirectory is set from context.App.OsDirectory so shared
+    // os/ goals (e.g. setup helpers) resolve identically in every test.
+    // Uses the ChildAppCreated hook to snapshot the child's OsDirectory.
     [Test]
-    public async Task Run_SystemDirectory_InheritedFromParentApp()
+    public async Task Run_OsDirectory_InheritedFromParentApp()
     {
-        _app.SystemDirectory = "/some/system/dir";
+        _app.OsDirectory = "/some/os/dir";
 
-        string? observedChildSystemDir = null;
+        string? observedChildOsDir = null;
         // Filter by _tempDir prefix — ChildAppCreated is a static event, so in a
         // parallel test run other tests' child Apps would otherwise overwrite our
-        // observation with their own (empty) SystemDirectory.
+        // observation with their own (empty) OsDirectory.
         void Probe(global::App.@this childApp)
         {
             if (childApp.AbsolutePath.StartsWith(_tempDir))
-                observedChildSystemDir = childApp.SystemDirectory;
+                observedChildOsDir = childApp.OsDirectory;
         }
         global::App.modules.test.run.ChildAppCreated += Probe;
         try
         {
-            var test = BuildFixture("SysDir.test.goal", "S", new (string, string, List<Data>)[]
+            var test = BuildFixture("OsDir.test.goal", "S", new (string, string, List<Data>)[]
             {
                 ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
             });
 
             await RunTests(new List<TestFile> { test });
 
-            await Assert.That(observedChildSystemDir).IsEqualTo("/some/system/dir");
+            await Assert.That(observedChildOsDir).IsEqualTo("/some/os/dir");
             // Parent unchanged — the propagation is one-way (parent → child).
-            await Assert.That(_app.SystemDirectory).IsEqualTo("/some/system/dir");
+            await Assert.That(_app.OsDirectory).IsEqualTo("/some/os/dir");
         }
         finally
         {

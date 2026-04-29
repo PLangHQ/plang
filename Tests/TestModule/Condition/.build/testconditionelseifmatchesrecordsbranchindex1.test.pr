@@ -1,6 +1,6 @@
 {
   "name": "TestConditionElseIfMatchesRecordsBranchIndex1",
-  "description": "Sets %x% to 7, evaluates an if/elseif/else chain to set %b% when %x% \u003E 5, then asserts the condition engine reported branchIndex=1 and that the elseif body ran by checking %b% equals 2.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -192,6 +197,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -226,6 +236,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -260,15 +275,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/TestModule/Condition/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal",
-  "prPath": "/Tests/TestModule/Condition/.build/testconditionelseifmatchesrecordsbranchindex1.test.pr",
+  "path": "/TestModule/Condition/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal",
+  "prPath": "/TestModule/Condition/.build/testconditionelseifmatchesrecordsbranchindex1.test.pr",
   "hash": "7c7911ff749550d35cadc0bb803035101ce5ffe57232d33e12db07c43107db9d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

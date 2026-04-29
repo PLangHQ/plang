@@ -1,6 +1,6 @@
 {
   "name": "TestRunIsolatesMemoryStackBetweenTests",
-  "description": "Discovers two isolation fixture goals, runs them sequentially in a single test.run, then checks that all results have Status == \u0027Pass\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -53,6 +53,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -95,6 +100,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -124,6 +134,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -171,6 +186,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -228,6 +248,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -252,15 +277,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal",
-  "prPath": "/Tests/TestModule/Run/.build/testrunisolatesmemorystackbetweentests.test.pr",
+  "path": "/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal",
+  "prPath": "/TestModule/Run/.build/testrunisolatesmemorystackbetweentests.test.pr",
   "hash": "4a9ec2134e51a51c2587b3148d38511306e201d7b0f12b272af72cfbbf1d5292",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

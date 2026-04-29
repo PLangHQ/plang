@@ -1,6 +1,6 @@
 {
   "name": "TestDiscoverFindsTestGoals",
-  "description": "Discovers fixture test goals under _fixtures recursively, counts the discovered results, and asserts the count equals 3.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -53,6 +53,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -90,11 +95,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Count the number of discovered test files in %tests% and store it in %count%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -124,15 +140,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that the discovered count equals 3.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Discover/TestDiscoverFindsTestGoals.test.goal",
-  "prPath": "/Discover/.build/testdiscoverfindstestgoals.test.pr",
+  "path": "/TestModule/Discover/TestDiscoverFindsTestGoals.test.goal",
+  "prPath": "/TestModule/Discover/.build/testdiscoverfindstestgoals.test.pr",
   "hash": "36adcc0116140de0e0f2970372e46d643dfc3d7b93bd971c3815396a3a736fdb",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "TestForeachCallsGoalPerItem",
-  "description": "Shared-state mutation: append \u0022x\u0022 to the %processed% list. Step is annotated @known, so the engine should reuse the prior mapping.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -39,6 +39,8 @@
       "guidance": null,
       "level": null,
       "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -77,6 +79,8 @@
       "guidance": null,
       "level": null,
       "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -138,6 +142,8 @@
       "guidance": null,
       "level": null,
       "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -170,6 +176,8 @@
       "guidance": "Post-condition assertion: verify the processed list count equals 3. This uses assert.equals with Expected=3 and Actual=%processed.Count%.",
       "level": "high",
       "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
@@ -214,13 +222,15 @@
           "guidance": null,
           "level": null,
           "confidence": null,
+          "formal": null,
+          "source": null,
           "waitForExecution": true
         }
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/ForeachCallsGoalPerItem.test.goal",
-      "prPath": "/.build/foreachcallsgoalperitem.test.pr",
+      "path": "/Builder/ForeachCallsGoalPerItem.test.goal",
+      "prPath": "/Builder/.build/foreachcallsgoalperitem.test.pr",
       "hash": "9685da6d1b5cc3cb89aadd55c630ea0194a0e8b2e1cd75117a61d4834c6d9810",
       "builderVersion": null,
       "isSetup": false,
@@ -231,10 +241,10 @@
     }
   ],
   "visibility": 1,
-  "path": "/ForeachCallsGoalPerItem.test.goal",
-  "prPath": "/.build/foreachcallsgoalperitem.test.pr",
+  "path": "/Builder/ForeachCallsGoalPerItem.test.goal",
+  "prPath": "/Builder/.build/foreachcallsgoalperitem.test.pr",
   "hash": "043dc09284500a85c7ec567e51ac62c737ef6dacd4b36b7033e154060c89f1de",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,6 +1,6 @@
 {
   "name": "TestReportRendersFailureWithVariables",
-  "description": "Discovers failing fixture goals, runs them, renders a test report, then asserts the report shows 1 failure and 1 variable snapshot.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -48,11 +48,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Discover fixture goal files under _fixtures_fail recursively matching *.fixture.goal, then store the discovered test files list into %tests%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -90,11 +101,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Run the discovered tests in %tests% and store the aggregated results into %results%.",
+      "level": "high",
+      "confidence": 97,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -111,7 +133,7 @@
             {
               "name": "Results",
               "value": "%results%",
-              "type": "results?"
+              "type": "results"
             }
           ],
           "defaults": null,
@@ -132,11 +154,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Render the test report from %results% and store the report object into %report%.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -166,6 +199,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the report\u0027s summaryFail equals 1.",
+      "level": "high",
+      "confidence": 99,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -195,15 +233,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the report\u0027s variableSnapshotCount equals 1 (regression check for Variables map rendering).",
+      "level": "high",
+      "confidence": 99,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/TestModule/Report/TestReportRendersFailureWithVariables.test.goal",
-  "prPath": "/Tests/TestModule/Report/.build/testreportrendersfailurewithvariables.test.pr",
+  "path": "/TestModule/Report/TestReportRendersFailureWithVariables.test.goal",
+  "prPath": "/TestModule/Report/.build/testreportrendersfailurewithvariables.test.pr",
   "hash": "48239745160930279840396bf6ddb529a74a9e8b353384c264638664ffdf1ab0",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

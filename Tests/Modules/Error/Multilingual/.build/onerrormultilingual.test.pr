@@ -456,9 +456,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Post-condition assertion that %caughtEnglish% equals true. Use assert.equals with Expected=true and Actual=%caughtEnglish%.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -490,9 +490,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Post-condition assertion that %caughtIcelandic% equals true.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -524,9 +524,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Post-condition assertion that %caughtJapanese% equals true.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -558,9 +558,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Post-condition assertion that %caughtArabic% equals true.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -592,9 +592,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Post-condition assertion that %caughtKorean% equals true.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -626,9 +626,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Post-condition assertion that %caughtSwahili% equals true.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -636,8 +636,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/OnErrorMultilingual.test.goal",
-  "prPath": "/.build/onerrormultilingual.test.pr",
+  "path": "/Modules/Error/Multilingual/OnErrorMultilingual.test.goal",
+  "prPath": "/Modules/Error/Multilingual/.build/onerrormultilingual.test.pr",
   "hash": "48d8307d0169dee45cba2008e65a433ffb654403b5852a5c70533bb382d7d543",
   "builderVersion": "0.2.2",
   "isSetup": false,

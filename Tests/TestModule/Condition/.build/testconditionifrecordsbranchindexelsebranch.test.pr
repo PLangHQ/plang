@@ -1,6 +1,6 @@
 {
   "name": "TestConditionIfRecordsBranchIndexElseBranch",
-  "description": "Sets %x% to 0, evaluates a chained if/else-if/else condition to assign %c% = 3 (since %x% is not \u003E 5 or \u003E 10), then asserts that the condition engine reports branchIndex = 2 for the else branch.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -192,6 +197,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -226,15 +236,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal",
-  "prPath": "/Tests/TestModule/Condition/.build/testconditionifrecordsbranchindexelsebranch.test.pr",
+  "path": "/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal",
+  "prPath": "/TestModule/Condition/.build/testconditionifrecordsbranchindexelsebranch.test.pr",
   "hash": "8c811da5c5241ac00a53ca66d71b3b03a2f48c2fd075acb31312f47cf0c59d49",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

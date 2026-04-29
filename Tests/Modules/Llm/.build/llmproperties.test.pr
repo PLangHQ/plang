@@ -93,9 +93,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Post-condition check: assert that %result% is not null. This is an unconditional invariant after step 0 produced %result%.",
+      "level": "high",
+      "confidence": 96,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -103,8 +103,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/LlmProperties.test.goal",
-  "prPath": "/.build/llmproperties.test.pr",
+  "path": "/Modules/Llm/LlmProperties.test.goal",
+  "prPath": "/Modules/Llm/.build/llmproperties.test.pr",
   "hash": "140e13322004adb05add061a579030e7ac8b0670b68cea3a8299456dd857c237",
   "builderVersion": "0.2.2",
   "isSetup": false,

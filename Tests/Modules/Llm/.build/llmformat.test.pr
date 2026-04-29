@@ -134,9 +134,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: ensure %result% is not null. This is an assert.* action with Value=%result% and the provided message.",
+      "guidance": "Post-condition check: assert that %result% is not null. This is an unconditional invariant after step 0 produced %result%.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -144,8 +144,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/LlmFormat.test.goal",
-  "prPath": "/.build/llmformat.test.pr",
+  "path": "/Modules/Llm/LlmFormat.test.goal",
+  "prPath": "/Modules/Llm/.build/llmformat.test.pr",
   "hash": "a572581de9026488973df4f3364f5d6ea4b68fd7482a223ed3b438130aad6304",
   "builderVersion": "0.2.2",
   "isSetup": false,

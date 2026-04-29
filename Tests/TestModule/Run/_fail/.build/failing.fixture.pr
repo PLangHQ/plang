@@ -1,6 +1,6 @@
 {
   "name": "Failing",
-  "description": "Maps the failing assertion step to an assert.equals action comparing 1 and 2, with a null/unspecified message.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,15 +30,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/TestModule/Run/_fail/failing.fixture.goal",
-  "prPath": "/Tests/TestModule/Run/_fail/.build/failing.fixture.pr",
+  "path": "/TestModule/Run/_fail/failing.fixture.goal",
+  "prPath": "/TestModule/Run/_fail/.build/failing.fixture.pr",
   "hash": "1b201b7c90b51c91002b5fc862b0101cefd1d520a549e9757fa11e52182de540",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

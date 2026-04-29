@@ -1,6 +1,6 @@
 {
   "name": "TestTimeoutOnSlowAction",
-  "description": "Sets %timedOut% to true, sleeps for 2000ms, applies a 100ms timeout to the sleep, ignores any error from the timed-out action, then asserts %timedOut% equals true.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,6 +30,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -50,20 +55,20 @@
             }
           ],
           "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "timeout.after",
-          "action": "after",
-          "parameters": [
-            {
-              "name": "Ms",
-              "value": 100,
-              "type": "int"
-            }
-          ],
-          "defaults": null,
           "modifiers": [
+            {
+              "module": "timeout",
+              "action": "after",
+              "parameters": [
+                {
+                  "name": "Ms",
+                  "value": 100,
+                  "type": "int"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
             {
               "module": "error",
               "action": "handle",
@@ -81,6 +86,11 @@
         }
       ],
       "intent": null,
+      "guidance": "timer.sleep for 2 seconds; the step text indicates a 100ms timeout modifier and that on error the timeout error should be ignored. The timeout.after wraps the timer.sleep, and error.handle IgnoreError suppresses the resulting error.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -110,15 +120,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that %timedOut% equals true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TimeoutOnSlowAction.test.goal",
-  "prPath": "/.build/timeoutonslowaction.test.pr",
+  "path": "/Modules/Modifiers/TimeoutOnSlowAction.test.goal",
+  "prPath": "/Modules/Modifiers/.build/timeoutonslowaction.test.pr",
   "hash": "aeb45dfc87a3de24d1483eb30cc10155c663e1063b3e959b81e3175d72dce21d",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

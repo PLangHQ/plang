@@ -102,9 +102,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Call the goal Recurse as the user actor, and on error run a recovery chain that calls HandleRecursionError. This matches the provided @known mapping, so we keep it.",
+      "guidance": "Call the Recurse goal. If it errors, run the recovery goal HandleRecursionError via error.handle Actions chain.",
       "level": "high",
-      "confidence": 60,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -136,9 +136,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Post-condition assertion that %recursionErrorCaught% is true.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -146,8 +146,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/RecursionDepthLimit.test.goal",
-  "prPath": "/.build/recursiondepthlimit.test.pr",
+  "path": "/App/RecursionDepth/RecursionDepthLimit.test.goal",
+  "prPath": "/App/RecursionDepth/.build/recursiondepthlimit.test.pr",
   "hash": "58ad7438d7c3f2c48a399f77ebbf2a7b737b05f1f9e5752cc883e9cac9f41253",
   "builderVersion": "0.2.2",
   "isSetup": false,

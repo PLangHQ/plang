@@ -1,0 +1,52 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Goal designed to potentially trip required-param check.\nfile.read requires Path; if the LLM forgets it, the new validator should reject.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%__missing__%",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "The step text is only \u0027read\u0027 and does not specify the required Path parameter for file.read. This should fail builder/validator schema checks for missing required parameters.",
+      "level": "low",
+      "confidence": 10,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Errors/RequiredParamCheck/Start.goal",
+  "prPath": "/Errors/RequiredParamCheck/.build/start.pr",
+  "hash": "2637eb931ab5c3fc02c3b6823b2ec0519a7b22c8245d3774c9523c5728422cb8",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

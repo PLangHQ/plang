@@ -318,63 +318,6 @@ public sealed partial class @this : modules.IDataWrappable
             subGoal.GroupModifiersRecursive(modules);
     }
 
-    /// <summary>
-    /// Runs this goal: lifecycle events → Steps.RunAsync → return handling.
-    /// Context travels as parameter — goals may be cached/shared.
-    /// </summary>
-    public async Task<Data.@this> RunAsync(Actor.Context.@this context)
-    {
-        var previousGoal = context.Goal;
-        context.Goal = this;
-
-        if (context.CancellationToken.IsCancellationRequested)
-            return Data.@this.FromError(new Errors.Error("Operation was cancelled", "Cancelled", 499));
-
-        var lifecycle = context.LifecycleFor(this);
-
-        // BeforeGoal events
-        var beforeResult = await lifecycle.Before.Run(context, EventType.BeforeGoal);
-        if (!beforeResult.Success) { context.Goal = previousGoal; return beforeResult; }
-        if (beforeResult.Handled) { context.Goal = previousGoal; return beforeResult; }
-
-        try
-        {
-            var result = await Steps.RunAsync(context);
-
-            // Handle return depth
-            if (result.Returned)
-            {
-                result.ReturnDepth--;
-                if (result.ReturnDepth <= 0)
-                    result.Returned = false;
-            }
-
-            // AfterGoal events
-            var afterResult = await lifecycle.After.Run(context, EventType.AfterGoal);
-            if (!afterResult.Success) return afterResult;
-
-            return result;
-        }
-        finally
-        {
-            context.Goal = previousGoal;
-        }
-    }
-
-    /// <summary>
-    /// OBP: Goal is responsible for its own Data representation.
-    /// Returns a cached per-execution Data&lt;Goal&gt; wrapper from the context.
-    /// </summary>
-    public Data.@this AsData(Actor.Context.@this context)
-    {
-        return context.GetOrCreate(this, () =>
-        {
-            var data = new Data.@this<@this>("", this);
-            data.Context = context;
-            return data;
-        });
-    }
-
     public static @this NotFound(string name) => new()
     {
         Name = name,

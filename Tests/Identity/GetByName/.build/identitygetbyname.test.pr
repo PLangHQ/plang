@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity (ignoring errors), creates it as the default identity, then asserts the created identity\u0027s name and public key are set, and finally archives it again.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -73,6 +78,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Create a new named identity \u0027TestGetByName\u0027 and set it as the default identity.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -99,7 +109,7 @@
             {
               "name": "Message",
               "value": null,
-              "type": "string?"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -107,6 +117,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: the identity name stored in %MyIdentity.Name% must equal \u0027TestGetByName\u0027.",
+      "level": "high",
+      "confidence": 97,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -128,7 +143,7 @@
             {
               "name": "Message",
               "value": null,
-              "type": "string?"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -136,6 +151,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: %MyIdentity.PublicKey% must not be null.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -165,15 +185,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Archive the identity \u0027TestGetByName\u0027 again (cleanup).",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/IdentityGetByName.test.goal",
-  "prPath": "/.build/identitygetbyname.test.pr",
+  "path": "/Identity/GetByName/IdentityGetByName.test.goal",
+  "prPath": "/Identity/GetByName/.build/identitygetbyname.test.pr",
   "hash": "3a52cacb10b52640c3baf3853e282e78aa53f36096be52879bb8e1c267de6a45",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

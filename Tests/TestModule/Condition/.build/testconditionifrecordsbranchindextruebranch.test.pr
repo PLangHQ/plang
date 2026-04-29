@@ -1,6 +1,6 @@
 {
   "name": "TestConditionIfRecordsBranchIndexTrueBranch",
-  "description": "Sets %x% to true, runs condition.if to execute the \u0027write ok\u0027 branch when %x% is true, then asserts that %__data__.branchIndex% equals 0.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -35,6 +35,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -103,6 +108,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -137,15 +147,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.test.goal",
-  "prPath": "/Tests/TestModule/Condition/.build/testconditionifrecordsbranchindextruebranch.test.pr",
+  "path": "/TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.test.goal",
+  "prPath": "/TestModule/Condition/.build/testconditionifrecordsbranchindextruebranch.test.pr",
   "hash": "9d4523e3679c588e21f9c071669f9cf1869b9566ffcfa22af62d83df4aeeb71a",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -161,7 +161,7 @@
             {
               "name": "Message",
               "value": "foreach should iterate 3 times",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -169,9 +169,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Post-condition assertion that %count% equals 3 with a descriptive message. Map to assert.equals with Expected=3, Actual=%count%, Message as tstring.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -179,8 +179,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Loop.test.goal",
-  "prPath": "/.build/loop.test.pr",
+  "path": "/Modules/Loop/Loop.test.goal",
+  "prPath": "/Modules/Loop/.build/loop.test.pr",
   "hash": "35f7fcc5b47fdb1e00c1f822dca60c16144d944fb172c65ec24bc411662875f3",
   "builderVersion": "0.2.2",
   "isSetup": false,

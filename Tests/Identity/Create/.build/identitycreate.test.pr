@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity (ignoring errors), creates it as default, asserts the runtime variable %MyIdentity% is not null, then archives it again.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -73,6 +78,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Create identity named TestCreate and set it as default. This should populate %MyIdentity% in the runtime context (as implied by the subsequent assertion).",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -102,6 +112,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -131,15 +146,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Archive identity TestCreate with force. No error handling modifier is specified here, so archive should be attempted as-is.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/IdentityCreate.test.goal",
-  "prPath": "/.build/identitycreate.test.pr",
+  "path": "/Identity/Create/IdentityCreate.test.goal",
+  "prPath": "/Identity/Create/.build/identitycreate.test.pr",
   "hash": "f4b23be9d46a834bb9d5b94a9d36fb833a23078dd48badfdab3c999b0de9ac75",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

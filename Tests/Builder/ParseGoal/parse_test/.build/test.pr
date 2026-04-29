@@ -1,6 +1,6 @@
 {
   "name": "TestGoal",
-  "description": "Maps two conditional steps using condition.if. The first step has no nested action; the second step includes an explicit Step=this.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -45,6 +45,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -89,15 +94,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/parse_test/Test.goal",
-  "prPath": "/parse_test/.build/test.pr",
+  "path": "/Builder/ParseGoal/parse_test/Test.goal",
+  "prPath": "/Builder/ParseGoal/parse_test/.build/test.pr",
   "hash": "a61e4828752e9706c892324fac9ff77098e3301722657cac993ddb5c405a5191",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

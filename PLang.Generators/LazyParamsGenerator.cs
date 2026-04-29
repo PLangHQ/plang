@@ -554,14 +554,6 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("            context.Goal = __previousGoal;");
         sb.AppendLine("            context.Event = __previousEvent;");
         sb.AppendLine("        }");
-        sb.AppendLine("        finally");
-        sb.AppendLine("        {");
-        sb.AppendLine("            __frame?.SnapshotVariables(context.Variables);");
-        sb.AppendLine("            if (context.CallStack != null) context.CallStack.PopAsync().GetAwaiter().GetResult();");
-        sb.AppendLine("            context.Step = __previousStep;");
-        sb.AppendLine("            context.Goal = __previousGoal;");
-        sb.AppendLine("            context.Event = __previousEvent;");
-        sb.AppendLine("        }");
         sb.AppendLine("    }");
         sb.AppendLine();
 
