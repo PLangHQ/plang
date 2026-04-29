@@ -1,0 +1,273 @@
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using PLang.Generators.Emission.Property;
+using DataProperty = PLang.Generators.Emission.Property.Data.@this;
+using ProviderProperty = PLang.Generators.Emission.Property.Provider.@this;
+using LegacyProperty = PLang.Generators.Emission.Property.Legacy.@this;
+using PropertyBase = PLang.Generators.Emission.Property.@this;
+
+namespace PLang.Generators.Discovery;
+
+/// <summary>
+/// Roslyn discovery — predicate, GetActionClassInfo, ActionClassInfo type,
+/// and the property factory that picks the right ActionProperty leaf per declared property.
+/// </summary>
+public static class @this
+{
+    public static bool IsActionPartialClass(SyntaxNode node)
+    {
+        if (node is not ClassDeclarationSyntax classDecl) return false;
+        if (!classDecl.Modifiers.Any(SyntaxKind.PartialKeyword)) return false;
+
+        foreach (var attrList in classDecl.AttributeLists)
+        {
+            foreach (var attr in attrList.Attributes)
+            {
+                var name = attr.Name.ToString();
+                if (name == "Action" || name == "ActionAttribute"
+                    || name.EndsWith(".Action") || name.EndsWith(".ActionAttribute"))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    public static ActionClassInfo? GetActionClassInfo(GeneratorSyntaxContext ctx)
+    {
+        var classDecl = (ClassDeclarationSyntax)ctx.Node;
+        var classSymbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl);
+        if (classSymbol is null) return null;
+
+        var hasActionAttr = classSymbol.GetAttributes().Any(a =>
+            a.AttributeClass?.Name == "ActionAttribute"
+            && a.AttributeClass.ContainingNamespace.ToDisplayString() == "App.modules");
+        if (!hasActionAttr) return null;
+
+        bool ImplementsModule(string ifaceName) =>
+            classSymbol.AllInterfaces.Any(i =>
+                i.Name == ifaceName
+                && i.ContainingNamespace.ToDisplayString() == "App.modules");
+
+        var implementsIContext = ImplementsModule("IContext");
+        var implementsIChannel = ImplementsModule("IChannel");
+        var implementsIAction = ImplementsModule("IAction");
+        var implementsIStep = ImplementsModule("IStep");
+        var implementsIStatic = ImplementsModule("IStatic");
+
+        var properties = new List<PropertyBase>();
+        var ievents = new List<string>();
+        foreach (var member in classSymbol.GetMembers())
+        {
+            if (member is not IPropertySymbol prop
+                || !prop.IsPartialDefinition
+                || prop.DeclaredAccessibility != Accessibility.Public
+                || prop.IsStatic)
+                continue;
+
+            var (actionProp, implementsIEvent) = BuildProperty(prop);
+            if (actionProp != null) properties.Add(actionProp);
+            if (implementsIEvent) ievents.Add(prop.Name);
+        }
+
+        return new ActionClassInfo(
+            classSymbol.ContainingNamespace.ToDisplayString(),
+            classSymbol.Name,
+            $"{classSymbol.ContainingNamespace}.{classSymbol.Name}",
+            implementsIContext,
+            implementsIChannel,
+            implementsIAction,
+            implementsIStep,
+            implementsIStatic,
+            properties,
+            ievents,
+            HasIsNotNull(classSymbol),
+            ScanIsNotNullProperties(classSymbol),
+            ScanRawScalarValidations(classSymbol));
+    }
+
+    /// <summary>
+    /// Picks the right ActionProperty leaf for a Roslyn IPropertySymbol.
+    /// Returns (property, implementsIEvent) — the latter is needed by Action emission
+    /// for context.Event wiring.
+    /// </summary>
+    private static (PropertyBase? Prop, bool ImplementsIEvent) BuildProperty(IPropertySymbol prop)
+    {
+        // [Provider] takes priority — these aren't parameter-sourced.
+        var isProvider = prop.GetAttributes().Any(a =>
+            a.AttributeClass?.Name == "ProviderAttribute");
+        if (isProvider)
+        {
+            var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            // ImplementsIContext is used for the engine-resolution expression — read off the parent class.
+            var parentImplsCtx = prop.ContainingType.AllInterfaces.Any(i =>
+                i.Name == "IContext" && i.ContainingNamespace.ToDisplayString() == "App.modules");
+            return (new ProviderProperty(prop.Name, typeName, parentImplsCtx), false);
+        }
+
+        // [Default] literal expression
+        string? defaultValue = ReadDefaultValueExpression(prop);
+
+        // [VariableName] flag (legacy)
+        var isVariableName = prop.GetAttributes().Any(a =>
+            a.AttributeClass?.Name == "VariableNameAttribute");
+
+        // App-resolvable: type has static Resolve(string, Context.@this)
+        var isAppResolvable = prop.Type is INamedTypeSymbol named
+            && named.GetMembers("Resolve")
+                .OfType<IMethodSymbol>()
+                .Any(m => m.IsStatic
+                    && m.Parameters.Length == 2
+                    && m.Parameters[0].Type.SpecialType == SpecialType.System_String
+                    && (m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App"
+                        || m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App.Actor.Context"));
+
+        // Strip Nullable<T> wrap for IEvent detection
+        var rawType = prop.Type;
+        if (rawType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
+            rawType = nullable.TypeArguments[0];
+        var implementsIEvent = rawType is INamedTypeSymbol evt
+            && evt.AllInterfaces.Any(i =>
+                i.Name == "IEvent"
+                && i.ContainingNamespace.ToDisplayString() == "App.modules");
+
+        // Detect Data<T> and plain Data
+        var typeNameStr = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var isNullable = prop.NullableAnnotation == NullableAnnotation.Annotated;
+
+        var isDataWrapped = prop.Type is INamedTypeSymbol dt
+            && dt.IsGenericType
+            && (dt.OriginalDefinition.Name == "this" || dt.OriginalDefinition.Name == "@this")
+            && dt.OriginalDefinition.ContainingNamespace.ToDisplayString() == "App.Data";
+        var isPlainData = !isDataWrapped
+            && (prop.Type as INamedTypeSymbol)?.Name is "this" or "@this"
+            && (prop.Type as INamedTypeSymbol)?.ContainingNamespace.ToDisplayString() == "App.Data"
+            && !((INamedTypeSymbol)prop.Type).IsGenericType;
+
+        if (isDataWrapped || isPlainData)
+        {
+            string? innerType = null;
+            if (isDataWrapped)
+            {
+                var ltIdx = typeNameStr.IndexOf('<');
+                innerType = ltIdx >= 0 ? typeNameStr.Substring(ltIdx + 1, typeNameStr.Length - ltIdx - 2) : "object";
+            }
+            return (new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue), implementsIEvent);
+        }
+
+        // Everything else falls into legacy scalar emission (raw string / int / etc.)
+        return (new LegacyProperty(
+            prop.Name, typeNameStr, isNullable, prop.Type.IsValueType,
+            isAppResolvable, isVariableName, defaultValue), implementsIEvent);
+    }
+
+    private static string? ReadDefaultValueExpression(IPropertySymbol prop)
+    {
+        var defaultAttr = prop.GetAttributes().FirstOrDefault(a =>
+            a.AttributeClass?.Name == "DefaultAttribute");
+        if (defaultAttr == null || defaultAttr.ConstructorArguments.Length == 0) return null;
+
+        var arg = defaultAttr.ConstructorArguments[0];
+        if (arg.Value is string strVal)
+            return "\"" + strVal.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+        if (arg.Value == null) return null;
+        if (prop.Type.TypeKind == TypeKind.Enum)
+            return $"({prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}){arg.Value}";
+        return arg.Value.ToString()!.ToLowerInvariant();
+    }
+
+    private static bool HasIsNotNull(INamedTypeSymbol classSymbol) =>
+        classSymbol.GetMembers().OfType<IPropertySymbol>()
+            .Any(p => p.GetAttributes().Any(a => a.AttributeClass?.Name == "IsNotNullAttribute")
+                      && !p.Type.IsValueType);
+
+    /// <summary>List of property names that carry [IsNotNull] AND aren't value types.</summary>
+    private static List<string> ScanIsNotNullProperties(INamedTypeSymbol classSymbol) =>
+        classSymbol.GetMembers().OfType<IPropertySymbol>()
+            .Where(p => p.GetAttributes().Any(a => a.AttributeClass?.Name == "IsNotNullAttribute")
+                        && !p.Type.IsValueType)
+            .Select(p => p.Name)
+            .ToList();
+
+    /// <summary>List of properties that need the legacy raw-scalar non-null validation in ExecuteAsync.</summary>
+    private static List<RawScalarValidation> ScanRawScalarValidations(INamedTypeSymbol classSymbol)
+    {
+        var result = new List<RawScalarValidation>();
+        foreach (var prop in classSymbol.GetMembers().OfType<IPropertySymbol>())
+        {
+            if (!prop.IsPartialDefinition) continue;
+            if (prop.DeclaredAccessibility != Accessibility.Public) continue;
+            if (prop.IsStatic) continue;
+            if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "ProviderAttribute")) continue;
+            if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "DefaultAttribute")) continue;
+            if (prop.NullableAnnotation == NullableAnnotation.Annotated) continue;
+            if (prop.Type.IsValueType) continue;
+
+            // Skip Data / Data<T>
+            var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            if (typeName.Contains("App.Data.@this")) continue;
+
+            // Skip App-resolvable types — they have their own resolve path
+            if (prop.Type is INamedTypeSymbol named
+                && named.GetMembers("Resolve").OfType<IMethodSymbol>()
+                    .Any(m => m.IsStatic && m.Parameters.Length == 2
+                              && m.Parameters[0].Type.SpecialType == SpecialType.System_String))
+                continue;
+
+            var isString = typeName == "string" || typeName == "global::System.String";
+            result.Add(new RawScalarValidation(prop.Name, isString));
+        }
+        return result;
+    }
+}
+
+/// <summary>
+/// Per-handler metadata produced by Discovery and consumed by the Action emitter.
+/// Lists carry value-equal records only — no Roslyn symbol references — so the
+/// IIncrementalGenerator cache treats two semantically identical inputs as equal.
+/// </summary>
+public sealed class ActionClassInfo
+{
+    public string Namespace { get; }
+    public string ClassName { get; }
+    public string FullName { get; }
+    public bool ImplementsIContext { get; }
+    public bool ImplementsIChannel { get; }
+    public bool ImplementsIAction { get; }
+    public bool ImplementsIStep { get; }
+    public bool ImplementsIStatic { get; }
+    public List<PropertyBase> Properties { get; }
+    public List<string> IEventPropertyNames { get; }
+    public bool HasAnyIsNotNull { get; }
+    public List<string> IsNotNullProperties { get; }
+    public List<RawScalarValidation> RawScalarValidations { get; }
+
+    public ActionClassInfo(
+        string ns, string className, string fullName,
+        bool implementsIContext, bool implementsIChannel, bool implementsIAction,
+        bool implementsIStep, bool implementsIStatic,
+        List<PropertyBase> properties,
+        List<string> ievents,
+        bool hasAnyIsNotNull,
+        List<string> isNotNullProperties,
+        List<RawScalarValidation> rawScalarValidations)
+    {
+        Namespace = ns;
+        ClassName = className;
+        FullName = fullName;
+        ImplementsIContext = implementsIContext;
+        ImplementsIChannel = implementsIChannel;
+        ImplementsIAction = implementsIAction;
+        ImplementsIStep = implementsIStep;
+        ImplementsIStatic = implementsIStatic;
+        Properties = properties;
+        IEventPropertyNames = ievents;
+        HasAnyIsNotNull = hasAnyIsNotNull;
+        IsNotNullProperties = isNotNullProperties;
+        RawScalarValidations = rawScalarValidations;
+    }
+}
+
+public sealed record RawScalarValidation(string PropertyName, bool IsString);
